@@ -36,12 +36,19 @@ public enum ArithOp {
             case ISUB:
             case LSUB:
                 return MINUS;
+            case IMUL:
+            case LMUL:
+                return MULTIPLY;
             case IADD:
+            case LADD:
                 return PLUS;
+            case LDIV:
             case IDIV:
                 return DIVIDE;
+            case LOR:
             case IOR:
                 return OR;
+            case LAND:
             case IAND:
                 return AND;
             default:
