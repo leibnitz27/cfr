@@ -16,10 +16,11 @@ public enum ArithOp {
     MINUS("-"),
     MULTIPLY("*"),
     DIVIDE("/"),
-    OR("|");
-    
+    OR("|"),
+    AND("&");
+
     private final String showAs;
-    
+
     private ArithOp(String showAs) {
         this.showAs = showAs;
     }
@@ -27,7 +28,7 @@ public enum ArithOp {
     public String getShowAs() {
         return showAs;
     }
-    
+
     public static ArithOp getOpFor(JVMInstr instr) {
         switch (instr) {
             case LCMP:
@@ -41,6 +42,8 @@ public enum ArithOp {
                 return DIVIDE;
             case IOR:
                 return OR;
+            case IAND:
+                return AND;
             default:
                 throw new ConfusedCFRException("Don't know arith op for " + instr);
         }
