@@ -1,0 +1,67 @@
+package org.benf.cfr.reader.entities.attributes;
+
+import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.List;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: lee
+ * Date: 18/04/2011
+ * Time: 19:01
+ * To change this template use File | Settings | File Templates.
+ */
+public class AttributeLocalVariableTable extends Attribute {
+    private static final long OFFSET_OF_ATTRIBUTE_LENGTH = 2;
+    private static final long OFFSET_OF_ENTRY_COUNT = 6;
+    private static final long OFFSET_OF_ENTRIES = 8;
+    private static final long OFFSET_OF_REMAINDER = 6;
+    private final List<LocalVariableEntry> localVariableEntryList = ListFactory.newList();
+
+    private final int length;
+
+    public AttributeLocalVariableTable(ByteData raw, ConstantPool cp)
+    {
+        this.length = raw.getU4At(OFFSET_OF_ATTRIBUTE_LENGTH);
+        short numLocalVariables = raw.getU2At(OFFSET_OF_ENTRY_COUNT);
+        long offset = OFFSET_OF_ENTRIES;
+        for (int x=0;x<numLocalVariables;++x) {
+            short startPc           = raw.getU2At(offset + 0);
+            short length            = raw.getU2At(offset + 2);
+            short nameIndex         = raw.getU2At(offset + 4);
+            short descriptorIndex   = raw.getU2At(offset + 6);
+            short index             = raw.getU2At(offset + 8);
+            localVariableEntryList.add(new LocalVariableEntry(startPc, length, nameIndex, descriptorIndex, index));
+            offset += 10;
+        }
+    }
+
+    @Override
+    public String getRawName()
+    {
+        return "LocalVariableTable";
+    }
+
+    @Override
+    public void dump(Dumper d, ConstantPool cp)
+    {
+/*        d.print("Local Variable table\n");
+        for (LocalVariableEntry entry : localVariableEntryList) {
+            entry.dump(d,cp);
+        }
+*/
+    }
+
+    public List<LocalVariableEntry> getLocalVariableEntryList() {
+        return localVariableEntryList;
+    }
+
+    @Override
+    public long getRawByteLength()
+    {
+        return OFFSET_OF_REMAINDER + length;
+    }
+}

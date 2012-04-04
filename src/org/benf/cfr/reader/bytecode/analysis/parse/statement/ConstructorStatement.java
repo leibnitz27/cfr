@@ -1,0 +1,38 @@
+package org.benf.cfr.reader.bytecode.analysis.parse.statement;
+
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.util.output.Dumper;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: lee
+ * Date: 16/03/2012
+ *
+ * This is a temporary statement - it should be replaced with an Assignment of a ConstructorInvokation
+ */
+public class ConstructorStatement extends AbstractStatement {
+    private MemberFunctionInvokation invokation;
+
+    public ConstructorStatement(MemberFunctionInvokation construction) {
+        this.invokation = construction;
+    }
+    @Override
+    public void dump(Dumper dumper) {
+        dumper.print(invokation.toString() + "; // <-- constructor of (" + invokation.getObject() + ")\n");
+    }
+
+    @Override
+    public void replaceSingleUsageLValues(LValueCollector lValueCollector) {
+        // can't ever change, but its arguments can.
+        invokation.replaceSingleUsageLValues(lValueCollector);
+    }
+
+    @Override
+    public void collectObjectCreation(CreationCollector creationCollector) {
+        Expression object = invokation.getObject();
+        creationCollector.collectConstruction(object, invokation, this.getContainer());
+    }
+}
