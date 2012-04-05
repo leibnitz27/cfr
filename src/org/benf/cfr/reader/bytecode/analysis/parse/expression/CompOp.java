@@ -1,9 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
-import org.benf.cfr.reader.bytecode.JVMInstr;
+import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.util.ConfusedCFRException;
-
-import java.util.logging.LoggingPermission;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,9 +18,9 @@ public enum CompOp {
     EQ("=="),
     NE("!=");
 
-    
+
     private final String showAs;
-    
+
     private CompOp(String showAs) {
         this.showAs = showAs;
     }
@@ -30,7 +28,7 @@ public enum CompOp {
     public String getShowAs() {
         return showAs;
     }
-    
+
     public static CompOp getOpFor(JVMInstr instr) {
         switch (instr) {
             case IF_ICMPLT:

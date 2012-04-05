@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.bytecode;
+package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
@@ -15,14 +15,12 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
  */
 public class OperationFactoryDefault implements OperationFactory {
 
-    public enum Handler
-    {
+    public enum Handler {
         INSTANCE(new OperationFactoryDefault());
 
         private final OperationFactoryDefault h;
 
-        Handler(OperationFactoryDefault h)
-        {
+        Handler(OperationFactoryDefault h) {
             this.h = h;
         }
 
@@ -32,15 +30,13 @@ public class OperationFactoryDefault implements OperationFactory {
     }
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries)
-    {
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries) {
         // Todo - obviously, doesn't need to be new.
-        return new StackDelta( instr.getRawStackPopped(), instr.getRawStackPushed() );
+        return new StackDelta(instr.getRawStackPopped(), instr.getRawStackPushed());
     }
 
     @Override
-    public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset)
-    {
+    public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
         byte[] args = instr.getRawLength() == 0 ? null : bd.getBytesAt(instr.getRawLength(), 1);
         int[] targetOffsets = null; // we know the nextr instr, it's our successor.
         return new Op01WithProcessedDataAndByteJumps(instr, args, targetOffsets, offset);

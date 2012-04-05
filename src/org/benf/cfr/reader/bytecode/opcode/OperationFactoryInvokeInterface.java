@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.bytecode;
+package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
@@ -23,8 +23,7 @@ public class OperationFactoryInvokeInterface extends OperationFactoryDefault {
     }
 
     @Override
-    public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset)
-    {
+    public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
         byte[] args = bd.getBytesAt(LENGTH_OF_DATA, 1);
         int[] targetOffsets = null; // we know the nextr instr, it's our successor (after the invoke returns).
         ConstantPoolEntry[] cpEntries = new ConstantPoolEntry[]{cp.getEntry(bd.getU2At(OFFSET_OF_METHOD_INDEX))};
@@ -35,7 +34,7 @@ public class OperationFactoryInvokeInterface extends OperationFactoryDefault {
 
     @Override
     public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries) {
-        ConstantPoolEntryMethodRef methodRef = (ConstantPoolEntryMethodRef)cpEntries[0];
+        ConstantPoolEntryMethodRef methodRef = (ConstantPoolEntryMethodRef) cpEntries[0];
 
         return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true, cp);
     }

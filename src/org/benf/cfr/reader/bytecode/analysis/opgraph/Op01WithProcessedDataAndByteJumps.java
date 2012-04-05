@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
-import org.benf.cfr.reader.bytecode.*;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
+import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 
@@ -24,8 +24,7 @@ public class Op01WithProcessedDataAndByteJumps {
     private final ConstantPoolEntry[] constantPoolEntries;
     private final int originalRawOffset;
 
-    public Op01WithProcessedDataAndByteJumps(JVMInstr instruction, byte[] data, int[] rawTargetOffsets, int originalRawOffset)
-    {
+    public Op01WithProcessedDataAndByteJumps(JVMInstr instruction, byte[] data, int[] rawTargetOffsets, int originalRawOffset) {
         this.instruction = instruction;
         this.data = data;
         this.rawTargetOffsets = rawTargetOffsets;
@@ -41,18 +40,15 @@ public class Op01WithProcessedDataAndByteJumps {
         this.constantPoolEntries = constantPoolEntries;
     }
 
-    public StackDelta getStackDelta(ConstantPool cp)
-    {
+    public StackDelta getStackDelta(ConstantPool cp) {
         return instruction.getStackDelta(data, cp, constantPoolEntries);
     }
 
-    public JVMInstr getJVMInstr()
-    {
+    public JVMInstr getJVMInstr() {
         return instruction;
     }
 
-    public byte[] getData()
-    {
+    public byte[] getData() {
         return data;
     }
 
@@ -60,19 +56,16 @@ public class Op01WithProcessedDataAndByteJumps {
         return new Op02WithProcessedDataAndRefs(instruction, data, index, cp, constantPoolEntries, originalRawOffset);
     }
 
-    public int[] getAbsoluteIndexJumps(int thisOpByteIndex, Map<Integer, Integer> lutByOffset)
-    {
+    public int[] getAbsoluteIndexJumps(int thisOpByteIndex, Map<Integer, Integer> lutByOffset) {
         int thisOpInstructionIndex = lutByOffset.get(thisOpByteIndex);
-        if (rawTargetOffsets == null)
-        {
-            return new int[]{thisOpInstructionIndex+1};
+        if (rawTargetOffsets == null) {
+            return new int[]{thisOpInstructionIndex + 1};
         }
         // Otherwise, figure out what the relative byte offsets we have are as instruction offsets,
         // and create a branching indexed operation.
 
         int targetIndexes[] = new int[rawTargetOffsets.length];
-        for (int x=0;x<rawTargetOffsets.length;++x)
-        {
+        for (int x = 0; x < rawTargetOffsets.length; ++x) {
             int targetRawAddress = thisOpByteIndex + rawTargetOffsets[x];
             int targetIndex = lutByOffset.get(targetRawAddress);
             targetIndexes[x] = targetIndex;
@@ -80,8 +73,7 @@ public class Op01WithProcessedDataAndByteJumps {
         return targetIndexes;
     }
 
-    public int getInstructionLength()
-    {
+    public int getInstructionLength() {
         return data == null ? 1 : (data.length + 1);
     }
 

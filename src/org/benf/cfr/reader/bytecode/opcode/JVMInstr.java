@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.bytecode;
+package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
@@ -20,9 +20,9 @@ import java.util.Map;
 public enum JVMInstr {
     /* opcode, numimmed, numpopped, numpushed, num targets */
     /* numimmed is length (-1 if variable) of arguments immediately following opcode */
-    AALOAD(0x32,0, 2, 1),
-    AASTORE(0x53,0, 3, 0),
-    ACONST_NULL(0x01,0, 0, 1),
+    AALOAD(0x32, 0, 2, 1),
+    AASTORE(0x53, 0, 3, 0),
+    ACONST_NULL(0x01, 0, 0, 1),
     ALOAD(0x19, 1, 0, 1),
     ALOAD_0(0x2a, 0, 0, 1),
     ALOAD_1(0x2b, 0, 0, 1),
@@ -46,7 +46,7 @@ public enum JVMInstr {
     D2F(0x90, 0, 1, 1),
     D2I(0x8e, 0, 1, 1),
     D2L(0x8f, 0, 1, 1),
-    DADD(0x63, 0,2,1),
+    DADD(0x63, 0, 2, 1),
     DALOAD(0x31, 0, 2, 1),
     DASTORE(0x52, 0, 3, 0),
     DCMPG(0x98, 0, 2, 1),
@@ -222,8 +222,8 @@ public enum JVMInstr {
     SWAP(0x5f, 0, 2, 2),
     TABLESWITCH(0xaa, -1, 1, 0, new OperationFactoryTableSwitch()),
     WIDE(0xc4, -1, -1, -1, new OperationFactoryWide()),
-    FAKE_TRY(-1, 0,0,0),
-    FAKE_CATCH(-1,0,0,1);
+    FAKE_TRY(-1, 0, 0, 0),
+    FAKE_CATCH(-1, 0, 0, 1);
 
     private final int opcode;
     private final int bytes;
@@ -234,20 +234,17 @@ public enum JVMInstr {
 
     private static final Map<Integer, JVMInstr> opcodeLookup = new HashMap<Integer, JVMInstr>();
 
-    static
-    {
+    static {
         for (JVMInstr i : values()) {
             opcodeLookup.put(i.getOpcode(), i);
         }
     }
 
-    JVMInstr(int opcode, int bytes, int stackPopped, int stackPushed)
-    {
+    JVMInstr(int opcode, int bytes, int stackPopped, int stackPushed) {
         this(opcode, bytes, stackPopped, stackPushed, OperationFactoryDefault.Handler.INSTANCE.getHandler());
     }
 
-    JVMInstr(int opcode, int bytes, int stackPopped, int stackPushed, OperationFactory handler)
-    {
+    JVMInstr(int opcode, int bytes, int stackPopped, int stackPushed, OperationFactory handler) {
         this.opcode = opcode;
         this.bytes = bytes;
         this.stackPopped = stackPopped;
@@ -256,18 +253,15 @@ public enum JVMInstr {
         this.handler = handler;
     }
 
-    public int getOpcode()
-    {
+    public int getOpcode() {
         return opcode;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public static JVMInstr find(int opcode)
-    {
+    public static JVMInstr find(int opcode) {
         if (opcode < 0) opcode += 256;
         Integer iOpcode = opcode;
         if (!opcodeLookup.containsKey(iOpcode)) {
@@ -276,28 +270,23 @@ public enum JVMInstr {
         return opcodeLookup.get(opcode);
     }
 
-    protected int getRawLength()
-    {
+    protected int getRawLength() {
         return bytes;
     }
 
-    public int getRawStackPushed()
-    {
+    public int getRawStackPushed() {
         return stackPushed;
     }
 
-    public int getRawStackPopped()
-    {
+    public int getRawStackPopped() {
         return stackPopped;
     }
 
-    public StackDelta getStackDelta(byte [] data, ConstantPool cp, ConstantPoolEntry[] constantPoolEntries)
-    {
+    public StackDelta getStackDelta(byte[] data, ConstantPool cp, ConstantPoolEntry[] constantPoolEntries) {
         return handler.getStackDelta(this, data, cp, constantPoolEntries);
     }
 
-    public Op01WithProcessedDataAndByteJumps createOperation(ByteData bd, ConstantPool cp, int offset)
-    {
+    public Op01WithProcessedDataAndByteJumps createOperation(ByteData bd, ConstantPool cp, int offset) {
         Op01WithProcessedDataAndByteJumps res = handler.createOperation(this, bd, cp, offset);
         return res;
     }

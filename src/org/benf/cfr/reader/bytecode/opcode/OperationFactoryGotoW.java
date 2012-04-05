@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.bytecode;
+package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.entities.ConstantPool;
@@ -16,8 +16,7 @@ public class OperationFactoryGotoW extends OperationFactoryDefault {
     private static long OFFSET_OF_TARGET = 1;
 
     @Override
-    public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset)
-    {
+    public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
         byte[] args = bd.getBytesAt(instr.getRawLength(), 1);
 
         int targetOffset = bd.getU4At(OFFSET_OF_TARGET);

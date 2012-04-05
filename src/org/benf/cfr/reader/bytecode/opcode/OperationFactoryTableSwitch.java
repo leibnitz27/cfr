@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.bytecode;
+package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.entities.ConstantPool;

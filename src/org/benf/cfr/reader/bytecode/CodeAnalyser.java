@@ -7,9 +7,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
+import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.attributes.AttributeLocalVariableTable;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionBookmark;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
@@ -34,18 +34,17 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class CodeAnalyser {
-    
+
     private final AttributeCode originalCodeAttribute;
     private final ConstantPool cp;
     private Dumpable start;
-    
+
     public CodeAnalyser(AttributeCode attributeCode) {
         this.originalCodeAttribute = attributeCode;
         this.cp = attributeCode.getConstantPool();
     }
 
-    public void analyse()
-    {
+    public void analyse() {
 
         ByteData rawCode = originalCodeAttribute.getRawData();
         long codeLength = originalCodeAttribute.getCodeLength();
@@ -56,8 +55,7 @@ public class CodeAnalyser {
         int idx = 0;
         int offset = 0;
 
-        do
-        {
+        do {
             JVMInstr instr = JVMInstr.find(bdCode.getU1At(0));
             Op01WithProcessedDataAndByteJumps oc = instr.createOperation(bdCode, cp, offset);
             System.out.println(oc);
@@ -73,16 +71,16 @@ public class CodeAnalyser {
         List<Op01WithProcessedDataAndByteJumps> op1list = ListFactory.newList();
         List<Op02WithProcessedDataAndRefs> op2list = ListFactory.newList();
         // Now walk the indexed ops
-        for (int x=0;x<instrs.size();++x) {
+        for (int x = 0; x < instrs.size(); ++x) {
             Op01WithProcessedDataAndByteJumps op1 = instrs.get(x);
             op1list.add(op1);
             Op02WithProcessedDataAndRefs op2 = op1.createOp2(cp, x);
             op2list.add(op2);
         }
-        
-        for (int x=0;x<instrs.size();++x) {
+
+        for (int x = 0; x < instrs.size(); ++x) {
             int offsetOfThisInstruction = lutByIdx.get(x);
-            int []targetIdxs = op1list.get(x).getAbsoluteIndexJumps(offsetOfThisInstruction, lutByOffset);
+            int[] targetIdxs = op1list.get(x).getAbsoluteIndexJumps(offsetOfThisInstruction, lutByOffset);
             Op02WithProcessedDataAndRefs source = op2list.get(x);
             for (int targetIdx : targetIdxs) {
                 Op02WithProcessedDataAndRefs target = op2list.get(targetIdx);
@@ -92,49 +90,50 @@ public class CodeAnalyser {
         }
 
         if (true) {
-        // Add entries from the exception table.  Since these are stored in terms of offsets, they're
-        // only usable here until we mess around with the instruction structure, so do it early!
-        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries());
-        List<Short> exceptionStarts = exceptions.getExceptionHandlerStarts();
-        for (Short exception_from : exceptionStarts) {
-            List<ExceptionTableEntry> rawes = exceptions.getExceptionsFromSource(exception_from);
-            int originalIndex = lutByOffset.get((int)exception_from);
-            Op02WithProcessedDataAndRefs startInstruction = op2list.get(originalIndex);
+            // Add entries from the exception table.  Since these are stored in terms of offsets, they're
+            // only usable here until we mess around with the instruction structure, so do it early!
+            ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries());
+            List<Short> exceptionStarts = exceptions.getExceptionHandlerStarts();
+            for (Short exception_from : exceptionStarts) {
+                List<ExceptionTableEntry> rawes = exceptions.getExceptionsFromSource(exception_from);
+                int originalIndex = lutByOffset.get((int) exception_from);
+                Op02WithProcessedDataAndRefs startInstruction = op2list.get(originalIndex);
 
-            List<Op02WithProcessedDataAndRefs> handlerTargets = ListFactory.newList();
-            for (ExceptionTableEntry exceptionTableEntry : rawes) {
-                short handler = exceptionTableEntry.getBytecode_index_handler();
-                int handlerIndex = lutByOffset.get((int)handler);
-                Op02WithProcessedDataAndRefs handerTarget = op2list.get(handlerIndex);
-                handlerTargets.add(handerTarget);
+                List<Op02WithProcessedDataAndRefs> handlerTargets = ListFactory.newList();
+                for (ExceptionTableEntry exceptionTableEntry : rawes) {
+                    short handler = exceptionTableEntry.getBytecode_index_handler();
+                    int handlerIndex = lutByOffset.get((int) handler);
+                    Op02WithProcessedDataAndRefs handerTarget = op2list.get(handlerIndex);
+                    handlerTargets.add(handerTarget);
+                }
+
+                // Unlink startInstruction from its source, add a new instruction in there, which has a
+                // default target of startInstruction, but additional targets of handlerTargets.
+                ExceptionBookmark exceptionBookmark = new ExceptionBookmark(rawes);
+                Op02WithProcessedDataAndRefs tryOp =
+                        new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex(), -1, cp, null, -1, exceptionBookmark);
+
+                if (startInstruction.getSources().isEmpty())
+                    throw new ConfusedCFRException("Can't install exception handler infront of nothing");
+                for (Op02WithProcessedDataAndRefs source : startInstruction.getSources()) {
+                    source.replaceTarget(startInstruction, tryOp);
+                }
+                tryOp.addTarget(startInstruction);
+                for (Op02WithProcessedDataAndRefs tryTarget : handlerTargets) {
+                    Op02WithProcessedDataAndRefs preCatchOp =
+                            new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex(), -1, cp, null, -1, null);
+
+                    op2list.add(preCatchOp);
+
+                    tryOp.addTarget(preCatchOp);
+                    preCatchOp.addSource(tryOp);
+                    preCatchOp.addTarget(tryTarget);
+                    tryTarget.addSource(preCatchOp);
+                }
+                startInstruction.clearSources();
+                startInstruction.addSource(tryOp);
+                op2list.add(tryOp);
             }
-            
-            // Unlink startInstruction from its source, add a new instruction in there, which has a
-            // default target of startInstruction, but additional targets of handlerTargets.
-            ExceptionBookmark exceptionBookmark = new ExceptionBookmark(rawes);
-            Op02WithProcessedDataAndRefs tryOp = 
-                    new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex(), -1, cp, null, -1, exceptionBookmark);
-
-            if (startInstruction.getSources().isEmpty()) throw new ConfusedCFRException("Can't install exception handler infront of nothing");
-            for (Op02WithProcessedDataAndRefs source : startInstruction.getSources()) {
-                source.replaceTarget(startInstruction, tryOp);
-            }
-            tryOp.addTarget(startInstruction);
-            for (Op02WithProcessedDataAndRefs tryTarget : handlerTargets) {
-                Op02WithProcessedDataAndRefs preCatchOp =
-                        new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex(), -1, cp, null, -1, null);
-
-                op2list.add(preCatchOp);
-
-                tryOp.addTarget(preCatchOp);
-                preCatchOp.addSource(tryOp);
-                preCatchOp.addTarget(tryTarget);
-                tryTarget.addSource(preCatchOp);
-            }
-            startInstruction.clearSources();
-            startInstruction.addSource(tryOp);
-            op2list.add(tryOp);
-        }
         }
 
         // This dump block only exists because we're debugging bad stack size calcuations.
@@ -200,8 +199,7 @@ public class CodeAnalyser {
     }
 
 
-    public void dump(Dumper d)
-    {
+    public void dump(Dumper d) {
         d.newln();
         start.dump(d);
     }

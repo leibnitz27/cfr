@@ -1,8 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
-import org.benf.cfr.reader.bytecode.JVMInstr;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-
 /**
  * Created by IntelliJ IDEA.
  * User: lee
