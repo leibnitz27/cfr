@@ -5,6 +5,8 @@ import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -15,7 +17,6 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 public class OperationFactoryTableSwitch extends OperationFactoryDefault {
 
     // offsets relative to computed start of default
-    private static final int OFFSET_OF_DEFAULT = 0;
     private static final int OFFSET_OF_LOWBYTE = 4;
     private static final int OFFSET_OF_HIGHBYTE = 8;
     private static final int OFFSET_OF_OFFSETS = 12;
@@ -28,17 +29,23 @@ public class OperationFactoryTableSwitch extends OperationFactoryDefault {
         int overflow = (curoffset % 4);
         overflow = overflow > 0 ? 4 - overflow : 0;
         int startdata = 1 + overflow;
-        int defaultvalue = bd.getU4At(startdata + OFFSET_OF_DEFAULT);
         int lowvalue = bd.getU4At(startdata + OFFSET_OF_LOWBYTE);
         int highvalue = bd.getU4At(startdata + OFFSET_OF_HIGHBYTE);
         int numoffsets = highvalue - lowvalue + 1;
-        for (int x = 0; x < numoffsets; ++x) {
-            int jumpfor = bd.getU4At(startdata + OFFSET_OF_OFFSETS + 4 * x);
-            System.out.println("Jump for " + (lowvalue + x) + " = " + jumpfor);
+        int size = overflow + OFFSET_OF_OFFSETS + 4 * numoffsets;
+        byte[] rawData = bd.getBytesAt(size, 1);
+
+        DecodedSwitch dts = new DecodedTableSwitch(rawData, offset);
+        int defaultTarget = dts.getDefaultTarget();
+        List<DecodedSwitchEntry> targets = dts.getJumpTargets();
+        int[] targetOffsets = new int[targets.size() + 1];
+        targetOffsets[0] = defaultTarget;
+        int out = 1;
+        for (DecodedSwitchEntry target : targets) {
+            targetOffsets[out++] = target.getBytecodeTarget();
         }
 
-
-        throw new NotImplementedException();
+        return new Op01WithProcessedDataAndByteJumps(instr, rawData, targetOffsets, offset);
     }
 
 }

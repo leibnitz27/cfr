@@ -20,9 +20,39 @@ public class SwitchTest1 {
 
     ;
 
+    public int test0(enm e) {
+        switch (e) {
+            case ONE:
+                return 1;
+            case TWO:
+                return 2;
+        }
+        return 0;
+    }
+
+
+    // LookupSwitch
+    public void test1(int x) {
+        switch (x) {
+            case 1:
+                System.out.println("One");   // Fall through
+            case 3:
+                System.out.println("Three");
+                break;
+            case 7:
+                System.out.println("Seven");
+                break;
+            case 5000:
+                System.out.println("FiveK"); // Fall through
+            default:
+                System.out.println("Default");
+
+        }
+    }
+
 
     // Tableswitch
-    public void test1(int x) {
+    public void test2(int x) {
         switch (x) {
             case 1:
                 System.out.println("One");   // Fall through
@@ -39,15 +69,5 @@ public class SwitchTest1 {
 
         }
     }
-    /*
-    public int test0(enm e) {
-        switch (e) {
-            case ONE:
-                return 1;
-            case TWO:
-                return 2;
-        }
-        return 0;
-    }
-    */
+
 }

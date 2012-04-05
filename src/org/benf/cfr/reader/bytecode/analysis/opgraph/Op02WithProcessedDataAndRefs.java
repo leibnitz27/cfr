@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
+import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -350,8 +352,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new CommentStatement("} catch ... {");
             case POP:
                 return new ExpressionStatement(getStackRValue(0));
+            case TABLESWITCH:
+                return new SwitchStatement(getStackRValue(0), new DecodedTableSwitch(rawData, originalRawOffset));
+            case LOOKUPSWITCH:
+                return new SwitchStatement(getStackRValue(0), new DecodedLookupSwitch(rawData, originalRawOffset));
             case IINC:
-                // ++?
+                // Can we have ++ instead?
                 return new Assignment(new LocalVariable(new LocalValueConstant(rawData[0], variableNamer, originalRawOffset)),
                         new ArithmeticOperation(new LocalValueConstant(rawData[0], variableNamer, originalRawOffset), new Literal(TypedLiteral.getInt(rawData[1])), ArithOp.PLUS));
             default:
