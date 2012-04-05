@@ -254,12 +254,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new Assignment(getStackLValue(0), new ArrayLength(getStackRValue(0)));
             case AALOAD:
             case IALOAD:
+            case BALOAD:
                 return new Assignment(getStackLValue(0), new ArrayIndex(getStackRValue(1), getStackRValue(0)));
             case AASTORE:
             case IASTORE:
+            case BASTORE:
                 return new Assignment(new ArrayVariable(new ArrayIndex(getStackRValue(2), getStackRValue(1))), getStackRValue(0));
             case LCMP:
             case LSUB:
+            case LADD:
             case IADD:
             case ISUB:
             case IDIV:
@@ -306,6 +309,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case IF_ICMPNE:
             case IF_ICMPLE: {
                 ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(1), getStackRValue(0), CompOp.getOpFor(instr));
+                return new IfStatement(conditionalExpression);
+            }
+            case IFNONNULL: {
+                ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(0), new Literal(TypedLiteral.getNull()), CompOp.NE);
                 return new IfStatement(conditionalExpression);
             }
             case IFEQ:
