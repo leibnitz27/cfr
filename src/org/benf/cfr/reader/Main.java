@@ -32,19 +32,19 @@ public class Main {
         }
 
         // Create the byte array to hold the data
-        byte[] bytes = new byte[(int)length];
+        byte[] bytes = new byte[(int) length];
 
         // Read in the bytes
         int offset = 0;
         int numRead = 0;
         while (offset < bytes.length
-               && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+                && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
             offset += numRead;
         }
 
         // Ensure all the bytes have been read in
         if (offset < bytes.length) {
-            throw new IOException("Could not completely read file "+file.getName());
+            throw new IOException("Could not completely read file " + file.getName());
         }
 
         // Close the input stream and return bytes
@@ -52,10 +52,8 @@ public class Main {
         return bytes;
     }
 
-    public static void main(String[] args)
-    {
-        if (args.length < 1)
-        {
+    public static void main(String[] args) {
+        if (args.length < 1) {
             System.err.println("requires arg 'classFile'");
             return;
         }
@@ -63,29 +61,23 @@ public class Main {
 
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
-            byte [] content = getBytesFromFile(fname);
+            byte[] content = getBytesFromFile(fname);
             ByteData data = new BaseByteData(content);
             ClassFile c = new ClassFile(data);
             Dumper d = new Dumper();
             c.Dump(d);
-        }
-        catch (FileNotFoundException e)
-        {
+        } catch (FileNotFoundException e) {
             System.err.println(e.toString());
-            return;
-        }
-        catch (IOException e)
-        {
+            System.exit(1);
+        } catch (IOException e) {
             System.err.println(e.toString());
-            return;
-        }
-        catch (ConfusedCFRException e)
-        {
+            System.exit(1);
+        } catch (ConfusedCFRException e) {
             System.err.println(e.toString());
-            for (Object x : e.getStackTrace())
-            {
+            for (Object x : e.getStackTrace()) {
                 System.err.println(x);
             }
+            System.exit(1);
         }
 
 
