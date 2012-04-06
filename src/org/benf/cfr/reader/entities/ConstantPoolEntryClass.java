@@ -15,26 +15,22 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry {
 
     final short nameIndex;
 
-    public ConstantPoolEntryClass(ByteData data)
-    {
-        this.nameIndex = data.getU2At(OFFSET_OF_NAME_INDEX);
+    public ConstantPoolEntryClass(ByteData data) {
+        this.nameIndex = data.getS2At(OFFSET_OF_NAME_INDEX);
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return 3;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "CONSTANT_Class " + nameIndex;
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp)
-    {
+    public void dump(Dumper d, ConstantPool cp) {
         d.print("Class " + cp.getUTF8Entry(nameIndex).getValue());
     }
 

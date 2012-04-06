@@ -2,7 +2,6 @@ package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.bytecode.CodeAnalyser;
 import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
@@ -36,28 +35,27 @@ public class AttributeCode extends Attribute {
     private final ConstantPool cp;
     private final ByteData rawData;
 
-    public AttributeCode(ByteData raw, final ConstantPool cp)
-    {
+    public AttributeCode(ByteData raw, final ConstantPool cp) {
         this.cp = cp;
-        this.length = raw.getU4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        this.maxStack = raw.getU2At(OFFSET_OF_MAX_STACK);
-        this.maxLocals = raw.getU2At(OFFSET_OF_MAX_LOCALS);
-        this.codeLength = raw.getU4At(OFFSET_OF_CODE_LENGTH);
+        this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
+        this.maxStack = raw.getS2At(OFFSET_OF_MAX_STACK);
+        this.maxLocals = raw.getS2At(OFFSET_OF_MAX_LOCALS);
+        this.codeLength = raw.getS4At(OFFSET_OF_CODE_LENGTH);
 
         final long OFFSET_OF_EXCEPTION_TABLE_LENGTH = OFFSET_OF_CODE + codeLength;
         final long OFFSET_OF_EXCEPTION_TABLE = OFFSET_OF_EXCEPTION_TABLE_LENGTH + 2;
 
         ArrayList<ExceptionTableEntry> etis = new ArrayList<ExceptionTableEntry>();
-        final short numExceptions = raw.getU2At(OFFSET_OF_EXCEPTION_TABLE_LENGTH);
+        final short numExceptions = raw.getS2At(OFFSET_OF_EXCEPTION_TABLE_LENGTH);
         etis.ensureCapacity(numExceptions);
         final long numBytesExceptionInfo =
                 ContiguousEntityFactory.buildSized(raw.getOffsetData(OFFSET_OF_EXCEPTION_TABLE), numExceptions, 8, etis,
-                ExceptionTableEntry.getBuilder(cp));
+                        ExceptionTableEntry.getBuilder(cp));
         this.exceptionTableEntries = etis;
 
         final long OFFSET_OF_ATTRIBUTES_COUNT = OFFSET_OF_EXCEPTION_TABLE + numBytesExceptionInfo;
         final long OFFSET_OF_ATTRIBUTES = OFFSET_OF_ATTRIBUTES_COUNT + 2;
-        final short numAttributes = raw.getU2At(OFFSET_OF_ATTRIBUTES_COUNT);
+        final short numAttributes = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
         ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
@@ -75,7 +73,7 @@ public class AttributeCode extends Attribute {
 
     public AttributeLocalVariableTable getLocalVariableTable() {
         for (Attribute attribute : attributes) {
-            if (attribute instanceof AttributeLocalVariableTable) return (AttributeLocalVariableTable)attribute;
+            if (attribute instanceof AttributeLocalVariableTable) return (AttributeLocalVariableTable) attribute;
         }
         return null;
     }
@@ -101,12 +99,10 @@ public class AttributeCode extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp)
-    {
+    public void dump(Dumper d, ConstantPool cp) {
         d.newln().print("Code Attribute, length " + codeLength);
         d.newln().print("MaxStack " + maxStack + ", maxLocals " + maxLocals);
-        for (Attribute a : attributes)
-        {
+        for (Attribute a : attributes) {
             d.newln();
             a.dump(d, cp);
         }
@@ -114,14 +110,12 @@ public class AttributeCode extends Attribute {
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return OFFSET_OF_MAX_STACK + length;
     }
 
     @Override
-    public String getRawName()
-    {
+    public String getRawName() {
         return "Code";
     }
 

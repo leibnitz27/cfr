@@ -31,6 +31,8 @@ public enum CompOp {
 
     public static CompOp getOpFor(JVMInstr instr) {
         switch (instr) {
+            case IF_ICMPEQ:
+                return EQ;
             case IF_ICMPLT:
                 return LT;
             case IF_ICMPGE:
@@ -51,6 +53,8 @@ public enum CompOp {
                 return LT;
             case IFGE:
                 return GTE;
+            case IFGT:
+                return GT;
             default:
                 throw new ConfusedCFRException("Don't know comparison op for " + instr);
         }

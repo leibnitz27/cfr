@@ -37,10 +37,9 @@ public class Field implements KnowsRawSize {
     private final Set<AccessFlag> accessFlags;
     private final List<Attribute> attributes;
 
-    public Field(ByteData raw, final ConstantPool cp)
-    {
-        this.accessFlags = AccessFlag.build(raw.getU2At(OFFSET_OF_ACCESS_FLAGS));
-        short attributes_count = raw.getU2At(OFFSET_OF_ATTRIBUTES_COUNT);
+    public Field(ByteData raw, final ConstantPool cp) {
+        this.accessFlags = AccessFlag.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
+        short attributes_count = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(attributes_count);
         long attributesLength = ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), attributes_count, tmpAttributes,
@@ -51,19 +50,17 @@ public class Field implements KnowsRawSize {
                     }
                 });
         this.attributes = tmpAttributes;
-        this.descriptorIndex = raw.getU2At(OFFSET_OF_DESCRIPTOR_INDEX);
-        this.nameIndex = raw.getU2At(OFFSET_OF_NAME_INDEX);
+        this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
+        this.nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return length;
     }
 
-    public void dump(Dumper d, ConstantPool cp)
-    {
+    public void dump(Dumper d, ConstantPool cp) {
         cp.getEntry(nameIndex).dump(d, cp);
         cp.getEntry(descriptorIndex).dump(d, cp);
         d.print(accessFlags.toString());

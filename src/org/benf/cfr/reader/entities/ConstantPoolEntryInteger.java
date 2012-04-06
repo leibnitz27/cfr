@@ -15,20 +15,17 @@ public class ConstantPoolEntryInteger implements ConstantPoolEntry {
 
     private final long value;
 
-    public ConstantPoolEntryInteger(ByteData data)
-    {
-        this.value = data.getU4At(OFFSET_OF_BYTES);
+    public ConstantPoolEntryInteger(ByteData data) {
+        this.value = data.getS4At(OFFSET_OF_BYTES);
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return 5;
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp)
-    {
+    public void dump(Dumper d, ConstantPool cp) {
         d.print("CONSTANT_Integer value=" + value);
     }
 

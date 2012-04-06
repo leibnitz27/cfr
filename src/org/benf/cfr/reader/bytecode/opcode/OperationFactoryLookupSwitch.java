@@ -27,7 +27,7 @@ public class OperationFactoryLookupSwitch extends OperationFactoryDefault {
         int overflow = (curoffset % 4);
         overflow = overflow > 0 ? 4 - overflow : 0;
         int startdata = 1 + overflow;
-        int npairs = bd.getU4At(startdata + OFFSET_OF_NPAIRS);
+        int npairs = bd.getS4At(startdata + OFFSET_OF_NPAIRS);
         int size = overflow + OFFSET_OF_OFFSETS + 8 * npairs;
         byte[] rawData = bd.getBytesAt(size, 1);
 

@@ -1,7 +1,5 @@
 package org.benf.cfr.reader.bytecode.opcode;
 
-import com.sun.org.apache.bcel.internal.generic.RETURN;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -33,13 +31,13 @@ public class DecodedTableSwitch implements DecodedSwitch {
         int offset = overflow > 0 ? 4 - overflow : 0;
 
         ByteData bd = new BaseByteData(data);
-        int defaultvalue = bd.getU4At(offset + OFFSET_OF_DEFAULT);
-        int lowvalue = bd.getU4At(offset + OFFSET_OF_LOWBYTE);
-        int highvalue = bd.getU4At(offset + OFFSET_OF_HIGHBYTE);
+        int defaultvalue = bd.getS4At(offset + OFFSET_OF_DEFAULT);
+        int lowvalue = bd.getS4At(offset + OFFSET_OF_LOWBYTE);
+        int highvalue = bd.getS4At(offset + OFFSET_OF_HIGHBYTE);
         int numoffsets = highvalue - lowvalue + 1;
         int[] targets = new int[numoffsets];
         for (int x = 0; x < numoffsets; ++x) {
-            targets[x] = bd.getU4At(offset + OFFSET_OF_OFFSETS + (x * 4));
+            targets[x] = bd.getS4At(offset + OFFSET_OF_OFFSETS + (x * 4));
         }
         this.defaultTarget = defaultvalue;
         this.startValue = lowvalue;

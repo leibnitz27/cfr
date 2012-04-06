@@ -180,7 +180,7 @@ public enum JVMInstr {
     LCONST_0(0x9, 0, 0, 1),
     LCONST_1(0xa, 0, 0, 1),
     LDC(0x12, 1, 0, 1, new OperationFactoryCPEntry()),
-    LDC_W(0x13, 2, 0, 1),
+    LDC_W(0x13, 2, 0, 1, new OperationFactoryCPEntryW()),
     LDC2_W(0x14, 2, 0, 1, new OperationFactoryCPEntryW()),
     LDIV(0x6d, 0, 2, 1),
     LLOAD(0x16, 1, 0, 1),

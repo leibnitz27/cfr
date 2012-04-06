@@ -18,27 +18,24 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
     private final short classIndex;
     private final short nameAndTypeIndex;
 
-    public ConstantPoolEntryMethodRef(ByteData data, boolean interfaceMethod)
-    {
-        this.classIndex = data.getU2At(OFFSET_OF_CLASS_INDEX);
-        this.nameAndTypeIndex = data.getU2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
+    public ConstantPoolEntryMethodRef(ByteData data, boolean interfaceMethod) {
+        this.classIndex = data.getS2At(OFFSET_OF_CLASS_INDEX);
+        this.nameAndTypeIndex = data.getS2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
         this.interfaceMethod = interfaceMethod;
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return 5;
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp)
-    {
+    public void dump(Dumper d, ConstantPool cp) {
         d.print("Method " +
                 cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue() + ":" +
                 cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue());
     }
-    
+
     @Override
     public String toString() {
         return "Method classIndex " + classIndex + " nameAndTypeIndex " + nameAndTypeIndex;
@@ -51,7 +48,7 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
     public short getNameAndTypeIndex() {
         return nameAndTypeIndex;
     }
-    
+
     public boolean isInitMethod(ConstantPool cp) {
         String name = cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue();
         return "<init>".equals(name);

@@ -21,33 +21,28 @@ public class ConstantPoolEntryUTF8 implements ConstantPoolEntry {
     private final short length;
     private final String value;
 
-    public ConstantPoolEntryUTF8(ByteData data)
-    {
-        this.length = data.getU2At(OFFSET_OF_LENGTH);
-        byte [] bytes = data.getBytesAt(length, OFFSET_OF_DATA);
+    public ConstantPoolEntryUTF8(ByteData data) {
+        this.length = data.getS2At(OFFSET_OF_LENGTH);
+        byte[] bytes = data.getBytesAt(length, OFFSET_OF_DATA);
         this.value = new String(bytes, UTF8_CHARSET);
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return 3 + length;
     }
 
-    public String getValue()
-    {
+    public String getValue() {
         return value;
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp)
-    {
+    public void dump(Dumper d, ConstantPool cp) {
         d.print("CONSTANT_UTF8 value=" + value);
     }
 
     @Override
-    public String toString()
-    {
-        return "ConstantUTF8["+value+"]";
+    public String toString() {
+        return "ConstantUTF8[" + value + "]";
     }
 }

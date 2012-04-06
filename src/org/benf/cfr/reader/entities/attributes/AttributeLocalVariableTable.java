@@ -23,31 +23,28 @@ public class AttributeLocalVariableTable extends Attribute {
 
     private final int length;
 
-    public AttributeLocalVariableTable(ByteData raw, ConstantPool cp)
-    {
-        this.length = raw.getU4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        short numLocalVariables = raw.getU2At(OFFSET_OF_ENTRY_COUNT);
+    public AttributeLocalVariableTable(ByteData raw, ConstantPool cp) {
+        this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
+        short numLocalVariables = raw.getS2At(OFFSET_OF_ENTRY_COUNT);
         long offset = OFFSET_OF_ENTRIES;
-        for (int x=0;x<numLocalVariables;++x) {
-            short startPc           = raw.getU2At(offset + 0);
-            short length            = raw.getU2At(offset + 2);
-            short nameIndex         = raw.getU2At(offset + 4);
-            short descriptorIndex   = raw.getU2At(offset + 6);
-            short index             = raw.getU2At(offset + 8);
+        for (int x = 0; x < numLocalVariables; ++x) {
+            short startPc = raw.getS2At(offset + 0);
+            short length = raw.getS2At(offset + 2);
+            short nameIndex = raw.getS2At(offset + 4);
+            short descriptorIndex = raw.getS2At(offset + 6);
+            short index = raw.getS2At(offset + 8);
             localVariableEntryList.add(new LocalVariableEntry(startPc, length, nameIndex, descriptorIndex, index));
             offset += 10;
         }
     }
 
     @Override
-    public String getRawName()
-    {
+    public String getRawName() {
         return "LocalVariableTable";
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp)
-    {
+    public void dump(Dumper d, ConstantPool cp) {
 /*        d.print("Local Variable table\n");
         for (LocalVariableEntry entry : localVariableEntryList) {
             entry.dump(d,cp);
@@ -60,8 +57,7 @@ public class AttributeLocalVariableTable extends Attribute {
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return OFFSET_OF_REMAINDER + length;
     }
 }

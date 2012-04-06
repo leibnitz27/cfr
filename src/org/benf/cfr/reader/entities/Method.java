@@ -35,11 +35,10 @@ public class Method implements KnowsRawSize {
     private final short nameIndex;
     private final short descriptorIndex;
 
-    public Method(ByteData raw, final ConstantPool cp)
-    {
-        this.nameIndex = raw.getU2At(OFFSET_OF_NAME_INDEX);
-        this.accessFlags = AccessFlagMethod.build(raw.getU2At(OFFSET_OF_ACCESS_FLAGS));
-        short numAttributes = raw.getU2At(OFFSET_OF_ATTRIBUTES_COUNT);
+    public Method(ByteData raw, final ConstantPool cp) {
+        this.nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
+        this.accessFlags = AccessFlagMethod.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
+        short numAttributes = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
         long attributesLength = ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
@@ -50,26 +49,23 @@ public class Method implements KnowsRawSize {
                     }
                 });
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
-        this.descriptorIndex = raw.getU2At(OFFSET_OF_DESCRIPTOR_INDEX);
+        this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return length;
     }
 
-    public void dump(Dumper d, ConstantPool cp)
-    {
+    public void dump(Dumper d, ConstantPool cp) {
         d.newln();
         cp.getEntry(nameIndex).dump(d, cp);
         d.newln();
         cp.getEntry(descriptorIndex).dump(d, cp);
         d.newln().print(accessFlags.toString());
         d.newln().print(attributes.size() + " attributes.");
-        for (Attribute attr : attributes.values())
-        {
+        for (Attribute attr : attributes.values()) {
             d.newln();
             attr.dump(d, cp);
         }

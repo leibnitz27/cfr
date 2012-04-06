@@ -20,7 +20,7 @@ public class OperationFactoryGoto extends OperationFactoryDefault {
     public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
         byte[] args = bd.getBytesAt(instr.getRawLength(), 1);
 
-        short targetOffset = bd.getU2At(OFFSET_OF_TARGET);
+        short targetOffset = bd.getS2At(OFFSET_OF_TARGET);
 
         int[] targetOffsets = new int[1];
         targetOffsets[0] = targetOffset;

@@ -40,14 +40,13 @@ public class ClassFile {
     private final ConstantPoolEntryClass superClass;
     private final List<ConstantPoolEntryClass> interfaces;
 
-    public ClassFile(final ByteData data)
-    {
-        int magic = data.getU4At(OFFSET_OF_MAGIC);
+    public ClassFile(final ByteData data) {
+        int magic = data.getS4At(OFFSET_OF_MAGIC);
         if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe");
 
-        minorVer = data.getU2At(OFFSET_OF_MINOR);
-        majorVer = data.getU2At(OFFSET_OF_MAJOR);
-        short constantPoolCount = data.getU2At(OFFSET_OF_CONSTANT_POOL_COUNT);
+        minorVer = data.getS2At(OFFSET_OF_MINOR);
+        majorVer = data.getS2At(OFFSET_OF_MAJOR);
+        short constantPoolCount = data.getS2At(OFFSET_OF_CONSTANT_POOL_COUNT);
         this.constantPool = new ConstantPool(data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
         final long OFFSET_OF_ACCESS_FLAGS = OFFSET_OF_CONSTANT_POOL + constantPool.getRawByteLength();
         final long OFFSET_OF_THIS_CLASS = OFFSET_OF_ACCESS_FLAGS + 2;
@@ -55,13 +54,13 @@ public class ClassFile {
         final long OFFSET_OF_INTERFACES_COUNT = OFFSET_OF_SUPER_CLASS + 2;
         final long OFFSET_OF_INTERFACES = OFFSET_OF_INTERFACES_COUNT + 2;
 
-        short numInterfaces = data.getU2At(OFFSET_OF_INTERFACES_COUNT);
+        short numInterfaces = data.getS2At(OFFSET_OF_INTERFACES_COUNT);
         ArrayList<ConstantPoolEntryClass> tmpInterfaces = new ArrayList<ConstantPoolEntryClass>();
         final long interfacesLength = ContiguousEntityFactory.buildSized(data.getOffsetData(OFFSET_OF_INTERFACES), numInterfaces, 2, tmpInterfaces,
                 new UnaryFunction<ByteData, ConstantPoolEntryClass>() {
                     @Override
                     public ConstantPoolEntryClass invoke(ByteData arg) {
-                        return (ConstantPoolEntryClass) constantPool.getEntry(arg.getU2At(0));
+                        return (ConstantPoolEntryClass) constantPool.getEntry(arg.getS2At(0));
                     }
                 }
         );
@@ -69,11 +68,11 @@ public class ClassFile {
         this.interfaces = tmpInterfaces;
 
 
-        accessFlags = AccessFlag.build(data.getU2At(OFFSET_OF_ACCESS_FLAGS));
+        accessFlags = AccessFlag.build(data.getS2At(OFFSET_OF_ACCESS_FLAGS));
 
-        final long OFFSET_OF_FIELDS_COUNT = OFFSET_OF_INTERFACES + 2*numInterfaces;
+        final long OFFSET_OF_FIELDS_COUNT = OFFSET_OF_INTERFACES + 2 * numInterfaces;
         final long OFFSET_OF_FIELDS = OFFSET_OF_FIELDS_COUNT + 2;
-        final short numFields = data.getU2At(OFFSET_OF_FIELDS_COUNT);
+        final short numFields = data.getS2At(OFFSET_OF_FIELDS_COUNT);
         ArrayList<Field> tmpFields = new ArrayList<Field>();
         tmpFields.ensureCapacity(numFields);
         final long fieldsLength = ContiguousEntityFactory.build(data.getOffsetData(OFFSET_OF_FIELDS), numFields, tmpFields,
@@ -87,7 +86,7 @@ public class ClassFile {
 
         final long OFFSET_OF_METHODS_COUNT = OFFSET_OF_FIELDS + fieldsLength;
         final long OFFSET_OF_METHODS = OFFSET_OF_METHODS_COUNT + 2;
-        final short numMethods = data.getU2At(OFFSET_OF_METHODS_COUNT);
+        final short numMethods = data.getS2At(OFFSET_OF_METHODS_COUNT);
         ArrayList<Method> tmpMethods = new ArrayList<Method>();
         tmpMethods.ensureCapacity(numMethods);
         System.out.println("" + numMethods + " methods.");
@@ -102,7 +101,7 @@ public class ClassFile {
 
         final long OFFSET_OF_ATTRIBUTES_COUNT = OFFSET_OF_METHODS + methodsLength;
         final long OFFSET_OF_ATTRIBUTES = OFFSET_OF_ATTRIBUTES_COUNT + 2;
-        final short numAttributes = data.getU2At(OFFSET_OF_ATTRIBUTES_COUNT);
+        final short numAttributes = data.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
         ContiguousEntityFactory.build(data.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
@@ -114,16 +113,13 @@ public class ClassFile {
                 });
         this.attributes = tmpAttributes;
 
-        thisClass = (ConstantPoolEntryClass)constantPool.getEntry(data.getU2At(OFFSET_OF_THIS_CLASS));
-        superClass = (ConstantPoolEntryClass)constantPool.getEntry(data.getU2At(OFFSET_OF_SUPER_CLASS));
-
-
+        thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_THIS_CLASS));
+        superClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_SUPER_CLASS));
 
 
     }
 
-    public void Dump(Dumper d)
-    {
+    public void Dump(Dumper d) {
         d.line();
         d.newln().print("Class ");
         thisClass.dump(d, constantPool);
@@ -131,28 +127,24 @@ public class ClassFile {
         superClass.dump(d, constantPool);
         d.line();
         d.newln().print("Interfaces");
-        for (ConstantPoolEntryClass iface : interfaces)
-        {
+        for (ConstantPoolEntryClass iface : interfaces) {
             d.newln();
             iface.dump(d, constantPool);
         }
         d.line();
         d.newln().print("Fields");
-        for (Field field : fields)
-        {
+        for (Field field : fields) {
             field.dump(d, constantPool);
         }
         d.line();
         d.newln().print("Attributes");
-        for (Attribute attr : attributes)
-        {
+        for (Attribute attr : attributes) {
             d.newln();
             attr.dump(d, constantPool);
         }
         d.line();
         d.newln().print("Methods");
-        for (Method meth : methods)
-        {
+        for (Method meth : methods) {
             d.newln();
             meth.dump(d, constantPool);
         }

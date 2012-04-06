@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode.opcode;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.bytestream.ByteData;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
 
@@ -29,8 +28,8 @@ public class OperationFactoryTableSwitch extends OperationFactoryDefault {
         int overflow = (curoffset % 4);
         overflow = overflow > 0 ? 4 - overflow : 0;
         int startdata = 1 + overflow;
-        int lowvalue = bd.getU4At(startdata + OFFSET_OF_LOWBYTE);
-        int highvalue = bd.getU4At(startdata + OFFSET_OF_HIGHBYTE);
+        int lowvalue = bd.getS4At(startdata + OFFSET_OF_LOWBYTE);
+        int highvalue = bd.getS4At(startdata + OFFSET_OF_HIGHBYTE);
         int numoffsets = highvalue - lowvalue + 1;
         int size = overflow + OFFSET_OF_OFFSETS + 4 * numoffsets;
         byte[] rawData = bd.getBytesAt(size, 1);

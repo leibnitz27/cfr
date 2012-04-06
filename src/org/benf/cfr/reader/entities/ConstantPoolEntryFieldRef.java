@@ -18,8 +18,8 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
     final short nameAndTypeIndex;
 
     public ConstantPoolEntryFieldRef(ByteData data) {
-        this.classIndex = data.getU2At(OFFSET_OF_CLASS_INDEX);
-        this.nameAndTypeIndex = data.getU2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
+        this.classIndex = data.getS2At(OFFSET_OF_CLASS_INDEX);
+        this.nameAndTypeIndex = data.getS2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
     }
 
     @Override

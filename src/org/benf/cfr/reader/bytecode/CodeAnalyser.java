@@ -56,7 +56,7 @@ public class CodeAnalyser {
         int offset = 0;
 
         do {
-            JVMInstr instr = JVMInstr.find(bdCode.getU1At(0));
+            JVMInstr instr = JVMInstr.find(bdCode.getS1At(0));
             Op01WithProcessedDataAndByteJumps oc = instr.createOperation(bdCode, cp, offset);
             System.out.println(oc);
             int length = oc.getInstructionLength();

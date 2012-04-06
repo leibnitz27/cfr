@@ -20,8 +20,8 @@ public class ConstantPoolEntryNameAndType implements ConstantPoolEntry {
     private StackDelta stackDelta = null; // populated on demand.
 
     public ConstantPoolEntryNameAndType(ByteData data) {
-        this.nameIndex = data.getU2At(OFFSET_OF_NAME_INDEX);
-        this.descriptorIndex = data.getU2At(OFFSET_OF_DESCRIPTOR_INDEX);
+        this.nameIndex = data.getS2At(OFFSET_OF_NAME_INDEX);
+        this.descriptorIndex = data.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
     }
 
     @Override
@@ -33,7 +33,7 @@ public class ConstantPoolEntryNameAndType implements ConstantPoolEntry {
     public void dump(Dumper d, ConstantPool cp) {
         d.print("CONSTANT_NameAndType nameIndex=" + nameIndex + ", descriptorIndex=" + descriptorIndex);
     }
-    
+
     @Override
     public String toString() {
         return "CONSTANT_NameAndType nameIndex=" + nameIndex + ", descriptorIndex=" + descriptorIndex;
@@ -48,7 +48,8 @@ public class ConstantPoolEntryNameAndType implements ConstantPoolEntry {
     }
 
     public StackDelta getStackDelta(boolean member, ConstantPool cp) {
-        if (stackDelta == null) stackDelta = ConstantPoolUtils.parseMethodPrototype(member, cp.getUTF8Entry(descriptorIndex));
+        if (stackDelta == null)
+            stackDelta = ConstantPoolUtils.parseMethodPrototype(member, cp.getUTF8Entry(descriptorIndex));
         return stackDelta;
     }
 }

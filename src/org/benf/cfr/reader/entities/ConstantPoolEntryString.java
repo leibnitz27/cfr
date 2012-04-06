@@ -15,24 +15,21 @@ public class ConstantPoolEntryString implements ConstantPoolEntry {
 
     private final long stringIndex;
 
-    public ConstantPoolEntryString(ByteData data)
-    {
-        this.stringIndex = data.getU2At(OFFSET_OF_STRING_INDEX);
+    public ConstantPoolEntryString(ByteData data) {
+        this.stringIndex = data.getS2At(OFFSET_OF_STRING_INDEX);
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return 3;
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp)
-    {
-        d.print("String " + cp.getUTF8Entry((int)stringIndex).getValue());
+    public void dump(Dumper d, ConstantPool cp) {
+        d.print("String " + cp.getUTF8Entry((int) stringIndex).getValue());
     }
-    
+
     public String getValue(ConstantPool cp) {
-        return cp.getUTF8Entry((int)stringIndex).getValue();
+        return cp.getUTF8Entry((int) stringIndex).getValue();
     }
 }

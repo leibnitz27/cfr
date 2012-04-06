@@ -28,14 +28,14 @@ public class DecodedLookupSwitch implements DecodedSwitch {
         int offset = overflow > 0 ? 4 - overflow : 0;
 
         ByteData bd = new BaseByteData(data);
-        int defaultvalue = bd.getU4At(offset + OFFSET_OF_DEFAULT);
-        int numpairs = bd.getU4At(offset + OFFSET_OF_NUMPAIRS);
+        int defaultvalue = bd.getS4At(offset + OFFSET_OF_DEFAULT);
+        int numpairs = bd.getS4At(offset + OFFSET_OF_NUMPAIRS);
         int[] targets = new int[numpairs];
         this.defaultTarget = defaultvalue;
         jumpTargets = ListFactory.newList();
         for (int x = 0; x < numpairs; ++x) {
-            int value = bd.getU4At(offset + OFFSET_OF_PAIRS + (x * 8));
-            int target = bd.getU4At(offset + OFFSET_OF_PAIRS + (x * 8) + 4);
+            int value = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8));
+            int target = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8) + 4);
             if (target != defaultTarget) {
                 jumpTargets.add(new DecodedSwitchEntry(value, target));
             }

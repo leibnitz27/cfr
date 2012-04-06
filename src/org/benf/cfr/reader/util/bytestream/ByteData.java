@@ -10,14 +10,21 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * To change this template use File | Settings | File Templates.
  */
 public interface ByteData {
-    byte getU1At(long offset);
-    short getU2At(long offset);
-    int getU4At(long offset);
+    byte getS1At(long offset);
+
+    short getU1At(long offset);
+
+    short getS2At(long offset);
+
+    int getS4At(long offset);
+
     double getDoubleAt(long o);
+
     long getLongAt(long o);
 
-    byte [] getBytesAt(int count, long offset);
+    byte[] getBytesAt(int count, long offset);
 
     ByteData getOffsetData(long offset);
+
     OffsettingByteData getOffsettingOffsetData(long offset);
 }

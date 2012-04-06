@@ -307,6 +307,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case IF_ICMPGE:
             case IF_ICMPGT:
             case IF_ICMPNE:
+            case IF_ICMPEQ:
             case IF_ICMPLE: {
                 ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(1), getStackRValue(0), CompOp.getOpFor(instr));
                 return new IfStatement(conditionalExpression);
@@ -315,10 +316,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(0), new Literal(TypedLiteral.getNull()), CompOp.NE);
                 return new IfStatement(conditionalExpression);
             }
+            case IFNULL: {
+                ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(0), new Literal(TypedLiteral.getNull()), CompOp.EQ);
+                return new IfStatement(conditionalExpression);
+            }
             case IFEQ:
             case IFNE:
             case IFLE:
             case IFLT:
+            case IFGT:
             case IFGE: {
                 ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(0), new Literal(TypedLiteral.getInt(0)), CompOp.getOpFor(instr));
                 return new IfStatement(conditionalExpression);
@@ -351,6 +357,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new CompoundStatement(s1, s2, s3);
             }
             case LDC:
+            case LDC_W:
             case LDC2_W:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getConstantPoolEntry(cp, cpEntries[0])));
             case FAKE_TRY:

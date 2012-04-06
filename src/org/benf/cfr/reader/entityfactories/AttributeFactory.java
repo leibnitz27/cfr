@@ -18,10 +18,9 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 public class AttributeFactory {
     private static final long OFFSET_OF_ATTRIBUTE_NAME_INDEX = 0;
 
-    public static Attribute build(ByteData raw, ConstantPool cp)
-    {
-        final short nameIndex = raw.getU2At(OFFSET_OF_ATTRIBUTE_NAME_INDEX);
-        ConstantPoolEntryUTF8 name = (ConstantPoolEntryUTF8)cp.getEntry(nameIndex);
+    public static Attribute build(ByteData raw, ConstantPool cp) {
+        final short nameIndex = raw.getS2At(OFFSET_OF_ATTRIBUTE_NAME_INDEX);
+        ConstantPoolEntryUTF8 name = (ConstantPoolEntryUTF8) cp.getEntry(nameIndex);
         String attributeName = name.getValue();
 
         if ("Code".equals(attributeName)) {
