@@ -189,18 +189,22 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ALOAD_0:
             case ILOAD_0:
             case LLOAD_0:
+            case DLOAD_0:
                 return new Assignment(getStackLValue(0), new LocalValueConstant(0, variableNamer, originalRawOffset));
             case ALOAD_1:
             case ILOAD_1:
             case LLOAD_1:
+            case DLOAD_1:
                 return new Assignment(getStackLValue(0), new LocalValueConstant(1, variableNamer, originalRawOffset));
             case ALOAD_2:
             case ILOAD_2:
             case LLOAD_2:
+            case DLOAD_2:
                 return new Assignment(getStackLValue(0), new LocalValueConstant(2, variableNamer, originalRawOffset));
             case ALOAD_3:
             case ILOAD_3:
             case LLOAD_3:
+            case DLOAD_3:
                 return new Assignment(getStackLValue(0), new LocalValueConstant(3, variableNamer, originalRawOffset));
             case ACONST_NULL:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getNull()));
@@ -274,6 +278,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case I2L:
             case I2S:
                 return new Assignment(getStackLValue(0), getStackRValue(0));
+            case INSTANCEOF:
+                return new Assignment(getStackLValue(0), new InstanceOfExpression(getStackRValue(0), cp, cpEntries[0]));
             case CHECKCAST:
                 // Not strictly true, but matches our intermediate form.
                 return new Assignment(getStackLValue(0), getStackRValue(0));
@@ -303,6 +309,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
             case RETURN:
                 return new ReturnNothingStatement();
+            case IF_ACMPEQ:
+            case IF_ACMPNE:
             case IF_ICMPLT:
             case IF_ICMPGE:
             case IF_ICMPGT:
@@ -343,6 +351,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
             case GETSTATIC:
                 return new Assignment(getStackLValue(0), new FieldExpression(new StaticVariable(cp, cpEntries[0])));
+            case PUTSTATIC:
+                return new Assignment(new StaticVariable(cp, cpEntries[0]), getStackRValue(0));
             case PUTFIELD:
                 return new Assignment(new FieldVariable(getStackRValue(1), cp, cpEntries[0]), getStackRValue(0));
             case DUP: {

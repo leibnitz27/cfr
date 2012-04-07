@@ -36,7 +36,9 @@ public class ConstantPoolUtils {
                 case 'B':
                 case 'J':
                 case 'S':
-                    numArgs++; curridx++;
+                case 'D':
+                    numArgs++;
+                    curridx++;
                     break;
                 case ')':
                     curridx++;
@@ -44,7 +46,7 @@ public class ConstantPoolUtils {
                     break;
                 default:
                     throw new ConfusedCFRException("Can't parse proto : " + proto);
-                    
+
             }
         } while (!finished);
         switch (proto.charAt(curridx)) {

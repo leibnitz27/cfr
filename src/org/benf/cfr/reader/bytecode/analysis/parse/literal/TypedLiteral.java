@@ -17,17 +17,18 @@ public class TypedLiteral {
         Long,
         Double,
         String,
-        NullObject
+        NullObject,
+        Class
     }
-    
+
     private final LiteralType type;
     private final Object value;
-    
+
     protected TypedLiteral(LiteralType type, Object value) {
         this.type = type;
         this.value = value;
     }
-    
+
     @Override
     public String toString() {
         switch (type) {
@@ -39,15 +40,15 @@ public class TypedLiteral {
                 return value.toString();
         }
     }
-    
+
     public static TypedLiteral getLong(long v) {
         return new TypedLiteral(LiteralType.Long, v);
     }
-    
+
     public static TypedLiteral getInt(int v) {
         return new TypedLiteral(LiteralType.Integer, v);
     }
-    
+
     public static TypedLiteral getDouble(double v) {
         return new TypedLiteral(LiteralType.Double, v);
     }
@@ -55,7 +56,7 @@ public class TypedLiteral {
     public static TypedLiteral getNull() {
         return new TypedLiteral(LiteralType.NullObject, null);
     }
-    
+
     public static TypedLiteral getConstantPoolEntry(ConstantPool cp, ConstantPoolEntry cpe) {
         if (cpe instanceof ConstantPoolEntryDouble) {
             return new TypedLiteral(LiteralType.Double, ((ConstantPoolEntryDouble) cpe).getValue());
@@ -65,7 +66,9 @@ public class TypedLiteral {
             return new TypedLiteral(LiteralType.Integer, ((ConstantPoolEntryInteger) cpe).getValue());
         } else if (cpe instanceof ConstantPoolEntryString) {
             return new TypedLiteral(LiteralType.String, ((ConstantPoolEntryString) cpe).getValue(cp));
+        } else if (cpe instanceof ConstantPoolEntryClass) {
+            return new TypedLiteral(LiteralType.Class, cp.getUTF8Entry(((ConstantPoolEntryClass) cpe).getNameIndex()).getValue());
         }
-        throw new ConfusedCFRException("Can't tune ConstantPoolEntry into Literal - got " + cpe);
+        throw new ConfusedCFRException("Can't turn ConstantPoolEntry into Literal - got " + cpe);
     }
 }

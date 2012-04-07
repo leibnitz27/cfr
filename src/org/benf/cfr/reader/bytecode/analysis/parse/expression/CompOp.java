@@ -32,6 +32,7 @@ public enum CompOp {
     public static CompOp getOpFor(JVMInstr instr) {
         switch (instr) {
             case IF_ICMPEQ:
+            case IF_ACMPEQ:
                 return EQ;
             case IF_ICMPLT:
                 return LT;
@@ -40,6 +41,7 @@ public enum CompOp {
             case IF_ICMPGT:
                 return GT;
             case IF_ICMPNE:
+            case IF_ACMPNE:
                 return NE;
             case IF_ICMPLE:
                 return LTE;
