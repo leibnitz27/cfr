@@ -6,11 +6,8 @@ import org.benf.cfr.reader.util.SetFactory;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
  * User: lee
  * Date: 05/05/2011
- * Time: 06:28
- * To change this template use File | Settings | File Templates.
  */
 public class AssignTest2 {
     private static long sid = 0;
