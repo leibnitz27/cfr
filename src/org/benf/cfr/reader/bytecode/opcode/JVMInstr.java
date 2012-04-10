@@ -72,7 +72,7 @@ public enum JVMInstr {
     DUP(0x59, 0, 1, 2),
     DUP_X1(0x5a, 0, 2, 3),
     DUP_X2(0x5b, 0, 3, 4),
-    DUP2(0x5c, 0, 2, 4),
+    DUP2(0x5c, 0, 1, 2),      // Todo : Need to determine action based on type (1,2) or (2,4)
     DUP2_X1(0x5d, 0, 3, 5),
     DUP2_X2(0x5e, 0, 4, 6),
     F2D(0x8d, 0, 1, 1),

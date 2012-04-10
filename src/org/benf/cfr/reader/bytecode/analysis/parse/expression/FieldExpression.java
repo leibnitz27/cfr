@@ -14,13 +14,14 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 public class FieldExpression implements Expression {
     private LValue fieldVariable;
 
-    public FieldExpression(LValue fieldVariable){
+    public FieldExpression(LValue fieldVariable) {
         this.fieldVariable = fieldVariable;
     }
 
     @Override
     public boolean isSimple() {
-        return true;
+        // A field expression is 'simple' only if it's final.
+        return false;
     }
 
     @Override
@@ -33,5 +34,5 @@ public class FieldExpression implements Expression {
     public String toString() {
         return fieldVariable.toString();
     }
-    
+
 }

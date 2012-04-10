@@ -366,6 +366,20 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
                 return new CompoundStatement(s1, s2, s3);
             }
+            case DUP2: {
+                // TODO : We need to know the correct data type in order to know if we're cloning 1 or 2!
+                if (true) {
+                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(0));
+                    return new CompoundStatement(s1, s2);
+                } else {
+                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
+                    Statement s4 = new Assignment(getStackLValue(3), getStackRValue(1));
+                    return new CompoundStatement(s1, s2, s3, s4);
+                }
+            }
             case LDC:
             case LDC_W:
             case LDC2_W:

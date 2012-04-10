@@ -180,6 +180,7 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes2);
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
+
         // Condense pointless assignments
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes2);
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
