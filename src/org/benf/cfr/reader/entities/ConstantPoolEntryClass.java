@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.stack.StackType;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -10,7 +11,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 20:38
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantPoolEntryClass implements ConstantPoolEntry {
+public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEntryLiteral {
     private final long OFFSET_OF_NAME_INDEX = 1;
 
     final short nameIndex;
@@ -36,5 +37,10 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry {
 
     public short getNameIndex() {
         return nameIndex;
+    }
+
+    @Override
+    public StackType getStackType() {
+        return StackType.REF;
     }
 }

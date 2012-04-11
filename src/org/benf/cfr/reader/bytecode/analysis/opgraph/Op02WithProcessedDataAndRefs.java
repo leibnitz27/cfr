@@ -109,7 +109,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     public void populateStackInfo(StackSim stackSim) {
-        StackDelta stackDelta = instr.getStackDelta(rawData, cp, cpEntries);
+        StackDelta stackDelta = instr.getStackDelta(rawData, cp, cpEntries, stackSim);
         if (stackDepthBeforeExecution != -1) {
             if (stackSim.getDepth() != stackDepthBeforeExecution) {
                 throw new ConfusedCFRException("Invalid stack depths @ " + this + " : expected " + stackSim.getDepth() + " got " + stackDepthBeforeExecution);
@@ -122,6 +122,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             List<StackEntryHolder> alsoConsumed = ListFactory.newList();
             List<StackEntryHolder> alsoProduced = ListFactory.newList();
             StackSim unusedStack = stackSim.getChange(stackDelta, alsoConsumed, alsoProduced);
+            if (alsoConsumed.size() != stackConsumed.size()) {
+                throw new ConfusedCFRException("Unexpected stack sizes on merge");
+            }
             for (int i = 0; i < stackConsumed.size(); ++i) {
                 stackConsumed.get(i).mergeWith(alsoConsumed.get(i));
             }
@@ -138,22 +141,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
-    //    public class GraphVisitorCallee implements BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>> {
-//        private final Dumper dumper;
-//
-//        public GraphVisitorCallee(Dumper dumper) {
-//            this.dumper = dumper;
-//        }
-//
-//        @Override
-//        public void call(Op02WithProcessedDataAndRefs node, GraphVisitor<Op02WithProcessedDataAndRefs> graphVisitor) {
-//            node.dumpInner(dumper);
-//            for (Op02WithProcessedDataAndRefs target : node.targets) {
-//                graphVisitor.enqueue(target);
-//            }
-//        }
-//    }
-//
     @Override
     public void dump(Dumper d) {
         d.print("" + index + "." + subindex + " : " + instr + "\t Stack:" + stackDepthBeforeExecution + "\t");
@@ -172,13 +159,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         d.print("\n");
     }
 
-//
-//    @Override
-//    public void dump(Dumper dumper) {
-//        GraphVisitorCallee graphVisitorCallee = new GraphVisitorCallee(dumper);
-//        GraphVisitor<Op02WithProcessedDataAndRefs> visitor = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(this, graphVisitorCallee);
-//        visitor.process();
-//    }
 
     public Statement createStatement(VariableNamer variableNamer) {
         switch (instr) {

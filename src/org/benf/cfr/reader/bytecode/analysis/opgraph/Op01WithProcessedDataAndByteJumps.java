@@ -40,10 +40,6 @@ public class Op01WithProcessedDataAndByteJumps {
         this.constantPoolEntries = constantPoolEntries;
     }
 
-    public StackDelta getStackDelta(ConstantPool cp) {
-        return instruction.getStackDelta(data, cp, constantPoolEntries);
-    }
-
     public JVMInstr getJVMInstr() {
         return instruction;
     }

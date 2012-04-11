@@ -1,0 +1,43 @@
+package org.benf.cfr.reader.bytecode.opcode;
+
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackType;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackTypes;
+import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.ConstantPoolEntry;
+import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.bytestream.ByteData;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: lee
+ * Date: 21/04/2011
+ * Time: 08:10
+ * To change this template use File | Settings | File Templates.
+ */
+public class OperationFactoryDupX1 extends OperationFactoryDefault {
+
+    @Override
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
+        StackType typeValue1 = stackSim.getEntry(0).getType();
+        StackType typeValue2 = stackSim.getEntry(1).getType();
+        if (typeValue1.getComputationCategory() != 1 ||
+                typeValue2.getComputationCategory() != 1) {
+            throw new ConfusedCFRException("Dup_x1 can only be used on computational category 1");
+        }
+
+        StackTypes popped = new StackTypes(typeValue1, typeValue2);
+        StackTypes pushed = new StackTypes(typeValue1, typeValue2, typeValue1);
+
+        return new StackDelta(popped, pushed);
+    }
+
+    @Override
+    public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
+        byte[] args = null;
+        int[] targetOffsets = null; // we know the nextr instr, it's our successor.
+        return new Op01WithProcessedDataAndByteJumps(instr, args, targetOffsets, offset);
+    }
+}

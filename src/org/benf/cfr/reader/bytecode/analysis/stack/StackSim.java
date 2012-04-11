@@ -13,44 +13,52 @@ import java.util.*;
  */
 public class StackSim {
     private final StackSim parent;
-    private final StackEntryHolder stackEntryHolder; 
+    private final StackEntryHolder stackEntryHolder;
     private final long depth;
-    
+
     public StackSim() {
         this.depth = 0;
         this.parent = null;
         this.stackEntryHolder = null;
     }
-    
-    private StackSim(StackSim parent) {
+
+    private StackSim(StackSim parent, StackType stackType) {
         this.parent = parent;
-        this.depth = parent.depth+1;
-        this.stackEntryHolder = new StackEntryHolder();
+        this.depth = parent.depth + 1;
+        this.stackEntryHolder = new StackEntryHolder(stackType);
     }
-    
-    
+
+    public StackEntry getEntry(int depth) {
+        StackSim thisSim = this;
+        while (depth > 0) {
+            thisSim = thisSim.getParent();
+            depth--;
+        }
+        return thisSim.stackEntryHolder.getStackEntry();
+    }
+
     public long getDepth() {
         return depth;
     }
-    
+
     public StackSim getChange(StackDelta delta, List<StackEntryHolder> consumed, List<StackEntryHolder> produced) {
         if (delta.isNoOp()) {
             return this;
         }
         StackSim thisSim = this;
-        long change = delta.getConsumed();
-        for (long i=0;i<change;++i) {
+        StackTypes consumedStack = delta.getConsumed();
+        for (StackType stackType : consumedStack) {
             consumed.add(thisSim.stackEntryHolder);
             thisSim = thisSim.getParent();
         }
-        change = delta.getProduced();
-        for (long i=0;i<change;++i) {
-            thisSim = new StackSim(thisSim);
+        StackTypes producedStack = delta.getProduced();
+        for (StackType stackType : producedStack) {
+            thisSim = new StackSim(thisSim, stackType);
             produced.add(thisSim.stackEntryHolder);
         }
         return thisSim;
-    }   
-    
+    }
+
     private StackSim getParent() {
         if (parent == null) {
             throw new ConfusedCFRException("Stack underflow");

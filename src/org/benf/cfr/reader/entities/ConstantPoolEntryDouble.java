@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.stack.StackType;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -10,7 +11,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 20:38
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantPoolEntryDouble implements ConstantPoolEntry {
+public class ConstantPoolEntryDouble implements ConstantPoolEntry, ConstantPoolEntryLiteral {
     private final double value;
 
     public ConstantPoolEntryDouble(ByteData data) {
@@ -18,18 +19,21 @@ public class ConstantPoolEntryDouble implements ConstantPoolEntry {
     }
 
     @Override
-    public long getRawByteLength()
-    {
+    public long getRawByteLength() {
         return 9;
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp)
-    {
+    public void dump(Dumper d, ConstantPool cp) {
         d.print("CONSTANT_Double " + value);
     }
 
     public double getValue() {
         return value;
+    }
+
+    @Override
+    public StackType getStackType() {
+        return StackType.DOUBLE;
     }
 }

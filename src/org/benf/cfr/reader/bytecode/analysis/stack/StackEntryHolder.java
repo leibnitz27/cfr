@@ -13,17 +13,18 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class StackEntryHolder {
-    private StackEntry stackEntry = new StackEntry();
+    private StackEntry stackEntry;
 
-    public StackEntryHolder() {
+    public StackEntryHolder(StackType stackType) {
+        stackEntry = new StackEntry(stackType);
     }
-    
+
     public void mergeWith(StackEntryHolder other) {
         stackEntry.mergeWith(other.stackEntry);
         other.stackEntry = stackEntry;
     }
-    
-    @Override 
+
+    @Override
     public String toString() {
         return stackEntry.toString();
     }

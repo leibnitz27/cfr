@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.stack.StackType;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -16,6 +17,7 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
 
     final short classIndex;
     final short nameAndTypeIndex;
+    StackType cachedDecodedType;
 
     public ConstantPoolEntryFieldRef(ByteData data) {
         this.classIndex = data.getS2At(OFFSET_OF_CLASS_INDEX);
@@ -40,6 +42,13 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
 
     public String getLocalName(ConstantPool cp) {
         return cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue();
+    }
+
+    public StackType getStackType(ConstantPool cp) {
+        if (cachedDecodedType == null) {
+            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue());
+        }
+        return cachedDecodedType;
     }
 
 }

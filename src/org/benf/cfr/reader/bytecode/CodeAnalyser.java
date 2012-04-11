@@ -149,6 +149,14 @@ public class CodeAnalyser {
             throw e;
         }
 
+        {
+            Dumper dmp = new Dumper();
+            dmp.print("----[known stack info]------------\n\n");
+            for (Op02WithProcessedDataAndRefs op : op2list) {
+                op.dump(dmp);
+            }
+        }
+
         this.start = o2start;
 
 
