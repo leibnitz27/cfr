@@ -149,13 +149,6 @@ public class CodeAnalyser {
             throw e;
         }
 
-        {
-            Dumper dmp = new Dumper();
-            dmp.print("----[known stack info]------------\n\n");
-            for (Op02WithProcessedDataAndRefs op : op2list) {
-                op.dump(dmp);
-            }
-        }
 
         this.start = o2start;
 
@@ -186,6 +179,7 @@ public class CodeAnalyser {
         conversionHelper.patchUpRelations();
         List<Op03SimpleStatement> op03SimpleParseNodes2 = op03SimpleParseNodes;
         // Expand any 'multiple' statements (eg from dups)
+
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes2);
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
 
