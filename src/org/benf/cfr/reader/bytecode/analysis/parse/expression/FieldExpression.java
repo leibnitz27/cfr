@@ -8,8 +8,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
  * Created by IntelliJ IDEA.
  * User: lee
  * Date: 22/03/2012
- * Time: 18:16
- * To change this template use File | Settings | File Templates.
+ */
+/*
+ * Wraps a local, a static or an instance field.
  */
 public class FieldExpression implements Expression {
     private LValue fieldVariable;

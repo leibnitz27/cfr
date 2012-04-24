@@ -49,7 +49,7 @@ public abstract class AbstractStatement implements Statement {
     public Expression getRValue() {
         throw new ConfusedCFRException("Not appropriate here.");
     }
-    
+
     protected Statement getTargetStatement(int idx) {
         return container.getTargetStatement(idx);
     }
@@ -73,4 +73,5 @@ public abstract class AbstractStatement implements Statement {
     public List<Statement> getCompoundParts() {
         throw new ConfusedCFRException("Should not be calling getCompoundParts on this statement");
     }
+
 }

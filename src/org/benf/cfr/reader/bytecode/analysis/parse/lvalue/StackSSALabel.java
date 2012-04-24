@@ -21,8 +21,8 @@ public class StackSSALabel implements LValue {
         this.id = id;
         this.stackEntry = stackEntry;
     }
-    
-    @Override 
+
+    @Override
     public String toString() {
         return "v" + id;
     }
@@ -32,9 +32,13 @@ public class StackSSALabel implements LValue {
         return stackEntry.getSourceCount();
     }
 
+    /*
+     * Can any use of this be replaced with the RHS instead?
+     * (Assuming that values in the RHS are not mutated)
+     */
     @Override
     public void determineLValueEquivalence(Expression rhsAssigned, StatementContainer statementContainer, LValueCollector lValueCollector) {
-        if ((rhsAssigned.isSimple() || stackEntry.getUsageCount() == 1 ) && getNumberOfCreators() == 1) {
+        if ((rhsAssigned.isSimple() || stackEntry.getUsageCount() == 1) && getNumberOfCreators() == 1) {
             lValueCollector.collect(this, statementContainer, rhsAssigned);
             return;
         }
@@ -48,4 +52,5 @@ public class StackSSALabel implements LValue {
     public StackEntry getStackEntry() {
         return stackEntry;
     }
+
 }

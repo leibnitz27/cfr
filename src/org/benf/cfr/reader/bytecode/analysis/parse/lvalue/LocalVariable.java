@@ -3,8 +3,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.LocalValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -15,20 +15,20 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * To change this template use File | Settings | File Templates.
  */
 public class LocalVariable implements LValue {
-    private final LocalValue localValue;
-    
-    public LocalVariable(LocalValue localValue) {
-        this.localValue = localValue;
+    private final String name;
+
+    public LocalVariable(long index, VariableNamer variableNamer, int originalRawOffset) {
+        this.name = variableNamer.getName(originalRawOffset, index);
     }
 
     @Override
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");
     }
-    
+
     @Override
     public String toString() {
-        return localValue.toString();
+        return name;
     }
 
     @Override
@@ -38,5 +38,17 @@ public class LocalVariable implements LValue {
     @Override
     public LValue replaceSingleUsageLValues(LValueCollector lValueCollector) {
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof LocalVariable)) return false;
+        LocalVariable other = (LocalVariable) o;
+        return name.equals(other.name);
     }
 }

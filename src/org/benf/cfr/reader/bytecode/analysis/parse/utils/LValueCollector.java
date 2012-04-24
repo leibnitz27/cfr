@@ -28,6 +28,8 @@ public class LValueCollector {
     public Expression getLValueReplacement(LValue lValue) {
         if (!found.containsKey(lValue)) return null;
         Pair<Expression, StatementContainer> pair = found.get(lValue);
+        // res is a valid replacement for lValue in an rValue, IF no mutable fields have different version
+        // identifiers (SSA tags)
         Expression res = pair.getFirst();
         Expression prev = null;
         pair.getSecond().nopOut();

@@ -8,7 +8,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
@@ -31,15 +30,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private int index;
     private int subIndex; // Only really needed when flattening.
     private Statement containedStatement;
-    
+
     public Op03SimpleStatement(Op02WithProcessedDataAndRefs original, Statement statement) {
         this.containedStatement = statement;
         this.isNop = false;
         this.index = original.getIndex();
         this.subIndex = original.getSubIndex();
-        statement.setContainer(this);        
+        statement.setContainer(this);
     }
-    
+
     private Op03SimpleStatement(Statement statement, int index, int subIndex) {
         this.containedStatement = statement;
         this.isNop = false;
@@ -72,7 +71,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     public Statement getStatement() {
         return containedStatement;
     }
-    
+
     @Override
     public Statement getTargetStatement(int idx) {
         if (targets.size() <= idx) throw new ConfusedCFRException("Trying to get invalid target " + idx);
@@ -94,7 +93,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             return;
             // throw new ConfusedCFRException("Trying to nopOut a node which was already nopped.");
         }
-        if (this.targets.size() != 1) { 
+        if (this.targets.size() != 1) {
             throw new ConfusedCFRException("Trying to nopOut a node with multiple targets");
         }
         this.containedStatement = new Nop();
@@ -121,7 +120,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.containedStatement = new Nop();
         this.isNop = true;
         containedStatement.setContainer(this);
-        for (int i=1;i<targets.size();++i) {
+        for (int i = 1; i < targets.size(); ++i) {
             Op03SimpleStatement dropTarget = targets.get(i);
             dropTarget.removeSource(this);
         }
@@ -139,7 +138,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private boolean isNop() {
         return isNop;
     }
-    
+
     private void replaceTarget(Op03SimpleStatement oldTarget, Op03SimpleStatement newTarget) {
         int index = targets.indexOf(oldTarget);
         if (index == -1) {
@@ -147,12 +146,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         targets.set(index, newTarget);
     }
-    
+
     private void replaceSingleSourceWith(Op03SimpleStatement oldSource, List<Op03SimpleStatement> newSources) {
         if (!sources.remove(oldSource)) throw new ConfusedCFRException("Invalid source");
         sources.addAll(newSources);
     }
-    
+
     private void replaceSource(Op03SimpleStatement oldSource, Op03SimpleStatement newSource) {
         int index = sources.indexOf(oldSource);
         if (index == -1) {
@@ -164,11 +163,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private void removeSource(Op03SimpleStatement oldSource) {
         if (!sources.remove(oldSource)) throw new ConfusedCFRException("Invalid source");
     }
-    
+
     private LValue getCreatedLValue() {
         return containedStatement.getCreatedLValue();
     }
-    
+
     public int getIndex() {
         return index;
     }
@@ -210,7 +209,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
     }
-    
+
     public static class CompareByIndex implements Comparator<Op03SimpleStatement> {
         @Override
         public int compare(Op03SimpleStatement a, Op03SimpleStatement b) {
@@ -220,14 +219,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             return a2;
         }
     }
-    
+
     private boolean needsLabel() {
         if (sources.size() > 1) return true;
         if (sources.size() == 0) return false;
         Op03SimpleStatement source = sources.get(0);
-        return (source.getIndex() != (this.getIndex()-1));
+        return (source.getIndex() != (this.getIndex() - 1));
     }
-    
+
     @Override
     public String getLabel() {
         return "lbl" + getIndex();
@@ -237,7 +236,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (needsLabel()) dumper.print(getLabel() + ":\n");
         getStatement().dump(dumper);
     }
-    
+
     @Override
     public void dump(Dumper dumper) {
         List<Op03SimpleStatement> reachableNodes = ListFactory.newList();
@@ -254,7 +253,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private boolean isCompound() {
         return containedStatement.isCompound();
     }
-    
+
     private List<Op03SimpleStatement> splitCompound() {
         List<Op03SimpleStatement> result = ListFactory.newList();
         List<Statement> innerStatements = containedStatement.getCompoundParts();
@@ -263,7 +262,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             result.add(new Op03SimpleStatement(statement, index, subIndex++));
         }
         Op03SimpleStatement previous = null;
-        for (Op03SimpleStatement statement :result) {
+        for (Op03SimpleStatement statement : result) {
             if (previous != null) {
                 statement.addSource(previous);
                 previous.addTarget(statement);
@@ -284,7 +283,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.isNop = true;
         return result;
     }
-    
+
     public static void flattenCompoundStatements(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> newStatements = ListFactory.newList();
         for (Op03SimpleStatement statement : statements) {
@@ -295,11 +294,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statements.addAll(newStatements);
     }
 
+
     public static void condenseLValues(List<Op03SimpleStatement> statements) {
         LValueCollector lValueCollector = new LValueCollector();
         for (Op03SimpleStatement statement : statements) {
             statement.collect(lValueCollector);
         }
+
         for (Op03SimpleStatement statement : statements) {
             statement.condense(lValueCollector);
         }
@@ -336,7 +337,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * b:
      */
     public static void condenseConditionals(List<Op03SimpleStatement> statements) {
-        for (int x=0;x<statements.size();++x) {
+        for (int x = 0; x < statements.size(); ++x) {
             boolean retry = false;
             do {
                 retry = false;

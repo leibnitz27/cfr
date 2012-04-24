@@ -20,10 +20,14 @@ public class StaticVariable implements LValue {
 
     private final ConstantPool cp;
     private final ConstantPoolEntryFieldRef field;
+    private final String className;
+    private final String varName;
 
     public StaticVariable(ConstantPool cp, ConstantPoolEntry field) {
-        this.field = (ConstantPoolEntryFieldRef)field;
+        this.field = (ConstantPoolEntryFieldRef) field;
         this.cp = cp;
+        this.className = cp.getUTF8Entry(cp.getClassEntry(this.field.getClassIndex()).getNameIndex()).getValue();
+        this.varName = this.field.getLocalName(cp);
     }
 
     @Override
@@ -34,8 +38,7 @@ public class StaticVariable implements LValue {
 
     @Override
     public String toString() {
-        String className = cp.getUTF8Entry(cp.getClassEntry(field.getClassIndex()).getNameIndex()).getValue();
-        return className + "." + field.getLocalName(cp);
+        return className + "." + varName;
     }
 
     @Override
@@ -44,5 +47,20 @@ public class StaticVariable implements LValue {
 
     public LValue replaceSingleUsageLValues(LValueCollector lValueCollector) {
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof StaticVariable)) return false;
+        StaticVariable other = (StaticVariable) o;
+        if (!other.className.equals(className)) return false;
+        return other.varName.equals(varName);
+    }
+
+    @Override
+    public int hashCode() {
+        int hashcode = className.hashCode();
+        hashcode = (13 * hashcode) + varName.hashCode();
+        return hashcode;
     }
 }

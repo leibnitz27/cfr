@@ -8,6 +8,7 @@ import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryFieldRef;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,7 +25,7 @@ public class FieldVariable implements LValue {
 
     public FieldVariable(Expression object, ConstantPool cp, ConstantPoolEntry field) {
         this.object = object;
-        this.field = (ConstantPoolEntryFieldRef)field;
+        this.field = (ConstantPoolEntryFieldRef) field;
         this.cp = cp;
     }
 
@@ -32,7 +33,6 @@ public class FieldVariable implements LValue {
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");
     }
-
 
     @Override
     public String toString() {
@@ -47,4 +47,5 @@ public class FieldVariable implements LValue {
         object = object.replaceSingleUsageLValues(lValueCollector);
         return this;
     }
+
 }

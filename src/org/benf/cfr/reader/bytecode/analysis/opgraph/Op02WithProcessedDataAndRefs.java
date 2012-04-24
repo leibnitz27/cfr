@@ -165,27 +165,27 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ALOAD:
             case ILOAD:
             case LLOAD:
-                return new Assignment(getStackLValue(0), new LocalValue(getInstrArgByte(0), variableNamer, originalRawOffset));
+                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset)));
             case ALOAD_0:
             case ILOAD_0:
             case LLOAD_0:
             case DLOAD_0:
-                return new Assignment(getStackLValue(0), new LocalValue(0, variableNamer, originalRawOffset));
+                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(0, variableNamer, originalRawOffset)));
             case ALOAD_1:
             case ILOAD_1:
             case LLOAD_1:
             case DLOAD_1:
-                return new Assignment(getStackLValue(0), new LocalValue(1, variableNamer, originalRawOffset));
+                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(1, variableNamer, originalRawOffset)));
             case ALOAD_2:
             case ILOAD_2:
             case LLOAD_2:
             case DLOAD_2:
-                return new Assignment(getStackLValue(0), new LocalValue(2, variableNamer, originalRawOffset));
+                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(2, variableNamer, originalRawOffset)));
             case ALOAD_3:
             case ILOAD_3:
             case LLOAD_3:
             case DLOAD_3:
-                return new Assignment(getStackLValue(0), new LocalValue(3, variableNamer, originalRawOffset));
+                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(3, variableNamer, originalRawOffset)));
             case ACONST_NULL:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getNull()));
             case ICONST_M1:
@@ -211,23 +211,23 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ISTORE:
             case ASTORE:
             case LSTORE:
-                return new Assignment(new LocalVariable(new LocalValue(getInstrArgByte(0), variableNamer, originalRawOffset)), getStackRValue(0));
+                return new Assignment(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset), getStackRValue(0));
             case ISTORE_0:
             case ASTORE_0:
             case LSTORE_0:
-                return new Assignment(new LocalVariable(new LocalValue(0, variableNamer, originalRawOffset)), getStackRValue(0));
+                return new Assignment(new LocalVariable(0, variableNamer, originalRawOffset), getStackRValue(0));
             case ISTORE_1:
             case ASTORE_1:
             case LSTORE_1:
-                return new Assignment(new LocalVariable(new LocalValue(1, variableNamer, originalRawOffset)), getStackRValue(0));
+                return new Assignment(new LocalVariable(1, variableNamer, originalRawOffset), getStackRValue(0));
             case ISTORE_2:
             case ASTORE_2:
             case LSTORE_2:
-                return new Assignment(new LocalVariable(new LocalValue(2, variableNamer, originalRawOffset)), getStackRValue(0));
+                return new Assignment(new LocalVariable(2, variableNamer, originalRawOffset), getStackRValue(0));
             case ISTORE_3:
             case ASTORE_3:
             case LSTORE_3:
-                return new Assignment(new LocalVariable(new LocalValue(3, variableNamer, originalRawOffset)), getStackRValue(0));
+                return new Assignment(new LocalVariable(3, variableNamer, originalRawOffset), getStackRValue(0));
             case NEW:
                 return new Assignment(getStackLValue(0), new NewObject(cp, cpEntries[0]));
             case NEWARRAY:
@@ -347,8 +347,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new CompoundStatement(s1, s2, s3);
             }
             case DUP2: {
-                // TODO : We need to know the correct data type in order to know if we're cloning 1 or 2!
-                if (true) {
+                // Todo - more elegant way of knowing which type.
+                if (sources.size() == 1) {
                     Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
                     Statement s2 = new Assignment(getStackLValue(1), getStackRValue(0));
                     return new CompoundStatement(s1, s2);
@@ -376,8 +376,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new SwitchStatement(getStackRValue(0), new DecodedLookupSwitch(rawData, originalRawOffset));
             case IINC:
                 // Can we have ++ instead?
-                return new Assignment(new LocalVariable(new LocalValue(rawData[0], variableNamer, originalRawOffset)),
-                        new ArithmeticOperation(new LocalValue(rawData[0], variableNamer, originalRawOffset), new Literal(TypedLiteral.getInt(rawData[1])), ArithOp.PLUS));
+                return new Assignment(new LocalVariable(rawData[0], variableNamer, originalRawOffset),
+                        new ArithmeticOperation(new FieldExpression(new LocalVariable(rawData[0], variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(rawData[1])), ArithOp.PLUS));
             default:
                 throw new ConfusedCFRException("Not implemented - conversion to statement from " + instr);
         }

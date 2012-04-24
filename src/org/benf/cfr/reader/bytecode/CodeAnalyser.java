@@ -89,6 +89,7 @@ public class CodeAnalyser {
             }
         }
 
+        /* Exceptions block */
         if (true) {
             // Add entries from the exception table.  Since these are stored in terms of offsets, they're
             // only usable here until we mess around with the instruction structure, so do it early!
@@ -135,6 +136,7 @@ public class CodeAnalyser {
                 op2list.add(tryOp);
             }
         }
+
 
         // This dump block only exists because we're debugging bad stack size calcuations.
         Op02WithProcessedDataAndRefs o2start = op2list.get(0);

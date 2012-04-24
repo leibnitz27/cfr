@@ -16,7 +16,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class Assignment extends AbstractStatement {
     private LValue lvalue;
     private Expression rvalue;
-    
+
     public Assignment(LValue lvalue, Expression rvalue) {
         this.lvalue = lvalue;
         this.rvalue = rvalue;
@@ -24,7 +24,7 @@ public class Assignment extends AbstractStatement {
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print(lvalue.toString() + " = " + rvalue.toString()+ ";\n");
+        dumper.print(lvalue.toString() + " = " + rvalue.toString() + ";\n");
     }
 
     @Override
@@ -52,4 +52,5 @@ public class Assignment extends AbstractStatement {
         lvalue = lvalue.replaceSingleUsageLValues(lValueCollector);
         rvalue = rvalue.replaceSingleUsageLValues(lValueCollector);
     }
+
 }
