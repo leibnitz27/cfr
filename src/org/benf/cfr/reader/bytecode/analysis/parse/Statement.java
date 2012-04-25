@@ -4,6 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.output.Dumpable;
 
 import java.util.List;
@@ -28,20 +30,28 @@ import java.util.List;
  */
 public interface Statement extends Dumpable {
     void setContainer(StatementContainer container);
+
     void getLValueEquivalences(LValueCollector lValueCollector);
-    void replaceSingleUsageLValues(LValueCollector lValueCollector);
+
+    void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers);
 
     void collectObjectCreation(CreationCollector creationCollector);
 
+    SSAIdentifiers collectLocallyMutatedVariables(SSAIdentifierFactory ssaIdentifierFactory);
+
     boolean condenseWithNextConditional();
+
     boolean isCompound();
+
     boolean condenseWithPriorIfStatement(IfStatement ifStatement);
+
     // Valid to call on everything, only useful on an assignment.
     LValue getCreatedLValue();
+
     // Only sensible to call on an assignment
     Expression getRValue();
 
     StatementContainer getContainer();
-    
+
     List<Statement> getCompoundParts();
 }

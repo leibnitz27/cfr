@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,8 +30,8 @@ public class ArrayLength implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        array = array.replaceSingleUsageLValues(lValueCollector);
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        array = array.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
         return this;
     }
 

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NotOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -33,8 +34,8 @@ public class IfStatement extends AbstractStatement {
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        Expression replacementCondition = condition.replaceSingleUsageLValues(lValueCollector);
+    public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        Expression replacementCondition = condition.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
         if (replacementCondition != condition) throw new ConfusedCFRException("Can't yet support replacing conditions");
     }
 

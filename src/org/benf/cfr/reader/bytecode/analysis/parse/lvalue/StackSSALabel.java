@@ -4,6 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 
 /**
@@ -45,7 +47,12 @@ public class StackSSALabel implements LValue {
     }
 
     @Override
-    public LValue replaceSingleUsageLValues(LValueCollector lValueCollector) {
+    public SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory) {
+        return new SSAIdentifiers();
+    }
+
+    @Override
+    public LValue replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
         return this;
     }
 

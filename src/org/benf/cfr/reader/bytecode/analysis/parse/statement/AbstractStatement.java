@@ -6,6 +6,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 import java.util.List;
@@ -37,6 +39,11 @@ public abstract class AbstractStatement implements Statement {
 
     @Override
     public void collectObjectCreation(CreationCollector creationCollector) {
+    }
+
+    @Override
+    public SSAIdentifiers collectLocallyMutatedVariables(SSAIdentifierFactory ssaIdentifierFactory) {
+        return new SSAIdentifiers();
     }
 
     @Override

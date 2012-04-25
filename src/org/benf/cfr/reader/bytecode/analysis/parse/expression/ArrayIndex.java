@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,9 +32,9 @@ public class ArrayIndex implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        array = array.replaceSingleUsageLValues(lValueCollector);
-        index = index.replaceSingleUsageLValues(lValueCollector);
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        array = array.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+        index = index.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
         return this;
     }
 

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,7 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 /*
  * Wraps a local, a static or an instance field.
  */
-public class FieldExpression implements Expression {
+public class FieldExpression implements LValueExpression {
     private LValue fieldVariable;
 
     public FieldExpression(LValue fieldVariable) {
@@ -26,8 +27,8 @@ public class FieldExpression implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        fieldVariable = fieldVariable.replaceSingleUsageLValues(lValueCollector);
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        fieldVariable = fieldVariable.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
         return this;
     }
 
@@ -36,4 +37,8 @@ public class FieldExpression implements Expression {
         return fieldVariable.toString();
     }
 
+    @Override
+    public LValue getLValue() {
+        return fieldVariable;
+    }
 }

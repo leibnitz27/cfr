@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,7 +15,7 @@ public class BooleanOperation implements ConditionalExpression {
     private ConditionalExpression lhs;
     private ConditionalExpression rhs;
     private BoolOp op;
-    
+
     public BooleanOperation(ConditionalExpression lhs, ConditionalExpression rhs, BoolOp op) {
         this.lhs = lhs;
         this.rhs = rhs;
@@ -22,7 +23,7 @@ public class BooleanOperation implements ConditionalExpression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
         return this;
     }
 

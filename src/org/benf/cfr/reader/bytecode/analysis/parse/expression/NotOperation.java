@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,7 +19,7 @@ public class NotOperation implements ConditionalExpression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
         return this;
     }
 
@@ -29,6 +30,6 @@ public class NotOperation implements ConditionalExpression {
 
     @Override
     public String toString() {
-        return "!(" + lhs.toString() +")";
+        return "!(" + lhs.toString() + ")";
     }
 }

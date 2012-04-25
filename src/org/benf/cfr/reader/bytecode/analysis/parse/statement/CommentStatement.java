@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -12,7 +13,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class CommentStatement extends AbstractStatement {
     private final String text;
-    
+
     public CommentStatement(String text) {
         this.text = text;
     }
@@ -23,6 +24,6 @@ public class CommentStatement extends AbstractStatement {
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueCollector lValueCollector) {
+    public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
     }
 }

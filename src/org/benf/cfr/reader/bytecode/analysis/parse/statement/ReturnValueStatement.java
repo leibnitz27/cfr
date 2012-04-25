@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.GraphConversionHelper;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -26,8 +27,8 @@ public class ReturnValueStatement extends ReturnStatement {
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        this.rvalue = rvalue.replaceSingleUsageLValues(lValueCollector);
+    public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        this.rvalue = rvalue.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
     }
 
 }

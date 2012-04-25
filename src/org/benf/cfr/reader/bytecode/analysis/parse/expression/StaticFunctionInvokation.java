@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.entities.*;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class StaticFunctionInvokation implements Expression {
     private final ConstantPool cp;
 
     public StaticFunctionInvokation(ConstantPool cp, ConstantPoolEntry function, List<Expression> args) {
-        this.function = (ConstantPoolEntryMethodRef)function;
+        this.function = (ConstantPoolEntryMethodRef) function;
         this.args = args;
         this.cp = cp;
     }
@@ -30,13 +31,13 @@ public class StaticFunctionInvokation implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        for (int x=0;x<args.size();++x) {
-            args.set(x, args.get(x).replaceSingleUsageLValues(lValueCollector));
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        for (int x = 0; x < args.size(); ++x) {
+            args.set(x, args.get(x).replaceSingleUsageLValues(lValueCollector, ssaIdentifiers));
         }
         return this;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

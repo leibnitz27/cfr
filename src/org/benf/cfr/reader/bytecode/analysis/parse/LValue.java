@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,5 +15,8 @@ public interface LValue {
     int getNumberOfCreators();
 
     void determineLValueEquivalence(Expression assignedTo, StatementContainer statementContainer, LValueCollector lValueCollector);
-    LValue replaceSingleUsageLValues(LValueCollector lValueCollector);
+
+    SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory);
+
+    LValue replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers);
 }

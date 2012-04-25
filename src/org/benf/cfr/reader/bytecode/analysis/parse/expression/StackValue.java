@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,7 +19,7 @@ public class StackValue implements Expression {
     public StackValue(StackSSALabel stackValue) {
         this.stackValue = stackValue;
     }
-    
+
     @Override
     public String toString() {
         return stackValue.toString();
@@ -30,8 +31,8 @@ public class StackValue implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        Expression replaceMeWith = lValueCollector.getLValueReplacement(stackValue);
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        Expression replaceMeWith = lValueCollector.getLValueReplacement(stackValue, ssaIdentifiers);
         if (replaceMeWith != null) return replaceMeWith;
         return this;
     }

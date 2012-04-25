@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -17,8 +18,8 @@ import java.util.List;
  */
 public class CompoundStatement extends AbstractStatement {
     private List<Statement> statements;
-    
-    public CompoundStatement(Statement ... statements) {
+
+    public CompoundStatement(Statement... statements) {
         this.statements = ListFactory.newList(statements);
     }
 
@@ -47,7 +48,7 @@ public class CompoundStatement extends AbstractStatement {
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueCollector lValueCollector) {
+    public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
         throw new ConfusedCFRException("Should not be using compound statements here");
     }
 

@@ -185,6 +185,8 @@ public class CodeAnalyser {
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes2);
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
 
+        Op03SimpleStatement.assignSSAIdentifiers(op03SimpleParseNodes2);
+
         // Condense pointless assignments
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes2);
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);

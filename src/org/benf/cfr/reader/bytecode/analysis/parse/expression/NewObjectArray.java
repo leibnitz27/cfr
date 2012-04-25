@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.ArrayType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
@@ -22,7 +23,7 @@ public class NewObjectArray implements Expression {
     public NewObjectArray(Expression size, ConstantPool constantPool, ConstantPoolEntry type) {
         this.size = size;
         this.cp = constantPool;
-        this.type = (ConstantPoolEntryClass)type;
+        this.type = (ConstantPoolEntryClass) type;
     }
 
     @Override
@@ -37,8 +38,8 @@ public class NewObjectArray implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        size = size.replaceSingleUsageLValues(lValueCollector);
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        size = size.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
         return this;
     }
 

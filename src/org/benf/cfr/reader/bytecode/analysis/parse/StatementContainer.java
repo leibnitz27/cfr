@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -9,9 +11,16 @@ package org.benf.cfr.reader.bytecode.analysis.parse;
  */
 public interface StatementContainer {
     Statement getStatement();
+
     Statement getTargetStatement(int idx);
+
     String getLabel();
+
     void nopOut();
+
     void replaceStatement(Statement newTarget);
+
     void nopOutConditional();
+
+    SSAIdentifiers getSSAIdentifiers();
 }

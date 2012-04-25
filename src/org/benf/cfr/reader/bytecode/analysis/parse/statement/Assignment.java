@@ -4,6 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -38,6 +40,11 @@ public class Assignment extends AbstractStatement {
     }
 
     @Override
+    public SSAIdentifiers collectLocallyMutatedVariables(SSAIdentifierFactory ssaIdentifierFactory) {
+        return lvalue.collectVariableMutation(ssaIdentifierFactory);
+    }
+
+    @Override
     public LValue getCreatedLValue() {
         return lvalue;
     }
@@ -48,9 +55,9 @@ public class Assignment extends AbstractStatement {
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        lvalue = lvalue.replaceSingleUsageLValues(lValueCollector);
-        rvalue = rvalue.replaceSingleUsageLValues(lValueCollector);
+    public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        lvalue = lvalue.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+        rvalue = rvalue.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
     }
 
 }

@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
@@ -22,13 +23,13 @@ public class MemberFunctionInvokation implements Expression {
     private Expression object;
     private final List<Expression> args;
     private final ConstantPool cp;
-    
+
     public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args) {
         this.function = function;
         this.object = object;
         this.args = ListFactory.newList();
         // idiot, there has to be a standard way....
-        for (int x=args.size()-1;x>=0;--x) this.args.add(args.get(x));
+        for (int x = args.size() - 1; x >= 0; --x) this.args.add(args.get(x));
         this.cp = cp;
     }
 
@@ -38,14 +39,14 @@ public class MemberFunctionInvokation implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        object = object.replaceSingleUsageLValues(lValueCollector);
-        for (int x=0;x<args.size();++x) {
-            args.set(x, args.get(x).replaceSingleUsageLValues(lValueCollector));
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        object = object.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+        for (int x = 0; x < args.size(); ++x) {
+            args.set(x, args.get(x).replaceSingleUsageLValues(lValueCollector, ssaIdentifiers));
         }
         return this;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

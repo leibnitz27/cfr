@@ -6,6 +6,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -30,12 +32,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private int index;
     private int subIndex; // Only really needed when flattening.
     private Statement containedStatement;
+    private SSAIdentifiers ssaIdentifiers;
 
     public Op03SimpleStatement(Op02WithProcessedDataAndRefs original, Statement statement) {
         this.containedStatement = statement;
         this.isNop = false;
         this.index = original.getIndex();
         this.subIndex = original.getSubIndex();
+        this.ssaIdentifiers = new SSAIdentifiers();
         statement.setContainer(this);
     }
 
@@ -44,6 +48,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.isNop = false;
         this.index = index;
         this.subIndex = subIndex;
+        this.ssaIdentifiers = new SSAIdentifiers();
         statement.setContainer(this);
     }
 
@@ -135,6 +140,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         target.replaceSingleSourceWith(this, sources);
     }
 
+    @Override
+    public SSAIdentifiers getSSAIdentifiers() {
+        return ssaIdentifiers;
+    }
+
     private boolean isNop() {
         return isNop;
     }
@@ -183,7 +193,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private void condense(LValueCollector lValueCollector) {
-        containedStatement.replaceSingleUsageLValues(lValueCollector);
+        containedStatement.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
     }
 
     private void findCreation(CreationCollector creationCollector) {
@@ -294,6 +304,30 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statements.addAll(newStatements);
     }
 
+    private void collectLocallyMutatedVariables(SSAIdentifierFactory ssaIdentifierFactory) {
+        this.ssaIdentifiers = containedStatement.collectLocallyMutatedVariables(ssaIdentifierFactory);
+    }
+
+    public static void assignSSAIdentifiers(List<Op03SimpleStatement> statements) {
+        SSAIdentifierFactory ssaIdentifierFactory = new SSAIdentifierFactory();
+        for (Op03SimpleStatement statement : statements) {
+            statement.collectLocallyMutatedVariables(ssaIdentifierFactory);
+        }
+
+        List<Op03SimpleStatement> toProcess = ListFactory.newLinkedList();
+        toProcess.addAll(statements);
+        for (Op03SimpleStatement statement : toProcess) {
+            SSAIdentifiers ssaIdentifiers = statement.ssaIdentifiers;
+            boolean changed = false;
+            for (Op03SimpleStatement source : statement.getSources()) {
+                if (ssaIdentifiers.mergeWith(source.ssaIdentifiers)) changed = true;
+            }
+            /* If anything's changed, we need to check this statements children. */
+            if (changed) {
+                toProcess.addAll(statement.getTargets());
+            }
+        }
+    }
 
     public static void condenseLValues(List<Op03SimpleStatement> statements) {
         LValueCollector lValueCollector = new LValueCollector();

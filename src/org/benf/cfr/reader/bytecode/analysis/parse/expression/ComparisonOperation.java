@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,9 +33,9 @@ public class ComparisonOperation implements ConditionalExpression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector) {
-        lhs = lhs.replaceSingleUsageLValues(lValueCollector);
-        rhs = rhs.replaceSingleUsageLValues(lValueCollector);
+    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+        lhs = lhs.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+        rhs = rhs.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
         return this;
     }
 }
