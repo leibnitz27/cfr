@@ -2,8 +2,12 @@ package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackType;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackTypes;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.ConstantPoolEntryLiteral;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,12 +16,9 @@ import org.benf.cfr.reader.entities.ConstantPoolEntry;
  * Time: 08:10
  * To change this template use File | Settings | File Templates.
  */
-public class OperationFactoryLDC2W extends OperationFactoryCPEntryW {
-
+public class OperationFactoryLDC2W extends OperationFactoryLDCW {
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
-        //
-        return new StackDelta(instr.getRawStackPopped(), instr.getRawStackPushed());
+    protected int getRequiredComputationCategory() {
+        return 2;
     }
-
 }

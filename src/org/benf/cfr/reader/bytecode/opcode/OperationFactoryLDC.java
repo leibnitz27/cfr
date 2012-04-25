@@ -27,6 +27,10 @@ public class OperationFactoryLDC extends OperationFactoryCPEntry {
             throw new ConfusedCFRException("Expecting ConstantPoolEntryLiteral");
         }
         StackType stackType = constantPoolEntryLiteral.getStackType();
+        int requiredComputationCategory = 1;
+        if (stackType.getComputationCategory() != requiredComputationCategory) {
+            throw new ConfusedCFRException("Got a literal, but expected a different category");
+        }
 
 
         return new StackDelta(StackTypes.EMPTY, stackType.asList());
