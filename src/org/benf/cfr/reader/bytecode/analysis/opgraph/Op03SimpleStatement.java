@@ -9,13 +9,16 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -29,8 +32,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private final List<Op03SimpleStatement> sources = ListFactory.newList();
     private final List<Op03SimpleStatement> targets = ListFactory.newList();
     private boolean isNop;
-    private int index;
-    private int subIndex; // Only really needed when flattening.
+    private InstrIndex index;
     private Statement containedStatement;
     private SSAIdentifiers ssaIdentifiers;
 
@@ -38,16 +40,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.containedStatement = statement;
         this.isNop = false;
         this.index = original.getIndex();
-        this.subIndex = original.getSubIndex();
         this.ssaIdentifiers = new SSAIdentifiers();
         statement.setContainer(this);
     }
 
-    private Op03SimpleStatement(Statement statement, int index, int subIndex) {
+    private Op03SimpleStatement(Statement statement, InstrIndex index) {
         this.containedStatement = statement;
         this.isNop = false;
         this.index = index;
-        this.subIndex = subIndex;
         this.ssaIdentifiers = new SSAIdentifiers();
         statement.setContainer(this);
     }
@@ -178,13 +178,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return containedStatement.getCreatedLValue();
     }
 
-    public int getIndex() {
+    public InstrIndex getIndex() {
         return index;
     }
 
-    private void setIndex(int index) {
+    private void setIndex(InstrIndex index) {
         this.index = index;
-        this.subIndex = 0;
     }
 
 
@@ -223,10 +222,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     public static class CompareByIndex implements Comparator<Op03SimpleStatement> {
         @Override
         public int compare(Op03SimpleStatement a, Op03SimpleStatement b) {
-            int a1 = a.getIndex() - b.getIndex();
-            if (a1 != 0) return a1;
-            int a2 = a.subIndex - b.subIndex;
-            return a2;
+            return a.getIndex().compareTo(b.getIndex());
         }
     }
 
@@ -234,7 +230,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (sources.size() > 1) return true;
         if (sources.size() == 0) return false;
         Op03SimpleStatement source = sources.get(0);
-        return (source.getIndex() != (this.getIndex() - 1));
+        return (!source.getIndex().directlyPreceeds(this.getIndex()));
     }
 
     @Override
@@ -267,9 +263,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private List<Op03SimpleStatement> splitCompound() {
         List<Op03SimpleStatement> result = ListFactory.newList();
         List<Statement> innerStatements = containedStatement.getCompoundParts();
-        int subIndex = 1;
+        InstrIndex nextIndex = index.justAfter();
         for (Statement statement : innerStatements) {
-            result.add(new Op03SimpleStatement(statement, index, subIndex++));
+            result.add(new Op03SimpleStatement(statement, nextIndex));
+            nextIndex = nextIndex.justAfter();
         }
         Op03SimpleStatement previous = null;
         for (Op03SimpleStatement statement : result) {
@@ -390,6 +387,30 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    private static class HasBackJump implements Predicate<Op03SimpleStatement> {
+        @Override
+        public boolean test(Op03SimpleStatement in) {
+            InstrIndex inIndex = in.getIndex();
+            List<Op03SimpleStatement> sources = in.getSources();
+            for (Op03SimpleStatement source : sources) {
+                if (source.getIndex().compareTo(inIndex) < 0) return true;
+            }
+            return false;
+        }
+    }
+
+    // Find simple loops.
+    // Identify distinct set of backjumps (b1,b2), which jump back to somewhere (p) which has a forward
+    // jump to somewhere which is NOT a /DIRECT/ parent of the backjumps.
+    // p must be a direct parent of all of (b1,b2)
+    public static void identifyLoops1(List<Op03SimpleStatement> statements) {
+        // Find back references.
+        // Verify that they belong to jump instructions (otherwise something has gone wrong)
+        // (if, goto).
+        List<Op03SimpleStatement> backjumps = Functional.filter(statements, new HasBackJump());
+
+    }
+
     /*
      * Filter out nops (where appropriate) and renumber.  For display purposes.
      */
@@ -406,7 +427,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // Sort result by existing index.
         Collections.sort(result, new CompareByIndex());
         for (Op03SimpleStatement statement : result) {
-            statement.setIndex(newIndex++);
+            statement.setIndex(new InstrIndex(newIndex++));
         }
         return result;
     }

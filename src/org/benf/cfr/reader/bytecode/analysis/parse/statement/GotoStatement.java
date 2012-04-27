@@ -14,6 +14,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * To change this template use File | Settings | File Templates.
  */
 public class GotoStatement extends AbstractStatement {
+
     public GotoStatement() {
     }
 

@@ -37,8 +37,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithProcessedDataAndRefs> {
-    private int index; // index in original instruction stream.
-    private int subindex;
+    private InstrIndex index;
 
     private final JVMInstr instr;
     private final int originalRawOffset;
@@ -54,18 +53,21 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private final List<StackEntryHolder> stackProduced = ListFactory.newList();
 
     public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, int index, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset) {
-        this(instr, rawData, index, 0, cp, cpEntries, originalRawOffset, null);
+        this(instr, rawData, new InstrIndex(index), cp, cpEntries, originalRawOffset, null);
     }
 
-    public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, int index, int subIndex, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset, ExceptionBookmark exceptionBookmark) {
+    public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, InstrIndex index, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset, ExceptionBookmark exceptionBookmark) {
         this.instr = instr;
         this.rawData = rawData;
         this.index = index;
-        this.subindex = subIndex;
         this.cp = cp;
         this.cpEntries = cpEntries;
         this.originalRawOffset = originalRawOffset;
         this.exceptionBookmark = exceptionBookmark;
+    }
+
+    public InstrIndex getIndex() {
+        return index;
     }
 
     public void addTarget(Op02WithProcessedDataAndRefs node) {
@@ -85,7 +87,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     public void clearSources() {
         sources.clear();
     }
-
+    /*
     public int getIndex() {
         return index;
     }
@@ -93,6 +95,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     public int getSubIndex() {
         return subindex;
     }
+    */
 
     private int getInstrArgByte(int index) {
         return rawData[index];
@@ -143,7 +146,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     @Override
     public void dump(Dumper d) {
-        d.print("" + index + "." + subindex + " : " + instr + "\t Stack:" + stackDepthBeforeExecution + "\t");
+        d.print("" + index + " : " + instr + "\t Stack:" + stackDepthBeforeExecution + "\t");
         d.print("Consumes:[");
         for (StackEntryHolder stackEntryHolder : stackConsumed) {
             d.print(stackEntryHolder.toString() + " ");
@@ -317,8 +320,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(0), new Literal(TypedLiteral.getInt(0)), CompOp.getOpFor(instr));
                 return new IfStatement(conditionalExpression);
             }
-            case GOTO:
+            case GOTO: {
                 return new GotoStatement();
+            }
             case ATHROW:
                 return new ThrowStatement(getStackRValue(0));
             case IRETURN:

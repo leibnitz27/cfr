@@ -112,7 +112,7 @@ public class CodeAnalyser {
                 // default target of startInstruction, but additional targets of handlerTargets.
                 ExceptionBookmark exceptionBookmark = new ExceptionBookmark(rawes);
                 Op02WithProcessedDataAndRefs tryOp =
-                        new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex(), -1, cp, null, -1, exceptionBookmark);
+                        new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex().justBefore(), cp, null, -1, exceptionBookmark);
 
                 if (startInstruction.getSources().isEmpty())
                     throw new ConfusedCFRException("Can't install exception handler infront of nothing");
@@ -122,7 +122,7 @@ public class CodeAnalyser {
                 tryOp.addTarget(startInstruction);
                 for (Op02WithProcessedDataAndRefs tryTarget : handlerTargets) {
                     Op02WithProcessedDataAndRefs preCatchOp =
-                            new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex(), -1, cp, null, -1, null);
+                            new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1, null);
 
                     op2list.add(preCatchOp);
 
@@ -200,6 +200,9 @@ public class CodeAnalyser {
         // Collapse conditionals into || / &&
         Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes2);
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
+
+        Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes2);
+
 
         Op03SimpleStatement o3start = op03SimpleParseNodes2.get(0);
         this.start = o3start;
