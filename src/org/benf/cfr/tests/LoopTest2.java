@@ -16,9 +16,11 @@ public class LoopTest2 {
 
     public int testNested(List<Object> list, Set<Object> set) {
         int result = 0;
-        for (Object o : list) {
-            for (Object o2 : set) {
-                if (o.equals(o2)) result++;
+        for (Object j : list) {
+            for (Object o : list) {
+                for (Object o2 : set) {
+                    if (o.equals(o2)) result++;
+                }
             }
         }
         return result;

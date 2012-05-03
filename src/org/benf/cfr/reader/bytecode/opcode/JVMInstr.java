@@ -218,6 +218,7 @@ public enum JVMInstr {
     POP2(0x58, 0, null, null, new OperationFactoryPop2()),
     PUTFIELD(0xb5, 2, null, null, new OperationFactoryPutField()),
     PUTSTATIC(0xb3, 2, null, null, new OperationFactoryPutStatic()),
+    // TODO : Ret isn't right.
     RET(0xa9, 1, StackTypes.EMPTY, StackTypes.EMPTY, new OperationFactoryReturn()),
     RETURN(0xb1, 0, StackTypes.EMPTY, StackTypes.EMPTY, new OperationFactoryReturn()),
     SALOAD(0x35, 0, new StackTypes(StackType.REF, StackType.INT), StackType.INT.asList()),

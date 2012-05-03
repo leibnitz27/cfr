@@ -29,6 +29,26 @@ public enum CompOp {
         return showAs;
     }
 
+    public CompOp getInverted() {
+        switch (this) {
+            case LT:
+                return GTE;
+            case GT:
+                return LTE;
+            case GTE:
+                return LT;
+            case LTE:
+                return GT;
+            case EQ:
+                return NE;
+            case NE:
+                return EQ;
+            default:
+                throw new ConfusedCFRException("Can't invert CompOp " + this);
+        }
+    }
+
+
     public static CompOp getOpFor(JVMInstr instr) {
         switch (instr) {
             case IF_ICMPEQ:

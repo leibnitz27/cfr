@@ -183,6 +183,7 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
 
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes2);
+        Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes2);
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
 
         Op03SimpleStatement.assignSSAIdentifiers(op03SimpleParseNodes2);
@@ -202,7 +203,7 @@ public class CodeAnalyser {
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
 
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes2);
-
+        Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes2);
 
         Op03SimpleStatement o3start = op03SimpleParseNodes2.get(0);
         this.start = o3start;

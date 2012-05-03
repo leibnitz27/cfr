@@ -8,6 +8,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.BoolOp;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NotOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -20,8 +22,13 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 18:05
  * To change this template use File | Settings | File Templates.
  */
-public class IfStatement extends AbstractStatement {
+public class IfStatement extends GotoStatement {
+
+    private static final int JUMP_NOT_TAKEN = 0;
+    private static final int JUMP_TAKEN = 1;
+
     private ConditionalExpression condition;
+
 
     public IfStatement(ConditionalExpression conditionalExpression) {
         this.condition = conditionalExpression;
@@ -29,8 +36,8 @@ public class IfStatement extends AbstractStatement {
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("if (" + condition.toString() + ")");
-        dumper.print(" goto " + getTargetStatement(1).getContainer().getLabel() + ";\n");
+        dumper.print("if (" + condition.toString() + ") ");
+        super.dump(dumper);
     }
 
     @Override
@@ -43,7 +50,7 @@ public class IfStatement extends AbstractStatement {
     public boolean condenseWithNextConditional() {
         // Get the next (fall through) statement.  If that's not a conditional, ignore.
         // Since the next statement is ALWAYS fall through, we don't need to test that.
-        Statement nextStatement = getTargetStatement(0);
+        Statement nextStatement = getTargetStatement(JUMP_NOT_TAKEN);
         return nextStatement.condenseWithPriorIfStatement(this);
     }
 
@@ -53,8 +60,8 @@ public class IfStatement extends AbstractStatement {
 
     @Override
     public boolean condenseWithPriorIfStatement(IfStatement prior) {
-        Statement fallThrough2 = getTargetStatement(0);
-        Statement target1 = prior.getTargetStatement(1);
+        Statement fallThrough2 = getTargetStatement(JUMP_NOT_TAKEN);
+        Statement target1 = prior.getTargetStatement(JUMP_TAKEN);
 
         // if (c1) goto a
         // if (c2) goto b
@@ -71,12 +78,28 @@ public class IfStatement extends AbstractStatement {
         // b
         // ->
         // if (c1 || c2) goto a
-        Statement target2 = getTargetStatement(1);
+        Statement target2 = getTargetStatement(JUMP_TAKEN);
         if (target1 == target2) {
             this.condition = new BooleanOperation(prior.getCondition(), getCondition(), BoolOp.OR);
             prior.getContainer().nopOutConditional();
             return true;
         }
         return false;
+    }
+
+
+    public void replaceWithWhileLoopStart(BlockIdentifier blockIdentifier) {
+        WhileStatement replacement = new WhileStatement(condition.getNegatedExpression());
+        getContainer().replaceStatement(replacement);
+    }
+
+    @Override
+    public Statement getJumpTarget() {
+        return getTargetStatement(JUMP_TAKEN);
+    }
+
+    @Override
+    public boolean isConditional() {
+        return true;
     }
 }

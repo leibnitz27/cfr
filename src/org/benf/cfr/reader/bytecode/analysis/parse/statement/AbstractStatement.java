@@ -81,4 +81,5 @@ public abstract class AbstractStatement implements Statement {
         throw new ConfusedCFRException("Should not be calling getCompoundParts on this statement");
     }
 
+
 }

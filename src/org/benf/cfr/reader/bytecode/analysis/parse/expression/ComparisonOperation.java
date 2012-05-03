@@ -38,4 +38,9 @@ public class ComparisonOperation implements ConditionalExpression {
         rhs = rhs.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
         return this;
     }
+
+    @Override
+    public ConditionalExpression getNegatedExpression() {
+        return new ComparisonOperation(lhs, rhs, op.getInverted());
+    }
 }

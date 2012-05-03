@@ -3,16 +3,14 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.JumpingStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -35,6 +33,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private InstrIndex index;
     private Statement containedStatement;
     private SSAIdentifiers ssaIdentifiers;
+    private BlockIdentifier startBlock;
+    private BlockType startBlockType;
+    private final List<BlockIdentifier> containedInBlocks = ListFactory.newList();
+    private final List<BlockIdentifier> endBlocks = ListFactory.newList();
 
     public Op03SimpleStatement(Op02WithProcessedDataAndRefs original, Statement statement) {
         this.containedStatement = statement;
@@ -186,6 +188,30 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.index = index;
     }
 
+    private void markBlockStart(BlockIdentifier blockIdentifier) {
+        if (startBlock != null) {
+            throw new ConfusedCFRException("Statement marked as the start of multiple blocks");
+        }
+        this.startBlock = blockIdentifier;
+        switch (blockIdentifier.getBlockType()) {
+            case WHILELOOP: {
+                IfStatement ifStatement = (IfStatement) containedStatement;
+                // Todo : What if the test is inverted?
+                ifStatement.replaceWithWhileLoopStart(blockIdentifier);
+                break;
+            }
+            default:
+                throw new ConfusedCFRException("Don't know how to start a block like this");
+        }
+    }
+
+    private void markBlockEnd(BlockIdentifier blockIdentifier) {
+        this.endBlocks.add(blockIdentifier);
+    }
+
+    private void markBlock(BlockIdentifier blockIdentifier) {
+        containedInBlocks.add(blockIdentifier);
+    }
 
     private void collect(LValueCollector lValueCollector) {
         containedStatement.getLValueEquivalences(lValueCollector);
@@ -239,8 +265,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private void dumpInner(Dumper dumper) {
+        int indent = dumper.getIndent();
+        dumper.setIndent(containedInBlocks.size());
         if (needsLabel()) dumper.print(getLabel() + ":\n");
         getStatement().dump(dumper);
+        dumper.setIndent(indent);
     }
 
     @Override
@@ -387,33 +416,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    private static class HasBackJump implements Predicate<Op03SimpleStatement> {
-        @Override
-        public boolean test(Op03SimpleStatement in) {
-            InstrIndex inIndex = in.getIndex();
-            List<Op03SimpleStatement> sources = in.getSources();
-            for (Op03SimpleStatement source : sources) {
-                if (source.getIndex().compareTo(inIndex) < 0) return true;
-            }
-            return false;
-        }
-    }
-
-    // Find simple loops.
-    // Identify distinct set of backjumps (b1,b2), which jump back to somewhere (p) which has a forward
-    // jump to somewhere which is NOT a /DIRECT/ parent of the backjumps.
-    // p must be a direct parent of all of (b1,b2)
-    public static void identifyLoops1(List<Op03SimpleStatement> statements) {
-        // Find back references.
-        // Verify that they belong to jump instructions (otherwise something has gone wrong)
-        // (if, goto).
-        List<Op03SimpleStatement> backjumps = Functional.filter(statements, new HasBackJump());
-
-    }
 
     /*
-     * Filter out nops (where appropriate) and renumber.  For display purposes.
-     */
+    * Filter out nops (where appropriate) and renumber.  For display purposes.
+    */
     public static List<Op03SimpleStatement> renumber(List<Op03SimpleStatement> statements) {
         int newIndex = 0;
         boolean nonNopSeen = false;
@@ -431,4 +437,238 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         return result;
     }
+
+
+    /* Remove pointless jumps 
+    *
+    * Normalise code by removing jumps which have been introduced to confuse.
+    */
+    public static void removePointlessJumps(List<Op03SimpleStatement> statements) {
+        for (Op03SimpleStatement statement : statements) {
+            Statement innerStatement = statement.getStatement();
+            if (innerStatement instanceof JumpingStatement &&
+                    statement.getSources().size() == 1 &&
+                    statement.getTargets().size() == 1) {
+                Op03SimpleStatement prior = statement.getSources().get(0);
+                Statement innerPrior = prior.getStatement();
+                if (innerPrior instanceof JumpingStatement) {
+                    JumpingStatement jumpInnerPrior = (JumpingStatement) innerPrior;
+                    Statement jumpingInnerPriorTarget = jumpInnerPrior.getJumpTarget();
+                    if (jumpingInnerPriorTarget == innerStatement) {
+                        statement.nopOut();
+                    }
+                }
+            }
+        }
+    }
+
+
+    /* DEAD CODE */
+
+    private static boolean isDirectParentWithoutPassing(Op03SimpleStatement child, Op03SimpleStatement parent, Op03SimpleStatement barrier) {
+        LinkedList<Op03SimpleStatement> tests = ListFactory.newLinkedList();
+        Set<Op03SimpleStatement> seen = SetFactory.newSet();
+        tests.add(child);
+        seen.add(child);
+        boolean hitParent = false;
+        while (!tests.isEmpty()) {
+            Op03SimpleStatement node = tests.removeFirst();
+            if (node == barrier) continue;
+            if (node == parent) {
+                hitParent = true;
+                continue;
+            }
+            List<Op03SimpleStatement> localParents = node.getSources();
+            for (Op03SimpleStatement localParent : localParents) {
+                if (seen.add(localParent)) {
+                    tests.add(localParent);
+                }
+            }
+        }
+        return hitParent;
+    }
+
+    public static void rewriteBreakStatements(List<Op03SimpleStatement> statements) {
+        for (Op03SimpleStatement statement : statements) {
+            Statement innerStatement = statement.getStatement();
+            if (innerStatement instanceof JumpingStatement) {
+                JumpingStatement jumpingStatement = (JumpingStatement) innerStatement;
+                if (jumpingStatement.getJumpType() == JumpType.GOTO) {
+                    Statement targetInnerStatement = jumpingStatement.getJumpTarget();
+                    Op03SimpleStatement targetStatement = (Op03SimpleStatement) targetInnerStatement.getContainer();
+                    if (targetStatement.startBlock != null) {
+                        // Continue startBlock, IF this statement is INSIDE that block.
+                        if (BlockIdentifier.blockIsOneOf(targetStatement.startBlock, statement.containedInBlocks)) {
+                            jumpingStatement.setJumpType(JumpType.CONTINUE);
+                        }
+                    } else if (!targetStatement.endBlocks.isEmpty()) {
+                        BlockIdentifier outermostContainedIn = BlockIdentifier.getOutermostContainedIn(targetStatement.endBlocks, statement.containedInBlocks);
+                        // Break to the outermost block.
+                        if (outermostContainedIn != null) {
+                            jumpingStatement.setJumpType(JumpType.BREAK);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Find simple loops.
+    // Identify distinct set of backjumps (b1,b2), which jump back to somewhere (p) which has a forward
+    // jump to somewhere which is NOT a /DIRECT/ parent of the backjumps (i.e. has to go through p)
+    // p must be a direct parent of all of (b1,b2)
+    public static void identifyLoops1(List<Op03SimpleStatement> statements) {
+        // Find back references.
+        // Verify that they belong to jump instructions (otherwise something has gone wrong)
+        // (if, goto).
+        List<Op03SimpleStatement> backjumps = Functional.filter(statements, new HasBackJump());
+        List<Op03SimpleStatement> starts = Functional.uniqAll(Functional.map(backjumps, new GetBackJump()));
+        /* Each of starts is the target of a back jump.
+         * Consider each of these seperately, and for each of these verify
+         * that it contains a forward jump to something which is not a parent except through p.
+         */
+        Map<BlockIdentifier, Op03SimpleStatement> blockEndsCache = MapFactory.newMap();
+        BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
+        Collections.sort(starts, new CompareByIndex());
+
+        for (Op03SimpleStatement start : starts) {
+            considerAsLoopStart(start, statements, blockIdentifierFactory, blockEndsCache);
+        }
+
+    }
+
+    private static class HasBackJump implements Predicate<Op03SimpleStatement> {
+        @Override
+        public boolean test(Op03SimpleStatement in) {
+            InstrIndex inIndex = in.getIndex();
+            List<Op03SimpleStatement> targets = in.getTargets();
+            for (Op03SimpleStatement target : targets) {
+                if (target.getIndex().compareTo(inIndex) < 0) {
+                    if (!(in.containedStatement instanceof JumpingStatement)) {
+                        throw new ConfusedCFRException("Invalid back jump. (anti-decompiler?) on " + in.containedStatement);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    private static class GetBackJump implements UnaryFunction<Op03SimpleStatement, Op03SimpleStatement> {
+        @Override
+        public Op03SimpleStatement invoke(Op03SimpleStatement in) {
+            InstrIndex inIndex = in.getIndex();
+            List<Op03SimpleStatement> targets = in.getTargets();
+            for (Op03SimpleStatement target : targets) {
+                if (target.getIndex().compareTo(inIndex) < 0) {
+                    return target;
+                }
+            }
+            throw new ConfusedCFRException("No back index.");
+        }
+    }
+
+    private static Op03SimpleStatement findFirstConditional(Op03SimpleStatement start) {
+        do {
+            Statement innerStatement = start.getStatement();
+            if (innerStatement instanceof IfStatement) {
+                return start;
+            }
+            List<Op03SimpleStatement> targets = start.getTargets();
+            if (targets.size() != 1) return null;
+            start = targets.get(0);
+        } while (start != null);
+        return null;
+    }
+
+    /* Is the first conditional jump NOT one of the sources of start?
+    * Take the target of the first conditional jump - is it somehwhere which is not reachable from
+    * any of the forward sources of start without going through start?
+    *
+    * If so we've probably got a for/while loop.....
+    * decode both as a while loop, we can convert it into a for later.
+    */
+    private static void considerAsLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
+                                            BlockIdentifierFactory blockIdentifierFactory,
+                                            Map<BlockIdentifier, Op03SimpleStatement> blockEndsCache) {
+        final InstrIndex startIndex = start.getIndex();
+        System.out.println("Is this a loop start ? " + start);
+        List<Op03SimpleStatement> backJumpSources = start.getSources();
+        backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return in.getIndex().compareTo(startIndex) > 0;
+            }
+        });
+        Op03SimpleStatement conditional = findFirstConditional(start);
+        if (conditional == null) {
+            System.out.println("Can't find a conditional");
+            return;
+        }
+        if (conditional != start) {
+            throw new ConfusedCFRException("Don't know how to have statements before a test");
+        }
+        /* Conditional has 2 targets - one of which has to NOT be a parent of 'sources', unless
+         * it involves going through conditional the other way.
+         */
+        List<Op03SimpleStatement> conditionalTargets = conditional.getTargets();
+        /*
+         * This could be broken by a decompiler easily.  We need a transform state which
+         * normalises the code so the jump out is the explicit jump.
+         * TODO : Could do this by finding which one of the targets of the condition is NOT reachable
+         * TODO : by going back from each of the backJumpSources to conditional
+         */
+        Op03SimpleStatement loopBreak = conditionalTargets.get(1);
+        int idxStart = statements.indexOf(start);
+
+        /* If this loop has a test at the bottom, we may have a continue style exit, i.e. the loopBreak
+         * is not just reachable from the top.  We can find this by seeing if loopBreak is reachable from
+         * any of the backJumpSources, without going through start.
+         */
+        /* Take the statement which directly preceeds loopbreak
+         * TODO : ORDERCHEAT
+         * and verify that it's reachable from conditional, WITHOUT going through start.
+         * If so, we guess that it's the end of the loop.
+         */
+        int idxAfterEnd = statements.indexOf(loopBreak);
+        if (idxAfterEnd < idxStart) {
+            /*
+             * We've got an inner loop which is terminating back to the start of the outer loop.
+             * This means we have to figure out the body of the loop by considering back jumps.
+             * We can't rely on the last statement in the loop being a backjump to the start, as it
+             * may be a continue/break to an outer loop.
+             */
+            /* We probably need a while block between start and the END of the loop which begins at idxEnd.
+             * (if that exists.)
+             */
+            Op03SimpleStatement startOfOuterLoop = statements.get(idxAfterEnd);
+            if (startOfOuterLoop.startBlock == null) {
+                // Boned.
+                return;
+            }
+            // Find the END of this block.
+            Op03SimpleStatement endOfOuter = blockEndsCache.get(startOfOuterLoop.startBlock);
+            if (endOfOuter == null) {
+                throw new ConfusedCFRException("BlockIdentifier doesn't exist in blockEndsCache");
+            }
+            idxAfterEnd = statements.indexOf(endOfOuter);
+        }
+
+        /* TODO : ORDERCHEAT */
+        // Mark everything in the list between start and maybeEndLoop as being in this block.
+
+        if (idxStart >= idxAfterEnd) {
+            return;
+//            throw new ConfusedCFRException("Can't decode block");
+        }
+        BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.WHILELOOP);
+        for (int x = idxStart; x < idxAfterEnd; ++x) {
+            statements.get(x).markBlock(blockIdentifier);
+        }
+        Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
+        start.markBlockStart(blockIdentifier);
+        blockEnd.markBlockEnd(blockIdentifier);
+        blockEndsCache.put(blockIdentifier, blockEnd);
+    }
+
 }

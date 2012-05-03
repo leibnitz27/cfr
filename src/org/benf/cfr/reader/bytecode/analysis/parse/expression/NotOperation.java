@@ -32,4 +32,9 @@ public class NotOperation implements ConditionalExpression {
     public String toString() {
         return "!(" + lhs.toString() + ")";
     }
+
+    @Override
+    public ConditionalExpression getNegatedExpression() {
+        return lhs;
+    }
 }

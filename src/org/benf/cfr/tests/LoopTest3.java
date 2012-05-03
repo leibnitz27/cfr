@@ -23,7 +23,7 @@ public class LoopTest3 {
             for (Object o2 : set) {
                 System.out.println("jim");
                 if (o.equals(o2)) {
-                    if (x == (y++)) continue fred;
+                    if (x == (y++)) break fred;
                     continue jim;
                 }
                 if (x == (++y)) continue fred;

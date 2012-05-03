@@ -32,6 +32,18 @@ public class InstrIndex implements Comparable<InstrIndex> {
         return a;
     }
 
+    @Override
+    public int hashCode() {
+        return index + (1001 * subindex);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof InstrIndex)) return false;
+        InstrIndex other = (InstrIndex) o;
+        return this.index == other.index && this.subindex == other.subindex;
+    }
+
     public InstrIndex justBefore() {
         return new InstrIndex(this.index, this.subindex - 1);
     }
@@ -43,4 +55,6 @@ public class InstrIndex implements Comparable<InstrIndex> {
     public boolean directlyPreceeds(InstrIndex other) {
         return this.index == other.index - 1;
     }
+
+
 }
