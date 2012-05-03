@@ -32,7 +32,6 @@ public class OperationFactoryDefault implements OperationFactory {
 
     @Override
     public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
-        // Todo - obviously, doesn't need to be new.
         return new StackDelta(instr.getRawStackPopped(), instr.getRawStackPushed());
     }
 
