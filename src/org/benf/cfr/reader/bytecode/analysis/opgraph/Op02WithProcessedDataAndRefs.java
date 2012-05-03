@@ -351,8 +351,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new CompoundStatement(s1, s2, s3);
             }
             case DUP2: {
-                // Todo - more elegant way of knowing which type.
-                if (sources.size() == 1) {
+                if (stackConsumed.get(0).getStackEntry().getType().getComputationCategory() == 2) {
                     Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
                     Statement s2 = new Assignment(getStackLValue(1), getStackRValue(0));
                     return new CompoundStatement(s1, s2);
