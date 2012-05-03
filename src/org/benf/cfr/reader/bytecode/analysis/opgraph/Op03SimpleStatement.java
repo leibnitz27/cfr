@@ -600,14 +600,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return in.getIndex().compareTo(startIndex) > 0;
             }
         });
+        Collections.sort(backJumpSources, new CompareByIndex());
         Op03SimpleStatement conditional = findFirstConditional(start);
         if (conditional == null) {
+            // No conditional before we have a branch?  Probably a do { } while. 
             System.out.println("Can't find a conditional");
             return;
         }
-        if (conditional != start) {
-            throw new ConfusedCFRException("Don't know how to have statements before a test");
-        }
+        // Now we've found our first conditional before a branch - is the target AFTER the last backJump?
+        // Requires Debuggered conditionals.
+        // TODO : ORDERING
+        Op03SimpleStatement lastJump = backJumpSources.get(backJumpSources.size() - 1);
         /* Conditional has 2 targets - one of which has to NOT be a parent of 'sources', unless
          * it involves going through conditional the other way.
          */
@@ -619,11 +622,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * TODO : by going back from each of the backJumpSources to conditional
          */
         Op03SimpleStatement loopBreak = conditionalTargets.get(1);
+
+        if (loopBreak.getIndex().compareTo(lastJump.getIndex()) <= 0) {
+            // The conditional doesn't take us to after the last back jump, i.e. it's not a while {} loop.
+            // ... unless it's an inner while loop continuing to a prior loop.
+            if (loopBreak.getIndex().compareTo(startIndex) >= 0) {
+                return;
+            }
+        }
+
+        if (start != conditional) {
+            // We'll have problems - there are actions taken inside the conditional.
+            return;
+        }
         int idxStart = statements.indexOf(start);
 
         /* If this loop has a test at the bottom, we may have a continue style exit, i.e. the loopBreak
          * is not just reachable from the top.  We can find this by seeing if loopBreak is reachable from
          * any of the backJumpSources, without going through start.
+         *
+         * OR we may just have a do { } while....
          */
         /* Take the statement which directly preceeds loopbreak
          * TODO : ORDERCHEAT

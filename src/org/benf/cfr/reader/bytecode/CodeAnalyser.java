@@ -184,6 +184,12 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes2);
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes2);
+        // Debugger conditionals
+        // if (X) goto Y
+        // goto Z
+        // Y
+        // -> if (!X) goto Z
+
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
 
         Op03SimpleStatement.assignSSAIdentifiers(op03SimpleParseNodes2);
