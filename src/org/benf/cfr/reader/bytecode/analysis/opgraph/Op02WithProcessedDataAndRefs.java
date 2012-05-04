@@ -103,6 +103,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return rawData[index];
     }
 
+    private int getInstrArgShort(int index) {
+        BaseByteData tmp = new BaseByteData(rawData);
+        return tmp.getS2At(index);
+    }
+
     @Override
     public List<Op02WithProcessedDataAndRefs> getTargets() {
         return targets;
@@ -170,6 +175,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ALOAD:
             case ILOAD:
             case LLOAD:
+            case DLOAD:
                 return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset)));
             case ALOAD_0:
             case ILOAD_0:
@@ -213,14 +219,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getLong(1)));
             case BIPUSH:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(rawData[0])));
-            case SIPUSH: {
-                BaseByteData tmp = new BaseByteData(rawData);
-                short s = tmp.getS2At(0);
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(s)));
-            }
+            case SIPUSH:
+                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(getInstrArgShort(0))));
             case ISTORE:
             case ASTORE:
             case LSTORE:
+            case DSTORE:
                 return new Assignment(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset), getStackRValue(0));
             case ISTORE_0:
             case ASTORE_0:
@@ -390,10 +394,20 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new SwitchStatement(getStackRValue(0), new DecodedTableSwitch(rawData, originalRawOffset));
             case LOOKUPSWITCH:
                 return new SwitchStatement(getStackRValue(0), new DecodedLookupSwitch(rawData, originalRawOffset));
-            case IINC:
-                // Can we have ++ instead?
-                return new Assignment(new LocalVariable(rawData[0], variableNamer, originalRawOffset),
-                        new ArithmeticOperation(new FieldExpression(new LocalVariable(rawData[0], variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(rawData[1])), ArithOp.PLUS));
+            case IINC: {
+                int variableIndex = getInstrArgByte(0);
+                int incrAmount = getInstrArgByte(1);
+                // Can we have ++ / += instead?
+                return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
+                        new ArithmeticOperation(new FieldExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), ArithOp.PLUS));
+            }
+            case IINC_WIDE: {
+                int variableIndex = getInstrArgShort(1);
+                int incrAmount = getInstrArgShort(3);
+                // Can we have ++ / += instead?
+                return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
+                        new ArithmeticOperation(new FieldExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), ArithOp.PLUS));
+            }
             default:
                 throw new ConfusedCFRException("Not implemented - conversion to statement from " + instr);
         }
