@@ -3,6 +3,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
+import javax.swing.*;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -16,6 +18,7 @@ public enum ArithOp {
     MINUS("-"),
     MULTIPLY("*"),
     DIVIDE("/"),
+    REM("%"),
     OR("|"),
     AND("&");
 
@@ -51,6 +54,8 @@ public enum ArithOp {
             case LAND:
             case IAND:
                 return AND;
+            case IREM:
+                return REM;
             default:
                 throw new ConfusedCFRException("Don't know arith op for " + instr);
         }

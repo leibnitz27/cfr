@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import com.sun.org.apache.bcel.internal.generic.IREM;
 import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
@@ -24,6 +25,7 @@ import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.exceptions.ExceptionBookmark;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -211,6 +213,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getLong(1)));
             case BIPUSH:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(rawData[0])));
+            case SIPUSH: {
+                BaseByteData tmp = new BaseByteData(rawData);
+                short s = tmp.getS2At(0);
+                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(s)));
+            }
             case ISTORE:
             case ASTORE:
             case LSTORE:
@@ -252,7 +259,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LADD:
             case IADD:
             case ISUB:
+            case IREM:
             case IDIV:
+            case IMUL:
+            case IAND:
+            case LAND:
+            case LDIV:
+            case LOR:
             case IOR: {
                 Expression op = new ArithmeticOperation(getStackRValue(1), getStackRValue(0), ArithOp.getOpFor(instr));
                 return new Assignment(getStackLValue(0), op);
