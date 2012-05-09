@@ -42,7 +42,7 @@ public class StackEntry {
 
     public void mergeWith(StackEntry other) {
         if (other.stackType != this.stackType) {
-            throw new ConfusedCFRException("Trying to merge different stackTypes");
+            throw new ConfusedCFRException("Trying to merge different stackTypes " + stackType + " vs " + other.stackType + " [" + id0 + "/" + other.id0 + "]");
         }
         ids.addAll(other.ids);
         usageCount += other.usageCount;

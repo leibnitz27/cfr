@@ -16,10 +16,13 @@ public class ConstantPoolUtils {
 
     public static StackType decodeTypeTok(String tok) {
         int idx = 0;
+        int numArrayDims = 0;
         char c = tok.charAt(idx);
         while (c == '[') {
+            numArrayDims++;
             c = tok.charAt(++idx);
         }
+        if (numArrayDims > 0) return StackType.REF;
         switch (c) {
             case 'L':   // object
                 return StackType.REF;
