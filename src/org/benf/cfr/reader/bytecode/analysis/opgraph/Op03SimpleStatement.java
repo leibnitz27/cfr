@@ -340,9 +340,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             statement.collectLocallyMutatedVariables(ssaIdentifierFactory);
         }
 
-        List<Op03SimpleStatement> toProcess = ListFactory.newLinkedList();
+        LinkedList<Op03SimpleStatement> toProcess = ListFactory.newLinkedList();
         toProcess.addAll(statements);
-        for (Op03SimpleStatement statement : toProcess) {
+        while (!toProcess.isEmpty()) {
+            Op03SimpleStatement statement = toProcess.remove();
             SSAIdentifiers ssaIdentifiers = statement.ssaIdentifiers;
             boolean changed = false;
             for (Op03SimpleStatement source : statement.getSources()) {
