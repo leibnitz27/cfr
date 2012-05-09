@@ -13,40 +13,46 @@ import java.util.Set;
  * Date: 24/04/2012
  */
 public class SSAIdentifiers {
+    private final static Integer AMBIGUOUS_IDENT = -1;
+
     private final LValue fixedHere;
-    private final Map<LValue, Set<Integer>> knownIdentifiers = MapFactory.newMap();
+    private final Map<LValue, Integer> knownIdentifiers = MapFactory.newMap();
 
     public SSAIdentifiers() {
         fixedHere = null;
     }
 
     public SSAIdentifiers(LValue lValue, SSAIdentifierFactory ssaIdentifierFactory) {
-        Set<Integer> values = SetFactory.newSet();
-        values.add(ssaIdentifierFactory.getIdent(lValue));
+        Integer id = ssaIdentifierFactory.getIdent(lValue);
         fixedHere = lValue;
-        knownIdentifiers.put(lValue, values);
+        knownIdentifiers.put(lValue, id);
     }
 
     public boolean mergeWith(SSAIdentifiers other) {
         boolean changed = false;
-        for (Map.Entry<LValue, Set<Integer>> valueSetEntry : other.knownIdentifiers.entrySet()) {
+        for (Map.Entry<LValue, Integer> valueSetEntry : other.knownIdentifiers.entrySet()) {
             LValue lValue = valueSetEntry.getKey();
-            Set<Integer> set = valueSetEntry.getValue();
+            Integer otherIdent = valueSetEntry.getValue();
             if (lValue.equals(fixedHere)) continue;
-            if (!knownIdentifiers.containsKey(lValue)) knownIdentifiers.put(lValue, SetFactory.<Integer>newSet());
-            int size = knownIdentifiers.size();
-            knownIdentifiers.get(lValue).addAll(set);
-            if (knownIdentifiers.size() != size) changed = true;
+            if (!knownIdentifiers.containsKey(lValue)) knownIdentifiers.put(lValue, otherIdent);
+            if (!knownIdentifiers.get(lValue).equals(otherIdent)) {
+                knownIdentifiers.put(lValue, AMBIGUOUS_IDENT);
+                changed = true;
+            }
         }
         return changed;
     }
 
     public boolean isValidReplacement(LValue lValue, SSAIdentifiers other) {
-        Set<Integer> vals = knownIdentifiers.get(lValue);
-        Set<Integer> otherVals = other.knownIdentifiers.get(lValue);
-        if (vals == null && otherVals == null) return true;
-        if (vals == null || vals.size() != 1) return false;
-        if (otherVals == null || otherVals.size() != 1) return false;
-        return vals.containsAll(otherVals);
+        Integer thisVersion = knownIdentifiers.get(lValue);
+        Integer otherVersion = other.knownIdentifiers.get(lValue);
+        if (thisVersion == null && otherVersion == null) return true;
+        if (thisVersion == null || thisVersion == AMBIGUOUS_IDENT) return false;
+        if (otherVersion == null || otherVersion == AMBIGUOUS_IDENT) return false;
+        return thisVersion.equals(otherVersion);
+    }
+
+    public int size() {
+        return knownIdentifiers.size();
     }
 }
