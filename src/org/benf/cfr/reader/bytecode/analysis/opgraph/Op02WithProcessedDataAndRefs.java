@@ -345,6 +345,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case IRETURN:
             case ARETURN:
             case LRETURN:
+            case DRETURN:
                 return new ReturnValueStatement(getStackRValue(0));
             case GETFIELD: {
                 Expression fieldExpression = new FieldExpression(new FieldVariable(getStackRValue(0), cp, cpEntries[0]));
