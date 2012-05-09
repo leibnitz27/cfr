@@ -390,6 +390,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new CommentStatement("} catch ... {");
             case POP:
                 return new ExpressionStatement(getStackRValue(0));
+            case POP2:
+                if (stackConsumed.get(0).getStackEntry().getType().getComputationCategory() == 2) {
+                    return new ExpressionStatement(getStackRValue(0));
+                } else {
+                    Statement s1 = new ExpressionStatement(getStackRValue(0));
+                    Statement s2 = new ExpressionStatement(getStackRValue(1));
+                    return new CompoundStatement(s1, s2);
+                }
             case TABLESWITCH:
                 return new SwitchStatement(getStackRValue(0), new DecodedTableSwitch(rawData, originalRawOffset));
             case LOOKUPSWITCH:
