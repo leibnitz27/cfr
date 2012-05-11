@@ -20,7 +20,10 @@ public enum ArithOp {
     DIVIDE("/"),
     REM("%"),
     OR("|"),
-    AND("&");
+    AND("&"),
+    SHR(">>"),
+    SHL("<<"),
+    XOR("^");
 
     private final String showAs;
 
@@ -38,15 +41,23 @@ public enum ArithOp {
                 return LCMP;
             case ISUB:
             case LSUB:
+            case FSUB:
+            case DSUB:
                 return MINUS;
             case IMUL:
             case LMUL:
+            case FMUL:
+            case DMUL:
                 return MULTIPLY;
             case IADD:
             case LADD:
+            case FADD:
+            case DADD:
                 return PLUS;
             case LDIV:
             case IDIV:
+            case FDIV:
+            case DDIV:
                 return DIVIDE;
             case LOR:
             case IOR:
@@ -55,7 +66,19 @@ public enum ArithOp {
             case IAND:
                 return AND;
             case IREM:
+            case LREM:
+            case FREM:
+            case DREM:
                 return REM;
+            case ISHR:
+            case LSHR:
+                return SHR;
+            case ISHL:
+            case LSHL:
+                return SHL;
+            case IXOR:
+            case LXOR:
+                return XOR;
             default:
                 throw new ConfusedCFRException("Don't know arith op for " + instr);
         }

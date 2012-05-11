@@ -60,6 +60,8 @@ public class TypedLiteral {
     public static TypedLiteral getConstantPoolEntry(ConstantPool cp, ConstantPoolEntry cpe) {
         if (cpe instanceof ConstantPoolEntryDouble) {
             return new TypedLiteral(LiteralType.Double, ((ConstantPoolEntryDouble) cpe).getValue());
+        } else if (cpe instanceof ConstantPoolEntryFloat) {
+            return new TypedLiteral(LiteralType.Double, ((ConstantPoolEntryFloat) cpe).getValue());
         } else if (cpe instanceof ConstantPoolEntryLong) {
             return new TypedLiteral(LiteralType.Long, ((ConstantPoolEntryLong) cpe).getValue());
         } else if (cpe instanceof ConstantPoolEntryInteger) {

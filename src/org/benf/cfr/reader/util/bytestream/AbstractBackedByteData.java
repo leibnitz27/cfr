@@ -37,6 +37,16 @@ public abstract class AbstractBackedByteData implements ByteData {
     }
 
     @Override
+    public float getFloatAt(long o) throws ConfusedCFRException {
+        DataInputStream dis = rawDataAsStream((int) o, 8);
+        try {
+            return dis.readFloat();
+        } catch (Exception e) {
+            throw new ConfusedCFRException(e);
+        }
+    }
+
+    @Override
     public long getLongAt(long o) throws ConfusedCFRException {
         DataInputStream dis = rawDataAsStream((int) o, 8);
         try {

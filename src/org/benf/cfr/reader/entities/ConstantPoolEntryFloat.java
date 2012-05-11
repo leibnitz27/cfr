@@ -12,7 +12,10 @@ import org.benf.cfr.reader.util.output.Dumper;
  * To change this template use File | Settings | File Templates.
  */
 public class ConstantPoolEntryFloat implements ConstantPoolEntry, ConstantPoolEntryLiteral {
+    private final float value;
+
     public ConstantPoolEntryFloat(ByteData data) {
+        this.value = data.getFloatAt(1);
     }
 
     @Override
@@ -28,5 +31,9 @@ public class ConstantPoolEntryFloat implements ConstantPoolEntry, ConstantPoolEn
     @Override
     public StackType getStackType() {
         return StackType.FLOAT;
+    }
+
+    public float getValue() {
+        return value;
     }
 }

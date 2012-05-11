@@ -262,21 +262,49 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LSUB:
             case LADD:
             case IADD:
+            case FADD:
+            case DADD:
             case ISUB:
+            case DSUB:
+            case FSUB:
             case IREM:
+            case FREM:
+            case DREM:
             case IDIV:
+            case FDIV:
+            case DDIV:
             case IMUL:
+            case DMUL:
+            case FMUL:
             case IAND:
             case LAND:
             case LDIV:
             case LOR:
-            case IOR: {
+            case IOR:
+            case LXOR:
+            case IXOR:
+            case ISHR:
+            case ISHL:
+            case LSHL:
+            case LSHR: {
                 Expression op = new ArithmeticOperation(getStackRValue(1), getStackRValue(0), ArithOp.getOpFor(instr));
                 return new Assignment(getStackLValue(0), op);
             }
-            case L2I:
+            case I2B:
+            case I2C:
+            case I2D:
+            case I2F:
             case I2L:
             case I2S:
+            case L2D:
+            case L2F:
+            case L2I:
+            case F2D:
+            case F2I:
+            case F2L:
+            case D2F:
+            case D2I:
+            case D2L:
                 return new Assignment(getStackLValue(0), getStackRValue(0));
             case INSTANCEOF:
                 return new Assignment(getStackLValue(0), new InstanceOfExpression(getStackRValue(0), cp, cpEntries[0]));

@@ -20,6 +20,8 @@ public interface ByteData {
 
     double getDoubleAt(long o);
 
+    float getFloatAt(long o);
+
     long getLongAt(long o);
 
     byte[] getBytesAt(int count, long offset);
