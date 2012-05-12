@@ -184,26 +184,31 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ILOAD:
             case LLOAD:
             case DLOAD:
+            case FLOAD:
                 return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset)));
             case ALOAD_0:
             case ILOAD_0:
             case LLOAD_0:
             case DLOAD_0:
+            case FLOAD_0:
                 return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(0, variableNamer, originalRawOffset)));
             case ALOAD_1:
             case ILOAD_1:
             case LLOAD_1:
             case DLOAD_1:
+            case FLOAD_1:
                 return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(1, variableNamer, originalRawOffset)));
             case ALOAD_2:
             case ILOAD_2:
             case LLOAD_2:
             case DLOAD_2:
+            case FLOAD_2:
                 return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(2, variableNamer, originalRawOffset)));
             case ALOAD_3:
             case ILOAD_3:
             case LLOAD_3:
             case DLOAD_3:
+            case FLOAD_3:
                 return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(3, variableNamer, originalRawOffset)));
             case ACONST_NULL:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getNull()));
@@ -225,10 +230,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getLong(0)));
             case LCONST_1:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getLong(1)));
+            case FCONST_0:
             case DCONST_0:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getDouble(0)));
+            case FCONST_1:
             case DCONST_1:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getDouble(1)));
+            case FCONST_2:
+                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getDouble(2)));
             case BIPUSH:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(rawData[0])));
             case SIPUSH:
@@ -237,22 +246,31 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ASTORE:
             case LSTORE:
             case DSTORE:
+            case FSTORE:
                 return new Assignment(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset), getStackRValue(0));
             case ISTORE_0:
             case ASTORE_0:
             case LSTORE_0:
+            case DSTORE_0:
+            case FSTORE_0:
                 return new Assignment(new LocalVariable(0, variableNamer, originalRawOffset), getStackRValue(0));
             case ISTORE_1:
             case ASTORE_1:
             case LSTORE_1:
+            case DSTORE_1:
+            case FSTORE_1:
                 return new Assignment(new LocalVariable(1, variableNamer, originalRawOffset), getStackRValue(0));
             case ISTORE_2:
             case ASTORE_2:
             case LSTORE_2:
+            case DSTORE_2:
+            case FSTORE_2:
                 return new Assignment(new LocalVariable(2, variableNamer, originalRawOffset), getStackRValue(0));
             case ISTORE_3:
             case ASTORE_3:
             case LSTORE_3:
+            case DSTORE_3:
+            case FSTORE_3:
                 return new Assignment(new LocalVariable(3, variableNamer, originalRawOffset), getStackRValue(0));
             case NEW:
                 return new Assignment(getStackLValue(0), new NewObject(cp, cpEntries[0]));
@@ -266,13 +284,23 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case IALOAD:
             case BALOAD:
             case CALOAD:
+            case FALOAD:
+            case LALOAD:
+            case DALOAD:
                 return new Assignment(getStackLValue(0), new ArrayIndex(getStackRValue(1), getStackRValue(0)));
             case AASTORE:
             case IASTORE:
             case BASTORE:
             case CASTORE:
+            case FASTORE:
+            case LASTORE:
+            case DASTORE:
                 return new Assignment(new ArrayVariable(new ArrayIndex(getStackRValue(2), getStackRValue(1))), getStackRValue(0));
             case LCMP:
+            case DCMPG:
+            case DCMPL:
+            case FCMPG:
+            case FCMPL:
             case LSUB:
             case LADD:
             case IADD:
@@ -283,6 +311,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FSUB:
             case IREM:
             case FREM:
+            case LREM:
             case DREM:
             case IDIV:
             case FDIV:
@@ -301,7 +330,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ISHR:
             case ISHL:
             case LSHL:
-            case LSHR: {
+            case LSHR:
+            case IUSHR:
+            case LUSHR: {
                 Expression op = new ArithmeticOperation(getStackRValue(1), getStackRValue(0), ArithOp.getOpFor(instr));
                 return new Assignment(getStackLValue(0), op);
             }
@@ -389,6 +420,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ARETURN:
             case LRETURN:
             case DRETURN:
+            case FRETURN:
                 return new ReturnValueStatement(getStackRValue(0));
             case GETFIELD: {
                 Expression fieldExpression = new FieldExpression(new FieldVariable(getStackRValue(0), cp, cpEntries[0]));
@@ -459,6 +491,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
                         new ArithmeticOperation(new FieldExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), ArithOp.PLUS));
             }
+            case DNEG:
+            case FNEG:
+            case LNEG:
+            case INEG: {
+                return new Assignment(getStackLValue(0),
+                        new ArithmeticMonOperation(getStackRValue(0), ArithOp.MINUS));
+            }
+
             case IINC_WIDE: {
                 int variableIndex = getInstrArgShort(1);
                 int incrAmount = getInstrArgShort(3);

@@ -14,6 +14,10 @@ import javax.swing.*;
  */
 public enum ArithOp {
     LCMP("LCMP"),
+    DCMPL("DCMPL"),
+    DCMPG("DCMPG"),
+    FCMPL("FCMPL"),
+    FCMPG("FCMPG"),
     PLUS("+"),
     MINUS("-"),
     MULTIPLY("*"),
@@ -39,6 +43,14 @@ public enum ArithOp {
         switch (instr) {
             case LCMP:
                 return LCMP;
+            case DCMPG:
+                return DCMPG;
+            case DCMPL:
+                return DCMPL;
+            case FCMPG:
+                return FCMPG;
+            case FCMPL:
+                return FCMPL;
             case ISUB:
             case LSUB:
             case FSUB:
@@ -72,6 +84,8 @@ public enum ArithOp {
                 return REM;
             case ISHR:
             case LSHR:
+            case IUSHR: // TODO : WRONG
+            case LUSHR: // TODO : WRONG
                 return SHR;
             case ISHL:
             case LSHL:
