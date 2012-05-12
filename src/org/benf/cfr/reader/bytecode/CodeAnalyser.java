@@ -121,8 +121,8 @@ public class CodeAnalyser {
                     throw new ConfusedCFRException("Can't install exception handler infront of nothing");
                 for (Op02WithProcessedDataAndRefs source : startInstruction.getSources()) {
                     source.replaceTarget(startInstruction, tryOp);
+                    tryOp.addSource(source);
                 }
-                tryOp.addTarget(startInstruction);
                 for (Op02WithProcessedDataAndRefs tryTarget : handlerTargets) {
                     /*
                      * tryTarget should not have a previous FAKE_CATCH source.
@@ -151,6 +151,7 @@ public class CodeAnalyser {
                     preCatchOp.addTarget(tryTarget);
                     tryTarget.addSource(preCatchOp);
                 }
+                tryOp.addTarget(startInstruction);
                 startInstruction.clearSources();
                 startInstruction.addSource(tryOp);
                 op2list.add(tryOp);

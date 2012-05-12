@@ -26,4 +26,9 @@ public class CommentStatement extends AbstractStatement {
     @Override
     public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
     }
+
+    @Override
+    public String toString() {
+        return "CommentStatement : " + text;
+    }
 }

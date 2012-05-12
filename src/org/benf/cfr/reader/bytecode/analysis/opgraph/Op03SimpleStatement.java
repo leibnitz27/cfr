@@ -153,6 +153,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private void replaceTarget(Op03SimpleStatement oldTarget, Op03SimpleStatement newTarget) {
+//        System.out.println("Replacing target + " + oldTarget + " with " + newTarget + " from " + this);
         int index = targets.indexOf(oldTarget);
         if (index == -1) {
             throw new ConfusedCFRException("Invalid target");
@@ -161,11 +162,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private void replaceSingleSourceWith(Op03SimpleStatement oldSource, List<Op03SimpleStatement> newSources) {
+//        System.out.println("Replacing source + " + oldSource + " with " + newSources + " from " + this);
         if (!sources.remove(oldSource)) throw new ConfusedCFRException("Invalid source");
         sources.addAll(newSources);
     }
 
     private void replaceSource(Op03SimpleStatement oldSource, Op03SimpleStatement newSource) {
+//        System.out.println("Replacing source + " + oldSource + " with " + newSource + " from " + this);
         int index = sources.indexOf(oldSource);
         if (index == -1) {
             throw new ConfusedCFRException("Invalid source");
@@ -174,7 +177,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private void removeSource(Op03SimpleStatement oldSource) {
-        if (!sources.remove(oldSource)) throw new ConfusedCFRException("Invalid source");
+        //       System.out.println("Removing source + " + oldSource + " from " + this);
+        if (!sources.remove(oldSource)) {
+            throw new ConfusedCFRException("Invalid source, tried to remove " + oldSource + "\nfrom " + this + "\nbut was not a source.");
+        }
     }
 
     private LValue getCreatedLValue() {
@@ -691,4 +697,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         blockEndsCache.put(blockIdentifier, blockEnd);
     }
 
+    @Override
+    public String toString() {
+        return "Op03SimpleStatement - " + index + " : " + containedStatement;
+    }
 }
