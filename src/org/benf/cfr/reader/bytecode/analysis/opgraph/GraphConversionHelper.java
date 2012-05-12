@@ -14,17 +14,17 @@ import java.util.Map;
  */
 public class GraphConversionHelper<X extends Graph<X>, Y extends MutableGraph<Y>> {
     private final Map<X, Y> correspondance;
-    
+
     public GraphConversionHelper() {
         this.correspondance = MapFactory.newMap();
     }
 
     private Y findEntry(X key) {
         Y value = correspondance.get(key);
-        if (key == null) throw new ConfusedCFRException("Missing key when tying up graph");
+        if (value == null) throw new ConfusedCFRException("Missing key when tying up graph " + key);
         return value;
     }
-    
+
     public void patchUpRelations() {
         for (Map.Entry<X, Y> entry : correspondance.entrySet()) {
             X orig = entry.getKey();
@@ -39,7 +39,7 @@ public class GraphConversionHelper<X extends Graph<X>, Y extends MutableGraph<Y>
             }
         }
     }
-    
+
     public void registerOriginalAndNew(X original, Y newnode) {
         correspondance.put(original, newnode);
     }

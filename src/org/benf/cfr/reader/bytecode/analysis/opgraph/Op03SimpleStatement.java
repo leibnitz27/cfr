@@ -66,6 +66,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public void addSource(Op03SimpleStatement source) {
+        if (source == null) throw new ConfusedCFRException("Null source being added.");
         sources.add(source);
     }
 

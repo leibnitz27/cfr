@@ -16,5 +16,9 @@ public class LoopTest5 {
         }
     }
 
-
+    public void test6(int end) {
+        for (int x = 3; x > 0; x--) {
+            System.out.println(x);
+        }
+    }
 }

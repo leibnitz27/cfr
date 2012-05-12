@@ -80,6 +80,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         sources.add(node);
     }
 
+    public JVMInstr getInstr() {
+        return instr;
+    }
+
     public void replaceTarget(Op02WithProcessedDataAndRefs oldTarget, Op02WithProcessedDataAndRefs newTarget) {
         int index = targets.indexOf(oldTarget);
         if (index == -1) throw new ConfusedCFRException("Invalid target");
@@ -122,7 +126,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         StackDelta stackDelta = instr.getStackDelta(rawData, cp, cpEntries, stackSim);
         if (stackDepthBeforeExecution != -1) {
             if (stackSim.getDepth() != stackDepthBeforeExecution) {
-                throw new ConfusedCFRException("Invalid stack depths @ " + this + " : expected " + stackSim.getDepth() + " got " + stackDepthBeforeExecution);
+                throw new ConfusedCFRException("Invalid stack depths @ " + this + " : expected " + stackSim.getDepth() + " previously set to " + stackDepthBeforeExecution);
             }
 
             // Merge our current known arguments with these.
@@ -162,7 +166,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         for (StackEntryHolder stackEntryHolder : stackProduced) {
             d.print(stackEntryHolder.toString() + " ");
         }
-        d.print("]  -> nodes");
+        d.print("] <- nodes");
+        for (Op02WithProcessedDataAndRefs source : sources) {
+            d.print(" " + source.index);
+        }
+        d.print(" -> nodes");
         for (Op02WithProcessedDataAndRefs target : targets) {
             d.print(" " + target.index);
         }
@@ -217,6 +225,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getLong(0)));
             case LCONST_1:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getLong(1)));
+            case DCONST_0:
+                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getDouble(0)));
+            case DCONST_1:
+                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getDouble(1)));
             case BIPUSH:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(rawData[0])));
             case SIPUSH:
@@ -253,10 +265,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case AALOAD:
             case IALOAD:
             case BALOAD:
+            case CALOAD:
                 return new Assignment(getStackLValue(0), new ArrayIndex(getStackRValue(1), getStackRValue(0)));
             case AASTORE:
             case IASTORE:
             case BASTORE:
+            case CASTORE:
                 return new Assignment(new ArrayVariable(new ArrayIndex(getStackRValue(2), getStackRValue(1))), getStackRValue(0));
             case LCMP:
             case LSUB:
@@ -276,6 +290,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case IMUL:
             case DMUL:
             case FMUL:
+            case LMUL:
             case IAND:
             case LAND:
             case LDIV:
@@ -413,10 +428,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LDC_W:
             case LDC2_W:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getConstantPoolEntry(cp, cpEntries[0])));
+            case MONITORENTER:
+                return new CommentStatement("MONITORENTER {");
+            case MONITOREXIT:
+                return new CommentStatement("} MONITOREXIT");
             case FAKE_TRY:
                 return new CommentStatement("try {");
             case FAKE_CATCH:
                 return new CommentStatement("} catch ... {");
+            case NOP:
+                return new Nop();
             case POP:
                 return new ExpressionStatement(getStackRValue(0));
             case POP2:

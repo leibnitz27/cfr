@@ -52,9 +52,12 @@ public class CodeAnalyser {
         Map<Integer, Integer> lutByOffset = new HashMap<Integer, Integer>();
         Map<Integer, Integer> lutByIdx = new HashMap<Integer, Integer>();
         OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(0);
-        int idx = 0;
+        int idx = 1;
         int offset = 0;
 
+        instrs.add(JVMInstr.NOP.createOperation(null, cp, -1));
+        lutByIdx.put(0, -1);
+        lutByOffset.put(-1, 0);
         do {
             JVMInstr instr = JVMInstr.find(bdCode.getS1At(0));
             Op01WithProcessedDataAndByteJumps oc = instr.createOperation(bdCode, cp, offset);
@@ -121,6 +124,23 @@ public class CodeAnalyser {
                 }
                 tryOp.addTarget(startInstruction);
                 for (Op02WithProcessedDataAndRefs tryTarget : handlerTargets) {
+                    /*
+                     * tryTarget should not have a previous FAKE_CATCH source.
+                     */
+                    List<Op02WithProcessedDataAndRefs> tryTargetSources = tryTarget.getSources();
+                    if (!tryTargetSources.isEmpty()) {
+                        if (tryTargetSources.size() > 1) {
+                            throw new ConfusedCFRException("Try target has >1 source");
+                        }
+                        Op02WithProcessedDataAndRefs source = tryTargetSources.get(0);
+                        if (source.getInstr() != JVMInstr.FAKE_CATCH) {
+                            throw new ConfusedCFRException("non catch before exception catch block");
+                        }
+                        // We won't add another catch.
+                        continue;
+                    }
+
+
                     Op02WithProcessedDataAndRefs preCatchOp =
                             new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1, null);
 

@@ -37,4 +37,8 @@ public class BooleanOperation implements ConditionalExpression {
         return "(" + lhs.toString() + " " + op.getShowAs() + " " + rhs.toString() + ")";
     }
 
+    @Override
+    public ConditionalExpression getNegatedExpression() {
+        return new NotOperation(this);
+    }
 }
