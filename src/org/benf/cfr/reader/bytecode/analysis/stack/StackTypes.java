@@ -4,6 +4,7 @@ import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created:
@@ -16,5 +17,9 @@ public class StackTypes extends ArrayList<StackType> {
 
     public StackTypes(StackType... stackTypes) {
         super(Arrays.asList(stackTypes));
+    }
+
+    public StackTypes(List<StackType> stackTypes) {
+        super(stackTypes);
     }
 }

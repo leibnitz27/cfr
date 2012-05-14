@@ -16,18 +16,21 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
  * Time: 08:10
  * To change this template use File | Settings | File Templates.
  */
-public class OperationFactoryDup2 extends OperationFactoryDefault {
+public class OperationFactoryDup2 extends OperationFactoryDupBase {
 
     @Override
     public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
-        StackType topStackEntry = stackSim.getEntry(0).getType();
-        if (topStackEntry.getComputationCategory() == 2) {
-            return new StackDelta(topStackEntry.asList(), new StackTypes(topStackEntry, topStackEntry));
+        if (getCat(stackSim, 0) == 1) {
+            checkCat(stackSim, 1, 1);
+            return new StackDelta(
+                    getStackTypes(stackSim, 0, 1),
+                    getStackTypes(stackSim, 0, 1, 0, 1)
+            );
         } else {
-            StackType nextStackEntry = stackSim.getEntry(1).getType();
-            StackTypes stackTypesPopped = new StackTypes(topStackEntry, nextStackEntry);
-            StackTypes stackTypesPushed = new StackTypes(topStackEntry, nextStackEntry, topStackEntry, nextStackEntry);
-            return new StackDelta(stackTypesPopped, stackTypesPushed);
+            return new StackDelta(
+                    getStackTypes(stackSim, 0),
+                    getStackTypes(stackSim, 0, 0)
+            );
         }
     }
 

@@ -443,6 +443,20 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
                 return new CompoundStatement(s1, s2, s3);
             }
+            case DUP_X2: {
+                if (stackConsumed.get(1).getStackEntry().getType().getComputationCategory() == 2) {
+                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
+                    return new CompoundStatement(s1, s2, s3);
+                } else {
+                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
+                    Statement s4 = new Assignment(getStackLValue(3), getStackRValue(0));
+                    return new CompoundStatement(s1, s2, s3, s4);
+                }
+            }
             case DUP2: {
                 if (stackConsumed.get(0).getStackEntry().getType().getComputationCategory() == 2) {
                     Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
@@ -454,6 +468,58 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
                     Statement s4 = new Assignment(getStackLValue(3), getStackRValue(1));
                     return new CompoundStatement(s1, s2, s3, s4);
+                }
+            }
+            case DUP2_X1: {
+                if (stackConsumed.get(0).getStackEntry().getType().getComputationCategory() == 2) {
+                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
+                    return new CompoundStatement(s1, s2, s3);
+                } else {
+                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
+                    Statement s4 = new Assignment(getStackLValue(3), getStackRValue(0));
+                    Statement s5 = new Assignment(getStackLValue(4), getStackRValue(1));
+                    return new CompoundStatement(s1, s2, s3, s4, s5);
+                }
+            }
+            case DUP2_X2: {
+                if (stackConsumed.get(0).getStackEntry().getType().getComputationCategory() == 2) {
+                    if (stackConsumed.get(1).getStackEntry().getType().getComputationCategory() == 2) {
+                        // form 4
+                        Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                        Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                        Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
+                        return new CompoundStatement(s1, s2, s3);
+                    } else {
+                        // form 2
+                        Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                        Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                        Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
+                        Statement s4 = new Assignment(getStackLValue(3), getStackRValue(0));
+                        return new CompoundStatement(s1, s2, s3, s4);
+                    }
+                } else {
+                    if (stackConsumed.get(2).getStackEntry().getType().getComputationCategory() == 2) {
+                        // form 3
+                        Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                        Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                        Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
+                        Statement s4 = new Assignment(getStackLValue(3), getStackRValue(0));
+                        Statement s5 = new Assignment(getStackLValue(4), getStackRValue(1));
+                        return new CompoundStatement(s1, s2, s3, s4, s5);
+                    } else {
+                        // form 1
+                        Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                        Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                        Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
+                        Statement s4 = new Assignment(getStackLValue(3), getStackRValue(3));
+                        Statement s5 = new Assignment(getStackLValue(4), getStackRValue(0));
+                        Statement s6 = new Assignment(getStackLValue(5), getStackRValue(1));
+                        return new CompoundStatement(s1, s2, s3, s4, s5, s6);
+                    }
                 }
             }
             case LDC:

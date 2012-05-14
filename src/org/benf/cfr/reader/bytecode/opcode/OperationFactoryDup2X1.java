@@ -3,8 +3,11 @@ package org.benf.cfr.reader.bytecode.opcode;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackType;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackTypes;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
 /**
@@ -14,11 +17,24 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
  * Time: 08:10
  * To change this template use File | Settings | File Templates.
  */
-public class OperationFactoryDup2X1 extends OperationFactoryDefault {
+public class OperationFactoryDup2X1 extends OperationFactoryDupBase {
 
     @Override
     public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
-        return new StackDelta(instr.getRawStackPopped(), instr.getRawStackPushed());
+
+        if (getCat(stackSim, 0) == 1) {
+            checkCat(stackSim, 1, 1);
+            checkCat(stackSim, 2, 1);
+            return new StackDelta(
+                    getStackTypes(stackSim, 0, 1),
+                    getStackTypes(stackSim, 0, 1, 2, 0, 1)
+            );
+        } else {
+            return new StackDelta(
+                    getStackTypes(stackSim, 0, 1),
+                    getStackTypes(stackSim, 0, 1, 0)
+            );
+        }
     }
 
     @Override
