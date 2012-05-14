@@ -61,7 +61,6 @@ public class CodeAnalyser {
         do {
             JVMInstr instr = JVMInstr.find(bdCode.getS1At(0));
             Op01WithProcessedDataAndByteJumps oc = instr.createOperation(bdCode, cp, offset);
-            System.out.println(oc);
             int length = oc.getInstructionLength();
             lutByOffset.put(offset, idx);
             lutByIdx.put(idx, offset);
