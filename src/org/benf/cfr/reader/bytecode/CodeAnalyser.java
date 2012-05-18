@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
@@ -227,8 +228,15 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes2);
         op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
 
-        Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes2);
+        BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
+        Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes2, blockIdentifierFactory);
+        // Perform this before simple forward if detection, as it allows us to not have to consider
+        // gotos which have been relabelled as continue/break.
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes2);
+
+        // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
+        // where xx and yy have no GOTOs in them.
+//        Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes2, blockIdentifierFactory);
 
         /*
          * Convert the Simple Statements into one structured Statement.

@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -12,9 +13,11 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class UnstructuredWhile extends AbstractStructuredStatement {
     private ConditionalExpression condition;
+    private BlockIdentifier blockIdentifier;
 
-    public UnstructuredWhile(ConditionalExpression condition) {
+    public UnstructuredWhile(ConditionalExpression condition, BlockIdentifier blockIdentifier) {
         this.condition = condition;
+        this.blockIdentifier = blockIdentifier;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -159,6 +160,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return startBlock != null;
     }
 
+    private BlockType startsBlockType() {
+        return startBlock.getBlockType();
+    }
+
     private boolean claimBlock(Op04StructuredStatement innerBlock) {
         int idx = targets.indexOf(innerBlock);
         if (idx == -1) return false;
@@ -225,12 +230,35 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                     }
                 }
             }
-            currentBlock.add(container);
 
             if (container.startsBlock()) {
-                stackedBlocks.push(new StackedBlock(currentBlockIdentifier, currentBlock, container));
+                BlockType blockType = container.startsBlockType();
+                // A bit confusing.  StartBlock for a while loop is the test.
+                // StartBlock for conditionals is the first element of the conditional.
+                // I need to refactor this......
+                Op04StructuredStatement blockClaimer = container;
+                boolean pushIntoNewBlock = false;
+                switch (blockType) {
+                    case WHILELOOP:
+                        currentBlock.add(container);
+                        break;
+                    case SIMPLE_IF_ELSE:
+                    case SIMPLE_IF_TAKEN:
+                        pushIntoNewBlock = true;
+                        blockClaimer = currentBlock.getLast();
+                        break;
+                    default:
+                        throw new ConfusedCFRException("Unknown block type");
+                }
+
+                stackedBlocks.push(new StackedBlock(currentBlockIdentifier, currentBlock, blockClaimer));
                 currentBlock = ListFactory.newLinkedList();
                 currentBlockIdentifier = container.startBlock;
+                if (pushIntoNewBlock) {
+                    currentBlock.add(container);
+                }
+            } else {
+                currentBlock.add(container);
             }
         }
         /* 

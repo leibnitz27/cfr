@@ -205,6 +205,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 ifStatement.replaceWithWhileLoopStart(blockIdentifier);
                 break;
             }
+            case SIMPLE_IF_ELSE:
+            case SIMPLE_IF_TAKEN:
+                break;
             default:
                 throw new ConfusedCFRException("Don't know how to start a block like this");
         }
@@ -509,8 +512,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 if (jumpingStatement.getJumpType() == JumpType.GOTO) {
                     Statement targetInnerStatement = jumpingStatement.getJumpTarget();
                     Op03SimpleStatement targetStatement = (Op03SimpleStatement) targetInnerStatement.getContainer();
-                    if (targetStatement.startBlock != null) {
-                        // Continue startBlock, IF this statement is INSIDE that block.
+                    if (targetStatement.startBlock != null) {  // Jumps to the comparison test of a WHILE
+                        // Continue loopBlock, IF this statement is INSIDE that block.
                         if (BlockIdentifier.blockIsOneOf(targetStatement.startBlock, statement.containedInBlocks)) {
                             jumpingStatement.setJumpType(JumpType.CONTINUE);
                         }
@@ -548,7 +551,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     // Identify distinct set of backjumps (b1,b2), which jump back to somewhere (p) which has a forward
     // jump to somewhere which is NOT a /DIRECT/ parent of the backjumps (i.e. has to go through p)
     // p must be a direct parent of all of (b1,b2)
-    public static void identifyLoops1(List<Op03SimpleStatement> statements) {
+    public static void identifyLoops1(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
         // Find back references.
         // Verify that they belong to jump instructions (otherwise something has gone wrong)
         // (if, goto).
@@ -559,7 +562,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * that it contains a forward jump to something which is not a parent except through p.
          */
         Map<BlockIdentifier, Op03SimpleStatement> blockEndsCache = MapFactory.newMap();
-        BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
         Collections.sort(starts, new CompareByIndex());
 
         for (Op03SimpleStatement start : starts) {
@@ -718,6 +720,110 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         start.markBlockStart(blockIdentifier);
         blockEnd.markBlockEnd(blockIdentifier);
         blockEndsCache.put(blockIdentifier, blockEnd);
+    }
+
+    private static class IsForwardIf implements Predicate<Op03SimpleStatement> {
+        @Override
+        public boolean test(Op03SimpleStatement in) {
+            if (!(in.containedStatement instanceof IfStatement)) return false;
+            IfStatement ifStatement = (IfStatement) in.containedStatement;
+            if (ifStatement.getJumpType() != JumpType.GOTO) return false;
+            if (in.targets.get(1).index.compareTo(in.index) <= 0) return false;
+            return true;
+        }
+    }
+
+    private JumpType getJumpType() {
+        if (containedStatement instanceof JumpingStatement) {
+            return ((JumpingStatement) containedStatement).getJumpType();
+        }
+        return JumpType.NONE;
+    }
+
+    private static void markWholeBlock(List<Op03SimpleStatement> statements, BlockIdentifier blockIdentifier) {
+        Op03SimpleStatement start = statements.get(0);
+        Op03SimpleStatement end = statements.get(statements.size() - 1);
+        start.markBlockStart(blockIdentifier);
+        end.markBlockEnd(blockIdentifier);
+        for (Op03SimpleStatement statement : statements) {
+            statement.markBlock(blockIdentifier);
+        }
+    }
+
+    /*
+    * This is an if statement where both targets are forward.
+    *
+    * it's a 'simple' if, if:
+    *
+    * target[0] reaches (incl) the instruction before target[1] without any jumps (other than continue / break).
+    *
+    * note that the instruction before target[1] doesn't have to have target[1] as a target...
+    * (we might have if (foo) return;)
+    */
+    private static boolean considerAsSimpleIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+        Op03SimpleStatement takenTarget = ifStatement.targets.get(1);
+        Op03SimpleStatement notTakenTarget = ifStatement.targets.get(0);
+        int idxTaken = statements.indexOf(takenTarget);
+        int idxNotTaken = statements.indexOf(notTakenTarget);
+        IfStatement innerIfStatement = (IfStatement) ifStatement.containedStatement;
+
+        int idxCurrent = idxNotTaken;
+        if (idxCurrent > idxTaken) return false;
+
+        int idxEnd = idxTaken;
+        boolean maybeSimpleIfElse = false;
+        Op03SimpleStatement maybeElseEnd = null;
+        List<Op03SimpleStatement> ifBranch = ListFactory.newList();
+        List<Op03SimpleStatement> elseBranch = null;
+        do {
+            Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
+            ifBranch.add(statementCurrent);
+            JumpType jumpType = statementCurrent.getJumpType();
+            if (jumpType == JumpType.GOTO) {
+                if (idxCurrent == idxTaken - 1) {
+                    // It's unconditional, and it's a forward jump.
+                    if (statementCurrent.getTargets().size() > 1) return false;
+                    maybeElseEnd = statementCurrent.getTargets().get(0);
+                    if (maybeElseEnd.getIndex().compareTo(takenTarget.getIndex()) <= 0) return false;
+                    maybeSimpleIfElse = true;
+                } else {
+                    return false;
+                }
+            }
+            idxCurrent++;
+        } while (idxCurrent != idxEnd);
+
+        if (maybeSimpleIfElse) {
+            // If there is a NO JUMP path between takenTarget and maybeElseEnd, then that's the ELSE block
+            elseBranch = ListFactory.newList();
+            idxCurrent = idxTaken;
+            idxEnd = statements.indexOf(maybeElseEnd);
+            do {
+                Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
+                elseBranch.add(statementCurrent);
+                JumpType jumpType = statementCurrent.getJumpType();
+                if (jumpType == JumpType.GOTO) return false;
+                idxCurrent++;
+            } while (idxCurrent != idxEnd);
+        }
+
+        BlockIdentifier ifBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_TAKEN);
+        markWholeBlock(ifBranch, ifBlockLabel);
+        BlockIdentifier elseBlockLabel = null;
+        if (maybeSimpleIfElse) {
+            elseBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_ELSE);
+            markWholeBlock(elseBranch, elseBlockLabel);
+        }
+
+        innerIfStatement.setKnownBlocks(ifBlockLabel, elseBlockLabel);
+        return true;
+    }
+
+    public static void identifyNonjumpingConditionals(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+        List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
+        for (Op03SimpleStatement forwardIf : forwardIfs) {
+            considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory);
+        }
     }
 
     @Override

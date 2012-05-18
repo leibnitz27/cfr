@@ -6,5 +6,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
  * Date: 01/05/2012
  */
 public enum BlockType {
-    WHILELOOP
+    WHILELOOP,
+    SIMPLE_IF_TAKEN,
+    SIMPLE_IF_ELSE
 }

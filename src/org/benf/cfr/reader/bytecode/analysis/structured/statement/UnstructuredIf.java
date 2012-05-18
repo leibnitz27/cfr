@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -10,9 +11,13 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class UnstructuredIf extends AbstractStructuredStatement {
     private ConditionalExpression conditionalExpression;
+    private BlockIdentifier knownIfBlock;
+    private BlockIdentifier knownElseBlock;
 
-    public UnstructuredIf(ConditionalExpression conditionalExpression) {
+    public UnstructuredIf(ConditionalExpression conditionalExpression, BlockIdentifier knownIfBlock, BlockIdentifier knownElseBlock) {
         this.conditionalExpression = conditionalExpression;
+        this.knownIfBlock = knownIfBlock;
+        this.knownElseBlock = knownElseBlock;
     }
 
     @Override

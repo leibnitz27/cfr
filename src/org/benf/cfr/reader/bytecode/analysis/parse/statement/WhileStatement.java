@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -18,9 +19,11 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class WhileStatement extends AbstractStatement {
     private ConditionalExpression condition;
+    private BlockIdentifier blockIdentifier;
 
-    public WhileStatement(ConditionalExpression conditionalExpression) {
+    public WhileStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier) {
         this.condition = conditionalExpression;
+        this.blockIdentifier = blockIdentifier;
     }
 
     @Override
@@ -37,6 +40,6 @@ public class WhileStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredWhile(condition);
+        return new UnstructuredWhile(condition, blockIdentifier);
     }
 }

@@ -6,6 +6,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
  * Date: 02/05/2012
  */
 public enum JumpType {
+    NONE("none"),
     GOTO("goto"),
     BREAK("break [ wrong atm, shows end ]"),
     CONTINUE("continue");

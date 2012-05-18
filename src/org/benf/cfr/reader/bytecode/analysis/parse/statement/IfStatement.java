@@ -31,6 +31,8 @@ public class IfStatement extends GotoStatement {
     private static final int JUMP_TAKEN = 1;
 
     private ConditionalExpression condition;
+    private BlockIdentifier knownIfBlock = null;
+    private BlockIdentifier knownElseBlock = null;
 
 
     public IfStatement(ConditionalExpression conditionalExpression) {
@@ -92,7 +94,7 @@ public class IfStatement extends GotoStatement {
 
 
     public void replaceWithWhileLoopStart(BlockIdentifier blockIdentifier) {
-        WhileStatement replacement = new WhileStatement(condition.getNegatedExpression());
+        WhileStatement replacement = new WhileStatement(condition.getNegatedExpression(), blockIdentifier);
         getContainer().replaceStatement(replacement);
     }
 
@@ -110,12 +112,17 @@ public class IfStatement extends GotoStatement {
     public StructuredStatement getStructuredStatement() {
         switch (getJumpType()) {
             case GOTO:
-                return new UnstructuredIf(condition);
+                return new UnstructuredIf(condition, knownIfBlock, knownElseBlock);
             case CONTINUE:
                 return new StructuredIf(condition, new Op04StructuredStatement(new StructuredContinue()));
             case BREAK:
                 return new StructuredIf(condition, new Op04StructuredStatement(new StructuredBreak()));
         }
         throw new UnsupportedOperationException();
+    }
+
+    public void setKnownBlocks(BlockIdentifier ifBlock, BlockIdentifier elseBlock) {
+        this.knownIfBlock = ifBlock;
+        this.knownElseBlock = elseBlock;
     }
 }
