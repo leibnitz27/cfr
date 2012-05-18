@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
@@ -15,6 +16,8 @@ public interface StatementContainer {
     Statement getTargetStatement(int idx);
 
     String getLabel();
+
+    InstrIndex getIndex();
 
     void nopOut();
 

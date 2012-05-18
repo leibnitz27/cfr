@@ -3,6 +3,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -42,5 +44,10 @@ public class SwitchStatement extends AbstractStatement {
     @Override
     public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
         switchOn = switchOn.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+    }
+
+    @Override
+    public StructuredStatement getStructuredStatement() {
+        return new UnstructuredSwitch(switchOn, switchData);
     }
 }

@@ -1,8 +1,7 @@
 package org.benf.cfr.reader.util;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -15,5 +14,9 @@ import java.util.Set;
 public class SetFactory {
     public static <X extends Object> Set<X> newSet() {
         return new HashSet<X>();
+    }
+
+    public static <X extends Object> Set<X> newSet(Collection<X> content) {
+        return new HashSet<X>(content);
     }
 }

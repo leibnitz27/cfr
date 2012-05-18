@@ -1,15 +1,12 @@
 package org.benf.cfr.reader.bytecode;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.GraphConversionHelper;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
-import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionBookmark;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
@@ -23,8 +20,10 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -181,7 +180,7 @@ public class CodeAnalyser {
         final List<Op03SimpleStatement> op03SimpleParseNodes = ListFactory.newList();
         // Convert the op2s into a simple set of statements.
         // Do these need to be processed in a sensible order?  Could just iterate?
-        final GraphConversionHelper conversionHelper = new GraphConversionHelper();
+        final GraphConversionHelper<Op02WithProcessedDataAndRefs, Op03SimpleStatement> conversionHelper = new GraphConversionHelper<Op02WithProcessedDataAndRefs, Op03SimpleStatement>();
         // By only processing reachable bytecode, we ignore deliberate corruption.   However, we could
         // Nop out unreachable code, so as to not have this ugliness.
         GraphVisitor o2Converter = new GraphVisitorDFS(o2start,
@@ -231,8 +230,13 @@ public class CodeAnalyser {
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes2);
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes2);
 
-        Op03SimpleStatement o3start = op03SimpleParseNodes2.get(0);
-        this.start = o3start;
+        /*
+         * Convert the Simple Statements into one structured Statement.
+         */
+
+        Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes2);
+
+        this.start = block;
     }
 
 

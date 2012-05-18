@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.JumpingStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
@@ -16,7 +15,6 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -34,7 +32,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private Statement containedStatement;
     private SSAIdentifiers ssaIdentifiers;
     private BlockIdentifier startBlock;
-    private BlockType startBlockType;
     private final List<BlockIdentifier> containedInBlocks = ListFactory.newList();
     private final List<BlockIdentifier> endBlocks = ListFactory.newList();
 
@@ -187,6 +184,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return containedStatement.getCreatedLValue();
     }
 
+    @Override
     public InstrIndex getIndex() {
         return index;
     }
@@ -273,10 +271,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     private void dumpInner(Dumper dumper) {
         int indent = dumper.getIndent();
-        dumper.setIndent(containedInBlocks.size());
         if (needsLabel()) dumper.print(getLabel() + ":\n");
         getStatement().dump(dumper);
-        dumper.setIndent(indent);
     }
 
     @Override
@@ -290,6 +286,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement op : reachableNodes) {
             op.dumpInner(dumper);
         }
+    }
+
+    public Op04StructuredStatement getStructuredStatementPlaceHolder() {
+        return new Op04StructuredStatement(
+                index,
+                startBlock,
+                containedInBlocks,
+                endBlocks,
+                containedStatement.getStructuredStatement());
     }
 
     private boolean isCompound() {
@@ -519,6 +524,24 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             }
         }
+    }
+
+    public static Op04StructuredStatement createInitialStructuredBlock(List<Op03SimpleStatement> statements) {
+        final GraphConversionHelper<Op03SimpleStatement, Op04StructuredStatement> conversionHelper = new GraphConversionHelper<Op03SimpleStatement, Op04StructuredStatement>();
+//        LinkedList<StructuredStatement> unstructuredStatements = ListFactory.newLinkedList();
+        List<Op04StructuredStatement> containers = ListFactory.newList();
+        for (Op03SimpleStatement statement : statements) {
+            Op04StructuredStatement unstructuredStatement = statement.getStructuredStatementPlaceHolder();
+            containers.add(unstructuredStatement);
+//            unstructuredStatements.add(unstructuredStatement.getStructuredStatement());
+            conversionHelper.registerOriginalAndNew(statement, unstructuredStatement);
+        }
+        conversionHelper.patchUpRelations();
+
+        /* Given that we've got a linear list of statements, we want to turn them into a set of nested blocks.
+         * We've already labelled statements with the list of blocks they're in, so we now need to create a partial ordering
+         */
+        return Op04StructuredStatement.buildNestedBlocks(containers);
     }
 
     // Find simple loops.

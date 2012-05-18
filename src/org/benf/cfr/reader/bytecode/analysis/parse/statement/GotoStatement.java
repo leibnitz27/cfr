@@ -1,12 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.GraphConversionHelper;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredBreak;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredContinue;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredGoto;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -51,5 +52,18 @@ public class GotoStatement extends JumpingStatement {
     @Override
     public boolean isConditional() {
         return false;
+    }
+
+    @Override
+    public StructuredStatement getStructuredStatement() {
+        switch (jumpType) {
+            case GOTO:
+                return new UnstructuredGoto();
+            case CONTINUE:
+                return new StructuredContinue();
+            case BREAK:
+                return new StructuredBreak();
+        }
+        throw new UnsupportedOperationException();
     }
 }

@@ -5,6 +5,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvo
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredConstruction;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -36,5 +38,10 @@ public class ConstructorStatement extends AbstractStatement {
     public void collectObjectCreation(CreationCollector creationCollector) {
         Expression object = invokation.getObject();
         creationCollector.collectConstruction(object, invokation, this.getContainer());
+    }
+
+    @Override
+    public StructuredStatement getStructuredStatement() {
+        return new StructuredConstruction(invokation);
     }
 }

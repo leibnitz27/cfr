@@ -11,6 +11,11 @@ public class Dumper {
     private int indent;
     private boolean atStart = true;
 
+    public void printLabel(String s) {
+        System.out.println(s + ":");
+        atStart = true;
+    }
+
     public void print(String s) {
         doIndent();
         System.out.print(s);
@@ -40,7 +45,7 @@ public class Dumper {
         return indent;
     }
 
-    public void setIndent(int indent) {
-        this.indent = indent;
+    public void indent(int diff) {
+        indent += diff;
     }
 }

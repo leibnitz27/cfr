@@ -3,7 +3,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -30,4 +31,8 @@ public class ExpressionStatement extends AbstractStatement {
         expression = expression.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
     }
 
+    @Override
+    public StructuredStatement getStructuredStatement() {
+        return new StructuredExpressionStatement(expression);
+    }
 }

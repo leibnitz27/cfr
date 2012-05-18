@@ -1,11 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.output.Dumpable;
 
 import java.util.List;
@@ -54,4 +54,6 @@ public interface Statement extends Dumpable {
     StatementContainer getContainer();
 
     List<Statement> getCompoundParts();
+
+    StructuredStatement getStructuredStatement();
 }

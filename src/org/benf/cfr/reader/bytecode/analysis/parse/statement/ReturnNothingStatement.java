@@ -1,9 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.GraphConversionHelper;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -26,4 +26,8 @@ public class ReturnNothingStatement extends ReturnStatement {
     public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
     }
 
+    @Override
+    public StructuredStatement getStructuredStatement() {
+        return new StructuredReturn();
+    }
 }

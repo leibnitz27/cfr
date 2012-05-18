@@ -1,13 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.BoolOp;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.NotOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -37,4 +35,8 @@ public class WhileStatement extends AbstractStatement {
         if (replacementCondition != condition) throw new ConfusedCFRException("Can't yet support replacing conditions");
     }
 
+    @Override
+    public StructuredStatement getStructuredStatement() {
+        return new UnstructuredWhile(condition);
+    }
 }

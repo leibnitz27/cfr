@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.GraphConversionHelper;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.BoolOp;
@@ -9,9 +8,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NotOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredBreak;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredContinue;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredIf;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -101,5 +104,18 @@ public class IfStatement extends GotoStatement {
     @Override
     public boolean isConditional() {
         return true;
+    }
+
+    @Override
+    public StructuredStatement getStructuredStatement() {
+        switch (getJumpType()) {
+            case GOTO:
+                return new UnstructuredIf(condition);
+            case CONTINUE:
+                return new StructuredIf(condition, new Op04StructuredStatement(new StructuredContinue()));
+            case BREAK:
+                return new StructuredIf(condition, new Op04StructuredStatement(new StructuredBreak()));
+        }
+        throw new UnsupportedOperationException();
     }
 }

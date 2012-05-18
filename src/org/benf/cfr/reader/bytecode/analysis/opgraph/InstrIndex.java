@@ -21,7 +21,7 @@ public class InstrIndex implements Comparable<InstrIndex> {
 
     @Override
     public String toString() {
-        return "" + index + (subindex == 0 ? "" : ("." + subindex));
+        return "lbl" + index + (subindex == 0 ? "" : ("." + subindex));
     }
 
     @Override
