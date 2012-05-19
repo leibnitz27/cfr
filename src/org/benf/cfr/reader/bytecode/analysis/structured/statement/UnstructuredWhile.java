@@ -26,7 +26,10 @@ public class UnstructuredWhile extends AbstractStructuredStatement {
     }
 
     @Override
-    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock) {
+    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier) {
+        if (blockIdentifier != this.blockIdentifier) {
+            throw new RuntimeException("While statement claiming wrong block");
+        }
         return new StructuredWhile(condition, innerBlock);
     }
 

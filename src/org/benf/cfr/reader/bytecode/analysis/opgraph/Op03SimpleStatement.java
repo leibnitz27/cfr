@@ -31,9 +31,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private InstrIndex index;
     private Statement containedStatement;
     private SSAIdentifiers ssaIdentifiers;
-    private BlockIdentifier startBlock;
+    // 
+    // This statement triggers a block
+    //
+    private BlockIdentifier thisComparisonBlock;
+    // 
+    // This statement is the first in this block
+    //
+    private BlockIdentifier firstStatementInThisBlock;
+    //
+    // This statement is CONTAINED in the following blocks.
+    //
     private final List<BlockIdentifier> containedInBlocks = ListFactory.newList();
-    private final List<BlockIdentifier> endBlocks = ListFactory.newList();
+    //
+    // This statement is the last statement of THESE blocks, inclusive. 
+    //
+    private final List<BlockIdentifier> lastStatementOfTheseBlocks = ListFactory.newList();
+    //
+    // blocks ended just before this.  EXCLUSIVE. 
+    //
+    private final List<BlockIdentifier> immediatelyAfterBlocks = ListFactory.newList();
 
     public Op03SimpleStatement(Op02WithProcessedDataAndRefs original, Statement statement) {
         this.containedStatement = statement;
@@ -193,11 +210,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.index = index;
     }
 
-    private void markBlockStart(BlockIdentifier blockIdentifier) {
-        if (startBlock != null) {
+    private void markPreBlockStatement(BlockIdentifier blockIdentifier) {
+        if (thisComparisonBlock != null) {
             throw new ConfusedCFRException("Statement marked as the start of multiple blocks");
         }
-        this.startBlock = blockIdentifier;
+        this.thisComparisonBlock = blockIdentifier;
         switch (blockIdentifier.getBlockType()) {
             case WHILELOOP: {
                 IfStatement ifStatement = (IfStatement) containedStatement;
@@ -207,14 +224,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
             case SIMPLE_IF_ELSE:
             case SIMPLE_IF_TAKEN:
-                break;
+                throw new ConfusedCFRException("Shouldn't be marking the comparison of an IF");
             default:
                 throw new ConfusedCFRException("Don't know how to start a block like this");
         }
     }
 
-    private void markBlockEnd(BlockIdentifier blockIdentifier) {
-        this.endBlocks.add(blockIdentifier);
+    private void markFirstStatementInBlock(BlockIdentifier blockIdentifier) {
+        if (this.firstStatementInThisBlock != null) {
+            throw new ConfusedCFRException("Statement already marked as first in another block");
+        }
+        this.firstStatementInThisBlock = blockIdentifier;
+    }
+
+
+    private void markLastStatementInBlock(BlockIdentifier blockIdentifier) {
+        this.lastStatementOfTheseBlocks.add(blockIdentifier);
+    }
+
+    private void markPostBlock(BlockIdentifier blockIdentifier) {
+        this.immediatelyAfterBlocks.add(blockIdentifier);
     }
 
     private void markBlock(BlockIdentifier blockIdentifier) {
@@ -269,7 +298,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public String getLabel() {
-        return "lbl" + getIndex();
+        return getIndex().toString();
     }
 
     private void dumpInner(Dumper dumper) {
@@ -294,9 +323,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     public Op04StructuredStatement getStructuredStatementPlaceHolder() {
         return new Op04StructuredStatement(
                 index,
-                startBlock,
+                firstStatementInThisBlock,
                 containedInBlocks,
-                endBlocks,
+                lastStatementOfTheseBlocks,
                 containedStatement.getStructuredStatement());
     }
 
@@ -509,16 +538,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Statement innerStatement = statement.getStatement();
             if (innerStatement instanceof JumpingStatement) {
                 JumpingStatement jumpingStatement = (JumpingStatement) innerStatement;
+                // 
+                // If there's a goto, see if it goes OUT of a known while loop, OR
+                // if it goes back to the comparison statement for a known while loop.
+                // 
                 if (jumpingStatement.getJumpType() == JumpType.GOTO) {
                     Statement targetInnerStatement = jumpingStatement.getJumpTarget();
                     Op03SimpleStatement targetStatement = (Op03SimpleStatement) targetInnerStatement.getContainer();
-                    if (targetStatement.startBlock != null) {  // Jumps to the comparison test of a WHILE
+                    if (targetStatement.thisComparisonBlock != null) {  // Jumps to the comparison test of a WHILE
                         // Continue loopBlock, IF this statement is INSIDE that block.
-                        if (BlockIdentifier.blockIsOneOf(targetStatement.startBlock, statement.containedInBlocks)) {
+                        if (BlockIdentifier.blockIsOneOf(targetStatement.thisComparisonBlock, statement.containedInBlocks)) {
                             jumpingStatement.setJumpType(JumpType.CONTINUE);
                         }
-                    } else if (!targetStatement.endBlocks.isEmpty()) {
-                        BlockIdentifier outermostContainedIn = BlockIdentifier.getOutermostContainedIn(targetStatement.endBlocks, statement.containedInBlocks);
+                    } else if (!targetStatement.immediatelyAfterBlocks.isEmpty()) {
+                        BlockIdentifier outermostContainedIn = BlockIdentifier.getOutermostContainedIn(targetStatement.immediatelyAfterBlocks, statement.containedInBlocks);
                         // Break to the outermost block.
                         if (outermostContainedIn != null) {
                             jumpingStatement.setJumpType(JumpType.BREAK);
@@ -623,7 +656,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     */
     private static void considerAsLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
                                             BlockIdentifierFactory blockIdentifierFactory,
-                                            Map<BlockIdentifier, Op03SimpleStatement> blockEndsCache) {
+                                            Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
         final InstrIndex startIndex = start.getIndex();
         System.out.println("Is this a loop start ? " + start);
         List<Op03SimpleStatement> backJumpSources = start.getSources();
@@ -668,7 +701,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // We'll have problems - there are actions taken inside the conditional.
             return;
         }
-        int idxStart = statements.indexOf(start);
+        int idxConditional = statements.indexOf(start);
 
         /* If this loop has a test at the bottom, we may have a continue style exit, i.e. the loopBreak
          * is not just reachable from the top.  We can find this by seeing if loopBreak is reachable from
@@ -682,7 +715,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * If so, we guess that it's the end of the loop.
          */
         int idxAfterEnd = statements.indexOf(loopBreak);
-        if (idxAfterEnd < idxStart) {
+        if (idxAfterEnd < idxConditional) {
             /*
              * We've got an inner loop which is terminating back to the start of the outer loop.
              * This means we have to figure out the body of the loop by considering back jumps.
@@ -693,12 +726,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
              * (if that exists.)
              */
             Op03SimpleStatement startOfOuterLoop = statements.get(idxAfterEnd);
-            if (startOfOuterLoop.startBlock == null) {
+            if (startOfOuterLoop.thisComparisonBlock == null) {
                 // Boned.
                 return;
             }
             // Find the END of this block.
-            Op03SimpleStatement endOfOuter = blockEndsCache.get(startOfOuterLoop.startBlock);
+            Op03SimpleStatement endOfOuter = postBlockCache.get(startOfOuterLoop.thisComparisonBlock);
             if (endOfOuter == null) {
                 throw new ConfusedCFRException("BlockIdentifier doesn't exist in blockEndsCache");
             }
@@ -708,18 +741,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         /* TODO : ORDERCHEAT */
         // Mark everything in the list between start and maybeEndLoop as being in this block.
 
-        if (idxStart >= idxAfterEnd) {
+        if (idxConditional >= idxAfterEnd) {
             return;
 //            throw new ConfusedCFRException("Can't decode block");
         }
         BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.WHILELOOP);
-        for (int x = idxStart; x < idxAfterEnd; ++x) {
+        for (int x = idxConditional + 1; x < idxAfterEnd; ++x) {
             statements.get(x).markBlock(blockIdentifier);
         }
         Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
-        start.markBlockStart(blockIdentifier);
-        blockEnd.markBlockEnd(blockIdentifier);
-        blockEndsCache.put(blockIdentifier, blockEnd);
+        start.markPreBlockStatement(blockIdentifier);
+        statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
+        statements.get(idxAfterEnd - 1).markLastStatementInBlock(blockIdentifier);
+        blockEnd.markPostBlock(blockIdentifier);
+        postBlockCache.put(blockIdentifier, blockEnd);
     }
 
     private static class IsForwardIf implements Predicate<Op03SimpleStatement> {
@@ -743,8 +778,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static void markWholeBlock(List<Op03SimpleStatement> statements, BlockIdentifier blockIdentifier) {
         Op03SimpleStatement start = statements.get(0);
         Op03SimpleStatement end = statements.get(statements.size() - 1);
-        start.markBlockStart(blockIdentifier);
-        end.markBlockEnd(blockIdentifier);
+        start.markFirstStatementInBlock(blockIdentifier);
+        end.markLastStatementInBlock(blockIdentifier);
         for (Op03SimpleStatement statement : statements) {
             statement.markBlock(blockIdentifier);
         }
@@ -759,6 +794,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     *
     * note that the instruction before target[1] doesn't have to have target[1] as a target...
     * (we might have if (foo) return;)
+    *
+    * If it's a SIMPLE if/else, then the last statement of the if block is a goto, which jumps to after the else
+    * block.  We don't want to keep that goto, as we've inferred structure now.
+    *
+    * We trim that GOTO when we move from an UnstructuredIf to a StructuredIf.
     */
     private static boolean considerAsSimpleIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
         Op03SimpleStatement takenTarget = ifStatement.targets.get(1);

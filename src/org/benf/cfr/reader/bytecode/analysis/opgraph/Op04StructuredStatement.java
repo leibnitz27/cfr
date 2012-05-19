@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
@@ -31,7 +32,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     private BlockIdentifier startBlock;
     private Set<BlockIdentifier> blockMembership;
-    private Set<BlockIdentifier> endOfTheseBlocks;
+    private Set<BlockIdentifier> lastOfTheseBlocks;
 
     private static final Set<BlockIdentifier> EMPTY_BLOCKSET = SetFactory.newSet();
 
@@ -44,22 +45,22 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             StructuredStatement justStatement
     ) {
         this.structuredStatement = justStatement;
-        this.instrIndex = null;
+        this.instrIndex = new InstrIndex(-1000);
         this.blockMembership = EMPTY_BLOCKSET;
-        this.endOfTheseBlocks = EMPTY_BLOCKSET;
+        this.lastOfTheseBlocks = EMPTY_BLOCKSET;
     }
 
     public Op04StructuredStatement(
             InstrIndex instrIndex,
             BlockIdentifier startBlock,
             List<BlockIdentifier> blockMembership,
-            List<BlockIdentifier> endOfTheseBlocks,
+            List<BlockIdentifier> lastStatementOfTheseBlocks,
             StructuredStatement structuredStatement) {
         this.instrIndex = instrIndex;
         this.structuredStatement = structuredStatement;
         this.startBlock = startBlock;
         this.blockMembership = blockSet(blockMembership);
-        this.endOfTheseBlocks = blockSet(endOfTheseBlocks);
+        this.lastOfTheseBlocks = blockSet(lastStatementOfTheseBlocks);
         structuredStatement.setContainer(this);
     }
 
@@ -156,6 +157,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         original.setTargets(ListFactory.<Op04StructuredStatement>newList());
     }
 
+    public void removeLastGoto() {
+        if (structuredStatement instanceof Block) {
+            ((Block) structuredStatement).removeLastGoto();
+        } else {
+            throw new ConfusedCFRException("Trying to remove last goto, but statement isn't a block!");
+        }
+    }
+
     private boolean startsBlock() {
         return startBlock != null;
     }
@@ -164,10 +173,19 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return startBlock.getBlockType();
     }
 
-    private boolean claimBlock(Op04StructuredStatement innerBlock) {
+    @Override
+    public String toString() {
+        return "OP4:" + structuredStatement;
+    }
+
+    public void replaceStatementWithNOP(String comment) {
+        this.structuredStatement = new StructuredComment(comment);
+    }
+
+    private boolean claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier thisBlock) {
         int idx = targets.indexOf(innerBlock);
         if (idx == -1) return false;
-        StructuredStatement replacement = structuredStatement.claimBlock(innerBlock);
+        StructuredStatement replacement = structuredStatement.claimBlock(innerBlock, thisBlock);
         if (replacement == null) return false;
         this.structuredStatement = replacement;
         replacement.setContainer(this);
@@ -199,7 +217,24 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         LinkedList<Op04StructuredStatement> currentBlock = outerBlock;
         Stack<StackedBlock> stackedBlocks = StackFactory.newStack();
         for (Op04StructuredStatement container : containers) {
-            /* 
+
+            if (container.startsBlock()) {
+                System.out.println("Starting block " + container.startBlock);
+                BlockType blockType = container.startsBlockType();
+                // A bit confusing.  StartBlock for a while loop is the test.
+                // StartBlock for conditionals is the first element of the conditional.
+                // I need to refactor this......
+                Op04StructuredStatement blockClaimer = currentBlock.getLast();
+
+                stackedBlocks.push(new StackedBlock(currentBlockIdentifier, currentBlock, blockClaimer));
+                currentBlock = ListFactory.newLinkedList();
+                currentBlockIdentifier = container.startBlock;
+            }
+
+//            System.out.println("Adding " + container + " to currentBlock");
+            currentBlock.add(container);
+
+            /*
              * if this statement has the same membership as blocksCurrentlyIn, it's in the same 
              * block as the previous statement, so emit it into currentBlock.
              * 
@@ -207,9 +242,12 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
              * 
              * If we've started a new block.... start that.
              */
-            if (!container.endOfTheseBlocks.isEmpty()) {
+            if (!container.lastOfTheseBlocks.isEmpty()) {
                 // Clone so we can mutate.
-                Set<BlockIdentifier> endOfTheseBlocks = SetFactory.newSet(container.endOfTheseBlocks);
+
+                System.out.println("statement is last statement in these blocks " + container.lastOfTheseBlocks);
+
+                Set<BlockIdentifier> endOfTheseBlocks = SetFactory.newSet(container.lastOfTheseBlocks);
                 while (!endOfTheseBlocks.isEmpty()) {
                     if (currentBlockIdentifier == null) {
                         throw new ConfusedCFRException("Trying to end block, but not in any!");
@@ -217,49 +255,20 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                     if (!endOfTheseBlocks.remove(currentBlockIdentifier)) {
                         throw new ConfusedCFRException("Tried to end block " + currentBlockIdentifier + " but am not in it!!");
                     }
-                    LinkedList<Op04StructuredStatement> tmp = currentBlock;
+                    LinkedList<Op04StructuredStatement> blockJustEnded = currentBlock;
                     StackedBlock popBlock = stackedBlocks.pop();
                     currentBlock = popBlock.statements;
-                    currentBlockIdentifier = popBlock.blockIdentifier;
                     // todo : Do I still need to get /un/structured parents right?
-                    Op04StructuredStatement finishedBlock = new Op04StructuredStatement(new Block(tmp, true));
-                    finishedBlock.replaceAsSource(tmp.getFirst());
+                    Op04StructuredStatement finishedBlock = new Op04StructuredStatement(new Block(blockJustEnded, true));
+                    finishedBlock.replaceAsSource(blockJustEnded.getFirst());
                     Op04StructuredStatement blockStartContainer = popBlock.outerStart;
-                    if (!blockStartContainer.claimBlock(finishedBlock)) {
+                    if (!blockStartContainer.claimBlock(finishedBlock, currentBlockIdentifier)) {
                         currentBlock.add(finishedBlock);
                     }
+                    currentBlockIdentifier = popBlock.blockIdentifier;
                 }
             }
 
-            if (container.startsBlock()) {
-                BlockType blockType = container.startsBlockType();
-                // A bit confusing.  StartBlock for a while loop is the test.
-                // StartBlock for conditionals is the first element of the conditional.
-                // I need to refactor this......
-                Op04StructuredStatement blockClaimer = container;
-                boolean pushIntoNewBlock = false;
-                switch (blockType) {
-                    case WHILELOOP:
-                        currentBlock.add(container);
-                        break;
-                    case SIMPLE_IF_ELSE:
-                    case SIMPLE_IF_TAKEN:
-                        pushIntoNewBlock = true;
-                        blockClaimer = currentBlock.getLast();
-                        break;
-                    default:
-                        throw new ConfusedCFRException("Unknown block type");
-                }
-
-                stackedBlocks.push(new StackedBlock(currentBlockIdentifier, currentBlock, blockClaimer));
-                currentBlock = ListFactory.newLinkedList();
-                currentBlockIdentifier = container.startBlock;
-                if (pushIntoNewBlock) {
-                    currentBlock.add(container);
-                }
-            } else {
-                currentBlock.add(container);
-            }
         }
         /* 
          * By here, the stack should be empty, and outerblocks should be all that remains.

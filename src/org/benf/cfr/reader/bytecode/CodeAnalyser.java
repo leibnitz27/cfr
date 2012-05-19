@@ -236,11 +236,13 @@ public class CodeAnalyser {
 
         // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
         // where xx and yy have no GOTOs in them.
-//        Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes2, blockIdentifierFactory);
+        Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes2, blockIdentifierFactory);
 
         /*
          * Convert the Simple Statements into one structured Statement.
          */
+        Dumper dumper = new Dumper();
+        op03SimpleParseNodes2.get(0).dump(dumper);
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes2);
 

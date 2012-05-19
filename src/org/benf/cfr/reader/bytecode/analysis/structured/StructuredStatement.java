@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.output.Dumpable;
 
 /**
@@ -11,7 +12,7 @@ import org.benf.cfr.reader.util.output.Dumpable;
 public interface StructuredStatement extends Dumpable {
     public void setContainer(Op04StructuredStatement container);
 
-    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock);
+    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier);
 
     public boolean isProperlyStructured();
 }

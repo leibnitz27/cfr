@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.LinkedList;
@@ -17,6 +18,15 @@ public class Block extends AbstractStructuredStatement {
     public Block(LinkedList<Op04StructuredStatement> containedStatements, boolean indenting) {
         this.containedStatements = containedStatements;
         this.indenting = indenting;
+    }
+
+    public void removeLastGoto() {
+        if (containedStatements.getLast().getStructuredStatement() instanceof UnstructuredGoto) {
+            Op04StructuredStatement oldGoto = containedStatements.getLast();
+            oldGoto.replaceStatementWithNOP("");
+        } else {
+            throw new ConfusedCFRException("Trying to remove last goto of a block, but it's not an unstructured GOTO");
+        }
     }
 
     @Override

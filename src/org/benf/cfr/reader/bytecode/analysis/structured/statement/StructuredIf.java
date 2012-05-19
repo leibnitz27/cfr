@@ -31,7 +31,7 @@ public class StructuredIf extends AbstractStructuredStatement {
         dumper.print("if (" + conditionalExpression + ") ");
         ifTaken.dump(dumper);
         if (elseBlock != null) {
-            dumper.print(" else \n ");
+            dumper.print("else ");
             elseBlock.dump(dumper);
         }
     }
