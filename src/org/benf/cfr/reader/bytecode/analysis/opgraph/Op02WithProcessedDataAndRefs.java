@@ -1,9 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
-import com.sun.org.apache.bcel.internal.generic.IREM;
-import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
-import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
-import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -19,17 +15,26 @@ import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntryHolder;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
+import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
+import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
+import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionBookmark;
+import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
+import org.benf.cfr.reader.util.functors.BinaryProcedure;
+import org.benf.cfr.reader.util.graph.GraphVisitor;
+import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -531,7 +536,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case MONITOREXIT:
                 return new CommentStatement("} MONITOREXIT");
             case FAKE_TRY:
-                return new CommentStatement("try {");
+                return new TryStatement();
             case FAKE_CATCH:
                 return new CommentStatement("} catch ... {");
             case NOP:
@@ -601,5 +606,125 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     @Override
     public String toString() {
         return "" + index + " : " + instr;
+    }
+
+
+    public static void populateStackInfo(List<Op02WithProcessedDataAndRefs> op2list) {
+        // This dump block only exists because we're debugging bad stack size calcuations.
+        Op02WithProcessedDataAndRefs o2start = op2list.get(0);
+        try {
+            o2start.populateStackInfo(new StackSim());
+        } catch (ConfusedCFRException e) {
+            Dumper dmp = new Dumper();
+            dmp.print("----[known stack info]------------\n\n");
+            for (Op02WithProcessedDataAndRefs op : op2list) {
+                op.dump(dmp);
+            }
+            throw e;
+        }
+
+    }
+
+    public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list, final VariableNamer variableNamer) {
+
+        final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
+        // Convert the op2s into a simple set of statements.
+        // Do these need to be processed in a sensible order?  Could just iterate?
+        final GraphConversionHelper<Op02WithProcessedDataAndRefs, Op03SimpleStatement> conversionHelper = new GraphConversionHelper<Op02WithProcessedDataAndRefs, Op03SimpleStatement>();
+        // By only processing reachable bytecode, we ignore deliberate corruption.   However, we could
+        // Nop out unreachable code, so as to not have this ugliness.
+        // We start at 0 as that's not controversial ;)
+        GraphVisitor o2Converter = new GraphVisitorDFS(op2list.get(0),
+                new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
+                    @Override
+                    public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
+                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(variableNamer));
+                        conversionHelper.registerOriginalAndNew(arg1, res);
+                        op03SimpleParseNodesTmp.add(res);
+                        for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {
+                            arg2.enqueue(target);
+                        }
+                    }
+                }
+        );
+        o2Converter.process();
+        conversionHelper.patchUpRelations();
+        return op03SimpleParseNodesTmp;
+    }
+
+    public static List<Op02WithProcessedDataAndRefs> insertExceptionBlocks(
+            List<Op02WithProcessedDataAndRefs> op2list,
+            ExceptionAggregator exceptions,
+            Map<Integer, Integer> lutByOffset,
+            ConstantPool cp
+    ) {
+        // Add entries from the exception table.  Since these are stored in terms of offsets, they're
+        // only usable here until we mess around with the instruction structure, so do it early!
+        List<Short> exceptionStarts = exceptions.getExceptionHandlerStarts();
+        for (Short exception_from : exceptionStarts) {
+            List<ExceptionTableEntry> rawes = exceptions.getExceptionsFromSource(exception_from);
+            int originalIndex = lutByOffset.get((int) exception_from);
+            Op02WithProcessedDataAndRefs startInstruction = op2list.get(originalIndex);
+
+            List<Op02WithProcessedDataAndRefs> handlerTargets = ListFactory.newList();
+            for (ExceptionTableEntry exceptionTableEntry : rawes) {
+                short handler = exceptionTableEntry.getBytecode_index_handler();
+                int handlerIndex = lutByOffset.get((int) handler);
+                Op02WithProcessedDataAndRefs handerTarget = op2list.get(handlerIndex);
+                handlerTargets.add(handerTarget);
+            }
+
+            // Unlink startInstruction from its source, add a new instruction in there, which has a
+            // default target of startInstruction, but additional targets of handlerTargets.
+            ExceptionBookmark exceptionBookmark = new ExceptionBookmark(rawes);
+            Op02WithProcessedDataAndRefs tryOp =
+                    new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex().justBefore(), cp, null, -1, exceptionBookmark);
+
+            // All operations which pointed to start should now point to our TRY
+            if (startInstruction.getSources().isEmpty())
+                throw new ConfusedCFRException("Can't install exception handler infront of nothing");
+            for (Op02WithProcessedDataAndRefs source : startInstruction.getSources()) {
+                source.replaceTarget(startInstruction, tryOp);
+                tryOp.addSource(source);
+            }
+
+            // Given that we're protecting a certain block,
+            // these are the different catch blocks, one for each caught type.
+
+            for (Op02WithProcessedDataAndRefs tryTarget : handlerTargets) {
+                /*
+                * tryTarget should not have a previous FAKE_CATCH source.
+                */
+                List<Op02WithProcessedDataAndRefs> tryTargetSources = tryTarget.getSources();
+                if (!tryTargetSources.isEmpty()) {
+                    if (tryTargetSources.size() > 1) {
+                        throw new ConfusedCFRException("Try target has >1 source");
+                    }
+                    Op02WithProcessedDataAndRefs source = tryTargetSources.get(0);
+                    if (source.getInstr() != JVMInstr.FAKE_CATCH) {
+                        throw new ConfusedCFRException("non catch before exception catch block");
+                    }
+                    // We won't add another catch.
+                    // TODO : validate the type of the catch.
+                    continue;
+                }
+
+
+                Op02WithProcessedDataAndRefs preCatchOp =
+                        new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1, null);
+
+                op2list.add(preCatchOp);
+
+                tryOp.addTarget(preCatchOp);
+                preCatchOp.addSource(tryOp);
+                preCatchOp.addTarget(tryTarget);
+                tryTarget.addSource(preCatchOp);
+            }
+            tryOp.addTarget(startInstruction);
+            startInstruction.clearSources();
+            startInstruction.addSource(tryOp);
+            op2list.add(tryOp);
+        }
+        return op2list;
     }
 }

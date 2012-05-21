@@ -1,23 +1,19 @@
 package org.benf.cfr.reader.bytecode;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
-import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
-import org.benf.cfr.reader.entities.exceptions.ExceptionBookmark;
-import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
-import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
-import org.benf.cfr.reader.util.functors.BinaryProcedure;
-import org.benf.cfr.reader.util.graph.GraphVisitor;
-import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -55,6 +51,8 @@ public class CodeAnalyser {
         int idx = 1;
         int offset = 0;
 
+        // We insert a fake NOP right at the start, so that we always know that each operation has a valid
+        // parent.  This sentinel assumption is used when inserting try { catch blocks.
         instrs.add(JVMInstr.NOP.createOperation(null, cp, -1));
         lutByIdx.put(0, -1);
         lutByOffset.put(-1, 0);
@@ -91,160 +89,65 @@ public class CodeAnalyser {
             }
         }
 
-        /* Exceptions block */
-        if (true) {
-            // Add entries from the exception table.  Since these are stored in terms of offsets, they're
-            // only usable here until we mess around with the instruction structure, so do it early!
-            ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries());
-            List<Short> exceptionStarts = exceptions.getExceptionHandlerStarts();
-            for (Short exception_from : exceptionStarts) {
-                List<ExceptionTableEntry> rawes = exceptions.getExceptionsFromSource(exception_from);
-                int originalIndex = lutByOffset.get((int) exception_from);
-                Op02WithProcessedDataAndRefs startInstruction = op2list.get(originalIndex);
-
-                List<Op02WithProcessedDataAndRefs> handlerTargets = ListFactory.newList();
-                for (ExceptionTableEntry exceptionTableEntry : rawes) {
-                    short handler = exceptionTableEntry.getBytecode_index_handler();
-                    int handlerIndex = lutByOffset.get((int) handler);
-                    Op02WithProcessedDataAndRefs handerTarget = op2list.get(handlerIndex);
-                    handlerTargets.add(handerTarget);
-                }
-
-                // Unlink startInstruction from its source, add a new instruction in there, which has a
-                // default target of startInstruction, but additional targets of handlerTargets.
-                ExceptionBookmark exceptionBookmark = new ExceptionBookmark(rawes);
-                Op02WithProcessedDataAndRefs tryOp =
-                        new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex().justBefore(), cp, null, -1, exceptionBookmark);
-
-                if (startInstruction.getSources().isEmpty())
-                    throw new ConfusedCFRException("Can't install exception handler infront of nothing");
-                for (Op02WithProcessedDataAndRefs source : startInstruction.getSources()) {
-                    source.replaceTarget(startInstruction, tryOp);
-                    tryOp.addSource(source);
-                }
-                for (Op02WithProcessedDataAndRefs tryTarget : handlerTargets) {
-                    /*
-                     * tryTarget should not have a previous FAKE_CATCH source.
-                     */
-                    List<Op02WithProcessedDataAndRefs> tryTargetSources = tryTarget.getSources();
-                    if (!tryTargetSources.isEmpty()) {
-                        if (tryTargetSources.size() > 1) {
-                            throw new ConfusedCFRException("Try target has >1 source");
-                        }
-                        Op02WithProcessedDataAndRefs source = tryTargetSources.get(0);
-                        if (source.getInstr() != JVMInstr.FAKE_CATCH) {
-                            throw new ConfusedCFRException("non catch before exception catch block");
-                        }
-                        // We won't add another catch.
-                        continue;
-                    }
+        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries());
+        //
+        // We know the ranges covered by each exception handler - insert try / catch statements around
+        // these ranges.
+        //
+        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp);
 
 
-                    Op02WithProcessedDataAndRefs preCatchOp =
-                            new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1, null);
+        // Populate stack info (each instruction gets references to stack objects
+        // consumed / produced.
+        Op02WithProcessedDataAndRefs.populateStackInfo(op2list);
 
-                    op2list.add(preCatchOp);
-
-                    tryOp.addTarget(preCatchOp);
-                    preCatchOp.addSource(tryOp);
-                    preCatchOp.addTarget(tryTarget);
-                    tryTarget.addSource(preCatchOp);
-                }
-                tryOp.addTarget(startInstruction);
-                startInstruction.clearSources();
-                startInstruction.addSource(tryOp);
-                op2list.add(tryOp);
-            }
-        }
-
-
-        // This dump block only exists because we're debugging bad stack size calcuations.
-        Op02WithProcessedDataAndRefs o2start = op2list.get(0);
-        try {
-            o2start.populateStackInfo(new StackSim());
-        } catch (ConfusedCFRException e) {
-            Dumper dmp = new Dumper();
-            dmp.print("----[known stack info]------------\n\n");
-            for (Op02WithProcessedDataAndRefs op : op2list) {
-                op.dump(dmp);
-            }
-            throw e;
-        }
-
-
-        this.start = o2start;
-
-
+        // Variable namer - if we've got variable names provided as an attribute in the class file, we'll
+        // use that.
         final VariableNamer variableNamer = VariableNamerFactory.getNamer(originalCodeAttribute.getLocalVariableTable(), cp);
 
+        // Create a non final version...
+        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableNamer);
 
-        final List<Op03SimpleStatement> op03SimpleParseNodes = ListFactory.newList();
-        // Convert the op2s into a simple set of statements.
-        // Do these need to be processed in a sensible order?  Could just iterate?
-        final GraphConversionHelper<Op02WithProcessedDataAndRefs, Op03SimpleStatement> conversionHelper = new GraphConversionHelper<Op02WithProcessedDataAndRefs, Op03SimpleStatement>();
-        // By only processing reachable bytecode, we ignore deliberate corruption.   However, we could
-        // Nop out unreachable code, so as to not have this ugliness.
-        GraphVisitor o2Converter = new GraphVisitorDFS(o2start,
-                new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
-                    @Override
-                    public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(variableNamer));
-                        conversionHelper.registerOriginalAndNew(arg1, res);
-                        op03SimpleParseNodes.add(res);
-                        for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {
-                            arg2.enqueue(target);
-                        }
-                    }
-                }
-        );
-        o2Converter.process();
-        conversionHelper.patchUpRelations();
-        List<Op03SimpleStatement> op03SimpleParseNodes2 = op03SimpleParseNodes;
         // Expand any 'multiple' statements (eg from dups)
+        Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
+        // Remove 2nd (+) jumps in pointless jump chains.
+        Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
-        Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes2);
-        Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes2);
-        // Debugger conditionals
-        // if (X) goto Y
-        // goto Z
-        // Y
-        // -> if (!X) goto Z
+        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
-
-        Op03SimpleStatement.assignSSAIdentifiers(op03SimpleParseNodes2);
+        Op03SimpleStatement.assignSSAIdentifiers(op03SimpleParseNodes);
 
         // Condense pointless assignments
-        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes2);
-        op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
+        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
         // Rewrite new / constructor pairs.
-        Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes2);
-        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes2);
-        op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
-        // Condense again!
-        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes2);
-        op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
+        Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes);
+        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+        // Condense again, now we've simplified constructors.
+        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
         // Collapse conditionals into || / &&
-        Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes2);
-        op03SimpleParseNodes2 = Op03SimpleStatement.renumber(op03SimpleParseNodes2);
+        Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
-        Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes2, blockIdentifierFactory);
+        Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
         // Perform this before simple forward if detection, as it allows us to not have to consider
         // gotos which have been relabelled as continue/break.
-        Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes2);
+        Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
 
         // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
         // where xx and yy have no GOTOs in them.
-        Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes2, blockIdentifierFactory);
+        Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         /*
          * Convert the Simple Statements into one structured Statement.
          */
-        Dumper dumper = new Dumper();
-        op03SimpleParseNodes2.get(0).dump(dumper);
-
-        Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes2);
+//        Dumper dumper = new Dumper();
+//        op03SimpleParseNodes.get(0).dump(dumper);
+//
+        Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         this.start = block;
     }
