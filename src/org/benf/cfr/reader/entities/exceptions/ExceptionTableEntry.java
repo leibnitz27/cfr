@@ -11,7 +11,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
  * Time: 06:32
  * To change this template use File | Settings | File Templates.
  */
-public class ExceptionTableEntry {
+public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
     private static final int OFFSET_INDEX_FROM = 0;
     private static final int OFFSET_INDEX_TO = 2;
     private static final int OFFSET_INDEX_HANDLER = 4;
@@ -57,5 +57,15 @@ public class ExceptionTableEntry {
         public ExceptionTableEntry invoke(ByteData arg) {
             return new ExceptionTableEntry(arg);
         }
+    }
+
+    @Override
+    public int compareTo(ExceptionTableEntry other) {
+        int res = bytecode_index_from - other.bytecode_index_from;
+        if (res != 0) return res;
+        res = bytecode_index_to - other.bytecode_index_to;
+        if (res != 0) return res;
+        res = bytecode_index_handler - other.bytecode_index_handler;
+        return res;
     }
 }

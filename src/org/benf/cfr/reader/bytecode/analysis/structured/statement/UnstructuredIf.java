@@ -56,7 +56,8 @@ public class UnstructuredIf extends AbstractStructuredStatement {
             }
             return new StructuredIf(conditionalExpression.getNegatedExpression(), setIfBlock, innerBlock);
         } else {
-            throw new ConfusedCFRException("IF statement given blocks it doesn't recognise");
+            return null;
+//            throw new ConfusedCFRException("IF statement given blocks it doesn't recognise");
         }
     }
 }

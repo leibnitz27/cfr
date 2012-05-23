@@ -89,12 +89,14 @@ public class CodeAnalyser {
             }
         }
 
-        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries());
+        BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
+        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory);
         //
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
         //
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp);
+        lutByOffset = null; // No longer valid.
 
 
         // Populate stack info (each instruction gets references to stack objects
@@ -131,7 +133,6 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
         // Perform this before simple forward if detection, as it allows us to not have to consider
         // gotos which have been relabelled as continue/break.
@@ -144,11 +145,12 @@ public class CodeAnalyser {
         /*
          * Convert the Simple Statements into one structured Statement.
          */
-//        Dumper dumper = new Dumper();
-//        op03SimpleParseNodes.get(0).dump(dumper);
+        Dumper dumper = new Dumper();
+        op03SimpleParseNodes.get(0).dump(dumper);
 //
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
+        block.dump(dumper);
         this.start = block;
     }
 

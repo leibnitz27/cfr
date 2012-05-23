@@ -26,7 +26,7 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
 
     @Override
     public String toString() {
-        return "" + index;
+        return "" + index + "[" + blockType + "]";
     }
 
     public static boolean blockIsOneOf(BlockIdentifier needle, List<BlockIdentifier> haystack) {

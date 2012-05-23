@@ -29,6 +29,29 @@ public class TypedLiteral {
         this.value = value;
     }
 
+    private static String IntegerName(Object o) {
+        if (!(o instanceof Integer)) return o.toString();
+        int i = (Integer) o;
+        switch (i) {
+            case Integer.MAX_VALUE:
+                return "Integer.MAX_VALUE";
+            case Integer.MIN_VALUE:
+                return "Integer.MIN_VALUE";
+            default:
+                return o.toString();
+        }
+    }
+
+    private static String LongName(Object o) {
+        if (!(o instanceof Long)) return o.toString();
+        long l = (Long) o;
+        if (l == Long.MAX_VALUE) return "Long.MAX_VALUE";
+        if (l == Long.MIN_VALUE) return "Long.MIN_VALUE";
+        if (l == Integer.MAX_VALUE) return "Integer.MAX_VALUE";
+        if (l == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
+        return o.toString();
+    }
+
     @Override
     public String toString() {
         switch (type) {
@@ -36,6 +59,10 @@ public class TypedLiteral {
                 return "\"" + value + "\"";
             case NullObject:
                 return "null";
+            case Integer:
+                return IntegerName(value);
+            case Long:
+                return LongName(value);
             default:
                 return value.toString();
         }

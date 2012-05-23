@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredTry;
+import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -14,8 +15,10 @@ import org.benf.cfr.reader.util.output.Dumper;
  * To change this template use File | Settings | File Templates.
  */
 public class TryStatement extends AbstractStatement {
+    private final ExceptionGroup exceptionGroup;
 
-    public TryStatement() {
+    public TryStatement(ExceptionGroup exceptionGroup) {
+        this.exceptionGroup = exceptionGroup;
     }
 
     @Override
@@ -34,6 +37,6 @@ public class TryStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredTry();
+        return new UnstructuredTry(exceptionGroup);
     }
 }

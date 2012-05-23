@@ -7,6 +7,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
  */
 public enum BlockType {
     WHILELOOP,
+    TRYBLOCK,
     SIMPLE_IF_TAKEN,
     SIMPLE_IF_ELSE
 }

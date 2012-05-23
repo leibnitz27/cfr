@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
@@ -22,7 +23,7 @@ import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
-import org.benf.cfr.reader.entities.exceptions.ExceptionBookmark;
+import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
@@ -49,7 +50,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private final JVMInstr instr;
     private final int originalRawOffset;
     private final byte[] rawData;
-    private final ExceptionBookmark exceptionBookmark;
+
+    private List<BlockIdentifier> containedInTheseBlocks = ListFactory.newList();
+    private ExceptionGroup exceptionGroup = null;
+
     private final List<Op02WithProcessedDataAndRefs> targets = ListFactory.newList();
     private final List<Op02WithProcessedDataAndRefs> sources = ListFactory.newList();
     private final ConstantPool cp;
@@ -60,17 +64,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private final List<StackEntryHolder> stackProduced = ListFactory.newList();
 
     public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, int index, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset) {
-        this(instr, rawData, new InstrIndex(index), cp, cpEntries, originalRawOffset, null);
+        this(instr, rawData, new InstrIndex(index), cp, cpEntries, originalRawOffset);
     }
 
-    public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, InstrIndex index, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset, ExceptionBookmark exceptionBookmark) {
+    public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, InstrIndex index, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset) {
         this.instr = instr;
         this.rawData = rawData;
         this.index = index;
         this.cp = cp;
         this.cpEntries = cpEntries;
         this.originalRawOffset = originalRawOffset;
-        this.exceptionBookmark = exceptionBookmark;
     }
 
     public InstrIndex getIndex() {
@@ -536,7 +539,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case MONITOREXIT:
                 return new CommentStatement("} MONITOREXIT");
             case FAKE_TRY:
-                return new TryStatement();
+                return new TryStatement(exceptionGroup);
             case FAKE_CATCH:
                 return new CommentStatement("} catch ... {");
             case NOP:
@@ -660,10 +663,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     ) {
         // Add entries from the exception table.  Since these are stored in terms of offsets, they're
         // only usable here until we mess around with the instruction structure, so do it early!
-        List<Short> exceptionStarts = exceptions.getExceptionHandlerStarts();
-        for (Short exception_from : exceptionStarts) {
-            List<ExceptionTableEntry> rawes = exceptions.getExceptionsFromSource(exception_from);
-            int originalIndex = lutByOffset.get((int) exception_from);
+        for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
+
+            List<ExceptionTableEntry> rawes = exceptionGroup.getEntries();
+            int originalIndex = lutByOffset.get((int) exceptionGroup.getBytecodeIndexFrom());
             Op02WithProcessedDataAndRefs startInstruction = op2list.get(originalIndex);
 
             List<Op02WithProcessedDataAndRefs> handlerTargets = ListFactory.newList();
@@ -676,9 +679,21 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
             // Unlink startInstruction from its source, add a new instruction in there, which has a
             // default target of startInstruction, but additional targets of handlerTargets.
-            ExceptionBookmark exceptionBookmark = new ExceptionBookmark(rawes);
             Op02WithProcessedDataAndRefs tryOp =
-                    new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex().justBefore(), cp, null, -1, exceptionBookmark);
+                    new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex().justBefore(), cp, null, -1);
+            BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
+            tryOp.containedInTheseBlocks.addAll(startInstruction.containedInTheseBlocks);
+            tryOp.exceptionGroup = exceptionGroup;
+
+
+//            tryOp.firstStatementInThisBlock = tryBlockIdentifier;
+//            tryOp.containedInTheseBlocks.add(tryBlockIdentifier);
+
+            int inclusiveLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo());
+            for (int x = originalIndex; x <= inclusiveLastIndex; ++x) {
+                op2list.get(x).containedInTheseBlocks.add(tryBlockIdentifier);
+            }
+
 
             // All operations which pointed to start should now point to our TRY
             if (startInstruction.getSources().isEmpty())
@@ -687,6 +702,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 source.replaceTarget(startInstruction, tryOp);
                 tryOp.addSource(source);
             }
+
+            // Add tryBlockIdentifier to each block in the original.
 
             // Given that we're protecting a certain block,
             // these are the different catch blocks, one for each caught type.
@@ -711,7 +728,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
 
                 Op02WithProcessedDataAndRefs preCatchOp =
-                        new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1, null);
+                        new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1);
+                preCatchOp.containedInTheseBlocks.addAll(tryTarget.getContainedInTheseBlocks());
+                preCatchOp.exceptionGroup = exceptionGroup;
 
                 op2list.add(preCatchOp);
 
@@ -727,4 +746,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
         return op2list;
     }
+
+    public List<BlockIdentifier> getContainedInTheseBlocks() {
+        return containedInTheseBlocks;
+    }
+
 }

@@ -44,11 +44,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     //
     private final List<BlockIdentifier> containedInBlocks = ListFactory.newList();
     //
-    // This statement is the last statement of THESE blocks, inclusive. 
-    //
-    private final List<BlockIdentifier> lastStatementOfTheseBlocks = ListFactory.newList();
-    //
-    // blocks ended just before this.  EXCLUSIVE. 
+    // blocks ended just before this.  (used to resolve break statements).
     //
     private final List<BlockIdentifier> immediatelyAfterBlocks = ListFactory.newList();
 
@@ -57,6 +53,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.isNop = false;
         this.index = original.getIndex();
         this.ssaIdentifiers = new SSAIdentifiers();
+        this.containedInBlocks.addAll(original.getContainedInTheseBlocks());
         statement.setContainer(this);
     }
 
@@ -237,11 +234,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.firstStatementInThisBlock = blockIdentifier;
     }
 
-
-    private void markLastStatementInBlock(BlockIdentifier blockIdentifier) {
-        this.lastStatementOfTheseBlocks.add(blockIdentifier);
-    }
-
     private void markPostBlock(BlockIdentifier blockIdentifier) {
         this.immediatelyAfterBlocks.add(blockIdentifier);
     }
@@ -302,6 +294,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private void dumpInner(Dumper dumper) {
+        for (BlockIdentifier blockIdentifier : containedInBlocks) {
+            dumper.print(blockIdentifier + " ");
+        }
         int indent = dumper.getIndent();
         if (needsLabel()) dumper.print(getLabel() + ":\n");
         getStatement().dump(dumper);
@@ -323,9 +318,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     public Op04StructuredStatement getStructuredStatementPlaceHolder() {
         return new Op04StructuredStatement(
                 index,
-                firstStatementInThisBlock,
                 containedInBlocks,
-                lastStatementOfTheseBlocks,
                 containedStatement.getStructuredStatement());
     }
 
@@ -752,7 +745,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
         start.markPreBlockStatement(blockIdentifier);
         statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
-        statements.get(idxAfterEnd - 1).markLastStatementInBlock(blockIdentifier);
         blockEnd.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, blockEnd);
     }
@@ -779,7 +771,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement start = statements.get(0);
         Op03SimpleStatement end = statements.get(statements.size() - 1);
         start.markFirstStatementInBlock(blockIdentifier);
-        end.markLastStatementInBlock(blockIdentifier);
         for (Op03SimpleStatement statement : statements) {
             statement.markBlock(blockIdentifier);
         }
