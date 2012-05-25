@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
@@ -24,7 +25,6 @@ import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
-import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
@@ -52,7 +52,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private final byte[] rawData;
 
     private List<BlockIdentifier> containedInTheseBlocks = ListFactory.newList();
-    private ExceptionGroup exceptionGroup = null;
+    private List<ExceptionGroup> exceptionGroups = ListFactory.newList();
+    private List<ExceptionGroup.Entry> catchExceptionGroups = ListFactory.newList();
 
     private final List<Op02WithProcessedDataAndRefs> targets = ListFactory.newList();
     private final List<Op02WithProcessedDataAndRefs> sources = ListFactory.newList();
@@ -133,6 +134,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     public void populateStackInfo(StackSim stackSim) {
         StackDelta stackDelta = instr.getStackDelta(rawData, cp, cpEntries, stackSim);
         if (stackDepthBeforeExecution != -1) {
+
+            /* Catch instructions are funny, as we know we'll get here with 1 thing on the stack. */
+            if (instr == JVMInstr.FAKE_CATCH) {
+                return;
+            }
+
             if (stackSim.getDepth() != stackDepthBeforeExecution) {
                 throw new ConfusedCFRException("Invalid stack depths @ " + this + " : expected " + stackSim.getDepth() + " previously set to " + stackDepthBeforeExecution);
             }
@@ -152,7 +159,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
 
         } else {
-            this.stackDepthBeforeExecution = stackSim.getDepth();
+
+            if (instr == JVMInstr.FAKE_CATCH) {
+                this.stackDepthBeforeExecution = 0;
+            } else {
+                this.stackDepthBeforeExecution = stackSim.getDepth();
+            }
             this.stackDepthAfterExecution = stackDepthBeforeExecution + stackDelta.getChange();
 
             StackSim newStackSim = stackSim.getChange(stackDelta, stackConsumed, stackProduced);
@@ -163,9 +175,19 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
+    public ExceptionGroup getSingleExceptionGroup() {
+        if (exceptionGroups.size() != 1) {
+            throw new ConfusedCFRException("Only expecting statement to be tagged with 1 exceptionGroup");
+        }
+        return exceptionGroups.iterator().next();
+    }
+
     @Override
     public void dump(Dumper d) {
-        d.print("" + index + " : " + instr + "\t Stack:" + stackDepthBeforeExecution + "\t");
+        for (BlockIdentifier blockIdentifier : containedInTheseBlocks) {
+            d.print(" " + blockIdentifier);
+        }
+        d.print(" " + index + " (" + originalRawOffset + ") : " + instr + "\t Stack:" + stackDepthBeforeExecution + "\t");
         d.print("Consumes:[");
         for (StackEntryHolder stackEntryHolder : stackConsumed) {
             d.print(stackEntryHolder.toString() + " ");
@@ -174,14 +196,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         for (StackEntryHolder stackEntryHolder : stackProduced) {
             d.print(stackEntryHolder.toString() + " ");
         }
-        d.print("] <- nodes");
-        for (Op02WithProcessedDataAndRefs source : sources) {
-            d.print(" " + source.index);
-        }
-        d.print(" -> nodes");
-        for (Op02WithProcessedDataAndRefs target : targets) {
-            d.print(" " + target.index);
-        }
+//        d.print("] <- nodes");
+//        for (Op02WithProcessedDataAndRefs source : sources) {
+//            d.print(" " + source.index);
+//        }
+//        d.print(" -> nodes");
+//        for (Op02WithProcessedDataAndRefs target : targets) {
+//            d.print(" " + target.index);
+//        }
         d.print("\n");
     }
 
@@ -539,9 +561,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case MONITOREXIT:
                 return new CommentStatement("} MONITOREXIT");
             case FAKE_TRY:
-                return new TryStatement(exceptionGroup);
+                return new TryStatement(getSingleExceptionGroup());
             case FAKE_CATCH:
-                return new CommentStatement("} catch ... {");
+                return new CommentStatement("} catch ... { // " + catchExceptionGroups);
             case NOP:
                 return new Nop();
             case POP:
@@ -665,16 +687,19 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         // only usable here until we mess around with the instruction structure, so do it early!
         for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
 
-            List<ExceptionTableEntry> rawes = exceptionGroup.getEntries();
+            List<ExceptionGroup.Entry> rawes = exceptionGroup.getEntries();
             int originalIndex = lutByOffset.get((int) exceptionGroup.getBytecodeIndexFrom());
             Op02WithProcessedDataAndRefs startInstruction = op2list.get(originalIndex);
 
-            List<Op02WithProcessedDataAndRefs> handlerTargets = ListFactory.newList();
-            for (ExceptionTableEntry exceptionTableEntry : rawes) {
-                short handler = exceptionTableEntry.getBytecode_index_handler();
+            List<Pair<Op02WithProcessedDataAndRefs, ExceptionGroup.Entry>> handlerTargets = ListFactory.newList();
+            for (ExceptionGroup.Entry exceptionEntry : rawes) {
+                short handler = exceptionEntry.getBytecodeIndexHandler();
                 int handlerIndex = lutByOffset.get((int) handler);
+                if (handlerIndex <= originalIndex) {
+                    throw new ConfusedCFRException("Back jump on a try block " + exceptionEntry);
+                }
                 Op02WithProcessedDataAndRefs handerTarget = op2list.get(handlerIndex);
-                handlerTargets.add(handerTarget);
+                handlerTargets.add(Pair.make(handerTarget, exceptionEntry));
             }
 
             // Unlink startInstruction from its source, add a new instruction in there, which has a
@@ -683,7 +708,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex().justBefore(), cp, null, -1);
             BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
             tryOp.containedInTheseBlocks.addAll(startInstruction.containedInTheseBlocks);
-            tryOp.exceptionGroup = exceptionGroup;
+            tryOp.exceptionGroups.add(exceptionGroup);
 
 
 //            tryOp.firstStatementInThisBlock = tryBlockIdentifier;
@@ -708,36 +733,35 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             // Given that we're protecting a certain block,
             // these are the different catch blocks, one for each caught type.
 
-            for (Op02WithProcessedDataAndRefs tryTarget : handlerTargets) {
+            for (Pair<Op02WithProcessedDataAndRefs, ExceptionGroup.Entry> catchTargets : handlerTargets) {
+                Op02WithProcessedDataAndRefs tryTarget = catchTargets.getFirst();
                 /*
                 * tryTarget should not have a previous FAKE_CATCH source.
                 */
                 List<Op02WithProcessedDataAndRefs> tryTargetSources = tryTarget.getSources();
+                Op02WithProcessedDataAndRefs preCatchOp;
                 if (!tryTargetSources.isEmpty()) {
                     if (tryTargetSources.size() > 1) {
                         throw new ConfusedCFRException("Try target has >1 source");
                     }
-                    Op02WithProcessedDataAndRefs source = tryTargetSources.get(0);
-                    if (source.getInstr() != JVMInstr.FAKE_CATCH) {
+                    preCatchOp = tryTargetSources.get(0);
+                    if (preCatchOp.getInstr() != JVMInstr.FAKE_CATCH) {
                         throw new ConfusedCFRException("non catch before exception catch block");
                     }
-                    // We won't add another catch.
-                    // TODO : validate the type of the catch.
-                    continue;
+
+                    // There was already a catch here.
+
+                } else {
+
+                    preCatchOp = new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1);
+                    preCatchOp.containedInTheseBlocks.addAll(tryTarget.getContainedInTheseBlocks());
+                    preCatchOp.addTarget(tryTarget);
+                    tryTarget.addSource(preCatchOp);
+                    op2list.add(preCatchOp);
                 }
-
-
-                Op02WithProcessedDataAndRefs preCatchOp =
-                        new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1);
-                preCatchOp.containedInTheseBlocks.addAll(tryTarget.getContainedInTheseBlocks());
-                preCatchOp.exceptionGroup = exceptionGroup;
-
-                op2list.add(preCatchOp);
-
-                tryOp.addTarget(preCatchOp);
                 preCatchOp.addSource(tryOp);
-                preCatchOp.addTarget(tryTarget);
-                tryTarget.addSource(preCatchOp);
+                tryOp.addTarget(preCatchOp);
+                preCatchOp.catchExceptionGroups.add(catchTargets.getSecond());
             }
             tryOp.addTarget(startInstruction);
             startInstruction.clearSources();

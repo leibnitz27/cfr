@@ -57,7 +57,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statement.setContainer(this);
     }
 
-    private Op03SimpleStatement(Statement statement, InstrIndex index) {
+    private Op03SimpleStatement(List<BlockIdentifier> containedIn, Statement statement, InstrIndex index) {
         this.containedStatement = statement;
         this.isNop = false;
         this.index = index;
@@ -294,11 +294,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private void dumpInner(Dumper dumper) {
+        if (needsLabel()) dumper.print(getLabel() + ":\n");
         for (BlockIdentifier blockIdentifier : containedInBlocks) {
             dumper.print(blockIdentifier + " ");
         }
         int indent = dumper.getIndent();
-        if (needsLabel()) dumper.print(getLabel() + ":\n");
         getStatement().dump(dumper);
     }
 
@@ -331,9 +331,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Statement> innerStatements = containedStatement.getCompoundParts();
         InstrIndex nextIndex = index.justAfter();
         for (Statement statement : innerStatements) {
-            result.add(new Op03SimpleStatement(statement, nextIndex));
+            result.add(new Op03SimpleStatement(containedInBlocks, statement, nextIndex));
             nextIndex = nextIndex.justAfter();
         }
+        result.get(0).firstStatementInThisBlock = firstStatementInThisBlock;
         Op03SimpleStatement previous = null;
         for (Op03SimpleStatement statement : result) {
             if (previous != null) {

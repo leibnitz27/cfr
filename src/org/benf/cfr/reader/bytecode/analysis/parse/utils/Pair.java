@@ -8,6 +8,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 public class Pair<X, Y> {
     private final X x;
     private final Y y;
+
     public Pair(X x, Y y) {
         this.x = x;
         this.y = y;
@@ -19,5 +20,9 @@ public class Pair<X, Y> {
 
     public Y getSecond() {
         return y;
+    }
+
+    public static <A, B> Pair<A, B> make(A a, B b) {
+        return new Pair<A, B>(a, b);
     }
 }

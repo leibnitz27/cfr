@@ -107,6 +107,10 @@ public class CodeAnalyser {
         // use that.
         final VariableNamer variableNamer = VariableNamerFactory.getNamer(originalCodeAttribute.getLocalVariableTable(), cp);
 
+        Dumper dumper = new Dumper();
+
+        dumper.dump(op2list);
+
         // Create a non final version...
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableNamer);
 
@@ -145,7 +149,7 @@ public class CodeAnalyser {
         /*
          * Convert the Simple Statements into one structured Statement.
          */
-        Dumper dumper = new Dumper();
+        dumper.print("FINAL Op03SimpleStatement NODES:\n\n************\n");
         op03SimpleParseNodes.get(0).dump(dumper);
 //
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);

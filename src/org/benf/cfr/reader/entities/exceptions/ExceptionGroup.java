@@ -14,7 +14,7 @@ public class ExceptionGroup {
 
     private final short bytecodeIndexFrom;        // [ a
     private short byteCodeIndexTo;          // ) b    st a <= x < b
-    private List<ExceptionTableEntry> entries = ListFactory.newList();
+    private List<Entry> entries = ListFactory.newList();
     private final BlockIdentifier tryBlockIdentifier;
 
     public ExceptionGroup(short bytecodeIndexFrom, BlockIdentifier blockIdentifier) {
@@ -23,11 +23,12 @@ public class ExceptionGroup {
     }
 
     public void add(ExceptionTableEntry entry) {
-        this.entries.add(entry);
+        if (entry.getBytecode_index_handler() == entry.getBytecode_index_from()) return;
+        this.entries.add(new Entry(entry));
         if (entry.getBytecode_index_to() > byteCodeIndexTo) byteCodeIndexTo = entry.getBytecode_index_to();
     }
 
-    public List<ExceptionTableEntry> getEntries() {
+    public List<Entry> getEntries() {
 
         return entries;
     }
@@ -46,6 +47,27 @@ public class ExceptionGroup {
 
     @Override
     public String toString() {
-        return "[egrp : " + tryBlockIdentifier + "]";
+        return "[egrp : " + tryBlockIdentifier + " [" + bytecodeIndexFrom + "->" + byteCodeIndexTo + ")]";
+    }
+
+    public class Entry {
+        private final ExceptionTableEntry entry;
+
+        public Entry(ExceptionTableEntry entry) {
+            this.entry = entry;
+        }
+
+        public short getBytecodeIndexTo() {
+            return entry.getBytecode_index_to();
+        }
+
+        public short getBytecodeIndexHandler() {
+            return entry.getBytecode_index_handler();
+        }
+
+        @Override
+        public String toString() {
+            return ExceptionGroup.this.toString();
+        }
     }
 }

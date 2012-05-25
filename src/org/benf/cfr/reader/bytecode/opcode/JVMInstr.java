@@ -240,7 +240,7 @@ public enum JVMInstr {
     TABLESWITCH(0xaa, -1, StackType.INT.asList(), StackTypes.EMPTY, new OperationFactoryTableSwitch()),
     WIDE(0xc4, -1, null, null, new OperationFactoryWide()),
     FAKE_TRY(-1, 0, StackTypes.EMPTY, StackTypes.EMPTY),
-    FAKE_CATCH(-1, 0, StackTypes.EMPTY, StackType.REF.asList());
+    FAKE_CATCH(-1, 0, StackTypes.EMPTY, StackType.REF.asList(), new OperationFactoryFakeCatch());
 
     private final int opcode;
     private final int bytes;

@@ -68,4 +68,9 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         res = bytecode_index_handler - other.bytecode_index_handler;
         return res;
     }
+
+    @Override
+    public String toString() {
+        return "ExceptionTableEntry : [" + bytecode_index_from + "->" + bytecode_index_to + ") : " + bytecode_index_handler;
+    }
 }

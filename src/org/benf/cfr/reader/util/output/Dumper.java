@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -47,5 +49,11 @@ public class Dumper {
 
     public void indent(int diff) {
         indent += diff;
+    }
+
+    public void dump(List<? extends Dumpable> d) {
+        for (Dumpable dumpable : d) {
+            dumpable.dump(this);
+        }
     }
 }
