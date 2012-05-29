@@ -150,6 +150,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         original.setTargets(ListFactory.<Op04StructuredStatement>newList());
     }
 
+    public void removeLastContinue(BlockIdentifier block) {
+        if (structuredStatement instanceof Block) {
+            ((Block) structuredStatement).removeLastContinue(block);
+        } else {
+            throw new ConfusedCFRException("Trying to remove last continue, but statement isn't block");
+        }
+    }
+
     public void removeLastGoto() {
         if (structuredStatement instanceof Block) {
             ((Block) structuredStatement).removeLastGoto();

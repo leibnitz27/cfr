@@ -30,12 +30,14 @@ public class UnstructuredWhile extends AbstractStructuredStatement {
         if (blockIdentifier != this.blockIdentifier) {
             throw new RuntimeException("While statement claiming wrong block");
         }
-        return new StructuredWhile(condition, innerBlock);
+        innerBlock.removeLastContinue(blockIdentifier);
+        return new StructuredWhile(condition, innerBlock, blockIdentifier);
     }
 
     @Override
     public boolean isProperlyStructured() {
         return false;
     }
+
 
 }

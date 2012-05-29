@@ -2,6 +2,7 @@ package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
 import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
@@ -71,7 +72,13 @@ public class ExceptionGroup {
         @Override
         public String toString() {
             short type = entry.getCatchType();
-            String name = (type == 0) ? "..." : "" + cp.getClassEntry(type);
+            String name;
+            if (type == 0) {
+                name = "Throwable";
+            } else {
+                ConstantPoolEntryClass constantPoolEntryClass = cp.getClassEntry(type);
+                name = cp.getUTF8Entry(constantPoolEntryClass.getNameIndex()).getValue();
+            }
             return ExceptionGroup.this.toString() + " " + name;
         }
     }

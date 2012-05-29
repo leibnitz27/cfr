@@ -114,7 +114,7 @@ public class IfStatement extends GotoStatement {
             case GOTO:
                 return new UnstructuredIf(condition, knownIfBlock, knownElseBlock);
             case CONTINUE:
-                return new StructuredIf(condition, new Op04StructuredStatement(new StructuredContinue()));
+                return new StructuredIf(condition, new Op04StructuredStatement(new StructuredContinue(getTargetStartBlock())));
             case BREAK:
                 return new StructuredIf(condition, new Op04StructuredStatement(new StructuredBreak()));
         }

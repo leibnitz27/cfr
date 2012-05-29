@@ -42,4 +42,8 @@ public class WhileStatement extends AbstractStatement {
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredWhile(condition, blockIdentifier);
     }
+
+    public BlockIdentifier getBlockIdentifier() {
+        return blockIdentifier;
+    }
 }
