@@ -2,8 +2,13 @@ package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
+import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -19,11 +24,60 @@ public class ExceptionAggregator {
 
     private final List<ExceptionGroup> exceptionsByRange = ListFactory.newList();
 
+    private static class CompareExceptionTablesByStart implements Comparator<ExceptionTableEntry> {
+        @Override
+        public int compare(ExceptionTableEntry exceptionTableEntry, ExceptionTableEntry exceptionTableEntry1) {
+            int res = exceptionTableEntry.getBytecodeIndexFrom() - exceptionTableEntry1.getBytecodeIndexFrom();
+            return res;
+        }
+    }
+
     private static class CompareExceptionTablesByRange implements Comparator<ExceptionTableEntry> {
         @Override
         public int compare(ExceptionTableEntry exceptionTableEntry, ExceptionTableEntry exceptionTableEntry1) {
-            int res = exceptionTableEntry.getBytecode_index_from() - exceptionTableEntry1.getBytecode_index_from();
+            int res = exceptionTableEntry.getBytecodeIndexFrom() - exceptionTableEntry1.getBytecodeIndexFrom();
+            if (res != 0) return res;
+            return exceptionTableEntry.getBytecodeIndexTo() - exceptionTableEntry1.getBytecodeIndexTo();
+        }
+    }
+
+    private static class ByTarget {
+        private final List<ExceptionTableEntry> entries;
+
+        public ByTarget(List<ExceptionTableEntry> entries) {
+            this.entries = entries;
+        }
+
+        public Collection<ExceptionTableEntry> getAggregated() {
+            Collections.sort(this.entries, new CompareExceptionTablesByRange());
+            /* If two entries are contiguous, they can be merged 
+             * If they're 'almost' contiguous, but point to the same range? ........ don't know.
+             */
+            List<ExceptionTableEntry> res = ListFactory.newList();
+            ExceptionTableEntry held = null;
+            for (ExceptionTableEntry entry : this.entries) {
+                if (held == null) {
+                    held = entry;
+                } else {
+                    // TODO - shouldn't be using bytecode indices unless we can account for instruction length?
+                    // TODO - depends if the end is the start of the last opcode, or the end.
+                    if (held.getBytecodeIndexTo() == entry.getBytecodeIndexFrom() - 1) {
+                        held = held.aggregateWith(entry);
+                    } else {
+                        res.add(held);
+                        held = entry;
+                    }
+                }
+            }
+            if (held != null) res.add(held);
             return res;
+        }
+    }
+
+    private static class ValidException implements Predicate<ExceptionTableEntry> {
+        @Override
+        public boolean test(ExceptionTableEntry in) {
+            return (in.getBytecodeIndexFrom() != in.getBytecodeIndexHandler());
         }
     }
 
@@ -31,14 +85,41 @@ public class ExceptionAggregator {
     * I guess a compiler could have a,b a2, b2 where a < a2, b > a2 < b2... (eww).
     * In that case, we should split the exception regime into non-overlapping sections.
     */
-    public ExceptionAggregator(List<ExceptionTableEntry> rawExceptions, BlockIdentifierFactory blockIdentifierFactory) {
+    public ExceptionAggregator(List<ExceptionTableEntry> rawExceptions, BlockIdentifierFactory blockIdentifierFactory, ConstantPool cp) {
+        rawExceptions = Functional.filter(rawExceptions, new ValidException());
+        /* 
+         * Try and aggregate exceptions for the same object which jump to the same target.
+         */
+        Collection<ByTarget> byTargetList = Functional.groupBy(rawExceptions, new Comparator<ExceptionTableEntry>() {
+                    @Override
+                    public int compare(ExceptionTableEntry exceptionTableEntry, ExceptionTableEntry exceptionTableEntry1) {
+                        int hd = exceptionTableEntry.getBytecodeIndexHandler() - exceptionTableEntry1.getBytecodeIndexHandler();
+                        if (hd != 0) return hd;
+                        return exceptionTableEntry.getCatchType() - exceptionTableEntry1.getCatchType();
+                    }
+                }, new UnaryFunction<List<ExceptionTableEntry>, ByTarget>() {
+            @Override
+            public ByTarget invoke(List<ExceptionTableEntry> arg) {
+                return new ByTarget(arg);
+            }
+        }
+        );
+
+        rawExceptions.clear();
+        /* 
+         * Each of these is now lists which point to the same handler+type.
+         */
+        for (ByTarget byTarget : byTargetList) {
+            rawExceptions.addAll(byTarget.getAggregated());
+        }
+
         Collections.sort(rawExceptions);
-        CompareExceptionTablesByRange compareExceptionTablesByRange = new CompareExceptionTablesByRange();
+        CompareExceptionTablesByStart compareExceptionTablesByStart = new CompareExceptionTablesByStart();
         ExceptionTableEntry prev = null;
         ExceptionGroup currentGroup = null;
         for (ExceptionTableEntry e : rawExceptions) {
-            if (prev == null || compareExceptionTablesByRange.compare(e, prev) != 0) {
-                currentGroup = new ExceptionGroup(e.getBytecode_index_from(), blockIdentifierFactory.getNextBlockIdentifier(BlockType.TRYBLOCK));
+            if (prev == null || compareExceptionTablesByStart.compare(e, prev) != 0) {
+                currentGroup = new ExceptionGroup(e.getBytecodeIndexFrom(), blockIdentifierFactory.getNextBlockIdentifier(BlockType.TRYBLOCK), cp);
                 exceptionsByRange.add(currentGroup);
                 prev = e;
             }

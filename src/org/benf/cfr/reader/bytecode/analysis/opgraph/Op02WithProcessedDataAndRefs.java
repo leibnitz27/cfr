@@ -563,7 +563,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FAKE_TRY:
                 return new TryStatement(getSingleExceptionGroup());
             case FAKE_CATCH:
-                return new CommentStatement("} catch ... { // " + catchExceptionGroups);
+                return new CatchStatement(catchExceptionGroups);
             case NOP:
                 return new Nop();
             case POP:
@@ -683,6 +683,18 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             Map<Integer, Integer> lutByOffset,
             ConstantPool cp
     ) {
+
+        // First pass - decorate blocks with identifiers, so that when we introduce try/catch statements
+        // they get the correct identifiers
+        for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
+            BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
+            int originalIndex = lutByOffset.get((int) exceptionGroup.getBytecodeIndexFrom());
+            int inclusiveLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo());
+            for (int x = originalIndex; x <= inclusiveLastIndex; ++x) {
+                op2list.get(x).containedInTheseBlocks.add(tryBlockIdentifier);
+            }
+        }
+
         // Add entries from the exception table.  Since these are stored in terms of offsets, they're
         // only usable here until we mess around with the instruction structure, so do it early!
         for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
@@ -706,19 +718,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             // default target of startInstruction, but additional targets of handlerTargets.
             Op02WithProcessedDataAndRefs tryOp =
                     new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex().justBefore(), cp, null, -1);
-            BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
             tryOp.containedInTheseBlocks.addAll(startInstruction.containedInTheseBlocks);
+            tryOp.containedInTheseBlocks.remove(exceptionGroup.getTryBlockIdentifier());
             tryOp.exceptionGroups.add(exceptionGroup);
-
-
-//            tryOp.firstStatementInThisBlock = tryBlockIdentifier;
-//            tryOp.containedInTheseBlocks.add(tryBlockIdentifier);
-
-            int inclusiveLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo());
-            for (int x = originalIndex; x <= inclusiveLastIndex; ++x) {
-                op2list.get(x).containedInTheseBlocks.add(tryBlockIdentifier);
-            }
-
 
             // All operations which pointed to start should now point to our TRY
             if (startInstruction.getSources().isEmpty())

@@ -90,7 +90,7 @@ public class CodeAnalyser {
         }
 
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
-        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory);
+        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, cp);
         //
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.

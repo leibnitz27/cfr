@@ -3,9 +3,10 @@ package org.benf.cfr.reader.util;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Created:
@@ -50,5 +51,22 @@ public class Functional {
             if (found.add(in)) result.add(in);
         }
         return result;
+    }
+
+    public static <Y, X> List<Y> groupBy(List<X> input, Comparator<? super X> comparator, UnaryFunction<List<X>, Y> gf) {
+        TreeMap<X, List<X>> temp = new TreeMap<X, List<X>>(comparator);
+        for (X x : input) {
+            List<X> lx = temp.get(x);
+            if (lx == null) {
+                lx = ListFactory.newList();
+                temp.put(x, lx);
+            }
+            lx.add(x);
+        }
+        List<Y> res = ListFactory.newList();
+        for (List<X> lx : temp.values()) {
+            res.add(gf.invoke(lx));
+        }
+        return res;
     }
 }

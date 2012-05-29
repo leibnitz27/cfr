@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -29,20 +30,35 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         this.catch_type = raw.getS2At(OFFSET_CATCH_TYPE);
     }
 
-    public short getBytecode_index_from() {
+    private ExceptionTableEntry(short from, short to, short handler, short catchType) {
+        this.bytecode_index_from = from;
+        this.bytecode_index_to = to;
+        this.bytecode_index_handler = handler;
+        this.catch_type = catchType;
+    }
+
+    public short getBytecodeIndexFrom() {
         return bytecode_index_from;
     }
 
-    public short getBytecode_index_to() {
+    public short getBytecodeIndexTo() {
         return bytecode_index_to;
     }
 
-    public short getBytecode_index_handler() {
+    public short getBytecodeIndexHandler() {
         return bytecode_index_handler;
     }
 
-    public short getCatch_type() {
+    public short getCatchType() {
         return catch_type;
+    }
+
+    public ExceptionTableEntry aggregateWith(ExceptionTableEntry later) {
+        if ((this.bytecode_index_from >= later.bytecode_index_from) ||
+                (this.bytecode_index_to != later.bytecode_index_from - 1)) {
+            throw new ConfusedCFRException("Can't aggregate exceptionTableEntries");
+        }
+        return new ExceptionTableEntry(this.bytecode_index_from, later.bytecode_index_to, this.bytecode_index_handler, this.catch_type);
     }
 
     public static UnaryFunction<ByteData, ExceptionTableEntry> getBuilder(ConstantPool cp) {

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
@@ -16,16 +17,18 @@ public class ExceptionGroup {
     private short byteCodeIndexTo;          // ) b    st a <= x < b
     private List<Entry> entries = ListFactory.newList();
     private final BlockIdentifier tryBlockIdentifier;
+    private final ConstantPool cp;
 
-    public ExceptionGroup(short bytecodeIndexFrom, BlockIdentifier blockIdentifier) {
+    public ExceptionGroup(short bytecodeIndexFrom, BlockIdentifier blockIdentifier, ConstantPool cp) {
         this.bytecodeIndexFrom = bytecodeIndexFrom;
         this.tryBlockIdentifier = blockIdentifier;
+        this.cp = cp;
     }
 
     public void add(ExceptionTableEntry entry) {
-        if (entry.getBytecode_index_handler() == entry.getBytecode_index_from()) return;
+        if (entry.getBytecodeIndexHandler() == entry.getBytecodeIndexFrom()) return;
         this.entries.add(new Entry(entry));
-        if (entry.getBytecode_index_to() > byteCodeIndexTo) byteCodeIndexTo = entry.getBytecode_index_to();
+        if (entry.getBytecodeIndexTo() > byteCodeIndexTo) byteCodeIndexTo = entry.getBytecodeIndexTo();
     }
 
     public List<Entry> getEntries() {
@@ -58,16 +61,18 @@ public class ExceptionGroup {
         }
 
         public short getBytecodeIndexTo() {
-            return entry.getBytecode_index_to();
+            return entry.getBytecodeIndexTo();
         }
 
         public short getBytecodeIndexHandler() {
-            return entry.getBytecode_index_handler();
+            return entry.getBytecodeIndexHandler();
         }
 
         @Override
         public String toString() {
-            return ExceptionGroup.this.toString();
+            short type = entry.getCatchType();
+            String name = (type == 0) ? "..." : "" + cp.getClassEntry(type);
+            return ExceptionGroup.this.toString() + " " + name;
         }
     }
 }
