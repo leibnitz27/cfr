@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -21,19 +22,22 @@ public class Block extends AbstractStructuredStatement {
         this.indenting = indenting;
     }
 
+    // At the end of a loop, we either jump back, jump out, or return.
     public boolean removeLastContinue(BlockIdentifier block) {
-        if (containedStatements.getLast().getStructuredStatement() instanceof StructuredContinue) {
-            Op04StructuredStatement continueStmt = containedStatements.getLast();
-            StructuredContinue structuredContinue = (StructuredContinue) continueStmt.getStructuredStatement();
+        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        if (structuredStatement instanceof StructuredContinue) {
+            StructuredContinue structuredContinue = (StructuredContinue) structuredStatement;
             if (structuredContinue.getContinueTgt() == block) {
+                Op04StructuredStatement continueStmt = containedStatements.getLast();
                 continueStmt.replaceStatementWithNOP("");
                 return true;
             } else {
-                System.out.println("Can't replace " + structuredContinue.getContinueTgt() + " with " + block);
                 return false;
             }
+        } else if (structuredStatement instanceof StructuredReturn) {
+            return false;
         } else {
-            throw new ConfusedCFRException("Trying to remove last goto of a block, but it's not an unstructured GOTO");
+            throw new ConfusedCFRException("Trying to remove last goto of a block, but it's not a valid loop end " + containedStatements.getLast());
         }
     }
 

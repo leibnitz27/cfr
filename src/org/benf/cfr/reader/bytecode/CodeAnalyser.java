@@ -137,6 +137,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
+        // Identify simple while loops.
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
         // Perform this before simple forward if detection, as it allows us to not have to consider
         // gotos which have been relabelled as continue/break.
@@ -151,7 +152,7 @@ public class CodeAnalyser {
          */
         dumper.print("FINAL Op03SimpleStatement NODES:\n\n************\n");
         op03SimpleParseNodes.get(0).dump(dumper);
-//
+
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         block.dump(dumper);

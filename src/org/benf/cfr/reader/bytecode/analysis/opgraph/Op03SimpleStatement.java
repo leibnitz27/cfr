@@ -641,6 +641,28 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return null;
     }
 
+
+    private static class GraphVisitorReachableInThese implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
+        private final Set<Integer> reachable;
+        private final Map<Op03SimpleStatement, Integer> instrToIdx;
+
+        public GraphVisitorReachableInThese(Set<Integer> reachable, Map<Op03SimpleStatement, Integer> instrToIdx) {
+            this.reachable = reachable;
+            this.instrToIdx = instrToIdx;
+        }
+
+        @Override
+        public void call(Op03SimpleStatement node, GraphVisitor<Op03SimpleStatement> graphVisitor) {
+            Integer idx = instrToIdx.get(node);
+            if (idx == null) return;
+            reachable.add(idx);
+            for (Op03SimpleStatement target : node.targets) {
+                graphVisitor.enqueue(target);
+            }
+        }
+    }
+
+
     /* Is the first conditional jump NOT one of the sources of start?
     * Take the target of the first conditional jump - is it somehwhere which is not reachable from
     * any of the forward sources of start without going through start?
@@ -680,6 +702,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * normalises the code so the jump out is the explicit jump.
          * TODO : Could do this by finding which one of the targets of the condition is NOT reachable
          * TODO : by going back from each of the backJumpSources to conditional
+         *
+         * TODO: This might give us something WAY past the end of the loop, if the next instruction is to
+         * jump past a catch block.....
          */
         Op03SimpleStatement loopBreak = conditionalTargets.get(1);
 
@@ -733,14 +758,46 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
 
         /* TODO : ORDERCHEAT */
-        // Mark everything in the list between start and maybeEndLoop as being in this block.
-
+        // Mark instructions in the list between start and maybeEndLoop as being in this block.
         if (idxConditional >= idxAfterEnd) {
-            return;
 //            throw new ConfusedCFRException("Can't decode block");
+            return;
         }
         BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.WHILELOOP);
+
+        /* Given that the potential statements inside this block are idxConditional+1 -> idxAfterEnd-1, [a->b]
+        * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
+        * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
+        */
+        Map<Op03SimpleStatement, Integer> instrToIdx = MapFactory.newMap();
         for (int x = idxConditional + 1; x < idxAfterEnd; ++x) {
+            instrToIdx.put(statements.get(x), x);
+        }
+
+        Set<Integer> reachableNodes = SetFactory.newSet();
+        GraphVisitorReachableInThese graphVisitorCallee = new GraphVisitorReachableInThese(reachableNodes, instrToIdx);
+        GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(idxConditional + 1), graphVisitorCallee);
+        visitor.process();
+
+        /* reachable nodes now contains those nodes which are reachable without leaving the range. */
+
+        int first = idxConditional + 1;
+        int last = -1;
+        boolean foundLast = false;
+
+        for (int x = first; x < idxAfterEnd; ++x) {
+            if (reachableNodes.contains(x)) {
+                if (foundLast) {
+                    throw new ConfusedCFRException("WHILE loop was exited and re-entered.");
+                }
+            } else {
+                if (!foundLast) last = x - 1;
+                foundLast = true;
+            }
+        }
+        if (last == -1) last = idxAfterEnd - 1;
+
+        for (int x = first; x <= last; ++x) {
             statements.get(x).markBlock(blockIdentifier);
         }
         Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
