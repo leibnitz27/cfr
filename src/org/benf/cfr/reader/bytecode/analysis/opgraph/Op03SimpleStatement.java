@@ -62,6 +62,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.isNop = false;
         this.index = index;
         this.ssaIdentifiers = new SSAIdentifiers();
+        this.containedInBlocks.addAll(containedIn);
         statement.setContainer(this);
     }
 
