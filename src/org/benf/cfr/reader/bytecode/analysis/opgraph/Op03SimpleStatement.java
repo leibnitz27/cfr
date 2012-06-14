@@ -883,8 +883,18 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement maybeElseEnd = null;
         List<Op03SimpleStatement> ifBranch = ListFactory.newList();
         List<Op03SimpleStatement> elseBranch = null;
+        // Consider the try blocks we're in at this point.  (the ifStatemenet).
+        // If we leave any of them, we've left the if.
+        List<BlockIdentifier> tryBlocksInAtStart = ListFactory.newList();
+        for (BlockIdentifier blockIdentifier : ifStatement.containedInBlocks) {
+            if (blockIdentifier.getBlockType() == BlockType.TRYBLOCK) tryBlocksInAtStart.add(blockIdentifier);
+        }
         do {
             Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
+            if (!BlockIdentifier.isInAllBlocks(tryBlocksInAtStart, statementCurrent.containedInBlocks)) {
+                // Left a try block.  Consider no more.
+                break;
+            }
             ifBranch.add(statementCurrent);
             JumpType jumpType = statementCurrent.getJumpType();
             if (jumpType == JumpType.GOTO) {

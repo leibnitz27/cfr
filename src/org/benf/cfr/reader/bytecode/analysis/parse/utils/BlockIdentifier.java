@@ -45,6 +45,14 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
         return containedIn.get(0);
     }
 
+    /* Ouch - should be set lookups.  */
+    public static boolean isInAllBlocks(List<BlockIdentifier> mustBeIn, List<BlockIdentifier> isIn) {
+        for (BlockIdentifier must : mustBeIn) {
+            if (!isIn.contains(must)) return false;
+        }
+        return true;
+    }
+
     @Override
     public int compareTo(BlockIdentifier blockIdentifier) {
         return index - blockIdentifier.index;

@@ -264,8 +264,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                     if (currentBlockIdentifier == null) {
                         throw new ConfusedCFRException("Trying to end block, but not in any!");
                     }
+                    // Leaving a block, but
                     if (!endOfTheseBlocks.remove(currentBlockIdentifier)) {
-                        throw new ConfusedCFRException("Tried to end block " + currentBlockIdentifier + " but am not in it!!");
+                        throw new ConfusedCFRException("Tried to end blocks " + endOfTheseBlocks + ", but top level block is " + currentBlockIdentifier);
                     }
                     blocksCurrentlyIn.remove(currentBlockIdentifier);
                     LinkedList<Op04StructuredStatement> blockJustEnded = currentBlock;
