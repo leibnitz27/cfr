@@ -1,7 +1,5 @@
 package org.benf.cfr.reader.util;
 
-import com.sun.deploy.util.ArrayUtil;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -21,6 +19,10 @@ public class ListFactory {
 
     public static <X extends Object> List<X> newList(X[] original) {
         return Arrays.asList(original);
+    }
+
+    public static <X extends Object> List<X> newList(List<X> original) {
+        return new ArrayList<X>(original);
     }
 
     public static <X extends Object> LinkedList<X> newLinkedList() {

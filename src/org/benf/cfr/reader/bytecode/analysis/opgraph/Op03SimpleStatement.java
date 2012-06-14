@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.JumpingStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
@@ -24,7 +25,7 @@ import java.util.*;
  * Time: 06:52
  * To change this template use File | Settings | File Templates.
  */
-public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, Dumpable, StatementContainer {
+public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, Dumpable, StatementContainer, IndexedStatement {
     private final List<Op03SimpleStatement> sources = ListFactory.newList();
     private final List<Op03SimpleStatement> targets = ListFactory.newList();
     private boolean isNop;
@@ -208,7 +209,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.index = index;
     }
 
-    private void markPreBlockStatement(BlockIdentifier blockIdentifier) {
+    private void markPreBlockStatement(BlockIdentifier blockIdentifier, Op03SimpleStatement blockEnd, List<Op03SimpleStatement> statements) {
         if (thisComparisonBlock != null) {
             throw new ConfusedCFRException("Statement marked as the start of multiple blocks");
         }
@@ -218,6 +219,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 IfStatement ifStatement = (IfStatement) containedStatement;
                 // Todo : What if the test is inverted?
                 ifStatement.replaceWithWhileLoopStart(blockIdentifier);
+                Op03SimpleStatement whileEndTarget = targets.get(1);
+                if (index.isBackJump(whileEndTarget)) {
+                    // If the while statement's 'not taken' is a back jump, we normalise
+                    // to a forward jump to after the block, and THAT gets to be the back jump.
+                    // Note that this can't be done before "Remove pointless jumps".
+                    // The blocks that this new statement is in are the same as my blocks, barring
+                    // blockIdentifier.
+                    List<BlockIdentifier> backJumpContainedIn = ListFactory.newList(containedInBlocks);
+                    backJumpContainedIn.remove(blockIdentifier);
+                    Op03SimpleStatement backJump = new Op03SimpleStatement(backJumpContainedIn, new GotoStatement(), blockEnd.index.justBefore());
+                    whileEndTarget.replaceSource(this, backJump);
+                    replaceTarget(whileEndTarget, backJump);
+                    backJump.addSource(this);
+                    backJump.addTarget(whileEndTarget);
+                    // We have to manipulate the statement list immediately, as we're relying on spatial locality elsewhere.
+                    statements.add(statements.indexOf(blockEnd), backJump);
+                }
                 break;
             }
             case SIMPLE_IF_ELSE:
@@ -802,7 +820,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             statements.get(x).markBlock(blockIdentifier);
         }
         Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
-        start.markPreBlockStatement(blockIdentifier);
+        start.markPreBlockStatement(blockIdentifier, blockEnd, statements);
         statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
         blockEnd.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, blockEnd);

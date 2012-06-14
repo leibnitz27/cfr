@@ -139,6 +139,7 @@ public class CodeAnalyser {
 
         // Identify simple while loops.
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
+
         // Perform this before simple forward if detection, as it allows us to not have to consider
         // gotos which have been relabelled as continue/break.
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
