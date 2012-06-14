@@ -71,7 +71,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     @Override
     public void dump(Dumper dumper) {
         if (hasUnstructuredSource()) {
-            dumper.printLabel(instrIndex.toString());
+            dumper.printLabel(instrIndex.toString() + ": // " + sources.size() + " sources");
         }
         structuredStatement.dump(dumper);
     }

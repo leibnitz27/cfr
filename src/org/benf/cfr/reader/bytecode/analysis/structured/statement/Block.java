@@ -36,6 +36,8 @@ public class Block extends AbstractStructuredStatement {
             }
         } else if (structuredStatement instanceof StructuredReturn) {
             return false;
+        } else if (structuredStatement instanceof StructuredThrow) {
+            return false;
         } else {
             throw new ConfusedCFRException("Trying to remove last goto of a block, but it's not a valid loop end " + containedStatements.getLast());
         }
