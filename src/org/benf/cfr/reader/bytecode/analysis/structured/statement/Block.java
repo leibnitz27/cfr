@@ -34,20 +34,27 @@ public class Block extends AbstractStructuredStatement {
             } else {
                 return false;
             }
+        } else if (structuredStatement instanceof StructuredWhile) {
+            return false;
         } else if (structuredStatement instanceof StructuredReturn) {
             return false;
         } else if (structuredStatement instanceof StructuredThrow) {
             return false;
         } else {
-            throw new ConfusedCFRException("Trying to remove last goto of a block, but it's not a valid loop end " + containedStatements.getLast());
+            throw new ConfusedCFRException("Trying to remove last continue of a block, but it's not a valid loop end " + containedStatements.getLast());
         }
     }
 
     public boolean removeLastGoto() {
-        if (containedStatements.getLast().getStructuredStatement() instanceof UnstructuredGoto) {
+        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        if (structuredStatement instanceof UnstructuredGoto) {
             Op04StructuredStatement oldGoto = containedStatements.getLast();
             oldGoto.replaceStatementWithNOP("");
             return true;
+        } else if (structuredStatement instanceof StructuredBreak) {
+            return false;
+        } else if (structuredStatement instanceof StructuredContinue) {
+            return false;
         } else {
             throw new ConfusedCFRException("Trying to remove last goto of a block, but it's not an unstructured GOTO");
         }

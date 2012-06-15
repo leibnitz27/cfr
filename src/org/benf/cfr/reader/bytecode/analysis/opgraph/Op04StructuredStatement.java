@@ -152,7 +152,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public void removeLastContinue(BlockIdentifier block) {
         if (structuredStatement instanceof Block) {
-            ((Block) structuredStatement).removeLastContinue(block);
+            boolean removed = ((Block) structuredStatement).removeLastContinue(block);
+            System.out.println("Removing last continue for " + block + " succeeded? " + removed);
         } else {
             throw new ConfusedCFRException("Trying to remove last continue, but statement isn't block");
         }
