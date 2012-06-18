@@ -23,8 +23,18 @@ public class ComparisonOperation implements ConditionalExpression {
     }
 
     @Override
+    public int getSize() {
+        return 3;
+    }
+
+    private String brace(Expression e) {
+        if (e instanceof ComparisonOperation) return "(" + e + ")";
+        return e.toString();
+    }
+
+    @Override
     public String toString() {
-        return "(" + lhs.toString() + " " + op.getShowAs() + " " + rhs.toString() + ")";
+        return brace(lhs) + " " + op.getShowAs() + " " + brace(rhs);
     }
 
     @Override
@@ -40,7 +50,13 @@ public class ComparisonOperation implements ConditionalExpression {
     }
 
     @Override
-    public ConditionalExpression getNegatedExpression() {
+    public ConditionalExpression getNegated() {
         return new ComparisonOperation(lhs, rhs, op.getInverted());
+    }
+
+    @Override
+    public ConditionalExpression getDemorganApplied(boolean amNegating) {
+        if (!amNegating) return this;
+        return getNegated();
     }
 }

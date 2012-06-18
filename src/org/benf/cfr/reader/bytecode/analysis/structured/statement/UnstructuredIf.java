@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ConditionalUtils;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -39,7 +40,7 @@ public class UnstructuredIf extends AbstractStructuredStatement {
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier) {
         if (blockIdentifier == knownIfBlock) {
             if (knownElseBlock == null) {
-                return new StructuredIf(conditionalExpression.getNegatedExpression(), innerBlock);
+                return new StructuredIf(ConditionalUtils.simplify(conditionalExpression.getNegated()), innerBlock);
             } else {
                 setIfBlock = innerBlock;
                 return this;
@@ -54,7 +55,7 @@ public class UnstructuredIf extends AbstractStructuredStatement {
             if (knownIfBlock.getBlockType() == BlockType.SIMPLE_IF_TAKEN) {
                 setIfBlock.removeLastGoto();
             }
-            return new StructuredIf(conditionalExpression.getNegatedExpression(), setIfBlock, innerBlock);
+            return new StructuredIf(ConditionalUtils.simplify(conditionalExpression.getNegated()), setIfBlock, innerBlock);
         } else {
             return null;
 //            throw new ConfusedCFRException("IF statement given blocks it doesn't recognise");

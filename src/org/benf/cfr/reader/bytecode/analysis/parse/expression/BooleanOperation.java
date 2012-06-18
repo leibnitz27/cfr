@@ -23,6 +23,11 @@ public class BooleanOperation implements ConditionalExpression {
     }
 
     @Override
+    public int getSize() {
+        return 2 + lhs.getSize() + 2 + rhs.getSize();
+    }
+
+    @Override
     public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
         return this;
     }
@@ -34,11 +39,16 @@ public class BooleanOperation implements ConditionalExpression {
 
     @Override
     public String toString() {
-        return "(" + lhs.toString() + " " + op.getShowAs() + " " + rhs.toString() + ")";
+        return "(" + lhs.toString() + ") " + op.getShowAs() + " (" + rhs.toString() + ")";
     }
 
     @Override
-    public ConditionalExpression getNegatedExpression() {
+    public ConditionalExpression getNegated() {
         return new NotOperation(this);
+    }
+
+    @Override
+    public ConditionalExpression getDemorganApplied(boolean amNegating) {
+        return new BooleanOperation(lhs.getDemorganApplied(amNegating), rhs.getDemorganApplied(amNegating), amNegating ? op.getDemorgan() : op);
     }
 }

@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NotOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ConditionalUtils;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -63,6 +64,10 @@ public class IfStatement extends GotoStatement {
         return condition;
     }
 
+    public void simplifyCondition() {
+        condition = ConditionalUtils.simplify(condition);
+    }
+
     @Override
     public boolean condenseWithPriorIfStatement(IfStatement prior) {
         Statement fallThrough2 = getTargetStatement(JUMP_NOT_TAKEN);
@@ -94,7 +99,7 @@ public class IfStatement extends GotoStatement {
 
 
     public void replaceWithWhileLoopStart(BlockIdentifier blockIdentifier) {
-        WhileStatement replacement = new WhileStatement(condition.getNegatedExpression(), blockIdentifier);
+        WhileStatement replacement = new WhileStatement(ConditionalUtils.simplify(condition.getNegated()), blockIdentifier);
         getContainer().replaceStatement(replacement);
     }
 

@@ -140,6 +140,7 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
         // Collapse conditionals into || / &&
         Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
+        Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 //
 //        dumper.print("Raw Op3 statements:\n");

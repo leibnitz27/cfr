@@ -277,6 +277,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return containedStatement.condenseWithNextConditional();
     }
 
+    private void simplifyConditional() {
+        if (containedStatement instanceof IfStatement) {
+            IfStatement ifStatement = (IfStatement) containedStatement;
+            ifStatement.simplifyCondition();
+        }
+    }
+
     public class GraphVisitorCallee implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
         private final List<Op03SimpleStatement> reachableNodes;
 
@@ -460,17 +467,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             do {
                 retry = false;
                 Op03SimpleStatement op03SimpleStatement = statements.get(x);
-//                System.out.println("Trying statement "+x+" " + op03SimpleStatement);
+                // If successful, this statement will be nopped out, and the next one will be
+                // the combination of the two.
                 if (op03SimpleStatement.condenseWithNextConditional()) {
-//                    System.out.println("Worked.");
-                    // Reset x to the first non-nop going in a straight line back up.
                     retry = true;
+                    // If it worked, go back to the last nop, and retry.
+                    // This could probably be refactored to do less work.....
                     do {
                         x--;
-//                        System.out.println("Reversing to " + x);
                     } while (statements.get(x).isNop() && x > 0);
                 }
             } while (retry);
+        }
+    }
+
+    public static void simplifyConditionals(List<Op03SimpleStatement> statements) {
+        for (Op03SimpleStatement statement : statements) {
+            statement.simplifyConditional();
         }
     }
 

@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.util.ConfusedCFRException;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -19,5 +21,16 @@ public enum BoolOp {
 
     public String getShowAs() {
         return showAs;
+    }
+
+    public BoolOp getDemorgan() {
+        switch (this) {
+            case OR:
+                return AND;
+            case AND:
+                return OR;
+            default:
+                throw new ConfusedCFRException("Unknown op.");
+        }
     }
 }

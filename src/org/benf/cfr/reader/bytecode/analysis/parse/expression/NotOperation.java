@@ -12,10 +12,15 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * To change this template use File | Settings | File Templates.
  */
 public class NotOperation implements ConditionalExpression {
-    private ConditionalExpression lhs;
+    private ConditionalExpression inner;
 
     public NotOperation(ConditionalExpression lhs) {
-        this.lhs = lhs;
+        this.inner = lhs;
+    }
+
+    @Override
+    public int getSize() {
+        return 1 + inner.getSize();
     }
 
     @Override
@@ -30,11 +35,16 @@ public class NotOperation implements ConditionalExpression {
 
     @Override
     public String toString() {
-        return "!(" + lhs.toString() + ")";
+        return "!(" + inner.toString() + ")";
     }
 
     @Override
-    public ConditionalExpression getNegatedExpression() {
-        return lhs;
+    public ConditionalExpression getNegated() {
+        return inner;
+    }
+
+    @Override
+    public ConditionalExpression getDemorganApplied(boolean amNegating) {
+        return inner.getDemorganApplied(!amNegating);
     }
 }
