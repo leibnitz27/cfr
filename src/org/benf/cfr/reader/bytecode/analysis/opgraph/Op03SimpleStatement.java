@@ -618,7 +618,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 // If there's a goto, see if it goes OUT of a known while loop, OR
                 // if it goes back to the comparison statement for a known while loop.
                 // 
-                if (jumpingStatement.getJumpType() == JumpType.GOTO) {
+                if (jumpingStatement.getJumpType().isUnknown()) {
                     Statement targetInnerStatement = jumpingStatement.getJumpTarget();
                     Op03SimpleStatement targetStatement = (Op03SimpleStatement) targetInnerStatement.getContainer();
                     if (targetStatement.thisComparisonBlock != null) {  // Jumps to the comparison test of a WHILE
@@ -894,7 +894,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         public boolean test(Op03SimpleStatement in) {
             if (!(in.containedStatement instanceof IfStatement)) return false;
             IfStatement ifStatement = (IfStatement) in.containedStatement;
-            if (ifStatement.getJumpType() != JumpType.GOTO) return false;
+            if (!ifStatement.getJumpType().isUnknown()) return false;
             if (in.targets.get(1).index.compareTo(in.index) <= 0) return false;
             return true;
         }
@@ -942,8 +942,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (idxCurrent > idxTaken) return false;
 
         int idxEnd = idxTaken;
+        int maybeElseEndIdx = -1;
         boolean maybeSimpleIfElse = false;
-        Op03SimpleStatement maybeElseEnd = null;
+        GotoStatement leaveIfBranchGoto = null;
         List<Op03SimpleStatement> ifBranch = ListFactory.newList();
         List<Op03SimpleStatement> elseBranch = null;
         // Consider the try blocks we're in at this point.  (the ifStatemenet).
@@ -953,12 +954,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
             ifBranch.add(statementCurrent);
             JumpType jumpType = statementCurrent.getJumpType();
-            if (jumpType == JumpType.GOTO) {
+            if (jumpType.isUnknown()) {
                 if (idxCurrent == idxTaken - 1) {
+                    Statement mGotoStatement = statementCurrent.containedStatement;
+                    if (!(mGotoStatement instanceof GotoStatement)) return false;
+                    GotoStatement gotoStatement = (GotoStatement) mGotoStatement;
                     // It's unconditional, and it's a forward jump.
-                    if (statementCurrent.getTargets().size() > 1) return false;
-                    maybeElseEnd = statementCurrent.getTargets().get(0);
+                    Op03SimpleStatement maybeElseEnd = statementCurrent.getTargets().get(0);
+                    maybeElseEndIdx = statements.indexOf(maybeElseEnd);
                     if (maybeElseEnd.getIndex().compareTo(takenTarget.getIndex()) <= 0) return false;
+                    leaveIfBranchGoto = gotoStatement;
                     maybeSimpleIfElse = true;
                 } else {
                     return false;
@@ -971,12 +976,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // If there is a NO JUMP path between takenTarget and maybeElseEnd, then that's the ELSE block
             elseBranch = ListFactory.newList();
             idxCurrent = idxTaken;
-            idxEnd = statements.indexOf(maybeElseEnd);
+            idxEnd = maybeElseEndIdx;
             do {
                 Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
                 elseBranch.add(statementCurrent);
                 JumpType jumpType = statementCurrent.getJumpType();
-                if (jumpType == JumpType.GOTO) return false;
+                if (jumpType.isUnknown()) return false;
                 idxCurrent++;
             } while (idxCurrent != idxEnd);
         }
@@ -993,15 +998,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             markWholeBlock(elseBranch, elseBlockLabel);
         }
 
+        if (leaveIfBranchGoto != null) leaveIfBranchGoto.setJumpType(JumpType.GOTO_KNOWN);
+        innerIfStatement.setJumpType(JumpType.GOTO_KNOWN);
         innerIfStatement.setKnownBlocks(ifBlockLabel, elseBlockLabel);
         return true;
     }
 
     public static void identifyNonjumpingConditionals(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
-        List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
-        for (Op03SimpleStatement forwardIf : forwardIfs) {
-            considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory);
-        }
+        boolean success = false;
+        do {
+            success = false;
+            List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
+            for (Op03SimpleStatement forwardIf : forwardIfs) {
+                success |= considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory);
+            }
+        } while (success);
     }
 
     @Override

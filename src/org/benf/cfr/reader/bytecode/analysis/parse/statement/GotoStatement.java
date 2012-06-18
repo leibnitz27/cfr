@@ -70,6 +70,7 @@ public class GotoStatement extends JumpingStatement {
     public StructuredStatement getStructuredStatement() {
         switch (jumpType) {
             case GOTO:
+            case GOTO_KNOWN:
                 return new UnstructuredGoto();
             case CONTINUE:
                 return new StructuredContinue(getTargetStartBlock());
