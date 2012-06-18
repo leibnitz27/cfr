@@ -521,6 +521,56 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
 
+    /*
+     * Rewrite
+     *
+     * a:if (cond) goto x  [else z]
+     * z : goto y:
+     * x :
+     *  blah
+     * y:
+     *
+     * a->z,x
+     * z->y
+     *
+     * as
+     * a: if (!cond) goto y [else z]
+     * z:nop
+     * x:blah
+     * y:
+     *
+     * a->z,y
+     * z->x
+     *
+     * We assume that statements are ordered.
+     */
+    public static void rewriteNegativeJumps(List<Op03SimpleStatement> statements) {
+        for (int x = 0; x < statements.size() - 2; ++x) {
+            Op03SimpleStatement aStatement = statements.get(x);
+            Statement innerAStatement = aStatement.getStatement();
+            if (innerAStatement instanceof IfStatement) {
+                if (aStatement.targets.get(0) == statements.get(x + 1) &&
+                        aStatement.targets.get(1) == statements.get(x + 2)) {
+                    Op03SimpleStatement zStatement = statements.get(x + 1);
+                    Statement innerZStatement = zStatement.getStatement();
+                    if (innerZStatement instanceof GotoStatement) {
+                        // Yep, this is it.
+                        Op03SimpleStatement yStatement = zStatement.targets.get(0);
+                        Op03SimpleStatement xStatement = statements.get(x + 2);
+
+                        // Order is important.
+                        aStatement.targets.set(1, yStatement);
+
+                        yStatement.replaceSource(zStatement, aStatement);
+                        xStatement.replaceSource(aStatement, zStatement);
+                        zStatement.replaceTarget(yStatement, xStatement);
+                        zStatement.containedStatement = new Nop();
+                    }
+                }
+            }
+        }
+    }
+
     /* DEAD CODE */
 
     private static boolean isDirectParentWithoutPassing(Op03SimpleStatement child, Op03SimpleStatement parent, Op03SimpleStatement barrier) {
@@ -885,16 +935,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> elseBranch = null;
         // Consider the try blocks we're in at this point.  (the ifStatemenet).
         // If we leave any of them, we've left the if.
-        List<BlockIdentifier> tryBlocksInAtStart = ListFactory.newList();
-        for (BlockIdentifier blockIdentifier : ifStatement.containedInBlocks) {
-            if (blockIdentifier.getBlockType() == BlockType.TRYBLOCK) tryBlocksInAtStart.add(blockIdentifier);
-        }
+        List<BlockIdentifier> blocksAtStart = ifStatement.containedInBlocks;
         do {
             Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
-            if (!BlockIdentifier.isInAllBlocks(tryBlocksInAtStart, statementCurrent.containedInBlocks)) {
-                // Left a try block.  Consider no more.
-                break;
-            }
             ifBranch.add(statementCurrent);
             JumpType jumpType = statementCurrent.getJumpType();
             if (jumpType == JumpType.GOTO) {
@@ -924,6 +967,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 idxCurrent++;
             } while (idxCurrent != idxEnd);
         }
+
+        Op03SimpleStatement realEnd = statements.get(idxEnd);
+        List<BlockIdentifier> blocksAtEnd = realEnd.containedInBlocks;
+        if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) return false;
 
         BlockIdentifier ifBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_TAKEN);
         markWholeBlock(ifBranch, ifBlockLabel);
