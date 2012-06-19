@@ -217,7 +217,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         switch (blockIdentifier.getBlockType()) {
             case WHILELOOP: {
                 IfStatement ifStatement = (IfStatement) containedStatement;
-                // Todo : What if the test is inverted?
                 ifStatement.replaceWithWhileLoopStart(blockIdentifier);
                 Op03SimpleStatement whileEndTarget = targets.get(1);
                 if (index.isBackJump(whileEndTarget)) {
@@ -863,7 +862,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         /* reachable nodes now contains those nodes which are reachable without leaving the range. */
 
-        int first = idxConditional + 1;
+        final int first = idxConditional + 1;
         int last = -1;
         boolean foundLast = false;
 
@@ -884,7 +883,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
         start.markPreBlockStatement(blockIdentifier, blockEnd, statements);
-        statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
+        statements.get(first).markFirstStatementInBlock(blockIdentifier);
         blockEnd.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, blockEnd);
     }
@@ -909,7 +908,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     private static void markWholeBlock(List<Op03SimpleStatement> statements, BlockIdentifier blockIdentifier) {
         Op03SimpleStatement start = statements.get(0);
-        Op03SimpleStatement end = statements.get(statements.size() - 1);
         start.markFirstStatementInBlock(blockIdentifier);
         for (Op03SimpleStatement statement : statements) {
             statement.markBlock(blockIdentifier);
