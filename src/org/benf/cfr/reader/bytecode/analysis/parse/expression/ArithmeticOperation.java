@@ -5,8 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -32,6 +30,24 @@ public class ArithmeticOperation implements Expression {
 
     @Override
     public boolean isSimple() {
+        return false;
+    }
+
+    private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {
+        LValue contained = expression.getLValue();
+        return (lValue.equals(contained));
+    }
+
+    /*
+     * Is this a very simple expression (a fn lit) / (lit fn a)?
+     */
+    public boolean isLiteralFunctionOf(LValue lValue) {
+        if ((lhs instanceof LValueExpression) && (rhs instanceof Literal)) {
+            return isLValueExprFor((LValueExpression) lhs, lValue);
+        }
+        if ((rhs instanceof LValueExpression) && (lhs instanceof Literal)) {
+            return isLValueExprFor((LValueExpression) rhs, lValue);
+        }
         return false;
     }
 

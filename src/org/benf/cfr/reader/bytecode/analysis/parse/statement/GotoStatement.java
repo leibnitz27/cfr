@@ -61,6 +61,9 @@ public class GotoStatement extends JumpingStatement {
         if (statement instanceof WhileStatement) {
             WhileStatement whileStatement = (WhileStatement) statement;
             return whileStatement.getBlockIdentifier();
+        } else if (statement instanceof ForStatement) {
+            ForStatement forStatement = (ForStatement) statement;
+            return forStatement.getBlockIdentifier();
         } else {
             throw new ConfusedCFRException("CONTINUE without a while");
         }

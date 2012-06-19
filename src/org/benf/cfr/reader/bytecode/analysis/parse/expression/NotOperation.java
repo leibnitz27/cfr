@@ -1,8 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,5 +49,10 @@ public class NotOperation implements ConditionalExpression {
     @Override
     public ConditionalExpression getDemorganApplied(boolean amNegating) {
         return inner.getDemorganApplied(!amNegating);
+    }
+
+    @Override
+    public Set<LValue> getLoopLValues() {
+        return inner.getLoopLValues();
     }
 }

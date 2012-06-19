@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class BlockIdentifier implements Comparable<BlockIdentifier> {
     private final int index;
-    private final BlockType blockType;
+    private BlockType blockType;
 
     public BlockIdentifier(int index, BlockType blockType) {
         this.index = index;
@@ -22,6 +22,10 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
 
     public BlockType getBlockType() {
         return blockType;
+    }
+
+    public void setBlockType(BlockType blockType) {
+        this.blockType = blockType;
     }
 
     @Override

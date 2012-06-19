@@ -1,8 +1,12 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.util.SetFactory;
+
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -58,5 +62,19 @@ public class ComparisonOperation implements ConditionalExpression {
     public ConditionalExpression getDemorganApplied(boolean amNegating) {
         if (!amNegating) return this;
         return getNegated();
+    }
+
+    private void addIfLValue(Expression expression, Set<LValue> res) {
+        if (expression instanceof LValueExpression) {
+            res.add(((LValueExpression) expression).getLValue());
+        }
+    }
+
+    @Override
+    public Set<LValue> getLoopLValues() {
+        Set<LValue> res = SetFactory.newSet();
+        addIfLValue(lhs, res);
+        addIfLValue(rhs, res);
+        return res;
     }
 }

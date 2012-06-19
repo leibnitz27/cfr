@@ -156,10 +156,12 @@ public class CodeAnalyser {
         // Perform this before simple forward if detection, as it allows us to not have to consider
         // gotos which have been relabelled as continue/break.
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
+        Op03SimpleStatement.rewriteWhilesAsFors(op03SimpleParseNodes);
 
         // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
         // where xx and yy have no GOTOs in them.
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+
 
         /*
          * Convert the Simple Statements into one structured Statement.

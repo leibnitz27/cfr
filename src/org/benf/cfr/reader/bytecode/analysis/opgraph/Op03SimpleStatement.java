@@ -1,12 +1,12 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.JumpingStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -219,7 +219,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 IfStatement ifStatement = (IfStatement) containedStatement;
                 ifStatement.replaceWithWhileLoopStart(blockIdentifier);
                 Op03SimpleStatement whileEndTarget = targets.get(1);
-                if (index.isBackJump(whileEndTarget)) {
+                if (index.isBackJumpTo(whileEndTarget)) {
                     // If the while statement's 'not taken' is a back jump, we normalise
                     // to a forward jump to after the block, and THAT gets to be the back jump.
                     // Note that this can't be done before "Remove pointless jumps".
@@ -606,6 +606,151 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
         return hitParent;
+    }
+
+    private static class isBackJumpTo implements Predicate<Op03SimpleStatement> {
+        private final InstrIndex thisIndex;
+
+        private isBackJumpTo(InstrIndex thisIndex) {
+            this.thisIndex = thisIndex;
+        }
+
+        @Override
+        public boolean test(Op03SimpleStatement in) {
+            return thisIndex.isBackJumpFrom(in);
+        }
+    }
+
+    // Todo - could get these out at the same time as below..... would add complexity though...
+    private static Op03SimpleStatement getForInvariant(Op03SimpleStatement start, LValue invariant, BlockIdentifier whileLoop) {
+        Op03SimpleStatement current = start;
+        while (current.containedInBlocks.contains(whileLoop)) {
+            if (current.containedStatement instanceof Assignment) {
+                Assignment assignment = (Assignment) current.containedStatement;
+                LValue assigned = assignment.getCreatedLValue();
+                if (invariant.equals(assigned)) {
+                    Expression rValue = assignment.getRValue();
+                    if (rValue instanceof ArithmeticOperation) {
+                        ArithmeticOperation arithmeticOperation = (ArithmeticOperation) rValue;
+                        if (arithmeticOperation.isLiteralFunctionOf(assigned)) return current;
+                    }
+                }
+            }
+            if (current.sources.size() > 1) break;
+            Op03SimpleStatement next = current.sources.get(0);
+            if (!current.index.isBackJumpTo(next)) break;
+            current = next;
+        }
+        throw new ConfusedCFRException("Shouldn't be able to get here.");
+    }
+
+    private static Set<LValue> findForInvariants(Op03SimpleStatement start, BlockIdentifier whileLoop) {
+        Set<LValue> res = SetFactory.newSet();
+        Op03SimpleStatement current = start;
+        while (current.containedInBlocks.contains(whileLoop)) {
+            if (current.containedStatement instanceof Assignment) {
+                Assignment assignment = (Assignment) current.containedStatement;
+                LValue assigned = assignment.getCreatedLValue();
+                Expression rValue = assignment.getRValue();
+                if (rValue instanceof ArithmeticOperation) {
+                    ArithmeticOperation arithmeticOperation = (ArithmeticOperation) rValue;
+                    if (arithmeticOperation.isLiteralFunctionOf(assigned)) res.add(assigned);
+                }
+            }
+            if (current.sources.size() > 1) break;
+            Op03SimpleStatement next = current.sources.get(0);
+            if (!current.index.isBackJumpTo(next)) break;
+            current = next;
+        }
+        return res;
+    }
+
+    private static void rewriteWhileAsFor(Op03SimpleStatement statement, List<Op03SimpleStatement> statements) {
+        // Find the backwards jumps to this statement
+        List<Op03SimpleStatement> backSources = Functional.filter(statement.sources, new isBackJumpTo(statement.index));
+        //
+        // Determine what could be the loop invariant.
+        //
+        WhileStatement whileStatement = (WhileStatement) statement.containedStatement;
+        ConditionalExpression condition = whileStatement.getCondition();
+        Set<LValue> invariantPossibilities = condition.getLoopLValues();
+        // If we can't find a possible invariant, no point proceeding.
+        if (invariantPossibilities.isEmpty()) {
+            System.out.println("No invariant possibilities\n");
+            return;
+        }
+
+        BlockIdentifier whileBlockIdentifier = whileStatement.getBlockIdentifier();
+        // For each of the back calling targets, find a CONSTANT inc/dec
+        // * which is in the loop arena
+        // * before any instruction which has multiple parents.
+        Set<LValue> mutatedPossibilities = null;
+        for (Op03SimpleStatement source : backSources) {
+            Set<LValue> incrPoss = findForInvariants(source, whileBlockIdentifier);
+            if (mutatedPossibilities == null) {
+                mutatedPossibilities = incrPoss;
+            } else {
+                mutatedPossibilities.retainAll(incrPoss);
+            }
+            // If there are no possibilites, then we can't do anything.
+            if (mutatedPossibilities.isEmpty()) {
+                System.out.println("No invariant possibilities on source\n");
+                return;
+            }
+        }
+        invariantPossibilities.retainAll(mutatedPossibilities);
+        // Intersection between incremented / tested.
+        if (invariantPossibilities.isEmpty()) {
+            System.out.println("No invariant intersection\n");
+            return;
+        }
+
+        // If we've got choices, ignore currently.
+        if (invariantPossibilities.size() > 1) {
+            System.out.println("Multiple invariant intersection\n");
+            return;
+        }
+
+        LValue loopInvariantLValue = invariantPossibilities.iterator().next();
+
+        /*
+         * Now, go back and get the list of mutations.  Make sure they're all equivalent, then nop them out.
+         */
+        List<Op03SimpleStatement> mutations = ListFactory.newList();
+        for (Op03SimpleStatement source : backSources) {
+            Op03SimpleStatement incrStatement = getForInvariant(source, loopInvariantLValue, whileBlockIdentifier);
+            mutations.add(incrStatement);
+        }
+
+        Op03SimpleStatement baseline = mutations.get(0);
+        for (Op03SimpleStatement incrStatement : mutations) {
+            // Compare - they all have to mutate in the same way.
+            if (!baseline.equals(incrStatement)) {
+                System.out.println("Incompatible constant mutations.");
+                return;
+            }
+        }
+
+        Assignment assignment = (Assignment) baseline.containedStatement;
+        for (Op03SimpleStatement incrStatement : mutations) {
+            incrStatement.nopOut();
+        }
+        whileBlockIdentifier.setBlockType(BlockType.FORLOOP);
+        whileStatement.replaceWithForLoop(assignment);
+    }
+
+    public static void rewriteWhilesAsFors(List<Op03SimpleStatement> statements) {
+        // Find all the while loops beginnings.
+        List<Op03SimpleStatement> whileStarts = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return (in.containedStatement instanceof WhileStatement);
+            }
+        });
+
+        for (Op03SimpleStatement whileStart : whileStarts) {
+            rewriteWhileAsFor(whileStart, statements);
+        }
     }
 
     public static void rewriteBreakStatements(List<Op03SimpleStatement> statements) {

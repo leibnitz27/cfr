@@ -28,7 +28,12 @@ public class Assignment extends AbstractStatement {
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print(lvalue.toString() + " = " + rvalue.toString() + ";\n");
+        dumper.print(this.toString() + ";\n");
+    }
+
+    @Override
+    public String toString() {
+        return (lvalue.toString() + " = " + rvalue.toString());
     }
 
     @Override
@@ -65,5 +70,13 @@ public class Assignment extends AbstractStatement {
     @Override
     public StructuredStatement getStructuredStatement() {
         return new StructuredAssignment(lvalue, rvalue);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Assignment)) return false;
+
+        Assignment other = (Assignment) o;
+        return lvalue.equals(other.lvalue) && rvalue.equals(other.rvalue);
     }
 }

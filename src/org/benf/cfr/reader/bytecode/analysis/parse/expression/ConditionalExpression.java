@@ -1,6 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,4 +18,6 @@ public interface ConditionalExpression extends Expression {
     int getSize();
 
     ConditionalExpression getDemorganApplied(boolean amNegating);
+
+    Set<LValue> getLoopLValues();
 }

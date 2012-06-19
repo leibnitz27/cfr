@@ -6,7 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredFor;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -17,24 +17,21 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 18:05
  * To change this template use File | Settings | File Templates.
  */
-public class WhileStatement extends AbstractStatement {
+public class ForStatement extends AbstractStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
+    private Assignment assignment;
 
-    public WhileStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier) {
+    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, Assignment assignment) {
         this.condition = conditionalExpression;
         this.blockIdentifier = blockIdentifier;
+        this.assignment = assignment;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("while (" + condition.toString() + ") ");
+        dumper.print("for (;" + condition.toString() + "; " + assignment + ") ");
         dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
-    }
-
-    public void replaceWithForLoop(Assignment assignment) {
-        ForStatement forStatement = new ForStatement(condition, blockIdentifier, assignment);
-        getContainer().replaceStatement(forStatement);
     }
 
     @Override
@@ -45,7 +42,7 @@ public class WhileStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredWhile(condition, blockIdentifier);
+        return new UnstructuredFor(condition, blockIdentifier, assignment);
     }
 
     public BlockIdentifier getBlockIdentifier() {

@@ -56,11 +56,20 @@ public class InstrIndex implements Comparable<InstrIndex> {
         return this.index == other.index - 1;
     }
 
-    public boolean isBackJump(IndexedStatement other) {
-        return isBackJump(other.getIndex());
+    public boolean isBackJumpTo(IndexedStatement other) {
+        return isBackJumpTo(other.getIndex());
     }
 
-    public boolean isBackJump(InstrIndex other) {
+    public boolean isBackJumpTo(InstrIndex other) {
         return other.compareTo(this) < 0;
     }
+
+    public boolean isBackJumpFrom(IndexedStatement other) {
+        return !isBackJumpTo(other);
+    }
+
+    public boolean isBackJumpFrom(InstrIndex other) {
+        return !isBackJumpTo(other);
+    }
+
 }
