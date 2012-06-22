@@ -163,6 +163,9 @@ public class CodeAnalyser {
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
+
+        // By now, we've (re)moved several statements, so it's possible that some jumps can be rewritten to
+        // breaks again.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
 
