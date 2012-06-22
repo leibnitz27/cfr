@@ -1,9 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
@@ -31,8 +31,8 @@ public class StackValue implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
-        Expression replaceMeWith = lValueCollector.getLValueReplacement(stackValue, ssaIdentifiers);
+    public Expression replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+        Expression replaceMeWith = lValueAssigmentCollector.getLValueReplacement(stackValue, ssaIdentifiers);
         if (replaceMeWith != null) return replaceMeWith;
         return this;
     }
@@ -40,4 +40,10 @@ public class StackValue implements Expression {
     public StackSSALabel getStackValue() {
         return stackValue;
     }
+
+    @Override
+    public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        lValueUsageCollector.collect(stackValue);
+    }
+
 }

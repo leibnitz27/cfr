@@ -22,7 +22,6 @@ public class Block extends AbstractStructuredStatement {
         this.indenting = indenting;
     }
 
-    // At the end of a loop, we either jump back, jump out, or return.
     public boolean removeLastContinue(BlockIdentifier block) {
         StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
         if (structuredStatement instanceof StructuredContinue) {
@@ -34,14 +33,8 @@ public class Block extends AbstractStructuredStatement {
             } else {
                 return false;
             }
-        } else if (structuredStatement instanceof StructuredWhile) {
-            return false;
-        } else if (structuredStatement instanceof StructuredReturn) {
-            return false;
-        } else if (structuredStatement instanceof StructuredThrow) {
-            return false;
         } else {
-            throw new ConfusedCFRException("Trying to remove last continue of a block, but it's not a valid loop end " + containedStatements.getLast());
+            return false;
         }
     }
 

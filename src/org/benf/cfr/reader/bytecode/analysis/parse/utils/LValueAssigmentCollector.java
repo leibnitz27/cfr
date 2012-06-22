@@ -15,7 +15,7 @@ import java.util.Map;
  * Time: 18:06
  * To change this template use File | Settings | File Templates.
  */
-public class LValueCollector {
+public class LValueAssigmentCollector {
 
     private final Map<LValue, Pair<Expression, StatementContainer>> found = MapFactory.newMap();
 

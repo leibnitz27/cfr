@@ -3,7 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
@@ -32,14 +32,14 @@ public class WhileStatement extends AbstractStatement {
         dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
     }
 
-    public void replaceWithForLoop(Assignment assignment) {
-        ForStatement forStatement = new ForStatement(condition, blockIdentifier, assignment);
+    public void replaceWithForLoop(Assignment initial, Assignment assignment) {
+        ForStatement forStatement = new ForStatement(condition, blockIdentifier, initial, assignment);
         getContainer().replaceStatement(forStatement);
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
-        Expression replacementCondition = condition.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+    public void replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+        Expression replacementCondition = condition.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
         if (replacementCondition != condition) throw new ConfusedCFRException("Can't yet support replacing conditions");
     }
 

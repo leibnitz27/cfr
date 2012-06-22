@@ -1,9 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,7 +10,9 @@ import java.util.List;
  * Date: 15/03/2012
  */
 public interface Expression {
-    Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers);
+    Expression replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers);
 
     boolean isSimple();
+
+    void collectUsedLValues(LValueUsageCollector lValueUsageCollector);
 }

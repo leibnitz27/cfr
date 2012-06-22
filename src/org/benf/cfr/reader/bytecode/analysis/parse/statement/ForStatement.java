@@ -1,13 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredFor;
-import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -20,29 +18,30 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class ForStatement extends AbstractStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
+    private Assignment initial;
     private Assignment assignment;
 
-    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, Assignment assignment) {
+    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, Assignment initial, Assignment assignment) {
         this.condition = conditionalExpression;
         this.blockIdentifier = blockIdentifier;
+        this.initial = initial;
         this.assignment = assignment;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("for (;" + condition.toString() + "; " + assignment + ") ");
+        dumper.print("for (" + (initial == null ? "" : initial) + ";" + condition.toString() + "; " + assignment + ") ");
         dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
-        Expression replacementCondition = condition.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
-        if (replacementCondition != condition) throw new ConfusedCFRException("Can't yet support replacing conditions");
+    public void replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+        throw new UnsupportedOperationException("Shouldn't be called here.");
     }
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredFor(condition, blockIdentifier, assignment);
+        return new UnstructuredFor(condition, blockIdentifier, initial, assignment);
     }
 
     public BlockIdentifier getBlockIdentifier() {

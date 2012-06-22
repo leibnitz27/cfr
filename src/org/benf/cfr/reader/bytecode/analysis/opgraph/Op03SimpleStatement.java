@@ -127,6 +127,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         // And replace the sources (in one go).
         target.replaceSingleSourceWith(this, sources);
+        sources.clear();
+        targets.clear();
     }
 
     /*
@@ -260,12 +262,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         containedInBlocks.add(blockIdentifier);
     }
 
-    private void collect(LValueCollector lValueCollector) {
-        containedStatement.getLValueEquivalences(lValueCollector);
+    private void collect(LValueAssigmentCollector lValueAssigmentCollector) {
+        containedStatement.getLValueEquivalences(lValueAssigmentCollector);
     }
 
-    private void condense(LValueCollector lValueCollector) {
-        containedStatement.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+    private void condense(LValueAssigmentCollector lValueAssigmentCollector) {
+        containedStatement.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
     }
 
     private void findCreation(CreationCollector creationCollector) {
@@ -420,13 +422,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public static void condenseLValues(List<Op03SimpleStatement> statements) {
-        LValueCollector lValueCollector = new LValueCollector();
+        LValueAssigmentCollector lValueAssigmentCollector = new LValueAssigmentCollector();
         for (Op03SimpleStatement statement : statements) {
-            statement.collect(lValueCollector);
+            statement.collect(lValueAssigmentCollector);
         }
 
         for (Op03SimpleStatement statement : statements) {
-            statement.condense(lValueCollector);
+            statement.condense(lValueAssigmentCollector);
         }
     }
 
@@ -608,16 +610,29 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return hitParent;
     }
 
-    private static class isBackJumpTo implements Predicate<Op03SimpleStatement> {
+    private static class IsBackJumpTo implements Predicate<Op03SimpleStatement> {
         private final InstrIndex thisIndex;
 
-        private isBackJumpTo(InstrIndex thisIndex) {
+        private IsBackJumpTo(InstrIndex thisIndex) {
             this.thisIndex = thisIndex;
         }
 
         @Override
         public boolean test(Op03SimpleStatement in) {
             return thisIndex.isBackJumpFrom(in);
+        }
+    }
+
+    private static class IsForwardJumpTo implements Predicate<Op03SimpleStatement> {
+        private final InstrIndex thisIndex;
+
+        private IsForwardJumpTo(InstrIndex thisIndex) {
+            this.thisIndex = thisIndex;
+        }
+
+        @Override
+        public boolean test(Op03SimpleStatement in) {
+            return thisIndex.isBackJumpTo(in);
         }
     }
 
@@ -665,18 +680,50 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return res;
     }
 
+    private static Op03SimpleStatement findMovableAssignment(Op03SimpleStatement start, LValue lValue) {
+        List<Op03SimpleStatement> startSources = Functional.filter(start.sources, new IsForwardJumpTo(start.index));
+        if (startSources.size() != 1) {
+            System.out.println("** Too many back sources");
+            return null;
+        }
+        Op03SimpleStatement current = startSources.iterator().next();
+        do {
+            if (current.containedStatement instanceof Assignment) {
+                Assignment assignment = (Assignment) current.containedStatement;
+                if (assignment.getCreatedLValue().equals(lValue)) {
+                    /* Verify that everything on the RHS is at the correct version */
+                    Expression rhs = assignment.getRValue();
+                    LValueUsageCollector lValueUsageCollector = new LValueUsageCollector();
+                    rhs.collectUsedLValues(lValueUsageCollector);
+                    if (SSAIdentifierUtils.isMovableUnder(lValueUsageCollector.getUsedLValues(), start.ssaIdentifiers, current.ssaIdentifiers)) {
+                        return current;
+                    } else {
+                        System.out.println("** incompatible sources");
+                        return null;
+                    }
+                }
+            }
+            if (current.sources.size() != 1) {
+                System.out.println("** too many sources");
+                return null;
+            }
+            current = current.sources.get(0);
+        } while (current != null);
+        return null;
+    }
+
     private static void rewriteWhileAsFor(Op03SimpleStatement statement, List<Op03SimpleStatement> statements) {
         // Find the backwards jumps to this statement
-        List<Op03SimpleStatement> backSources = Functional.filter(statement.sources, new isBackJumpTo(statement.index));
+        List<Op03SimpleStatement> backSources = Functional.filter(statement.sources, new IsBackJumpTo(statement.index));
         //
         // Determine what could be the loop invariant.
         //
         WhileStatement whileStatement = (WhileStatement) statement.containedStatement;
         ConditionalExpression condition = whileStatement.getCondition();
-        Set<LValue> invariantPossibilities = condition.getLoopLValues();
+        Set<LValue> loopVariablePossibilities = condition.getLoopLValues();
         // If we can't find a possible invariant, no point proceeding.
-        if (invariantPossibilities.isEmpty()) {
-            System.out.println("No invariant possibilities\n");
+        if (loopVariablePossibilities.isEmpty()) {
+            System.out.println("No loop variable possibilities\n");
             return;
         }
 
@@ -698,27 +745,27 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return;
             }
         }
-        invariantPossibilities.retainAll(mutatedPossibilities);
+        loopVariablePossibilities.retainAll(mutatedPossibilities);
         // Intersection between incremented / tested.
-        if (invariantPossibilities.isEmpty()) {
+        if (loopVariablePossibilities.isEmpty()) {
             System.out.println("No invariant intersection\n");
             return;
         }
 
         // If we've got choices, ignore currently.
-        if (invariantPossibilities.size() > 1) {
+        if (loopVariablePossibilities.size() > 1) {
             System.out.println("Multiple invariant intersection\n");
             return;
         }
 
-        LValue loopInvariantLValue = invariantPossibilities.iterator().next();
+        LValue loopVariable = loopVariablePossibilities.iterator().next();
 
         /*
          * Now, go back and get the list of mutations.  Make sure they're all equivalent, then nop them out.
          */
         List<Op03SimpleStatement> mutations = ListFactory.newList();
         for (Op03SimpleStatement source : backSources) {
-            Op03SimpleStatement incrStatement = getForInvariant(source, loopInvariantLValue, whileBlockIdentifier);
+            Op03SimpleStatement incrStatement = getForInvariant(source, loopVariable, whileBlockIdentifier);
             mutations.add(incrStatement);
         }
 
@@ -731,12 +778,24 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
-        Assignment assignment = (Assignment) baseline.containedStatement;
+        //
+        // If possible, go back and find an unconditional assignment to the loop variable.
+        // We have to be sure that moving this to the for doesn't violate SSA versions.
+        //
+        Op03SimpleStatement initialValue = findMovableAssignment(statement, loopVariable);
+        Assignment initalAssignment = null;
+
+        if (initialValue != null) {
+            initalAssignment = (Assignment) initialValue.containedStatement;
+            initialValue.nopOut();
+        }
+
+        Assignment updateAssignment = (Assignment) baseline.containedStatement;
         for (Op03SimpleStatement incrStatement : mutations) {
             incrStatement.nopOut();
         }
         whileBlockIdentifier.setBlockType(BlockType.FORLOOP);
-        whileStatement.replaceWithForLoop(assignment);
+        whileStatement.replaceWithForLoop(initalAssignment, updateAssignment);
     }
 
     public static void rewriteWhilesAsFors(List<Op03SimpleStatement> statements) {
@@ -1156,6 +1215,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 success |= considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory);
             }
         } while (success);
+    }
+
+    public static List<Op03SimpleStatement> removeUselessNops(List<Op03SimpleStatement> in) {
+        return Functional.filter(in, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return !(in.sources.isEmpty() && in.targets.isEmpty());
+            }
+        });
     }
 
     @Override

@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
@@ -14,9 +14,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 public interface LValue {
     int getNumberOfCreators();
 
-    void determineLValueEquivalence(Expression assignedTo, StatementContainer statementContainer, LValueCollector lValueCollector);
+    void determineLValueEquivalence(Expression assignedTo, StatementContainer statementContainer, LValueAssigmentCollector lValueAssigmentCollector);
 
     SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory);
 
-    LValue replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers);
+    LValue replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers);
 }

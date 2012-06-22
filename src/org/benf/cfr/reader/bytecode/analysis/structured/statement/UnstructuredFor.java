@@ -15,17 +15,19 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class UnstructuredFor extends AbstractStructuredStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
+    private Assignment initial;
     private Assignment assignment;
 
-    public UnstructuredFor(ConditionalExpression condition, BlockIdentifier blockIdentifier, Assignment assignment) {
+    public UnstructuredFor(ConditionalExpression condition, BlockIdentifier blockIdentifier, Assignment initial, Assignment assignment) {
         this.condition = condition;
         this.blockIdentifier = blockIdentifier;
+        this.initial = initial;
         this.assignment = assignment;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("** for (;" + condition + "; " + assignment + ")\n");
+        dumper.print("** for (" + initial + ";" + condition + "; " + assignment + ")\n");
     }
 
     @Override
@@ -34,7 +36,7 @@ public class UnstructuredFor extends AbstractStructuredStatement {
             throw new RuntimeException("For statement claiming wrong block");
         }
         innerBlock.removeLastContinue(blockIdentifier);
-        return new StructuredFor(condition, assignment, innerBlock, blockIdentifier);
+        return new StructuredFor(condition, initial, assignment, innerBlock, blockIdentifier);
     }
 
     @Override

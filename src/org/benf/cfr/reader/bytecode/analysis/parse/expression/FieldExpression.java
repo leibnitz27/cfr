@@ -2,7 +2,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
@@ -27,8 +28,8 @@ public class FieldExpression implements LValueExpression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
-        fieldVariable = fieldVariable.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+    public Expression replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+        fieldVariable = fieldVariable.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
         return this;
     }
 
@@ -41,4 +42,10 @@ public class FieldExpression implements LValueExpression {
     public LValue getLValue() {
         return fieldVariable;
     }
+
+    @Override
+    public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        lValueUsageCollector.collect(fieldVariable);
+    }
+
 }

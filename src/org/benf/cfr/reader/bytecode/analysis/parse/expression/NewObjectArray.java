@@ -1,8 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.ArrayType;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
@@ -38,9 +38,13 @@ public class NewObjectArray implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
-        size = size.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+    public Expression replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+        size = size.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
         return this;
+    }
+
+    @Override
+    public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
     }
 
 }

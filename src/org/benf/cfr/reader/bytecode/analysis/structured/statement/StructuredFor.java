@@ -14,19 +14,21 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class StructuredFor extends AbstractStructuredStatement {
     private ConditionalExpression condition;
     private Op04StructuredStatement body;
+    private Assignment initial;
     private Assignment assignment;
     private final BlockIdentifier block;
 
-    public StructuredFor(ConditionalExpression condition, Assignment assignment, Op04StructuredStatement body, BlockIdentifier block) {
+    public StructuredFor(ConditionalExpression condition, Assignment initial, Assignment assignment, Op04StructuredStatement body, BlockIdentifier block) {
         this.condition = condition;
         this.body = body;
+        this.initial = initial;
         this.assignment = assignment;
         this.block = block;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("for (;" + condition.toString() + "; " + assignment + ") ");
+        dumper.print("for (" + (initial == null ? "" : initial.toString()) + ";" + condition.toString() + "; " + assignment + ") ");
         body.dump(dumper);
     }
 }

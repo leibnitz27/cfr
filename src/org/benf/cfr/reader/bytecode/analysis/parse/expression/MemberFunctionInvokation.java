@@ -1,10 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.ConstantPoolEntryNameAndType;
 import org.benf.cfr.reader.util.ListFactory;
@@ -39,10 +39,10 @@ public class MemberFunctionInvokation implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
-        object = object.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+    public Expression replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+        object = object.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
         for (int x = 0; x < args.size(); ++x) {
-            args.set(x, args.get(x).replaceSingleUsageLValues(lValueCollector, ssaIdentifiers));
+            args.set(x, args.get(x).replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers));
         }
         return this;
     }
@@ -80,4 +80,12 @@ public class MemberFunctionInvokation implements Expression {
     public ConstantPool getCp() {
         return cp;
     }
+
+    @Override
+    public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        for (Expression expression : args) {
+            expression.collectUsedLValues(lValueUsageCollector);
+        }
+    }
+
 }

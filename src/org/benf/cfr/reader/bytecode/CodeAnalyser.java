@@ -162,6 +162,9 @@ public class CodeAnalyser {
         // where xx and yy have no GOTOs in them.
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
+        op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
+        Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
+        Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
 
         /*
          * Convert the Simple Statements into one structured Statement.

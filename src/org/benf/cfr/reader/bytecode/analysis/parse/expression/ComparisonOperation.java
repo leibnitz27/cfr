@@ -2,7 +2,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.SetFactory;
 
@@ -47,9 +48,9 @@ public class ComparisonOperation implements ConditionalExpression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
-        lhs = lhs.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
-        rhs = rhs.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+    public Expression replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+        lhs = lhs.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
+        rhs = rhs.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
         return this;
     }
 
@@ -77,4 +78,11 @@ public class ComparisonOperation implements ConditionalExpression {
         addIfLValue(rhs, res);
         return res;
     }
+
+    @Override
+    public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        lhs.collectUsedLValues(lValueUsageCollector);
+        rhs.collectUsedLValues(lValueUsageCollector);
+    }
+
 }

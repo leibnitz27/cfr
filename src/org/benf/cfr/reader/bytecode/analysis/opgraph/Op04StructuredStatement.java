@@ -113,7 +113,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public void replaceTarget(Op04StructuredStatement from, Op04StructuredStatement to) {
         int index = targets.indexOf(from);
         if (index == -1) {
-            throw new ConfusedCFRException("Invalid target");
+            throw new ConfusedCFRException("Invalid target.  Trying to replace " + from + " -> " + to);
         }
         targets.set(index, to);
     }

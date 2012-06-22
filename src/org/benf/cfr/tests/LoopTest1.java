@@ -40,6 +40,12 @@ public class LoopTest1 {
         }
     }
 
+    public void test3a(int[] xs) {
+        for (int x : xs) {
+            System.out.println(x);
+        }
+    }
+
     public void test4(int end) {
         int x = 0;
         while (x < end) {

@@ -3,7 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.entities.ConstantPool;
@@ -44,11 +44,11 @@ public class StaticVariable implements LValue {
     }
 
     @Override
-    public void determineLValueEquivalence(Expression assignedTo, StatementContainer statementContainer, LValueCollector lValueCollector) {
+    public void determineLValueEquivalence(Expression assignedTo, StatementContainer statementContainer, LValueAssigmentCollector lValueAssigmentCollector) {
     }
 
     @Override
-    public LValue replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
+    public LValue replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
         return this;
     }
 

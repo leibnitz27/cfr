@@ -1,7 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
@@ -31,8 +32,13 @@ public class ArithmeticMonOperation implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueCollector lValueCollector, SSAIdentifiers ssaIdentifiers) {
-        lhs = lhs.replaceSingleUsageLValues(lValueCollector, ssaIdentifiers);
+    public Expression replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+        lhs = lhs.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
         return this;
+    }
+
+    @Override
+    public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        lhs.collectUsedLValues(lValueUsageCollector);
     }
 }
