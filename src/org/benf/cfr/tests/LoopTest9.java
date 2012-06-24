@@ -19,4 +19,18 @@ public class LoopTest9 {
         }
     }
 
+    public boolean test1() {
+        return true;
+    }
+
+    public void test2() {
+        Object o = (Object) test1();
+        System.out.println(o + " " + o.getClass());
+    }
+
+    public static void main(String args[]) {
+        LoopTest9 l = new LoopTest9();
+        l.test2();
+    }
+
 }
