@@ -19,4 +19,13 @@ public class SetFactory {
     public static <X extends Object> Set<X> newSet(Collection<X> content) {
         return new HashSet<X>(content);
     }
+
+    public static <X extends Object> Set<X> newSet(X... content) {
+        Set<X> res = new HashSet<X>();
+        for (X x : content) {
+            res.add(x);
+        }
+        return res;
+    }
+
 }
