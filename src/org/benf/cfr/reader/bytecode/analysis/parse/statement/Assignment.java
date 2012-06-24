@@ -2,10 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -37,7 +34,7 @@ public class Assignment extends AbstractStatement {
     }
 
     @Override
-    public void getLValueEquivalences(LValueAssigmentCollector lValueAssigmentCollector) {
+    public void getLValueEquivalences(LValueAssignmentCollector lValueAssigmentCollector) {
         lvalue.determineLValueEquivalence(rvalue, this.getContainer(), lValueAssigmentCollector);
     }
 
@@ -62,9 +59,9 @@ public class Assignment extends AbstractStatement {
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
-        lvalue = lvalue.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
-        rvalue = rvalue.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
+    public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
+        lvalue = lvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
+        rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
     }
 
     @Override

@@ -3,7 +3,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -37,7 +38,7 @@ public class CompoundStatement extends AbstractStatement {
     }
 
     @Override
-    public void getLValueEquivalences(LValueAssigmentCollector lValueAssigmentCollector) {
+    public void getLValueEquivalences(LValueAssignmentCollector lValueAssigmentCollector) {
         throw new ConfusedCFRException("Should not be using compound statements here");
     }
 
@@ -52,7 +53,7 @@ public class CompoundStatement extends AbstractStatement {
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+    public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         throw new ConfusedCFRException("Should not be using compound statements here");
     }
 

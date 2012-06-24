@@ -3,7 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
@@ -38,8 +38,8 @@ public class WhileStatement extends AbstractStatement {
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
-        Expression replacementCondition = condition.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
+    public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
+        Expression replacementCondition = condition.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
         if (replacementCondition != condition) throw new ConfusedCFRException("Can't yet support replacing conditions");
     }
 

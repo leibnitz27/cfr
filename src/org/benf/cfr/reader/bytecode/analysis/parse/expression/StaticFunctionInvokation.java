@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.entities.*;
@@ -32,9 +32,9 @@ public class StaticFunctionInvokation implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+    public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         for (int x = 0; x < args.size(); ++x) {
-            args.set(x, args.get(x).replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers));
+            args.set(x, args.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers));
         }
         return this;
     }

@@ -262,12 +262,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         containedInBlocks.add(blockIdentifier);
     }
 
-    private void collect(LValueAssigmentCollector lValueAssigmentCollector) {
+    private void collect(LValueAssignmentCollector lValueAssigmentCollector) {
         containedStatement.getLValueEquivalences(lValueAssigmentCollector);
     }
 
-    private void condense(LValueAssigmentCollector lValueAssigmentCollector) {
-        containedStatement.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
+    private void condense(LValueRewriter lValueRewriter) {
+        containedStatement.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
     }
 
     private void findCreation(CreationCollector creationCollector) {
@@ -422,7 +422,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public static void condenseLValues(List<Op03SimpleStatement> statements) {
-        LValueAssigmentCollector lValueAssigmentCollector = new LValueAssigmentCollector();
+        LValueAssignmentCollector lValueAssigmentCollector = new LValueAssignmentCollector();
         for (Op03SimpleStatement statement : statements) {
             statement.collect(lValueAssigmentCollector);
         }
@@ -510,6 +510,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return result;
     }
 
+
+    public static void rewriteStackAliases(List<Op03SimpleStatement> statements) {
+    }
 
     /* Remove pointless jumps 
     *

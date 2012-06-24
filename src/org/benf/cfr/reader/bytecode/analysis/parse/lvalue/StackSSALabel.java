@@ -3,7 +3,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
@@ -39,10 +40,10 @@ public class StackSSALabel implements LValue {
      * (Assuming that values in the RHS are not mutated)
      */
     @Override
-    public void determineLValueEquivalence(Expression rhsAssigned, StatementContainer statementContainer, LValueAssigmentCollector lValueAssigmentCollector) {
+    public void determineLValueEquivalence(Expression rhsAssigned, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
         if ((rhsAssigned.isSimple() || stackEntry.getUsageCount() == 1) && getNumberOfCreators() == 1) {
+//        if (stackEntry.getUsageCount() == 1 && getNumberOfCreators() == 1) {
             lValueAssigmentCollector.collect(this, statementContainer, rhsAssigned);
-            return;
         }
     }
 
@@ -52,7 +53,7 @@ public class StackSSALabel implements LValue {
     }
 
     @Override
-    public LValue replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
+    public LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         return this;
     }
 

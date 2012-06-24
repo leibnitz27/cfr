@@ -15,7 +15,7 @@ import java.util.Map;
  * Time: 18:06
  * To change this template use File | Settings | File Templates.
  */
-public class LValueAssigmentCollector {
+public class LValueAssignmentCollector implements LValueRewriter {
 
     private final Map<LValue, Pair<Expression, StatementContainer>> found = MapFactory.newMap();
 
@@ -23,6 +23,7 @@ public class LValueAssigmentCollector {
         found.put(lValue, new Pair<Expression, StatementContainer>(value, statementContainer));
     }
 
+    @Override
     public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers) {
         if (!found.containsKey(lValue)) return null;
         Pair<Expression, StatementContainer> pair = found.get(lValue);

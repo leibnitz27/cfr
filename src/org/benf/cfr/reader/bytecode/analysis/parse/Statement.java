@@ -1,10 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.output.Dumpable;
 
@@ -31,9 +28,9 @@ import java.util.List;
 public interface Statement extends Dumpable {
     void setContainer(StatementContainer container);
 
-    void getLValueEquivalences(LValueAssigmentCollector lValueAssigmentCollector);
+    void getLValueEquivalences(LValueAssignmentCollector lValueAssigmentCollector);
 
-    void replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers);
+    void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers);
 
     void collectObjectCreation(CreationCollector creationCollector);
 

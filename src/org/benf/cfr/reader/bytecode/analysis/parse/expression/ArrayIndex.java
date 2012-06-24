@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
@@ -33,9 +33,9 @@ public class ArrayIndex implements Expression {
     }
 
     @Override
-    public Expression replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
-        array = array.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
-        index = index.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
+    public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
+        array = array.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
+        index = index.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
         return this;
     }
 

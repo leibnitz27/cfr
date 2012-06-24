@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
@@ -27,8 +27,8 @@ public class ReturnValueStatement extends ReturnStatement {
     }
 
     @Override
-    public void replaceSingleUsageLValues(LValueAssigmentCollector lValueAssigmentCollector, SSAIdentifiers ssaIdentifiers) {
-        this.rvalue = rvalue.replaceSingleUsageLValues(lValueAssigmentCollector, ssaIdentifiers);
+    public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
+        this.rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
     }
 
     @Override

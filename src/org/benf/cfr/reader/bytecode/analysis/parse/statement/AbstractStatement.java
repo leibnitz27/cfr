@@ -5,7 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssigmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -34,7 +34,7 @@ public abstract class AbstractStatement implements Statement {
     }
 
     @Override
-    public void getLValueEquivalences(LValueAssigmentCollector lValueAssigmentCollector) {
+    public void getLValueEquivalences(LValueAssignmentCollector lValueAssigmentCollector) {
     }
 
     @Override
