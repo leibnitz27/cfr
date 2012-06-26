@@ -31,7 +31,7 @@ public class ConstructorStatement extends AbstractStatement {
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         // can't ever change, but its arguments can.
-        invokation.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
+        invokation.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override

@@ -427,6 +427,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             statement.collect(lValueAssigmentCollector);
         }
 
+        LValueAssignmentCollector.FirstPassRewriter multiRewriter = lValueAssigmentCollector.getFirstPassRewriter();
+        for (Op03SimpleStatement statement : statements) {
+            statement.condense(multiRewriter);
+        }
+        multiRewriter.inferAliases();
+
         for (Op03SimpleStatement statement : statements) {
             statement.condense(lValueAssigmentCollector);
         }
@@ -510,9 +516,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return result;
     }
 
-
-    public static void rewriteStackAliases(List<Op03SimpleStatement> statements) {
-    }
 
     /* Remove pointless jumps 
     *

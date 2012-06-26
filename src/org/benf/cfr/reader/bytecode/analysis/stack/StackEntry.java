@@ -1,11 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.stack;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -32,12 +30,12 @@ public class StackEntry {
         this.stackType = stackType;
     }
 
-    public void incrementUsage() {
-        usageCount++;
+    public long incrementUsage() {
+        return ++usageCount;
     }
 
-    public void decrementUsage() {
-        usageCount--;
+    public long decrementUsage() {
+        return (--usageCount);
     }
 
     public void mergeWith(StackEntry other) {

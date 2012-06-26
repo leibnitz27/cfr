@@ -41,9 +41,12 @@ public class StackSSALabel implements LValue {
      */
     @Override
     public void determineLValueEquivalence(Expression rhsAssigned, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
-        if ((rhsAssigned.isSimple() || stackEntry.getUsageCount() == 1) && getNumberOfCreators() == 1) {
-//        if (stackEntry.getUsageCount() == 1 && getNumberOfCreators() == 1) {
-            lValueAssigmentCollector.collect(this, statementContainer, rhsAssigned);
+        if (getNumberOfCreators() == 1) {
+            if ((rhsAssigned.isSimple() || stackEntry.getUsageCount() == 1)) {
+                lValueAssigmentCollector.collect(this, statementContainer, rhsAssigned);
+            } else if (stackEntry.getUsageCount() > 1) {
+                lValueAssigmentCollector.collectMultiUse(this, statementContainer, rhsAssigned);
+            }
         }
     }
 
@@ -53,7 +56,7 @@ public class StackSSALabel implements LValue {
     }
 
     @Override
-    public LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
+    public LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         return this;
     }
 

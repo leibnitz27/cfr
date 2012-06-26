@@ -114,8 +114,8 @@ public class CodeAnalyser {
         // Create a non final version...
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableNamer);
 
-//        dumper.print("Raw Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
+        dumper.print("Raw Op3 statements:\n");
+        op03SimpleParseNodes.get(0).dump(dumper);
 
 
         // Expand any 'multiple' statements (eg from dups)
@@ -123,7 +123,7 @@ public class CodeAnalyser {
 
         // For any stack values which are only assigned once, we can alias them to the former expression
         // (undoes much of the ugliness caused by eg DUP)
-        Op03SimpleStatement.rewriteStackAliases(op03SimpleParseNodes);
+//        Op03SimpleStatement.rewriteStackAliases(op03SimpleParseNodes);
 
         // Remove 2nd (+) jumps in pointless jump chains.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
@@ -174,9 +174,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
 
-        /*
-         * Convert the Simple Statements into one structured Statement.
-         */
+
         dumper.print("FINAL Op03SimpleStatement NODES:\n\n************\n");
         op03SimpleParseNodes.get(0).dump(dumper);
 

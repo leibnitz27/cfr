@@ -43,7 +43,7 @@ public class SwitchStatement extends AbstractStatement {
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        switchOn = switchOn.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
+        switchOn = switchOn.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override

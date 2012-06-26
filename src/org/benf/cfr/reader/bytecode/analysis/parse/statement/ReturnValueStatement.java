@@ -28,7 +28,7 @@ public class ReturnValueStatement extends ReturnStatement {
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        this.rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
+        this.rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override

@@ -40,8 +40,8 @@ public class ArrayVariable implements LValue {
     }
 
     @Override
-    public LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        arrayIndex = arrayIndex.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
+    public LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        arrayIndex = arrayIndex.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;
     }
 

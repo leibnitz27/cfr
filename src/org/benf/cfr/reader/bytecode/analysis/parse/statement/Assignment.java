@@ -60,8 +60,8 @@ public class Assignment extends AbstractStatement {
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        lvalue = lvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
-        rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
+        lvalue = lvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+        rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override

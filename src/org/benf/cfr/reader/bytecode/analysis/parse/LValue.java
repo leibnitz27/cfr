@@ -19,5 +19,5 @@ public interface LValue {
 
     SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory);
 
-    LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers);
+    LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
 }

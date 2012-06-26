@@ -51,8 +51,8 @@ public class FieldVariable implements LValue {
     }
 
     @Override
-    public LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        object = object.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
+    public LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        object = object.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;
     }
 

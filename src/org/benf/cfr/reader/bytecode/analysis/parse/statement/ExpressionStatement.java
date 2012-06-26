@@ -28,7 +28,7 @@ public class ExpressionStatement extends AbstractStatement {
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        expression = expression.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
+        expression = expression.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override
