@@ -114,8 +114,8 @@ public class CodeAnalyser {
         // Create a non final version...
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableNamer);
 
-        dumper.print("Raw Op3 statements:\n");
-        op03SimpleParseNodes.get(0).dump(dumper);
+//        dumper.print("Raw Op3 statements:\n");
+//        op03SimpleParseNodes.get(0).dump(dumper);
 
 
         // Expand any 'multiple' statements (eg from dups)
