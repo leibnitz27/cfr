@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
+import org.benf.cfr.reader.util.functors.NonaryFunction;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
@@ -1158,6 +1159,18 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // Consider the try blocks we're in at this point.  (the ifStatemenet).
         // If we leave any of them, we've left the if.
         List<BlockIdentifier> blocksAtStart = ifStatement.containedInBlocks;
+        if (idxCurrent == idxEnd) {
+            // It's a trivial tautology?
+//            Dumper d = new Dumper();
+//            d.print("********\n");
+//            ifStatement.dumpInner(d);
+//            d.print("Taken:\n");
+//            takenTarget.dumpInner(d);
+//            d.print("Not taken:\n");
+//            notTakenTarget.dumpInner(d);
+//            throw new ConfusedCFRException("Tautology?");
+            return false;
+        }
         do {
             Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
             ifBranch.add(statementCurrent);
@@ -1230,6 +1243,127 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return !(in.sources.isEmpty() && in.targets.isEmpty());
             }
         });
+    }
+
+    /*
+     * Could be refactored out as uniquelyReachableFrom....
+     */
+    private static void identifyCatchBlock(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
+        Set<Op03SimpleStatement> knownMembers = SetFactory.newSet();
+        Set<Op03SimpleStatement> seen = SetFactory.newSet();
+        seen.add(start);
+        knownMembers.add(start);
+
+        /*
+         * Because a conditional will cause us to hit a parent which isn't in the block
+         * if (a) goto x
+         * ..
+         * goto z
+         * x:
+         * ...
+         * z
+         *
+         * (at z we'll see the parent from x before we've marked it)
+         * , we have to make sure that we've exhausted pending possibilities before
+         * we decide we're reachable from something outside the catch block.
+         * (this is different to tentative marking, as there we're examining nodes
+         * which are reachable from something we're not sure is actually in the block
+         */
+        LinkedList<Op03SimpleStatement> pendingPossibilities = ListFactory.newLinkedList();
+        for (Op03SimpleStatement target : start.targets) {
+            pendingPossibilities.add(target);
+            seen.add(target);
+        }
+
+        Map<Op03SimpleStatement, Set<Op03SimpleStatement>> allows = MapFactory.newLazyMap(new NonaryFunction<Set<Op03SimpleStatement>>() {
+            @Override
+            public Set<Op03SimpleStatement> invoke() {
+                return SetFactory.newSet();
+            }
+        });
+        Dumper d = new Dumper();
+        int sinceDefinite = 0;
+        while (!pendingPossibilities.isEmpty() && sinceDefinite <= pendingPossibilities.size()) {
+            Op03SimpleStatement maybe = pendingPossibilities.removeFirst();
+            boolean definite = true;
+            for (Op03SimpleStatement source : maybe.sources) {
+                if (!knownMembers.contains(source)) {
+                    definite = false;
+                    allows.get(source).add(maybe);
+                }
+            }
+            if (definite) {
+                d.print("Definite : ");
+                maybe.dumpInner(d);
+                sinceDefinite = 0;
+                // All of this guys sources are known
+                knownMembers.add(maybe);
+                Set<Op03SimpleStatement> allowedBy = allows.get(maybe);
+                pendingPossibilities.addAll(allowedBy);
+                // They'll get re-added if they're still blocked.
+                allowedBy.clear();
+                /* OrderCheat :
+                 * only add backTargets which are to after the catch block started.
+                 */
+                for (Op03SimpleStatement target : maybe.targets) {
+                    // Don't need to check knownMembers, always included in seen.
+                    if (!seen.contains(target)) {
+                        seen.add(target);
+                        if (target.getIndex().isBackJumpTo(start)) {
+                            d.print("New target poss : ");
+                            target.dumpInner(d);
+                            pendingPossibilities.add(target);
+                        }
+                    }
+                }
+            } else {
+                /*
+                 * Can't reach this one (or certainly, can't reach it given what we know yet)
+                 */
+                sinceDefinite++;
+                d.print("Readding : ");
+                maybe.dumpInner(d);
+                pendingPossibilities.add(maybe);
+            }
+        }
+        /*
+         * knownMembers now defines the graph uniquely reachable from start.
+         * TODO :
+         * Now we have to check how well it lines up with the linear code assumption.
+         */
+        knownMembers.remove(start);
+        for (Op03SimpleStatement inBlock : knownMembers) {
+            inBlock.containedInBlocks.add(blockIdentifier);
+        }
+    }
+
+    /* Basic principle with catch blocks - we mark all statements from the start
+     * of a catch block, UNTIL they can be reached by something that isn't marked.
+     *
+     * Complexity comes from allowing back jumps inside a catch block.  If there's a BACK
+     * JUMP
+     * TODO : OrderCheat
+     * which is not from a catchblock statement, we have to mark current location as
+     * "last known guaranteed".  We then proceed, tentatively marking.
+     *
+     * As soon as we hit something which /can't/ be in the catch block, we can
+     * unwind all tentatives which assume that it was.
+     */
+    public static void identifyCatchBlocks(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+        List<Op03SimpleStatement> catchStarts = Functional.filter(in, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return (in.containedStatement instanceof CatchStatement);
+            }
+        });
+        for (Op03SimpleStatement catchStart : catchStarts) {
+            CatchStatement catchStatement = (CatchStatement) catchStart.containedStatement;
+            if (catchStatement.getCatchBlockIdent() == null) {
+                BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.CATCHBLOCK);
+                catchStatement.setCatchBlockIdent(blockIdentifier);
+                identifyCatchBlock(catchStart, blockIdentifier);
+            }
+        }
     }
 
     @Override

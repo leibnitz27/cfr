@@ -10,5 +10,6 @@ public enum BlockType {
     FORLOOP,
     TRYBLOCK,
     SIMPLE_IF_TAKEN,
-    SIMPLE_IF_ELSE
+    SIMPLE_IF_ELSE,
+    CATCHBLOCK
 }

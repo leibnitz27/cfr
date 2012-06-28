@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -18,6 +19,7 @@ import java.util.List;
  */
 public class CatchStatement extends AbstractStatement {
     private final List<ExceptionGroup.Entry> exceptions;
+    private BlockIdentifier catchBlockIdent;
 
     public CatchStatement(List<ExceptionGroup.Entry> exceptions) {
         this.exceptions = exceptions;
@@ -26,6 +28,14 @@ public class CatchStatement extends AbstractStatement {
     @Override
     public void dump(Dumper dumper) {
         dumper.print("catch {\n");
+    }
+
+    public BlockIdentifier getCatchBlockIdent() {
+        return catchBlockIdent;
+    }
+
+    public void setCatchBlockIdent(BlockIdentifier catchBlockIdent) {
+        this.catchBlockIdent = catchBlockIdent;
     }
 
     @Override
@@ -39,6 +49,6 @@ public class CatchStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredCatch(exceptions);
+        return new UnstructuredCatch(exceptions, catchBlockIdent);
     }
 }

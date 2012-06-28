@@ -163,6 +163,8 @@ public class CodeAnalyser {
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
         Op03SimpleStatement.rewriteWhilesAsFors(op03SimpleParseNodes);
 
+        Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+
         // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
         // where xx and yy have no GOTOs in them.
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);

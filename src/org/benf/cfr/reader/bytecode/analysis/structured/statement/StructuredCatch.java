@@ -13,31 +13,29 @@ import java.util.List;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredCatch extends AbstractStructuredStatement {
+public class StructuredCatch extends AbstractStructuredStatement {
     private final List<ExceptionGroup.Entry> exceptions;
-    private final BlockIdentifier blockIdentifier;
+    private final Op04StructuredStatement catchBlock;
 
-    public UnstructuredCatch(List<ExceptionGroup.Entry> exceptions, BlockIdentifier blockIdentifier) {
+    public StructuredCatch(List<ExceptionGroup.Entry> exceptions, Op04StructuredStatement catchBlock) {
         this.exceptions = exceptions;
-        this.blockIdentifier = blockIdentifier;
+        this.catchBlock = catchBlock;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("** catch " + exceptions + " { \n");
+        dumper.print("catch /* " + exceptions + "*/ ");
+        catchBlock.dump(dumper);
     }
+
 
     @Override
     public boolean isProperlyStructured() {
-        return false;
+        return true;
     }
 
     @Override
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier) {
-        if (blockIdentifier == this.blockIdentifier) {
-            return new StructuredCatch(exceptions, innerBlock);
-        } else {
-            return null;
-        }
+        return null;
     }
 }
