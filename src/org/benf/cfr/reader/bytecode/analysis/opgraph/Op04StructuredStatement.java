@@ -9,6 +9,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.StackFactory;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -196,6 +197,13 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             this.statements = statements;
             this.outerStart = outerStart;
         }
+
+        private static class BlockIdentifierGetter implements UnaryFunction<StackedBlock, BlockIdentifier> {
+            @Override
+            public BlockIdentifier invoke(StackedBlock arg) {
+                return arg.blockIdentifier;
+            }
+        }
     }
 
 
@@ -224,6 +232,41 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return nowCopy.iterator().next();
     }
 
+    private static class MutableProcessingBlockState {
+        BlockIdentifier currentBlockIdentifier = null;
+        LinkedList<Op04StructuredStatement> currentBlock = ListFactory.newLinkedList();
+    }
+
+    public static void processEndingBlocks(
+            final Set<BlockIdentifier> endOfTheseBlocks,
+            final Set<BlockIdentifier> blocksCurrentlyIn,
+            final Stack<StackedBlock> stackedBlocks,
+            final MutableProcessingBlockState mutableProcessingBlockState) {
+        System.out.println("statement is last statement in these blocks " + endOfTheseBlocks);
+
+        while (!endOfTheseBlocks.isEmpty()) {
+            if (mutableProcessingBlockState.currentBlockIdentifier == null) {
+                throw new ConfusedCFRException("Trying to end block, but not in any!");
+            }
+            // Leaving a block, but
+            if (!endOfTheseBlocks.remove(mutableProcessingBlockState.currentBlockIdentifier)) {
+                throw new ConfusedCFRException("Tried to end blocks " + endOfTheseBlocks + ", but top level block is " + mutableProcessingBlockState.currentBlockIdentifier);
+            }
+            blocksCurrentlyIn.remove(mutableProcessingBlockState.currentBlockIdentifier);
+            LinkedList<Op04StructuredStatement> blockJustEnded = mutableProcessingBlockState.currentBlock;
+            StackedBlock popBlock = stackedBlocks.pop();
+            mutableProcessingBlockState.currentBlock = popBlock.statements;
+            // todo : Do I still need to get /un/structured parents right?
+            Op04StructuredStatement finishedBlock = new Op04StructuredStatement(new Block(blockJustEnded, true));
+            finishedBlock.replaceAsSource(blockJustEnded.getFirst());
+            Op04StructuredStatement blockStartContainer = popBlock.outerStart;
+            if (!blockStartContainer.claimBlock(finishedBlock, mutableProcessingBlockState.currentBlockIdentifier)) {
+                mutableProcessingBlockState.currentBlock.add(finishedBlock);
+            }
+            mutableProcessingBlockState.currentBlockIdentifier = popBlock.blockIdentifier;
+        }
+    }
+
     /*
     *
     */
@@ -231,23 +274,15 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         /* 
          * the blocks we're in, and when we entered them.
          */
+
         Set<BlockIdentifier> blocksCurrentlyIn = SetFactory.newSet();
-        BlockIdentifier currentBlockIdentifier = null;
         LinkedList<Op04StructuredStatement> outerBlock = ListFactory.newLinkedList();
-        LinkedList<Op04StructuredStatement> currentBlock = outerBlock;
         Stack<StackedBlock> stackedBlocks = StackFactory.newStack();
+
+        MutableProcessingBlockState mutableProcessingBlockState = new MutableProcessingBlockState();
+        mutableProcessingBlockState.currentBlock = outerBlock;
+
         for (Op04StructuredStatement container : containers) {
-
-
-//            System.out.print(container + " starts " + container.startBlock + " in [");
-//            for (BlockIdentifier blockIdentifier : container.blockMembership) {
-//                System.out.print(blockIdentifier + " ");
-//            }
-//            System.out.println("]");
-
-
-//            System.out.println("Adding " + container + " to currentBlock");
-
             /*
              * if this statement has the same membership as blocksCurrentlyIn, it's in the same 
              * block as the previous statement, so emit it into currentBlock.
@@ -258,30 +293,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
              */
             Set<BlockIdentifier> endOfTheseBlocks = getEndingBlocks(blocksCurrentlyIn, container.blockMembership);
             if (!endOfTheseBlocks.isEmpty()) {
-
-                System.out.println("statement is last statement in these blocks " + endOfTheseBlocks);
-
-                while (!endOfTheseBlocks.isEmpty()) {
-                    if (currentBlockIdentifier == null) {
-                        throw new ConfusedCFRException("Trying to end block, but not in any!");
-                    }
-                    // Leaving a block, but
-                    if (!endOfTheseBlocks.remove(currentBlockIdentifier)) {
-                        throw new ConfusedCFRException("Tried to end blocks " + endOfTheseBlocks + ", but top level block is " + currentBlockIdentifier);
-                    }
-                    blocksCurrentlyIn.remove(currentBlockIdentifier);
-                    LinkedList<Op04StructuredStatement> blockJustEnded = currentBlock;
-                    StackedBlock popBlock = stackedBlocks.pop();
-                    currentBlock = popBlock.statements;
-                    // todo : Do I still need to get /un/structured parents right?
-                    Op04StructuredStatement finishedBlock = new Op04StructuredStatement(new Block(blockJustEnded, true));
-                    finishedBlock.replaceAsSource(blockJustEnded.getFirst());
-                    Op04StructuredStatement blockStartContainer = popBlock.outerStart;
-                    if (!blockStartContainer.claimBlock(finishedBlock, currentBlockIdentifier)) {
-                        currentBlock.add(finishedBlock);
-                    }
-                    currentBlockIdentifier = popBlock.blockIdentifier;
-                }
+                processEndingBlocks(endOfTheseBlocks, blocksCurrentlyIn, stackedBlocks, mutableProcessingBlockState);
             }
 
             BlockIdentifier startsThisBlock = getStartingBlocks(blocksCurrentlyIn, container.blockMembership);
@@ -291,23 +303,23 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                 // A bit confusing.  StartBlock for a while loop is the test.
                 // StartBlock for conditionals is the first element of the conditional.
                 // I need to refactor this......
-                Op04StructuredStatement blockClaimer = currentBlock.getLast();
+                Op04StructuredStatement blockClaimer = mutableProcessingBlockState.currentBlock.getLast();
 
-                stackedBlocks.push(new StackedBlock(currentBlockIdentifier, currentBlock, blockClaimer));
-                currentBlock = ListFactory.newLinkedList();
-                currentBlockIdentifier = startsThisBlock;
-                blocksCurrentlyIn.add(currentBlockIdentifier);
+                stackedBlocks.push(new StackedBlock(mutableProcessingBlockState.currentBlockIdentifier, mutableProcessingBlockState.currentBlock, blockClaimer));
+                mutableProcessingBlockState.currentBlock = ListFactory.newLinkedList();
+                mutableProcessingBlockState.currentBlockIdentifier = startsThisBlock;
+                blocksCurrentlyIn.add(mutableProcessingBlockState.currentBlockIdentifier);
             }
 
-            currentBlock.add(container);
+            mutableProcessingBlockState.currentBlock.add(container);
 
 
         }
         /* 
-         * By here, the stack should be empty, and outerblocks should be all that remains.
+         * End any blocks we're still in.
          */
         if (!stackedBlocks.isEmpty()) {
-            throw new ConfusedCFRException("Finished processing block membership, not empty!");
+            processEndingBlocks(blocksCurrentlyIn, blocksCurrentlyIn, stackedBlocks, mutableProcessingBlockState);
         }
         Block result = new Block(outerBlock, true);
         return new Op04StructuredStatement(result);
