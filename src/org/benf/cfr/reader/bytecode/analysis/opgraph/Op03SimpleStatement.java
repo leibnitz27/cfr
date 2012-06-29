@@ -897,7 +897,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             for (Op03SimpleStatement target : targets) {
                 if (target.getIndex().compareTo(inIndex) < 0) {
                     if (!(in.containedStatement instanceof JumpingStatement)) {
-                        throw new ConfusedCFRException("Invalid back jump. (anti-decompiler?) on " + in.containedStatement);
+                        throw new ConfusedCFRException("Invalid back jump on " + in.containedStatement);
                     }
                     return true;
                 }
