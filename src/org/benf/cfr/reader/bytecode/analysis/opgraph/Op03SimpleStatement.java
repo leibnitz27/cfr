@@ -1288,8 +1288,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             boolean definite = true;
             for (Op03SimpleStatement source : maybe.sources) {
                 if (!knownMembers.contains(source)) {
-                    definite = false;
-                    allows.get(source).add(maybe);
+                    /* If it's a backjump, we'll allow it.
+                     * We won't tag the source as good, which means that we may have gaps
+                     * if it turns out this was invalid.
+                     */
+                    if (!source.getIndex().isBackJumpTo(maybe)) {
+                        definite = false;
+                        allows.get(source).add(maybe);
+                    }
                 }
             }
             if (definite) {
