@@ -39,6 +39,7 @@ public class InstrIndex implements Comparable<InstrIndex> {
 
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (!(o instanceof InstrIndex)) return false;
         InstrIndex other = (InstrIndex) o;
         return this.index == other.index && this.subindex == other.subindex;
@@ -46,6 +47,10 @@ public class InstrIndex implements Comparable<InstrIndex> {
 
     public InstrIndex justBefore() {
         return new InstrIndex(this.index, this.subindex - 1);
+    }
+
+    public InstrIndex justBefore(int by) {
+        return new InstrIndex(this.index, this.subindex - by);
     }
 
     public InstrIndex justAfter() {

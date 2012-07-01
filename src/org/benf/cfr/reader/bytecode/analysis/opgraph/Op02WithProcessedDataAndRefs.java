@@ -27,13 +27,17 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
+import org.benf.cfr.reader.util.functors.NonaryFunction;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -81,6 +85,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return index;
     }
 
+    public void setIndex(InstrIndex index) {
+        this.index = index;
+    }
+
     public void addTarget(Op02WithProcessedDataAndRefs node) {
         targets.add(node);
     }
@@ -97,6 +105,18 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         int index = targets.indexOf(oldTarget);
         if (index == -1) throw new ConfusedCFRException("Invalid target");
         targets.set(index, newTarget);
+    }
+
+    public void replaceSource(Op02WithProcessedDataAndRefs oldSource, Op02WithProcessedDataAndRefs newSource) {
+        int index = sources.indexOf(oldSource);
+        if (index == -1) throw new ConfusedCFRException("Invalid source");
+        sources.set(index, newSource);
+    }
+
+    public void removeSource(Op02WithProcessedDataAndRefs oldSource) {
+        if (!sources.remove(oldSource)) {
+            throw new ConfusedCFRException("Invalid source");
+        }
     }
 
     public void clearSources() {
@@ -677,12 +697,132 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return op03SimpleParseNodesTmp;
     }
 
+    private static class ExceptionTempStatement implements Comparable<ExceptionTempStatement> {
+        private final ExceptionGroup triggeringGroup;
+        private final Op02WithProcessedDataAndRefs op;
+        private final boolean isTry; // else catch;
+
+        private ExceptionTempStatement(ExceptionGroup triggeringGroup, Op02WithProcessedDataAndRefs op) {
+            this.triggeringGroup = triggeringGroup;
+            this.op = op;
+            this.isTry = (op.instr == JVMInstr.FAKE_TRY);
+        }
+
+        public ExceptionGroup getTriggeringGroup() {
+            return triggeringGroup;
+        }
+
+        public Op02WithProcessedDataAndRefs getOp() {
+            return op;
+        }
+
+        public boolean isTry() {
+            return isTry;
+        }
+
+        // A try statement cannot DIRECTLY preceed a catch statement from an EARLIER try (should be after)
+        // two try statements should be ordered according to their reach - first by start, and if that's equal, by
+        // reverse ordering of end.
+        @Override
+        public int compareTo(ExceptionTempStatement other) {
+            if (other == this) return 0;
+            int startCompare = triggeringGroup.getBytecodeIndexFrom() - other.triggeringGroup.getBytecodeIndexFrom();
+            if (startCompare != 0) return startCompare;
+            throw new ConfusedCFRException("Can't compare these exception groups.");
+        }
+
+        @Override
+        public String toString() {
+            return op.toString();
+        }
+    }
+
+    /* We want to place newNode in front of infrontOf.
+     * If there's something there already (a fake try and a fake catch co-incide)
+     * then we need to find where this /should/ go.
+     */
+    private static Op02WithProcessedDataAndRefs adjustOrdering(
+            Map<InstrIndex, List<ExceptionTempStatement>> insertions,
+            Op02WithProcessedDataAndRefs infrontOf,
+            ExceptionGroup exceptionGroup,
+            Op02WithProcessedDataAndRefs newNode) {
+        InstrIndex idxInfrontOf = infrontOf.getIndex();
+        List<ExceptionTempStatement> collides = insertions.get(idxInfrontOf);
+        ExceptionTempStatement exceptionTempStatement = new ExceptionTempStatement(exceptionGroup, newNode);
+        if (collides.isEmpty()) {
+            collides.add(exceptionTempStatement);
+            return infrontOf;
+        }
+
+        System.out.println("Adding " + newNode + " ident " + exceptionGroup.getTryBlockIdentifier());
+        System.out.println("Already have " + collides);
+
+
+        // If there's already something, we need to figure out which belongs in what order.
+        int insertionPos = Collections.binarySearch(collides, exceptionTempStatement);
+        if (insertionPos >= 0) throw new ConfusedCFRException("Already exists?");
+        insertionPos = -(insertionPos + 1);
+        if (insertionPos == 0) { // start
+            collides.add(0, exceptionTempStatement);
+            /* Anything which was */
+            throw new ConfusedCFRException("EEk.");
+        }
+
+        Op02WithProcessedDataAndRefs afterThis;
+        System.out.println("Insertion position = " + insertionPos);
+
+        if (insertionPos == collides.size()) { // end.
+            collides.add(exceptionTempStatement);
+            afterThis = infrontOf;
+        } else { // middle
+            afterThis = collides.get(insertionPos).getOp();
+            collides.add(insertionPos, exceptionTempStatement);
+        }
+        /* Relabel the nodes, for subsequent sorting */
+        int offset = collides.size();
+        for (ExceptionTempStatement ets : collides) {
+            ets.getOp().setIndex(infrontOf.getIndex().justBefore(offset--));
+        }
+        return afterThis;
+    }
+
+    private static void tidyMultipleInsertionIdentifiers(Collection<List<ExceptionTempStatement>> etsList) {
+        for (List<ExceptionTempStatement> ets : etsList) {
+            /*
+             * For each of these, find the ones which mark try statements, and remove that block from anything infront.
+             */
+            if (ets.size() <= 1) continue;
+
+            for (int idx = 0; idx < ets.size(); ++idx) {
+                ExceptionTempStatement et = ets.get(idx);
+                if (et.isTry()) {
+                    BlockIdentifier tryGroup = et.triggeringGroup.getTryBlockIdentifier();
+                    System.out.println("Removing try group identifier " + tryGroup + " idx " + idx);
+                    for (int idx2 = 0; idx2 < idx; ++idx2) {
+                        System.out.println(ets.get(idx2).getOp());
+                        System.out.println(ets.get(idx2).getOp().containedInTheseBlocks + " -->");
+                        ets.get(idx2).getOp().containedInTheseBlocks.remove(tryGroup);
+                        System.out.println(ets.get(idx2).getOp().containedInTheseBlocks);
+                    }
+                }
+            }
+        }
+    }
+
     public static List<Op02WithProcessedDataAndRefs> insertExceptionBlocks(
             List<Op02WithProcessedDataAndRefs> op2list,
             ExceptionAggregator exceptions,
             Map<Integer, Integer> lutByOffset,
             ConstantPool cp
     ) {
+
+        Map<InstrIndex, List<ExceptionTempStatement>> insertions = MapFactory.newLazyMap(
+                new NonaryFunction<List<ExceptionTempStatement>>() {
+                    @Override
+                    public List<ExceptionTempStatement> invoke() {
+                        return ListFactory.newList();
+                    }
+                });
 
         // First pass - decorate blocks with identifiers, so that when we introduce try/catch statements
         // they get the correct identifiers
@@ -718,6 +858,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             // default target of startInstruction, but additional targets of handlerTargets.
             Op02WithProcessedDataAndRefs tryOp =
                     new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_TRY, null, startInstruction.getIndex().justBefore(), cp, null, -1);
+            // It might turn out we want to insert it before something which has already been added BEFORE startInstruction!
+            startInstruction = adjustOrdering(insertions, startInstruction, exceptionGroup, tryOp);
             tryOp.containedInTheseBlocks.addAll(startInstruction.containedInTheseBlocks);
             tryOp.containedInTheseBlocks.remove(exceptionGroup.getTryBlockIdentifier());
             tryOp.exceptionGroups.add(exceptionGroup);
@@ -756,6 +898,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 } else {
 
                     preCatchOp = new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1);
+                    tryTarget = adjustOrdering(insertions, tryTarget, exceptionGroup, preCatchOp);
                     preCatchOp.containedInTheseBlocks.addAll(tryTarget.getContainedInTheseBlocks());
                     preCatchOp.addTarget(tryTarget);
                     tryTarget.addSource(preCatchOp);
@@ -766,10 +909,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 preCatchOp.catchExceptionGroups.add(catchTargets.getSecond());
             }
             tryOp.addTarget(startInstruction);
-            startInstruction.clearSources();
+            startInstruction.clearSources();   // todo: What about the nodes which TARGET startInstruction?
             startInstruction.addSource(tryOp);
             op2list.add(tryOp);
         }
+
+        /* For all lists where we've got multiple fake insertions in a single location now, make sure that
+         * try block insertions aren't referenced before they exist.  I.e. for each try block in the ExceptionTemps
+         * remove it from previous ones.
+         */
+        tidyMultipleInsertionIdentifiers(insertions.values());
         return op2list;
     }
 
