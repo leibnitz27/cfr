@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.Map;
@@ -47,6 +48,7 @@ public class SSAIdentifiers {
     }
 
     public boolean isValidReplacement(LValue lValue, SSAIdentifiers other) {
+        if (lValue instanceof ArrayVariable) return false;
         SSAIdent thisVersion = knownIdentifiers.get(lValue);
         SSAIdent otherVersion = other.knownIdentifiers.get(lValue);
         if (thisVersion == null && otherVersion == null) return true;
