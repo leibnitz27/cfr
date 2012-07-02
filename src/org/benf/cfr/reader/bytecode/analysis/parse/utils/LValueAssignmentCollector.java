@@ -157,8 +157,7 @@ public class LValueAssignmentCollector implements LValueRewriter {
                 }
             }
             if (guessAlias == null) return null;
-            for (LValueStatementContainer lValueStatementContainer : possibleAliasList) {
-                StatementContainer verifyStatement = lValueStatementContainer.statementContainer;
+            for (StatementContainer verifyStatement : usages.get(stackSSALabel)) {
                 /*
                  * verify that 'guessAlias' is the same version in verifyStatement
                  * as it is in guessStatement.
