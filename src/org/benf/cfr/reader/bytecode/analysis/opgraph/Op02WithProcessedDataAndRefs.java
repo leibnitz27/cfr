@@ -337,6 +337,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FALOAD:
             case LALOAD:
             case DALOAD:
+            case SALOAD:
                 return new Assignment(getStackLValue(0), new ArrayIndex(getStackRValue(1), getStackRValue(0)));
             case AASTORE:
             case IASTORE:
@@ -345,6 +346,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FASTORE:
             case LASTORE:
             case DASTORE:
+            case SASTORE:
                 return new Assignment(new ArrayVariable(new ArrayIndex(getStackRValue(2), getStackRValue(1))), getStackRValue(0));
             case LCMP:
             case DCMPG:
