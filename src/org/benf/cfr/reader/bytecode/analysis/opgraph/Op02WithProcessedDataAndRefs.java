@@ -830,7 +830,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
             int originalIndex = lutByOffset.get((int) exceptionGroup.getBytecodeIndexFrom());
             int inclusiveLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo());
-            for (int x = originalIndex; x <= inclusiveLastIndex; ++x) {
+            for (int x = originalIndex; x < inclusiveLastIndex; ++x) {
                 op2list.get(x).containedInTheseBlocks.add(tryBlockIdentifier);
             }
         }
