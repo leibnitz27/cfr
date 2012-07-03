@@ -121,10 +121,6 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
-        // For any stack values which are only assigned once, we can alias them to the former expression
-        // (undoes much of the ugliness caused by eg DUP)
-//        Op03SimpleStatement.rewriteStackAliases(op03SimpleParseNodes);
-
         // Remove 2nd (+) jumps in pointless jump chains.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 

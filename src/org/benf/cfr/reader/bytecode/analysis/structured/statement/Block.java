@@ -53,6 +53,17 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
+    public UnstructuredWhile removeLastEndWhile() {
+        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        if (structuredStatement instanceof UnstructuredWhile) {
+            Op04StructuredStatement endWhile = containedStatements.getLast();
+            endWhile.replaceStatementWithNOP("");
+            return (UnstructuredWhile) structuredStatement;
+        } else {
+            throw new ConfusedCFRException("Trying to remove last while of a block, but it's not an unstructured WHILE");
+        }
+    }
+
     @Override
     public void dump(Dumper dumper) {
         try {

@@ -11,27 +11,26 @@ import org.benf.cfr.reader.util.output.Dumper;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredWhile extends AbstractStructuredStatement {
-    private ConditionalExpression condition;
+public class UnstructuredDo extends AbstractStructuredStatement {
     private BlockIdentifier blockIdentifier;
 
-    public UnstructuredWhile(ConditionalExpression condition, BlockIdentifier blockIdentifier) {
-        this.condition = condition;
+    public UnstructuredDo(BlockIdentifier blockIdentifier) {
         this.blockIdentifier = blockIdentifier;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("** while (" + condition.toString() + ")\n");
+        dumper.print("** do \n");
     }
 
     @Override
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier) {
+        System.out.println("Unstructured do trying to claim block");
         if (blockIdentifier != this.blockIdentifier) {
-            throw new RuntimeException("While statement claiming wrong block");
+            throw new RuntimeException("Do statement claiming wrong block");
         }
-        innerBlock.removeLastContinue(blockIdentifier);
-        return new StructuredWhile(condition, innerBlock, blockIdentifier);
+        ConditionalExpression condition = innerBlock.removeLastEndWhile().getCondition();
+        return new StructuredDo(condition, innerBlock, blockIdentifier);
     }
 
     @Override
@@ -39,7 +38,5 @@ public class UnstructuredWhile extends AbstractStructuredStatement {
         return false;
     }
 
-    public ConditionalExpression getCondition() {
-        return condition;
-    }
+
 }

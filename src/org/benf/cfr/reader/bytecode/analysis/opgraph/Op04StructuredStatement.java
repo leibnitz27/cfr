@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
@@ -168,6 +169,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    public UnstructuredWhile removeLastEndWhile() {
+        if (structuredStatement instanceof Block) {
+            return ((Block) structuredStatement).removeLastEndWhile();
+        } else {
+            throw new ConfusedCFRException("Trying to remove last ending while, but statement isn't a block!");
+        }
+    }
+
     @Override
     public String toString() {
         return "OP4:" + structuredStatement;
@@ -179,7 +188,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     private boolean claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier thisBlock) {
         int idx = targets.indexOf(innerBlock);
-        if (idx == -1) return false;
+        if (idx == -1) {
+            return false;
+        }
         StructuredStatement replacement = structuredStatement.claimBlock(innerBlock, thisBlock);
         if (replacement == null) return false;
         this.structuredStatement = replacement;
@@ -260,6 +271,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             Op04StructuredStatement finishedBlock = new Op04StructuredStatement(new Block(blockJustEnded, true));
             finishedBlock.replaceAsSource(blockJustEnded.getFirst());
             Op04StructuredStatement blockStartContainer = popBlock.outerStart;
+
+            System.out.println("Trying to claim with " + blockStartContainer);
             if (!blockStartContainer.claimBlock(finishedBlock, mutableProcessingBlockState.currentBlockIdentifier)) {
                 mutableProcessingBlockState.currentBlock.add(finishedBlock);
             }

@@ -212,7 +212,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.index = index;
     }
 
-    private void markPreBlockStatement(BlockIdentifier blockIdentifier, Op03SimpleStatement blockEnd, List<Op03SimpleStatement> statements) {
+    private void markBlockStatement(BlockIdentifier blockIdentifier, Op03SimpleStatement blockEnd, List<Op03SimpleStatement> statements) {
         if (thisComparisonBlock != null) {
             throw new ConfusedCFRException("Statement marked as the start of multiple blocks");
         }
@@ -238,6 +238,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     // We have to manipulate the statement list immediately, as we're relying on spatial locality elsewhere.
                     statements.add(statements.indexOf(blockEnd), backJump);
                 }
+                break;
+            }
+            case DOLOOP: {
+                IfStatement ifStatement = (IfStatement) containedStatement;
+                ifStatement.replaceWithWhileLoopEnd(blockIdentifier);
                 break;
             }
             case SIMPLE_IF_ELSE:
@@ -832,7 +837,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> whileStarts = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
             @Override
             public boolean test(Op03SimpleStatement in) {
-                return (in.containedStatement instanceof WhileStatement);
+                return (in.containedStatement instanceof WhileStatement) && ((WhileStatement) in.containedStatement).getBlockIdentifier().getBlockType() == BlockType.WHILELOOP;
             }
         });
 
@@ -906,7 +911,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Collections.sort(starts, new CompareByIndex());
 
         for (Op03SimpleStatement start : starts) {
-            considerAsLoopStart(start, statements, blockIdentifierFactory, blockEndsCache);
+            if (considerAsWhileLoopStart(start, statements, blockIdentifierFactory, blockEndsCache)) continue;
+            considerAsDoLoopStart(start, statements, blockIdentifierFactory, blockEndsCache);
         }
 
     }
@@ -977,6 +983,69 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
 
+    private static boolean considerAsDoLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
+                                                 BlockIdentifierFactory blockIdentifierFactory,
+                                                 Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
+
+        final InstrIndex startIndex = start.getIndex();
+        System.out.println("Is this a do loop start ? " + start);
+        List<Op03SimpleStatement> backJumpSources = start.getSources();
+        backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return in.getIndex().compareTo(startIndex) > 0;
+            }
+        });
+        Collections.sort(backJumpSources, new CompareByIndex());
+        Op03SimpleStatement lastJump = backJumpSources.get(backJumpSources.size() - 1);
+        if (!(lastJump.containedStatement instanceof IfStatement)) {
+            return false;
+        }
+        IfStatement ifStatement = (IfStatement) lastJump.containedStatement;
+        if (ifStatement.getJumpTarget().getContainer() != start) {
+            return false;
+        }
+
+        int startIdx = statements.indexOf(start);
+        int endIdx = statements.indexOf(lastJump);
+
+        if (startIdx >= endIdx) return false;
+
+        BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.DOLOOP);
+
+        /* Given that the potential statements inside this block are idxConditional+1 -> idxAfterEnd-1, [a->b]
+        * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
+        * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
+        */
+        validateAndAssignLoopIdentifier(statements, startIdx, endIdx + 1, blockIdentifier);
+
+        // Add a 'do' statement infront of the block (which does not belong to the block)
+        // transform the test to a 'POST_WHILE' statement.
+        Op03SimpleStatement doStatement = new Op03SimpleStatement(start.containedInBlocks, new DoStatement(blockIdentifier), start.index.justBefore());
+        doStatement.containedInBlocks.remove(blockIdentifier);
+        // we need to link the do statement in between all the sources of start WHICH
+        // are NOT in blockIdentifier.
+        List<Op03SimpleStatement> startSources = ListFactory.newList(start.sources);
+        for (Op03SimpleStatement source : startSources) {
+            if (!source.containedInBlocks.contains(blockIdentifier)) {
+                source.replaceTarget(start, doStatement);
+                start.removeSource(source);
+                doStatement.addSource(source);
+            }
+        }
+        doStatement.addTarget(start);
+        start.addSource(doStatement);
+        Op03SimpleStatement postBlock = lastJump.getTargets().get(0);
+        statements.add(statements.indexOf(start), doStatement);
+        lastJump.markBlockStatement(blockIdentifier, lastJump, statements);
+        start.markFirstStatementInBlock(blockIdentifier);
+        postBlock.markPostBlock(blockIdentifier);
+        postBlockCache.put(blockIdentifier, postBlock);
+
+        return true;
+
+    }
+
     /* Is the first conditional jump NOT one of the sources of start?
     * Take the target of the first conditional jump - is it somehwhere which is not reachable from
     * any of the forward sources of start without going through start?
@@ -984,11 +1053,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     * If so we've probably got a for/while loop.....
     * decode both as a while loop, we can convert it into a for later.
     */
-    private static void considerAsLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
-                                            BlockIdentifierFactory blockIdentifierFactory,
-                                            Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
+    private static boolean considerAsWhileLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
+                                                    BlockIdentifierFactory blockIdentifierFactory,
+                                                    Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
         final InstrIndex startIndex = start.getIndex();
-        System.out.println("Is this a loop start ? " + start);
+        System.out.println("Is this a while loop start ? " + start);
         List<Op03SimpleStatement> backJumpSources = start.getSources();
         backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
             @Override
@@ -1001,7 +1070,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (conditional == null) {
             // No conditional before we have a branch?  Probably a do { } while. 
             System.out.println("Can't find a conditional");
-            return;
+            return false;
         }
         // Now we've found our first conditional before a branch - is the target AFTER the last backJump?
         // Requires Debuggered conditionals.
@@ -1026,13 +1095,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // The conditional doesn't take us to after the last back jump, i.e. it's not a while {} loop.
             // ... unless it's an inner while loop continuing to a prior loop.
             if (loopBreak.getIndex().compareTo(startIndex) >= 0) {
-                return;
+                return false;
             }
         }
 
         if (start != conditional) {
             // We'll have problems - there are actions taken inside the conditional.
-            return;
+            return false;
         }
         int idxConditional = statements.indexOf(start);
 
@@ -1061,7 +1130,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Op03SimpleStatement startOfOuterLoop = statements.get(idxAfterEnd);
             if (startOfOuterLoop.thisComparisonBlock == null) {
                 // Boned.
-                return;
+                return false;
             }
             // Find the END of this block.
             Op03SimpleStatement endOfOuter = postBlockCache.get(startOfOuterLoop.thisComparisonBlock);
@@ -1075,7 +1144,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // Mark instructions in the list between start and maybeEndLoop as being in this block.
         if (idxConditional >= idxAfterEnd) {
 //            throw new ConfusedCFRException("Can't decode block");
-            return;
+            return false;
         }
         BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.WHILELOOP);
 
@@ -1083,19 +1152,30 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
         * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
         */
+        validateAndAssignLoopIdentifier(statements, idxConditional + 1, idxAfterEnd, blockIdentifier);
+
+        Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
+        start.markBlockStatement(blockIdentifier, blockEnd, statements);
+        statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
+        blockEnd.markPostBlock(blockIdentifier);
+        postBlockCache.put(blockIdentifier, blockEnd);
+        return true;
+    }
+
+    private static void validateAndAssignLoopIdentifier(List<Op03SimpleStatement> statements, int idxTestStart, int idxAfterEnd, BlockIdentifier blockIdentifier) {
         Map<Op03SimpleStatement, Integer> instrToIdx = MapFactory.newMap();
-        for (int x = idxConditional + 1; x < idxAfterEnd; ++x) {
+        for (int x = idxTestStart; x < idxAfterEnd; ++x) {
             instrToIdx.put(statements.get(x), x);
         }
 
         Set<Integer> reachableNodes = SetFactory.newSet();
         GraphVisitorReachableInThese graphVisitorCallee = new GraphVisitorReachableInThese(reachableNodes, instrToIdx);
-        GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(idxConditional + 1), graphVisitorCallee);
+        GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(idxTestStart), graphVisitorCallee);
         visitor.process();
 
         /* reachable nodes now contains those nodes which are reachable without leaving the range. */
 
-        final int first = idxConditional + 1;
+        final int first = idxTestStart;
         int last = -1;
         boolean foundLast = false;
 
@@ -1114,11 +1194,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (int x = first; x <= last; ++x) {
             statements.get(x).markBlock(blockIdentifier);
         }
-        Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
-        start.markPreBlockStatement(blockIdentifier, blockEnd, statements);
-        statements.get(first).markFirstStatementInBlock(blockIdentifier);
-        blockEnd.markPostBlock(blockIdentifier);
-        postBlockCache.put(blockIdentifier, blockEnd);
     }
 
     private static class IsForwardIf implements Predicate<Op03SimpleStatement> {

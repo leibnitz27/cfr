@@ -107,6 +107,11 @@ public class IfStatement extends GotoStatement {
         getContainer().replaceStatement(replacement);
     }
 
+    public void replaceWithWhileLoopEnd(BlockIdentifier blockIdentifier) {
+        WhileStatement replacement = new WhileStatement(ConditionalUtils.simplify(condition), blockIdentifier);
+        getContainer().replaceStatement(replacement);
+    }
+
     @Override
     public Statement getJumpTarget() {
         return getTargetStatement(JUMP_TAKEN);
