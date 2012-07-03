@@ -4,7 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.TernaryExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
@@ -652,11 +651,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 Assignment assignment = (Assignment) current.containedStatement;
                 LValue assigned = assignment.getCreatedLValue();
                 if (invariant.equals(assigned)) {
-                    Expression rValue = assignment.getRValue();
-                    if (rValue instanceof ArithmeticOperation) {
-                        ArithmeticOperation arithmeticOperation = (ArithmeticOperation) rValue;
-                        if (arithmeticOperation.isLiteralFunctionOf(assigned)) return current;
-                    }
+                    if (assignment.isSelfMutatingOperation()) return current;
                 }
             }
             if (current.sources.size() > 1) break;
@@ -673,11 +668,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         while (current.containedInBlocks.contains(whileLoop)) {
             if (current.containedStatement instanceof Assignment) {
                 Assignment assignment = (Assignment) current.containedStatement;
-                LValue assigned = assignment.getCreatedLValue();
-                Expression rValue = assignment.getRValue();
-                if (rValue instanceof ArithmeticOperation) {
-                    ArithmeticOperation arithmeticOperation = (ArithmeticOperation) rValue;
-                    if (arithmeticOperation.isLiteralFunctionOf(assigned)) res.add(assigned);
+                if (assignment.isSelfMutatingOperation()) {
+                    res.add(assignment.getCreatedLValue());
                 }
             }
             if (current.sources.size() > 1) break;

@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
@@ -12,7 +13,6 @@ import org.benf.cfr.reader.util.output.Dumper;
  * User: lee
  * Date: 15/03/2012
  * Time: 17:57
- * To change this template use File | Settings | File Templates.
  */
 public class Assignment extends AbstractStatement {
     private LValue lvalue;
@@ -58,6 +58,14 @@ public class Assignment extends AbstractStatement {
         return rvalue;
     }
 
+    public boolean isSelfMutatingOperation() {
+        if (rvalue instanceof ArithmeticOperation) {
+            ArithmeticOperation arithmeticOperation = (ArithmeticOperation) rvalue;
+            if (arithmeticOperation.isLiteralFunctionOf(lvalue)) return true;
+        }
+        return false;
+    }
+
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         lvalue = lvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
@@ -71,6 +79,7 @@ public class Assignment extends AbstractStatement {
 
     @Override
     public boolean equals(Object o) {
+        if (o == this) return true;
         if (!(o instanceof Assignment)) return false;
 
         Assignment other = (Assignment) o;
