@@ -459,9 +459,30 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         creationCollector.condenseConstructions();
     }
 
+    /*
+     * lbl: [to which there is a backjump]
+     * a = 3
+     * if (a == 4) foo
+     * ->
+     * lbl:
+     * if ((a=3)==4) foo
+     */
+    private static void rollAssignmentsIntoConditional(Op03SimpleStatement conditional) {
+        /* Generate a list of all the assignments before this statement in a straight line, until there
+         * is a back source.
+         *
+         * For each of these, IF that value is NOT used between its location and 'conditional', AND
+         * the RHS is compatible with the SSAIdentifiers of 'conditional', then it can be inserted
+         * as a mutating expression in 'conditional'.
+         *
+         */
+    }
+
     public static void rollAssignmentsIntoConditionals(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> conditionals = Functional.filter(statements, new TypeFilter(IfStatement.class));
-
+        for (Op03SimpleStatement conditional : conditionals) {
+            rollAssignmentsIntoConditional(conditional);
+        }
     }
 
     /*
@@ -591,6 +612,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         xStatement.replaceSource(aStatement, zStatement);
                         zStatement.replaceTarget(yStatement, xStatement);
                         zStatement.containedStatement = new Nop();
+
+                        IfStatement innerAIfStatement = (IfStatement) innerAStatement;
+                        innerAIfStatement.negateCondition();
                     }
                 }
             }
@@ -1135,16 +1159,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    private static class TypeFilter implements Predicate<Op03SimpleStatement> {
-        private final Class clazz;
+    private static class TypeFilter<T> implements Predicate<Op03SimpleStatement> {
+        private final Class<T> clazz;
         private final boolean positive;
 
-        public TypeFilter(Class clazz) {
+        public TypeFilter(Class<T> clazz) {
             this.clazz = clazz;
             this.positive = true;
         }
 
-        public TypeFilter(Class clazz, boolean positive) {
+        public TypeFilter(Class<T> clazz, boolean positive) {
             this.clazz = clazz;
             this.positive = positive;
         }
@@ -1158,7 +1182,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static DiscoveredTernary testForTernary(List<Op03SimpleStatement> ifBranch, List<Op03SimpleStatement> elseBranch, Op03SimpleStatement leaveIfBranch) {
         if (ifBranch == null || elseBranch == null) return null;
         if (leaveIfBranch == null) return null;
-        TypeFilter notNops = new TypeFilter(Nop.class, false);
+        TypeFilter<Nop> notNops = new TypeFilter<Nop>(Nop.class, false);
         ifBranch = Functional.filter(ifBranch, notNops);
         switch (ifBranch.size()) {
             case 1:

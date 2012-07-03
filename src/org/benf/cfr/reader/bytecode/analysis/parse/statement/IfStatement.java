@@ -68,6 +68,10 @@ public class IfStatement extends GotoStatement {
         condition = ConditionalUtils.simplify(condition);
     }
 
+    public void negateCondition() {
+        condition = ConditionalUtils.simplify(condition.getNegated());
+    }
+
     @Override
     public boolean condenseWithPriorIfStatement(IfStatement prior) {
         Statement fallThrough2 = getTargetStatement(JUMP_NOT_TAKEN);
