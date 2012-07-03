@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.TernaryExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.util.*;
@@ -1125,6 +1126,51 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    private static class DiscoveredTernary {
+        LValue lValue;
+        Expression e1;
+        Expression e2;
+
+        private DiscoveredTernary(LValue lValue, Expression e1, Expression e2) {
+            this.lValue = lValue;
+            this.e1 = e1;
+            this.e2 = e2;
+        }
+    }
+
+    private static class NotNops implements Predicate<Op03SimpleStatement> {
+        @Override
+        public boolean test(Op03SimpleStatement in) {
+            return (!(in.containedStatement instanceof Nop));
+        }
+    }
+
+    private static DiscoveredTernary testForTernary(List<Op03SimpleStatement> ifBranch, List<Op03SimpleStatement> elseBranch, Op03SimpleStatement leaveIfBranch) {
+        if (ifBranch == null || elseBranch == null) return null;
+        if (leaveIfBranch == null) return null;
+        NotNops notNops = new NotNops();
+        ifBranch = Functional.filter(ifBranch, notNops);
+        switch (ifBranch.size()) {
+            case 1:
+                break;
+            case 2:
+                if (ifBranch.get(1) != leaveIfBranch) return null;
+                break;
+            default:
+                return null;
+        }
+        elseBranch = Functional.filter(elseBranch, notNops);
+        if (elseBranch.size() != 1) return null;
+
+        Op03SimpleStatement s1 = ifBranch.get(0);
+        Op03SimpleStatement s2 = elseBranch.get(0);
+        LValue l1 = s1.containedStatement.getCreatedLValue();
+        LValue l2 = s2.containedStatement.getCreatedLValue();
+        if (l1 == null || l2 == null) return null;
+        if (!l2.equals(l1)) return null;
+        return new DiscoveredTernary(l1, s1.containedStatement.getRValue(), s2.containedStatement.getRValue());
+    }
+
     /*
     * This is an if statement where both targets are forward.
     *
@@ -1154,13 +1200,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         int maybeElseEndIdx = -1;
         boolean maybeSimpleIfElse = false;
         GotoStatement leaveIfBranchGoto = null;
+        Op03SimpleStatement leaveIfBranchHolder = null;
         List<Op03SimpleStatement> ifBranch = ListFactory.newList();
         List<Op03SimpleStatement> elseBranch = null;
         // Consider the try blocks we're in at this point.  (the ifStatemenet).
         // If we leave any of them, we've left the if.
         List<BlockIdentifier> blocksAtStart = ifStatement.containedInBlocks;
         if (idxCurrent == idxEnd) {
-            // It's a trivial tautology?
+            // It's a trivial tautology? We can't nop it out unless it's side effect free.
 //            Dumper d = new Dumper();
 //            d.print("********\n");
 //            ifStatement.dumpInner(d);
@@ -1184,6 +1231,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     Op03SimpleStatement maybeElseEnd = statementCurrent.getTargets().get(0);
                     maybeElseEndIdx = statements.indexOf(maybeElseEnd);
                     if (maybeElseEnd.getIndex().compareTo(takenTarget.getIndex()) <= 0) return false;
+                    leaveIfBranchHolder = statementCurrent;
                     leaveIfBranchGoto = gotoStatement;
                     maybeSimpleIfElse = true;
                 } else {
@@ -1210,6 +1258,36 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement realEnd = statements.get(idxEnd);
         List<BlockIdentifier> blocksAtEnd = realEnd.containedInBlocks;
         if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) return false;
+
+        // It's an if statement / simple if/else, for sure.  Can we replace it with a ternary?
+        DiscoveredTernary ternary = testForTernary(ifBranch, elseBranch, leaveIfBranchHolder);
+        if (ternary != null) {
+            // We can ditch this whole thing for a ternary expression.
+            for (Op03SimpleStatement statement : ifBranch) statement.nopOut();
+            for (Op03SimpleStatement statement : elseBranch) statement.nopOut();
+            // todo : do I need to do a more complex merge?
+            ifStatement.ssaIdentifiers = leaveIfBranchHolder.ssaIdentifiers;
+            ifStatement.replaceStatement(
+                    new Assignment(
+                            ternary.lValue,
+                            new TernaryExpression(innerIfStatement.getCondition(), ternary.e1, ternary.e2)
+                    )
+            );
+            // If statement now should have only one target.
+            List<Op03SimpleStatement> tmp = ListFactory.uniqueList(ifStatement.targets);
+            ifStatement.targets.clear();
+            ifStatement.targets.addAll(tmp);
+            if (ifStatement.targets.size() != 1) {
+                throw new ConfusedCFRException("If statement should only have one target after dedup");
+            }
+            Op03SimpleStatement joinStatement = ifStatement.targets.get(0);
+            tmp = ListFactory.uniqueList(joinStatement.sources);
+            joinStatement.sources.clear();
+            joinStatement.sources.addAll(tmp);
+
+            System.out.println("IfStatement targets : " + ifStatement.targets);
+            return true;
+        }
 
         BlockIdentifier ifBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_TAKEN);
         markWholeBlock(ifBranch, ifBlockLabel);

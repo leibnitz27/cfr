@@ -106,9 +106,9 @@ public class CodeAnalyser {
         // Variable namer - if we've got variable names provided as an attribute in the class file, we'll
         // use that.
         final VariableNamer variableNamer = VariableNamerFactory.getNamer(originalCodeAttribute.getLocalVariableTable(), cp);
-
+//
         Dumper dumper = new Dumper();
-
+//
         dumper.dump(op2list);
 
         // Create a non final version...

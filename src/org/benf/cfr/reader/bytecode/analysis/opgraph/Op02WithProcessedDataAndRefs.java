@@ -605,24 +605,34 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case IINC: {
                 int variableIndex = getInstrArgByte(0);
                 int incrAmount = getInstrArgByte(1);
+                ArithOp op = ArithOp.PLUS;
+                if (incrAmount < 0) {
+                    incrAmount = -incrAmount;
+                    op = ArithOp.MINUS;
+                }
                 // Can we have ++ / += instead?
                 return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
-                        new ArithmeticOperation(new FieldExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), ArithOp.PLUS));
+                        new ArithmeticOperation(new FieldExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
+            case IINC_WIDE: {
+                int variableIndex = getInstrArgShort(1);
+                int incrAmount = getInstrArgShort(3);
+                ArithOp op = ArithOp.PLUS;
+                if (incrAmount < 0) {
+                    incrAmount = -incrAmount;
+                    op = ArithOp.MINUS;
+                }
+                // Can we have ++ / += instead?
+                return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
+                        new ArithmeticOperation(new FieldExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
+            }
+
             case DNEG:
             case FNEG:
             case LNEG:
             case INEG: {
                 return new Assignment(getStackLValue(0),
                         new ArithmeticMonOperation(getStackRValue(0), ArithOp.MINUS));
-            }
-
-            case IINC_WIDE: {
-                int variableIndex = getInstrArgShort(1);
-                int incrAmount = getInstrArgShort(3);
-                // Can we have ++ / += instead?
-                return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
-                        new ArithmeticOperation(new FieldExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), ArithOp.PLUS));
             }
             default:
                 throw new ConfusedCFRException("Not implemented - conversion to statement from " + instr);

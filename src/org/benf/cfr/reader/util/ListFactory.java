@@ -1,9 +1,6 @@
 package org.benf.cfr.reader.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,5 +24,14 @@ public class ListFactory {
 
     public static <X extends Object> LinkedList<X> newLinkedList() {
         return new LinkedList<X>();
+    }
+
+    public static <X extends Object> List<X> uniqueList(Collection<X> list) {
+        List<X> res = ListFactory.newList();
+        Set<X> tmp = SetFactory.newSet();
+        for (X x : list) {
+            if (tmp.add(x)) res.add(x);
+        }
+        return res;
     }
 }
