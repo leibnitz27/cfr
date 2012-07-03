@@ -459,6 +459,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         creationCollector.condenseConstructions();
     }
 
+    public static void rollAssignmentsIntoConditionals(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> conditionals = Functional.filter(statements, new TypeFilter(IfStatement.class));
+
+    }
+
     /*
      * We look for related groups of conditionals, such that
      *
@@ -1130,17 +1135,30 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    private static class NotNops implements Predicate<Op03SimpleStatement> {
+    private static class TypeFilter implements Predicate<Op03SimpleStatement> {
+        private final Class clazz;
+        private final boolean positive;
+
+        public TypeFilter(Class clazz) {
+            this.clazz = clazz;
+            this.positive = true;
+        }
+
+        public TypeFilter(Class clazz, boolean positive) {
+            this.clazz = clazz;
+            this.positive = positive;
+        }
+
         @Override
         public boolean test(Op03SimpleStatement in) {
-            return (!(in.containedStatement instanceof Nop));
+            return (positive == clazz.isInstance(in.containedStatement));
         }
     }
 
     private static DiscoveredTernary testForTernary(List<Op03SimpleStatement> ifBranch, List<Op03SimpleStatement> elseBranch, Op03SimpleStatement leaveIfBranch) {
         if (ifBranch == null || elseBranch == null) return null;
         if (leaveIfBranch == null) return null;
-        NotNops notNops = new NotNops();
+        TypeFilter notNops = new TypeFilter(Nop.class, false);
         ifBranch = Functional.filter(ifBranch, notNops);
         switch (ifBranch.size()) {
             case 1:
@@ -1262,7 +1280,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             ifStatement.replaceStatement(
                     new Assignment(
                             ternary.lValue,
-                            new TernaryExpression(innerIfStatement.getCondition(), ternary.e1, ternary.e2)
+                            new TernaryExpression(
+                                    innerIfStatement.getCondition().getNegated(),
+                                    ternary.e1, ternary.e2)
                     )
             );
             // If statement now should have only one target.
