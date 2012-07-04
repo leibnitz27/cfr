@@ -1332,8 +1332,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 //            throw new ConfusedCFRException("Tautology?");
             return false;
         }
+        Set<Op03SimpleStatement> validForwardParents = SetFactory.newSet();
+        validForwardParents.add(ifStatement);
         do {
             Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
+            /* Consider sources of this which jumped forward to get to it.
+             *
+             */
+            InstrIndex currentIndex = statementCurrent.getIndex();
+            for (Op03SimpleStatement source : statementCurrent.sources) {
+                if (currentIndex.isBackJumpTo(source)) {
+                    if (!validForwardParents.contains(source)) return false;
+                }
+            }
+            validForwardParents.add(statementCurrent);
+
             ifBranch.add(statementCurrent);
             JumpType jumpType = statementCurrent.getJumpType();
             if (jumpType.isUnknown()) {
