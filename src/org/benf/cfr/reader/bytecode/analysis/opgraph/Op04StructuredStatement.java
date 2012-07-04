@@ -14,10 +14,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * Created:
@@ -36,7 +33,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     private static final Set<BlockIdentifier> EMPTY_BLOCKSET = SetFactory.newSet();
 
-    private static Set<BlockIdentifier> blockSet(List<BlockIdentifier> in) {
+    private static Set<BlockIdentifier> blockSet(Collection<BlockIdentifier> in) {
         if (in == null || in.isEmpty()) return EMPTY_BLOCKSET;
         return SetFactory.newSet(in);
     }
@@ -51,7 +48,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public Op04StructuredStatement(
             InstrIndex instrIndex,
-            List<BlockIdentifier> blockMembership,
+            Collection<BlockIdentifier> blockMembership,
             StructuredStatement structuredStatement) {
         this.instrIndex = instrIndex;
         this.structuredStatement = structuredStatement;

@@ -44,7 +44,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     //
     // This statement is CONTAINED in the following blocks.
     //
-    private final List<BlockIdentifier> containedInBlocks = ListFactory.newList();
+    private final Set<BlockIdentifier> containedInBlocks = SetFactory.newSet();
     //
     // blocks ended just before this.  (used to resolve break statements).
     //
@@ -59,7 +59,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statement.setContainer(this);
     }
 
-    private Op03SimpleStatement(List<BlockIdentifier> containedIn, Statement statement, InstrIndex index) {
+    private Op03SimpleStatement(Set<BlockIdentifier> containedIn, Statement statement, InstrIndex index) {
         this.containedStatement = statement;
         this.isNop = false;
         this.index = index;
@@ -164,6 +164,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return ssaIdentifiers;
     }
 
+    @Override
+    public Set<BlockIdentifier> getBlockIdentifiers() {
+        return containedInBlocks;
+    }
+
     private boolean isNop() {
         return isNop;
     }
@@ -228,7 +233,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     // Note that this can't be done before "Remove pointless jumps".
                     // The blocks that this new statement is in are the same as my blocks, barring
                     // blockIdentifier.
-                    List<BlockIdentifier> backJumpContainedIn = ListFactory.newList(containedInBlocks);
+                    Set<BlockIdentifier> backJumpContainedIn = SetFactory.newSet(containedInBlocks);
                     backJumpContainedIn.remove(blockIdentifier);
                     Op03SimpleStatement backJump = new Op03SimpleStatement(backJumpContainedIn, new GotoStatement(), blockEnd.index.justBefore());
                     whileEndTarget.replaceSource(this, backJump);
@@ -1314,7 +1319,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> elseBranch = null;
         // Consider the try blocks we're in at this point.  (the ifStatemenet).
         // If we leave any of them, we've left the if.
-        List<BlockIdentifier> blocksAtStart = ifStatement.containedInBlocks;
+        Set<BlockIdentifier> blocksAtStart = ifStatement.containedInBlocks;
         if (idxCurrent == idxEnd) {
             // It's a trivial tautology? We can't nop it out unless it's side effect free.
 //            Dumper d = new Dumper();
@@ -1365,7 +1370,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
 
         Op03SimpleStatement realEnd = statements.get(idxEnd);
-        List<BlockIdentifier> blocksAtEnd = realEnd.containedInBlocks;
+        Set<BlockIdentifier> blocksAtEnd = realEnd.containedInBlocks;
         if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) return false;
 
         // It's an if statement / simple if/else, for sure.  Can we replace it with a ternary?

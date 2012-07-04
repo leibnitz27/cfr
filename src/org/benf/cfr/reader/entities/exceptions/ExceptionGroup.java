@@ -16,6 +16,7 @@ public class ExceptionGroup {
 
     private final short bytecodeIndexFrom;        // [ a
     private short byteCodeIndexTo;          // ) b    st a <= x < b
+    private short minHandlerStart = Short.MAX_VALUE;
     private List<Entry> entries = ListFactory.newList();
     private final BlockIdentifier tryBlockIdentifier;
     private final ConstantPool cp;
@@ -28,8 +29,10 @@ public class ExceptionGroup {
 
     public void add(ExceptionTableEntry entry) {
         if (entry.getBytecodeIndexHandler() == entry.getBytecodeIndexFrom()) return;
+        if (entry.getBytecodeIndexHandler() < minHandlerStart) minHandlerStart = entry.getBytecodeIndexHandler();
         this.entries.add(new Entry(entry));
         if (entry.getBytecodeIndexTo() > byteCodeIndexTo) byteCodeIndexTo = entry.getBytecodeIndexTo();
+        if (byteCodeIndexTo > minHandlerStart) byteCodeIndexTo = minHandlerStart;
     }
 
     public List<Entry> getEntries() {

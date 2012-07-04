@@ -5,6 +5,7 @@ import org.benf.cfr.reader.util.Predicate;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created:
@@ -33,11 +34,11 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
         return "" + index + "[" + blockType + "]";
     }
 
-    public static boolean blockIsOneOf(BlockIdentifier needle, List<BlockIdentifier> haystack) {
+    public static boolean blockIsOneOf(BlockIdentifier needle, Set<BlockIdentifier> haystack) {
         return haystack.contains(needle);
     }
 
-    public static BlockIdentifier getOutermostContainedIn(List<BlockIdentifier> endingBlocks, final List<BlockIdentifier> blocksInAtThisPoint) {
+    public static BlockIdentifier getOutermostContainedIn(List<BlockIdentifier> endingBlocks, final Set<BlockIdentifier> blocksInAtThisPoint) {
         List<BlockIdentifier> containedIn = Functional.filter(endingBlocks, new Predicate<BlockIdentifier>() {
             @Override
             public boolean test(BlockIdentifier in) {

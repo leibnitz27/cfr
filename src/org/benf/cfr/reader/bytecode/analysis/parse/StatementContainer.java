@@ -1,7 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,4 +29,6 @@ public interface StatementContainer {
     void nopOutConditional();
 
     SSAIdentifiers getSSAIdentifiers();
+
+    Set<BlockIdentifier> getBlockIdentifiers();
 }
