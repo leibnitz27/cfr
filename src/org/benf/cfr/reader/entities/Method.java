@@ -4,11 +4,14 @@ import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.KnowsRawSize;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -56,6 +59,10 @@ public class Method implements KnowsRawSize {
     @Override
     public long getRawByteLength() {
         return length;
+    }
+
+    public String getName(ConstantPool cp) {
+        return cp.getUTF8Entry(nameIndex).getValue();
     }
 
     public void dump(Dumper d, ConstantPool cp) {

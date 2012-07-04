@@ -3,12 +3,14 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -147,6 +149,15 @@ public class ClassFile {
         for (Method meth : methods) {
             d.newln();
             meth.dump(d, constantPool);
+        }
+    }
+
+    public void dumpMethod(String name, Dumper dumper) {
+        for (Method method : methods) {
+            if (method.getName(constantPool).equals(name)) {
+                dumper.newln();
+                method.dump(dumper, constantPool);
+            }
         }
     }
 }

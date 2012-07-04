@@ -1,7 +1,7 @@
 package org.benf.cfr.reader;
 
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -58,6 +58,10 @@ public class Main {
             return;
         }
         String fname = args[0];
+        String methname = null;
+        if (args.length >= 2) {
+            methname = args[1];
+        }
 
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
@@ -65,7 +69,11 @@ public class Main {
             ByteData data = new BaseByteData(content);
             ClassFile c = new ClassFile(data);
             Dumper d = new Dumper();
-            c.Dump(d);
+            if (methname == null) {
+                c.Dump(d);
+            } else {
+                c.dumpMethod(methname, d);
+            }
         } catch (FileNotFoundException e) {
             System.err.println(e.toString());
             System.exit(1);
