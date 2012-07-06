@@ -1307,6 +1307,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         int idxNotTaken = statements.indexOf(notTakenTarget);
         IfStatement innerIfStatement = (IfStatement) ifStatement.containedStatement;
 
+        boolean takenAction = false;
+
         int idxCurrent = idxNotTaken;
         if (idxCurrent > idxTaken) return false;
 
@@ -1344,7 +1346,28 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             InstrIndex currentIndex = statementCurrent.getIndex();
             for (Op03SimpleStatement source : statementCurrent.sources) {
                 if (currentIndex.isBackJumpTo(source)) {
-                    if (!validForwardParents.contains(source)) return false;
+                    if (!validForwardParents.contains(source)) {
+                        // source from outside the block.  This likely means that we've actually left the block.
+                        // eg
+                        // if (foo) goto Z
+                        // ....
+                        // return 1;
+                        // label:
+                        // statement <-- here.
+                        // ...
+                        // Z
+                        //
+                        // (although it might mean some horrid duffs device style compiler output).
+                        // TODO: CheckForDuff As below.
+                        //if (statementIsReachableFrom(statementCurrent, ifStatement)) return false;
+                        Op03SimpleStatement newJump = new Op03SimpleStatement(ifStatement.containedInBlocks, new GotoStatement(), statementCurrent.getIndex().justBefore());
+                        Op03SimpleStatement oldTarget = ifStatement.targets.get(1);
+                        newJump.addTarget(oldTarget);
+                        ifStatement.replaceTarget(oldTarget, newJump);
+                        oldTarget.replaceSource(ifStatement, newJump);
+                        statements.add(idxCurrent, newJump);
+                        return true;
+                    }
                 }
             }
             validForwardParents.add(statementCurrent);
@@ -1399,6 +1422,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         statementCurrent.addSource(leaveIfBranchHolder);
                         maybeElseEnd.removeSource(leaveIfBranchHolder);
                         elseBranch.remove(statementCurrent);   // eww.
+                        takenAction = true;
                     } else {
                         return false;
                     }
@@ -1409,7 +1433,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         Op03SimpleStatement realEnd = statements.get(idxEnd);
         Set<BlockIdentifier> blocksAtEnd = realEnd.containedInBlocks;
-        if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) return false;
+        if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) return takenAction;
 
         // It's an if statement / simple if/else, for sure.  Can we replace it with a ternary?
         DiscoveredTernary ternary = testForTernary(ifBranch, elseBranch, leaveIfBranchHolder);
