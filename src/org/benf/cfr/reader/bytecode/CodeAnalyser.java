@@ -166,6 +166,9 @@ public class CodeAnalyser {
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
+        // identify conditionals which are of the form if (a) { xx } else if (b) { yy} ..... (potentially with
+        // unconditional final else.
+//        Op03SimpleStatement.identifyRepeatingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         // By now, we've (re)moved several statements, so it's possible that some jumps can be rewritten to
         // breaks again.

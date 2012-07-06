@@ -1312,7 +1312,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         int idxEnd = idxTaken;
         int maybeElseEndIdx = -1;
+        Op03SimpleStatement maybeElseEnd = null;
         boolean maybeSimpleIfElse = false;
+        boolean extractCommonEnd = false;
         GotoStatement leaveIfBranchGoto = null;
         Op03SimpleStatement leaveIfBranchHolder = null;
         List<Op03SimpleStatement> ifBranch = ListFactory.newList();
@@ -1355,7 +1357,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     if (!(mGotoStatement instanceof GotoStatement)) return false;
                     GotoStatement gotoStatement = (GotoStatement) mGotoStatement;
                     // It's unconditional, and it's a forward jump.
-                    Op03SimpleStatement maybeElseEnd = statementCurrent.getTargets().get(0);
+                    maybeElseEnd = statementCurrent.getTargets().get(0);
                     maybeElseEndIdx = statements.indexOf(maybeElseEnd);
                     if (maybeElseEnd.getIndex().compareTo(takenTarget.getIndex()) <= 0) return false;
                     leaveIfBranchHolder = statementCurrent;
@@ -1367,6 +1369,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
             idxCurrent++;
         } while (idxCurrent != idxEnd);
+        // We've reached the "other" branch of the conditional.
+        // If maybeSimpleIfElse is set, then there was a final jump to
 
         if (maybeSimpleIfElse) {
             // If there is a NO JUMP path between takenTarget and maybeElseEnd, then that's the ELSE block
@@ -1377,7 +1381,28 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
                 elseBranch.add(statementCurrent);
                 JumpType jumpType = statementCurrent.getJumpType();
-                if (jumpType.isUnknown()) return false;
+                if (jumpType.isUnknown()) {
+                    /* We allow ONE unconditional forward jump, to maybeElseEnd.  If we find this, we have
+                     * a simple if /else/ block, which we can rewrite as
+                     * if (a) { .. .goto X } else { .... goto X } -->
+                     * if (a) { ... } else { ....} ; goto X
+                     */
+                    Statement mGotoStatement = statementCurrent.containedStatement;
+                    if (!(mGotoStatement instanceof GotoStatement)) return false;
+                    GotoStatement gotoStatement = (GotoStatement) mGotoStatement;
+                    // It's unconditional, and it's a forward jump.
+                    if (statementCurrent.targets.get(0) == maybeElseEnd) {
+                        idxEnd = idxCurrent;
+                        idxCurrent--;
+                        // We can do this aggressively, as it doesn't break the graph.
+                        leaveIfBranchHolder.replaceTarget(maybeElseEnd, statementCurrent);
+                        statementCurrent.addSource(leaveIfBranchHolder);
+                        maybeElseEnd.removeSource(leaveIfBranchHolder);
+                        elseBranch.remove(statementCurrent);   // eww.
+                    } else {
+                        return false;
+                    }
+                }
                 idxCurrent++;
             } while (idxCurrent != idxEnd);
         }
@@ -1442,6 +1467,169 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         } while (success);
     }
+
+
+    private static Op03SimpleStatement setFinalBlockEnd(Op03SimpleStatement previous, Op03SimpleStatement thisGuess) {
+        if (previous == null) return thisGuess;
+        if (previous != thisGuess) return null;
+        return previous;
+    }
+
+    private static class IfAndStatements {
+        private final Op03SimpleStatement ifStatement;
+        private final List<Op03SimpleStatement> statements;
+        private final Op03SimpleStatement leaveBranch;
+
+        IfAndStatements(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, Op03SimpleStatement leaveBranch) {
+            this.ifStatement = ifStatement;
+            this.statements = statements;
+            this.leaveBranch = leaveBranch;
+        }
+
+        public Op03SimpleStatement getIfStatement() {
+            return ifStatement;
+        }
+
+        public List<Op03SimpleStatement> getStatements() {
+            return statements;
+        }
+
+        public Op03SimpleStatement getLeaveBranch() {
+            return leaveBranch;
+        }
+    }
+
+//    /*
+//     * Discern a list of collections of blocks, all of which end up at the same point X.
+//     * There should be no instructions on the path after the final block, as we require fall through to X.
+//     */
+//    private static boolean considerAsRepeatingIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+//
+//        List<IfAndStatements> blocks = ListFactory.newList();
+//
+//        Op03SimpleStatement finalBlockEnd = null;
+//
+//        boolean jumpOut = false;
+//        boolean lastBlock = false;
+//        Op03SimpleStatement statementCurrent;
+//        do {
+//            Op03SimpleStatement currentBlockIfStatement = ifStatement;
+//            Op03SimpleStatement takenTarget, notTakenTarget;
+//            int idxTaken;
+//            int idxNotTaken;
+//            if (ifStatement.containedStatement instanceof IfStatement) {
+//                takenTarget = currentBlockIfStatement.targets.get(1);
+//                notTakenTarget = currentBlockIfStatement.targets.get(0);
+//                idxTaken = statements.indexOf(takenTarget); // this is either 'X' or start of next if.
+//                idxNotTaken = statements.indexOf(notTakenTarget); // start of current block.
+//            } else {
+//                if (lastBlock) return false;
+//                if (finalBlockEnd == null) return false;
+//                lastBlock = true;
+//                idxTaken = statements.indexOf(finalBlockEnd);
+//                takenTarget = finalBlockEnd;
+//                idxNotTaken = statements.indexOf(currentBlockIfStatement);
+//            }
+//
+//
+//            int idxCurrent = idxNotTaken;
+//            if (idxCurrent > idxTaken) {
+//                System.out.println("** idxCurrent > idxTaken");
+//                return false;
+//            }
+//
+//            int idxEndOrNextBlock = idxTaken;
+//            List<Op03SimpleStatement> ifBranch = ListFactory.newList();
+//            // Consider the try blocks we're in at this point.  (the ifStatemenet).
+//            // If we leave any of them, we've left the if.
+//            Set<BlockIdentifier> blocksAtStart = currentBlockIfStatement.containedInBlocks;
+//            if (idxCurrent == idxEndOrNextBlock) {
+//                System.out.println("** idxCurrent == idxEndOrNextBlock");
+//                return false;
+//            }
+//            Set<Op03SimpleStatement> validForwardParents = SetFactory.newSet();
+//            validForwardParents.add(ifStatement);
+//            Op03SimpleStatement leaveIfBranchHolder = null;
+//            do {
+//                statementCurrent = statements.get(idxCurrent);
+//                // Consider sources of this which jumped forward to get to it.
+//                InstrIndex currentIndex = statementCurrent.getIndex();
+//                for (Op03SimpleStatement source : statementCurrent.sources) {
+//                    if (currentIndex.isBackJumpTo(source)) {
+//                        if (!validForwardParents.contains(source)) {
+//                            System.out.println("** !validForwardParents.contains(source)");
+//                            return false;
+//                        }
+//                    }
+//                }
+//                validForwardParents.add(statementCurrent);
+//
+//                ifBranch.add(statementCurrent);
+//                JumpType jumpType = statementCurrent.getJumpType();
+//                jumpOut = false;
+//                if (jumpType.isUnknown()) {
+//                    if (idxCurrent == idxTaken - 1) {
+//                        Statement mGotoStatement = statementCurrent.containedStatement;
+//                        if (!(mGotoStatement instanceof GotoStatement)) return false;
+//                        // It's unconditional, and it's a forward jump.
+//                        Op03SimpleStatement maybeElseEnd = statementCurrent.targets.get(0);
+//                        finalBlockEnd = setFinalBlockEnd(finalBlockEnd, maybeElseEnd);
+//                    } else {
+//                        Statement mIfStatement = statementCurrent.containedStatement;
+//                        if (!(mIfStatement instanceof IfStatement)) return false;
+//                        Op03SimpleStatement maybeElseEnd = statementCurrent.targets.get(1);
+//                        finalBlockEnd = setFinalBlockEnd(finalBlockEnd, maybeElseEnd);
+//                    }
+//                    if (finalBlockEnd == null) {
+//                        System.out.println("** finalBlockEnd == null");
+//                        return false;
+//                    }
+//                    jumpOut = true;
+//                    if (finalBlockEnd.getIndex().compareTo(takenTarget.getIndex()) <= 0) {
+//                        System.out.println("** maybeElseEnd.getIndex().compareTo(takenTarget.getIndex()) <= 0");
+//                        return false;
+//                    }
+//                }
+//                idxCurrent++;
+//            } while (idxCurrent != idxTaken);
+//            // Ok, we've reached then end of THIS block.  If jumpOut == false, we have to be at the end.
+//            statementCurrent = statements.get(idxCurrent);
+//            if (jumpOut) {
+//                if (statementCurrent == finalBlockEnd) {
+//                    System.out.println("** statementCurrent == finalBlockEnd");
+//                    return false;
+//                }
+//                blocks.add(new IfAndStatements(ifStatement, ifBranch, leaveIfBranchHolder));
+//                ifStatement = takenTarget;
+//            } else {
+//                blocks.add(new IfAndStatements(ifStatement, ifBranch, null));
+//            }
+//        } while (jumpOut);
+//        if (statementCurrent != finalBlockEnd) {
+//            System.out.println("** statementCurrent != finalBlockEnd");
+//            return false;
+//        }
+//        throw new ConfusedCFRException("Found an if/else/else!");
+//        //return false;
+//    }
+//
+//    /* similar to the simpler conditon, but we attempt to find
+//     * if (a) {
+//     * } else if (B) {
+//     * } else ....
+//     * }
+//     */
+//    public static void identifyRepeatingConditionals(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+//        boolean success = false;
+//        do {
+//            success = false;
+//            List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
+//            for (Op03SimpleStatement forwardIf : forwardIfs) {
+//                success |= considerAsRepeatingIf(forwardIf, statements, blockIdentifierFactory);
+//            }
+//        } while (success);
+//
+//    }
 
     public static List<Op03SimpleStatement> removeUselessNops(List<Op03SimpleStatement> in) {
         return Functional.filter(in, new Predicate<Op03SimpleStatement>() {
