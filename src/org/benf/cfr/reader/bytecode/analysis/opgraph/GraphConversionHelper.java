@@ -19,9 +19,10 @@ public class GraphConversionHelper<X extends Graph<X>, Y extends MutableGraph<Y>
         this.correspondance = MapFactory.newMap();
     }
 
-    private Y findEntry(X key) {
+    private Y findEntry(X key, X orig, String dbg) {
         Y value = correspondance.get(key);
-        if (value == null) throw new ConfusedCFRException("Missing key when tying up graph " + key);
+        if (value == null)
+            throw new ConfusedCFRException("Missing key when tying up graph " + key + ", was " + dbg + " of " + orig);
         return value;
     }
 
@@ -31,11 +32,11 @@ public class GraphConversionHelper<X extends Graph<X>, Y extends MutableGraph<Y>
             Y newnode = entry.getValue();
 
             for (X source : orig.getSources()) {
-                newnode.addSource(findEntry(source));
+                newnode.addSource(findEntry(source, orig, "source"));
             }
 
             for (X target : orig.getTargets()) {
-                newnode.addTarget(findEntry(target));
+                newnode.addTarget(findEntry(target, orig, "target"));
             }
         }
     }

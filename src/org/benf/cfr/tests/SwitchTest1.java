@@ -1,9 +1,5 @@
 package org.benf.cfr.tests;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -15,7 +11,8 @@ public class SwitchTest1 {
 
     enum enm {
         ONE,
-        TWO
+        TWO,
+        THREE
     }
 
     ;
@@ -24,6 +21,8 @@ public class SwitchTest1 {
         switch (e) {
             case ONE:
                 return 1;
+            case THREE:
+                System.out.println("Fallthrough!");
             case TWO:
                 return 2;
         }

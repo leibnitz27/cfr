@@ -599,9 +599,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     return new CompoundStatement(s1, s2);
                 }
             case TABLESWITCH:
-                return new SwitchStatement(getStackRValue(0), new DecodedTableSwitch(rawData, originalRawOffset));
+                return new RawSwitchStatement(getStackRValue(0), new DecodedTableSwitch(rawData, originalRawOffset));
             case LOOKUPSWITCH:
-                return new SwitchStatement(getStackRValue(0), new DecodedLookupSwitch(rawData, originalRawOffset));
+                return new RawSwitchStatement(getStackRValue(0), new DecodedLookupSwitch(rawData, originalRawOffset));
             case IINC: {
                 int variableIndex = getInstrArgByte(0);
                 int incrAmount = getInstrArgByte(1);

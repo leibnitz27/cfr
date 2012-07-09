@@ -18,7 +18,7 @@ public class ListFactory {
         return Arrays.asList(original);
     }
 
-    public static <X extends Object> List<X> newList(List<X> original) {
+    public static <X extends Object> List<X> newList(Collection<X> original) {
         return new ArrayList<X>(original);
     }
 

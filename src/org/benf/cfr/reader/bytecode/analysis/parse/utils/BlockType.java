@@ -12,5 +12,7 @@ public enum BlockType {
     TRYBLOCK,
     SIMPLE_IF_TAKEN,
     SIMPLE_IF_ELSE,
-    CATCHBLOCK
+    CATCHBLOCK,
+    SWITCH,
+    CASE
 }

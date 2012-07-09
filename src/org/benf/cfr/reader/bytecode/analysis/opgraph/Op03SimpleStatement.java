@@ -5,9 +5,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.TernaryExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
+import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.NonaryFunction;
@@ -338,6 +342,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         int indent = dumper.getIndent();
         getStatement().dump(dumper);
+        dumper.print(" " + sources.size() + " sources, " + targets.size() + " targets\n");
     }
 
     @Override
@@ -888,6 +893,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Op04StructuredStatement unstructuredStatement = statement.getStructuredStatementPlaceHolder();
             containers.add(unstructuredStatement);
 //            unstructuredStatements.add(unstructuredStatement.getStructuredStatement());
+//            System.out.println(" " + statement + " ==> " + unstructuredStatement);
+//            for (Op03SimpleStatement source : statement.sources) {
+//                System.out.println("   " + source);
+//            }
             conversionHelper.registerOriginalAndNew(statement, unstructuredStatement);
         }
         conversionHelper.patchUpRelations();
@@ -1167,36 +1176,40 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return true;
     }
 
-    private static void validateAndAssignLoopIdentifier(List<Op03SimpleStatement> statements, int idxTestStart, int idxAfterEnd, BlockIdentifier blockIdentifier) {
+    private static int getFarthestReachableInRange(List<Op03SimpleStatement> statements, int start, int afterEnd) {
         Map<Op03SimpleStatement, Integer> instrToIdx = MapFactory.newMap();
-        for (int x = idxTestStart; x < idxAfterEnd; ++x) {
+        for (int x = start; x < afterEnd; ++x) {
             instrToIdx.put(statements.get(x), x);
         }
 
         Set<Integer> reachableNodes = SetFactory.newSet();
         GraphVisitorReachableInThese graphVisitorCallee = new GraphVisitorReachableInThese(reachableNodes, instrToIdx);
-        GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(idxTestStart), graphVisitorCallee);
+        GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(start), graphVisitorCallee);
         visitor.process();
 
-        /* reachable nodes now contains those nodes which are reachable without leaving the range. */
-
-        final int first = idxTestStart;
+        final int first = start;
         int last = -1;
         boolean foundLast = false;
 
-        for (int x = first; x < idxAfterEnd; ++x) {
+        for (int x = first; x < afterEnd; ++x) {
             if (reachableNodes.contains(x)) {
                 if (foundLast) {
-                    throw new ConfusedCFRException("WHILE loop was exited and re-entered.");
+                    throw new ConfusedCFRException("reachable test BLOCK was exited and re-entered.");
                 }
             } else {
                 if (!foundLast) last = x - 1;
                 foundLast = true;
             }
         }
-        if (last == -1) last = idxAfterEnd - 1;
+        if (last == -1) last = afterEnd - 1;
+        return last;
 
-        for (int x = first; x <= last; ++x) {
+    }
+
+    private static void validateAndAssignLoopIdentifier(List<Op03SimpleStatement> statements, int idxTestStart, int idxAfterEnd, BlockIdentifier blockIdentifier) {
+        int last = getFarthestReachableInRange(statements, idxTestStart, idxAfterEnd);
+
+        for (int x = idxTestStart; x <= last; ++x) {
             statements.get(x).markBlock(blockIdentifier);
         }
     }
@@ -1775,12 +1788,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * unwind all tentatives which assume that it was.
      */
     public static void identifyCatchBlocks(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
-        List<Op03SimpleStatement> catchStarts = Functional.filter(in, new Predicate<Op03SimpleStatement>() {
-            @Override
-            public boolean test(Op03SimpleStatement in) {
-                return (in.containedStatement instanceof CatchStatement);
-            }
-        });
+        List<Op03SimpleStatement> catchStarts = Functional.filter(in, new TypeFilter<CatchStatement>(CatchStatement.class));
         for (Op03SimpleStatement catchStart : catchStarts) {
             CatchStatement catchStatement = (CatchStatement) catchStart.containedStatement;
             if (catchStatement.getCatchBlockIdent() == null) {
@@ -1789,6 +1797,180 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 identifyCatchBlock(catchStart, blockIdentifier);
             }
         }
+    }
+
+    public static void replaceRawSwitch(Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+        List<Op03SimpleStatement> targets = swatch.targets;
+        RawSwitchStatement switchStatement = (RawSwitchStatement) swatch.containedStatement;
+        DecodedSwitch switchData = switchStatement.getSwitchData();
+        BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SWITCH);
+        // For each of the switch targets, add a 'case' statement
+        // We can add them at the end, as long as we've got a post hoc sort.
+
+        // What happens if there's no default statement?  Not sure java permits?
+        List<DecodedSwitchEntry> entries = switchData.getJumpTargets();
+        Map<InstrIndex, Op03SimpleStatement> firstPrev = MapFactory.newMap();
+        for (int x = 0; x < targets.size(); ++x) {
+            Op03SimpleStatement target = targets.get(x);
+            InstrIndex tindex = target.getIndex();
+            if (firstPrev.containsKey(tindex)) {
+                target = firstPrev.get(tindex);
+            }
+            Expression expression;
+            if (x == 0) {
+                expression = null;
+            } else {
+                expression = new Literal(TypedLiteral.getInt(entries.get(x - 1).getValue()));
+            }
+            Op03SimpleStatement caseStatement = new Op03SimpleStatement(target.getBlockIdentifiers(), new CaseStatement(expression, blockIdentifier, blockIdentifierFactory.getNextBlockIdentifier(BlockType.CASE)), target.getIndex().justBefore());
+            // Link casestatement in infront of target - all sources of target should point to casestatement instead, and
+            // there should be one link going from caseStatement to target. (it's unambiguous).
+            for (Op03SimpleStatement source : target.sources) {
+                source.replaceTarget(target, caseStatement);
+                caseStatement.addSource(source);
+            }
+            target.sources.clear();
+            target.sources.add(caseStatement);
+            caseStatement.addTarget(target);
+            in.add(caseStatement);
+            firstPrev.put(tindex, caseStatement);
+        }
+        swatch.replaceStatement(switchStatement.getSwitchStatement(blockIdentifier));
+    }
+
+    private static boolean examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
+        Set<Op03SimpleStatement> forwardTargets = SetFactory.newSet();
+
+        // Create a copy of the targets.  We're going to have to copy because we want to sort.
+        List<Op03SimpleStatement> targets = ListFactory.newList(switchStatement.targets);
+        Collections.sort(targets, new CompareByIndex());
+
+        int idxFirstCase = statements.indexOf(targets.get(0));
+
+        if (idxFirstCase != statements.indexOf(switchStatement) + 1) {
+            throw new ConfusedCFRException("First case is not immediately after switch.");
+        }
+
+        BlockIdentifier switchBlock = ((SwitchStatement) switchStatement.containedStatement).getSwitchBlock();
+        int indexLastInLastBlock = 0;
+        for (int x = 0; x < targets.size() - 1; ++x) {
+            Op03SimpleStatement thisCase = targets.get(x);
+            Op03SimpleStatement nextCase = targets.get(x + 1);
+            int indexThisCase = statements.indexOf(thisCase);
+            int indexNextCase = statements.indexOf(nextCase);
+            InstrIndex nextCaseIndex = nextCase.getIndex();
+
+            CaseStatement caseStatement = (CaseStatement) thisCase.containedStatement;
+            BlockIdentifier caseBlock = caseStatement.getCaseBlock();
+
+            int indexLastInThis = getFarthestReachableInRange(statements, indexThisCase, indexNextCase);
+            if (indexLastInThis != indexNextCase - 1) {
+                throw new ConfusedCFRException("Case statement doesn't cover expected range.");
+            }
+            indexLastInLastBlock = indexLastInThis;
+            for (int y = indexThisCase + 1; y <= indexLastInThis; ++y) {
+                Op03SimpleStatement statement = statements.get(y);
+                statement.markBlock(caseBlock);
+                if (statement.getJumpType().isUnknown()) {
+                    for (Op03SimpleStatement innerTarget : statement.targets) {
+                        if (nextCaseIndex.isBackJumpFrom(innerTarget)) {
+                            forwardTargets.add(innerTarget);
+                        }
+                    }
+                }
+            }
+        }
+        // Either we have zero forwardTargets, in which case we can take the last statement and pull it out,
+        // or we have some forward targets.
+        // If so, we assume (!!) that's the end, and verify reachability from the start of the last case.
+        Op03SimpleStatement lastCase = targets.get(targets.size() - 1);
+        int indexLastCase = statements.indexOf(lastCase);
+        int breakTarget = -1;
+        if (forwardTargets.isEmpty()) {
+            for (int y = idxFirstCase; y <= indexLastInLastBlock; ++y) {
+                Op03SimpleStatement statement = statements.get(y);
+                statement.markBlock(switchBlock);
+            }
+            if (indexLastCase != indexLastInLastBlock + 1) {
+                throw new ConfusedCFRException("Extractable last case doesn't follow previous");
+            }
+            lastCase.markBlock(switchBlock);
+            breakTarget = indexLastCase + 1;
+        } else {
+            List<Op03SimpleStatement> lstFwdTargets = ListFactory.newList(forwardTargets);
+            Collections.sort(lstFwdTargets, new CompareByIndex());
+            Op03SimpleStatement afterCaseGuess = lstFwdTargets.get(0);
+            int indexAfterCase = statements.indexOf(afterCaseGuess);
+
+            CaseStatement caseStatement = (CaseStatement) lastCase.containedStatement;
+            BlockIdentifier caseBlock = caseStatement.getCaseBlock();
+
+            int indexLastInThis = getFarthestReachableInRange(statements, indexLastCase, indexAfterCase);
+            if (indexLastInThis != indexAfterCase - 1) {
+                throw new ConfusedCFRException("Final statement in case doesn't meet smallest exit.");
+            }
+            for (int y = indexLastCase + 1; y <= indexLastInThis; ++y) {
+                Op03SimpleStatement statement = statements.get(y);
+                statement.markBlock(caseBlock);
+            }
+            for (int y = idxFirstCase; y <= indexLastInThis; ++y) {
+                Op03SimpleStatement statement = statements.get(y);
+                statement.markBlock(switchBlock);
+            }
+            breakTarget = indexLastInThis + 1;
+        }
+
+        /* Given the assumption that the statement after the switch block is the break target, can we rewrite any
+         * of the exits from the switch statement to be breaks?
+         */
+        Op03SimpleStatement breakStatementTarget = statements.get(breakTarget);
+        breakStatementTarget.markPostBlock(switchBlock);
+        for (Op03SimpleStatement breakSource : breakStatementTarget.sources) {
+            if (breakSource.getJumpType().isUnknown()) {
+                ((JumpingStatement) breakSource.containedStatement).setJumpType(JumpType.BREAK);
+            }
+        }
+
+        return true;
+    }
+
+    public static void replaceRawSwitches(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+        List<Op03SimpleStatement> switchStatements = Functional.filter(in, new TypeFilter<RawSwitchStatement>(RawSwitchStatement.class));
+        // Replace raw switch statements with switches and case statements inline.
+        for (Op03SimpleStatement switchStatement : switchStatements) {
+            replaceRawSwitch(switchStatement, in, blockIdentifierFactory);
+        }
+        // We've injected 'case' statements, sort to get them into the proper place.
+        Collections.sort(in, new CompareByIndex());
+
+//        Dumper d = new Dumper();
+//        for (Op03SimpleStatement statement : in) {
+//            statement.dumpInner(d);
+//        }
+//
+        // For each of the switch statements, can we find a contiguous range which represents it?
+        // (i.e. where the break statement vectors to).
+        // for each case statement, we need to find a common successor, however there may NOT be
+        // one, i.e. where all branches (or all bar one) cause termination (return/throw)
+
+        // While we haven't yet done any analysis on loop bodies etc, we can make some fairly
+        // simple assumptions, (which can be broken by an obfuscator)  - for each case statement
+        // (except the last one) get the set of jumps which are to AFTER the start of the next statement.
+        // Fall through doesn't count.
+        // [These jumps may be legitimate breaks for the switch, or they may be breaks to enclosing statements.]
+        // 1 ) If there are no forward jumps, pull the last case out, and make it fall through. (works for default/non default).
+        // 2 ) If there are forward jumps, then it's possible that they're ALL to past the end of the switch statement
+        //     However, if that's the case, it probable means that we've been obfuscated.  Take the earliest common one.
+        //
+        // Check each case statement for obfuscation - for all but the last case, all statements in the range [X -> [x+1)
+        // without leaving the block.
+
+
+        switchStatements = Functional.filter(in, new TypeFilter<SwitchStatement>(SwitchStatement.class));
+        for (Op03SimpleStatement switchStatement : switchStatements) {
+            examineSwitchContiguity(switchStatement, in);
+        }
+
     }
 
     @Override

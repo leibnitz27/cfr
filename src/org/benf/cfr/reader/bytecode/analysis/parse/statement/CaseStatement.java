@@ -5,8 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredSwitch;
-import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCase;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -16,33 +15,38 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 18:08
  * To change this template use File | Settings | File Templates.
  */
-public class SwitchStatement extends AbstractStatement {
-    private Expression switchOn;
-    private final DecodedSwitch switchData;
+public class CaseStatement extends AbstractStatement {
+    private Expression value; // null for default.
     private final BlockIdentifier switchBlock;
+    private final BlockIdentifier caseBlock;
 
-    public SwitchStatement(Expression switchOn, DecodedSwitch switchData, BlockIdentifier switchBlock) {
-        this.switchOn = switchOn;
-        this.switchData = switchData;
+    public CaseStatement(Expression value, BlockIdentifier switchBlock, BlockIdentifier caseBlock) {
+        this.value = value;
         this.switchBlock = switchBlock;
+        this.caseBlock = caseBlock;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("switch (" + switchOn + ") { // " + switchBlock + "\n");
+        if (value == null) {
+            dumper.print("default:\n");
+        } else {
+            dumper.print("case " + value + ":\n");
+        }
     }
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        switchOn = switchOn.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+        if (value == null) return;
+        value = value.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredSwitch(switchOn, switchBlock);
+        return new UnstructuredCase(value, caseBlock);
     }
 
-    public BlockIdentifier getSwitchBlock() {
-        return switchBlock;
+    public BlockIdentifier getCaseBlock() {
+        return caseBlock;
     }
 }
