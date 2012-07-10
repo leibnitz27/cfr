@@ -28,6 +28,7 @@ public class StructuredFor extends AbstractStructuredStatement {
 
     @Override
     public void dump(Dumper dumper) {
+        if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         dumper.print("for (" + (initial == null ? "" : initial.toString()) + ";" + condition.toString() + "; " + assignment + ") ");
         body.dump(dumper);
     }

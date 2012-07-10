@@ -23,6 +23,7 @@ public class StructuredDo extends AbstractStructuredStatement {
 
     @Override
     public void dump(Dumper dumper) {
+        if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         dumper.print("do");
         body.dump(dumper);
         dumper.print("while (" + condition.toString() + ");\n");

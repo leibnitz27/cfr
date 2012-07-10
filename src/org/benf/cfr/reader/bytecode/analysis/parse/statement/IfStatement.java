@@ -12,9 +12,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.ConditionalUtils;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredBreak;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredContinue;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredBreak;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredContinue;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredIf;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -129,9 +129,9 @@ public class IfStatement extends GotoStatement {
             case GOTO_KNOWN:
                 return new UnstructuredIf(condition, knownIfBlock, knownElseBlock);
             case CONTINUE:
-                return new StructuredIf(condition, new Op04StructuredStatement(new StructuredContinue(getTargetStartBlock())));
+                return new StructuredIf(condition, new Op04StructuredStatement(new UnstructuredContinue(getTargetStartBlock())));
             case BREAK:
-                return new StructuredIf(condition, new Op04StructuredStatement(new StructuredBreak()));
+                return new StructuredIf(condition, new Op04StructuredStatement(new UnstructuredBreak(getJumpTarget().getContainer().getBlocksEnded())));
         }
         throw new UnsupportedOperationException();
     }

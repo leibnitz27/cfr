@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -9,11 +10,21 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class StructuredBreak extends AbstractStructuredStatement {
 
-    public StructuredBreak() {
+    private final BlockIdentifier breakBlock;
+    private final boolean localBreak;
+
+    public StructuredBreak(BlockIdentifier breakBlock, boolean localBreak) {
+        this.breakBlock = breakBlock;
+        this.localBreak = localBreak;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("break;\n");
+        if (localBreak) {
+            dumper.print("break;\n");
+        } else {
+            dumper.print("break " + breakBlock.getName() + ";\n");
+        }
     }
+
 }

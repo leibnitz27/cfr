@@ -24,8 +24,8 @@ public class Block extends AbstractStructuredStatement {
 
     public boolean removeLastContinue(BlockIdentifier block) {
         StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
-        if (structuredStatement instanceof StructuredContinue) {
-            StructuredContinue structuredContinue = (StructuredContinue) structuredStatement;
+        if (structuredStatement instanceof AbstractStructuredContinue) {
+            AbstractStructuredContinue structuredContinue = (AbstractStructuredContinue) structuredStatement;
             if (structuredContinue.getContinueTgt() == block) {
                 Op04StructuredStatement continueStmt = containedStatements.getLast();
                 continueStmt.replaceStatementWithNOP("");
@@ -44,9 +44,11 @@ public class Block extends AbstractStructuredStatement {
             Op04StructuredStatement oldGoto = containedStatements.getLast();
             oldGoto.replaceStatementWithNOP("");
             return true;
+        } else if (structuredStatement instanceof UnstructuredBreak) {
+            return false;
         } else if (structuredStatement instanceof StructuredBreak) {
             return false;
-        } else if (structuredStatement instanceof StructuredContinue) {
+        } else if (structuredStatement instanceof UnstructuredContinue) {
             return false;
         } else {
             throw new ConfusedCFRException("Trying to remove last goto of a block, but it's not an unstructured GOTO");

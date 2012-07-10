@@ -174,6 +174,13 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    public void informBlockMembership(Vector<BlockIdentifier> currentlyIn) {
+        StructuredStatement replacement = structuredStatement.informBlockHeirachy(currentlyIn);
+        if (replacement == null) return;
+        this.structuredStatement = replacement;
+        replacement.setContainer(this);
+    }
+
     @Override
     public String toString() {
         return "OP4:" + structuredStatement;
@@ -218,14 +225,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     /*
      * This is pretty inefficient....
      */
-    private static Set<BlockIdentifier> getEndingBlocks(Set<BlockIdentifier> wasIn, Set<BlockIdentifier> nowIn) {
+    private static Set<BlockIdentifier> getEndingBlocks(Stack<BlockIdentifier> wasIn, Set<BlockIdentifier> nowIn) {
         Set<BlockIdentifier> wasCopy = SetFactory.newSet(wasIn);
         wasCopy.removeAll(nowIn);
 //        System.out.println("From " + wasIn + " to " + nowIn + " = " + wasCopy);
         return wasCopy;
     }
 
-    private static BlockIdentifier getStartingBlocks(Set<BlockIdentifier> wasIn, Set<BlockIdentifier> nowIn) {
+    private static BlockIdentifier getStartingBlocks(Stack<BlockIdentifier> wasIn, Set<BlockIdentifier> nowIn) {
         /* 
          * We /KNOW/ that we've already checked and dealt with blocks we've left.
          * So we're only entering a new block if |nowIn|>|wasIn|.
@@ -247,7 +254,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void processEndingBlocks(
             final Set<BlockIdentifier> endOfTheseBlocks,
-            final Set<BlockIdentifier> blocksCurrentlyIn,
+            final Stack<BlockIdentifier> blocksCurrentlyIn,
             final Stack<StackedBlock> stackedBlocks,
             final MutableProcessingBlockState mutableProcessingBlockState) {
         System.out.println("statement is last statement in these blocks " + endOfTheseBlocks);
@@ -260,7 +267,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             if (!endOfTheseBlocks.remove(mutableProcessingBlockState.currentBlockIdentifier)) {
                 throw new ConfusedCFRException("Tried to end blocks " + endOfTheseBlocks + ", but top level block is " + mutableProcessingBlockState.currentBlockIdentifier);
             }
-            blocksCurrentlyIn.remove(mutableProcessingBlockState.currentBlockIdentifier);
+            BlockIdentifier popBlockIdentifier = blocksCurrentlyIn.pop();
+            if (popBlockIdentifier != mutableProcessingBlockState.currentBlockIdentifier) {
+                throw new ConfusedCFRException("Tried to end blocks " + endOfTheseBlocks + ", but top level block is " + mutableProcessingBlockState.currentBlockIdentifier);
+            }
             LinkedList<Op04StructuredStatement> blockJustEnded = mutableProcessingBlockState.currentBlock;
             StackedBlock popBlock = stackedBlocks.pop();
             mutableProcessingBlockState.currentBlock = popBlock.statements;
@@ -283,9 +293,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public static Op04StructuredStatement buildNestedBlocks(List<Op04StructuredStatement> containers) {
         /* 
          * the blocks we're in, and when we entered them.
+         *
+         * This is ugly, could keep track of this more cleanly.
          */
-
-        Set<BlockIdentifier> blocksCurrentlyIn = SetFactory.newSet();
+        Stack<BlockIdentifier> blocksCurrentlyIn = StackFactory.newStack();
         LinkedList<Op04StructuredStatement> outerBlock = ListFactory.newLinkedList();
         Stack<StackedBlock> stackedBlocks = StackFactory.newStack();
 
@@ -318,9 +329,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                 stackedBlocks.push(new StackedBlock(mutableProcessingBlockState.currentBlockIdentifier, mutableProcessingBlockState.currentBlock, blockClaimer));
                 mutableProcessingBlockState.currentBlock = ListFactory.newLinkedList();
                 mutableProcessingBlockState.currentBlockIdentifier = startsThisBlock;
-                blocksCurrentlyIn.add(mutableProcessingBlockState.currentBlockIdentifier);
+                blocksCurrentlyIn.push(mutableProcessingBlockState.currentBlockIdentifier);
             }
 
+            container.informBlockMembership(blocksCurrentlyIn);
             mutableProcessingBlockState.currentBlock.add(container);
 
 
@@ -329,7 +341,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
          * End any blocks we're still in.
          */
         if (!stackedBlocks.isEmpty()) {
-            processEndingBlocks(blocksCurrentlyIn, blocksCurrentlyIn, stackedBlocks, mutableProcessingBlockState);
+            processEndingBlocks(SetFactory.newSet(blocksCurrentlyIn), blocksCurrentlyIn, stackedBlocks, mutableProcessingBlockState);
         }
         Block result = new Block(outerBlock, true);
         return new Op04StructuredStatement(result);

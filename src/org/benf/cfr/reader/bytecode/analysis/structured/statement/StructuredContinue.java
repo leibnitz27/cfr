@@ -8,19 +8,26 @@ import org.benf.cfr.reader.util.output.Dumper;
  * User: lee
  * Date: 15/05/2012
  */
-public class StructuredContinue extends AbstractStructuredStatement {
+public class StructuredContinue extends AbstractStructuredContinue {
 
     private final BlockIdentifier continueTgt;
+    private final boolean localContinue;
 
-    public StructuredContinue(BlockIdentifier continueTgt) {
+    public StructuredContinue(BlockIdentifier continueTgt, boolean localContinue) {
         this.continueTgt = continueTgt;
+        this.localContinue = localContinue;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("continue;\n");
+        if (localContinue) {
+            dumper.print("continue;\n");
+        } else {
+            dumper.print("continue " + continueTgt.getName() + ";\n");
+        }
     }
 
+    @Override
     public BlockIdentifier getContinueTgt() {
         return continueTgt;
     }

@@ -22,17 +22,18 @@ public class LoopTest3 {
             jim:
             for (Object o2 : set) {
                 System.out.println("jim");
-                if (o.equals(o2)) {
-                    if (x == (y++)) break fred;
-                    continue jim;
-                }
-                if (x == (++y)) continue fred;
+                if (x == y) continue jim;
                 continue fred;
             }
-            break fred;
+            break;
         }
         return result;
     }
 
-
+//    public static void main (String args[]) {
+//        List<Object> lst = ListFactory.newList((Object)"a", "b", "c");
+//        Set<Object> set = SetFactory.newSet((Object)1, 2, 3);
+//        LoopTest3 loopTest3 = new LoopTest3();
+//        loopTest3.testNested(lst, set);
+//    }
 }

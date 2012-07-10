@@ -2,7 +2,11 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.Vector;
 
 /**
  * Created:
@@ -34,5 +38,12 @@ public class StructuredIf extends AbstractStructuredStatement {
             dumper.print("else ");
             elseBlock.dump(dumper);
         }
+    }
+
+    @Override
+    public StructuredStatement informBlockHeirachy(Vector<BlockIdentifier> blockIdentifiers) {
+        ifTaken.informBlockMembership(blockIdentifiers);
+        if (elseBlock != null) elseBlock.informBlockMembership(blockIdentifiers);
+        return null;
     }
 }

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 import org.benf.cfr.reader.util.Functional;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.Predicate;
 
 import java.util.Collections;
@@ -15,6 +16,7 @@ import java.util.Set;
 public class BlockIdentifier implements Comparable<BlockIdentifier> {
     private final int index;
     private BlockType blockType;
+    private int knownForeignReferences = 0;
 
     public BlockIdentifier(int index, BlockType blockType) {
         this.index = index;
@@ -29,6 +31,22 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
         this.blockType = blockType;
     }
 
+    public String getName() {
+        return "block" + index;
+    }
+
+    public void addForeignRef() {
+        knownForeignReferences++;
+    }
+
+    public void releaseForeignRef() {
+        knownForeignReferences--;
+    }
+
+    public boolean hasForeignReferences() {
+        return knownForeignReferences > 0;
+    }
+
     @Override
     public String toString() {
         return "" + index + "[" + blockType + "]";
@@ -38,8 +56,8 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
         return haystack.contains(needle);
     }
 
-    public static BlockIdentifier getOutermostContainedIn(List<BlockIdentifier> endingBlocks, final Set<BlockIdentifier> blocksInAtThisPoint) {
-        List<BlockIdentifier> containedIn = Functional.filter(endingBlocks, new Predicate<BlockIdentifier>() {
+    public static BlockIdentifier getOutermostContainedIn(Set<BlockIdentifier> endingBlocks, final Set<BlockIdentifier> blocksInAtThisPoint) {
+        List<BlockIdentifier> containedIn = Functional.filter(ListFactory.newList(endingBlocks), new Predicate<BlockIdentifier>() {
             @Override
             public boolean test(BlockIdentifier in) {
                 return blocksInAtThisPoint.contains(in);
@@ -48,6 +66,14 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
         if (containedIn.isEmpty()) return null;
         Collections.sort(containedIn);
         return containedIn.get(0);
+    }
+
+    public static BlockIdentifier getOutermostBreakable(List<BlockIdentifier> blocks) {
+        BlockIdentifier res = null;
+        for (BlockIdentifier block : blocks) {
+            if (block.blockType.isBreakable()) res = block;
+        }
+        return res;
     }
 
     /* Ouch - should be set lookups.  */

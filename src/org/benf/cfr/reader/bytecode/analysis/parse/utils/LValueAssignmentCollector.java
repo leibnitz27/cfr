@@ -73,7 +73,7 @@ public class LValueAssignmentCollector implements LValueRewriter {
             if (!ssaIdentifiers.isValidReplacement(resLValue, replacementIdentifiers)) return null;
         }
         if (statementContainer != null) {
-            lvSc.getBlockIdentifiers().addAll(statementContainer.getBlockIdentifiers());
+            lvSc.copyBlockInformationFrom(statementContainer);
             statementContainer.nopOut();
         }
         stackSSALabel.getStackEntry().decrementUsage();

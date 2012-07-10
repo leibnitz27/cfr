@@ -31,4 +31,10 @@ public interface StatementContainer {
     SSAIdentifiers getSSAIdentifiers();
 
     Set<BlockIdentifier> getBlockIdentifiers();
+
+    BlockIdentifier getBlockStarted();
+
+    Set<BlockIdentifier> getBlocksEnded();
+
+    void copyBlockInformationFrom(StatementContainer other);
 }

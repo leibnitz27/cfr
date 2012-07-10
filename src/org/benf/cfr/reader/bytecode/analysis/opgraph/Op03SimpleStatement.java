@@ -52,7 +52,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     //
     // blocks ended just before this.  (used to resolve break statements).
     //
-    private final List<BlockIdentifier> immediatelyAfterBlocks = ListFactory.newList();
+    private final Set<BlockIdentifier> immediatelyAfterBlocks = SetFactory.newSet();
 
     public Op03SimpleStatement(Op02WithProcessedDataAndRefs original, Statement statement) {
         this.containedStatement = statement;
@@ -171,6 +171,22 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     @Override
     public Set<BlockIdentifier> getBlockIdentifiers() {
         return containedInBlocks;
+    }
+
+    @Override
+    public BlockIdentifier getBlockStarted() {
+        return firstStatementInThisBlock;
+    }
+
+    @Override
+    public Set<BlockIdentifier> getBlocksEnded() {
+        return immediatelyAfterBlocks;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void copyBlockInformationFrom(StatementContainer other) {
+        this.immediatelyAfterBlocks.addAll(other.getBlocksEnded());
+        this.containedInBlocks.addAll(other.getBlockIdentifiers());
     }
 
     private boolean isNop() {
@@ -342,7 +358,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         int indent = dumper.getIndent();
         getStatement().dump(dumper);
-        dumper.print(" " + sources.size() + " sources, " + targets.size() + " targets\n");
+        dumper.print(" " + sources.size() + " sources, " + targets.size() + " targets , immediately after " + immediatelyAfterBlocks + "\n");
     }
 
     @Override
