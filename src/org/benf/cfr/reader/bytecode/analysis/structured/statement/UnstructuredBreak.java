@@ -43,7 +43,7 @@ public class UnstructuredBreak extends AbstractStructuredStatement {
             return null;
         }
         boolean localBreak = false;
-        BlockIdentifier outermostBreakable = BlockIdentifier.getOutermostBreakable(blockIdentifiers);
+        BlockIdentifier outermostBreakable = BlockIdentifier.getInnermostBreakable(blockIdentifiers);
         if (outermostBreakable == bestBlock) {
             localBreak = true;
         } else {

@@ -24,7 +24,7 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     }
 
     @Override
-    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier) {
+    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         return null;
     }
 

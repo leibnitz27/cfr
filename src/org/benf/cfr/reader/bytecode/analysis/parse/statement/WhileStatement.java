@@ -45,7 +45,7 @@ public class WhileStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredWhile(condition, blockIdentifier);
+        return new UnstructuredWhile(condition, blockIdentifier, getTargetStatement(1).getContainer().getBlocksEnded());
     }
 
     public BlockIdentifier getBlockIdentifier() {

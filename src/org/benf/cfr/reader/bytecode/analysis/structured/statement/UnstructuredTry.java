@@ -6,6 +6,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Vector;
+
 /**
  * Created:
  * User: lee
@@ -29,7 +31,7 @@ public class UnstructuredTry extends AbstractStructuredStatement {
     }
 
     @Override
-    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier) {
+    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == exceptionGroup.getTryBlockIdentifier()) {
             return new StructuredTry(exceptionGroup, innerBlock);
         } else {

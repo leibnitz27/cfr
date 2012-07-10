@@ -68,12 +68,23 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
         return containedIn.get(0);
     }
 
-    public static BlockIdentifier getOutermostBreakable(List<BlockIdentifier> blocks) {
+    /* Given a scope heirachy, which is the innermost one which can be broken out of? */
+    public static BlockIdentifier getInnermostBreakable(List<BlockIdentifier> blocks) {
         BlockIdentifier res = null;
         for (BlockIdentifier block : blocks) {
             if (block.blockType.isBreakable()) res = block;
         }
         return res;
+    }
+
+    /* Given a scope heirachy, and a list of blocks which are ending, which is the outermost block which is ending?
+     * i.e. we want the earliest block in blocks which is also in blocksEnding.
+     */
+    public static BlockIdentifier getOutermostEnding(List<BlockIdentifier> blocks, Set<BlockIdentifier> blocksEnding) {
+        for (BlockIdentifier blockIdentifier : blocks) {
+            if (blocksEnding.contains(blockIdentifier)) return blockIdentifier;
+        }
+        return null;
     }
 
     /* Ouch - should be set lookups.  */

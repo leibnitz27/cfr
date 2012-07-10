@@ -7,6 +7,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
+import java.util.Vector;
 
 /**
  * Created:
@@ -35,7 +36,7 @@ public class StructuredCatch extends AbstractStructuredStatement {
     }
 
     @Override
-    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier) {
+    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         return null;
     }
 }

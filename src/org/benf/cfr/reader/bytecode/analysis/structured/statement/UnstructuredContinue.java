@@ -33,7 +33,7 @@ public class UnstructuredContinue extends AbstractStructuredContinue {
     public StructuredStatement informBlockHeirachy(Vector<BlockIdentifier> blockIdentifiers) {
 
         boolean localBreak = false;
-        BlockIdentifier outermostBreakable = BlockIdentifier.getOutermostBreakable(blockIdentifiers);
+        BlockIdentifier outermostBreakable = BlockIdentifier.getInnermostBreakable(blockIdentifiers);
         if (outermostBreakable == continueTgt) {
             localBreak = true;
         } else {

@@ -9,6 +9,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Vector;
+
 /**
  * Created:
  * User: lee
@@ -37,7 +39,7 @@ public class UnstructuredIf extends AbstractStructuredStatement {
     }
 
     @Override
-    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier) {
+    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == knownIfBlock) {
             if (knownElseBlock == null) {
                 return new StructuredIf(ConditionalUtils.simplify(conditionalExpression.getNegated()), innerBlock);

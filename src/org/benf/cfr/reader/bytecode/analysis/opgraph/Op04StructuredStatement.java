@@ -190,12 +190,12 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         this.structuredStatement = new StructuredComment(comment);
     }
 
-    private boolean claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier thisBlock) {
+    private boolean claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier thisBlock, Vector<BlockIdentifier> currentlyIn) {
         int idx = targets.indexOf(innerBlock);
         if (idx == -1) {
             return false;
         }
-        StructuredStatement replacement = structuredStatement.claimBlock(innerBlock, thisBlock);
+        StructuredStatement replacement = structuredStatement.claimBlock(innerBlock, thisBlock, currentlyIn);
         if (replacement == null) return false;
         this.structuredStatement = replacement;
         replacement.setContainer(this);
@@ -280,7 +280,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             Op04StructuredStatement blockStartContainer = popBlock.outerStart;
 
             System.out.println("Trying to claim with " + blockStartContainer);
-            if (!blockStartContainer.claimBlock(finishedBlock, mutableProcessingBlockState.currentBlockIdentifier)) {
+            if (!blockStartContainer.claimBlock(finishedBlock, mutableProcessingBlockState.currentBlockIdentifier, blocksCurrentlyIn)) {
                 mutableProcessingBlockState.currentBlock.add(finishedBlock);
             }
             mutableProcessingBlockState.currentBlockIdentifier = popBlock.blockIdentifier;

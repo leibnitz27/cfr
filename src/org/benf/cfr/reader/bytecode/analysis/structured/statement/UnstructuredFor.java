@@ -7,6 +7,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Vector;
+
 /**
  * Created:
  * User: lee
@@ -31,7 +33,7 @@ public class UnstructuredFor extends AbstractStructuredStatement {
     }
 
     @Override
-    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier) {
+    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier != this.blockIdentifier) {
             throw new RuntimeException("For statement claiming wrong block");
         }

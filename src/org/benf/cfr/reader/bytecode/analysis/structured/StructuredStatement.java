@@ -14,7 +14,7 @@ import java.util.Vector;
 public interface StructuredStatement extends Dumpable {
     public void setContainer(Op04StructuredStatement container);
 
-    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier);
+    public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn);
 
     public StructuredStatement informBlockHeirachy(Vector<BlockIdentifier> blockIdentifiers);
 
