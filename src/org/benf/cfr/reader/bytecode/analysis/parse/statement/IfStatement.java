@@ -64,6 +64,10 @@ public class IfStatement extends GotoStatement {
         return condition;
     }
 
+    public void setCondition(ConditionalExpression condition) {
+        this.condition = condition;
+    }
+
     public void simplifyCondition() {
         condition = ConditionalUtils.simplify(condition);
     }

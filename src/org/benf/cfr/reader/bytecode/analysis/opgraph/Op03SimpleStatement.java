@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.TernaryExpression;
@@ -552,6 +553,92 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    /* If there is a chain of assignments before this conditional,
+     * AND following single parents back, there is only conditionals and assignments,
+     * AND this chain terminates in a back jump.....
+     */
+    private static boolean appropriateForIfAssignmentCollapse(Op03SimpleStatement statement) {
+        boolean extraCondSeen = false;
+        boolean preCondAssignmentSeen = false;
+        while (statement.sources.size() == 1) {
+            Op03SimpleStatement source = statement.sources.get(0);
+            // If there's a single parent, and it's a backjump, then I'm confused, as that means
+            // we have a loop with no entry point...
+            if (statement.getIndex().isBackJumpFrom(source)) break;
+            Statement contained = source.containedStatement;
+            if (contained instanceof Assignment) {
+                preCondAssignmentSeen |= (!extraCondSeen);
+            } else if (contained instanceof IfStatement) {
+                extraCondSeen = true;
+            } else {
+                break;
+            }
+            statement = source;
+        }
+        if (!preCondAssignmentSeen) return false;
+        /* If this statement has any backjumping sources then we consider it */
+        InstrIndex statementIndex = statement.getIndex();
+        for (Op03SimpleStatement source : statement.sources) {
+            if (statementIndex.isBackJumpFrom(source)) return true;
+        }
+        return false;
+    }
+
+    // a=x
+    // b=y
+    // if (b==a)
+    //
+    // --> if ((b=x)==(a=y))
+    private static void collapseAssignmentsIntoConditional(Op03SimpleStatement ifStatement) {
+        if (!appropriateForIfAssignmentCollapse(ifStatement)) return;
+
+        IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
+        ConditionalExpression conditionalExpression = innerIf.getCondition();
+        /* where possible, collapse any single parent assignments into this. */
+        while (ifStatement.sources.size() == 1) {
+            Op03SimpleStatement source = ifStatement.sources.get(0);
+            if (!(source.containedStatement instanceof Assignment)) return;
+            LValue lValue = source.getCreatedLValue();
+            // We don't have to worry about RHS having undesired side effects if we roll it into the
+            // conditional - that has already happened.
+            LValueUsageCollector lvc = new LValueUsageCollector();
+            conditionalExpression.collectUsedLValues(lvc);
+            if (!lvc.isUsed(lValue)) return;
+            Assignment assignment = (Assignment) (source.containedStatement);
+            AssignmentExpression assignmentExpression = new AssignmentExpression(assignment.getCreatedLValue(), assignment.getRValue());
+            if (!ifStatement.getSSAIdentifiers().isValidReplacement(lValue, source.getSSAIdentifiers())) return;
+            LValueAssignmentExpressionRewriter rewriter = new LValueAssignmentExpressionRewriter(lValue, assignmentExpression, source);
+
+            Expression replacement = conditionalExpression.replaceSingleUsageLValues(rewriter, ifStatement.getSSAIdentifiers(), ifStatement);
+            if (replacement == null) return;
+            if (!(replacement instanceof ConditionalExpression)) return;
+            innerIf.setCondition((ConditionalExpression) replacement);
+        }
+
+    }
+
+    /*
+     * Deal with
+     *
+     * a=b
+     * if (a==4) {
+     * }
+     *
+     * vs
+     *
+     * if ((a=b)==4) {
+     * }
+     *
+     * We will always have the former, but (ONLY!) just after a backjump, (with only conditionals and assignments, and
+     * single parents), we will want to run them together.
+     */
+    public static void collapseAssignmentsIntoConditionals(List<Op03SimpleStatement> statements) {
+        // find all conditionals.
+        List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
+        for (Op03SimpleStatement statement : ifStatements) {
+            collapseAssignmentsIntoConditional(statement);
+        }
+    }
 
     /*
     * Filter out nops (where appropriate) and renumber.  For display purposes.

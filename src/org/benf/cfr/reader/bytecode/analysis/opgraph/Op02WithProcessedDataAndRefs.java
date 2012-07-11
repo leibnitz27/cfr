@@ -235,31 +235,31 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LLOAD:
             case DLOAD:
             case FLOAD:
-                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset)));
             case ALOAD_0:
             case ILOAD_0:
             case LLOAD_0:
             case DLOAD_0:
             case FLOAD_0:
-                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(0, variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(0, variableNamer, originalRawOffset)));
             case ALOAD_1:
             case ILOAD_1:
             case LLOAD_1:
             case DLOAD_1:
             case FLOAD_1:
-                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(1, variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(1, variableNamer, originalRawOffset)));
             case ALOAD_2:
             case ILOAD_2:
             case LLOAD_2:
             case DLOAD_2:
             case FLOAD_2:
-                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(2, variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(2, variableNamer, originalRawOffset)));
             case ALOAD_3:
             case ILOAD_3:
             case LLOAD_3:
             case DLOAD_3:
             case FLOAD_3:
-                return new Assignment(getStackLValue(0), new FieldExpression(new LocalVariable(3, variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(3, variableNamer, originalRawOffset)));
             case ACONST_NULL:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getNull()));
             case ICONST_M1:
@@ -475,11 +475,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FRETURN:
                 return new ReturnValueStatement(getStackRValue(0));
             case GETFIELD: {
-                Expression fieldExpression = new FieldExpression(new FieldVariable(getStackRValue(0), cp, cpEntries[0]));
+                Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), cp, cpEntries[0]));
                 return new Assignment(getStackLValue(0), fieldExpression);
             }
             case GETSTATIC:
-                return new Assignment(getStackLValue(0), new FieldExpression(new StaticVariable(cp, cpEntries[0])));
+                return new Assignment(getStackLValue(0), new LValueExpression(new StaticVariable(cp, cpEntries[0])));
             case PUTSTATIC:
                 return new Assignment(new StaticVariable(cp, cpEntries[0]), getStackRValue(0));
             case PUTFIELD:
@@ -612,7 +612,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 }
                 // Can we have ++ / += instead?
                 return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
-                        new ArithmeticOperation(new FieldExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
+                        new ArithmeticOperation(new LValueExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
             case IINC_WIDE: {
                 int variableIndex = getInstrArgShort(1);
@@ -624,7 +624,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 }
                 // Can we have ++ / += instead?
                 return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
-                        new ArithmeticOperation(new FieldExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
+                        new ArithmeticOperation(new LValueExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
 
             case DNEG:

@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.FieldExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
@@ -87,6 +86,11 @@ public class LValueAssignmentCollector implements LValueRewriter {
 //            System.out.println("can replace " + prev + " with " + res);
         } while (res != null && res != prev);
         return prev;
+    }
+
+    @Override
+    public boolean explicitlyReplaceThisLValue(LValue lValue) {
+        return false;
     }
 
     private static class ExpressionStatement {
@@ -190,9 +194,14 @@ public class LValueAssignmentCollector implements LValueRewriter {
                     System.out.println("We can replace " + stackSSALabel + " with " + multi.getValue().expression);
                     found.put(stackSSALabel, multi.getValue());
                     System.out.println("And then subsequently " + alias);
-                    aliasReplacements.put(stackSSALabel, new FieldExpression(alias));
+                    aliasReplacements.put(stackSSALabel, new LValueExpression(alias));
                 }
             }
+        }
+
+        @Override
+        public boolean explicitlyReplaceThisLValue(LValue lValue) {
+            return false;
         }
     }
 

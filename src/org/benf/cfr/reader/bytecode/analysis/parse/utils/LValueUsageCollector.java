@@ -22,4 +22,8 @@ public class LValueUsageCollector {
     public Collection<LValue> getUsedLValues() {
         return used;
     }
+
+    public boolean isUsed(LValue lValue) {
+        return used.contains(lValue);
+    }
 }

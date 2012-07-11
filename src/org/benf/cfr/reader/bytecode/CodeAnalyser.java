@@ -144,6 +144,9 @@ public class CodeAnalyser {
         // Condense again, now we've simplified constructors.
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+
+        Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes);
+
         // Collapse conditionals into || / &&
         Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes);

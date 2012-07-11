@@ -12,4 +12,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
  */
 public interface LValueRewriter {
     Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
+
+    boolean explicitlyReplaceThisLValue(LValue lValue);
 }
