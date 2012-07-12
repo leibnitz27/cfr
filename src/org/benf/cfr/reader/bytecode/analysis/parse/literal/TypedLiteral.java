@@ -12,7 +12,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  */
 public class TypedLiteral {
 
-    enum LiteralType {
+    public enum LiteralType {
         Integer,
         Long,
         Double,
@@ -99,5 +99,13 @@ public class TypedLiteral {
             return new TypedLiteral(LiteralType.Class, cp.getUTF8Entry(((ConstantPoolEntryClass) cpe).getNameIndex()).getValue());
         }
         throw new ConfusedCFRException("Can't turn ConstantPoolEntry into Literal - got " + cpe);
+    }
+
+    public LiteralType getType() {
+        return type;
+    }
+
+    public Object getValue() {
+        return value;
     }
 }

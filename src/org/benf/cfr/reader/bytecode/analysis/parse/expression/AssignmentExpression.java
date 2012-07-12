@@ -14,7 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class AssignmentExpression implements Expression {
+public class AssignmentExpression extends AbstractExpression {
     private final LValue lValue;
     private final Expression rValue;
 
@@ -27,11 +27,6 @@ public class AssignmentExpression implements Expression {
     @Override
     public String toString() {
         return "(" + lValue + " = " + rValue + ")";
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

@@ -13,7 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class ArrayIndex implements Expression {
+public class ArrayIndex extends AbstractExpression {
     private Expression array;
     private Expression index;
 
@@ -26,11 +26,6 @@ public class ArrayIndex implements Expression {
     public String toString() {
 
         return "" + array + "[" + index + "]";
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

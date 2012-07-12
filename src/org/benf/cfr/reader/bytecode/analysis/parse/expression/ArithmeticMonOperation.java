@@ -13,7 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * Time: 17:51
  * To change this template use File | Settings | File Templates.
  */
-public class ArithmeticMonOperation implements Expression {
+public class ArithmeticMonOperation extends AbstractExpression {
     private Expression lhs;
     private final ArithOp op;
 
@@ -25,11 +25,6 @@ public class ArithmeticMonOperation implements Expression {
     @Override
     public String toString() {
         return "(" + op.getShowAs() + " " + lhs.toString() + ")";
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

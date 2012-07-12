@@ -14,7 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class NewPrimitiveArray implements Expression {
+public class NewPrimitiveArray extends AbstractExpression {
     private Expression size;
     private final ArrayType type;
 
@@ -26,11 +26,6 @@ public class NewPrimitiveArray implements Expression {
     @Override
     public String toString() {
         return "new " + type + "[" + size + "]";
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

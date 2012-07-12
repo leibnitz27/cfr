@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.Set;
@@ -17,7 +18,7 @@ import java.util.Set;
  * Time: 18:03
  * To change this template use File | Settings | File Templates.
  */
-public class ComparisonOperation implements ConditionalExpression {
+public class ComparisonOperation extends AbstractExpression implements ConditionalExpression {
     private Expression lhs;
     private Expression rhs;
     private final CompOp op;
@@ -44,20 +45,27 @@ public class ComparisonOperation implements ConditionalExpression {
     }
 
     @Override
-    public boolean isSimple() {
-        return false;
-    }
-
-    @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         lhs = lhs.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         rhs = rhs.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+        if (lhs.canPushDownInto()) {
+            if (rhs.canPushDownInto()) throw new ConfusedCFRException("2 sides of a comparison support pushdown?");
+            Expression res = lhs.pushDown(rhs, this);
+            if (res != null) return res;
+        } else if (rhs.canPushDownInto()) {
+            Expression res = rhs.pushDown(lhs, getNegated());
+            if (res != null) return res;
+        }
         return this;
     }
 
     @Override
     public ConditionalExpression getNegated() {
         return new ComparisonOperation(lhs, rhs, op.getInverted());
+    }
+
+    public CompOp getOp() {
+        return op;
     }
 
     @Override

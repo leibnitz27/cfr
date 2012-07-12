@@ -16,7 +16,7 @@ import java.util.Set;
  * Time: 06:45
  * To change this template use File | Settings | File Templates.
  */
-public class NotOperation implements ConditionalExpression {
+public class NotOperation extends AbstractExpression implements ConditionalExpression {
     private ConditionalExpression inner;
 
     public NotOperation(ConditionalExpression lhs) {
@@ -31,11 +31,6 @@ public class NotOperation implements ConditionalExpression {
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         return this;
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

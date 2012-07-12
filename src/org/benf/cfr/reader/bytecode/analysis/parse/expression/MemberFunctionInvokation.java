@@ -19,7 +19,7 @@ import java.util.List;
  * Time: 17:26
  * To change this template use File | Settings | File Templates.
  */
-public class MemberFunctionInvokation implements Expression {
+public class MemberFunctionInvokation extends AbstractExpression {
     private final ConstantPoolEntryMethodRef function;
     private Expression object;
     private final List<Expression> args;
@@ -32,11 +32,6 @@ public class MemberFunctionInvokation implements Expression {
         // idiot, there has to be a standard way....
         for (int x = args.size() - 1; x >= 0; --x) this.args.add(args.get(x));
         this.cp = cp;
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

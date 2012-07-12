@@ -14,7 +14,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * Time: 17:51
  * To change this template use File | Settings | File Templates.
  */
-public class TernaryExpression implements Expression {
+public class TernaryExpression extends AbstractExpression {
     private ConditionalExpression condition;
     private Expression lhs;
     private Expression rhs;
@@ -28,11 +28,6 @@ public class TernaryExpression implements Expression {
     @Override
     public String toString() {
         return "(" + condition.toString() + ") ? (" + lhs.toString() + ") : (" + rhs.toString() + ")";
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

@@ -16,7 +16,7 @@ import java.util.List;
  * Time: 17:26
  * To change this template use File | Settings | File Templates.
  */
-public class StaticFunctionInvokation implements Expression {
+public class StaticFunctionInvokation extends AbstractExpression {
     private final ConstantPoolEntryMethodRef function;
     private final List<Expression> args;
     private final ConstantPool cp;
@@ -25,11 +25,6 @@ public class StaticFunctionInvokation implements Expression {
         this.function = (ConstantPoolEntryMethodRef) function;
         this.args = args;
         this.cp = cp;
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

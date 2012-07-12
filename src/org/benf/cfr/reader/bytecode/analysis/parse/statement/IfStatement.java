@@ -16,7 +16,6 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredBreak;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredContinue;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredIf;
-import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -49,7 +48,9 @@ public class IfStatement extends GotoStatement {
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         Expression replacementCondition = condition.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
-        if (replacementCondition != condition) throw new ConfusedCFRException("Can't yet support replacing conditions");
+        if (replacementCondition != condition) {
+            this.condition = (ConditionalExpression) replacementCondition;
+        }
     }
 
     @Override

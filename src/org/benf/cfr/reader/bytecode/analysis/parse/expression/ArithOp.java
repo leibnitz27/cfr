@@ -3,8 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
-import javax.swing.*;
-
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -13,11 +11,11 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public enum ArithOp {
-    LCMP("LCMP"),
-    DCMPL("DCMPL"),
-    DCMPG("DCMPG"),
-    FCMPL("FCMPL"),
-    FCMPG("FCMPG"),
+    LCMP("LCMP", true),
+    DCMPL("DCMPL", true),
+    DCMPG("DCMPG", true),
+    FCMPL("FCMPL", true),
+    FCMPG("FCMPG", true),
     PLUS("+"),
     MINUS("-"),
     MULTIPLY("*"),
@@ -30,13 +28,23 @@ public enum ArithOp {
     XOR("^");
 
     private final String showAs;
+    private final boolean temporary;
+
+    private ArithOp(String showAs, boolean temporary) {
+        this.showAs = showAs;
+        this.temporary = temporary;
+    }
 
     private ArithOp(String showAs) {
-        this.showAs = showAs;
+        this(showAs, false);
     }
 
     public String getShowAs() {
         return showAs;
+    }
+
+    public boolean isTemporary() {
+        return temporary;
     }
 
     public static ArithOp getOpFor(JVMInstr instr) {

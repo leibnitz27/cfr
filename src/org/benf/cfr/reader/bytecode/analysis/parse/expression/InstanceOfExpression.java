@@ -16,7 +16,7 @@ import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
  * Time: 17:51
  * To change this template use File | Settings | File Templates.
  */
-public class InstanceOfExpression implements Expression {
+public class InstanceOfExpression extends AbstractExpression {
     private Expression lhs;
     private String className;
 
@@ -29,11 +29,6 @@ public class InstanceOfExpression implements Expression {
     @Override
     public String toString() {
         return "(" + lhs.toString() + " instanceof " + className + ")";
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

@@ -3,9 +3,11 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,7 +16,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * Time: 17:51
  * To change this template use File | Settings | File Templates.
  */
-public class ArithmeticOperation implements Expression {
+public class ArithmeticOperation extends AbstractExpression {
     private Expression lhs;
     private Expression rhs;
     private final ArithOp op;
@@ -28,11 +30,6 @@ public class ArithmeticOperation implements Expression {
     @Override
     public String toString() {
         return "(" + lhs.toString() + " " + op.getShowAs() + " " + rhs.toString() + ")";
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {
@@ -66,4 +63,97 @@ public class ArithmeticOperation implements Expression {
         rhs.collectUsedLValues(lValueUsageCollector);
     }
 
+    @Override
+    public boolean canPushDownInto() {
+        return op.isTemporary();
+    }
+
+    private static CompOp rewriteXCMPCompOp(CompOp from, int on) {
+        if (on == 0) return from;
+        if (on < 0) {
+            switch (from) {
+                case LT:
+                    throw new IllegalStateException("Bad CMP");
+                case LTE:
+                    return CompOp.LT;  // <= -1 -> < 0
+                case GTE:
+                    throw new IllegalStateException("Bad CMP");
+                case GT:
+                    return CompOp.GTE; // > -1 -> >= 0
+                case EQ:
+                    return CompOp.LT;  // == -1 -> < 0
+                case NE:
+                    return CompOp.GTE; // != -1 -> >= 0
+                default:
+                    throw new IllegalStateException("Unknown enum");
+            }
+        } else {
+            switch (from) {
+                case LT:
+                    return CompOp.LTE; // < 1 -> <= 0
+                case LTE:
+                    throw new IllegalStateException("Bad CMP");
+                case GTE:
+                    return CompOp.GT; // >= 1 -> > 1
+                case GT:
+                    throw new IllegalStateException("Bad CMP");
+                case EQ:
+                    return CompOp.GT; // == 1 -> > 0
+                case NE:
+                    return CompOp.LTE; // != 1 -> <= 0
+                default:
+                    throw new IllegalStateException("Unknown enum");
+            }
+        }
+    }
+
+    @Override
+    public Expression pushDown(Expression toPush, Expression parent) {
+        if (!(parent instanceof ComparisonOperation)) return null;
+        if (!op.isTemporary()) return null;
+        if (!(toPush instanceof Literal)) {
+            throw new ConfusedCFRException("Pushing with a non-literal as pushee.");
+        }
+        ComparisonOperation comparisonOperation = (ComparisonOperation) parent;
+        CompOp compOp = comparisonOperation.getOp();
+        Literal literal = (Literal) toPush;
+        TypedLiteral typedLiteral = literal.getValue();
+        if (typedLiteral.getType() != TypedLiteral.LiteralType.Integer) {
+            throw new ConfusedCFRException("<xCMP> , non integer!");
+        }
+        int litVal = (Integer) typedLiteral.getValue();
+        switch (litVal) {
+            case -1:
+            case 0:
+            case 1:
+                break;
+            default:
+                throw new ConfusedCFRException("Invalid literal value " + litVal + " in xCMP");
+        }
+        /*
+         * TODO: Not quite behaving correctly here wrt floating point, i.e. DCMPG vs DCMPL.
+         */
+        switch (op) {
+            case DCMPG:
+            case FCMPG:
+            case DCMPL:
+            case FCMPL:
+            case LCMP:
+                break;
+            default:
+                throw new ConfusedCFRException("Shouldn't be here.");
+        }
+
+
+        /* the structure is something like
+         *
+         *  (LHS <xCMP> RHS) compOp litVal
+         *
+         * Since there are only 3 possible returns (-1,0,1) from a xCMP, turn everything into OP 0.
+         * i.e. = 1 --> > 0
+         *      > -1 --> >= 0
+         */
+        compOp = rewriteXCMPCompOp(compOp, litVal);
+        return new ComparisonOperation(this.lhs, this.rhs, compOp);
+    }
 }

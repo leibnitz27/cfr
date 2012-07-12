@@ -16,7 +16,7 @@ import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class NewObject implements Expression {
+public class NewObject extends AbstractExpression {
     private final ConstantPool cp;
     private final ConstantPoolEntryClass type;
 
@@ -28,11 +28,6 @@ public class NewObject implements Expression {
     @Override
     public String toString() {
         return "new " + cp.getUTF8Entry(type.getNameIndex()).getValue();
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

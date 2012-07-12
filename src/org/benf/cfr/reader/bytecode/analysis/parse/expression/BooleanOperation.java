@@ -17,7 +17,7 @@ import java.util.Set;
  * Time: 06:45
  * To change this template use File | Settings | File Templates.
  */
-public class BooleanOperation implements ConditionalExpression {
+public class BooleanOperation extends AbstractExpression implements ConditionalExpression {
     private ConditionalExpression lhs;
     private ConditionalExpression rhs;
     private BoolOp op;
@@ -36,11 +36,6 @@ public class BooleanOperation implements ConditionalExpression {
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         return this;
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

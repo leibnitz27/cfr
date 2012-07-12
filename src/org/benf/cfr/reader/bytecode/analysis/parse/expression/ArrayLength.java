@@ -13,7 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class ArrayLength implements Expression {
+public class ArrayLength extends AbstractExpression {
     private Expression array;
 
     public ArrayLength(Expression array) {
@@ -24,11 +24,6 @@ public class ArrayLength implements Expression {
     public String toString() {
 
         return "" + array + ".length";
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

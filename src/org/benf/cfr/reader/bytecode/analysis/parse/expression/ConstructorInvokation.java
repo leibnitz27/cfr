@@ -19,7 +19,7 @@ import java.util.List;
  * Time: 17:26
  * To change this template use File | Settings | File Templates.
  */
-public class ConstructorInvokation implements Expression {
+public class ConstructorInvokation extends AbstractExpression {
     private final ConstantPoolEntryMethodRef function;
     private final ConstantPoolEntryClass type;
     private final List<Expression> args;
@@ -30,11 +30,6 @@ public class ConstructorInvokation implements Expression {
         this.type = type;
         this.args = args;
         this.cp = cp;
-    }
-
-    @Override
-    public boolean isSimple() {
-        return false;
     }
 
     @Override

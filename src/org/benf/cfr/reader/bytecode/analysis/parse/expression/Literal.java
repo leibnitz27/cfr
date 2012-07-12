@@ -14,7 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class Literal implements Expression {
+public class Literal extends AbstractExpression {
     private final TypedLiteral value;
 
     public Literal(TypedLiteral value) {
@@ -41,4 +41,7 @@ public class Literal implements Expression {
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
     }
 
+    public TypedLiteral getValue() {
+        return value;
+    }
 }

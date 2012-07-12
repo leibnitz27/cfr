@@ -15,4 +15,8 @@ public interface Expression {
     boolean isSimple();
 
     void collectUsedLValues(LValueUsageCollector lValueUsageCollector);
+
+    boolean canPushDownInto();
+
+    Expression pushDown(Expression toPush, Expression parent);
 }

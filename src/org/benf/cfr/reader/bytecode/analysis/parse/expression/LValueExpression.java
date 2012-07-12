@@ -15,7 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 /*
  * Wraps a local, a static or an instance field.
  */
-public class LValueExpression implements Expression {
+public class LValueExpression extends AbstractExpression {
     private LValue lValue;
 
     public LValueExpression(LValue lValue) {
