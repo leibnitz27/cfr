@@ -106,10 +106,10 @@ public class CodeAnalyser {
         // Variable namer - if we've got variable names provided as an attribute in the class file, we'll
         // use that.
         final VariableNamer variableNamer = VariableNamerFactory.getNamer(originalCodeAttribute.getLocalVariableTable(), cp);
-//
-        Dumper dumper = new Dumper();
-//
-        dumper.dump(op2list);
+////
+//        Dumper dumper = new Dumper();
+////
+//        dumper.dump(op2list);
 
         // Create a non final version...
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableNamer);
@@ -121,9 +121,9 @@ public class CodeAnalyser {
         // Expand raw switch statements into more useful ones.
         Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
-
-        dumper.print("Raw Op3 statements:\n");
-        op03SimpleParseNodes.get(0).dump(dumper);
+//
+//        dumper.print("Raw Op3 statements:\n");
+//        op03SimpleParseNodes.get(0).dump(dumper);
 
 
         // Remove 2nd (+) jumps in pointless jump chains.
@@ -170,22 +170,14 @@ public class CodeAnalyser {
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
-        // identify conditionals which are of the form if (a) { xx } else if (b) { yy} ..... (potentially with
-        // unconditional final else.
-//        Op03SimpleStatement.identifyRepeatingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         // By now, we've (re)moved several statements, so it's possible that some jumps can be rewritten to
         // breaks again.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
 
-
-        dumper.print("FINAL Op03SimpleStatement NODES:\n\n************\n");
-        op03SimpleParseNodes.get(0).dump(dumper);
-
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
-        block.dump(dumper);
         this.start = block;
     }
 
