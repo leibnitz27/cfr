@@ -1679,7 +1679,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return SetFactory.newSet();
             }
         });
-        Dumper d = new Dumper();
         int sinceDefinite = 0;
         while (!pendingPossibilities.isEmpty() && sinceDefinite <= pendingPossibilities.size()) {
             Op03SimpleStatement maybe = pendingPossibilities.removeFirst();
@@ -1697,8 +1696,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             }
             if (definite) {
-                d.print("Definite : ");
-                maybe.dumpInner(d);
                 sinceDefinite = 0;
                 // All of this guys sources are known
                 knownMembers.add(maybe);
@@ -1714,8 +1711,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     if (!seen.contains(target)) {
                         seen.add(target);
                         if (target.getIndex().isBackJumpTo(start)) {
-                            d.print("New target poss : ");
-                            target.dumpInner(d);
                             pendingPossibilities.add(target);
                         }
                     }
@@ -1725,8 +1720,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                  * Can't reach this one (or certainly, can't reach it given what we know yet)
                  */
                 sinceDefinite++;
-                d.print("Readding : ");
-                maybe.dumpInner(d);
                 pendingPossibilities.add(maybe);
             }
         }

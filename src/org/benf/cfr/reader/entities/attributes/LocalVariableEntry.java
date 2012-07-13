@@ -1,8 +1,5 @@
 package org.benf.cfr.reader.entities.attributes;
 
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.util.output.Dumper;
-
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -21,10 +18,6 @@ public class LocalVariableEntry {
         this.nameIndex = nameIndex;
         this.descriptorIndex = descriptorIndex;
         this.index = index;
-    }
-
-    public void dump(Dumper d, ConstantPool cp) {
-        d.print("Variable # " + index + " @" + startPc + "[" + length + "] : " + cp.getUTF8Entry(nameIndex).getValue() + "\n");
     }
 
     public short getStartPc() {

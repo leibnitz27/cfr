@@ -34,15 +34,8 @@ public class VariableNamerHinted implements VariableNamer {
             return cp.getUTF8Entry(lve.getNameIndex()).getValue();
         } else {
             Dumper d = new Dumper();
-            this.dump(d, cp);
             String lveName = cp.getUTF8Entry(lve.getNameIndex()).getValue();
             return "badlocal_" + lveName + "_" + stackPosition;
-        }
-    }
-
-    private void dump(Dumper d, ConstantPool cp) {
-        for (LocalVariableEntry lve : localVariableEntryTreeSet) {
-            lve.dump(d, cp);
         }
     }
 
