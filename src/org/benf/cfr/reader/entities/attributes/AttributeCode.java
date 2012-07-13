@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.bytecode.CodeAnalyser;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
@@ -78,6 +79,10 @@ public class AttributeCode extends Attribute {
             if (attribute instanceof AttributeLocalVariableTable) return (AttributeLocalVariableTable) attribute;
         }
         return null;
+    }
+
+    public VariableNamer getVariableNamer() {
+        return codeAnalyser.getVariableNamer();
     }
 
     public ByteData getRawData() {

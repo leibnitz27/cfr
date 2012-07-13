@@ -33,11 +33,14 @@ public class CodeAnalyser {
 
     private final AttributeCode originalCodeAttribute;
     private final ConstantPool cp;
+    private final VariableNamer variableNamer;
     private Dumpable start;
+
 
     public CodeAnalyser(AttributeCode attributeCode) {
         this.originalCodeAttribute = attributeCode;
         this.cp = attributeCode.getConstantPool();
+        this.variableNamer = VariableNamerFactory.getNamer(originalCodeAttribute.getLocalVariableTable(), cp);
     }
 
     public void analyse() {
@@ -187,4 +190,7 @@ public class CodeAnalyser {
         start.dump(d);
     }
 
+    public VariableNamer getVariableNamer() {
+        return variableNamer;
+    }
 }

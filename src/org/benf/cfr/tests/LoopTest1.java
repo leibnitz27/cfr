@@ -14,7 +14,7 @@ import java.util.Set;
 public class LoopTest1 {
 
 
-    public boolean test1(List<Object> list, Set<Object> set) {
+    public boolean test1(List<Object> list, long test, Set<Object> set) {
         boolean result = false;
         for (Object o : list) {
             result |= set.add(o);

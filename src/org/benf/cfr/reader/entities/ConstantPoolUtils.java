@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -95,7 +96,7 @@ public class ConstantPoolUtils {
         return proto.substring(startidx, curridx);
     }
 
-    public static MethodPrototype parseJavaMethodPrototype(ConstantPoolEntryUTF8 prototype) {
+    public static MethodPrototype parseJavaMethodPrototype(boolean instanceMethod, ConstantPoolEntryUTF8 prototype, VariableNamer variableNamer) {
         String proto = prototype.getValue();
         int curridx = 1;
         if (!proto.startsWith("(")) throw new ConfusedCFRException("Prototype " + proto + " is invalid");
@@ -114,12 +115,15 @@ public class ConstantPoolUtils {
                 resultType = decodeTypeTok(getNextTypeTok(proto, curridx));
                 break;
         }
-        MethodPrototype res = new MethodPrototype(args, resultType);
+        MethodPrototype res = new MethodPrototype(instanceMethod, args, resultType, variableNamer);
         logger.info("Parsed prototype " + proto + " as " + res);
         return res;
     }
 
 
+    /*
+     * could be rephrased in terms of MethodPrototype.
+     */
     public static StackDelta parseMethodPrototype(boolean member, ConstantPoolEntryUTF8 prototype) {
         String proto = prototype.getValue();
         int curridx = 1;
