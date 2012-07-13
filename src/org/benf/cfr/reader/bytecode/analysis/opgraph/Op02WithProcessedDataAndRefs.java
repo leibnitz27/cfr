@@ -658,7 +658,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     private List<Expression> getNStackRValuesAsExpressions(int count) {
         List<Expression> res = ListFactory.newList();
-        for (int i = 0; i < count; ++i) {
+        for (int i = count - 1; i >= 0; --i) {
             res.add(getStackRValue(i));
         }
         return res;
