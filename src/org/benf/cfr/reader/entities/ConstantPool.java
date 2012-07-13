@@ -1,11 +1,13 @@
 package org.benf.cfr.reader.entities;
 
-import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
+import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,6 +17,8 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class ConstantPool {
+    private static final Logger logger = LoggerFactory.create(ConstantPool.class);
+
     private final long length;
     private final List<ConstantPoolEntry> entries;
 
@@ -29,7 +33,7 @@ public class ConstantPool {
 
     private long processRaw(ByteData raw, short count, List<ConstantPoolEntry> tgt) {
         OffsettingByteData data = raw.getOffsettingOffsetData(0);
-        System.out.println("Processing " + count + " constpool entries.");
+        logger.info("Processing " + count + " constpool entries.");
         for (short x = 0; x < count; ++x) {
             ConstantPoolEntry.Type type = ConstantPoolEntry.Type.get(data.getS1At(0));
             ConstantPoolEntry cpe;
@@ -70,7 +74,7 @@ public class ConstantPool {
                 default:
                     throw new ConfusedCFRException("Invalid constant pool entry : ");
             }
-            System.out.println("" + (x + 1) + " : " + cpe);
+            logger.info("" + (x + 1) + " : " + cpe);
             tgt.add(cpe);
             switch (type) {
                 case CPT_Double:

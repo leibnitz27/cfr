@@ -35,7 +35,6 @@ public class VariableNamerHinted implements VariableNamer {
         } else {
             Dumper d = new Dumper();
             this.dump(d, cp);
-//            System.out.println("Looking up variable at " + originalRawOffset + ", index " + stackPosition);
             String lveName = cp.getUTF8Entry(lve.getNameIndex()).getValue();
             return "badlocal_" + lveName + "_" + stackPosition;
         }

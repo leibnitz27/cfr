@@ -4,6 +4,9 @@ import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackType;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackTypes;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.output.LoggerFactory;
+
+import java.util.logging.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,6 +16,8 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * To change this template use File | Settings | File Templates.
  */
 public class ConstantPoolUtils {
+
+    private static final Logger logger = LoggerFactory.create(ConstantPoolUtils.class);
 
     public static StackType decodeTypeTok(String tok) {
         int idx = 0;
@@ -97,7 +102,7 @@ public class ConstantPoolUtils {
                 break;
         }
         StackDelta res = new StackDelta(argumentTypes, resultType);
-        System.out.println("Parsed prototype " + proto + " as " + res);
+        logger.info("Parsed prototype " + proto + " as " + res);
         return res;
     }
 }

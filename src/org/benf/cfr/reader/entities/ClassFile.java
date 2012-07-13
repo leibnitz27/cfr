@@ -91,7 +91,6 @@ public class ClassFile {
         final short numMethods = data.getS2At(OFFSET_OF_METHODS_COUNT);
         ArrayList<Method> tmpMethods = new ArrayList<Method>();
         tmpMethods.ensureCapacity(numMethods);
-        System.out.println("" + numMethods + " methods.");
         final long methodsLength = ContiguousEntityFactory.build(data.getOffsetData(OFFSET_OF_METHODS), numMethods, tmpMethods,
                 new UnaryFunction<ByteData, Method>() {
                     @Override

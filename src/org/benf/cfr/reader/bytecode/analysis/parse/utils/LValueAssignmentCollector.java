@@ -10,9 +10,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.Assignment;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.NonaryFunction;
+import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,6 +24,8 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class LValueAssignmentCollector implements LValueRewriter {
+
+    private static final Logger logger = LoggerFactory.create(LValueAssignmentCollector.class);
 
     //
     // Found states that key can be replaced with value.
@@ -83,7 +87,6 @@ public class LValueAssignmentCollector implements LValueRewriter {
         do {
             prev = res;
             res = res.replaceSingleUsageLValues(this, ssaIdentifiers, lvSc);
-//            System.out.println("can replace " + prev + " with " + res);
         } while (res != null && res != prev);
         return prev;
     }
@@ -191,9 +194,9 @@ public class LValueAssignmentCollector implements LValueRewriter {
                     /* The assignment between stackSSAlabel and alias can be elided, and
                      * referenced to stackSSALabel can be replaced with references to alias.
                      */
-                    System.out.println("We can replace " + stackSSALabel + " with " + multi.getValue().expression);
+                    logger.info("We can replace " + stackSSALabel + " with " + multi.getValue().expression);
                     found.put(stackSSALabel, multi.getValue());
-                    System.out.println("And then subsequently " + alias);
+                    logger.info("And then subsequently " + alias);
                     aliasReplacements.put(stackSSALabel, new LValueExpression(alias));
                 }
             }

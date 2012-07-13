@@ -35,11 +35,13 @@ import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,6 +51,8 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithProcessedDataAndRefs> {
+    private static final Logger logger = LoggerFactory.create(Op02WithProcessedDataAndRefs.class);
+
     private InstrIndex index;
 
     private final JVMInstr instr;
@@ -766,8 +770,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             return infrontOf;
         }
 
-        System.out.println("Adding " + newNode + " ident " + exceptionGroup.getTryBlockIdentifier());
-        System.out.println("Already have " + collides);
+        logger.finer("Adding " + newNode + " ident " + exceptionGroup.getTryBlockIdentifier());
+        logger.finer("Already have " + collides);
 
 
         // If there's already something, we need to figure out which belongs in what order.
@@ -781,7 +785,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
 
         Op02WithProcessedDataAndRefs afterThis;
-        System.out.println("Insertion position = " + insertionPos);
+        logger.finer("Insertion position = " + insertionPos);
 
         if (insertionPos == collides.size()) { // end.
             collides.add(exceptionTempStatement);
@@ -809,12 +813,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 ExceptionTempStatement et = ets.get(idx);
                 if (et.isTry()) {
                     BlockIdentifier tryGroup = et.triggeringGroup.getTryBlockIdentifier();
-                    System.out.println("Removing try group identifier " + tryGroup + " idx " + idx);
+                    logger.finer("Removing try group identifier " + tryGroup + " idx " + idx);
                     for (int idx2 = 0; idx2 < idx; ++idx2) {
-                        System.out.println(ets.get(idx2).getOp());
-                        System.out.println(ets.get(idx2).getOp().containedInTheseBlocks + " -->");
+                        logger.finest("" + ets.get(idx2).getOp());
+                        logger.finest("" + ets.get(idx2).getOp().containedInTheseBlocks + " -->");
                         ets.get(idx2).getOp().containedInTheseBlocks.remove(tryGroup);
-                        System.out.println(ets.get(idx2).getOp().containedInTheseBlocks);
+                        logger.finest("" + ets.get(idx2).getOp().containedInTheseBlocks);
                     }
                 }
             }

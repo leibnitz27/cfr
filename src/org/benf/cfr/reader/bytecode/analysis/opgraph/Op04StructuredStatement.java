@@ -13,8 +13,10 @@ import org.benf.cfr.reader.util.StackFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Created:
@@ -24,6 +26,8 @@ import java.util.*;
  * Structured statements
  */
 public class Op04StructuredStatement implements MutableGraph<Op04StructuredStatement>, Dumpable {
+    private static final Logger logger = LoggerFactory.create(Op04StructuredStatement.class);
+
     private InstrIndex instrIndex;
     private List<Op04StructuredStatement> sources = ListFactory.newList();
     private List<Op04StructuredStatement> targets = ListFactory.newList();
@@ -152,7 +156,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public void removeLastContinue(BlockIdentifier block) {
         if (structuredStatement instanceof Block) {
             boolean removed = ((Block) structuredStatement).removeLastContinue(block);
-            System.out.println("Removing last continue for " + block + " succeeded? " + removed);
+            logger.info("Removing last continue for " + block + " succeeded? " + removed);
         } else {
             throw new ConfusedCFRException("Trying to remove last continue, but statement isn't block");
         }
@@ -228,7 +232,6 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     private static Set<BlockIdentifier> getEndingBlocks(Stack<BlockIdentifier> wasIn, Set<BlockIdentifier> nowIn) {
         Set<BlockIdentifier> wasCopy = SetFactory.newSet(wasIn);
         wasCopy.removeAll(nowIn);
-//        System.out.println("From " + wasIn + " to " + nowIn + " = " + wasCopy);
         return wasCopy;
     }
 
@@ -241,8 +244,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         Set<BlockIdentifier> nowCopy = SetFactory.newSet(nowIn);
         nowCopy.removeAll(wasIn);
         if (nowCopy.size() != 1) {
-            System.out.println("From " + wasIn + " to " + nowIn + " = " + nowCopy);
-            throw new RuntimeException("Started " + nowCopy.size() + " blocks at once");
+            logger.warning("From " + wasIn + " to " + nowIn + " = " + nowCopy);
+            throw new ConfusedCFRException("Started " + nowCopy.size() + " blocks at once");
         }
         return nowCopy.iterator().next();
     }
@@ -257,7 +260,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             final Stack<BlockIdentifier> blocksCurrentlyIn,
             final Stack<StackedBlock> stackedBlocks,
             final MutableProcessingBlockState mutableProcessingBlockState) {
-        System.out.println("statement is last statement in these blocks " + endOfTheseBlocks);
+        logger.fine("statement is last statement in these blocks " + endOfTheseBlocks);
 
         while (!endOfTheseBlocks.isEmpty()) {
             if (mutableProcessingBlockState.currentBlockIdentifier == null) {
@@ -279,7 +282,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             finishedBlock.replaceAsSource(blockJustEnded.getFirst());
             Op04StructuredStatement blockStartContainer = popBlock.outerStart;
 
-            System.out.println("Trying to claim with " + blockStartContainer);
+            logger.fine("Trying to claim with " + blockStartContainer);
             if (!blockStartContainer.claimBlock(finishedBlock, mutableProcessingBlockState.currentBlockIdentifier, blocksCurrentlyIn)) {
                 mutableProcessingBlockState.currentBlock.add(finishedBlock);
             }
@@ -319,7 +322,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
             BlockIdentifier startsThisBlock = getStartingBlocks(blocksCurrentlyIn, container.blockMembership);
             if (startsThisBlock != null) {
-                System.out.println("Starting block " + startsThisBlock);
+                logger.fine("Starting block " + startsThisBlock);
                 BlockType blockType = startsThisBlock.getBlockType();
                 // A bit confusing.  StartBlock for a while loop is the test.
                 // StartBlock for conditionals is the first element of the conditional.
