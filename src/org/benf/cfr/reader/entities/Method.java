@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.entities.attributes.Attribute;
+import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
+import org.benf.cfr.reader.util.CollectionUtils;
 import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -65,16 +67,18 @@ public class Method implements KnowsRawSize {
         return cp.getUTF8Entry(nameIndex).getValue();
     }
 
+    private String getSignatureText(ConstantPool cp) {
+        String prefix = CollectionUtils.join(accessFlags, " ");
+        return prefix + " " + ConstantPoolUtils.parseJavaMethodPrototype(cp.getUTF8Entry(descriptorIndex)).getPrototype(cp.getUTF8Entry(nameIndex).getValue());
+
+    }
+
     public void dump(Dumper d, ConstantPool cp) {
         d.newln();
-        cp.getEntry(nameIndex).dump(d, cp);
-        d.newln();
-        cp.getEntry(descriptorIndex).dump(d, cp);
-        d.newln().print(accessFlags.toString());
-        d.newln().print(attributes.size() + " attributes.");
-        for (Attribute attr : attributes.values()) {
-            d.newln();
-            attr.dump(d, cp);
+        d.print(getSignatureText(cp));
+        Attribute codeAttribute = attributes.get(AttributeCode.ATTRIBUTE_NAME);
+        if (codeAttribute != null) {
+            codeAttribute.dump(d, cp);
         }
         d.newln();
     }

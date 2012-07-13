@@ -19,6 +19,8 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class AttributeCode extends Attribute {
+    public static final String ATTRIBUTE_NAME = "Code";
+
     private static final long OFFSET_OF_ATTRIBUTE_LENGTH = 2;
     private static final long OFFSET_OF_MAX_STACK = 6;
     private static final long OFFSET_OF_MAX_LOCALS = 8;
@@ -100,12 +102,12 @@ public class AttributeCode extends Attribute {
 
     @Override
     public void dump(Dumper d, ConstantPool cp) {
-        d.newln().print("Code Attribute, length " + codeLength);
-        d.newln().print("MaxStack " + maxStack + ", maxLocals " + maxLocals);
-        for (Attribute a : attributes) {
-            d.newln();
-            a.dump(d, cp);
-        }
+//        d.newln().print("Code Attribute, length " + codeLength);
+//        d.newln().print("MaxStack " + maxStack + ", maxLocals " + maxLocals);
+//        for (Attribute a : attributes) {
+//            d.newln();
+//            a.dump(d, cp);
+//        }
         codeAnalyser.dump(d);
     }
 
@@ -116,7 +118,7 @@ public class AttributeCode extends Attribute {
 
     @Override
     public String getRawName() {
-        return "Code";
+        return ATTRIBUTE_NAME;
     }
 
 

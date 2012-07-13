@@ -8,25 +8,28 @@ import java.util.TreeSet;
  * Created by IntelliJ IDEA.
  * User: lee
  * Date: 17/04/2011
- * Time: 21:49
- * To change this template use File | Settings | File Templates.
  */
 public enum AccessFlagMethod {
-    ACC_PUBLIC,
-    ACC_PRIVATE,
-    ACC_PROTECTED,
-    ACC_STATIC,
-    ACC_FINAL,
-    ACC_SYNCHRONISED,
-    ACC_BRIDGE,
-    ACC_VARARGS,
-    ACC_NATIVE,
-    ACC_ABSTRACT,
-    ACC_STRICT,
-    ACC_SYNTHETIC;
+    ACC_PUBLIC("public"),
+    ACC_PRIVATE("private"),
+    ACC_PROTECTED("protected"),
+    ACC_STATIC("static"),
+    ACC_FINAL("final"),
+    ACC_SYNCHRONISED("synchronised"),
+    ACC_BRIDGE("bridge"),
+    ACC_VARARGS("varargs"),
+    ACC_NATIVE("native"),
+    ACC_ABSTRACT("abstract"),
+    ACC_STRICT("strict"),
+    ACC_SYNTHETIC("synthetic");
 
-    public static Set<AccessFlagMethod> build(int raw)
-    {
+    private final String name;
+
+    private AccessFlagMethod(String name) {
+        this.name = name;
+    }
+
+    public static Set<AccessFlagMethod> build(int raw) {
         Set<AccessFlagMethod> res = new TreeSet<AccessFlagMethod>();
 
         // Because we're decoding a C++ style enum.
@@ -48,4 +51,9 @@ public enum AccessFlagMethod {
         return resaf;
     }
 
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

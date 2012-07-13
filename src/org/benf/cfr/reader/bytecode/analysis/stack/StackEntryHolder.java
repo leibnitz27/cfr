@@ -1,9 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.stack;
 
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.SetFactory;
-
-import java.util.Set;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 
 /**
  * Created by IntelliJ IDEA.

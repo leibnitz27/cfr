@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.bytecode.analysis.stack;
+package org.benf.cfr.reader.bytecode.analysis.types;
 
 /**
  * Created:
@@ -18,7 +18,8 @@ public enum StackType {
     RETURNADDRESS("returnaddress", 1),
     RETURNADDRESSORREF("returnaddress or ref", 1), // Special, for astore.
     LONG("long", 2),
-    DOUBLE("double", 2);
+    DOUBLE("double", 2),
+    VOID("void", 0);   // not real, but useful.
 
     private final String name;
     private final int computationCategory;

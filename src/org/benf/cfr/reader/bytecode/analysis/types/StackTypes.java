@@ -1,6 +1,4 @@
-package org.benf.cfr.reader.bytecode.analysis.stack;
-
-import org.benf.cfr.reader.util.ListFactory;
+package org.benf.cfr.reader.bytecode.analysis.types;
 
 import java.util.ArrayList;
 import java.util.Arrays;

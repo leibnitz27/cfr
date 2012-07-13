@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.entities;
 
-import org.benf.cfr.reader.bytecode.analysis.stack.StackType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 
 /**
  * Created:
