@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types.discovery;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -13,6 +14,10 @@ import java.util.Map;
  * User: lee
  * Date: 13/07/2012
  * Time: 18:35
+ * <p/>
+ * Type promotion info:
+ * <p/>
+ * http://java.sun.com/docs/books/jls/third_edition/html/expressions.html#15.25
  */
 public class KnownJavaType {
     private final JavaTypeInstance javaType;
@@ -66,11 +71,46 @@ public class KnownJavaType {
         if (b == UNKNOWN) return a;
         if (a.javaType == JavaType.NULL) return b;
         if (b.javaType == JavaType.NULL) return a;
-        if (!a.javaType.equals(b.javaType)) {
-            throw new ConfusedCFRException("Combining java types : " + a + " and " + b);
+        if (a.javaType.equals(b.javaType)) {
+            if (a.isKnown) return a;
+            return b;
         }
-        if (a.isKnown) return a;
-        return b;
+        StackType sa = a.javaType.getStackType();
+        StackType sb = b.javaType.getStackType();
+        if (sa == sb) {
+            if (a.isKnown) return a;
+            return b;
+        }
+        /* Else we don't know .... but we can combine as per the spec. */
+        switch (sa) {
+            case INT:
+                switch (sb) {
+                    case FLOAT:
+                    case DOUBLE:
+                        return b;
+                    default:
+                        throw new ConfusedCFRException("Can't combine " + a + " / " + b);
+                }
+            case FLOAT:
+                switch (sb) {
+                    case INT:
+                        return a;
+                    case DOUBLE:
+                        return b;
+                    default:
+                        throw new ConfusedCFRException("Can't combine " + a + " / " + b);
+                }
+            case DOUBLE:
+                switch (sb) {
+                    case INT:
+                    case FLOAT:
+                        return a;
+                    default:
+                        throw new ConfusedCFRException("Can't combine " + a + " / " + b);
+                }
+            default:
+                throw new ConfusedCFRException("Can't combine " + a + " / " + b);
+        }
     }
 
     @Override

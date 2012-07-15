@@ -8,10 +8,6 @@ package org.benf.cfr.reader.bytecode.analysis.types;
  * See table 3.3 in JVM spec.
  */
 public enum StackType {
-    BOOLEAN("boolean", 1),
-    BYTE("byte", 1),
-    CHAR("char", 1),
-    SHORT("short", 1),
     INT("int", 1),
     FLOAT("float", 1),
     REF("reference", 1),
