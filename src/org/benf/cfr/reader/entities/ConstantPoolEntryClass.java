@@ -35,6 +35,10 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEn
         d.print("Class " + cp.getUTF8Entry(nameIndex).getValue());
     }
 
+    public String getClassName(ConstantPool cp) {
+        return cp.getUTF8Entry(nameIndex).getValue();
+    }
+
     public short getNameIndex() {
         return nameIndex;
     }

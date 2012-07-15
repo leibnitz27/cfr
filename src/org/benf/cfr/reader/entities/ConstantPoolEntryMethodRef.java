@@ -1,5 +1,8 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerDefault;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -14,6 +17,8 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
     private final long OFFSET_OF_CLASS_INDEX = 1;
     private final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
     private final boolean interfaceMethod;
+    private static final VariableNamer fakeNamer = new VariableNamerDefault();
+    private MethodPrototype methodPrototype = null;
 
     private final short classIndex;
     private final short nameAndTypeIndex;
@@ -47,6 +52,13 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
 
     public short getNameAndTypeIndex() {
         return nameAndTypeIndex;
+    }
+
+    public MethodPrototype getMethodPrototype(ConstantPool cp) {
+        if (methodPrototype == null) {
+            methodPrototype = ConstantPoolUtils.parseJavaMethodPrototype(interfaceMethod, cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp), fakeNamer);
+        }
+        return methodPrototype;
     }
 
     public boolean isInitMethod(ConstantPool cp) {

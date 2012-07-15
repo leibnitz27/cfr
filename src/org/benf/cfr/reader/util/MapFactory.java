@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.util;
 
-import org.benf.cfr.reader.util.functors.NonaryFunction;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +22,7 @@ public class MapFactory {
         return new TreeMap<X, Y>();
     }
 
-    public static <X extends Object, Y extends Object> Map<X, Y> newLazyMap(NonaryFunction<Y> factory) {
+    public static <X extends Object, Y extends Object> Map<X, Y> newLazyMap(UnaryFunction<X, Y> factory) {
         return new LazyMap<X, Y>(MapFactory.<X, Y>newMap(), factory);
     }
 }

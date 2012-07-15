@@ -19,6 +19,7 @@ public class AssignmentExpression extends AbstractExpression {
     private final Expression rValue;
 
     public AssignmentExpression(LValue lValue, Expression rValue) {
+        super(rValue.knownType());
         this.lValue = lValue;
         this.rValue = rValue;
     }

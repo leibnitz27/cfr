@@ -9,7 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Assignment;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.functors.NonaryFunction;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.List;
@@ -112,17 +112,17 @@ public class LValueAssignmentCollector implements LValueRewriter {
 
     public class FirstPassRewriter implements LValueRewriter {
         private final Map<StackSSALabel, List<StatementContainer>> usages = MapFactory.newLazyMap(
-                new NonaryFunction<List<StatementContainer>>() {
+                new UnaryFunction<StackSSALabel, List<StatementContainer>>() {
                     @Override
-                    public List<StatementContainer> invoke() {
+                    public List<StatementContainer> invoke(StackSSALabel ignore) {
                         return ListFactory.newList();
                     }
                 }
         );
         private final Map<StackSSALabel, List<LValueStatementContainer>> possibleAliases = MapFactory.newLazyMap(
-                new NonaryFunction<List<LValueStatementContainer>>() {
+                new UnaryFunction<StackSSALabel, List<LValueStatementContainer>>() {
                     @Override
-                    public List<LValueStatementContainer> invoke() {
+                    public List<LValueStatementContainer> invoke(StackSSALabel ignore) {
                         return ListFactory.newList();
                     }
                 }

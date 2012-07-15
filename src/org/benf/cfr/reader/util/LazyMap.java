@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.util;
 
-import org.benf.cfr.reader.util.functors.NonaryFunction;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Collection;
 import java.util.Map;
@@ -14,9 +14,9 @@ import java.util.Set;
  */
 public class LazyMap<X, Y> implements Map<X, Y> {
     private final Map<X, Y> inner;
-    private final NonaryFunction<Y> factory;
+    private final UnaryFunction<X, Y> factory;
 
-    public LazyMap(Map<X, Y> inner, NonaryFunction<Y> factory) {
+    public LazyMap(Map<X, Y> inner, UnaryFunction<X, Y> factory) {
         this.inner = inner;
         this.factory = factory;
     }
@@ -45,7 +45,7 @@ public class LazyMap<X, Y> implements Map<X, Y> {
     public Y get(Object o) {
         Y res = inner.get(o);
         if (res == null) {
-            res = factory.invoke();
+            res = factory.invoke((X) o);
             inner.put((X) o, res);
         }
         return res;

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -10,6 +11,12 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * Time: 06:40
  */
 public abstract class AbstractExpression implements Expression {
+    private KnownJavaType knownJavaType;
+
+    public AbstractExpression(KnownJavaType knownJavaType) {
+        this.knownJavaType = knownJavaType;
+    }
+
     @Override
     public boolean canPushDownInto() {
         return false;
@@ -23,5 +30,10 @@ public abstract class AbstractExpression implements Expression {
     @Override
     public Expression pushDown(Expression toPush, Expression parent) {
         throw new ConfusedCFRException("Push down not supported.");
+    }
+
+    @Override
+    public KnownJavaType knownType() {
+        return knownJavaType;
     }
 }

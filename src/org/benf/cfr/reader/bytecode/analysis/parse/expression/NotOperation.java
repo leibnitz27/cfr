@@ -6,6 +6,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 
 import java.util.Set;
 
@@ -20,6 +22,7 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
     private ConditionalExpression inner;
 
     public NotOperation(ConditionalExpression lhs) {
+        super(KnownJavaType.getKnownJavaType(JavaType.BOOLEAN));
         this.inner = lhs;
     }
 

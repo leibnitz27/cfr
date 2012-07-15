@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,6 +20,8 @@ public class LValueExpression extends AbstractExpression {
     private LValue lValue;
 
     public LValueExpression(LValue lValue) {
+        // Probably could do better...
+        super(KnownJavaType.getUnknown());
         this.lValue = lValue;
     }
 

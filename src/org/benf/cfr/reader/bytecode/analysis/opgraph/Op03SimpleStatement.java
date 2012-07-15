@@ -15,7 +15,6 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
-import org.benf.cfr.reader.util.functors.NonaryFunction;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
@@ -590,13 +589,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     //
     // --> if ((b=x)==(a=y))
     private static void collapseAssignmentsIntoConditional(Op03SimpleStatement ifStatement) {
+        logger.fine("Collapse assignment into conditional " + ifStatement);
         if (!appropriateForIfAssignmentCollapse(ifStatement)) return;
 
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
         ConditionalExpression conditionalExpression = innerIf.getCondition();
         /* where possible, collapse any single parent assignments into this. */
+        Op03SimpleStatement previousSource = null;
         while (ifStatement.sources.size() == 1) {
             Op03SimpleStatement source = ifStatement.sources.get(0);
+            if (source == previousSource) return;
+            previousSource = source;
             if (!(source.containedStatement instanceof Assignment)) return;
             LValue lValue = source.getCreatedLValue();
             // We don't have to worry about RHS having undesired side effects if we roll it into the
@@ -608,7 +611,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             AssignmentExpression assignmentExpression = new AssignmentExpression(assignment.getCreatedLValue(), assignment.getRValue());
             if (!ifStatement.getSSAIdentifiers().isValidReplacement(lValue, source.getSSAIdentifiers())) return;
             LValueAssignmentExpressionRewriter rewriter = new LValueAssignmentExpressionRewriter(lValue, assignmentExpression, source);
-
             Expression replacement = conditionalExpression.replaceSingleUsageLValues(rewriter, ifStatement.getSSAIdentifiers(), ifStatement);
             if (replacement == null) return;
             if (!(replacement instanceof ConditionalExpression)) return;
@@ -1673,9 +1675,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             seen.add(target);
         }
 
-        Map<Op03SimpleStatement, Set<Op03SimpleStatement>> allows = MapFactory.newLazyMap(new NonaryFunction<Set<Op03SimpleStatement>>() {
+        Map<Op03SimpleStatement, Set<Op03SimpleStatement>> allows = MapFactory.newLazyMap(new UnaryFunction<Op03SimpleStatement, Set<Op03SimpleStatement>>() {
             @Override
-            public Set<Op03SimpleStatement> invoke() {
+            public Set<Op03SimpleStatement> invoke(Op03SimpleStatement ignore) {
                 return SetFactory.newSet();
             }
         });

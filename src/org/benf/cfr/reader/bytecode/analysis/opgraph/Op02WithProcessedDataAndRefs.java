@@ -30,7 +30,7 @@ import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
-import org.benf.cfr.reader.util.functors.NonaryFunction;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -658,7 +658,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     private List<Expression> getNStackRValuesAsExpressions(int count) {
         List<Expression> res = ListFactory.newList();
-        for (int i = count - 1; i >= 0; --i) {
+        for (int i = 0; i < count; ++i) {
             res.add(getStackRValue(i));
         }
         return res;
@@ -833,9 +833,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     ) {
 
         Map<InstrIndex, List<ExceptionTempStatement>> insertions = MapFactory.newLazyMap(
-                new NonaryFunction<List<ExceptionTempStatement>>() {
+                new UnaryFunction<InstrIndex, List<ExceptionTempStatement>>() {
                     @Override
-                    public List<ExceptionTempStatement> invoke() {
+                    public List<ExceptionTempStatement> invoke(InstrIndex ignore) {
                         return ListFactory.newList();
                     }
                 });

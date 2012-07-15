@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +19,8 @@ public class ArrayIndex extends AbstractExpression {
     private Expression index;
 
     public ArrayIndex(Expression array, Expression index) {
+        // If we knew what type array was, we could do more...
+        super(KnownJavaType.getUnknown());
         this.array = array;
         this.index = index;
     }

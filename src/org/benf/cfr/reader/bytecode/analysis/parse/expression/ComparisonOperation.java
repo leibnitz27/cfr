@@ -6,6 +6,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
 
@@ -24,6 +26,7 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     private final CompOp op;
 
     public ComparisonOperation(Expression lhs, Expression rhs, CompOp op) {
+        super(KnownJavaType.getKnownJavaType(JavaType.BOOLEAN));
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;

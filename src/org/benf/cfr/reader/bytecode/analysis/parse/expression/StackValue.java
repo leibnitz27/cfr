@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +19,7 @@ public class StackValue extends AbstractExpression {
     private final StackSSALabel stackValue;
 
     public StackValue(StackSSALabel stackValue) {
+        super(KnownJavaType.getUnknown());
         this.stackValue = stackValue;
     }
 

@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -20,6 +21,7 @@ public class TernaryExpression extends AbstractExpression {
     private Expression rhs;
 
     public TernaryExpression(ConditionalExpression condition, Expression lhs, Expression rhs) {
+        super(KnownJavaType.eitherOf(lhs.knownType(), rhs.knownType()));
         this.condition = condition;
         this.lhs = lhs;
         this.rhs = rhs;
@@ -36,6 +38,7 @@ public class TernaryExpression extends AbstractExpression {
         if (replacementCondition != condition) throw new ConfusedCFRException("Can't yet support replacing conditions");
         lhs = lhs.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         rhs = rhs.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+
         return this;
     }
 
@@ -45,5 +48,6 @@ public class TernaryExpression extends AbstractExpression {
         lhs.collectUsedLValues(lValueUsageCollector);
         rhs.collectUsedLValues(lValueUsageCollector);
     }
+
 
 }

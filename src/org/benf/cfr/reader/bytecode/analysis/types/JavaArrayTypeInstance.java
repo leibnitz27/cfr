@@ -29,4 +29,17 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         }
         return sb.toString();
     }
+
+    @Override
+    public int hashCode() {
+        return (dimensions * 31) + underlyingType.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof JavaArrayTypeInstance)) return false;
+        JavaArrayTypeInstance other = (JavaArrayTypeInstance) o;
+        return (other.dimensions == dimensions && other.underlyingType.equals(underlyingType));
+    }
 }

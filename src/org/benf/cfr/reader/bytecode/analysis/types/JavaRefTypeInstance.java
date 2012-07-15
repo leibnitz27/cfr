@@ -22,4 +22,17 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     public String toString() {
         return className;
     }
+
+    @Override
+    public int hashCode() {
+        return 31 + className.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof JavaRefTypeInstance)) return false;
+        JavaRefTypeInstance other = (JavaRefTypeInstance) o;
+        return other.className.equals(className);
+    }
 }

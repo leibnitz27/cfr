@@ -16,11 +16,13 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,6 +32,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class CodeAnalyser {
+    private final static Logger logger = LoggerFactory.create(CodeAnalyser.class);
 
     private final AttributeCode originalCodeAttribute;
     private final ConstantPool cp;
@@ -148,17 +151,22 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
+        logger.info("collapseAssignmentsIntoConditionals");
         Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes);
 
         // Collapse conditionals into || / &&
+        logger.info("condenseConditionals");
         Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
+        logger.info("simplifyConditionals");
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         // Rewrite conditionals which jump into an immediate jump (see specifics)
+        logger.info("rewriteNegativeJumps");
         Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes);
 
         // Identify simple while loops.
+        logger.info("identifyLoops1");
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
 
         // Perform this before simple forward if detection, as it allows us to not have to consider

@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.ArrayType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,6 +20,8 @@ public class NewPrimitiveArray extends AbstractExpression {
     private final ArrayType type;
 
     public NewPrimitiveArray(Expression size, byte type) {
+        // We don't really know anything about the array dimensionality, just the underlying type. :P
+        super(KnownJavaType.getUnknown());
         this.size = size;
         this.type = ArrayType.getArrayType(type);
     }

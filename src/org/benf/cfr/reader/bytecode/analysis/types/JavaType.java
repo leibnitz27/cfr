@@ -18,7 +18,8 @@ public enum JavaType implements JavaTypeInstance {
     RETURNADDRESSORREF("returnaddress or ref", StackType.RETURNADDRESSORREF),
     LONG("long", StackType.LONG),
     DOUBLE("double", StackType.DOUBLE),
-    VOID("void", StackType.VOID);
+    VOID("void", StackType.VOID),
+    NULL("null", StackType.REF);  // Null is a special type, sort of.
 
     private final String name;
     private final StackType stackType;
@@ -36,7 +37,6 @@ public enum JavaType implements JavaTypeInstance {
     public StackType getStackType() {
         return stackType;
     }
-
 
     @Override
     public String toString() {

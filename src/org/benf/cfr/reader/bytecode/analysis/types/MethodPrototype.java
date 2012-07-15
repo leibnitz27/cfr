@@ -40,4 +40,8 @@ public class MethodPrototype {
         sb.append(")");
         return sb.toString();
     }
+
+    public JavaTypeInstance getReturnType() {
+        return result;
+    }
 }

@@ -5,6 +5,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
@@ -21,6 +23,7 @@ public class InstanceOfExpression extends AbstractExpression {
     private String className;
 
     public InstanceOfExpression(Expression lhs, ConstantPool cp, ConstantPoolEntry cpe) {
+        super(KnownJavaType.getKnownJavaType(JavaType.BOOLEAN));
         this.lhs = lhs;
         ConstantPoolEntryClass cpec = (ConstantPoolEntryClass) cpe;
         this.className = cp.getUTF8Entry(cpec.getNameIndex()).getValue();
