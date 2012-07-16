@@ -145,4 +145,8 @@ public class IfStatement extends GotoStatement {
         this.knownIfBlock = ifBlock;
         this.knownElseBlock = elseBlock;
     }
+
+    public void optimiseForTypes() {
+        condition = condition.optimiseForType();
+    }
 }

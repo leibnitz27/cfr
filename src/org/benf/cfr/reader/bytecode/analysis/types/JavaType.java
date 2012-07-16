@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.util.ConfusedCFRException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -41,5 +43,26 @@ public enum JavaType implements JavaTypeInstance {
     @Override
     public String toString() {
         return name;
+    }
+
+    public static JavaType getJavaTypeForStackType(StackType stackType) {
+        switch (stackType) {
+            case INT:
+                return JavaType.INT;
+            case FLOAT:
+                return JavaType.FLOAT;
+            case REF:
+                return JavaType.REF;
+            case RETURNADDRESS:
+                return JavaType.RETURNADDRESS;
+            case RETURNADDRESSORREF:
+                return JavaType.RETURNADDRESSORREF;
+            case LONG:
+                return JavaType.LONG;
+            case DOUBLE:
+                return JavaType.DOUBLE;
+            default:
+                throw new ConfusedCFRException("Unexpected stacktype.");
+        }
     }
 }

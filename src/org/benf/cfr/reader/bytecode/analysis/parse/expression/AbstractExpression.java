@@ -33,7 +33,7 @@ public abstract class AbstractExpression implements Expression {
     }
 
     @Override
-    public KnownJavaType knownType() {
+    public KnownJavaType getKnownType() {
         return knownJavaType;
     }
 }

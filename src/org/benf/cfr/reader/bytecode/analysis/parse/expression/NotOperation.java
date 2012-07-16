@@ -61,4 +61,8 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
         inner.collectUsedLValues(lValueUsageCollector);
     }
 
+    @Override
+    public ConditionalExpression optimiseForType() {
+        return this;
+    }
 }

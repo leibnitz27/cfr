@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public class KnownJavaType {
     private final JavaTypeInstance javaType;
-    private final boolean isKnown;
+    private final boolean isSure;
 
     private final static Map<JavaTypeInstance, KnownJavaType> knownTypes = MapFactory.newLazyMap(new UnaryFunction<JavaTypeInstance, KnownJavaType>() {
         @Override
@@ -37,9 +37,9 @@ public class KnownJavaType {
     });
     private final static KnownJavaType UNKNOWN = new KnownJavaType(null, false);
 
-    private KnownJavaType(JavaTypeInstance javaType, boolean known) {
+    private KnownJavaType(JavaTypeInstance javaType, boolean sure) {
         this.javaType = javaType;
-        this.isKnown = known;
+        this.isSure = sure;
     }
 
     public static KnownJavaType getJavaType(JavaTypeInstance javaType, boolean known) {
@@ -59,6 +59,14 @@ public class KnownJavaType {
         return getJavaType(javaType, false);
     }
 
+    /* We don't know what the java type is, but we know what the stack type is -
+     * map this to an unsure javatype.
+     */
+    public static KnownJavaType getUnknownStackType(StackType stackType) {
+        JavaType javaType = JavaType.getJavaTypeForStackType(stackType);
+        return getJavaType(javaType, false);
+    }
+
     public static KnownJavaType getUnknown() {
         return UNKNOWN;
     }
@@ -72,16 +80,17 @@ public class KnownJavaType {
         if (a.javaType == JavaType.NULL) return b;
         if (b.javaType == JavaType.NULL) return a;
         if (a.javaType.equals(b.javaType)) {
-            if (a.isKnown) return a;
+            if (a.isSure) return a;
             return b;
         }
         StackType sa = a.javaType.getStackType();
         StackType sb = b.javaType.getStackType();
         if (sa == sb) {
-            if (a.isKnown) return a;
+            if (a.isSure) return a;
             return b;
         }
         /* Else we don't know .... but we can combine as per the spec. */
+        // This could probably be done a lot nicer with some kind of precedence thingummy.
         switch (sa) {
             case INT:
                 switch (sb) {
@@ -115,6 +124,6 @@ public class KnownJavaType {
 
     @Override
     public String toString() {
-        return "JavaType [" + javaType + "] sure? " + isKnown;
+        return "JavaType [" + javaType + "] sure? " + isSure;
     }
 }

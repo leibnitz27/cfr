@@ -165,6 +165,8 @@ public class CodeAnalyser {
         logger.info("rewriteNegativeJumps");
         Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes);
 
+        Op03SimpleStatement.optimiseForTypes(op03SimpleParseNodes);
+
         // Identify simple while loops.
         logger.info("identifyLoops1");
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
@@ -186,6 +188,7 @@ public class CodeAnalyser {
         // breaks again.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
+
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 

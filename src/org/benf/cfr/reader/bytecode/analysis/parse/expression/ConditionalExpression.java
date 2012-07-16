@@ -20,4 +20,6 @@ public interface ConditionalExpression extends Expression {
     ConditionalExpression getDemorganApplied(boolean amNegating);
 
     Set<LValue> getLoopLValues();
+
+    ConditionalExpression optimiseForType();
 }

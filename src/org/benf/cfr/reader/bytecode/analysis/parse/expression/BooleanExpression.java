@@ -15,25 +15,19 @@ import java.util.Set;
 /**
  * Created by IntelliJ IDEA.
  * User: lee
- * Date: 22/03/2012
- * Time: 06:45
- * To change this template use File | Settings | File Templates.
+ * Date: 15/07/2012
  */
-public class BooleanOperation extends AbstractExpression implements ConditionalExpression {
-    private ConditionalExpression lhs;
-    private ConditionalExpression rhs;
-    private BoolOp op;
+public class BooleanExpression extends AbstractExpression implements ConditionalExpression {
+    private Expression inner;
 
-    public BooleanOperation(ConditionalExpression lhs, ConditionalExpression rhs, BoolOp op) {
+    public BooleanExpression(Expression inner) {
         super(KnownJavaType.getKnownJavaType(JavaType.BOOLEAN));
-        this.lhs = lhs;
-        this.rhs = rhs;
-        this.op = op;
+        this.inner = inner;
     }
 
     @Override
     public int getSize() {
-        return 2 + lhs.getSize() + 2 + rhs.getSize();
+        return 1;
     }
 
     @Override
@@ -43,7 +37,7 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
 
     @Override
     public String toString() {
-        return "(" + lhs.toString() + ") " + op.getShowAs() + " (" + rhs.toString() + ")";
+        return inner.toString();
     }
 
     @Override
@@ -53,27 +47,31 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
 
     @Override
     public ConditionalExpression getDemorganApplied(boolean amNegating) {
-        return new BooleanOperation(lhs.getDemorganApplied(amNegating), rhs.getDemorganApplied(amNegating), amNegating ? op.getDemorgan() : op);
+        if (!amNegating) return this;
+        return getNegated();
+    }
+
+
+    protected void addIfLValue(Expression expression, Set<LValue> res) {
+        if (expression instanceof LValueExpression) {
+            res.add(((LValueExpression) expression).getLValue());
+        }
     }
 
     @Override
     public Set<LValue> getLoopLValues() {
         Set<LValue> res = SetFactory.newSet();
-        res.addAll(lhs.getLoopLValues());
-        res.addAll(rhs.getLoopLValues());
+        addIfLValue(inner, res);
         return res;
     }
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        lhs.collectUsedLValues(lValueUsageCollector);
-        rhs.collectUsedLValues(lValueUsageCollector);
+        inner.collectUsedLValues(lValueUsageCollector);
     }
 
     @Override
     public ConditionalExpression optimiseForType() {
-        lhs = lhs.optimiseForType();
-        rhs = rhs.optimiseForType();
         return this;
     }
 }

@@ -21,7 +21,7 @@ public class TernaryExpression extends AbstractExpression {
     private Expression rhs;
 
     public TernaryExpression(ConditionalExpression condition, Expression lhs, Expression rhs) {
-        super(KnownJavaType.eitherOf(lhs.knownType(), rhs.knownType()));
+        super(KnownJavaType.eitherOf(lhs.getKnownType(), rhs.getKnownType()));
         this.condition = condition;
         this.lhs = lhs;
         this.rhs = rhs;

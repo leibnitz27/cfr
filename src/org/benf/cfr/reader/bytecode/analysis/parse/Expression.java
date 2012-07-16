@@ -21,5 +21,5 @@ public interface Expression {
 
     Expression pushDown(Expression toPush, Expression parent);
 
-    KnownJavaType knownType();
+    KnownJavaType getKnownType();
 }

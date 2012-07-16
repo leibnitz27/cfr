@@ -1934,6 +1934,18 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     }
 
+    private static void optimiseForTypes(Op03SimpleStatement statement) {
+        IfStatement ifStatement = (IfStatement) (statement.containedStatement);
+        ifStatement.optimiseForTypes();
+    }
+
+    public static void optimiseForTypes(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> conditionals = Functional.filter(statements, new TypeFilter(IfStatement.class));
+        for (Op03SimpleStatement conditional : conditionals) {
+            optimiseForTypes(conditional);
+        }
+    }
+
     @Override
     public String toString() {
         return "Op03SimpleStatement - " + index + " : " + containedStatement;

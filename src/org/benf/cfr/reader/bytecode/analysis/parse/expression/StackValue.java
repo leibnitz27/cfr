@@ -19,7 +19,7 @@ public class StackValue extends AbstractExpression {
     private final StackSSALabel stackValue;
 
     public StackValue(StackSSALabel stackValue) {
-        super(KnownJavaType.getUnknown());
+        super(KnownJavaType.getUnknownStackType(stackValue.getStackEntry().getType()));
         this.stackValue = stackValue;
     }
 

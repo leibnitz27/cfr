@@ -18,7 +18,7 @@ public class ArithmeticMonOperation extends AbstractExpression {
     private final ArithOp op;
 
     public ArithmeticMonOperation(Expression lhs, ArithOp op) {
-        super(lhs.knownType());
+        super(lhs.getKnownType());
         this.lhs = lhs;
         this.op = op;
     }

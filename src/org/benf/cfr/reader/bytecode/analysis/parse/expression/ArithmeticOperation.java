@@ -23,7 +23,7 @@ public class ArithmeticOperation extends AbstractExpression {
     private final ArithOp op;
 
     public ArithmeticOperation(Expression lhs, Expression rhs, ArithOp op) {
-        super(KnownJavaType.eitherOf(lhs.knownType(), rhs.knownType()));
+        super(KnownJavaType.eitherOf(lhs.getKnownType(), rhs.getKnownType()));
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;
@@ -109,6 +109,10 @@ public class ArithmeticOperation extends AbstractExpression {
         }
     }
 
+    /*
+     * parent is (x LCMP y) > 0
+     * (this is (x LCMP y)).
+     */
     @Override
     public Expression pushDown(Expression toPush, Expression parent) {
         if (!(parent instanceof ComparisonOperation)) return null;
