@@ -5,6 +5,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.io.*;
 
@@ -65,7 +66,7 @@ public class Main {
 
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
-//            LoggerFactory.setGlobalLoggingLevel();
+            LoggerFactory.setGlobalLoggingLevel();
             byte[] content = getBytesFromFile(fname);
             ByteData data = new BaseByteData(content);
             ClassFile c = new ClassFile(data);

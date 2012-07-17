@@ -1,9 +1,6 @@
 package org.benf.cfr.reader.util.output;
 
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.StreamHandler;
+import java.util.logging.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,15 +12,23 @@ import java.util.logging.StreamHandler;
  */
 public class LoggerFactory {
 
-    private static StreamHandler handler = new ConsoleHandler();
+    private static Handler handler = getHandler();
     private static Level level = Level.WARNING;
 
     public static void setGlobalLoggingLevel() {
         level = Level.FINEST;
     }
 
+    private static Handler getHandler() {
+        Handler handler = new ConsoleHandler();
+        Formatter formatter = new LogFormatter();
+        handler.setFormatter(formatter);
+        return handler;
+    }
+
     public static <T> Logger create(Class<T> clazz) {
         Logger logger = Logger.getLogger(clazz.getName());
+        logger.setUseParentHandlers(false);
         logger.addHandler(handler);
         logger.setLevel(level);
         return logger;
