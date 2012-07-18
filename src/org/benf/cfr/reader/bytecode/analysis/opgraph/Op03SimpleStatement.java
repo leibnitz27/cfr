@@ -358,11 +358,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         int indent = dumper.getIndent();
         getStatement().dump(dumper);
-        dumper.print(" " + sources.size() + " sources, " + targets.size() + " targets , immediately after " + immediatelyAfterBlocks + "\n");
+//        dumper.print(" " + sources.size() + " sources, " + targets.size() + " targets , immediately after " + immediatelyAfterBlocks + "\n");
     }
 
     @Override
     public void dump(Dumper dumper) {
+        dumper.print("**********\n");
         List<Op03SimpleStatement> reachableNodes = ListFactory.newList();
         GraphVisitorCallee graphVisitorCallee = new GraphVisitorCallee(reachableNodes);
         GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(this, graphVisitorCallee);
@@ -372,6 +373,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement op : reachableNodes) {
             op.dumpInner(dumper);
         }
+        dumper.print("**********\n");
     }
 
     public Op04StructuredStatement getStructuredStatementPlaceHolder() {
@@ -1278,7 +1280,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static int getFarthestReachableInRange(List<Op03SimpleStatement> statements, int start, int afterEnd) {
         Map<Op03SimpleStatement, Integer> instrToIdx = MapFactory.newMap();
         for (int x = start; x < afterEnd; ++x) {
-            instrToIdx.put(statements.get(x), x);
+            Op03SimpleStatement statement = statements.get(x);
+            instrToIdx.put(statement, x);
         }
 
         Set<Integer> reachableNodes = SetFactory.newSet();
@@ -1291,12 +1294,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         boolean foundLast = false;
 
         for (int x = first; x < afterEnd; ++x) {
-            if (reachableNodes.contains(x)) {
+            if (reachableNodes.contains(x) || statements.get(x).isNop()) {
                 if (foundLast) {
                     throw new ConfusedCFRException("reachable test BLOCK was exited and re-entered.");
                 }
             } else {
-                if (!foundLast) last = x - 1;
+                if (!foundLast) {
+                    last = x - 1;
+                }
                 foundLast = true;
             }
         }
