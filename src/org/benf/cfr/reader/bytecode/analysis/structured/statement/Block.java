@@ -44,14 +44,8 @@ public class Block extends AbstractStructuredStatement {
             Op04StructuredStatement oldGoto = containedStatements.getLast();
             oldGoto.replaceStatementWithNOP("");
             return true;
-        } else if (structuredStatement instanceof UnstructuredBreak) {
-            return false;
-        } else if (structuredStatement instanceof StructuredBreak) {
-            return false;
-        } else if (structuredStatement instanceof UnstructuredContinue) {
-            return false;
         } else {
-            throw new ConfusedCFRException("Trying to remove last goto of a block, but it's not an unstructured GOTO");
+            return false;
         }
     }
 
