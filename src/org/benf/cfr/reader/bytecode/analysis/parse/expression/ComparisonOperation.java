@@ -7,8 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaType;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
 
@@ -23,10 +21,8 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     private Expression lhs;
     private Expression rhs;
     private final CompOp op;
-    private static final KnownJavaType BOOLEAN_KNOWN = KnownJavaType.getKnownJavaType(JavaType.BOOLEAN);
 
     public ComparisonOperation(Expression lhs, Expression rhs, CompOp op) {
-        super(BOOLEAN_KNOWN);
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;
@@ -122,7 +118,6 @@ public class ComparisonOperation extends AbstractExpression implements Condition
             default:
                 return BooleanComparisonType.NOT;
         }
-        if (a.getKnownType() != BOOLEAN_KNOWN) return BooleanComparisonType.NOT;
         if (!(b instanceof Literal)) return BooleanComparisonType.NOT;
         Literal literal = (Literal) b;
         TypedLiteral lit = literal.getValue();

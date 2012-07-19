@@ -7,7 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -23,7 +22,6 @@ public class ArithmeticOperation extends AbstractExpression {
     private final ArithOp op;
 
     public ArithmeticOperation(Expression lhs, Expression rhs, ArithOp op) {
-        super(KnownJavaType.eitherOf(lhs.getKnownType(), rhs.getKnownType()));
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;

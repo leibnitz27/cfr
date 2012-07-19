@@ -18,7 +18,6 @@ public class Literal extends AbstractExpression {
     private final TypedLiteral value;
 
     public Literal(TypedLiteral value) {
-        super(value.getKnownJavaType());
         this.value = value;
     }
 

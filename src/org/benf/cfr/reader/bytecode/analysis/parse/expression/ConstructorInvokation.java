@@ -5,8 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
@@ -28,7 +26,6 @@ public class ConstructorInvokation extends AbstractExpression {
     private final ConstantPool cp;
 
     public ConstructorInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, ConstantPoolEntryClass type, List<Expression> args) {
-        super(KnownJavaType.getKnownJavaType(new JavaRefTypeInstance(type.getClassName(cp))));
         this.function = function;
         this.type = type;
         this.args = args;

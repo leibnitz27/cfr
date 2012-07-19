@@ -6,8 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaType;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.Set;
@@ -25,7 +23,6 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     private BoolOp op;
 
     public BooleanOperation(ConditionalExpression lhs, ConditionalExpression rhs, BoolOp op) {
-        super(KnownJavaType.getKnownJavaType(JavaType.BOOLEAN));
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;

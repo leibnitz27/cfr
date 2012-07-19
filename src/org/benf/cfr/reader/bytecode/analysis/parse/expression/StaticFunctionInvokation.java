@@ -5,7 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.entities.*;
 
 import java.util.List;
@@ -23,7 +22,6 @@ public class StaticFunctionInvokation extends AbstractExpression {
     private final ConstantPool cp;
 
     public StaticFunctionInvokation(ConstantPool cp, ConstantPoolEntry function, List<Expression> args) {
-        super(KnownJavaType.getKnownJavaType(((ConstantPoolEntryMethodRef) function).getMethodPrototype(cp).getReturnType()));
         this.function = (ConstantPoolEntryMethodRef) function;
         this.args = args;
         this.cp = cp;

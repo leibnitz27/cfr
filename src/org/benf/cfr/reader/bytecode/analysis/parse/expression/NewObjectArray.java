@@ -5,7 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
@@ -24,7 +23,6 @@ public class NewObjectArray extends AbstractExpression {
 
     public NewObjectArray(Expression size, ConstantPool constantPool, ConstantPoolEntry type) {
         // We don't really know anything about the array dimensionality, just the underlying type. :P
-        super(KnownJavaType.getUnknown());
         this.size = size;
         this.cp = constantPool;
         this.type = (ConstantPoolEntryClass) type;

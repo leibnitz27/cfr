@@ -6,8 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaType;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.KnownJavaType;
 import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.Set;
@@ -21,7 +19,6 @@ public class BooleanExpression extends AbstractExpression implements Conditional
     private Expression inner;
 
     public BooleanExpression(Expression inner) {
-        super(KnownJavaType.getKnownJavaType(JavaType.BOOLEAN));
         this.inner = inner;
     }
 
