@@ -35,28 +35,28 @@ public class ConstantPoolUtils {
                 javaTypeInstance = new JavaRefTypeInstance(tok.substring(idx + 1, tok.length() - 1));
                 break;
             case 'B':   // byte
-                javaTypeInstance = JavaType.BYTE;
+                javaTypeInstance = RawJavaType.BYTE;
                 break;
             case 'C':   // char
-                javaTypeInstance = JavaType.CHAR;
+                javaTypeInstance = RawJavaType.CHAR;
                 break;
             case 'I':   // integer
-                javaTypeInstance = JavaType.INT;
+                javaTypeInstance = RawJavaType.INT;
                 break;
             case 'S':   // short
-                javaTypeInstance = JavaType.SHORT;
+                javaTypeInstance = RawJavaType.SHORT;
                 break;
             case 'Z':   // boolean
-                javaTypeInstance = JavaType.BOOLEAN;
+                javaTypeInstance = RawJavaType.BOOLEAN;
                 break;
             case 'F':   // float
-                javaTypeInstance = JavaType.FLOAT;
+                javaTypeInstance = RawJavaType.FLOAT;
                 break;
             case 'D':   // double
-                javaTypeInstance = JavaType.DOUBLE;
+                javaTypeInstance = RawJavaType.DOUBLE;
                 break;
             case 'J':   // long
-                javaTypeInstance = JavaType.LONG;
+                javaTypeInstance = RawJavaType.LONG;
                 break;
             default:
                 throw new ConfusedCFRException("Invalid type string " + tok);
@@ -107,7 +107,7 @@ public class ConstantPoolUtils {
             curridx += typeTok.length();
         }
         curridx++;
-        JavaTypeInstance resultType = JavaType.VOID;
+        JavaTypeInstance resultType = RawJavaType.VOID;
         switch (proto.charAt(curridx)) {
             case 'V':
                 break;

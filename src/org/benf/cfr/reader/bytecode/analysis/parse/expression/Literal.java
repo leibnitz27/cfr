@@ -12,7 +12,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * User: lee
  * Date: 16/03/2012
  * Time: 17:44
- * To change this template use File | Settings | File Templates.
  */
 public class Literal extends AbstractExpression {
     private final TypedLiteral value;

@@ -8,7 +8,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * Date: 13/07/2012
  * Time: 06:57
  */
-public enum JavaType implements JavaTypeInstance {
+public enum RawJavaType implements JavaTypeInstance {
     BOOLEAN("boolean", StackType.INT),
     BYTE("byte", StackType.INT),
     CHAR("char", StackType.INT),
@@ -26,7 +26,7 @@ public enum JavaType implements JavaTypeInstance {
     private final String name;
     private final StackType stackType;
 
-    private JavaType(String name, StackType stackType) {
+    private RawJavaType(String name, StackType stackType) {
         this.name = name;
         this.stackType = stackType;
     }
@@ -45,22 +45,22 @@ public enum JavaType implements JavaTypeInstance {
         return name;
     }
 
-    public static JavaType getJavaTypeForStackType(StackType stackType) {
+    public static RawJavaType getMaximalJavaTypeForStackType(StackType stackType) {
         switch (stackType) {
             case INT:
-                return JavaType.INT;
+                return RawJavaType.INT;
             case FLOAT:
-                return JavaType.FLOAT;
+                return RawJavaType.FLOAT;
             case REF:
-                return JavaType.REF;
+                return RawJavaType.REF;
             case RETURNADDRESS:
-                return JavaType.RETURNADDRESS;
+                return RawJavaType.RETURNADDRESS;
             case RETURNADDRESSORREF:
-                return JavaType.RETURNADDRESSORREF;
+                return RawJavaType.RETURNADDRESSORREF;
             case LONG:
-                return JavaType.LONG;
+                return RawJavaType.LONG;
             case DOUBLE:
-                return JavaType.DOUBLE;
+                return RawJavaType.DOUBLE;
             default:
                 throw new ConfusedCFRException("Unexpected stacktype.");
         }
