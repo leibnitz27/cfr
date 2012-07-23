@@ -20,6 +20,7 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
     private ConditionalExpression inner;
 
     public NotOperation(ConditionalExpression lhs) {
+        super(lhs.getInferredJavaType());
         this.inner = lhs;
     }
 

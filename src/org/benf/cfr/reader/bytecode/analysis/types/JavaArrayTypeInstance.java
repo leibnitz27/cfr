@@ -42,4 +42,14 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         JavaArrayTypeInstance other = (JavaArrayTypeInstance) o;
         return (other.dimensions == dimensions && other.underlyingType.equals(underlyingType));
     }
+
+    @Override
+    public boolean isComplexType() {
+        return true;
+    }
+
+    @Override
+    public RawJavaType getRawTypeOfSimpleType() {
+        return underlyingType.getRawTypeOfSimpleType();
+    }
 }

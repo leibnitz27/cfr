@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollect
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryFieldRef;
@@ -19,13 +20,14 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * Time: 18:32
  * To change this template use File | Settings | File Templates.
  */
-public class FieldVariable implements LValue {
+public class FieldVariable extends AbstractLValue {
 
     private Expression object;
     private final ConstantPool cp;
     private final ConstantPoolEntryFieldRef field;
 
     public FieldVariable(Expression object, ConstantPool cp, ConstantPoolEntry field) {
+        super(new InferredJavaType(((ConstantPoolEntryFieldRef) field).getJavaTypeInstance(cp), InferredJavaType.Source.FIELD));
         this.object = object;
         this.field = (ConstantPoolEntryFieldRef) field;
         this.cp = cp;

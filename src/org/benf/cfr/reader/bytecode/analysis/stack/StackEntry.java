@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.stack;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
 
@@ -23,6 +24,7 @@ public class StackEntry {
     private final StackSSALabel lValue;
     private long usageCount = 0;
     private final StackType stackType;
+    private final InferredJavaType inferredJavaType = new InferredJavaType();
 
     public StackEntry(StackType stackType) {
         id0 = sid++;
@@ -66,5 +68,9 @@ public class StackEntry {
 
     public StackType getType() {
         return stackType;
+    }
+
+    public InferredJavaType getInferredJavaType() {
+        return inferredJavaType;
     }
 }

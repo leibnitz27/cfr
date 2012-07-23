@@ -7,16 +7,17 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntryHolder;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
@@ -232,38 +233,38 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
 
-    public Statement createStatement(VariableNamer variableNamer) {
+    public Statement createStatement(VariableFactory variableFactory) {
         switch (instr) {
             case ALOAD:
             case ILOAD:
             case LLOAD:
             case DLOAD:
             case FLOAD:
-                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset)));
             case ALOAD_0:
             case ILOAD_0:
             case LLOAD_0:
             case DLOAD_0:
             case FLOAD_0:
-                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(0, variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(0, originalRawOffset)));
             case ALOAD_1:
             case ILOAD_1:
             case LLOAD_1:
             case DLOAD_1:
             case FLOAD_1:
-                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(1, variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(1, originalRawOffset)));
             case ALOAD_2:
             case ILOAD_2:
             case LLOAD_2:
             case DLOAD_2:
             case FLOAD_2:
-                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(2, variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(2, originalRawOffset)));
             case ALOAD_3:
             case ILOAD_3:
             case LLOAD_3:
             case DLOAD_3:
             case FLOAD_3:
-                return new Assignment(getStackLValue(0), new LValueExpression(new LocalVariable(3, variableNamer, originalRawOffset)));
+                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(3, originalRawOffset)));
             case ACONST_NULL:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getNull()));
             case ICONST_M1:
@@ -301,31 +302,31 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LSTORE:
             case DSTORE:
             case FSTORE:
-                return new Assignment(new LocalVariable(getInstrArgByte(0), variableNamer, originalRawOffset), getStackRValue(0));
+                return new Assignment(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset), getStackRValue(0));
             case ISTORE_0:
             case ASTORE_0:
             case LSTORE_0:
             case DSTORE_0:
             case FSTORE_0:
-                return new Assignment(new LocalVariable(0, variableNamer, originalRawOffset), getStackRValue(0));
+                return new Assignment(variableFactory.localVariable(0, originalRawOffset), getStackRValue(0));
             case ISTORE_1:
             case ASTORE_1:
             case LSTORE_1:
             case DSTORE_1:
             case FSTORE_1:
-                return new Assignment(new LocalVariable(1, variableNamer, originalRawOffset), getStackRValue(0));
+                return new Assignment(variableFactory.localVariable(1, originalRawOffset), getStackRValue(0));
             case ISTORE_2:
             case ASTORE_2:
             case LSTORE_2:
             case DSTORE_2:
             case FSTORE_2:
-                return new Assignment(new LocalVariable(2, variableNamer, originalRawOffset), getStackRValue(0));
+                return new Assignment(variableFactory.localVariable(2, originalRawOffset), getStackRValue(0));
             case ISTORE_3:
             case ASTORE_3:
             case LSTORE_3:
             case DSTORE_3:
             case FSTORE_3:
-                return new Assignment(new LocalVariable(3, variableNamer, originalRawOffset), getStackRValue(0));
+                return new Assignment(variableFactory.localVariable(3, originalRawOffset), getStackRValue(0));
             case NEW:
                 return new Assignment(getStackLValue(0), new NewObject(cp, cpEntries[0]));
             case NEWARRAY:
@@ -406,15 +407,22 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case F2L:
             case D2F:
             case D2I:
-            case D2L:
-                return new Assignment(getStackLValue(0), getStackRValue(0));
+            case D2L: {
+                LValue lValue = getStackLValue(0);
+                lValue.getInferredJavaType().useAsWithCast(instr.getRawJavaType());
+                return new Assignment(lValue, getStackRValue(0));
+            }
             case INSTANCEOF:
                 return new Assignment(getStackLValue(0), new InstanceOfExpression(getStackRValue(0), cp, cpEntries[0]));
             case CHECKCAST:
                 // Not strictly true, but matches our intermediate form.
                 return new Assignment(getStackLValue(0), getStackRValue(0));
             case INVOKESTATIC: {
-                StaticFunctionInvokation funcCall = new StaticFunctionInvokation(cp, cpEntries[0], getNStackRValuesAsExpressions(stackConsumed.size()));
+                ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
+                MethodPrototype methodPrototype = function.getMethodPrototype(cp);
+                List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size());
+                methodPrototype.tightenArgs(args);
+                StaticFunctionInvokation funcCall = new StaticFunctionInvokation(cp, function, args);
                 if (stackProduced.size() == 0) {
                     return new ExpressionStatement(funcCall);
                 } else {
@@ -426,7 +434,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case INVOKEINTERFACE: {
                 ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
                 StackValue object = getStackRValue(stackConsumed.size() - 1);
-                MemberFunctionInvokation funcCall = new MemberFunctionInvokation(cp, function, object, getNStackRValuesAsExpressions(stackConsumed.size() - 1));
+                MethodPrototype methodPrototype = function.getMethodPrototype(cp);
+                List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size() - 1);
+                methodPrototype.tightenArgs(args);
+                MemberFunctionInvokation funcCall = new MemberFunctionInvokation(cp, function, methodPrototype, object, args);
                 if (function.isInitMethod(cp)) {
                     return new ConstructorStatement(funcCall);
                 } else {
@@ -615,8 +626,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     op = ArithOp.MINUS;
                 }
                 // Can we have ++ / += instead?
-                return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
-                        new ArithmeticOperation(new LValueExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
+                return new Assignment(variableFactory.localVariable(variableIndex, originalRawOffset),
+                        new ArithmeticOperation(new LValueExpression(variableFactory.localVariable(variableIndex, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
             case IINC_WIDE: {
                 int variableIndex = getInstrArgShort(1);
@@ -627,8 +638,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     op = ArithOp.MINUS;
                 }
                 // Can we have ++ / += instead?
-                return new Assignment(new LocalVariable(variableIndex, variableNamer, originalRawOffset),
-                        new ArithmeticOperation(new LValueExpression(new LocalVariable(variableIndex, variableNamer, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
+                return new Assignment(variableFactory.localVariable(variableIndex, originalRawOffset),
+                        new ArithmeticOperation(new LValueExpression(variableFactory.localVariable(variableIndex, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
 
             case DNEG:
@@ -695,11 +706,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         // By only processing reachable bytecode, we ignore deliberate corruption.   However, we could
         // Nop out unreachable code, so as to not have this ugliness.
         // We start at 0 as that's not controversial ;)
+        final VariableFactory variableFactory = new VariableFactory(variableNamer);
         GraphVisitor o2Converter = new GraphVisitorDFS(op2list.get(0),
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override
                     public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(variableNamer));
+                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(variableFactory));
                         conversionHelper.registerOriginalAndNew(arg1, res);
                         op03SimpleParseNodesTmp.add(res);
                         for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {

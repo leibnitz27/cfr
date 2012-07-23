@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollect
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,4 +21,6 @@ public interface LValue {
     SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory);
 
     LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
+
+    InferredJavaType getInferredJavaType();
 }

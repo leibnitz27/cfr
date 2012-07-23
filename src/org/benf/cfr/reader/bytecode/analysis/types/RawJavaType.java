@@ -41,6 +41,20 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
     @Override
+    public boolean isComplexType() {
+        return false;
+    }
+
+    @Override
+    public RawJavaType getRawTypeOfSimpleType() {
+        return this;
+    }
+
+    public String getCastString() {
+        return "(" + name + ")";
+    }
+
+    @Override
     public String toString() {
         return name;
     }

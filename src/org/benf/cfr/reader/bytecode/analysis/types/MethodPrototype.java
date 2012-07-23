@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 
 import java.util.List;
 
@@ -43,5 +45,32 @@ public class MethodPrototype {
 
     public JavaTypeInstance getReturnType() {
         return result;
+    }
+
+    public String getAppropriatelyCastedArgumentString(Expression expression, int argidx) {
+        JavaTypeInstance type = args.get(argidx);
+        if (type.isComplexType()) {
+            return expression.toString();
+        } else {
+            RawJavaType expectedRawJavaType = type.getRawTypeOfSimpleType();
+            RawJavaType providedRawJavaType = expression.getInferredJavaType().getRawType();
+            if (expectedRawJavaType == providedRawJavaType) {
+                return expression.toString();
+            }
+            return expectedRawJavaType.getCastString() + expression.toString();
+        }
+    }
+
+
+    public void tightenArgs(List<Expression> expressions) {
+        if (expressions.size() != args.size()) {
+            throw new ConfusedCFRException("expr arg size mismatch");
+        }
+        int length = args.size();
+        for (int x = 0; x < length; ++x) {
+            Expression expression = expressions.get(x);
+            JavaTypeInstance type = args.get(x);
+            expression.getInferredJavaType().useAsWithoutCasting(type.getRawTypeOfSimpleType());
+        }
     }
 }

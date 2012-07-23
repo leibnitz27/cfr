@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -11,12 +12,12 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * User: lee
  * Date: 22/03/2012
  * Time: 18:28
- * To change this template use File | Settings | File Templates.
  */
-public class LocalVariable implements LValue {
+public class LocalVariable extends AbstractLValue {
     private final String name;
 
     public LocalVariable(long index, VariableNamer variableNamer, int originalRawOffset) {
+        super(new InferredJavaType());
         this.name = variableNamer.getName(originalRawOffset, index);
     }
 
@@ -27,7 +28,7 @@ public class LocalVariable implements LValue {
 
     @Override
     public String toString() {
-        return name;
+        return getInferredJavaType().toString() + name;
     }
 
     @Override

@@ -21,6 +21,9 @@ public class Assignment extends AbstractStatement {
     public Assignment(LValue lvalue, Expression rvalue) {
         this.lvalue = lvalue;
         this.rvalue = rvalue;
+        System.out.println("LValue " + lvalue + " " + lvalue.getInferredJavaType());
+        System.out.println("RValue " + rvalue + " " + rvalue.getInferredJavaType());
+        lvalue.getInferredJavaType().chain(rvalue.getInferredJavaType());
     }
 
     @Override

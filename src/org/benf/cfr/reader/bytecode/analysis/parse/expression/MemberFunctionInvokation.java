@@ -5,6 +5,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.ConstantPoolEntryNameAndType;
@@ -23,9 +25,12 @@ public class MemberFunctionInvokation extends AbstractExpression {
     private Expression object;
     private final List<Expression> args;
     private final ConstantPool cp;
+    private final MethodPrototype methodPrototype;
 
-    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args) {
+    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args) {
+        super(new InferredJavaType(methodPrototype.getReturnType(), InferredJavaType.Source.FIELD));
         this.function = function;
+        this.methodPrototype = methodPrototype;
         this.object = object;
         this.args = args;
         this.cp = cp;
@@ -49,10 +54,11 @@ public class MemberFunctionInvokation extends AbstractExpression {
         sb.append(nameAndType.getName(cp).getValue());
         sb.append("(");
         boolean first = true;
-        for (Expression arg : args) {
+        for (int x = 0; x < args.size(); ++x) {
+            Expression arg = args.get(x);
             if (!first) sb.append(", ");
             first = false;
-            sb.append(arg.toString());
+            sb.append(methodPrototype.getAppropriatelyCastedArgumentString(arg, x));
         }
         sb.append(")");
         return sb.toString();

@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.literal;
 
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
@@ -18,18 +20,20 @@ public class TypedLiteral {
         Double,
         String,
         NullObject,
-        Class
+        Class;
     }
 
+    private final InferredJavaType inferredJavaType;
     private final LiteralType type;
     private final Object value;
 
-    protected TypedLiteral(LiteralType type, Object value) {
+    protected TypedLiteral(LiteralType type, InferredJavaType inferredJavaType, Object value) {
         this.type = type;
         this.value = value;
+        this.inferredJavaType = inferredJavaType;
     }
 
-    private static String IntegerName(Object o) {
+    private static String integerName(Object o) {
         if (!(o instanceof Integer)) return o.toString();
         int i = (Integer) o;
         switch (i) {
@@ -42,7 +46,27 @@ public class TypedLiteral {
         }
     }
 
-    private static String LongName(Object o) {
+    private static String charName(Object o) {
+        if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting char-as-int");
+        int i = (Integer) o;
+        char c = (char) i;
+        return "'" + c + "'";
+    }
+
+    private static String boolName(Object o) {
+        if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting boolean-as-int");
+        int i = (Integer) o;
+        switch (i) {
+            case 0:
+                return "false";
+            case 1:
+                return "true";
+            default:
+                throw new ConfusedCFRException("Expecting a boolean, got " + i);
+        }
+    }
+
+    private static String longName(Object o) {
         if (!(o instanceof Long)) return o.toString();
         long l = (Long) o;
         if (l == Long.MAX_VALUE) return "Long.MAX_VALUE";
@@ -60,43 +84,62 @@ public class TypedLiteral {
             case NullObject:
                 return "null";
             case Integer:
-                return IntegerName(value);
+                switch (inferredJavaType.getRawType()) {
+                    case CHAR:
+                        return charName(value);
+                    case BOOLEAN:
+                        return boolName(value);
+                    default:
+                        return integerName(value);
+                }
             case Long:
-                return LongName(value);
+                return longName(value);
             default:
                 return value.toString();
         }
     }
 
     public static TypedLiteral getLong(long v) {
-        return new TypedLiteral(LiteralType.Long, v);
+        return new TypedLiteral(LiteralType.Long, new InferredJavaType(RawJavaType.LONG, InferredJavaType.Source.LITERAL), v);
     }
 
     public static TypedLiteral getInt(int v) {
-        return new TypedLiteral(LiteralType.Integer, v);
+        return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL), v);
     }
 
     public static TypedLiteral getDouble(double v) {
-        return new TypedLiteral(LiteralType.Double, v);
+        return new TypedLiteral(LiteralType.Double, new InferredJavaType(RawJavaType.DOUBLE, InferredJavaType.Source.LITERAL), v);
+    }
+
+    public static TypedLiteral getFloat(float v) {
+        return new TypedLiteral(LiteralType.Double, new InferredJavaType(RawJavaType.FLOAT, InferredJavaType.Source.LITERAL), v);
+    }
+
+    public static TypedLiteral getClass(String v) {
+        return new TypedLiteral(LiteralType.Class, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), v);
+    }
+
+    public static TypedLiteral getString(String v) {
+        return new TypedLiteral(LiteralType.String, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), v);
     }
 
     public static TypedLiteral getNull() {
-        return new TypedLiteral(LiteralType.NullObject, null);
+        return new TypedLiteral(LiteralType.NullObject, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), null);
     }
 
     public static TypedLiteral getConstantPoolEntry(ConstantPool cp, ConstantPoolEntry cpe) {
         if (cpe instanceof ConstantPoolEntryDouble) {
-            return new TypedLiteral(LiteralType.Double, ((ConstantPoolEntryDouble) cpe).getValue());
+            return getDouble(((ConstantPoolEntryDouble) cpe).getValue());
         } else if (cpe instanceof ConstantPoolEntryFloat) {
-            return new TypedLiteral(LiteralType.Double, ((ConstantPoolEntryFloat) cpe).getValue());
+            return getFloat(((ConstantPoolEntryFloat) cpe).getValue());
         } else if (cpe instanceof ConstantPoolEntryLong) {
-            return new TypedLiteral(LiteralType.Long, ((ConstantPoolEntryLong) cpe).getValue());
+            return getLong(((ConstantPoolEntryLong) cpe).getValue());
         } else if (cpe instanceof ConstantPoolEntryInteger) {
-            return new TypedLiteral(LiteralType.Integer, ((ConstantPoolEntryInteger) cpe).getValue());
+            return getInt(((ConstantPoolEntryInteger) cpe).getValue());
         } else if (cpe instanceof ConstantPoolEntryString) {
-            return new TypedLiteral(LiteralType.String, ((ConstantPoolEntryString) cpe).getValue(cp));
+            return getString(((ConstantPoolEntryString) cpe).getValue(cp));
         } else if (cpe instanceof ConstantPoolEntryClass) {
-            return new TypedLiteral(LiteralType.Class, cp.getUTF8Entry(((ConstantPoolEntryClass) cpe).getNameIndex()).getValue());
+            return getClass(cp.getUTF8Entry(((ConstantPoolEntryClass) cpe).getNameIndex()).getValue());
         }
         throw new ConfusedCFRException("Can't turn ConstantPoolEntry into Literal - got " + cpe);
     }
@@ -107,5 +150,9 @@ public class TypedLiteral {
 
     public Object getValue() {
         return value;
+    }
+
+    public InferredJavaType getInferredJavaType() {
+        return inferredJavaType;
     }
 }

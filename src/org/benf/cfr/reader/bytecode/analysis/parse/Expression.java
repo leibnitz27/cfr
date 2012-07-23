@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,4 +20,6 @@ public interface Expression {
     boolean canPushDownInto();
 
     Expression pushDown(Expression toPush, Expression parent);
+
+    InferredJavaType getInferredJavaType();
 }

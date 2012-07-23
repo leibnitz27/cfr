@@ -19,7 +19,7 @@ public class LValueExpression extends AbstractExpression {
     private LValue lValue;
 
     public LValueExpression(LValue lValue) {
-        // Probably could do better...
+        super(lValue.getInferredJavaType());
         this.lValue = lValue;
     }
 

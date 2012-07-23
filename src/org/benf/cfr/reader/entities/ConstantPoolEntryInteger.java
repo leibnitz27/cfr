@@ -14,7 +14,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class ConstantPoolEntryInteger implements ConstantPoolEntry, ConstantPoolEntryLiteral {
     private final long OFFSET_OF_BYTES = 1;
 
-    private final long value;
+    private final int value;
 
     public ConstantPoolEntryInteger(ByteData data) {
         this.value = data.getS4At(OFFSET_OF_BYTES);
@@ -30,7 +30,7 @@ public class ConstantPoolEntryInteger implements ConstantPoolEntry, ConstantPool
         d.print("CONSTANT_Integer value=" + value);
     }
 
-    public long getValue() {
+    public int getValue() {
         return value;
     }
 

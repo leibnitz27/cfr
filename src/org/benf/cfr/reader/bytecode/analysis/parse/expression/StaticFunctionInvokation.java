@@ -5,7 +5,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
+import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.ConstantPoolEntryNameAndType;
 
 import java.util.List;
 
@@ -21,8 +25,9 @@ public class StaticFunctionInvokation extends AbstractExpression {
     private final List<Expression> args;
     private final ConstantPool cp;
 
-    public StaticFunctionInvokation(ConstantPool cp, ConstantPoolEntry function, List<Expression> args) {
-        this.function = (ConstantPoolEntryMethodRef) function;
+    public StaticFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, List<Expression> args) {
+        super(new InferredJavaType(function.getMethodPrototype(cp).getReturnType(), InferredJavaType.Source.EXPRESSION));
+        this.function = function;
         this.args = args;
         this.cp = cp;
     }

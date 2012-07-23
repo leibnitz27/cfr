@@ -5,6 +5,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,6 +19,7 @@ public class ArrayLength extends AbstractExpression {
     private Expression array;
 
     public ArrayLength(Expression array) {
+        super(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.INSTRUCTION));
         this.array = array;
     }
 

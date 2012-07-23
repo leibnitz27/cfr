@@ -35,4 +35,14 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         JavaRefTypeInstance other = (JavaRefTypeInstance) o;
         return other.className.equals(className);
     }
+
+    @Override
+    public boolean isComplexType() {
+        return true;
+    }
+
+    @Override
+    public RawJavaType getRawTypeOfSimpleType() {
+        return RawJavaType.REF;
+    }
 }

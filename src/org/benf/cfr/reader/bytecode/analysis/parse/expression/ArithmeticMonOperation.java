@@ -18,6 +18,8 @@ public class ArithmeticMonOperation extends AbstractExpression {
     private final ArithOp op;
 
     public ArithmeticMonOperation(Expression lhs, ArithOp op) {
+        // Type won't change over monop (??)
+        super(lhs.getInferredJavaType());
         this.lhs = lhs;
         this.op = op;
     }

@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -20,10 +21,17 @@ public class TernaryExpression extends AbstractExpression {
     private Expression rhs;
 
     public TernaryExpression(ConditionalExpression condition, Expression lhs, Expression rhs) {
+        super(inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType()));
         this.condition = condition;
         this.lhs = lhs;
         this.rhs = rhs;
     }
+
+    private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b) {
+        // TODO : verify same
+        return new InferredJavaType(a.getRawType(), InferredJavaType.Source.OPERATION);
+    }
+
 
     @Override
     public String toString() {

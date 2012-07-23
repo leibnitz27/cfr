@@ -8,4 +8,8 @@ package org.benf.cfr.reader.bytecode.analysis.types;
  */
 public interface JavaTypeInstance {
     StackType getStackType();
+
+    public boolean isComplexType();
+
+    public RawJavaType getRawTypeOfSimpleType();
 }

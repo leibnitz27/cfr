@@ -18,6 +18,7 @@ public class StackValue extends AbstractExpression {
     private final StackSSALabel stackValue;
 
     public StackValue(StackSSALabel stackValue) {
+        super(stackValue.getInferredJavaType());
         this.stackValue = stackValue;
     }
 

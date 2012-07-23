@@ -16,18 +16,19 @@ import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
  * Time: 18:25
  * To change this template use File | Settings | File Templates.
  */
-public class StackSSALabel implements LValue {
+public class StackSSALabel extends AbstractLValue {
     private final long id;
     private final StackEntry stackEntry;
 
     public StackSSALabel(long id, StackEntry stackEntry) {
+        super(stackEntry.getInferredJavaType());
         this.id = id;
         this.stackEntry = stackEntry;
     }
 
     @Override
     public String toString() {
-        return "v" + id;
+        return getInferredJavaType().toString() + "v" + id;
     }
 
     @Override

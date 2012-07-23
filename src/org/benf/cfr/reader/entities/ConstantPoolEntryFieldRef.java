@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -17,7 +18,7 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
 
     final short classIndex;
     final short nameAndTypeIndex;
-    StackType cachedDecodedType;
+    JavaTypeInstance cachedDecodedType;
 
     public ConstantPoolEntryFieldRef(ByteData data) {
         this.classIndex = data.getS2At(OFFSET_OF_CLASS_INDEX);
@@ -33,7 +34,7 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
     public void dump(Dumper d, ConstantPool cp) {
         d.print("Field " +
                 cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue() + ":" +
-                cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue());
+                getJavaTypeInstance(cp));
     }
 
     public short getClassIndex() {
@@ -44,11 +45,15 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
         return cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue();
     }
 
-    public StackType getStackType(ConstantPool cp) {
+    public JavaTypeInstance getJavaTypeInstance(ConstantPool cp) {
         if (cachedDecodedType == null) {
-            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue()).getStackType();
+            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue());
         }
         return cachedDecodedType;
+    }
+
+    public StackType getStackType(ConstantPool cp) {
+        return getJavaTypeInstance(cp).getStackType();
     }
 
 }

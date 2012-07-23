@@ -16,11 +16,12 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * Time: 18:32
  * To change this template use File | Settings | File Templates.
  */
-public class ArrayVariable implements LValue {
+public class ArrayVariable extends AbstractLValue {
 
     private Expression arrayIndex;
 
     public ArrayVariable(Expression arrayIndex) {
+        super(arrayIndex.getInferredJavaType());
         this.arrayIndex = arrayIndex;
     }
 

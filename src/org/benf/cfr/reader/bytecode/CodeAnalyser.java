@@ -113,7 +113,7 @@ public class CodeAnalyser {
         // use that.
         final VariableNamer variableNamer = VariableNamerFactory.getNamer(originalCodeAttribute.getLocalVariableTable(), cp);
 ////
-//        Dumper dumper = new Dumper();
+        Dumper dumper = new Dumper();
 ////
 //        dumper.dump(op2list);
 
@@ -127,9 +127,9 @@ public class CodeAnalyser {
         // Expand raw switch statements into more useful ones.
         Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
-//
-//        dumper.print("Raw Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
+
+        dumper.print("Raw Op3 statements:\n");
+        op03SimpleParseNodes.get(0).dump(dumper);
 
 
         // Remove 2nd (+) jumps in pointless jump chains.

@@ -17,13 +17,14 @@ public class Literal extends AbstractExpression {
     private final TypedLiteral value;
 
     public Literal(TypedLiteral value) {
+        super(value.getInferredJavaType());
         this.value = value;
     }
 
 
     @Override
     public String toString() {
-        return "" + value;
+        return "" + getInferredJavaType() + value;
     }
 
     @Override
