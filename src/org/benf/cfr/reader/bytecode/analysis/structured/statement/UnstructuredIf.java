@@ -57,10 +57,30 @@ public class UnstructuredIf extends AbstractStructuredStatement {
             if (knownIfBlock.getBlockType() == BlockType.SIMPLE_IF_TAKEN) {
                 setIfBlock.removeLastGoto();
             }
+            innerBlock = unpackElseIfBlock(innerBlock);
             return new StructuredIf(ConditionalUtils.simplify(conditionalExpression.getNegated()), setIfBlock, innerBlock);
         } else {
             return null;
 //            throw new ConfusedCFRException("IF statement given blocks it doesn't recognise");
         }
+    }
+
+    /*
+     * Maybe this could be put somewhere more general....
+     */
+    private static Op04StructuredStatement unpackElseIfBlock(Op04StructuredStatement elseBlock) {
+        StructuredStatement elseStmt = elseBlock.getStructuredStatement();
+        if (!(elseStmt instanceof Block)) return elseBlock;
+        Block block = (Block) elseStmt;
+        if (!block.isJustOneStatement()) {
+            Dumper d = new Dumper();
+            block.dump(d);
+            return elseBlock;
+        }
+        Op04StructuredStatement inner = block.getSingleStatement();
+        if (inner.getStructuredStatement() instanceof StructuredIf) {
+            return inner;
+        }
+        return elseBlock;
     }
 }

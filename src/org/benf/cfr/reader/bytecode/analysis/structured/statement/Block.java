@@ -60,6 +60,17 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
+    public boolean isJustOneStatement() {
+        return containedStatements.size() == 1;
+    }
+
+    public Op04StructuredStatement getSingleStatement() {
+        if (containedStatements.size() != 1) {
+            throw new IllegalStateException();
+        }
+        return containedStatements.get(0);
+    }
+
     @Override
     public void dump(Dumper dumper) {
         try {
@@ -70,7 +81,8 @@ public class Block extends AbstractStructuredStatement {
             }
         } finally {
             dumper.indent(-1);
-            dumper.print("}\n");
+            dumper.print("}");
+            dumper.enqueuePendingCarriageReturn();
         }
     }
 }

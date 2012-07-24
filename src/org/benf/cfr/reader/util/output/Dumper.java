@@ -12,13 +12,32 @@ import java.util.List;
 public class Dumper {
     private int indent;
     private boolean atStart = true;
+    private boolean pendingCR = false;
 
     public void printLabel(String s) {
+        processPendingCR();
         System.out.println(s + ":");
         atStart = true;
     }
 
+    public void enqueuePendingCarriageReturn() {
+        pendingCR = true;
+    }
+
+    public void removePendingCarriageReturn() {
+        pendingCR = false;
+    }
+
+    private void processPendingCR() {
+        if (pendingCR) {
+            System.out.println();
+            atStart = true;
+            pendingCR = false;
+        }
+    }
+
     public void print(String s) {
+        processPendingCR();
         doIndent();
         System.out.print(s);
         atStart = false;

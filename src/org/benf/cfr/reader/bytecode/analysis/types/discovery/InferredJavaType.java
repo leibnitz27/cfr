@@ -55,8 +55,7 @@ public class InferredJavaType {
 
     private class IJTLocal implements IJTInternal {
         private JavaTypeInstance type;
-        private Source source;
-        private boolean locked = false;
+        private final Source source;
 
         private IJTLocal(JavaTypeInstance type, Source source) {
             this.type = type;
@@ -94,7 +93,7 @@ public class InferredJavaType {
     }
 
     private class IJTDelegate implements IJTInternal {
-        private InferredJavaType delegate;
+        private final InferredJavaType delegate;
 
         private IJTDelegate(InferredJavaType delegate) {
             this.delegate = delegate;
@@ -137,7 +136,11 @@ public class InferredJavaType {
     }
 
     private void chainFrom(InferredJavaType other) {
-        this.value = new IJTDelegate(other);
+        if (this == other) return;
+        /*
+         * Or if this would introduce a cycle.  This is madly inefficient - do it a more sensible way.
+         */
+        this.value = other.value; // new IJTDelegate(other);
     }
 
     /*
@@ -269,6 +272,7 @@ public class InferredJavaType {
     }
 
     public RawJavaType getRawType() {
+//        System.out.println(super.toString());
         return value.getRawType();
     }
 
