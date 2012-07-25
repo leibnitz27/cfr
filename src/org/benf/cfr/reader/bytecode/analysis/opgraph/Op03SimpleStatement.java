@@ -2012,6 +2012,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         LValue originalArray = wildcardMatch.getLValueWildCard("array").getMatch();
 
+        Expression arrayStatement = new LValueExpression(originalArray);
+        Op03SimpleStatement prepreceeding = null;
+        /*
+         * if we're following the JDK pattern, we'll have something assigned to array.
+         */
+        if (preceeding.sources.size() == 1) {
+            if (wildcardMatch.match(
+                    new Assignment(originalArray, wildcardMatch.getExpressionWildCard("value")),
+                    preceeding.sources.get(0).containedStatement)) {
+                prepreceeding = preceeding.sources.get(0);
+                arrayStatement = wildcardMatch.getExpressionWildCard("value").getMatch();
+            }
+        }
+
+
         Op03SimpleStatement loopStart = loop.getTargets().get(0);
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
@@ -2034,7 +2049,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         for (Op03SimpleStatement inBlock : statementsInBlock) {
             if (inBlock == loopStart) continue;
-            ;
             Statement inStatement = inBlock.containedStatement;
             LValue updated = inStatement.getCreatedLValue();
             if (updated == null) continue;
@@ -2043,9 +2057,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
-        loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, new LValueExpression(originalArray)));
+        loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, arrayStatement));
         loopStart.nopOut();
         preceeding.nopOut();
+        if (prepreceeding != null) {
+            prepreceeding.nopOut();
+        }
     }
 
     public static void rewriteArrayForLoops(List<Op03SimpleStatement> statements) {
