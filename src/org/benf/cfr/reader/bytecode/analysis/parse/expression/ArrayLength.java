@@ -43,4 +43,11 @@ public class ArrayLength extends AbstractExpression {
     public Expression getArray() {
         return array;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof ArrayLength)) return false;
+        return array.equals(((ArrayLength) o).getArray());
+    }
 }

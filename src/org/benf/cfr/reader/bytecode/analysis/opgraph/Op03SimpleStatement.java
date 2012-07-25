@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.util.*;
@@ -1969,7 +1970,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *
      * TODO : The tests in here are very rigid (and gross!), and need loosening up when it's working.
      */
-    private static void rewriteArrayForLoop(Op03SimpleStatement loop) {
+    private static void rewriteArrayForLoop(Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
 
         /*
          * loop should have one back-parent.
@@ -1978,94 +1979,79 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (preceeding == null) return;
 
         ForStatement forStatement = (ForStatement) loop.containedStatement;
-        BlockIdentifier forBlock = forStatement.getBlockIdentifier();
 
-        Assignment initial = forStatement.getInitial();
-        LValue indexLValue = initial.getCreatedLValue();
-        Expression initialRValue = initial.getRValue();
-        if (!(initialRValue instanceof Literal)) return;
-        TypedLiteral initialVal = ((Literal) initialRValue).getValue();
-        if (initialVal.getType() != TypedLiteral.LiteralType.Integer) return;
-        if (!initialVal.getValue().equals(0)) return;
+        WildcardMatch wildcardMatch = new WildcardMatch();
 
-        // Ok. for (lvalue = 0
-        // Now make sure it's lvalue++
-        // TODO: Should have something like "expect" and pass in a newly constructed expression.
-        Assignment update = forStatement.getAssignment();
-        LValue updateLValue = update.getCreatedLValue();
-        if (!updateLValue.equals(indexLValue)) return;
-        Expression updateExpression = update.getRValue();
-        if (!(updateExpression instanceof ArithmeticOperation)) return;
-        ArithmeticOperation arithmeticOperation = (ArithmeticOperation) updateExpression;
-        if (!arithmeticOperation.isIncr(indexLValue)) return;
+        if (!wildcardMatch.match(
+                new Assignment(wildcardMatch.getLValueWildCard("iter"), new Literal(TypedLiteral.getInt(0))),
+                forStatement.getInitial())) return;
 
-        // ok, it's lvalue++.
-        // Check test is lvalue < x.
-        // X should be a non literal lvalue.
-        // TODO : Should have 'expect', with a wildcard.
-        ConditionalExpression condition = forStatement.getCondition();
-        if (!(condition instanceof ComparisonOperation)) return;
-        ComparisonOperation comparisonOperation = (ComparisonOperation) condition;
-        if (comparisonOperation.getOp() != CompOp.LT) return;
+        LValue originalLoopVariable = wildcardMatch.getLValueWildCard("iter").getMatch();
 
-        Expression lvCmp = comparisonOperation.getLhs();
-        if (!(lvCmp instanceof LValueExpression)) return;
-        if (!((LValueExpression) lvCmp).getLValue().equals(indexLValue)) return;
-        Expression bound = comparisonOperation.getRhs();
-        if (!(bound instanceof LValueExpression)) return;
-        LValue boundLValue = ((LValueExpression) bound).getLValue();
+        if (!wildcardMatch.match(
+                new Assignment(
+                        originalLoopVariable,
+                        new ArithmeticOperation(
+                                new LValueExpression(originalLoopVariable),
+                                new Literal(TypedLiteral.getInt(1)),
+                                ArithOp.PLUS)), forStatement.getAssignment())) return;
+
+        if (!wildcardMatch.match(
+                new ComparisonOperation(
+                        new LValueExpression(originalLoopVariable),
+                        new LValueExpression(wildcardMatch.getLValueWildCard("bound")),
+                        CompOp.LT), forStatement.getCondition())) return;
+
+        LValue originalLoopBound = wildcardMatch.getLValueWildCard("bound").getMatch();
 
         // Bound should have been constructed RECENTLY, and should be an array length.
         // TODO: Let's just check the single backref from the for loop test.
-        Statement maybeLen = preceeding.containedStatement;
-        if (!(maybeLen instanceof Assignment)) return;
-        Assignment boundAssignment = (Assignment) maybeLen;
-        if (!maybeLen.getCreatedLValue().equals(boundLValue)) return;
-        Expression boundRhs = boundAssignment.getRValue();
-        if (!(boundRhs instanceof ArrayLength)) return;
-        ArrayLength arrayLength = (ArrayLength) boundRhs;
-        Expression array = arrayLength.getArray();
+        if (!wildcardMatch.match(
+                new Assignment(originalLoopBound, new ArrayLength(new LValueExpression(wildcardMatch.getLValueWildCard("array")))),
+                preceeding.containedStatement)) return;
 
-        if (!(array instanceof LValueExpression)) return;
-        LValue arrayLValue = ((LValueExpression) array).getLValue();
+        LValue originalArray = wildcardMatch.getLValueWildCard("array").getMatch();
 
+        Op03SimpleStatement loopStart = loop.getTargets().get(0);
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
-        Op03SimpleStatement loopStart = loop.getTargets().get(0);
-        Statement iteratorStmt = loopStart.containedStatement;
+        if (!wildcardMatch.match(
+                new Assignment(wildcardMatch.getLValueWildCard("sugariter"),
+                        new ArrayIndex(new LValueExpression(originalArray), new LValueExpression(originalLoopVariable))),
+                loopStart.containedStatement)) return;
 
-        // iteratorStmt must be
-        // Assignment [ ? = arr[index] ]
-        // TODO : WILDCARDS!!!
-        if (!(iteratorStmt instanceof Assignment)) return;
-        Assignment iteratorAssign = (Assignment) iteratorStmt;
-
-        LValue iteratorLhs = iteratorAssign.getCreatedLValue();
-
-        Expression iteratorRhs = iteratorAssign.getRValue();
-        if (!(iteratorRhs instanceof ArrayIndex)) return;
-        ArrayIndex iteratorArrayIndex = (ArrayIndex) iteratorRhs;
-        Expression maybeIteratorArray = iteratorArrayIndex.getArray();
-        if (!(maybeIteratorArray instanceof LValueExpression)) return;
-        if (!(((LValueExpression) maybeIteratorArray).getLValue().equals(arrayLValue))) return;
-        Expression maybeIteratorIndex = iteratorArrayIndex.getIndex();
-        if (!(maybeIteratorIndex instanceof LValueExpression)) return;
-        if (!(((LValueExpression) maybeIteratorIndex).getLValue().equals(indexLValue))) return;
+        LValue sugarIter = wildcardMatch.getLValueWildCard("sugariter").getMatch();
 
         // It's probably valid.  We just have to make sure that array and index aren't assigned to anywhere in the loop
         // body.
-        loop.replaceStatement(new ForIterStatement(forBlock, iteratorLhs, maybeIteratorArray));
+        final BlockIdentifier forBlock = forStatement.getBlockIdentifier();
+        List<Op03SimpleStatement> statementsInBlock = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return in.containedInBlocks.contains(forBlock);
+            }
+        });
+
+        for (Op03SimpleStatement inBlock : statementsInBlock) {
+            if (inBlock == loopStart) continue;
+            ;
+            Statement inStatement = inBlock.containedStatement;
+            LValue updated = inStatement.getCreatedLValue();
+            if (updated == null) continue;
+            if (updated.equals(sugarIter) || updated.equals(originalArray)) {
+                return;
+            }
+        }
+
+        loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, new LValueExpression(originalArray)));
         loopStart.nopOut();
         preceeding.nopOut();
-        // throw new ConfusedCFRException("Got to here!  [" + indexLValue + " = 0 -> " + boundLValue + "] " + iteratorStmt);
-
-
     }
 
     public static void rewriteArrayForLoops(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> loops = Functional.filter(statements, new TypeFilter<ForStatement>(ForStatement.class));
         for (Op03SimpleStatement loop : loops) {
-            rewriteArrayForLoop(loop);
+            rewriteArrayForLoop(loop, statements);
         }
 
     }

@@ -166,4 +166,14 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     public Expression getRhs() {
         return rhs;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof ComparisonOperation)) return false;
+        ComparisonOperation other = (ComparisonOperation) o;
+        return op == other.op &&
+                lhs.equals(other.lhs) &&
+                rhs.equals(other.rhs);
+    }
 }

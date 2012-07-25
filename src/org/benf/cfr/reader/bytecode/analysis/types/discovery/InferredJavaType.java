@@ -35,6 +35,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  */
 public class InferredJavaType {
     public enum Source {
+        TEST,
         UNKNOWN,
         LITERAL,
         FIELD,
@@ -127,6 +128,8 @@ public class InferredJavaType {
 
     private IJTInternal value;
 
+    public static final InferredJavaType IGNORE = new InferredJavaType();
+
     public InferredJavaType() {
         value = new IJTLocal(RawJavaType.VOID, Source.UNKNOWN);
     }
@@ -147,10 +150,15 @@ public class InferredJavaType {
      * This is being explicitly casted by (eg) i2c.  We need to cut the chain.
      */
     public void useAsWithCast(RawJavaType otherRaw) {
+        if (this == IGNORE) return;
+
         this.value = new IJTLocal(otherRaw, Source.OPERATION);
     }
 
     public static void compareAsWithoutCasting(InferredJavaType a, InferredJavaType b) {
+        if (a == IGNORE) return;
+        if (b == IGNORE) return;
+
         RawJavaType art = a.getRawType();
         RawJavaType brt = b.getRawType();
         if (art.getStackType() != StackType.INT ||
@@ -174,6 +182,8 @@ public class InferredJavaType {
      * This is being used as an argument to a known typed function.  Maybe we can infer some type information.
      */
     public void useAsWithoutCasting(RawJavaType otherRaw) {
+        if (this == IGNORE) return;
+
         /* If value is something that can legitimately be forced /DOWN/
          * (i.e. from int to char) then we should push it down.
          *
@@ -215,6 +225,9 @@ public class InferredJavaType {
      * so, if we can, let's narrow this type, or chain it from
      */
     public void chain(InferredJavaType other) {
+        if (this == IGNORE) return;
+        if (other == IGNORE) return;
+
         if (other.getRawType() == RawJavaType.VOID) {
             return;
         }

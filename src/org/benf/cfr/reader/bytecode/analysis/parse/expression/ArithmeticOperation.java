@@ -84,6 +84,16 @@ public class ArithmeticOperation extends AbstractExpression {
         return op.isTemporary();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof ArithmeticOperation)) return false;
+        ArithmeticOperation other = (ArithmeticOperation) o;
+        return op == other.op &&
+                lhs.equals(other.lhs) &&
+                rhs.equals(other.rhs);
+    }
+
     private static CompOp rewriteXCMPCompOp(CompOp from, int on) {
         if (on == 0) return from;
         if (on < 0) {

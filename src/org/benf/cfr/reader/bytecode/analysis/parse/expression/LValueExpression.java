@@ -53,4 +53,10 @@ public class LValueExpression extends AbstractExpression {
         lValueUsageCollector.collect(lValue);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof LValueExpression)) return false;
+        return lValue.equals(((LValueExpression) o).getLValue());
+    }
 }

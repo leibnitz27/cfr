@@ -155,4 +155,12 @@ public class TypedLiteral {
     public InferredJavaType getInferredJavaType() {
         return inferredJavaType;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof TypedLiteral)) return false;
+        TypedLiteral other = (TypedLiteral) o;
+        return type == other.type && value.equals(other.value);
+    }
 }

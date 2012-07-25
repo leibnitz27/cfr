@@ -44,4 +44,12 @@ public class Literal extends AbstractExpression {
     public TypedLiteral getValue() {
         return value;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof Literal)) return false;
+        Literal other = (Literal) o;
+        return value.equals(other.value);
+    }
 }

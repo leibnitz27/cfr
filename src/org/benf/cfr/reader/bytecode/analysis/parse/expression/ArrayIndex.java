@@ -51,4 +51,13 @@ public class ArrayIndex extends AbstractExpression {
     public Expression getIndex() {
         return index;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof ArrayIndex)) return false;
+        ArrayIndex other = (ArrayIndex) o;
+        return array.equals(other.array) &&
+                index.equals(other.index);
+    }
 }
