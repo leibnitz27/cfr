@@ -64,6 +64,9 @@ public class GotoStatement extends JumpingStatement {
         } else if (statement instanceof ForStatement) {
             ForStatement forStatement = (ForStatement) statement;
             return forStatement.getBlockIdentifier();
+        } else if (statement instanceof ForIterStatement) {
+            ForIterStatement forStatement = (ForIterStatement) statement;
+            return forStatement.getBlockIdentifier();
         } else {
             throw new ConfusedCFRException("CONTINUE without a while");
         }

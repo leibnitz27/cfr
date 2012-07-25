@@ -4,10 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.TernaryExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -831,13 +828,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return res;
     }
 
-    private static Op03SimpleStatement findMovableAssignment(Op03SimpleStatement start, LValue lValue) {
+    private static Op03SimpleStatement findSingleBackSource(Op03SimpleStatement start) {
         List<Op03SimpleStatement> startSources = Functional.filter(start.sources, new IsForwardJumpTo(start.index));
         if (startSources.size() != 1) {
             logger.info("** Too many back sources");
             return null;
         }
-        Op03SimpleStatement current = startSources.iterator().next();
+        return startSources.get(0);
+    }
+
+    private static Op03SimpleStatement findMovableAssignment(Op03SimpleStatement start, LValue lValue) {
+        Op03SimpleStatement current = findSingleBackSource(start);
         do {
             if (current.containedStatement instanceof Assignment) {
                 Assignment assignment = (Assignment) current.containedStatement;
@@ -1945,10 +1946,128 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public static void optimiseForTypes(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> conditionals = Functional.filter(statements, new TypeFilter(IfStatement.class));
+        List<Op03SimpleStatement> conditionals = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
         for (Op03SimpleStatement conditional : conditionals) {
             optimiseForTypes(conditional);
         }
+    }
+
+    /* Given a for loop
+     *
+     * array
+     * bound = array.length
+     * for ( index ; index < bound ; index++) {
+     *   a = array[index]
+     * }
+     *
+     * rewrite as
+     *
+     * for ( a : array ) {
+     * }
+     *
+     * /however/ - it is only safe to do this if NEITHER index / bound / array are assigned to inside the loop.
+     *
+     * TODO : The tests in here are very rigid (and gross!), and need loosening up when it's working.
+     */
+    private static void rewriteArrayForLoop(Op03SimpleStatement loop) {
+
+        /*
+         * loop should have one back-parent.
+         */
+        Op03SimpleStatement preceeding = findSingleBackSource(loop);
+        if (preceeding == null) return;
+
+        ForStatement forStatement = (ForStatement) loop.containedStatement;
+        BlockIdentifier forBlock = forStatement.getBlockIdentifier();
+
+        Assignment initial = forStatement.getInitial();
+        LValue indexLValue = initial.getCreatedLValue();
+        Expression initialRValue = initial.getRValue();
+        if (!(initialRValue instanceof Literal)) return;
+        TypedLiteral initialVal = ((Literal) initialRValue).getValue();
+        if (initialVal.getType() != TypedLiteral.LiteralType.Integer) return;
+        if (!initialVal.getValue().equals(0)) return;
+
+        // Ok. for (lvalue = 0
+        // Now make sure it's lvalue++
+        // TODO: Should have something like "expect" and pass in a newly constructed expression.
+        Assignment update = forStatement.getAssignment();
+        LValue updateLValue = update.getCreatedLValue();
+        if (!updateLValue.equals(indexLValue)) return;
+        Expression updateExpression = update.getRValue();
+        if (!(updateExpression instanceof ArithmeticOperation)) return;
+        ArithmeticOperation arithmeticOperation = (ArithmeticOperation) updateExpression;
+        if (!arithmeticOperation.isIncr(indexLValue)) return;
+
+        // ok, it's lvalue++.
+        // Check test is lvalue < x.
+        // X should be a non literal lvalue.
+        // TODO : Should have 'expect', with a wildcard.
+        ConditionalExpression condition = forStatement.getCondition();
+        if (!(condition instanceof ComparisonOperation)) return;
+        ComparisonOperation comparisonOperation = (ComparisonOperation) condition;
+        if (comparisonOperation.getOp() != CompOp.LT) return;
+
+        Expression lvCmp = comparisonOperation.getLhs();
+        if (!(lvCmp instanceof LValueExpression)) return;
+        if (!((LValueExpression) lvCmp).getLValue().equals(indexLValue)) return;
+        Expression bound = comparisonOperation.getRhs();
+        if (!(bound instanceof LValueExpression)) return;
+        LValue boundLValue = ((LValueExpression) bound).getLValue();
+
+        // Bound should have been constructed RECENTLY, and should be an array length.
+        // TODO: Let's just check the single backref from the for loop test.
+        Statement maybeLen = preceeding.containedStatement;
+        if (!(maybeLen instanceof Assignment)) return;
+        Assignment boundAssignment = (Assignment) maybeLen;
+        if (!maybeLen.getCreatedLValue().equals(boundLValue)) return;
+        Expression boundRhs = boundAssignment.getRValue();
+        if (!(boundRhs instanceof ArrayLength)) return;
+        ArrayLength arrayLength = (ArrayLength) boundRhs;
+        Expression array = arrayLength.getArray();
+
+        if (!(array instanceof LValueExpression)) return;
+        LValue arrayLValue = ((LValueExpression) array).getLValue();
+
+        // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
+        // TODO : This can be pushed into the loop, as long as it's not after a conditional.
+        Op03SimpleStatement loopStart = loop.getTargets().get(0);
+        Statement iteratorStmt = loopStart.containedStatement;
+
+        // iteratorStmt must be
+        // Assignment [ ? = arr[index] ]
+        // TODO : WILDCARDS!!!
+        if (!(iteratorStmt instanceof Assignment)) return;
+        Assignment iteratorAssign = (Assignment) iteratorStmt;
+
+        LValue iteratorLhs = iteratorAssign.getCreatedLValue();
+
+        Expression iteratorRhs = iteratorAssign.getRValue();
+        if (!(iteratorRhs instanceof ArrayIndex)) return;
+        ArrayIndex iteratorArrayIndex = (ArrayIndex) iteratorRhs;
+        Expression maybeIteratorArray = iteratorArrayIndex.getArray();
+        if (!(maybeIteratorArray instanceof LValueExpression)) return;
+        if (!(((LValueExpression) maybeIteratorArray).getLValue().equals(arrayLValue))) return;
+        Expression maybeIteratorIndex = iteratorArrayIndex.getIndex();
+        if (!(maybeIteratorIndex instanceof LValueExpression)) return;
+        if (!(((LValueExpression) maybeIteratorIndex).getLValue().equals(indexLValue))) return;
+
+        // It's probably valid.  We just have to make sure that array and index aren't assigned to anywhere in the loop
+        // body.
+        loop.replaceStatement(new ForIterStatement(forBlock, iteratorLhs, maybeIteratorArray));
+        loopStart.nopOut();
+        preceeding.nopOut();
+        // throw new ConfusedCFRException("Got to here!  [" + indexLValue + " = 0 -> " + boundLValue + "] " + iteratorStmt);
+
+
+    }
+
+    public static void rewriteArrayForLoops(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> loops = Functional.filter(statements, new TypeFilter<ForStatement>(ForStatement.class));
+        for (Op03SimpleStatement loop : loops) {
+            rewriteArrayForLoop(loop);
+        }
+
     }
 
     @Override

@@ -158,4 +158,12 @@ public class ComparisonOperation extends AbstractExpression implements Condition
         }
         return this;
     }
+
+    public Expression getLhs() {
+        return lhs;
+    }
+
+    public Expression getRhs() {
+        return rhs;
+    }
 }

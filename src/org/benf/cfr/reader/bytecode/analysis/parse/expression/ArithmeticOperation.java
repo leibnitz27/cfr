@@ -57,6 +57,15 @@ public class ArithmeticOperation extends AbstractExpression {
         return false;
     }
 
+    public boolean isIncr(LValue lValue) {
+        if (!(lhs instanceof LValueExpression)) return false;
+        LValue lv = ((LValueExpression) lhs).getLValue();
+        if (!lv.equals(lValue)) return false;
+        if (op != ArithOp.PLUS) return false;
+        if (!(rhs instanceof Literal)) return false;
+        return ((Literal) rhs).getValue().getValue().equals((Integer) 1);
+    }
+
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         lhs = lhs.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);

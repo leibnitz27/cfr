@@ -40,4 +40,7 @@ public class ArrayLength extends AbstractExpression {
         array.collectUsedLValues(lValueUsageCollector);
     }
 
+    public Expression getArray() {
+        return array;
+    }
 }

@@ -44,4 +44,11 @@ public class ArrayIndex extends AbstractExpression {
         index.collectUsedLValues(lValueUsageCollector);
     }
 
+    public Expression getArray() {
+        return array;
+    }
+
+    public Expression getIndex() {
+        return index;
+    }
 }

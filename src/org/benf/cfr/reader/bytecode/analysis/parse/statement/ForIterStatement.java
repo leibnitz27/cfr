@@ -1,11 +1,12 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredFor;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredIter;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -15,22 +16,20 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 18:05
  * To change this template use File | Settings | File Templates.
  */
-public class ForStatement extends AbstractStatement {
-    private ConditionalExpression condition;
+public class ForIterStatement extends AbstractStatement {
     private BlockIdentifier blockIdentifier;
-    private Assignment initial;
-    private Assignment assignment;
+    private LValue iterator;
+    private Expression list; // or array!
 
-    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, Assignment initial, Assignment assignment) {
-        this.condition = conditionalExpression;
+    public ForIterStatement(BlockIdentifier blockIdentifier, LValue iterator, Expression list) {
         this.blockIdentifier = blockIdentifier;
-        this.initial = initial;
-        this.assignment = assignment;
+        this.iterator = iterator;
+        this.list = list;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("for (" + (initial == null ? "" : initial) + ";" + condition.toString() + "; " + assignment + ") ");
+        dumper.print("for (" + iterator + " : " + list + ")");
         dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
     }
 
@@ -41,22 +40,11 @@ public class ForStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredFor(condition, blockIdentifier, initial, assignment);
+        return new UnstructuredIter(blockIdentifier, iterator, list);
     }
 
     public BlockIdentifier getBlockIdentifier() {
         return blockIdentifier;
     }
 
-    public ConditionalExpression getCondition() {
-        return condition;
-    }
-
-    public Assignment getInitial() {
-        return initial;
-    }
-
-    public Assignment getAssignment() {
-        return assignment;
-    }
 }
