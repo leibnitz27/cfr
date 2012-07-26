@@ -47,7 +47,7 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
 
     public JavaTypeInstance getJavaTypeInstance(ConstantPool cp) {
         if (cachedDecodedType == null) {
-            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue());
+            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue(), cp);
         }
         return cachedDecodedType;
     }

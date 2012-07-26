@@ -70,7 +70,7 @@ public class Method implements KnowsRawSize {
 
     private String getSignatureText(ConstantPool cp, VariableNamer variableNamer) {
         String prefix = CollectionUtils.join(accessFlags, " ");
-        return prefix + " " + ConstantPoolUtils.parseJavaMethodPrototype(!accessFlags.contains(AccessFlagMethod.ACC_STATIC), cp.getUTF8Entry(descriptorIndex), variableNamer).getPrototype(cp.getUTF8Entry(nameIndex).getValue());
+        return prefix + " " + ConstantPoolUtils.parseJavaMethodPrototype(!accessFlags.contains(AccessFlagMethod.ACC_STATIC), cp.getUTF8Entry(descriptorIndex), cp, variableNamer).getPrototype(cp.getUTF8Entry(nameIndex).getValue());
 
     }
 

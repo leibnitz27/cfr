@@ -21,7 +21,7 @@ public class ConstantPoolUtils {
 
     private static final Logger logger = LoggerFactory.create(ConstantPoolUtils.class);
 
-    public static JavaTypeInstance decodeTypeTok(String tok) {
+    public static JavaTypeInstance decodeTypeTok(String tok, ConstantPool cp) {
         int idx = 0;
         int numArrayDims = 0;
         char c = tok.charAt(idx);
@@ -32,7 +32,7 @@ public class ConstantPoolUtils {
         JavaTypeInstance javaTypeInstance = null;
         switch (c) {
             case 'L':   // object
-                javaTypeInstance = new JavaRefTypeInstance(tok.substring(idx + 1, tok.length() - 1));
+                javaTypeInstance = new JavaRefTypeInstance(cp.getShortenedTypeName(tok.substring(idx + 1, tok.length() - 1)));
                 break;
             case 'B':   // byte
                 javaTypeInstance = RawJavaType.BYTE;
@@ -96,14 +96,14 @@ public class ConstantPoolUtils {
         return proto.substring(startidx, curridx);
     }
 
-    public static MethodPrototype parseJavaMethodPrototype(boolean instanceMethod, ConstantPoolEntryUTF8 prototype, VariableNamer variableNamer) {
+    public static MethodPrototype parseJavaMethodPrototype(boolean instanceMethod, ConstantPoolEntryUTF8 prototype, ConstantPool cp, VariableNamer variableNamer) {
         String proto = prototype.getValue();
         int curridx = 1;
         if (!proto.startsWith("(")) throw new ConfusedCFRException("Prototype " + proto + " is invalid");
         List<JavaTypeInstance> args = ListFactory.newList();
         while (proto.charAt(curridx) != ')') {
             String typeTok = getNextTypeTok(proto, curridx);
-            args.add(decodeTypeTok(typeTok));
+            args.add(decodeTypeTok(typeTok, cp));
             curridx += typeTok.length();
         }
         curridx++;
@@ -112,7 +112,7 @@ public class ConstantPoolUtils {
             case 'V':
                 break;
             default:
-                resultType = decodeTypeTok(getNextTypeTok(proto, curridx));
+                resultType = decodeTypeTok(getNextTypeTok(proto, curridx), cp);
                 break;
         }
         MethodPrototype res = new MethodPrototype(instanceMethod, args, resultType, variableNamer);
@@ -124,7 +124,7 @@ public class ConstantPoolUtils {
     /*
      * could be rephrased in terms of MethodPrototype.
      */
-    public static StackDelta parseMethodPrototype(boolean member, ConstantPoolEntryUTF8 prototype) {
+    public static StackDelta parseMethodPrototype(boolean member, ConstantPoolEntryUTF8 prototype, ConstantPool cp) {
         String proto = prototype.getValue();
         int curridx = 1;
         if (!proto.startsWith("(")) throw new ConfusedCFRException("Prototype " + proto + " is invalid");
@@ -134,7 +134,7 @@ public class ConstantPoolUtils {
         }
         while (proto.charAt(curridx) != ')') {
             String typeTok = getNextTypeTok(proto, curridx);
-            argumentTypes.add(decodeTypeTok(typeTok).getStackType());
+            argumentTypes.add(decodeTypeTok(typeTok, cp).getStackType());
             curridx += typeTok.length();
         }
         curridx++;
@@ -143,7 +143,7 @@ public class ConstantPoolUtils {
             case 'V':
                 break;
             default:
-                resultType = decodeTypeTok(getNextTypeTok(proto, curridx)).getStackType().asList();
+                resultType = decodeTypeTok(getNextTypeTok(proto, curridx), cp).getStackType().asList();
                 break;
         }
         StackDelta res = new StackDelta(argumentTypes, resultType);

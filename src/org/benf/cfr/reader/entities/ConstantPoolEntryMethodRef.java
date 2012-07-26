@@ -56,7 +56,7 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
 
     public MethodPrototype getMethodPrototype(ConstantPool cp) {
         if (methodPrototype == null) {
-            methodPrototype = ConstantPoolUtils.parseJavaMethodPrototype(interfaceMethod, cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp), fakeNamer);
+            methodPrototype = ConstantPoolUtils.parseJavaMethodPrototype(interfaceMethod, cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp), cp, fakeNamer);
         }
         return methodPrototype;
     }

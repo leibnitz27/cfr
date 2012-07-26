@@ -47,10 +47,14 @@ public class ConstantPoolEntryNameAndType implements ConstantPoolEntry {
         return cp.getUTF8Entry(descriptorIndex);
     }
 
+    public short getDescriptorIndex() {
+        return descriptorIndex;
+    }
+
     public StackDelta getStackDelta(boolean member, ConstantPool cp) {
         int idx = member ? 1 : 0;
         if (stackDelta[idx] == null)
-            stackDelta[idx] = ConstantPoolUtils.parseMethodPrototype(member, cp.getUTF8Entry(descriptorIndex));
+            stackDelta[idx] = ConstantPoolUtils.parseMethodPrototype(member, cp.getUTF8Entry(descriptorIndex), cp);
         return stackDelta[idx];
     }
 }

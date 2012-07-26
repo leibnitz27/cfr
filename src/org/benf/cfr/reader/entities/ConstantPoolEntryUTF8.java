@@ -27,6 +27,11 @@ public class ConstantPoolEntryUTF8 implements ConstantPoolEntry {
         this.value = new String(bytes, UTF8_CHARSET);
     }
 
+    public ConstantPoolEntryUTF8(String fake) {
+        this.value = fake;
+        this.length = 0;
+    }
+
     @Override
     public long getRawByteLength() {
         return 3 + length;
