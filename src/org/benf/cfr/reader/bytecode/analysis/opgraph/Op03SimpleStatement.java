@@ -2089,8 +2089,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement preceeding = findSingleBackSource(loop);
         if (preceeding == null) return;
 
-        BlockIdentifier whileBlock = whileStatement.getBlockIdentifier();
-
         WildcardMatch wildcardMatch = new WildcardMatch();
 
         if (!wildcardMatch.match(
@@ -2118,7 +2116,27 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         Expression iterSource = wildcardMatch.getExpressionWildCard("iteratorsource").getMatch();
 
-        loop.replaceStatement(new ForIterStatement(whileBlock, sugarIter, iterSource));
+        // It's probably valid.  We just have to make sure that array and index aren't assigned to anywhere in the loop
+        // body.
+        final BlockIdentifier blockIdentifier = whileStatement.getBlockIdentifier();
+        List<Op03SimpleStatement> statementsInBlock = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return in.containedInBlocks.contains(blockIdentifier);
+            }
+        });
+
+        for (Op03SimpleStatement inBlock : statementsInBlock) {
+            if (inBlock == loopStart) continue;
+            Statement inStatement = inBlock.containedStatement;
+            LValue updated = inStatement.getCreatedLValue();
+            if (updated == null) continue;
+            if (updated.equals(sugarIter)) {
+                return;
+            }
+        }
+
+        loop.replaceStatement(new ForIterStatement(blockIdentifier, sugarIter, iterSource));
         loopStart.nopOut();
         preceeding.nopOut();
     }
