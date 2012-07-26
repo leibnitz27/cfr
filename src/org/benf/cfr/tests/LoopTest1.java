@@ -27,7 +27,8 @@ public class LoopTest1 {
         boolean result = false;
         Iterator<Object> e = list.iterator();
         while (e.hasNext()) {
-            if (set.add(e.next())) {
+            Object o = e.next();
+            if (set.add(o)) {
                 result = true;
             }
         }

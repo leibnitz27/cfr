@@ -2070,8 +2070,66 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement loop : loops) {
             rewriteArrayForLoop(loop, statements);
         }
-
     }
+
+    /*
+     * We're being called /after/ optimiseForTypes, so we expect an expression set of the form
+     *
+     * [x] = [y].iterator()
+     * while ([x].hasNext()) {
+     *   [a] = [x].next();
+     * }
+     */
+    private static void rewriteIteratorWhileLoop(Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
+        WhileStatement whileStatement = (WhileStatement) loop.containedStatement;
+
+        /*
+         * loop should have one back-parent.
+         */
+        Op03SimpleStatement preceeding = findSingleBackSource(loop);
+        if (preceeding == null) return;
+
+        BlockIdentifier whileBlock = whileStatement.getBlockIdentifier();
+
+        WildcardMatch wildcardMatch = new WildcardMatch();
+
+        if (!wildcardMatch.match(
+                new BooleanExpression(
+                        wildcardMatch.getMemberFunction("hasnextfn", "hasNext", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")))
+                ),
+                whileStatement.getCondition())) return;
+
+        LValue iterable = wildcardMatch.getLValueWildCard("iterable").getMatch();
+
+        Op03SimpleStatement loopStart = loop.getTargets().get(0);
+        // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
+        // TODO : This can be pushed into the loop, as long as it's not after a conditional.
+        if (!wildcardMatch.match(
+                new Assignment(wildcardMatch.getLValueWildCard("sugariter"),
+                        wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")))),
+                loopStart.containedStatement)) return;
+
+        LValue sugarIter = wildcardMatch.getLValueWildCard("sugariter").getMatch();
+
+        if (!wildcardMatch.match(
+                new Assignment(wildcardMatch.getLValueWildCard("iterable"),
+                        wildcardMatch.getMemberFunction("iterator", "iterator", new LValueExpression(wildcardMatch.getLValueWildCard("iteratorsource")))),
+                preceeding.containedStatement)) return;
+
+        LValue iterSource = wildcardMatch.getLValueWildCard("iteratorsource").getMatch();
+
+        loop.replaceStatement(new ForIterStatement(whileBlock, sugarIter, new LValueExpression(iterSource)));
+        loopStart.nopOut();
+        preceeding.nopOut();
+    }
+
+    public static void rewriteIteratorWhileLoops(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> loops = Functional.filter(statements, new TypeFilter<WhileStatement>(WhileStatement.class));
+        for (Op03SimpleStatement loop : loops) {
+            rewriteIteratorWhileLoop(loop, statements);
+        }
+    }
+
 
     @Override
     public String toString() {

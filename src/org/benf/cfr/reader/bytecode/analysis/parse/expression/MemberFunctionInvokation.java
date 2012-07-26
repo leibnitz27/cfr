@@ -26,6 +26,7 @@ public class MemberFunctionInvokation extends AbstractExpression {
     private final List<Expression> args;
     private final ConstantPool cp;
     private final MethodPrototype methodPrototype;
+    private final String name;
 
     public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args) {
         super(new InferredJavaType(methodPrototype.getReturnType(), InferredJavaType.Source.FIELD));
@@ -34,6 +35,8 @@ public class MemberFunctionInvokation extends AbstractExpression {
         this.object = object;
         this.args = args;
         this.cp = cp;
+        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
+        this.name = nameAndType.getName(cp).getValue();
     }
 
     @Override
@@ -49,10 +52,7 @@ public class MemberFunctionInvokation extends AbstractExpression {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(object.toString());
-        sb.append(".");
-        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
-        sb.append(nameAndType.getName(cp).getValue());
-        sb.append("(");
+        sb.append(".").append(name).append("(");
         boolean first = true;
         for (int x = 0; x < args.size(); ++x) {
             Expression arg = args.get(x);
@@ -70,6 +70,10 @@ public class MemberFunctionInvokation extends AbstractExpression {
 
     public ConstantPoolEntryMethodRef getFunction() {
         return function;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public List<Expression> getArgs() {

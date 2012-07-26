@@ -74,4 +74,12 @@ public class BooleanExpression extends AbstractExpression implements Conditional
     public ConditionalExpression optimiseForType() {
         return this;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof BooleanExpression)) return false;
+        BooleanExpression other = (BooleanExpression) o;
+        return inner.equals(other.inner);
+    }
 }

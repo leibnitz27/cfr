@@ -191,6 +191,8 @@ public class CodeAnalyser {
 
         // Introduce java 6 style for (x : array)
         Op03SimpleStatement.rewriteArrayForLoops(op03SimpleParseNodes);
+        // and for (x : iterable)
+        Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
