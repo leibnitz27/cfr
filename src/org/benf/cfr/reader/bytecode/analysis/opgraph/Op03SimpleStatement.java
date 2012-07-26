@@ -2113,12 +2113,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         if (!wildcardMatch.match(
                 new Assignment(wildcardMatch.getLValueWildCard("iterable"),
-                        wildcardMatch.getMemberFunction("iterator", "iterator", new LValueExpression(wildcardMatch.getLValueWildCard("iteratorsource")))),
+                        wildcardMatch.getMemberFunction("iterator", "iterator", wildcardMatch.getExpressionWildCard("iteratorsource"))),
                 preceeding.containedStatement)) return;
 
-        LValue iterSource = wildcardMatch.getLValueWildCard("iteratorsource").getMatch();
+        Expression iterSource = wildcardMatch.getExpressionWildCard("iteratorsource").getMatch();
 
-        loop.replaceStatement(new ForIterStatement(whileBlock, sugarIter, new LValueExpression(iterSource)));
+        loop.replaceStatement(new ForIterStatement(whileBlock, sugarIter, iterSource));
         loopStart.nopOut();
         preceeding.nopOut();
     }
