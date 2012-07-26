@@ -10,7 +10,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
-import org.benf.cfr.reader.entities.ConstantPoolEntryNameAndType;
 
 import java.util.List;
 
@@ -46,9 +45,10 @@ public class ConstructorInvokation extends AbstractExpression {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("new " + cp.getUTF8Entry(type.getNameIndex()).getValue() + ".");
-        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
-        sb.append(nameAndType.getName(cp).getValue());
+        sb.append("new " + cp.getUTF8Entry(type.getNameIndex()).getValue());
+        // + ".");
+        // ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
+        //sb.append(nameAndType.getName(cp).getValue());
         sb.append("(");
         boolean first = true;
         for (Expression arg : args) {
