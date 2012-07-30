@@ -575,6 +575,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             statement = source;
         }
         if (!preCondAssignmentSeen) return false;
+        // It turns out we generate better code with this, as we want (where possible) to /avoid/ pushing these
+        // assignments.
+        if (extraCondSeen) return false;
         /* If this statement has any backjumping sources then we consider it */
         InstrIndex statementIndex = statement.getIndex();
         for (Op03SimpleStatement source : statement.sources) {
