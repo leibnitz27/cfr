@@ -1,14 +1,13 @@
 package org.benf.cfr.reader.entities;
 
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
+import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -42,6 +41,17 @@ public class ConstantPool {
         processNames();
     }
 
+    public void dumpImports(Dumper d) {
+        if (shortenedClassNames.isEmpty()) return;
+        d.print("\n");
+        List<String> names = ListFactory.newList(shortenedClassNames.keySet());
+        Collections.sort(names);
+        for (String shortenedName : names) {
+            d.print("import " + shortenedName + ";\n");
+        }
+        d.print("\n");
+    }
+
     public String getShortenedTypeName(String qualifiedName) {
         String res = shortenedClassNames.get(qualifiedName);
         if (res == null) return qualifiedName;
@@ -58,7 +68,7 @@ public class ConstantPool {
         List<ConstantPoolEntry> classes = Functional.filter(entries, new Predicate<ConstantPoolEntry>() {
             @Override
             public boolean test(ConstantPoolEntry in) {
-                return in instanceof ConstantPoolEntryClass;
+                return (in instanceof ConstantPoolEntryClass);
             }
         });
 

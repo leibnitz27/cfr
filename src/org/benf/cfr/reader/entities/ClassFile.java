@@ -143,6 +143,7 @@ public class ClassFile {
             d.newln();
             attr.dump(d, constantPool);
         }
+        constantPool.dumpImports(d);
         d.line();
         d.newln().print("Methods");
         for (Method meth : methods) {
