@@ -50,6 +50,11 @@ public enum RawJavaType implements JavaTypeInstance {
         return this;
     }
 
+    @Override
+    public JavaTypeInstance removeAnArrayIndirection() {
+        return VOID;
+    }
+
     public String getCastString() {
         return "(" + name + ")";
     }

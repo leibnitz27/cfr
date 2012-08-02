@@ -42,6 +42,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public JavaTypeInstance removeAnArrayIndirection() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public RawJavaType getRawTypeOfSimpleType() {
         return RawJavaType.REF;
     }

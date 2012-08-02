@@ -12,4 +12,6 @@ public interface JavaTypeInstance {
     public boolean isComplexType();
 
     public RawJavaType getRawTypeOfSimpleType();
+
+    public JavaTypeInstance removeAnArrayIndirection();
 }

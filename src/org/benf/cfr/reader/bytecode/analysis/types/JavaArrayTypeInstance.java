@@ -48,6 +48,13 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         return true;
     }
 
+    // should be cached..
+    @Override
+    public JavaTypeInstance removeAnArrayIndirection() {
+        if (dimensions == 1) return underlyingType;
+        return new JavaArrayTypeInstance(dimensions - 1, underlyingType);
+    }
+
     @Override
     public RawJavaType getRawTypeOfSimpleType() {
         return underlyingType.getRawTypeOfSimpleType();

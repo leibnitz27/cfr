@@ -19,8 +19,7 @@ public class ArrayIndex extends AbstractExpression {
     private Expression index;
 
     public ArrayIndex(Expression array, Expression index) {
-        super(new InferredJavaType());
-        // If we knew what type array was, we could do more...
+        super(new InferredJavaType(array.getInferredJavaType().getJavaTypeInstance().removeAnArrayIndirection(), InferredJavaType.Source.OPERATION));
         this.array = array;
         this.index = index;
     }

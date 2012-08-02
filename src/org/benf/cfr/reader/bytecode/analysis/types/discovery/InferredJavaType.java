@@ -47,6 +47,8 @@ public class InferredJavaType {
     private interface IJTInternal {
         RawJavaType getRawType();
 
+        JavaTypeInstance getJavaTypeInstance();
+
         boolean isChained();
 
         void chain(InferredJavaType chainTo);
@@ -67,6 +69,11 @@ public class InferredJavaType {
         public RawJavaType getRawType() {
             // Think this might bite me later?
             return type.getRawTypeOfSimpleType();
+        }
+
+        @Override
+        public JavaTypeInstance getJavaTypeInstance() {
+            return type;
         }
 
         @Override
@@ -103,6 +110,11 @@ public class InferredJavaType {
         @Override
         public RawJavaType getRawType() {
             return delegate.getRawType();
+        }
+
+        @Override
+        public JavaTypeInstance getJavaTypeInstance() {
+            return delegate.getJavaTypeInstance();
         }
 
         @Override
@@ -287,6 +299,10 @@ public class InferredJavaType {
     public RawJavaType getRawType() {
 //        System.out.println(super.toString());
         return value.getRawType();
+    }
+
+    public JavaTypeInstance getJavaTypeInstance() {
+        return value.getJavaTypeInstance();
     }
 
     @Override
