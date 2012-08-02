@@ -12,7 +12,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntryHolder;
@@ -697,7 +696,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     }
 
-    public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list, final VariableNamer variableNamer) {
+    public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list, final VariableFactory variableFactory) {
 
         final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
         // Convert the op2s into a simple set of statements.
@@ -706,7 +705,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         // By only processing reachable bytecode, we ignore deliberate corruption.   However, we could
         // Nop out unreachable code, so as to not have this ugliness.
         // We start at 0 as that's not controversial ;)
-        final VariableFactory variableFactory = new VariableFactory(variableNamer);
         GraphVisitor o2Converter = new GraphVisitorDFS(op2list.get(0),
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override

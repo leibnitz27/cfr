@@ -44,6 +44,7 @@ public class Method implements KnowsRawSize {
     public Method(ByteData raw, final ConstantPool cp) {
         this.nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         this.accessFlags = AccessFlagMethod.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
+        this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
         short numAttributes = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
@@ -55,7 +56,6 @@ public class Method implements KnowsRawSize {
                     }
                 });
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
-        this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
     }
 

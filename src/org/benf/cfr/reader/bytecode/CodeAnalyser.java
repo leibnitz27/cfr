@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRef
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
@@ -118,7 +119,8 @@ public class CodeAnalyser {
 //        dumper.dump(op2list);
 
         // Create a non final version...
-        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableNamer);
+        final VariableFactory variableFactory = new VariableFactory(variableNamer);
+        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableFactory);
 
 
         // Expand any 'multiple' statements (eg from dups)

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entityfactories;
 
-import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.ConstantPoolEntryUTF8;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.attributes.AttributeLocalVariableTable;
@@ -24,6 +25,8 @@ public class AttributeFactory {
         String attributeName = name.getValue();
 
         if ("Code".equals(attributeName)) {
+            // Code attribute needs the signature of the method, so that we have type information for the
+            // local variables.
             return new AttributeCode(raw, cp);
         } else if ("LocalVariableTable".equals(attributeName)) {
             return new AttributeLocalVariableTable(raw, cp);
