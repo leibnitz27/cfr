@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
@@ -40,8 +42,12 @@ public class Method implements KnowsRawSize {
     private final Map<String, Attribute> attributes;
     private final short nameIndex;
     private final short descriptorIndex;
+    private final AttributeCode codeAttribute;
+    private final ConstantPool cp;
+    private final VariableNamer variableNamer;
 
     public Method(ByteData raw, final ConstantPool cp) {
+        this.cp = cp;
         this.nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         this.accessFlags = AccessFlagMethod.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
         this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
@@ -57,6 +63,21 @@ public class Method implements KnowsRawSize {
                 });
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
+        Attribute codeAttribute = attributes.get(AttributeCode.ATTRIBUTE_NAME);
+        if (codeAttribute == null) {
+            this.variableNamer = null;
+            this.codeAttribute = null;
+        } else {
+            this.codeAttribute = (AttributeCode) codeAttribute;
+            // This rigamarole is neccessary because we don't provide the factory for the code attribute enough information
+            // get get the Method (this).
+            this.variableNamer = VariableNamerFactory.getNamer(this.codeAttribute.getLocalVariableTable(), cp);
+            this.codeAttribute.setMethod(this);
+        }
+    }
+
+    public VariableNamer getVariableNamer() {
+        return variableNamer;
     }
 
     @Override
@@ -64,21 +85,28 @@ public class Method implements KnowsRawSize {
         return length;
     }
 
-    public String getName(ConstantPool cp) {
+    public String getName() {
         return cp.getUTF8Entry(nameIndex).getValue();
     }
 
-    private String getSignatureText(ConstantPool cp, VariableNamer variableNamer) {
-        String prefix = CollectionUtils.join(accessFlags, " ");
-        return prefix + " " + ConstantPoolUtils.parseJavaMethodPrototype(!accessFlags.contains(AccessFlagMethod.ACC_STATIC), cp.getUTF8Entry(descriptorIndex), cp, variableNamer).getPrototype(cp.getUTF8Entry(nameIndex).getValue());
+    /* This is a bit ugly - otherwise though we need to tie a variablenamer to this earlier. */
+    public MethodPrototype getMethodPrototype() {
+        return ConstantPoolUtils.parseJavaMethodPrototype(!accessFlags.contains(AccessFlagMethod.ACC_STATIC), cp.getUTF8Entry(descriptorIndex), cp, variableNamer);
+    }
 
+    private String getSignatureText() {
+        String prefix = CollectionUtils.join(accessFlags, " ");
+        return prefix + " " + getMethodPrototype().getPrototype(cp.getUTF8Entry(nameIndex).getValue());
+    }
+
+    public void analyse() {
+        if (codeAttribute != null) codeAttribute.analyse();
     }
 
     public void dump(Dumper d, ConstantPool cp) {
-        d.newln();
-        Attribute codeAttribute = attributes.get(AttributeCode.ATTRIBUTE_NAME);
         if (codeAttribute != null) {
-            d.print(getSignatureText(cp, ((AttributeCode) codeAttribute).getVariableNamer()));
+            d.newln();
+            d.print(getSignatureText());
             codeAttribute.dump(d, cp);
         }
         d.newln();

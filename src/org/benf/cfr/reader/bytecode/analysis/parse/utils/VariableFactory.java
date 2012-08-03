@@ -2,8 +2,16 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,15 +22,35 @@ import java.util.Map;
  */
 public class VariableFactory {
     private final VariableNamer variableNamer;
+    private final List<InferredJavaType> typedArgs;
 
     private final Map<LValue, LValue> cache = MapFactory.newMap();
 
-    public VariableFactory(VariableNamer variableNamer) {
+    public VariableFactory(VariableNamer variableNamer, Method method) {
         this.variableNamer = variableNamer;
+        if (method == null) {
+            throw new ConfusedCFRException("No method signature for a variable factory");
+        }
+        MethodPrototype methodPrototype = method.getMethodPrototype();
+        List<JavaTypeInstance> args = methodPrototype.getArgs();
+        this.typedArgs = ListFactory.newList();
+        if (methodPrototype.isInstanceMethod()) {
+            // we should type 'this'....
+            typedArgs.add(new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.UNKNOWN));
+        }
+        for (JavaTypeInstance arg : args) {
+            typedArgs.add(new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN));
+        }
     }
 
     public LValue localVariable(int idx, int origRawOffset) {
-        LValue tmp = new LocalVariable(idx, variableNamer, origRawOffset);
+        InferredJavaType varType;
+        if (idx < typedArgs.size()) {
+            varType = typedArgs.get(idx);
+        } else {
+            varType = new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.UNKNOWN);
+        }
+        LValue tmp = new LocalVariable(idx, variableNamer, origRawOffset, varType);
         LValue val = cache.get(tmp);
         if (val == null) {
             cache.put(tmp, tmp);

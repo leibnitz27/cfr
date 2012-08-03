@@ -69,6 +69,7 @@ public class Main {
             byte[] content = getBytesFromFile(fname);
             ByteData data = new BaseByteData(content);
             ClassFile c = new ClassFile(data);
+            c.analyse();
             Dumper d = new Dumper();
             if (methname == null) {
                 c.Dump(d);

@@ -1,8 +1,8 @@
 package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.bytecode.CodeAnalyser;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
@@ -34,9 +34,10 @@ public class AttributeCode extends Attribute {
     private final int codeLength;
     private final List<ExceptionTableEntry> exceptionTableEntries;
     private final List<Attribute> attributes;
-    private final CodeAnalyser codeAnalyser;
     private final ConstantPool cp;
     private final ByteData rawData;
+
+    private final CodeAnalyser codeAnalyser;
 
     public AttributeCode(ByteData raw, final ConstantPool cp) {
         this.cp = cp;
@@ -65,8 +66,14 @@ public class AttributeCode extends Attribute {
                 AttributeFactory.getBuilder(cp));
         this.attributes = tmpAttributes;
         this.rawData = raw.getOffsetData(OFFSET_OF_CODE);
-
         this.codeAnalyser = new CodeAnalyser(this);
+    }
+
+    public void setMethod(Method method) {
+        codeAnalyser.setMethod(method);
+    }
+
+    public void analyse() {
         codeAnalyser.analyse();
     }
 
@@ -79,10 +86,6 @@ public class AttributeCode extends Attribute {
             if (attribute instanceof AttributeLocalVariableTable) return (AttributeLocalVariableTable) attribute;
         }
         return null;
-    }
-
-    public VariableNamer getVariableNamer() {
-        return codeAnalyser.getVariableNamer();
     }
 
     public ByteData getRawData() {

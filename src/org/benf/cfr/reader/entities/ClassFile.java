@@ -116,8 +116,12 @@ public class ClassFile {
 
         thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_THIS_CLASS));
         superClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_SUPER_CLASS));
+    }
 
-
+    public void analyse() {
+        for (Method method : methods) {
+            method.analyse();
+        }
     }
 
     public void Dump(Dumper d) {
@@ -154,7 +158,7 @@ public class ClassFile {
 
     public void dumpMethod(String name, Dumper dumper) {
         for (Method method : methods) {
-            if (method.getName(constantPool).equals(name)) {
+            if (method.getName().equals(name)) {
                 dumper.newln();
                 method.dump(dumper, constantPool);
             }

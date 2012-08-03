@@ -16,8 +16,8 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 public class LocalVariable extends AbstractLValue {
     private final String name;
 
-    public LocalVariable(long index, VariableNamer variableNamer, int originalRawOffset) {
-        super(new InferredJavaType());
+    public LocalVariable(long index, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType) {
+        super(inferredJavaType);
         this.name = variableNamer.getName(originalRawOffset, index);
     }
 

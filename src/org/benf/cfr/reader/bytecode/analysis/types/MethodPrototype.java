@@ -47,6 +47,14 @@ public class MethodPrototype {
         return result;
     }
 
+    public List<JavaTypeInstance> getArgs() {
+        return args;
+    }
+
+    public boolean isInstanceMethod() {
+        return instanceMethod;
+    }
+
     public String getAppropriatelyCastedArgumentString(Expression expression, int argidx) {
         JavaTypeInstance type = args.get(argidx);
         if (type.isComplexType()) {
