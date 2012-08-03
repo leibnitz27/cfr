@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -15,6 +17,7 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEn
     private final long OFFSET_OF_NAME_INDEX = 1;
 
     final short nameIndex;
+    transient JavaTypeInstance javaTypeInstance = null;
 
     public ConstantPoolEntryClass(ByteData data) {
         this.nameIndex = data.getS2At(OFFSET_OF_NAME_INDEX);
@@ -35,8 +38,16 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEn
         d.print("Class " + cp.getUTF8Entry(nameIndex).getValue());
     }
 
-    public String getClassName(ConstantPool cp) {
-        return cp.getUTF8Entry(nameIndex).getValue();
+    public JavaTypeInstance getTypeInstance(ConstantPool cp) {
+        if (javaTypeInstance == null) {
+            String rawType = cp.getUTF8Entry(nameIndex).getValue();
+            if (rawType.startsWith("[")) {
+                javaTypeInstance = ConstantPoolUtils.decodeTypeTok(rawType, cp);
+            } else {
+                javaTypeInstance = new JavaRefTypeInstance(rawType);
+            }
+        }
+        return javaTypeInstance;
     }
 
     public short getNameIndex() {

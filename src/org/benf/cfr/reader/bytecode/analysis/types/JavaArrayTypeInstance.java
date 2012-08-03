@@ -22,8 +22,17 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public String toString() {
+        return getBeforeNewString() + getAfterNewString();
+    }
+
+    @Override
+    public String getBeforeNewString() {
+        return underlyingType.toString();
+    }
+
+    @Override
+    public String getAfterNewString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(underlyingType);
         for (int x = 0; x < dimensions; ++x) {
             sb.append("[]");
         }
@@ -45,6 +54,11 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public boolean isComplexType() {
+        return true;
+    }
+
+    @Override
+    public boolean isUsableType() {
         return true;
     }
 

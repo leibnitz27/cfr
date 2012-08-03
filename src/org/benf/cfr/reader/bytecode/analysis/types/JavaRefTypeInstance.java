@@ -24,6 +24,16 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public String getBeforeNewString() {
+        return className;
+    }
+
+    @Override
+    public String getAfterNewString() {
+        return "";
+    }
+
+    @Override
     public int hashCode() {
         return 31 + className.hashCode();
     }
@@ -38,6 +48,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public boolean isComplexType() {
+        return true;
+    }
+
+    @Override
+    public boolean isUsableType() {
         return true;
     }
 

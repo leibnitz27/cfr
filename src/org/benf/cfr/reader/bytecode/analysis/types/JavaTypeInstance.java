@@ -11,7 +11,19 @@ public interface JavaTypeInstance {
 
     public boolean isComplexType();
 
+    public boolean isUsableType();
+
     public RawJavaType getRawTypeOfSimpleType();
 
     public JavaTypeInstance removeAnArrayIndirection();
+
+    /*
+     *
+     */
+    public String getBeforeNewString();
+
+    /*
+     *
+     */
+    public String getAfterNewString();
 }

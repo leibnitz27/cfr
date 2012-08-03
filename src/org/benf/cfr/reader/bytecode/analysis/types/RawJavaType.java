@@ -9,26 +9,28 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * Time: 06:57
  */
 public enum RawJavaType implements JavaTypeInstance {
-    BOOLEAN("boolean", StackType.INT),
-    BYTE("byte", StackType.INT),
-    CHAR("char", StackType.INT),
-    SHORT("short", StackType.INT),
-    INT("int", StackType.INT),
-    FLOAT("float", StackType.FLOAT),
-    REF("reference", StackType.REF),  // Don't use for fixedtypeinstance.
-    RETURNADDRESS("returnaddress", StackType.RETURNADDRESS),
-    RETURNADDRESSORREF("returnaddress or ref", StackType.RETURNADDRESSORREF),
-    LONG("long", StackType.LONG),
-    DOUBLE("double", StackType.DOUBLE),
-    VOID("void", StackType.VOID),
-    NULL("null", StackType.REF);  // Null is a special type, sort of.
+    BOOLEAN("boolean", StackType.INT, true),
+    BYTE("byte", StackType.INT, true),
+    CHAR("char", StackType.INT, true),
+    SHORT("short", StackType.INT, true),
+    INT("int", StackType.INT, true),
+    FLOAT("float", StackType.FLOAT, true),
+    REF("reference", StackType.REF, false),  // Don't use for fixedtypeinstance.
+    RETURNADDRESS("returnaddress", StackType.RETURNADDRESS, false),
+    RETURNADDRESSORREF("returnaddress or ref", StackType.RETURNADDRESSORREF, false),
+    LONG("long", StackType.LONG, true),
+    DOUBLE("double", StackType.DOUBLE, true),
+    VOID("void", StackType.VOID, false),
+    NULL("null", StackType.REF, false);  // Null is a special type, sort of.
 
     private final String name;
     private final StackType stackType;
+    private final boolean usableType;
 
-    private RawJavaType(String name, StackType stackType) {
+    private RawJavaType(String name, StackType stackType, boolean usableType) {
         this.name = name;
         this.stackType = stackType;
+        this.usableType = usableType;
     }
 
     public String getName() {
@@ -46,6 +48,11 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
     @Override
+    public boolean isUsableType() {
+        return usableType;
+    }
+
+    @Override
     public RawJavaType getRawTypeOfSimpleType() {
         return this;
     }
@@ -53,6 +60,16 @@ public enum RawJavaType implements JavaTypeInstance {
     @Override
     public JavaTypeInstance removeAnArrayIndirection() {
         return VOID;
+    }
+
+    @Override
+    public String getBeforeNewString() {
+        return name;
+    }
+
+    @Override
+    public String getAfterNewString() {
+        return "";
     }
 
     public String getCastString() {
@@ -63,6 +80,7 @@ public enum RawJavaType implements JavaTypeInstance {
     public String toString() {
         return name;
     }
+
 
     public static RawJavaType getMaximalJavaTypeForStackType(StackType stackType) {
         switch (stackType) {

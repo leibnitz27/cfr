@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.entities;
 
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -33,12 +35,6 @@ public class ConstantPool {
 
         length = processRaw(raw, count, res);
         entries = res;
-
-        /* Now, go through the class entries, and see how unique we can make the names.
-         * We can be quite naive here - all we have to require is that a name is either
-         * unique, or fully qualified.
-         */
-        processNames();
     }
 
     public void dumpImports(Dumper d) {
@@ -50,47 +46,6 @@ public class ConstantPool {
             d.print("import " + shortenedName + ";\n");
         }
         d.print("\n");
-    }
-
-    public String getShortenedTypeName(String qualifiedName) {
-        String res = shortenedClassNames.get(qualifiedName);
-        if (res == null) return qualifiedName;
-        return res;
-    }
-
-    private static String deQualify(String qualifiedName) {
-        int i = qualifiedName.lastIndexOf('/');
-        if (i == -1) return qualifiedName;
-        return qualifiedName.substring(i + 1);
-    }
-
-    private void processNames() {
-        List<ConstantPoolEntry> classes = Functional.filter(entries, new Predicate<ConstantPoolEntry>() {
-            @Override
-            public boolean test(ConstantPoolEntry in) {
-                return (in instanceof ConstantPoolEntryClass);
-            }
-        });
-
-        Map<String, ConstantPoolEntryClass> uniq = MapFactory.newMap();
-        for (ConstantPoolEntry clazz : classes) {
-            ConstantPoolEntryClass constantPoolEntryClass = (ConstantPoolEntryClass) clazz;
-            String name = constantPoolEntryClass.getClassName(this);
-            String unqualifiedName = deQualify(name);
-            if (uniq.containsKey(unqualifiedName)) {
-                uniq.put(unqualifiedName, null);
-            } else {
-                uniq.put(unqualifiedName, constantPoolEntryClass);
-            }
-        }
-        for (Map.Entry<String, ConstantPoolEntryClass> entry : uniq.entrySet()) {
-            ConstantPoolEntryClass constantPoolEntryClass = entry.getValue();
-            if (constantPoolEntryClass != null) {
-                ConstantPoolEntryUTF8 oldName = getUTF8Entry(constantPoolEntryClass.getNameIndex());
-                setEntry(constantPoolEntryClass.getNameIndex(), new ConstantPoolEntryUTF8(entry.getKey()));
-                shortenedClassNames.put(oldName.getValue(), entry.getKey());
-            }
-        }
     }
 
     private static long processRaw(ByteData raw, short count, List<ConstantPoolEntry> tgt) {

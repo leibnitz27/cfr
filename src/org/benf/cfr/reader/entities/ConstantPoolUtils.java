@@ -32,7 +32,7 @@ public class ConstantPoolUtils {
         JavaTypeInstance javaTypeInstance = null;
         switch (c) {
             case 'L':   // object
-                javaTypeInstance = new JavaRefTypeInstance(cp.getShortenedTypeName(tok.substring(idx + 1, tok.length() - 1)));
+                javaTypeInstance = new JavaRefTypeInstance(tok.substring(idx + 1, tok.length() - 1));
                 break;
             case 'B':   // byte
                 javaTypeInstance = RawJavaType.BYTE;
