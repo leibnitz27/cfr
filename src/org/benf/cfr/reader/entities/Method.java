@@ -89,7 +89,7 @@ public class Method implements KnowsRawSize {
         return cp.getUTF8Entry(nameIndex).getValue();
     }
 
-    /* This is a bit ugly - otherwise though we need to tie a variablenamer to this earlier. */
+    /* This is a bit ugly - otherwise though we need to tie a variable namer to this earlier. */
     public MethodPrototype getMethodPrototype() {
         return ConstantPoolUtils.parseJavaMethodPrototype(!accessFlags.contains(AccessFlagMethod.ACC_STATIC), cp.getUTF8Entry(descriptorIndex), cp, variableNamer);
     }
