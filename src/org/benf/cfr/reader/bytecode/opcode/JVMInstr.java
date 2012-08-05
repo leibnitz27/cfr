@@ -222,7 +222,7 @@ public enum JVMInstr {
     LXOR(0x83, 0, new StackTypes(StackType.LONG, StackType.LONG), StackType.LONG.asList(), RawJavaType.LONG),
     MONITORENTER(0xc2, 0, StackType.REF.asList(), StackTypes.EMPTY, RawJavaType.VOID),
     MONITOREXIT(0xc3, 0, StackType.REF.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    MULTIANEWARRAY(0xc5, 3, null, null, null),
+    MULTIANEWARRAY(0xc5, 3, null, null, RawJavaType.REF, new OperationFactoryMultiANewArray()),
     NEW(0xbb, 2, StackTypes.EMPTY, StackType.REF.asList(), null, new OperationFactoryNew()),
     NEWARRAY(0xbc, 1, StackType.INT.asList(), StackType.REF.asList(), null),
     NOP(0x0, 0, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID),

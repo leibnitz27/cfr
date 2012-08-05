@@ -13,17 +13,18 @@ public interface JavaTypeInstance {
 
     public boolean isUsableType();
 
+    /*
+     * TODO : Doesn't feel like this is right, it ignores array dimensionality.
+     */
     public RawJavaType getRawTypeOfSimpleType();
 
+    /*
+     * Again, can't we already be sure we have an array type here?
+     * TODO : Doesn't feel right.
+     */
     public JavaTypeInstance removeAnArrayIndirection();
 
-    /*
-     *
-     */
-    public String getBeforeNewString();
+    public JavaTypeInstance getArrayStrippedType();
 
-    /*
-     *
-     */
-    public String getAfterNewString();
+    public int getNumArrayDimensions();
 }

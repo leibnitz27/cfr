@@ -13,7 +13,9 @@ public class ArrayTest1 {
     int z;
 
     void test1(int a, int b) {
-        String[][] r = new String[a][b];
+        String[][][] r = new String[a][b][a];
+        String[][][] r2 = new String[a][b][];
+        String[][][] r3 = new String[a][][];
     }
 
     void test2(int a) {

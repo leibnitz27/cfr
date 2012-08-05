@@ -24,13 +24,13 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public String getBeforeNewString() {
-        return className;
+    public JavaTypeInstance getArrayStrippedType() {
+        return this;
     }
 
     @Override
-    public String getAfterNewString() {
-        return "";
+    public int getNumArrayDimensions() {
+        return 0;
     }
 
     @Override

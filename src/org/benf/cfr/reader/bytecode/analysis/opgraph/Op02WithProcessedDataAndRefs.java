@@ -16,12 +16,16 @@ import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntryHolder;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
+import org.benf.cfr.reader.bytecode.opcode.OperationFactoryMultiANewArray;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -330,8 +334,31 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new Assignment(getStackLValue(0), new NewObject(cp, cpEntries[0]));
             case NEWARRAY:
                 return new Assignment(getStackLValue(0), new NewPrimitiveArray(getStackRValue(0), rawData[0]));
-            case ANEWARRAY:
-                return new Assignment(getStackLValue(0), new NewObjectArray(getStackRValue(0), cp, cpEntries[0]));
+            case ANEWARRAY: {
+                List<Expression> tmp = ListFactory.newList();
+                tmp.add(getStackRValue(0));
+                // Type of cpEntries[0] will be the type of the array slice being allocated.
+                // i.e. for A a[][] = new A[2][] it will be [LA
+                //      for A a[] = new A[2] it will be A.
+                // Resulting type needs an extra dimension attached for the dim being allocated.
+                ConstantPoolEntryClass clazz = (ConstantPoolEntryClass) (cpEntries[0]);
+                JavaTypeInstance innerInstance = clazz.getTypeInstance(cp);
+                // Result instance is the same as inner instance with 1 extra dimension.
+                JavaTypeInstance resultInstance = new JavaArrayTypeInstance(1, innerInstance);
+
+                return new Assignment(getStackLValue(0), new NewObjectArray(tmp, innerInstance, resultInstance));
+            }
+            case MULTIANEWARRAY: {
+                int numDims = rawData[OperationFactoryMultiANewArray.OFFSET_OF_DIMS];
+                // Type of cpEntries[0] will be the type of the whole array.
+                // I.e. for A a[][] = new A[2][3]  it will be [[LA
+                ConstantPoolEntryClass clazz = (ConstantPoolEntryClass) (cpEntries[0]);
+                JavaTypeInstance innerInstance = clazz.getTypeInstance(cp);
+                // Result instance is the same as innerInstance
+                JavaTypeInstance resultInstance = innerInstance;
+
+                return new Assignment(getStackLValue(0), new NewObjectArray(getNStackRValuesAsExpressions(numDims), innerInstance, resultInstance));
+            }
             case ARRAYLENGTH:
                 return new Assignment(getStackLValue(0), new ArrayLength(getStackRValue(0)));
             case AALOAD:

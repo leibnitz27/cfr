@@ -22,21 +22,22 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public String toString() {
-        return getBeforeNewString() + getAfterNewString();
-    }
-
-    @Override
-    public String getBeforeNewString() {
-        return underlyingType.toString();
-    }
-
-    @Override
-    public String getAfterNewString() {
         StringBuilder sb = new StringBuilder();
-        for (int x = 0; x < dimensions; ++x) {
+        sb.append(underlyingType.toString());
+        for (int x = 0; x < getNumArrayDimensions(); ++x) {
             sb.append("[]");
         }
         return sb.toString();
+    }
+
+    @Override
+    public JavaTypeInstance getArrayStrippedType() {
+        return underlyingType.getArrayStrippedType();
+    }
+
+    @Override
+    public int getNumArrayDimensions() {
+        return dimensions + underlyingType.getNumArrayDimensions();
     }
 
     @Override
