@@ -96,7 +96,7 @@ public class Method implements KnowsRawSize {
 
     private String getSignatureText() {
         String prefix = CollectionUtils.join(accessFlags, " ");
-        return prefix + " " + getMethodPrototype().getPrototype(cp.getUTF8Entry(nameIndex).getValue());
+        return (prefix.isEmpty() ? "" : (prefix + " ")) + getMethodPrototype().getPrototype(cp.getUTF8Entry(nameIndex).getValue());
     }
 
     public void analyse() {
