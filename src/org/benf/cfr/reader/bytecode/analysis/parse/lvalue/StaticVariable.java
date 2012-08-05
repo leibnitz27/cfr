@@ -32,6 +32,7 @@ public class StaticVariable extends AbstractLValue {
         this.field = (ConstantPoolEntryFieldRef) field;
         this.cp = cp;
         this.className = cp.getUTF8Entry(cp.getClassEntry(this.field.getClassIndex()).getNameIndex()).getValue();
+        cp.markClassNameUsed(className);
         this.varName = this.field.getLocalName(cp);
     }
 
@@ -43,7 +44,7 @@ public class StaticVariable extends AbstractLValue {
 
     @Override
     public String toString() {
-        return className + "." + varName;
+        return cp.getDisplayableClassName(className) + "." + varName;
     }
 
     @Override

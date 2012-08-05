@@ -26,7 +26,8 @@ public class ConstantPool {
 
     private final long length;
     private final List<ConstantPoolEntry> entries;
-    private final Map<String, String> shortenedClassNames = MapFactory.newMap();
+    private final Map<String, String> longNameToShortName = MapFactory.newMap();
+    private final Map<String, String> shortNameToLongName = MapFactory.newMap();
 
     public ConstantPool(ByteData raw, short count) {
         ArrayList<ConstantPoolEntry> res = new ArrayList<ConstantPoolEntry>();
@@ -38,9 +39,9 @@ public class ConstantPool {
     }
 
     public void dumpImports(Dumper d) {
-        if (shortenedClassNames.isEmpty()) return;
+        if (shortNameToLongName.isEmpty()) return;
         d.print("\n");
-        List<String> names = ListFactory.newList(shortenedClassNames.keySet());
+        List<String> names = ListFactory.newList(shortNameToLongName.values());
         Collections.sort(names);
         for (String shortenedName : names) {
             d.print("import " + shortenedName + ";\n");
@@ -133,5 +134,20 @@ public class ConstantPool {
 
     public ConstantPoolEntryClass getClassEntry(int index) {
         return (ConstantPoolEntryClass) getEntry(index);
+    }
+
+    public void markClassNameUsed(String className) {
+        int idxlast = className.lastIndexOf('/');
+        String partname = idxlast == -1 ? className : className.substring(idxlast + 1);
+        if (!shortNameToLongName.containsKey(partname)) {
+            shortNameToLongName.put(partname, className.replace('/', '.'));
+            longNameToShortName.put(className, partname);
+        }
+    }
+
+    public String getDisplayableClassName(String className) {
+        String res = longNameToShortName.get(className);
+        if (res != null) return res;
+        return res.replace('/', '.');
     }
 }

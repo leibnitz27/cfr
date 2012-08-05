@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.entities.ConstantPool;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -8,9 +10,12 @@ package org.benf.cfr.reader.bytecode.analysis.types;
  */
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
+    private final ConstantPool cp;
 
-    public JavaRefTypeInstance(String className) {
+    public JavaRefTypeInstance(String className, ConstantPool cp) {
         this.className = className;
+        this.cp = cp;
+        cp.markClassNameUsed(className);
     }
 
     @Override
@@ -20,7 +25,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public String toString() {
-        return className;
+        return cp.getDisplayableClassName(className);
     }
 
     @Override

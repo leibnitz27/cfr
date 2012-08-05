@@ -44,7 +44,8 @@ public class StaticFunctionInvokation extends AbstractExpression {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         ConstantPoolEntryClass classEntry = cp.getClassEntry(function.getClassIndex());
-        sb.append(cp.getUTF8Entry(classEntry.getNameIndex()).getValue() + ".");
+        sb.append(cp.getDisplayableClassName(cp.getUTF8Entry(classEntry.getNameIndex()).getValue()));
+        sb.append(".");
         ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
         sb.append(nameAndType.getName(cp).getValue());
         sb.append("(");
