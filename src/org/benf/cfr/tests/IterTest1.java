@@ -14,18 +14,16 @@ import java.util.Set;
 public class IterTest1 {
 
 
-    public boolean test1 (List<Object> list, Set<Object> set)
-    {
+    public boolean test1(List<String> list, Set<Integer> set) {
         boolean result = false;
-        for ( Object o : list ) {
-            result |= set.add(o);
+        for (String o : list) {
+            result |= set.add(Integer.parseInt(o));
         }
-        return result; 
+        return result;
     }
 
 
-    public boolean test2 (List<Object> list, Set<Object> set)
-    {
+    public boolean test2(List<Object> list, Set<Object> set) {
         boolean result = false;
         Iterator<Object> e = list.iterator();
         while (e.hasNext()) {
@@ -35,7 +33,6 @@ public class IterTest1 {
         }
         return result;
     }
-
 
 
 }
