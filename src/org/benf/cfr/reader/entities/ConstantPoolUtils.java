@@ -21,6 +21,18 @@ public class ConstantPoolUtils {
 
     private static final Logger logger = LoggerFactory.create(ConstantPoolUtils.class);
 
+    private static JavaTypeInstance parseRefType(String tok, ConstantPool cp) {
+        int idxGen = tok.indexOf('<');
+        if (idxGen != -1) {
+            String pre = tok.substring(0, idxGen);
+            String gen = tok.substring(idxGen + 1, tok.length() - 1);
+            List<JavaTypeInstance> genericTypes = parseTypeList(gen, cp);
+            return new JavaGenericRefTypeInstance(pre, genericTypes, cp);
+        } else {
+            return new JavaRefTypeInstance(tok, cp);
+        }
+    }
+
     public static JavaTypeInstance decodeTypeTok(String tok, ConstantPool cp) {
         int idx = 0;
         int numArrayDims = 0;
@@ -32,7 +44,7 @@ public class ConstantPoolUtils {
         JavaTypeInstance javaTypeInstance = null;
         switch (c) {
             case 'L':   // object
-                javaTypeInstance = new JavaRefTypeInstance(tok.substring(idx + 1, tok.length() - 1), cp);
+                javaTypeInstance = parseRefType(tok.substring(idx + 1, tok.length() - 1), cp);
                 break;
             case 'B':   // byte
                 javaTypeInstance = RawJavaType.BYTE;
@@ -74,12 +86,22 @@ public class ConstantPoolUtils {
         }
 
         switch (c) {
-            case 'L':
+            case 'L': {
+                int openBra = 0;
                 do {
                     c = proto.charAt(++curridx);
-                } while (c != ';');
+                    switch (c) {
+                        case '<':
+                            openBra++;
+                            break;
+                        case '>':
+                            openBra--;
+                            break;
+                    }
+                } while (openBra > 0 || c != ';');
                 curridx++;
                 break;
+            }
             case 'B':   // byte
             case 'C':   // char
             case 'I':   // integer
@@ -101,6 +123,7 @@ public class ConstantPoolUtils {
         int curridx = 1;
         if (!proto.startsWith("(")) throw new ConfusedCFRException("Prototype " + proto + " is invalid");
         List<JavaTypeInstance> args = ListFactory.newList();
+        // could use parseTypeList below.
         while (proto.charAt(curridx) != ')') {
             String typeTok = getNextTypeTok(proto, curridx);
             args.add(decodeTypeTok(typeTok, cp));
@@ -120,6 +143,17 @@ public class ConstantPoolUtils {
         return res;
     }
 
+    public static List<JavaTypeInstance> parseTypeList(String proto, ConstantPool cp) {
+        int curridx = 0;
+        int len = proto.length();
+        List<JavaTypeInstance> res = ListFactory.newList();
+        while (curridx < len) {
+            String typeTok = getNextTypeTok(proto, curridx);
+            res.add(decodeTypeTok(typeTok, cp));
+            curridx += typeTok.length();
+        }
+        return res;
+    }
 
     /*
      * could be rephrased in terms of MethodPrototype.

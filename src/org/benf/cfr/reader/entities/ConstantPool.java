@@ -147,7 +147,7 @@ public class ConstantPool {
 
     public String getDisplayableClassName(String className) {
         String res = longNameToShortName.get(className);
-        if (res != null) return res;
+        if (res == null) return res;
         return res.replace('/', '.');
     }
 }
