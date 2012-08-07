@@ -6,7 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
@@ -37,7 +36,6 @@ public class CodeAnalyser {
 
     private final AttributeCode originalCodeAttribute;
     private final ConstantPool cp;
-    private VariableNamer variableNamer;
 
     private Method method;
 
@@ -51,7 +49,6 @@ public class CodeAnalyser {
 
     public void setMethod(Method method) {
         this.method = method;
-        this.variableNamer = method.getVariableNamer();
     }
 
     public void analyse() {
@@ -122,7 +119,7 @@ public class CodeAnalyser {
 //        dumper.dump(op2list);
 
         // Create a non final version...
-        final VariableFactory variableFactory = new VariableFactory(variableNamer, method);
+        final VariableFactory variableFactory = new VariableFactory(method);
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableFactory);
 
 

@@ -2,10 +2,7 @@ package org.benf.cfr.reader.entityfactories;
 
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryUTF8;
-import org.benf.cfr.reader.entities.attributes.Attribute;
-import org.benf.cfr.reader.entities.attributes.AttributeCode;
-import org.benf.cfr.reader.entities.attributes.AttributeLocalVariableTable;
-import org.benf.cfr.reader.entities.attributes.AttributeUnknown;
+import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -24,12 +21,14 @@ public class AttributeFactory {
         ConstantPoolEntryUTF8 name = (ConstantPoolEntryUTF8) cp.getEntry(nameIndex);
         String attributeName = name.getValue();
 
-        if ("Code".equals(attributeName)) {
+        if (AttributeCode.ATTRIBUTE_NAME.equals(attributeName)) {
             // Code attribute needs the signature of the method, so that we have type information for the
             // local variables.
             return new AttributeCode(raw, cp);
-        } else if ("LocalVariableTable".equals(attributeName)) {
+        } else if (AttributeLocalVariableTable.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeLocalVariableTable(raw, cp);
+        } else if (AttributeSignature.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeSignature(raw, cp);
         } else {
             return new AttributeUnknown(raw, attributeName);
         }

@@ -22,6 +22,14 @@ public class IterTest1 {
         return result;
     }
 
+    public boolean test1b(List list, Set set) {
+        boolean result = false;
+        for (Object o : list) {
+            result |= set.add(o);
+        }
+        return result;
+    }
+
 
     public boolean test2(List<Object> list, Set<Object> set) {
         boolean result = false;

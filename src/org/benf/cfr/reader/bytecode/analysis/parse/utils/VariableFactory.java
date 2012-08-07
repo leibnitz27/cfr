@@ -26,8 +26,8 @@ public class VariableFactory {
 
     private final Map<LValue, LValue> cache = MapFactory.newMap();
 
-    public VariableFactory(VariableNamer variableNamer, Method method) {
-        this.variableNamer = variableNamer;
+    public VariableFactory(Method method) {
+        this.variableNamer = method.getVariableNamer();
         if (method == null) {
             throw new ConfusedCFRException("No method signature for a variable factory");
         }

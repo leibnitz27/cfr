@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
+import org.benf.cfr.reader.entities.attributes.AttributeSignature;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.CollectionUtils;
@@ -76,6 +77,12 @@ public class Method implements KnowsRawSize {
         }
     }
 
+    private AttributeSignature getSignatureAttribute() {
+        Attribute attribute = attributes.get(AttributeSignature.ATTRIBUTE_NAME);
+        if (attribute == null) return null;
+        return (AttributeSignature) attribute;
+    }
+
     public VariableNamer getVariableNamer() {
         return variableNamer;
     }
@@ -91,7 +98,10 @@ public class Method implements KnowsRawSize {
 
     /* This is a bit ugly - otherwise though we need to tie a variable namer to this earlier. */
     public MethodPrototype getMethodPrototype() {
-        return ConstantPoolUtils.parseJavaMethodPrototype(!accessFlags.contains(AccessFlagMethod.ACC_STATIC), cp.getUTF8Entry(descriptorIndex), cp, variableNamer);
+        AttributeSignature signature = null; // getSignatureAttribute();
+        ConstantPoolEntryUTF8 prototype = signature == null ? cp.getUTF8Entry(descriptorIndex) : signature.getSignature();
+        boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
+        return ConstantPoolUtils.parseJavaMethodPrototype(isInstance, prototype, cp, variableNamer);
     }
 
     private String getSignatureText() {

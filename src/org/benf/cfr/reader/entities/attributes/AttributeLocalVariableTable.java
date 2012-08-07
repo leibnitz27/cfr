@@ -15,6 +15,8 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class AttributeLocalVariableTable extends Attribute {
+    public final static String ATTRIBUTE_NAME = "LocalVariableTable";
+
     private static final long OFFSET_OF_ATTRIBUTE_LENGTH = 2;
     private static final long OFFSET_OF_ENTRY_COUNT = 6;
     private static final long OFFSET_OF_ENTRIES = 8;
@@ -40,7 +42,7 @@ public class AttributeLocalVariableTable extends Attribute {
 
     @Override
     public String getRawName() {
-        return "LocalVariableTable";
+        return ATTRIBUTE_NAME;
     }
 
     @Override
