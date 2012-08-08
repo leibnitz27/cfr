@@ -44,7 +44,7 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEn
             if (rawType.startsWith("[")) {
                 javaTypeInstance = ConstantPoolUtils.decodeTypeTok(rawType, cp);
             } else {
-                javaTypeInstance = new JavaRefTypeInstance(rawType, cp);
+                javaTypeInstance = new JavaRefTypeInstance(rawType, cp, false);
             }
         }
         return javaTypeInstance;

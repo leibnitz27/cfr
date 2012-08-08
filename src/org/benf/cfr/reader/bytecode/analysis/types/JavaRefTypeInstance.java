@@ -11,11 +11,13 @@ import org.benf.cfr.reader.entities.ConstantPool;
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
     private final ConstantPool cp;
+    private final boolean isTemplate;
 
-    public JavaRefTypeInstance(String className, ConstantPool cp) {
+    public JavaRefTypeInstance(String className, ConstantPool cp, boolean isTemplate) {
         this.className = className;
         this.cp = cp;
-        cp.markClassNameUsed(className);
+        this.isTemplate = isTemplate;
+        if (!isTemplate) cp.markClassNameUsed(className);
     }
 
     @Override
@@ -25,7 +27,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public String toString() {
-        return cp.getDisplayableClassName(className);
+        if (isTemplate) {
+            return className;
+        } else {
+            return cp.getDisplayableClassName(className);
+        }
     }
 
     @Override

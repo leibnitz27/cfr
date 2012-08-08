@@ -21,7 +21,7 @@ public class ConstantPoolUtils {
 
     private static final Logger logger = LoggerFactory.create(ConstantPoolUtils.class);
 
-    private static JavaTypeInstance parseRefType(String tok, ConstantPool cp) {
+    private static JavaTypeInstance parseRefType(String tok, ConstantPool cp, boolean isTemplate) {
         int idxGen = tok.indexOf('<');
         if (idxGen != -1) {
             String pre = tok.substring(0, idxGen);
@@ -29,7 +29,7 @@ public class ConstantPoolUtils {
             List<JavaTypeInstance> genericTypes = parseTypeList(gen, cp);
             return new JavaGenericRefTypeInstance(pre, genericTypes, cp);
         } else {
-            return new JavaRefTypeInstance(tok, cp);
+            return new JavaRefTypeInstance(tok, cp, isTemplate);
         }
     }
 
@@ -44,7 +44,10 @@ public class ConstantPoolUtils {
         JavaTypeInstance javaTypeInstance = null;
         switch (c) {
             case 'L':   // object
-                javaTypeInstance = parseRefType(tok.substring(idx + 1, tok.length() - 1), cp);
+                javaTypeInstance = parseRefType(tok.substring(idx + 1, tok.length() - 1), cp, false);
+                break;
+            case 'T':   // Template
+                javaTypeInstance = parseRefType(tok.substring(idx + 1, tok.length() - 1), cp, true);
                 break;
             case 'B':   // byte
                 javaTypeInstance = RawJavaType.BYTE;
@@ -86,7 +89,8 @@ public class ConstantPoolUtils {
         }
 
         switch (c) {
-            case 'L': {
+            case 'L':
+            case 'T': {
                 int openBra = 0;
                 do {
                     c = proto.charAt(++curridx);
