@@ -228,7 +228,7 @@ public class ConstantPoolUtils {
                 break;
         }
         MethodPrototype res = new MethodPrototype(instanceMethod, formalTypeParameters, args, resultType, variableNamer);
-        logger.info("Parsed prototype " + proto + " as " + res);
+//        logger.info("Parsed prototype " + proto + " as " + res);
         return res;
     }
 
@@ -270,7 +270,7 @@ public class ConstantPoolUtils {
                 break;
         }
         StackDelta res = new StackDelta(argumentTypes, resultType);
-        logger.info("Parsed prototype " + proto + " as " + res);
+//        logger.info("Parsed prototype " + proto + " as " + res);
         return res;
     }
 }
