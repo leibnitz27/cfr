@@ -1071,6 +1071,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private static Op03SimpleStatement findFirstConditional(Op03SimpleStatement start) {
+        Set<Op03SimpleStatement> visited = SetFactory.newSet();
         do {
             Statement innerStatement = start.getStatement();
             if (innerStatement instanceof IfStatement) {
@@ -1079,6 +1080,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             List<Op03SimpleStatement> targets = start.getTargets();
             if (targets.size() != 1) return null;
             start = targets.get(0);
+            if (visited.contains(start)) {
+                return null;
+            }
+            visited.add(start);
         } while (start != null);
         return null;
     }

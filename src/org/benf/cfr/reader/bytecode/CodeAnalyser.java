@@ -179,9 +179,12 @@ public class CodeAnalyser {
 
         // Perform this before simple forward if detection, as it allows us to not have to consider
         // gotos which have been relabelled as continue/break.
+        logger.info("rewriteBreakStatements");
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
+        logger.info("rewriteWhilesAsFors");
         Op03SimpleStatement.rewriteWhilesAsFors(op03SimpleParseNodes);
 
+        logger.info("identifyCatchBlocks");
         Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
 
         // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
