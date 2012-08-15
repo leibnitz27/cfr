@@ -13,12 +13,14 @@ import java.util.List;
  * Time: 07:49
  */
 public class MethodPrototype {
+    private final List<FormalTypeParameter> formalTypeParameters;
     private final List<JavaTypeInstance> args;
     private final JavaTypeInstance result;
     private final VariableNamer variableNamer;
     private final boolean instanceMethod;
 
-    public MethodPrototype(boolean instanceMethod, List<JavaTypeInstance> args, JavaTypeInstance result, VariableNamer variableNamer) {
+    public MethodPrototype(boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, VariableNamer variableNamer) {
+        this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         this.args = args;
         this.result = result;
@@ -27,6 +29,19 @@ public class MethodPrototype {
 
     public String getPrototype(String methName) {
         StringBuilder sb = new StringBuilder();
+        if (formalTypeParameters != null) {
+            sb.append('<');
+            boolean first = true;
+            for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
+                if (!first) {
+                    sb.append(", ");
+                } else {
+                    first = false;
+                }
+                sb.append(formalTypeParameter.toString());
+            }
+            sb.append("> ");
+        }
         sb.append(result.toString()).append(" ").append(methName).append("(");
         boolean first = true;
         int offset = instanceMethod ? 1 : 0;
@@ -80,5 +95,14 @@ public class MethodPrototype {
             JavaTypeInstance type = args.get(x);
             expression.getInferredJavaType().useAsWithoutCasting(type.getRawTypeOfSimpleType());
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (JavaTypeInstance arg : args) {
+            sb.append(arg).append(" ");
+        }
+        return sb.toString();
     }
 }

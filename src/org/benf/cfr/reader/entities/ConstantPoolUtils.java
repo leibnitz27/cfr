@@ -26,10 +26,13 @@ public class ConstantPoolUtils {
         if (idxGen != -1) {
             String pre = tok.substring(0, idxGen);
             String gen = tok.substring(idxGen + 1, tok.length() - 1);
+            JavaRefTypeInstance clazzType = new JavaRefTypeInstance(pre, cp);
             List<JavaTypeInstance> genericTypes = parseTypeList(gen, cp);
-            return new JavaGenericRefTypeInstance(pre, genericTypes, cp);
+            return new JavaGenericRefTypeInstance(clazzType, genericTypes, cp);
+        } else if (isTemplate) {
+            return new JavaGenericPlaceholderTypeInstance(tok, cp);
         } else {
-            return new JavaRefTypeInstance(tok, cp, isTemplate);
+            return new JavaRefTypeInstance(tok, cp);
         }
     }
 
@@ -37,12 +40,20 @@ public class ConstantPoolUtils {
         int idx = 0;
         int numArrayDims = 0;
         char c = tok.charAt(idx);
+        WildcardType wildcardType = WildcardType.NONE;
+        if (c == '-' || c == '+') {
+            wildcardType = c == '+' ? WildcardType.EXTENDS : WildcardType.SUPER;
+            c = tok.charAt(++idx);
+        }
         while (c == '[') {
             numArrayDims++;
             c = tok.charAt(++idx);
         }
         JavaTypeInstance javaTypeInstance = null;
         switch (c) {
+            case '*': // wildcard
+                javaTypeInstance = new JavaGenericPlaceholderTypeInstance("?", cp);
+                break;
             case 'L':   // object
                 javaTypeInstance = parseRefType(tok.substring(idx + 1, tok.length() - 1), cp, false);
                 break;
@@ -77,6 +88,9 @@ public class ConstantPoolUtils {
                 throw new ConfusedCFRException("Invalid type string " + tok);
         }
         if (numArrayDims > 0) javaTypeInstance = new JavaArrayTypeInstance(numArrayDims, javaTypeInstance);
+        if (wildcardType != WildcardType.NONE) {
+            javaTypeInstance = new JavaWildcardTypeInstance(wildcardType, javaTypeInstance);
+        }
         return javaTypeInstance;
     }
 
@@ -84,11 +98,18 @@ public class ConstantPoolUtils {
         final int startidx = curridx;
         char c = proto.charAt(curridx);
 
+        if (c == '-' || c == '+') {
+            c = proto.charAt(++curridx);
+        }
+
         while (c == '[') {
             c = proto.charAt(++curridx);
         }
 
         switch (c) {
+            case '*':   // wildcard
+                curridx++;
+                break;
             case 'L':
             case 'T': {
                 int openBra = 0;
@@ -117,15 +138,79 @@ public class ConstantPoolUtils {
                 curridx++;
                 break;
             default:
-                throw new ConfusedCFRException("Can't parse proto : " + proto);
+                throw new ConfusedCFRException("Can't parse proto : " + proto + " starting " + proto.substring(startidx));
         }
         return proto.substring(startidx, curridx);
     }
 
+    private static String getNextFormalTypeTok(String proto, int curridx) {
+        final int startidx = curridx;
+
+        while (proto.charAt(curridx) != ':') {
+            curridx++;
+        }
+        curridx++;
+        if (proto.charAt(curridx) != ':') {
+            // Class bound.
+            String classBound = getNextTypeTok(proto, curridx);
+            curridx += classBound.length();
+        }
+        if (proto.charAt(curridx) == ':') {
+            // interface bound
+            curridx++;
+            String interfaceBound = getNextTypeTok(proto, curridx);
+            curridx += interfaceBound.length();
+        }
+        return proto.substring(startidx, curridx);
+    }
+
+    private static FormalTypeParameter decodeFormalTypeTok(String tok, ConstantPool cp) {
+        int idx = 0;
+
+        while (tok.charAt(idx) != ':') {
+            idx++;
+        }
+        String name = tok.substring(0, idx);
+        idx++;
+        JavaTypeInstance classBound = null;
+        if (tok.charAt(idx) != ':') {
+            // Class bound.
+            String classBoundTok = getNextTypeTok(tok, idx);
+            classBound = decodeTypeTok(classBoundTok, cp);
+            idx += classBoundTok.length();
+        }
+        JavaTypeInstance interfaceBound = null;
+        if (idx < tok.length()) {
+            if (tok.charAt(idx) == ':') {
+                // interface bound
+                idx++;
+                String interfaceBoundTok = getNextTypeTok(tok, idx);
+                interfaceBound = decodeTypeTok(interfaceBoundTok, cp);
+                idx += interfaceBoundTok.length();
+            }
+        }
+        return new FormalTypeParameter(name, classBound, interfaceBound);
+    }
+
     public static MethodPrototype parseJavaMethodPrototype(boolean instanceMethod, ConstantPoolEntryUTF8 prototype, ConstantPool cp, VariableNamer variableNamer) {
         String proto = prototype.getValue();
-        int curridx = 1;
-        if (!proto.startsWith("(")) throw new ConfusedCFRException("Prototype " + proto + " is invalid");
+        int curridx = 0;
+        /*
+         * Method is itself generic...
+         */
+        List<FormalTypeParameter> formalTypeParameters = null;
+        if (proto.charAt(curridx) == '<') {
+            formalTypeParameters = ListFactory.newList();
+            curridx++;
+            while (proto.charAt(curridx) != '>') {
+                String formalTypeTok = getNextFormalTypeTok(proto, curridx);
+                formalTypeParameters.add(decodeFormalTypeTok(formalTypeTok, cp));
+                curridx += formalTypeTok.length();
+            }
+            curridx++;
+        }
+        if (proto.charAt(curridx) != '(') throw new ConfusedCFRException("Prototype " + proto + " is invalid");
+        curridx++;
         List<JavaTypeInstance> args = ListFactory.newList();
         // could use parseTypeList below.
         while (proto.charAt(curridx) != ')') {
@@ -142,7 +227,7 @@ public class ConstantPoolUtils {
                 resultType = decodeTypeTok(getNextTypeTok(proto, curridx), cp);
                 break;
         }
-        MethodPrototype res = new MethodPrototype(instanceMethod, args, resultType, variableNamer);
+        MethodPrototype res = new MethodPrototype(instanceMethod, formalTypeParameters, args, resultType, variableNamer);
         logger.info("Parsed prototype " + proto + " as " + res);
         return res;
     }

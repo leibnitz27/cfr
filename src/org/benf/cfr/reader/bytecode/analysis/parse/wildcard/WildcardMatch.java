@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.GenericInfoSource;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 
@@ -164,6 +165,10 @@ public class WildcardMatch {
         public Expression getMatch() {
             return matchedValue;
         }
+
+        @Override
+        public void findGenericTypeInfo(GenericInfoSource genericInfoSource) {
+        }
     }
 
     public class MemberFunctionInvokationWildcard implements Expression, Wildcard<Expression> {
@@ -237,5 +242,8 @@ public class WildcardMatch {
             return matchedValue;
         }
 
+        @Override
+        public void findGenericTypeInfo(GenericInfoSource genericInfoSource) {
+        }
     }
 }

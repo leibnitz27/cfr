@@ -41,7 +41,8 @@ public class InferredJavaType {
         FIELD,
         OPERATION,
         EXPRESSION,
-        INSTRUCTION // Instr returns type which guarantees this (eg arraylength returns int).
+        INSTRUCTION, // Instr returns type which guarantees this (eg arraylength returns int).
+        GENERICCALL
     }
 
     private interface IJTInternal {
@@ -54,6 +55,9 @@ public class InferredJavaType {
         void chain(InferredJavaType chainTo);
 
         void force(RawJavaType rawJavaType);
+
+        void forceGeneric(JavaTypeInstance rawJavaType);
+
     }
 
     private class IJTLocal implements IJTInternal {
@@ -95,6 +99,11 @@ public class InferredJavaType {
         }
 
         @Override
+        public void forceGeneric(JavaTypeInstance rawJavaType) {
+            this.type = rawJavaType;
+        }
+
+        @Override
         public String toString() {
             return type.toString();
         }
@@ -130,6 +139,11 @@ public class InferredJavaType {
         @Override
         public void force(RawJavaType rawJavaType) {
             delegate.useAsWithoutCasting(rawJavaType);
+        }
+
+        @Override
+        public void forceGeneric(JavaTypeInstance rawJavaType) {
+            delegate.value.forceGeneric(rawJavaType);
         }
 
         @Override
@@ -233,6 +247,17 @@ public class InferredJavaType {
         }
     }
 
+    public void generify(JavaTypeInstance other) {
+        JavaTypeInstance typeInstanceThis = getJavaTypeInstance();
+        JavaTypeInstance typeInstanceOther = other.getDeGenerifiedType();
+        if (!typeInstanceOther.equals(typeInstanceThis)) {
+            if (!("java/lang/Object".equals(typeInstanceThis.getRawName()))) {
+                throw new ConfusedCFRException("Incompatible types : " + typeInstanceThis.getClass() + "[" + typeInstanceThis + "] / " + typeInstanceOther.getClass() + "[" + typeInstanceOther + "]");
+            }
+        }
+        value.forceGeneric(other);
+    }
+
     /* We've got some type info about this type already, but we're assigning from other.
      * so, if we can, let's narrow this type, or chain it from
      */
@@ -256,8 +281,8 @@ public class InferredJavaType {
         RawJavaType otherRaw = other.getRawType();
 
         if (thisRaw.getStackType() != otherRaw.getStackType()) {
+            // throw new ConfusedCFRException("Can't tighten from " + thisRaw + " to " + otherRaw);
             return;
-//            throw new ConfusedCFRException("Can't tighten from " + thisRaw + " to " + otherRaw);
         }
         if (thisRaw == otherRaw) {
             chainFrom(other);

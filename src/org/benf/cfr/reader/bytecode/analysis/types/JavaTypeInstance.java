@@ -26,5 +26,9 @@ public interface JavaTypeInstance {
 
     public JavaTypeInstance getArrayStrippedType();
 
+    public JavaTypeInstance getDeGenerifiedType();
+
     public int getNumArrayDimensions();
+
+    public String getRawName();
 }

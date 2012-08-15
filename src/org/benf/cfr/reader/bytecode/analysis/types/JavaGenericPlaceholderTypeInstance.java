@@ -8,14 +8,13 @@ import org.benf.cfr.reader.entities.ConstantPool;
  * Date: 13/07/2012
  * Time: 08:01
  */
-public class JavaRefTypeInstance implements JavaTypeInstance {
+public class JavaGenericPlaceholderTypeInstance implements JavaTypeInstance {
     private final String className;
     private final ConstantPool cp;
 
-    public JavaRefTypeInstance(String className, ConstantPool cp) {
+    public JavaGenericPlaceholderTypeInstance(String className, ConstantPool cp) {
         this.className = className;
         this.cp = cp;
-        cp.markClassNameUsed(className);
     }
 
     @Override
@@ -25,7 +24,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public String toString() {
-        return cp.getDisplayableClassName(className);
+        return className;
     }
 
     @Override
@@ -51,8 +50,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof JavaRefTypeInstance)) return false;
-        JavaRefTypeInstance other = (JavaRefTypeInstance) o;
+        if (!(o instanceof JavaGenericPlaceholderTypeInstance)) return false;
+        JavaGenericPlaceholderTypeInstance other = (JavaGenericPlaceholderTypeInstance) o;
         return other.className.equals(className);
     }
 

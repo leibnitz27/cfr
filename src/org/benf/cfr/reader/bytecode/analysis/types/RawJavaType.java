@@ -1,6 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.MapFactory;
+
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -68,8 +71,19 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
     @Override
+    public JavaTypeInstance getDeGenerifiedType() {
+        return this;
+    }
+
+
+    @Override
     public int getNumArrayDimensions() {
         return 0;
+    }
+
+    @Override
+    public String getRawName() {
+        return name;
     }
 
     public String getCastString() {
@@ -101,5 +115,21 @@ public enum RawJavaType implements JavaTypeInstance {
             default:
                 throw new ConfusedCFRException("Unexpected stacktype.");
         }
+    }
+
+    public static Map<String, RawJavaType> rawJavaTypeMap;
+
+    public static RawJavaType getByName(String name) {
+        if (rawJavaTypeMap == null) {
+            rawJavaTypeMap = MapFactory.newMap();
+            for (RawJavaType typ : RawJavaType.values()) {
+                rawJavaTypeMap.put(typ.getName(), typ);
+            }
+        }
+        RawJavaType res = rawJavaTypeMap.get(name);
+        if (res == null) {
+            throw new ConfusedCFRException("No RawJavaType '" + name + "'");
+        }
+        return res;
     }
 }

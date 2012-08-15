@@ -126,13 +126,17 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
-        // Expand raw switch statements into more useful ones.
-        Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
-        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
-
 //        dumper.print("Raw Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
 
+//        Op03SimpleStatement.findGenericTypes(op03SimpleParseNodes, cp);
+
+//        dumper.print("Raw(2) Op3 statements:\n");
+//        op03SimpleParseNodes.get(0).dump(dumper);
+
+        // Expand raw switch statements into more useful ones.
+        Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
+        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         // Remove 2nd (+) jumps in pointless jump chains.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);

@@ -11,15 +11,14 @@ import java.util.List;
  * Time: 08:01
  */
 public class JavaGenericRefTypeInstance implements JavaTypeInstance {
-    private final String className;
+    private final JavaTypeInstance typeInstance;
     private final List<JavaTypeInstance> genericTypes;
     private final ConstantPool cp;
 
-    public JavaGenericRefTypeInstance(String className, List<JavaTypeInstance> genericTypes, ConstantPool cp) {
-        this.className = className;
+    public JavaGenericRefTypeInstance(JavaTypeInstance typeInstance, List<JavaTypeInstance> genericTypes, ConstantPool cp) {
+        this.typeInstance = typeInstance;
         this.cp = cp;
         this.genericTypes = genericTypes;
-        cp.markClassNameUsed(className);
     }
 
     @Override
@@ -30,7 +29,7 @@ public class JavaGenericRefTypeInstance implements JavaTypeInstance {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(cp.getDisplayableClassName(className));
+        sb.append(typeInstance.toString());
         sb.append("<");
         boolean first = true;
         for (JavaTypeInstance type : genericTypes) {
@@ -50,6 +49,15 @@ public class JavaGenericRefTypeInstance implements JavaTypeInstance {
         return this;
     }
 
+    public List<JavaTypeInstance> getGenericTypes() {
+        return genericTypes;
+    }
+
+    @Override
+    public JavaTypeInstance getDeGenerifiedType() {
+        return typeInstance;
+    }
+
     @Override
     public int getNumArrayDimensions() {
         return 0;
@@ -57,7 +65,20 @@ public class JavaGenericRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public int hashCode() {
-        return 31 + className.hashCode();
+        return 31 + typeInstance.hashCode();
+    }
+
+    @Override
+    public String getRawName() {
+        return toString();
+    }
+
+    public JavaTypeInstance getTypeInstance() {
+        return typeInstance;
+    }
+
+    public String getClassName() {
+        return typeInstance.getRawName();
     }
 
     @Override
@@ -65,7 +86,7 @@ public class JavaGenericRefTypeInstance implements JavaTypeInstance {
         if (o == this) return true;
         if (!(o instanceof JavaGenericRefTypeInstance)) return false;
         JavaGenericRefTypeInstance other = (JavaGenericRefTypeInstance) o;
-        return other.className.equals(className);
+        return typeInstance.equals(other.typeInstance);
     }
 
     @Override

@@ -6,12 +6,12 @@ package org.benf.cfr.reader.bytecode.analysis.types;
  * Date: 13/07/2012
  * Time: 08:01
  */
-public class JavaArrayTypeInstance implements JavaTypeInstance {
-    private final int dimensions;
+public class JavaWildcardTypeInstance implements JavaTypeInstance {
+    private final WildcardType wildcardType;
     private final JavaTypeInstance underlyingType;
 
-    public JavaArrayTypeInstance(int dimensions, JavaTypeInstance underlyingType) {
-        this.dimensions = dimensions;
+    public JavaWildcardTypeInstance(WildcardType wildcardType, JavaTypeInstance underlyingType) {
+        this.wildcardType = wildcardType;
         this.underlyingType = underlyingType;
     }
 
@@ -23,10 +23,8 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("? ").append(wildcardType).append(' ');
         sb.append(underlyingType.toString());
-        for (int x = 0; x < getNumArrayDimensions(); ++x) {
-            sb.append("[]");
-        }
         return sb.toString();
     }
 
@@ -42,20 +40,20 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public int getNumArrayDimensions() {
-        return dimensions + underlyingType.getNumArrayDimensions();
+        return underlyingType.getNumArrayDimensions();
     }
 
     @Override
     public int hashCode() {
-        return (dimensions * 31) + underlyingType.hashCode();
+        return (wildcardType.hashCode() * 31) + underlyingType.hashCode();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof JavaArrayTypeInstance)) return false;
-        JavaArrayTypeInstance other = (JavaArrayTypeInstance) o;
-        return (other.dimensions == dimensions && other.underlyingType.equals(underlyingType));
+        if (!(o instanceof JavaWildcardTypeInstance)) return false;
+        JavaWildcardTypeInstance other = (JavaWildcardTypeInstance) o;
+        return (other.wildcardType == wildcardType && other.underlyingType.equals(underlyingType));
     }
 
     @Override
@@ -71,8 +69,8 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     // should be cached..
     @Override
     public JavaTypeInstance removeAnArrayIndirection() {
-        if (dimensions == 1) return underlyingType;
-        return new JavaArrayTypeInstance(dimensions - 1, underlyingType);
+        // ??
+        return underlyingType.removeAnArrayIndirection();
     }
 
     @Override

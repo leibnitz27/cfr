@@ -5,11 +5,15 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.ConstantPoolEntryNameAndType;
+import org.benf.cfr.reader.entities.GenericInfoSource;
 
 import java.util.List;
 
@@ -91,4 +95,31 @@ public class MemberFunctionInvokation extends AbstractExpression {
         }
     }
 
+    /*
+     * If we're calling a method on an object which has some generic qualifiers, then we might be able
+     * to get better type info on the result!
+     */
+    @Override
+    public void findGenericTypeInfo(GenericInfoSource genericInfoSource) {
+        JavaTypeInstance objectTypeInstance = object.getInferredJavaType().getJavaTypeInstance();
+        if (!(objectTypeInstance instanceof JavaGenericRefTypeInstance)) return;
+
+        JavaGenericRefTypeInstance javaGenericRefTypeInstance = (JavaGenericRefTypeInstance) objectTypeInstance;
+        InferredJavaType inferredJavaType = getInferredJavaType();
+        System.out.println("Have generic knowledge : " + javaGenericRefTypeInstance);
+        System.out.println(" Method " + name + " ( " + methodPrototype + " ) ");
+        System.out.println(" Non generic return " + getInferredJavaType());
+
+        JavaTypeInstance lossyType = inferredJavaType.getJavaTypeInstance();
+        if (lossyType instanceof RawJavaType) return;
+
+        JavaTypeInstance improvedType = genericInfoSource.getGenericTypeInfo(lossyType, javaGenericRefTypeInstance, name, methodPrototype);
+        if (improvedType == null) {
+            System.out.println("Non generic return type " + improvedType);
+            return;
+        }
+        System.out.println(" generic return " + improvedType);
+        // This isn't necessarily good enough, as we actually need to substitute. :(
+        inferredJavaType.generify(improvedType);
+    }
 }

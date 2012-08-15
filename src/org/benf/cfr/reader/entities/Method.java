@@ -101,6 +101,8 @@ public class Method implements KnowsRawSize {
         AttributeSignature signature = getSignatureAttribute();
         ConstantPoolEntryUTF8 prototype = signature == null ? cp.getUTF8Entry(descriptorIndex) : signature.getSignature();
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
+//        System.out.println("Method " + cp.getUTF8Entry(descriptorIndex));
+//        System.out.println("Using  " + prototype);
         return ConstantPoolUtils.parseJavaMethodPrototype(isInstance, prototype, cp, variableNamer);
     }
 
