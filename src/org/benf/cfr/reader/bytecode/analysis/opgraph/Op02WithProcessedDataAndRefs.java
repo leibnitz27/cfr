@@ -9,9 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntryHolder;
@@ -236,7 +234,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
 
-    public Statement createStatement(VariableFactory variableFactory) {
+    public Statement createStatement(VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory) {
         switch (instr) {
             case ALOAD:
             case ILOAD:
@@ -620,9 +618,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LDC2_W:
                 return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getConstantPoolEntry(cp, cpEntries[0])));
             case MONITORENTER:
-                return new CommentStatement("MONITORENTER {");
+                return new MonitorEnterStatement(getStackRValue(0), blockIdentifierFactory.getNextBlockIdentifier(BlockType.MONITOR));
             case MONITOREXIT:
-                return new CommentStatement("} MONITOREXIT");
+                return new MonitorExitStatement(getStackRValue(0));
             case FAKE_TRY:
                 return new TryStatement(getSingleExceptionGroup());
             case FAKE_CATCH:
@@ -723,7 +721,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     }
 
-    public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list, final VariableFactory variableFactory) {
+    public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list, final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory) {
 
         final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
         // Convert the op2s into a simple set of statements.
@@ -736,7 +734,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override
                     public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(variableFactory));
+                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(variableFactory, blockIdentifierFactory));
                         conversionHelper.registerOriginalAndNew(arg1, res);
                         op03SimpleParseNodesTmp.add(res);
                         for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {

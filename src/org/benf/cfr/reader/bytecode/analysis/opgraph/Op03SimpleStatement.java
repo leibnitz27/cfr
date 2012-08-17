@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.GenericInfoSource;
+import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -123,6 +124,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             return;
             // throw new ConfusedCFRException("Trying to nopOut a node which was already nopped.");
         }
+        if (this.targets.size() == 0) {
+            this.containedStatement = new Nop();
+            this.isNop = true;
+            containedStatement.setContainer(this);
+            return;
+        }
+
         if (this.targets.size() != 1) {
             throw new ConfusedCFRException("Trying to nopOut a node with multiple targets");
         }
@@ -221,6 +229,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private void removeSource(Op03SimpleStatement oldSource) {
         if (!sources.remove(oldSource)) {
             throw new ConfusedCFRException("Invalid source, tried to remove " + oldSource + "\nfrom " + this + "\nbut was not a source.");
+        }
+    }
+
+    private void removeTarget(Op03SimpleStatement oldTarget) {
+        if (!targets.remove(oldTarget)) {
+            throw new ConfusedCFRException("Invalid target, tried to remove " + oldTarget + "\nfrom " + this + "\nbut was not a target.");
         }
     }
 
@@ -356,9 +370,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (BlockIdentifier blockIdentifier : containedInBlocks) {
             dumper.print(blockIdentifier + " ");
         }
-        int indent = dumper.getIndent();
         getStatement().dump(dumper);
-//        dumper.print(" " + sources.size() + " sources, " + targets.size() + " targets , immediately after " + immediatelyAfterBlocks + "\n");
+    }
+
+    public static void dumpAll(List<Op03SimpleStatement> statements, Dumper dumper) {
+        for (Op03SimpleStatement statement : statements) {
+            statement.dumpInner(dumper);
+        }
     }
 
     @Override
@@ -674,6 +692,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     * Normalise code by removing jumps which have been introduced to confuse.
     */
     public static void removePointlessJumps(List<Op03SimpleStatement> statements) {
+        // Do this pass first, as it needs spatial locality.
+        int size = statements.size() - 1;
+        for (int x = 0; x < size; ++x) {
+            Op03SimpleStatement maybeJump = statements.get(x);
+            if (maybeJump.containedStatement instanceof GotoStatement &&
+                    maybeJump.targets.size() == 1 &&
+                    maybeJump.targets.get(0) == statements.get(x + 1)) {
+                maybeJump.nopOut();
+            }
+        }
+
         for (Op03SimpleStatement statement : statements) {
             Statement innerStatement = statement.getStatement();
             if (innerStatement instanceof JumpingStatement &&
@@ -1687,6 +1716,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * which are reachable from something we're not sure is actually in the block
          */
         LinkedList<Op03SimpleStatement> pendingPossibilities = ListFactory.newLinkedList();
+        if (start.targets.size() != 1) {
+            throw new ConfusedCFRException("Catch statement with multiple targets");
+        }
         for (Op03SimpleStatement target : start.targets) {
             pendingPossibilities.add(target);
             seen.add(target);
@@ -1751,6 +1783,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement inBlock : knownMembers) {
             inBlock.containedInBlocks.add(blockIdentifier);
         }
+        /*
+         * Find the (there should only be one) descendant of start.  It /SHOULD/ be the first sorted member of
+         * known members, otherwise we have a problem.  Mark that as start of block.
+         */
+        Op03SimpleStatement first = start.getTargets().get(0);
+        first.markFirstStatementInBlock(blockIdentifier);
     }
 
     /* Basic principle with catch blocks - we mark all statements from the start
@@ -1774,6 +1812,154 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 catchStatement.setCatchBlockIdent(blockIdentifier);
                 identifyCatchBlock(catchStart, blockIdentifier);
             }
+        }
+    }
+
+    private static boolean verifyLinearBlock(Op03SimpleStatement current, BlockIdentifier block, int num) {
+        while (num >= 0) {
+            if (num > 0) {
+                if (current.targets.size() != 1) return false;
+                if (!current.containedInBlocks.contains(block)) return false;
+                current = current.targets.get(0);
+            } else {
+                if (!current.containedInBlocks.contains(block)) return false;
+            }
+            num--;
+        }
+        // None of current's targets should be contained in block.
+        for (Op03SimpleStatement target : current.targets) {
+            if (target.containedInBlocks.contains(block)) return false;
+        }
+        return true;
+    }
+
+    /*
+    * Because of the way we generate code, this will look like
+    *
+    * x = stack
+    * monitorexit (a)
+    * throw x
+    */
+    private static boolean removeSynchronizedCatchBlock(Op03SimpleStatement start, List<Op03SimpleStatement> statements) {
+
+        BlockIdentifier block = start.firstStatementInThisBlock;
+
+        if (start.sources.size() != 1) return false;
+        Op03SimpleStatement catchStatementContainer = start.sources.get(0);
+        // Again, the catch statement should have only one source.
+        if (catchStatementContainer.sources.size() != 1) return false;
+        if (!(catchStatementContainer.containedStatement instanceof CatchStatement)) return false;
+        CatchStatement catchStatement = (CatchStatement) catchStatementContainer.containedStatement;
+        List<ExceptionGroup.Entry> exceptions = catchStatement.getExceptions();
+        if (exceptions.size() != 1) return false;
+        ExceptionGroup.Entry exception = exceptions.get(0);
+        // Exception is *.
+        if (!exception.isJustThrowable()) return false;
+
+        // We expect the next 2 and NO more to be in this catch block.
+        if (!verifyLinearBlock(start, block, 2)) return false;
+
+        Op03SimpleStatement variableAss = start;
+        Op03SimpleStatement monitorExit = start.targets.get(0);
+        Op03SimpleStatement rethrow = monitorExit.targets.get(0);
+
+        WildcardMatch wildcardMatch = new WildcardMatch();
+
+        if (!wildcardMatch.match(
+                new Assignment(wildcardMatch.getLValueWildCard("var"), wildcardMatch.getExpressionWildCard("e")),
+                variableAss.containedStatement)) {
+            return false;
+        }
+
+        if (!wildcardMatch.match(
+                new MonitorExitStatement(wildcardMatch.getExpressionWildCard("lock")),
+                monitorExit.containedStatement)) {
+            return false;
+        }
+
+        if (!wildcardMatch.match(
+                new ThrowStatement(new LValueExpression(wildcardMatch.getLValueWildCard("var"))),
+                rethrow.containedStatement)) return false;
+
+        /* This is an artificial catch block - probably.  Remove it, and if we can, remove the associated try
+         * statement.
+         * (This only makes sense if we eventually replace the MONITOR(ENTER|EXIT) pair with a synchronized
+         * block).
+         */
+        Op03SimpleStatement tryStatementContainer = catchStatementContainer.sources.get(0);
+        tryStatementContainer.removeTarget(catchStatementContainer);
+        catchStatementContainer.removeSource(tryStatementContainer);
+        catchStatementContainer.nopOut();
+        variableAss.nopOut();
+        monitorExit.nopOut();
+        for (Op03SimpleStatement target : rethrow.targets) {
+            target.removeSource(rethrow);
+            rethrow.removeTarget(target);
+        }
+        rethrow.nopOut();
+        /*
+         * Can we remove the try too?
+         */
+        if (tryStatementContainer.targets.size() == 1) {
+            TryStatement tryStatement = (TryStatement) tryStatementContainer.containedStatement;
+            BlockIdentifier tryBlock = tryStatement.getBlockIdentifier();
+            tryStatementContainer.nopOut();
+            /* And we have to remove this block from all statements.
+             * TODO: This is inefficient - we could just have a concept of 'dead' blocks.
+             */
+            System.out.println("Removing " + tryBlock + " from all statements.");
+            for (Op03SimpleStatement statement : statements) {
+                statement.containedInBlocks.remove(tryBlock);
+            }
+        }
+        return true;
+    }
+
+    /*
+     * TODO : Defeatable.
+     * Every time we write
+     *
+     * synchronized(x) {
+     *  y
+     * }
+     *
+     * we emit
+     *
+     * try {
+     *   MONITORENTER(x)
+     *   y
+     *   MONITOREXIT(x)
+     * } catch (Throwable t) {
+     *   MONITOREXIT(x)
+     *   throw t;
+     * }
+     *
+     * Remove the catch block and try statement.
+     */
+    public static void removeSynchronizedCatchBlocks(List<Op03SimpleStatement> in) {
+        // find all the block statements which are the first statement in a CATCHBLOCK.
+        List<Op03SimpleStatement> catchStarts = Functional.filter(in, new FindBlockStarts(BlockType.CATCHBLOCK));
+        boolean effect = false;
+        for (Op03SimpleStatement catchStart : catchStarts) {
+            effect = removeSynchronizedCatchBlock(catchStart, in) || effect;
+        }
+        if (effect) {
+            removePointlessJumps(in);
+        }
+    }
+
+    private final static class FindBlockStarts implements Predicate<Op03SimpleStatement> {
+        private final BlockType blockType;
+
+        public FindBlockStarts(BlockType blockType) {
+            this.blockType = blockType;
+        }
+
+        @Override
+        public boolean test(Op03SimpleStatement in) {
+            BlockIdentifier blockIdentifier = in.firstStatementInThisBlock;
+            if (blockIdentifier == null) return false;
+            return (blockIdentifier.getBlockType() == blockType);
         }
     }
 
@@ -2157,6 +2343,94 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             rewriteIteratorWhileLoop(loop, statements);
         }
     }
+
+    public static void findSynchronizedStart(final Op03SimpleStatement start, final Expression monitor) {
+        final Set<Op03SimpleStatement> addToBlock = SetFactory.newSet();
+
+        final Set<Op03SimpleStatement> foundExits = SetFactory.newSet();
+        /* Process all the parents until we find the monitorExit.
+         * Note that this does NOT find statements which are 'orphaned', i.e.
+         *
+         * synch(foo) {
+         *   try {
+         *     bob
+         *   } catch (e) {
+         *     throw  <--- not reachable backwards from monitorexit,
+         *   }
+         *   monitorexit.
+         * }
+         */
+        GraphVisitor<Op03SimpleStatement> marker = new GraphVisitorDFS<Op03SimpleStatement>(start,
+                new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
+                    @Override
+                    public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+                        Statement statement = arg1.containedStatement;
+                        if (statement instanceof MonitorExitStatement) {
+                            if (monitor.equals(((MonitorExitStatement) statement).getMonitor())) {
+                                foundExits.add(arg1);
+                                /*
+                                 * If there's a return / throw immediately after this, then we know that the brace
+                                 * is validly moved.
+                                 */
+                                if (arg1.targets.size() == 1) {
+                                    Op03SimpleStatement target = arg1.targets.get(0);
+                                    if (target.targets.size() == 0) {
+                                        addToBlock.add(target);
+                                    }
+                                }
+                                return;
+                            }
+                        }
+                        addToBlock.add(arg1);
+                        for (Op03SimpleStatement target : arg1.getTargets()) {
+                            arg2.enqueue(target);
+                        }
+                    }
+                }
+        );
+        marker.process();
+
+        MonitorEnterStatement monitorEnterStatement = (MonitorEnterStatement) (start.containedStatement);
+        BlockIdentifier blockIdentifier = monitorEnterStatement.getBlockIdentifier();
+        for (Op03SimpleStatement contained : addToBlock) {
+            if (contained != start) {
+                contained.containedInBlocks.add(blockIdentifier);
+            }
+        }
+
+        for (Op03SimpleStatement exit : foundExits) {
+            exit.nopOut();
+        }
+    }
+
+    /*
+    * We make a (dangerous?) assumption here - that the monitor entered is the same one as exited.
+    * Can JVM spec be read to allow
+    *
+    * a = x;
+    * b = x;
+    * enter(a)
+    * exit(b) ?
+    *
+    * Since monitorenter/exit must be paired (it's counted) we don't have to worry (much!) about monitorenter in a loop without
+    * exit.
+    *
+    * (might be a good anti-decompiler technique though!)
+    *
+    * What would be nasty is a switch statement which enters on one branch and exits on another...
+    */
+    public static void findSynchronizedBlocks(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> exits = Functional.filter(statements, new TypeFilter<MonitorEnterStatement>(MonitorEnterStatement.class));
+        // Each exit can be tied to one enter, which is the first one found by
+        // walking code backwards and not passing any other exit/enter for this var.
+
+        for (Op03SimpleStatement exit : exits) {
+            MonitorEnterStatement monitorExitStatement = (MonitorEnterStatement) exit.containedStatement;
+
+            findSynchronizedStart(exit, monitorExitStatement.getMonitor());
+        }
+    }
+
 
     public static void findGenericTypes(Op03SimpleStatement statement, GenericInfoSource genericInfoSource) {
         statement.containedStatement.getRValue().findGenericTypeInfo(genericInfoSource);

@@ -120,19 +120,16 @@ public class CodeAnalyser {
 
         // Create a non final version...
         final VariableFactory variableFactory = new VariableFactory(method);
-        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableFactory);
+        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableFactory, blockIdentifierFactory);
 
 
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
-//        dumper.print("Raw Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
+        dumper.print("Raw Op3 statements:\n");
+        op03SimpleParseNodes.get(0).dump(dumper);
 
 //        Op03SimpleStatement.findGenericTypes(op03SimpleParseNodes, cp);
-
-//        dumper.print("Raw(2) Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
 
         // Expand raw switch statements into more useful ones.
         Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
@@ -148,6 +145,7 @@ public class CodeAnalyser {
         // Condense pointless assignments
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+
 
         // Rewrite new / constructor pairs.
         Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes);
@@ -187,22 +185,43 @@ public class CodeAnalyser {
         logger.info("identifyCatchBlocks");
         Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
 
+        logger.info("removeSynchronizedCatchBlocks");
+        Op03SimpleStatement.removeSynchronizedCatchBlocks(op03SimpleParseNodes);
+
         // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
         // where xx and yy have no GOTOs in them.
+        logger.info("identifyNonjumpingConditionals");
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
+        logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
 
         // By now, we've (re)moved several statements, so it's possible that some jumps can be rewritten to
         // breaks again.
+        logger.info("removePointlessJumps");
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
+        logger.info("rewriteBreakStatements");
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
 
         // Introduce java 6 style for (x : array)
+        logger.info("rewriteArrayForLoops");
         Op03SimpleStatement.rewriteArrayForLoops(op03SimpleParseNodes);
         // and for (x : iterable)
+        logger.info("rewriteIteratorWhileLoops");
         Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
+
+        logger.info("findSynchronizedBlocks");
+        Op03SimpleStatement.findSynchronizedBlocks(op03SimpleParseNodes);
+
+
+        logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
+
+        dumper.print("Final Op3 statements:\n");
+        op03SimpleParseNodes.get(0).dump(dumper);
+        dumper.print("#############\n");
+        Op03SimpleStatement.dumpAll(op03SimpleParseNodes, dumper);
+
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 

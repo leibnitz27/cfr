@@ -14,7 +14,8 @@ public enum BlockType {
     SIMPLE_IF_ELSE(false),
     CATCHBLOCK(false),
     SWITCH(true),
-    CASE(false);
+    CASE(false),
+    MONITOR(false);
 
     private final boolean breakable;
 

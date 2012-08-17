@@ -16,6 +16,7 @@ import java.util.Set;
 public class BlockIdentifier implements Comparable<BlockIdentifier> {
     private final int index;
     private BlockType blockType;
+    // foreign refs - for spotting non local jumps to this block.
     private int knownForeignReferences = 0;
 
     public BlockIdentifier(int index, BlockType blockType) {

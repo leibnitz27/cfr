@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -38,5 +39,9 @@ public class TryStatement extends AbstractStatement {
     @Override
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredTry(exceptionGroup);
+    }
+
+    public BlockIdentifier getBlockIdentifier() {
+        return exceptionGroup.getTryBlockIdentifier();
     }
 }

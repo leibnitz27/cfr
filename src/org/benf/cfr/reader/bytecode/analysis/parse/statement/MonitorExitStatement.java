@@ -4,43 +4,52 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredThrow;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
  * User: lee
  * Date: 16/03/2012
- * Time: 17:40
+ * Time: 18:08
  * To change this template use File | Settings | File Templates.
  */
-public class ThrowStatement extends ReturnStatement {
-    private Expression rvalue;
+public class MonitorExitStatement extends AbstractStatement {
+    private Expression monitor;
 
-    public ThrowStatement(Expression rvalue) {
-        this.rvalue = rvalue;
+    public MonitorExitStatement(Expression monitor) {
+        this.monitor = monitor;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("throw " + rvalue.toString() + ";\n");
+        dumper.print("MONITOREXIT : " + monitor + "\n");
     }
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        this.rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+        monitor = monitor.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+    }
+
+    @Override
+    public String toString() {
+        return "MonitorExit : " + monitor;
     }
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredThrow(rvalue);
+        return new StructuredComment("** MonitorExit[" + monitor + "] (shouldn't be in output)");
+    }
+
+    public Expression getMonitor() {
+        return monitor;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof ThrowStatement)) return false;
-        ThrowStatement other = (ThrowStatement) o;
-        return rvalue.equals(other.rvalue);
+        if (!(o instanceof MonitorExitStatement)) return false;
+        MonitorExitStatement other = (MonitorExitStatement) o;
+        return monitor.equals(other.monitor);
     }
 }

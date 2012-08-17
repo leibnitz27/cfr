@@ -72,6 +72,11 @@ public class ExceptionGroup {
             return entry.getBytecodeIndexHandler();
         }
 
+        public boolean isJustThrowable() {
+            short type = entry.getCatchType();
+            return type == 0;
+        }
+
         @Override
         public String toString() {
             short type = entry.getCatchType();

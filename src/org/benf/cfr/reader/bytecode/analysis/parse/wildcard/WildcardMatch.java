@@ -99,7 +99,9 @@ public class WildcardMatch {
 
         @Override
         public boolean equals(Object o) {
-            if (!(o instanceof LValue)) return false;
+            if (!(o instanceof LValue)) {
+                return false;
+            }
             if (matchedValue == null) {
                 matchedValue = (LValue) o;
                 return true;
@@ -153,7 +155,9 @@ public class WildcardMatch {
 
         @Override
         public boolean equals(Object o) {
-            if (!(o instanceof Expression)) return false;
+            if (!(o instanceof Expression)) {
+                return false;
+            }
             if (matchedValue == null) {
                 matchedValue = (Expression) o;
                 return true;
