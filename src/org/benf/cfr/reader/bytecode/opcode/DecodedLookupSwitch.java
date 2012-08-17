@@ -1,10 +1,14 @@
 package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,15 +36,25 @@ public class DecodedLookupSwitch implements DecodedSwitch {
         int numpairs = bd.getS4At(offset + OFFSET_OF_NUMPAIRS);
         int[] targets = new int[numpairs];
         this.defaultTarget = defaultvalue;
-        jumpTargets = ListFactory.newList();
+        // Treemap so that targets are in bytecode order.
+        Map<Integer, List<Integer>> uniqueTargets = MapFactory.<Integer, List<Integer>>newLazyMap(
+                new TreeMap<Integer, List<Integer>>(),
+                new UnaryFunction<Integer, List<Integer>>() {
+                    @Override
+                    public List<Integer> invoke(Integer arg) {
+                        return ListFactory.newList();
+                    }
+                });
         for (int x = 0; x < numpairs; ++x) {
             int value = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8));
             int target = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8) + 4);
             if (target != defaultTarget) {
-                List<Integer> tmp = ListFactory.newList();
-                tmp.add(value);
-                jumpTargets.add(new DecodedSwitchEntry(tmp, target));
+                uniqueTargets.get(target).add(value);
             }
+        }
+        jumpTargets = ListFactory.newList();
+        for (Map.Entry<Integer, List<Integer>> entry : uniqueTargets.entrySet()) {
+            jumpTargets.add(new DecodedSwitchEntry(entry.getValue(), entry.getKey()));
         }
     }
 

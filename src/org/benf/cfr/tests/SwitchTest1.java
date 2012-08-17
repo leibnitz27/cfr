@@ -41,6 +41,7 @@ public class SwitchTest1 {
             case 7:
                 System.out.println("Seven");
                 break;
+            case 11214:
             case 5000:
                 System.out.println("FiveK"); // Fall through
             default:
@@ -58,6 +59,7 @@ public class SwitchTest1 {
             case 3:
                 System.out.println("Three");
                 break;
+            case 6:
             case 7:
                 System.out.println("Seven");
                 break;
