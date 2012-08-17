@@ -1907,7 +1907,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             /* And we have to remove this block from all statements.
              * TODO: This is inefficient - we could just have a concept of 'dead' blocks.
              */
-            System.out.println("Removing " + tryBlock + " from all statements.");
             for (Op03SimpleStatement statement : statements) {
                 statement.containedInBlocks.remove(tryBlock);
             }
