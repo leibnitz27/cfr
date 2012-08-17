@@ -5,28 +5,32 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.List;
+
 /**
  * Created:
  * User: lee
  * Date: 15/05/2012
  */
 public class StructuredCase extends AbstractStructuredStatement {
-    private Expression value;
+    private List<Expression> values;
     private Op04StructuredStatement body;
     private final BlockIdentifier blockIdentifier;
 
-    public StructuredCase(Expression value, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
-        this.value = value;
+    public StructuredCase(List<Expression> values, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
+        this.values = values;
         this.body = body;
         this.blockIdentifier = blockIdentifier;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        if (value == null) {
+        if (values.isEmpty()) {
             dumper.print("default: ");
         } else {
-            dumper.print("case " + value + ": ");
+            for (Expression value : values) {
+                dumper.print("case " + value + ": ");
+            }
         }
         body.dump(dumper);
     }

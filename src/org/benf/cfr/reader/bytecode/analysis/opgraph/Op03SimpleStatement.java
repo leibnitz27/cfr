@@ -1979,11 +1979,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (firstPrev.containsKey(tindex)) {
                 target = firstPrev.get(tindex);
             }
-            Expression expression;
-            if (x == 0) {
-                expression = null;
-            } else {
-                expression = new Literal(TypedLiteral.getInt(entries.get(x - 1).getValue()));
+            List<Expression> expression = ListFactory.newList();
+            if (x != 0) {
+                List<Integer> vals = entries.get(x - 1).getValue();
+                for (int val : vals) {
+                    expression.add(new Literal(TypedLiteral.getInt(val)));
+                }
             }
             Op03SimpleStatement caseStatement = new Op03SimpleStatement(target.getBlockIdentifiers(), new CaseStatement(expression, blockIdentifier, blockIdentifierFactory.getNextBlockIdentifier(BlockType.CASE)), target.getIndex().justBefore());
             // Link casestatement in infront of target - all sources of target should point to casestatement instead, and

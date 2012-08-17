@@ -25,4 +25,8 @@ public class MapFactory {
     public static <X extends Object, Y extends Object> Map<X, Y> newLazyMap(UnaryFunction<X, Y> factory) {
         return new LazyMap<X, Y>(MapFactory.<X, Y>newMap(), factory);
     }
+
+    public static <X extends Object, Y extends Object> Map<X, Y> newLazyMap(Map<X, Y> base, UnaryFunction<X, Y> factory) {
+        return new LazyMap<X, Y>(base, factory);
+    }
 }

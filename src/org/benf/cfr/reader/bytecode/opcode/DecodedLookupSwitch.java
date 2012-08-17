@@ -37,7 +37,9 @@ public class DecodedLookupSwitch implements DecodedSwitch {
             int value = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8));
             int target = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8) + 4);
             if (target != defaultTarget) {
-                jumpTargets.add(new DecodedSwitchEntry(value, target));
+                List<Integer> tmp = ListFactory.newList();
+                tmp.add(value);
+                jumpTargets.add(new DecodedSwitchEntry(tmp, target));
             }
         }
     }

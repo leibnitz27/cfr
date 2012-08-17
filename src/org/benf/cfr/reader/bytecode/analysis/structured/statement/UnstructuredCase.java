@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -15,20 +16,22 @@ import java.util.Vector;
  * Date: 15/05/2012
  */
 public class UnstructuredCase extends AbstractStructuredStatement {
-    private Expression value;
+    private final List<Expression> values;
     private final BlockIdentifier blockIdentifier;
 
-    public UnstructuredCase(Expression value, BlockIdentifier blockIdentifier) {
-        this.value = value;
+    public UnstructuredCase(List<Expression> values, BlockIdentifier blockIdentifier) {
+        this.values = values;
         this.blockIdentifier = blockIdentifier;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        if (value == null) {
+        if (values.isEmpty()) {
             dumper.print("default:\n");
         } else {
-            dumper.print("case " + value + ":\n");
+            for (Expression value : values) {
+                dumper.print("case " + value + ":\n");
+            }
         }
     }
 
@@ -42,6 +45,6 @@ public class UnstructuredCase extends AbstractStructuredStatement {
         if (blockIdentifier != this.blockIdentifier) {
             throw new ConfusedCFRException("Unstructured case being asked to claim wrong block. [" + blockIdentifier + " != " + this.blockIdentifier + "]");
         }
-        return new StructuredCase(value, innerBlock, blockIdentifier);
+        return new StructuredCase(values, innerBlock, blockIdentifier);
     }
 }

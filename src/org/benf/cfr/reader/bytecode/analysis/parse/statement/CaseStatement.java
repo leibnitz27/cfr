@@ -8,6 +8,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCase;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -16,34 +18,37 @@ import org.benf.cfr.reader.util.output.Dumper;
  * To change this template use File | Settings | File Templates.
  */
 public class CaseStatement extends AbstractStatement {
-    private Expression value; // null for default.
+    private List<Expression> values; // null for default.
     private final BlockIdentifier switchBlock;
     private final BlockIdentifier caseBlock;
 
-    public CaseStatement(Expression value, BlockIdentifier switchBlock, BlockIdentifier caseBlock) {
-        this.value = value;
+    public CaseStatement(List<Expression> values, BlockIdentifier switchBlock, BlockIdentifier caseBlock) {
+        this.values = values;
         this.switchBlock = switchBlock;
         this.caseBlock = caseBlock;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        if (value == null) {
+        if (values.isEmpty()) {
             dumper.print("default:\n");
         } else {
-            dumper.print("case " + value + ":\n");
+            for (Expression value : values) {
+                dumper.print("case " + value + ":\n");
+            }
         }
     }
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        if (value == null) return;
-        value = value.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+        for (int x = 0; x < values.size(); ++x) {
+            values.set(x, values.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer()));
+        }
     }
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredCase(value, caseBlock);
+        return new UnstructuredCase(values, caseBlock);
     }
 
     public BlockIdentifier getCaseBlock() {
