@@ -2398,6 +2398,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
+        for (Op03SimpleStatement exit : foundExits) {
+            exit.nopOut();
+        }
+
         /* For the extra nodes, if ALL the sources are in the block, we add the extranode
          * to the block.  This pulls returns/throws into the block, but keeps them out
          * if they're targets for a conditional outside the block.
@@ -2405,16 +2409,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement extra : extraNodes) {
             boolean allParents = true;
             for (Op03SimpleStatement source : extra.sources) {
-                if (!source.containedInBlocks.contains(blockIdentifier)) allParents = false;
+                if (!source.containedInBlocks.contains(blockIdentifier)) {
+                    allParents = false;
+                }
             }
             if (allParents) {
                 extra.containedInBlocks.add(blockIdentifier);
             }
         }
 
-        for (Op03SimpleStatement exit : foundExits) {
-            exit.nopOut();
-        }
     }
 
     /*

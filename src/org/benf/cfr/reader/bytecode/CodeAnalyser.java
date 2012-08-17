@@ -191,6 +191,9 @@ public class CodeAnalyser {
         // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
         // where xx and yy have no GOTOs in them.
         logger.info("identifyNonjumpingConditionals");
+        // We need another pass of this to remove jumps which are next to each other except for nops
+        op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
+        Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         logger.info("removeUselessNops");
@@ -219,8 +222,6 @@ public class CodeAnalyser {
 
 //        dumper.print("Final Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
-//        dumper.print("#############\n");
-//        Op03SimpleStatement.dumpAll(op03SimpleParseNodes, dumper);
 //
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
