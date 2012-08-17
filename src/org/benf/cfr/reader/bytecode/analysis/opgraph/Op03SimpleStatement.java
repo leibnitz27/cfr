@@ -2347,6 +2347,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         final Set<Op03SimpleStatement> addToBlock = SetFactory.newSet();
 
         final Set<Op03SimpleStatement> foundExits = SetFactory.newSet();
+        final Set<Op03SimpleStatement> extraNodes = SetFactory.newSet();
         /* Process all the parents until we find the monitorExit.
          * Note that this does NOT find statements which are 'orphaned', i.e.
          *
@@ -2374,7 +2375,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                                 if (arg1.targets.size() == 1) {
                                     Op03SimpleStatement target = arg1.targets.get(0);
                                     if (target.targets.size() == 0) {
-                                        addToBlock.add(target);
+                                        extraNodes.add(target);
                                     }
                                 }
                                 return;
@@ -2394,6 +2395,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement contained : addToBlock) {
             if (contained != start) {
                 contained.containedInBlocks.add(blockIdentifier);
+            }
+        }
+
+        /* For the extra nodes, if ALL the sources are in the block, we add the extranode
+         * to the block.  This pulls returns/throws into the block, but keeps them out
+         * if they're targets for a conditional outside the block.
+         */
+        for (Op03SimpleStatement extra : extraNodes) {
+            boolean allParents = true;
+            for (Op03SimpleStatement source : extra.sources) {
+                if (!source.containedInBlocks.contains(blockIdentifier)) allParents = false;
+            }
+            if (allParents) {
+                extra.containedInBlocks.add(blockIdentifier);
             }
         }
 
