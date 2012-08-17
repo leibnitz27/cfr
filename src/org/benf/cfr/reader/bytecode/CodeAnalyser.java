@@ -126,8 +126,8 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
-        dumper.print("Raw Op3 statements:\n");
-        op03SimpleParseNodes.get(0).dump(dumper);
+//        dumper.print("Raw Op3 statements:\n");
+//        op03SimpleParseNodes.get(0).dump(dumper);
 
 //        Op03SimpleStatement.findGenericTypes(op03SimpleParseNodes, cp);
 
@@ -217,11 +217,11 @@ public class CodeAnalyser {
         logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
 
-        dumper.print("Final Op3 statements:\n");
-        op03SimpleParseNodes.get(0).dump(dumper);
-        dumper.print("#############\n");
-        Op03SimpleStatement.dumpAll(op03SimpleParseNodes, dumper);
-
+//        dumper.print("Final Op3 statements:\n");
+//        op03SimpleParseNodes.get(0).dump(dumper);
+//        dumper.print("#############\n");
+//        Op03SimpleStatement.dumpAll(op03SimpleParseNodes, dumper);
+//
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
