@@ -9,6 +9,7 @@ package org.benf.cfr.tests;
  */
 public class SwitchTest4 {
 
+    // Disabled because I don't want to make this java7 yet!
 
     public int test0(String s) {
 /*        switch (s) {
