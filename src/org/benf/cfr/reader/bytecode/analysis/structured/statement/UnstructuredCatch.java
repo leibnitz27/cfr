@@ -36,7 +36,11 @@ public class UnstructuredCatch extends AbstractStructuredStatement {
     @Override
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == this.blockIdentifier) {
-            return new StructuredCatch(exceptions, innerBlock);
+            /*
+             * Convert to types (should verify elsewhere that there's only 1.
+             */
+            String name = exceptions.get(0).getTypeName();
+            return new StructuredCatch(name, innerBlock);
         } else {
             return null;
         }

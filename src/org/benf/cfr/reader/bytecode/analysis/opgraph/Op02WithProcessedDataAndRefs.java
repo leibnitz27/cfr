@@ -30,6 +30,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -39,10 +40,7 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -885,6 +883,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 op2list.get(x).containedInTheseBlocks.add(tryBlockIdentifier);
             }
         }
+        // What if the exception handler terminates early, eg before a return or a goto?
+
 
         // Add entries from the exception table.  Since these are stored in terms of offsets, they're
         // only usable here until we mess around with the instruction structure, so do it early!
@@ -965,10 +965,41 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             op2list.add(tryOp);
         }
 
-        /* For all lists where we've got multiple fake insertions in a single location now, make sure that
-         * try block insertions aren't referenced before they exist.  I.e. for each try block in the ExceptionTemps
-         * remove it from previous ones.
+        /*
+         * 3rd pass - extend try blocks if the instructions after them can't throw, and are in
+         * identical blocks except the try block.  (and aren't catch statemetns... etc.. ;)
+         *
+         * basically just returns and gotos....
          */
+        for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
+            BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
+            int beforeLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo()) - 1;
+            Op02WithProcessedDataAndRefs lastStatement = op2list.get(beforeLastIndex);
+            Set<BlockIdentifier> blocks = SetFactory.newSet(lastStatement.containedInTheseBlocks);
+            blocks.remove(tryBlockIdentifier);
+            int x = beforeLastIndex + 1;
+            if (lastStatement.targets.size() == 1 && op2list.get(x) == lastStatement.targets.get(0)) {
+                Op02WithProcessedDataAndRefs next = op2list.get(x);
+                switch (next.instr) {
+                    case ARETURN:
+                    case IRETURN:
+                    case DRETURN:
+                    case FRETURN:
+                    case GOTO: {
+                        Set<BlockIdentifier> blocks2 = SetFactory.newSet(next.containedInTheseBlocks);
+                        if (blocks.equals(blocks2)) {
+                            next.containedInTheseBlocks.add(tryBlockIdentifier);
+                        }
+                    }
+                }
+            }
+
+        }
+
+        /* For all lists where we've got multiple fake insertions in a single location now, make sure that
+        * try block insertions aren't referenced before they exist.  I.e. for each try block in the ExceptionTemps
+        * remove it from previous ones.
+        */
         tidyMultipleInsertionIdentifiers(insertions.values());
         return op2list;
     }

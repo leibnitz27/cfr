@@ -20,7 +20,7 @@ public class StructuredTry extends AbstractStructuredStatement {
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("try /* " + exceptionGroup + "*/ ");
+        dumper.print("try ");
         tryBlock.dump(dumper);
     }
 

@@ -77,16 +77,22 @@ public class ExceptionGroup {
             return type == 0;
         }
 
-        @Override
-        public String toString() {
+        public String getTypeName() {
             short type = entry.getCatchType();
             String name;
             if (type == 0) {
-                name = "Throwable";
+                name = "java/lang/Throwable";
             } else {
                 ConstantPoolEntryClass constantPoolEntryClass = cp.getClassEntry(type);
                 name = cp.getUTF8Entry(constantPoolEntryClass.getNameIndex()).getValue();
             }
+            return name;
+        }
+
+        @Override
+        public String toString() {
+            short type = entry.getCatchType();
+            String name = getTypeName();
             return ExceptionGroup.this.toString() + " " + name;
         }
     }

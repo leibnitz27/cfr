@@ -9,26 +9,6 @@ package org.benf.cfr.tests;
  */
 public class SwitchTest1 {
 
-    enum enm {
-        ONE,
-        TWO,
-        THREE
-    }
-
-    ;
-
-    public int test0(enm e) {
-        switch (e) {
-            case ONE:
-                return 1;
-            case THREE:
-                System.out.println("Fallthrough!");
-            case TWO:
-                return 2;
-        }
-        return 0;
-    }
-
 
     // LookupSwitch
     public void test1(int x) {
