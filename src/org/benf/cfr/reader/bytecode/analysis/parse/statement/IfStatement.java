@@ -131,7 +131,7 @@ public class IfStatement extends GotoStatement {
     public StructuredStatement getStructuredStatement() {
         switch (getJumpType()) {
             case GOTO:
-            case GOTO_KNOWN:
+            case GOTO_OUT_OF_IF:
                 return new UnstructuredIf(condition, knownIfBlock, knownElseBlock);
             case CONTINUE:
                 return new StructuredIf(condition, new Op04StructuredStatement(new UnstructuredContinue(getTargetStartBlock())));

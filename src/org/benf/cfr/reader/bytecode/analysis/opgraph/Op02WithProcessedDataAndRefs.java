@@ -500,9 +500,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(0), new Literal(TypedLiteral.getInt(0)), CompOp.getOpFor(instr));
                 return new IfStatement(conditionalExpression);
             }
-            case GOTO: {
+            case GOTO:
+            case GOTO_W:
                 return new GotoStatement();
-            }
             case ATHROW:
                 return new ThrowStatement(getStackRValue(0));
             case IRETURN:
@@ -976,19 +976,33 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             int beforeLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo()) - 1;
             Op02WithProcessedDataAndRefs lastStatement = op2list.get(beforeLastIndex);
             Set<BlockIdentifier> blocks = SetFactory.newSet(lastStatement.containedInTheseBlocks);
-            blocks.remove(tryBlockIdentifier);
             int x = beforeLastIndex + 1;
             if (lastStatement.targets.size() == 1 && op2list.get(x) == lastStatement.targets.get(0)) {
                 Op02WithProcessedDataAndRefs next = op2list.get(x);
-                switch (next.instr) {
-                    case ARETURN:
-                    case IRETURN:
-                    case DRETURN:
-                    case FRETURN:
-                    case GOTO: {
-                        Set<BlockIdentifier> blocks2 = SetFactory.newSet(next.containedInTheseBlocks);
-                        if (blocks.equals(blocks2)) {
-                            next.containedInTheseBlocks.add(tryBlockIdentifier);
+                boolean bOk = true;
+                if (next.sources.size() > 1) {
+                    for (Op02WithProcessedDataAndRefs source : next.sources) {
+                        Set<BlockIdentifier> blocks2 = SetFactory.newSet(source.containedInTheseBlocks);
+                        if (!blocks.equals(blocks2)) bOk = false;
+                    }
+                }
+                // If all sources are in same block....
+                Set<BlockIdentifier> blocksWithoutTry = SetFactory.newSet(blocks);
+                blocksWithoutTry.remove(tryBlockIdentifier);
+                if (bOk) {
+                    switch (next.instr) {
+                        case GOTO:
+                        case GOTO_W:
+                        case RETURN:
+                        case ARETURN:
+                        case IRETURN:
+                        case LRETURN:
+                        case DRETURN:
+                        case FRETURN: {
+                            Set<BlockIdentifier> blocks2 = SetFactory.newSet(next.containedInTheseBlocks);
+                            if (blocksWithoutTry.equals(blocks2)) {
+                                next.containedInTheseBlocks.add(tryBlockIdentifier);
+                            }
                         }
                     }
                 }

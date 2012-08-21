@@ -1633,8 +1633,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             markWholeBlock(elseBranch, elseBlockLabel);
         }
 
-        if (leaveIfBranchGoto != null) leaveIfBranchGoto.setJumpType(JumpType.GOTO_KNOWN);
-        innerIfStatement.setJumpType(JumpType.GOTO_KNOWN);
+        if (leaveIfBranchGoto != null) leaveIfBranchGoto.setJumpType(JumpType.GOTO_OUT_OF_IF);
+        innerIfStatement.setJumpType(JumpType.GOTO_OUT_OF_IF);
         innerIfStatement.setKnownBlocks(ifBlockLabel, elseBlockLabel);
         return true;
     }
