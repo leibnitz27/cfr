@@ -135,8 +135,8 @@ public class CodeAnalyser {
         Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        dumper.print("Raw Op3 statements:\n");
-        op03SimpleParseNodes.get(0).dump(dumper);
+//        dumper.print("Raw Op3 statements:\n");
+//        op03SimpleParseNodes.get(0).dump(dumper);
 
         // Remove 2nd (+) jumps in pointless jump chains.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
