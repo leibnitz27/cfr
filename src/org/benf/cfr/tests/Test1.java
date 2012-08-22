@@ -5,16 +5,13 @@ package org.benf.cfr.tests;
  * User: lee
  * Date: 15/04/2011
  * Time: 18:05
- * To change this template use File | Settings | File Templates.
  */
 public class Test1 {
-    public static void main(String [] args)
-    {
+    public static void main(String[] args) {
         System.out.println("Test");
     }
 
-    public String concat(String s)
-    {
-        return s+"Fred";
+    public String concat(String s) {
+        return s + "Fred";
     }
 }
