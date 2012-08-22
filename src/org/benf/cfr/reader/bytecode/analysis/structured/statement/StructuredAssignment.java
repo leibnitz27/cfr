@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 
@@ -23,5 +24,9 @@ public class StructuredAssignment extends AbstractStructuredStatement {
     @Override
     public void dump(Dumper dumper) {
         dumper.print(lvalue.toString() + " = " + rvalue.toString() + ";\n");
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
     }
 }

@@ -7,7 +7,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredGoto extends AbstractStructuredStatement {
+public class UnstructuredGoto extends AbstractUnStructuredStatement {
 
     public UnstructuredGoto() {
     }
@@ -15,11 +15,6 @@ public class UnstructuredGoto extends AbstractStructuredStatement {
     @Override
     public void dump(Dumper dumper) {
         dumper.print("** GOTO " + getContainer().getTargetLabel(0) + "\n");
-    }
-
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
     }
 
 }

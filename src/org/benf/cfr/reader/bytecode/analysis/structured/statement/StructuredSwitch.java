@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -32,4 +33,8 @@ public class StructuredSwitch extends AbstractStructuredStatement {
         return true;
     }
 
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+        body.transform(transformer);
+    }
 }

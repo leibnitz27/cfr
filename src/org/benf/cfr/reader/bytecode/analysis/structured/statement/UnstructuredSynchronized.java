@@ -13,7 +13,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredSynchronized extends AbstractStructuredStatement {
+public class UnstructuredSynchronized extends AbstractUnStructuredStatement {
     private Expression monitor;
     private BlockIdentifier blockIdentifier;
 
@@ -36,8 +36,4 @@ public class UnstructuredSynchronized extends AbstractStructuredStatement {
         return new StructuredSynchronized(monitor, blockIdentifier, innerBlock);
     }
 
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
-    }
 }

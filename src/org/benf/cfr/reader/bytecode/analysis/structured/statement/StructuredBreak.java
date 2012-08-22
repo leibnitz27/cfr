@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -25,6 +26,10 @@ public class StructuredBreak extends AbstractStructuredStatement {
         } else {
             dumper.print("break " + breakBlock.getName() + ";\n");
         }
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
     }
 
 }

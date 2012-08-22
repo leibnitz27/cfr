@@ -16,7 +16,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredWhile extends AbstractStructuredStatement {
+public class UnstructuredWhile extends AbstractUnStructuredStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
     private Set<BlockIdentifier> blocksEndedAfter;
@@ -57,11 +57,6 @@ public class UnstructuredWhile extends AbstractStructuredStatement {
         return new Block(
                 lst, false
         );
-    }
-
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
     }
 
     public ConditionalExpression getCondition() {

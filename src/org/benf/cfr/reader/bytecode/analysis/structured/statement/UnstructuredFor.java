@@ -14,7 +14,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredFor extends AbstractStructuredStatement {
+public class UnstructuredFor extends AbstractUnStructuredStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
     private Assignment initial;
@@ -40,11 +40,5 @@ public class UnstructuredFor extends AbstractStructuredStatement {
         innerBlock.removeLastContinue(blockIdentifier);
         return new StructuredFor(condition, initial, assignment, innerBlock, blockIdentifier);
     }
-
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
-    }
-
 
 }

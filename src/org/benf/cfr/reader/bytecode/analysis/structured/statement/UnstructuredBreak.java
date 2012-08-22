@@ -12,7 +12,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredBreak extends AbstractStructuredStatement {
+public class UnstructuredBreak extends AbstractUnStructuredStatement {
 
     private final Set<BlockIdentifier> blocksEnding;
 
@@ -50,10 +50,5 @@ public class UnstructuredBreak extends AbstractStructuredStatement {
             bestBlock.addForeignRef();
         }
         return new StructuredBreak(bestBlock, localBreak);
-    }
-
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
     }
 }

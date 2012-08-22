@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -26,5 +27,10 @@ public class StructuredWhile extends AbstractStructuredStatement {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         dumper.print("while (" + condition.toString() + ") ");
         body.dump(dumper);
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+        body.transform(transformer);
     }
 }

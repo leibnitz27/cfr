@@ -15,7 +15,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredCase extends AbstractStructuredStatement {
+public class UnstructuredCase extends AbstractUnStructuredStatement {
     private final List<Expression> values;
     private final BlockIdentifier blockIdentifier;
 
@@ -27,17 +27,22 @@ public class UnstructuredCase extends AbstractStructuredStatement {
     @Override
     public void dump(Dumper dumper) {
         if (values.isEmpty()) {
-            dumper.print("default:\n");
+            dumper.print("** default:\n");
         } else {
             for (Expression value : values) {
-                dumper.print("case " + value + ":\n");
+                dumper.print("** case " + value + ":\n");
             }
         }
     }
 
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
+    public StructuredStatement getEmptyStructuredCase() {
+        Op04StructuredStatement container = getContainer();
+        return new StructuredCase(values,
+                new Op04StructuredStatement(
+                        container.getInstrIndex().justAfter(),
+                        container.getBlockMembership(),
+                        Block.getEmptyBlock()),
+                blockIdentifier);
     }
 
     @Override

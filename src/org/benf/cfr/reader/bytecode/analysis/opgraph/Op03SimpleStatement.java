@@ -2017,6 +2017,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         BlockIdentifier switchBlock = ((SwitchStatement) switchStatement.containedStatement).getSwitchBlock();
         int indexLastInLastBlock = 0;
+        // Process all but the last target.  (handle that below, as we may treat it as outside the case block
+        // depending on forward targets.
         for (int x = 0; x < targets.size() - 1; ++x) {
             Op03SimpleStatement thisCase = targets.get(x);
             Op03SimpleStatement nextCase = targets.get(x + 1);

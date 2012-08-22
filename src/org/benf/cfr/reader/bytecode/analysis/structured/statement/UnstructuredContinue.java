@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Vector;
@@ -47,4 +48,7 @@ public class UnstructuredContinue extends AbstractStructuredContinue {
         return false;
     }
 
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+    }
 }

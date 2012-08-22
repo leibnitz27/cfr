@@ -13,7 +13,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredTry extends AbstractStructuredStatement {
+public class UnstructuredTry extends AbstractUnStructuredStatement {
     private final ExceptionGroup exceptionGroup;
 
     public UnstructuredTry(ExceptionGroup exceptionGroup) {
@@ -23,11 +23,6 @@ public class UnstructuredTry extends AbstractStructuredStatement {
     @Override
     public void dump(Dumper dumper) {
         dumper.print("** try " + exceptionGroup + " { \n");
-    }
-
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
     }
 
     @Override

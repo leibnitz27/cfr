@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Assignment;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -31,5 +32,10 @@ public class StructuredFor extends AbstractStructuredStatement {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         dumper.print("for (" + (initial == null ? "" : initial.toString()) + ";" + condition.toString() + "; " + assignment + ") ");
         body.dump(dumper);
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+        body.transform(transformer);
     }
 }

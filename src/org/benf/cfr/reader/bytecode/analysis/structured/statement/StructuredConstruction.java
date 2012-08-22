@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -18,5 +19,9 @@ public class StructuredConstruction extends AbstractStructuredStatement {
     @Override
     public void dump(Dumper dumper) {
         dumper.print(invokation.toString() + "; // <-- constructor of (" + invokation.getObject() + ")\n");
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
     }
 }

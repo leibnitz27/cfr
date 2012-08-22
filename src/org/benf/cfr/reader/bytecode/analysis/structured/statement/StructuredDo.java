@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -28,5 +29,10 @@ public class StructuredDo extends AbstractStructuredStatement {
         body.dump(dumper);
         dumper.removePendingCarriageReturn();
         dumper.print(" while (" + condition.toString() + ");\n");
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+        body.transform(transformer);
     }
 }

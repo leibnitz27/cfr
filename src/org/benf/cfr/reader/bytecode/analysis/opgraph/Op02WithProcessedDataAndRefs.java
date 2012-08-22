@@ -622,7 +622,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FAKE_TRY:
                 return new TryStatement(getSingleExceptionGroup());
             case FAKE_CATCH:
-                return new CatchStatement(catchExceptionGroups);
+                return new CatchStatement(catchExceptionGroups, new LValueExpression(getStackLValue(0)));
             case NOP:
                 return new Nop();
             case POP:

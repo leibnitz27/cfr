@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -19,5 +20,9 @@ public class StructuredComment extends AbstractStructuredStatement {
         if (comment.length() > 0) {
             dumper.print(comment + "\n");
         }
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
     }
 }

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -30,5 +31,9 @@ public class StructuredContinue extends AbstractStructuredContinue {
     @Override
     public BlockIdentifier getContinueTgt() {
         return continueTgt;
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
     }
 }

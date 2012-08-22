@@ -18,5 +18,7 @@ public interface StructuredStatement extends Dumpable {
 
     public StructuredStatement informBlockHeirachy(Vector<BlockIdentifier> blockIdentifiers);
 
+    public void transformStructuredChildren(StructuredStatementTransformer transformer);
+
     public boolean isProperlyStructured();
 }

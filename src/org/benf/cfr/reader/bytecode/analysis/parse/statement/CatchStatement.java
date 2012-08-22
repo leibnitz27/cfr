@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -20,9 +21,11 @@ import java.util.List;
 public class CatchStatement extends AbstractStatement {
     private final List<ExceptionGroup.Entry> exceptions;
     private BlockIdentifier catchBlockIdent;
+    private Expression catching;
 
-    public CatchStatement(List<ExceptionGroup.Entry> exceptions) {
+    public CatchStatement(List<ExceptionGroup.Entry> exceptions, Expression catching) {
         this.exceptions = exceptions;
+        this.catching = catching;
     }
 
     @Override
@@ -40,6 +43,7 @@ public class CatchStatement extends AbstractStatement {
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
+        catching = catching.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override
@@ -53,6 +57,6 @@ public class CatchStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredCatch(exceptions, catchBlockIdent);
+        return new UnstructuredCatch(exceptions, catchBlockIdent, catching);
     }
 }

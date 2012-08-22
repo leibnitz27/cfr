@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -11,15 +13,17 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class StructuredCatch extends AbstractStructuredStatement {
     private final String typeName;
     private final Op04StructuredStatement catchBlock;
+    private final Expression catching;
 
-    public StructuredCatch(String typeName, Op04StructuredStatement catchBlock) {
+    public StructuredCatch(String typeName, Op04StructuredStatement catchBlock, Expression catching) {
         this.typeName = typeName;
         this.catchBlock = catchBlock;
+        this.catching = catching;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("catch ( " + typeName + " ) ");
+        dumper.print("catch (" + typeName + " " + catching + ") ");
         catchBlock.dump(dumper);
     }
 
@@ -29,4 +33,8 @@ public class StructuredCatch extends AbstractStructuredStatement {
         return true;
     }
 
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+        catchBlock.transform(transformer);
+    }
 }

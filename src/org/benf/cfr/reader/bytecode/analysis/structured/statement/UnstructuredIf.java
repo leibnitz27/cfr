@@ -16,7 +16,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredIf extends AbstractStructuredStatement {
+public class UnstructuredIf extends AbstractUnStructuredStatement {
     private ConditionalExpression conditionalExpression;
     private Op04StructuredStatement setIfBlock;
     private BlockIdentifier knownIfBlock;
@@ -31,11 +31,6 @@ public class UnstructuredIf extends AbstractStructuredStatement {
     @Override
     public void dump(Dumper dumper) {
         dumper.print("** if (" + conditionalExpression + ") goto " + getContainer().getTargetLabel(1) + "\n");
-    }
-
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
     }
 
     @Override

@@ -135,9 +135,6 @@ public class CodeAnalyser {
         Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-//        dumper.print("Raw Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
-
         // Remove 2nd (+) jumps in pointless jump chains.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
@@ -217,9 +214,16 @@ public class CodeAnalyser {
         logger.info("rewriteIteratorWhileLoops");
         Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
 
+//        dumper.print("Raw Op3 statements:\n");
+//        for (Op03SimpleStatement node : op03SimpleParseNodes) {
+//            node.dumpInner(dumper);
+//        }
+//
         logger.info("findSynchronizedBlocks");
         Op03SimpleStatement.findSynchronizedBlocks(op03SimpleParseNodes);
 
+//        dumper.print("Raw Op3 statements:\n");
+//        op03SimpleParseNodes.get(0).dump(dumper);
 
         logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
@@ -229,6 +233,9 @@ public class CodeAnalyser {
 //
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
+
+        logger.info("tidyTryCatch");
+        Op04StructuredStatement.tidyTryCatch(block);
 
         this.start = block;
     }

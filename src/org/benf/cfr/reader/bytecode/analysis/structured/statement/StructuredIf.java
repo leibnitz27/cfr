@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Vector;
@@ -46,5 +47,11 @@ public class StructuredIf extends AbstractStructuredStatement {
         ifTaken.informBlockMembership(blockIdentifiers);
         if (elseBlock != null) elseBlock.informBlockMembership(blockIdentifiers);
         return null;
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+        ifTaken.transform(transformer);
+        if (elseBlock != null) elseBlock.transform(transformer);
     }
 }

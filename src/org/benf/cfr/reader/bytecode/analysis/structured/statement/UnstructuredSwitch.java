@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -14,7 +15,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredSwitch extends AbstractStructuredStatement {
+public class UnstructuredSwitch extends AbstractUnStructuredStatement {
     private Expression switchOn;
     private final BlockIdentifier blockIdentifier;
 
@@ -29,14 +30,22 @@ public class UnstructuredSwitch extends AbstractStructuredStatement {
     }
 
     @Override
-    public boolean isProperlyStructured() {
-        return false;
-    }
-
-    @Override
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier != this.blockIdentifier) {
             throw new ConfusedCFRException("Unstructured switch being asked to claim wrong block. [" + blockIdentifier + " != " + this.blockIdentifier + "]");
+        }
+        /*
+         * If the last statement is an unstructured case, then we've got a case with no body.  Transform it into a structured
+         * case.
+         */
+        if (innerBlock.getStructuredStatement() instanceof Block) {
+            Block block = (Block) innerBlock.getStructuredStatement();
+            List<Op04StructuredStatement> statements = block.getBlockStatements();
+            Op04StructuredStatement last = statements.get(statements.size() - 1);
+            if (last.getStructuredStatement() instanceof UnstructuredCase) {
+                UnstructuredCase caseStatement = (UnstructuredCase) (last.getStructuredStatement());
+                last.replaceContainedStatement(caseStatement.getEmptyStructuredCase());
+            }
         }
         return new StructuredSwitch(switchOn, innerBlock, blockIdentifier);
     }

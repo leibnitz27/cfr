@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
@@ -60,15 +61,32 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         structuredStatement.setContainer(this);
     }
 
+    // TODO: This isn't quite right.  Should actually be removing the node.
+    public Op04StructuredStatement nopThisAndReplace() {
+        Op04StructuredStatement replacement = new Op04StructuredStatement(instrIndex, blockMembership, structuredStatement);
+        replaceStatementWithNOP("");
+        return replacement;
+    }
+
     public StructuredStatement getStructuredStatement() {
         return structuredStatement;
     }
 
     private boolean hasUnstructuredSource() {
         for (Op04StructuredStatement source : sources) {
-            if (!source.structuredStatement.isProperlyStructured()) return true;
+            if (!source.structuredStatement.isProperlyStructured()) {
+                return true;
+            }
         }
         return false;
+    }
+
+    public InstrIndex getInstrIndex() {
+        return instrIndex;
+    }
+
+    public Collection<BlockIdentifier> getBlockMembership() {
+        return blockMembership;
     }
 
     @Override
@@ -170,6 +188,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    public void removeLastGoto(Op04StructuredStatement toHere) {
+        if (structuredStatement instanceof Block) {
+            ((Block) structuredStatement).removeLastGoto(toHere);
+        } else {
+            throw new ConfusedCFRException("Trying to remove last goto, but statement isn't a block!");
+        }
+    }
+
     public UnstructuredWhile removeLastEndWhile() {
         if (structuredStatement instanceof Block) {
             return ((Block) structuredStatement).removeLastEndWhile();
@@ -192,6 +218,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public void replaceStatementWithNOP(String comment) {
         this.structuredStatement = new StructuredComment(comment);
+        this.structuredStatement.setContainer(this);
     }
 
     private boolean claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier thisBlock, Vector<BlockIdentifier> currentlyIn) {
@@ -204,6 +231,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         this.structuredStatement = replacement;
         replacement.setContainer(this);
         return true;
+    }
+
+    public void replaceContainedStatement(StructuredStatement structuredStatement) {
+        this.structuredStatement = structuredStatement;
+        this.structuredStatement.setContainer(this);
     }
 
     private static class StackedBlock {
@@ -349,6 +381,33 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         Block result = new Block(outerBlock, true);
         return new Op04StructuredStatement(result);
 
+    }
+
+
+    private static class TryCatchTidier implements StructuredStatementTransformer {
+        @Override
+        public StructuredStatement transform(StructuredStatement in) {
+            if (in instanceof Block) {
+                // Search for try statements, see if we can combine following catch statements with them.
+                Block block = (Block) in;
+                block.combineTryCatch();
+            }
+            in.transformStructuredChildren(this);
+            return in;
+        }
+    }
+
+    public void transform(StructuredStatementTransformer transformer) {
+        structuredStatement = transformer.transform(structuredStatement);
+    }
+
+    /*
+     * mutually exclusive blocks may have trailling gotos after them.  It's hard to remove them prior to here, but now we have
+     * structure, we can find them more easily.
+     */
+
+    public static void tidyTryCatch(Op04StructuredStatement root) {
+        root.transform(new TryCatchTidier());
     }
 
 }

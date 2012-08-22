@@ -14,7 +14,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredIter extends AbstractStructuredStatement {
+public class UnstructuredIter extends AbstractUnStructuredStatement {
     private BlockIdentifier blockIdentifier;
     private LValue iterator;
     private Expression list;
@@ -37,11 +37,6 @@ public class UnstructuredIter extends AbstractStructuredStatement {
         }
         innerBlock.removeLastContinue(blockIdentifier);
         return new StructuredIter(blockIdentifier, iterator, list, innerBlock);
-    }
-
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
     }
 
 

@@ -3,10 +3,13 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created:
@@ -17,9 +20,15 @@ public class Block extends AbstractStructuredStatement {
     private LinkedList<Op04StructuredStatement> containedStatements;
     private boolean indenting;
 
+    private final static LinkedList<Op04StructuredStatement> emptyBlockStatements = ListFactory.newLinkedList();
+
     public Block(LinkedList<Op04StructuredStatement> containedStatements, boolean indenting) {
         this.containedStatements = containedStatements;
         this.indenting = indenting;
+    }
+
+    public static Block getEmptyBlock() {
+        return new Block(emptyBlockStatements, false);
     }
 
     public boolean removeLastContinue(BlockIdentifier block) {
@@ -38,6 +47,7 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
+    // TODO : This is unsafe.  Replace with version which requires target.
     public boolean removeLastGoto() {
         StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
         if (structuredStatement instanceof UnstructuredGoto) {
@@ -47,6 +57,18 @@ public class Block extends AbstractStructuredStatement {
         } else {
             return false;
         }
+    }
+
+    public boolean removeLastGoto(Op04StructuredStatement toHere) {
+        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        if (structuredStatement instanceof UnstructuredGoto) {
+            Op04StructuredStatement oldGoto = containedStatements.getLast();
+            if (oldGoto.getTargets().get(0) == toHere) {
+                oldGoto.replaceStatementWithNOP("");
+                return true;
+            }
+        }
+        return false;
     }
 
     public UnstructuredWhile removeLastEndWhile() {
@@ -71,8 +93,50 @@ public class Block extends AbstractStructuredStatement {
         return containedStatements.get(0);
     }
 
+    public void combineTryCatch() {
+        int size = containedStatements.size();
+        for (int x = 0; x < size; ++x) {
+            Op04StructuredStatement statement = containedStatements.get(x);
+            if (statement.getStructuredStatement() instanceof StructuredTry) {
+                StructuredTry structuredTry = (StructuredTry) statement.getStructuredStatement();
+                ++x;
+                Op04StructuredStatement next = containedStatements.get(x);
+                while (x < size && next.getStructuredStatement() instanceof StructuredCatch) {
+                    structuredTry.addCatch(next.nopThisAndReplace());
+                    ++x;
+                    if (x < size) {
+                        next = containedStatements.get(x);
+                    } else {
+                        // We'll have to find some other way of getting the next statement, probably need a DFS :(
+                        next = null;
+                    }
+                }
+                if (next != null) {
+                    structuredTry.removeFinalJumpsTo(next);
+                    --x;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+        for (Op04StructuredStatement structuredBlock : containedStatements) {
+            structuredBlock.transform(transformer);
+        }
+    }
+
+    public List<Op04StructuredStatement> getBlockStatements() {
+        return containedStatements;
+    }
+
     @Override
     public void dump(Dumper dumper) {
+        if (containedStatements.isEmpty()) {
+            dumper.print("\n");
+            return;
+        }
+        ;
         try {
             dumper.print("{\n");
             dumper.indent(1);

@@ -13,7 +13,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredDo extends AbstractStructuredStatement {
+public class UnstructuredDo extends AbstractUnStructuredStatement {
     private BlockIdentifier blockIdentifier;
 
     public UnstructuredDo(BlockIdentifier blockIdentifier) {
@@ -32,11 +32,6 @@ public class UnstructuredDo extends AbstractStructuredStatement {
         }
         ConditionalExpression condition = innerBlock.removeLastEndWhile().getCondition();
         return new StructuredDo(condition, innerBlock, blockIdentifier);
-    }
-
-    @Override
-    public boolean isProperlyStructured() {
-        return false;
     }
 
 
