@@ -2370,12 +2370,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                             if (monitor.equals(((MonitorExitStatement) statement).getMonitor())) {
                                 foundExits.add(arg1);
                                 /*
-                                 * If there's a return / throw immediately after this, then we know that the brace
+                                 * If there's a return / throw / goto immediately after this, then we know that the brace
                                  * is validly moved.
                                  */
                                 if (arg1.targets.size() == 1) {
                                     Op03SimpleStatement target = arg1.targets.get(0);
-                                    if (target.targets.size() == 0) {
+                                    Statement targetStatement = target.containedStatement;
+                                    if (targetStatement instanceof ReturnStatement ||
+                                            targetStatement instanceof ThrowStatement ||
+                                            targetStatement instanceof GotoStatement) {
                                         extraNodes.add(target);
                                     }
                                 }
