@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Assignment;
 import org.benf.cfr.reader.util.ListFactory;
@@ -21,7 +22,6 @@ import java.util.logging.Logger;
  * User: lee
  * Date: 20/03/2012
  * Time: 18:06
- * To change this template use File | Settings | File Templates.
  */
 public class LValueAssignmentCollector implements LValueRewriter {
 
@@ -167,6 +167,13 @@ public class LValueAssignmentCollector implements LValueRewriter {
                 }
             }
             if (guessAlias == null) return null;
+            // This isn't right.  We should allow
+            //
+            // x[1] = 3
+            // a = x[1]
+            // However, since we're looking at this from the point of view of SSALabels, we don't have that info here
+            // so we ban LValues like this, to stop array creation being reordered.
+            if (guessAlias instanceof ArrayVariable) return null;
             for (StatementContainer verifyStatement : usages.get(stackSSALabel)) {
                 /*
                  * verify that 'guessAlias' is the same version in verifyStatement
