@@ -50,4 +50,14 @@ public class ArrayVariable extends AbstractLValue {
     public SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory) {
         return new SSAIdentifiers();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ArrayVariable)) return false;
+        ArrayVariable other = (ArrayVariable) o;
+        return arrayIndex.equals(other.arrayIndex);
+    }
 }

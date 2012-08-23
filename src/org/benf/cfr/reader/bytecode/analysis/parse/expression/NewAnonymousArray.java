@@ -7,7 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.util.ConfusedCFRException;
 
 import java.util.List;
 
@@ -16,53 +15,40 @@ import java.util.List;
  * User: lee
  * Date: 16/03/2012
  * Time: 17:44
+ * <p/>
+ * 1d array only.
  */
-public class NewObjectArray extends AbstractNewArray {
-    private List<Expression> dimSizes;
-    private final JavaTypeInstance allocatedType;
+public class NewAnonymousArray extends AbstractExpression {
+    private List<Expression> values;
     private final JavaTypeInstance resultType;
 
-    public NewObjectArray(List<Expression> dimSizes, JavaTypeInstance innerInstance, JavaTypeInstance resultInstance) {
+    public NewAnonymousArray(List<Expression> values, JavaTypeInstance resultInstance) {
         super(new InferredJavaType(resultInstance, InferredJavaType.Source.EXPRESSION));
-        this.dimSizes = dimSizes;
-        this.allocatedType = innerInstance;
+        this.values = values;
         this.resultType = resultInstance;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("new ").append(resultType.getArrayStrippedType());
-        int numDims = resultType.getNumArrayDimensions();
-        for (Expression dimSize : dimSizes) {
-            sb.append("[").append(dimSize).append("]");
+        sb.append("new ").append(resultType.getArrayStrippedType()).append("[]{");
+        boolean first = true;
+        for (Expression value : values) {
+            if (!first) {
+                sb.append(", ");
+            } else {
+                first = false;
+            }
+            sb.append(value);
         }
-        for (int x = dimSizes.size(); x < numDims; ++x) {
-            sb.append("[]");
-        }
+        sb.append("}");
         return sb.toString();
     }
 
     @Override
-    public int getNumDims() {
-        return dimSizes.size();
-    }
-
-    @Override
-    public Expression getDimSize(int dim) {
-        if (dim >= dimSizes.size()) throw new ConfusedCFRException("Out of bounds");
-        return dimSizes.get(dim);
-    }
-
-    @Override
-    public JavaTypeInstance getInnerType() {
-        return resultType;
-    }
-
-    @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        for (int x = 0; x < dimSizes.size(); ++x) {
-            dimSizes.set(x, dimSizes.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));
+        for (int x = 0; x < values.size(); ++x) {
+            values.set(x, values.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));
         }
         return this;
     }

@@ -48,4 +48,11 @@ public class StackValue extends AbstractExpression {
         lValueUsageCollector.collect(stackValue);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof StackValue)) return false;
+        StackValue other = (StackValue) o;
+        return stackValue.equals(other.stackValue);
+    }
 }

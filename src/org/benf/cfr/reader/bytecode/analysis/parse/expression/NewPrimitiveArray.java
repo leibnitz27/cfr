@@ -6,8 +6,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.ArrayType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,7 +18,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class NewPrimitiveArray extends AbstractExpression {
+public class NewPrimitiveArray extends AbstractNewArray {
     private Expression size;
     private final ArrayType type;
 
@@ -30,6 +32,22 @@ public class NewPrimitiveArray extends AbstractExpression {
     @Override
     public String toString() {
         return "new " + type + "[" + size + "]";
+    }
+
+    @Override
+    public int getNumDims() {
+        return 1;
+    }
+
+    @Override
+    public Expression getDimSize(int dim) {
+        if (dim > 0) throw new ConfusedCFRException("Only 1 dimension for primitive arrays!");
+        return size;
+    }
+
+    @Override
+    public JavaTypeInstance getInnerType() {
+        return type.getJavaTypeInstance();
     }
 
     @Override

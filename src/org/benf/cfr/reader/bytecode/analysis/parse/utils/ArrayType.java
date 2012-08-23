@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -10,25 +12,25 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * To change this template use File | Settings | File Templates.
  */
 public enum ArrayType {
-    T_BOOLEAN(4,"boolean"),
-    T_CHAR(5,"char"),
-    T_FLOAT(6,"float"),
-    T_DOUBLE(7,"double"),
-    T_BYTE(8,"byte"),
-    T_SHORT(9,"short"),
-    T_INT(10,"int"),
-    T_LONG(11,"long");
-    
+    T_BOOLEAN(4, "boolean", RawJavaType.BOOLEAN),
+    T_CHAR(5, "char", RawJavaType.CHAR),
+    T_FLOAT(6, "float", RawJavaType.FLOAT),
+    T_DOUBLE(7, "double", RawJavaType.DOUBLE),
+    T_BYTE(8, "byte", RawJavaType.BYTE),
+    T_SHORT(9, "short", RawJavaType.SHORT),
+    T_INT(10, "int", RawJavaType.INT),
+    T_LONG(11, "long", RawJavaType.LONG);
+
     private final int spec;
     private final String name;
-    
-    ArrayType(int spec, String name) {
+    private final JavaTypeInstance javaTypeInstance;
+
+    ArrayType(int spec, String name, JavaTypeInstance javaTypeInstance) {
         this.spec = spec;
         this.name = name;
+        this.javaTypeInstance = javaTypeInstance;
     }
-    
-    
-    
+
     public static ArrayType getArrayType(int id) {
         switch (id) {
             case 4:
@@ -55,5 +57,9 @@ public enum ArrayType {
     @Override
     public String toString() {
         return name;
+    }
+
+    public JavaTypeInstance getJavaTypeInstance() {
+        return javaTypeInstance;
     }
 }

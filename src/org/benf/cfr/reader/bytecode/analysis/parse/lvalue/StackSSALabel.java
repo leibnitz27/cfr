@@ -65,4 +65,8 @@ public class StackSSALabel extends AbstractLValue {
         return stackEntry;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
 }

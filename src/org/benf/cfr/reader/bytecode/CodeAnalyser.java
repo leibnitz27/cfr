@@ -155,6 +155,9 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
+        logger.info("sugarAnyonymousArrays");
+        Op03SimpleStatement.resugarAnonymousArrays(op03SimpleParseNodes);
+
         logger.info("collapseAssignmentsIntoConditionals");
         Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes);
 
@@ -170,6 +173,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes);
 
         Op03SimpleStatement.optimiseForTypes(op03SimpleParseNodes);
+
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
@@ -227,6 +231,7 @@ public class CodeAnalyser {
 
         logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
+
 
 //        dumper.print("Final Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);

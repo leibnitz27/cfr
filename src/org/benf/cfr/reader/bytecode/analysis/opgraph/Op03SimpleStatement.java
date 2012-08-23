@@ -6,6 +6,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
@@ -2454,6 +2456,90 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+
+    private static void resugarAnonymousArray(Op03SimpleStatement newArray, List<Op03SimpleStatement> statements) {
+        Assignment assignment = (Assignment) newArray.containedStatement;
+        WildcardMatch start = new WildcardMatch();
+        if (!start.match(
+                new Assignment(start.getLValueWildCard("array"), start.getNewArrayWildCard("def")),
+                assignment
+        )) {
+            throw new ConfusedCFRException("Expecting new array");
+        }
+        /*
+         * If it's not a literal size, ignore.
+         */
+        LValue arrayLValue = start.getLValueWildCard("array").getMatch();
+        if (!(arrayLValue instanceof StackSSALabel)) {
+            return;
+        }
+        StackSSALabel array = (StackSSALabel) arrayLValue;
+        AbstractNewArray arrayDef = start.getNewArrayWildCard("def").getMatch();
+        Expression dimSize0 = arrayDef.getDimSize(0);
+        if (!(dimSize0 instanceof Literal)) return;
+        Literal lit = (Literal) dimSize0;
+        if (lit.getValue().getType() != TypedLiteral.LiteralType.Integer) return;
+        int bound = (Integer) lit.getValue().getValue();
+
+        Op03SimpleStatement next = newArray;
+        List<Expression> anon = ListFactory.newList();
+        List<Op03SimpleStatement> anonAssigns = ListFactory.newList();
+        for (int x = 0; x < bound; ++x) {
+            if (next.targets.size() != 1) {
+                return;
+            }
+            next = next.targets.get(0);
+            WildcardMatch testAnon = new WildcardMatch();
+            Literal idx = new Literal(TypedLiteral.getInt(x));
+            if (!testAnon.match(
+                    new Assignment(
+                            new ArrayVariable(new ArrayIndex(new StackValue(array), idx)),
+                            testAnon.getExpressionWildCard("val")),
+                    next.containedStatement)) {
+                return;
+            }
+            anon.add(testAnon.getExpressionWildCard("val").getMatch());
+            anonAssigns.add(next);
+        }
+        Assignment replacement = new Assignment(assignment.getCreatedLValue(), new NewAnonymousArray(anon, arrayDef.getInnerType()));
+        newArray.replaceStatement(replacement);
+        for (Op03SimpleStatement create : anonAssigns) {
+            create.nopOut();
+        }
+    }
+
+    /*
+     * Search for
+     *
+     * stk = new X[N];
+     * stk[0] = a
+     * stk[1] = b
+     * ...
+     * stk[N-1] = c
+     *
+     * transform into stk = new X{ a,b, .. c }
+     *
+     * (it's important that stk is a stack label, so we don't allow an RValue to reference it inside the
+     * array definition!)
+     */
+    public static void resugarAnonymousArrays(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<Assignment>(Assignment.class));
+        // filter for structure now
+        assignments = Functional.filter(assignments, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                Assignment assignment = (Assignment) in.containedStatement;
+                WildcardMatch wildcardMatch = new WildcardMatch();
+                return (wildcardMatch.match(
+                        new Assignment(wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1)),
+                        assignment
+                ));
+            }
+        });
+        for (Op03SimpleStatement assignment : assignments) {
+            resugarAnonymousArray(assignment, statements);
+        }
+    }
 
     public static void findGenericTypes(Op03SimpleStatement statement, GenericInfoSource genericInfoSource) {
         statement.containedStatement.getRValue().findGenericTypeInfo(genericInfoSource);
