@@ -23,8 +23,8 @@ public enum AccessFlag {
     ACC_TRANSIENT("transient"),
     ACC_INTERFACE("interface"),
     ACC_ABSTRACT("abstract"),
-    ACC_SYNTHETIC("synthetic"),
-    ACC_ANNOTATION("annotation"),
+    ACC_SYNTHETIC("/* synthetic */"),
+    ACC_ANNOTATION("/* annotation */"),
     ACC_ENUM("/* enum */");
 
     public final String name;
