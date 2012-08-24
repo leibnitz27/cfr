@@ -96,13 +96,28 @@ public class Method implements KnowsRawSize {
         return cp.getUTF8Entry(nameIndex).getValue();
     }
 
-    /* This is a bit ugly - otherwise though we need to tie a variable namer to this earlier. */
+    /* This is a bit ugly - otherwise though we need to tie a variable namer to this earlier.
+     * We can't always use the signature... in an enum, for example, it lies!
+     *
+     * Method  : <init> name : 30, descriptor 31
+     * Descriptor ConstantUTF8[(Ljava/lang/String;I)V]
+     * Signature Signature:ConstantUTF8[()V]
+     *
+     * Since the signature is only ever the descriptor with more data, we can just do a length check
+     * to validate this.
+     *
+     */
     public MethodPrototype getMethodPrototype() {
-        AttributeSignature signature = getSignatureAttribute();
-        ConstantPoolEntryUTF8 prototype = signature == null ? cp.getUTF8Entry(descriptorIndex) : signature.getSignature();
+        AttributeSignature sig = getSignatureAttribute();
+        ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
+        ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
+        ConstantPoolEntryUTF8 prototype = null;
+        if (signature == null || signature.getValue().length() < descriptor.getValue().length()) {
+            prototype = descriptor;
+        } else {
+            prototype = signature;
+        }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
-//        System.out.println("Method " + cp.getUTF8Entry(descriptorIndex));
-//        System.out.println("Using  " + prototype);
         return ConstantPoolUtils.parseJavaMethodPrototype(isInstance, prototype, cp, variableNamer);
     }
 
