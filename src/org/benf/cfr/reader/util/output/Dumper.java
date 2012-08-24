@@ -58,7 +58,7 @@ public class Dumper {
     }
 
     public void line() {
-        System.out.println("\n-------------------");
+        System.out.println("\n// -------------------");
         atStart = true;
     }
 

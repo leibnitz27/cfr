@@ -126,30 +126,33 @@ public class ClassFile {
 
     public void Dump(Dumper d) {
         d.line();
-        d.newln().print("Class ");
+        d.print("// Class\n");
         thisClass.dump(d, constantPool);
-        d.newln().print("Super ");
+        d.line();
+        d.print("// Super\n");
         superClass.dump(d, constantPool);
         d.line();
-        d.newln().print("Interfaces");
+        d.print("// Interfaces\n");
         for (ConstantPoolEntryClass iface : interfaces) {
             d.newln();
             iface.dump(d, constantPool);
         }
         d.line();
-        d.newln().print("Fields");
+        d.print("// Imports\n");
+        constantPool.dumpImports(d);
+        d.line();
+        d.print("// Fields\n");
         for (Field field : fields) {
             field.dump(d, constantPool);
         }
         d.line();
-        d.newln().print("Attributes");
+        d.print("// Attributes\n");
         for (Attribute attr : attributes) {
             d.newln();
             attr.dump(d, constantPool);
         }
-        constantPool.dumpImports(d);
         d.line();
-        d.newln().print("Methods");
+        d.print("// Methods\n");
         for (Method meth : methods) {
             d.newln();
             meth.dump(d, constantPool);

@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.entities;
 
-import javax.accessibility.Accessible;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -14,22 +13,27 @@ import java.util.TreeSet;
  */
 
 public enum AccessFlag {
-    ACC_PUBLIC,
-    ACC_PRIVATE,
-    ACC_PROTECTED,
-    ACC_STATIC,
-    ACC_FINAL,
-    ACC_SUPER,
-    ACC_VOLATILE,
-    ACC_TRANSIENT,
-    ACC_INTERFACE,
-    ACC_ABSTRACT,
-    ACC_SYNTHETIC,
-    ACC_ANNOTATION,
-    ACC_ENUM;
+    ACC_PUBLIC("public"),
+    ACC_PRIVATE("private"),
+    ACC_PROTECTED("protected"),
+    ACC_STATIC("static"),
+    ACC_FINAL("final"),
+    ACC_SUPER("super"),
+    ACC_VOLATILE("volatile"),
+    ACC_TRANSIENT("transient"),
+    ACC_INTERFACE("interface"),
+    ACC_ABSTRACT("abstract"),
+    ACC_SYNTHETIC("synthetic"),
+    ACC_ANNOTATION("annotation"),
+    ACC_ENUM("/* enum */");
 
-    public static Set<AccessFlag> build(int raw)
-    {
+    public final String name;
+
+    private AccessFlag(String name) {
+        this.name = name;
+    }
+
+    public static Set<AccessFlag> build(int raw) {
         Set<AccessFlag> res = new TreeSet<AccessFlag>();
 
         // Because we're decoding a C++ style enum.
@@ -50,6 +54,11 @@ public enum AccessFlag {
         if (res.isEmpty()) return res;
         Set<AccessFlag> resaf = EnumSet.copyOf(res);
         return resaf;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
 };

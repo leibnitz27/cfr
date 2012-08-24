@@ -1,11 +1,13 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
+import org.benf.cfr.reader.util.CollectionUtils;
 import org.benf.cfr.reader.util.KnowsRawSize;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -36,6 +38,8 @@ public class Field implements KnowsRawSize {
     private final short descriptorIndex;
     private final Set<AccessFlag> accessFlags;
     private final List<Attribute> attributes;
+    private transient JavaTypeInstance cachedDecodedType;
+
 
     public Field(ByteData raw, final ConstantPool cp) {
         this.accessFlags = AccessFlag.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
@@ -60,9 +64,20 @@ public class Field implements KnowsRawSize {
         return length;
     }
 
+    public JavaTypeInstance getJavaTypeInstance(ConstantPool cp) {
+        if (cachedDecodedType == null) {
+            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getUTF8Entry(descriptorIndex).getValue(), cp);
+        }
+        return cachedDecodedType;
+    }
+
     public void dump(Dumper d, ConstantPool cp) {
-        cp.getEntry(nameIndex).dump(d, cp);
-        cp.getEntry(descriptorIndex).dump(d, cp);
-        d.print(accessFlags.toString());
+        StringBuilder sb = new StringBuilder();
+        String prefix = CollectionUtils.join(accessFlags, " ");
+        if (!prefix.isEmpty()) sb.append(prefix);
+        JavaTypeInstance type = getJavaTypeInstance(cp);
+        sb.append(' ').append(type.toString()).append(' ').append(cp.getUTF8Entry(nameIndex).getValue());
+        sb.append(";\n");
+        d.print(sb.toString());
     }
 }
