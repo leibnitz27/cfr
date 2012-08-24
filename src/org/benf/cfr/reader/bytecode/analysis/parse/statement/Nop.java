@@ -28,6 +28,6 @@ public class Nop extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredComment("// nop");
+        return new StructuredComment("");
     }
 }
