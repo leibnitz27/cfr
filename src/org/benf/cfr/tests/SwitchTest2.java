@@ -9,21 +9,14 @@ package org.benf.cfr.tests;
  */
 public class SwitchTest2 {
 
-    enum enm {
-        ONE,
-        TWO,
-        THREE
-    }
-
-    ;
-
-    public int test0(enm e) {
+    public int test0(EnumTest1 e) {
         switch (e) {
-            case ONE:
+            case FOO:
                 return 1;
+            case BAP:
+                return 2;
         }
         return 0;
     }
-
 
 }
