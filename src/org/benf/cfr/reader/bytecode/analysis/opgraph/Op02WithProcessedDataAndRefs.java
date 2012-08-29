@@ -526,8 +526,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case PUTFIELD:
                 return new Assignment(new FieldVariable(getStackRValue(1), cp, cpEntries[0]), getStackRValue(0));
             case SWAP: {
-                Statement s1 = new Assignment(getStackLValue(0), getStackRValue(1));
-                Statement s2 = new Assignment(getStackLValue(1), getStackRValue(0));
+                Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
+                Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
                 return new CompoundStatement(s1, s2);
             }
             case DUP: {
