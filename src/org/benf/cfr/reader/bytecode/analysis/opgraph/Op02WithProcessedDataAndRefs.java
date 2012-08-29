@@ -500,6 +500,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(0), new Literal(TypedLiteral.getInt(0)), CompOp.getOpFor(instr));
                 return new IfStatement(conditionalExpression);
             }
+            case JSR:
+                return new GotoStatement();
+            case RET:
+                throw new ConfusedCFRException("Not implemented - RET (also requires JSR change)");
             case GOTO:
             case GOTO_W:
                 return new GotoStatement();
@@ -521,6 +525,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new Assignment(new StaticVariable(cp, cpEntries[0]), getStackRValue(0));
             case PUTFIELD:
                 return new Assignment(new FieldVariable(getStackRValue(1), cp, cpEntries[0]), getStackRValue(0));
+            case SWAP: {
+                Statement s1 = new Assignment(getStackLValue(0), getStackRValue(1));
+                Statement s2 = new Assignment(getStackLValue(1), getStackRValue(0));
+                return new CompoundStatement(s1, s2);
+            }
             case DUP: {
                 Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
                 Statement s2 = new Assignment(getStackLValue(1), getStackRValue(0));

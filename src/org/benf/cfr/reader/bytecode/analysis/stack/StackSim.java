@@ -36,6 +36,9 @@ public class StackSim {
             thisSim = thisSim.getParent();
             depth--;
         }
+        if (thisSim.stackEntryHolder == null) {
+            throw new ConfusedCFRException("Underrun type stack");
+        }
         return thisSim.stackEntryHolder.getStackEntry();
     }
 

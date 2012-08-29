@@ -25,6 +25,7 @@ public enum ArithOp {
     AND("&"),
     SHR(">>"),
     SHL("<<"),
+    SHRU(">> /* (u) */"),
     XOR("^");
 
     private final String showAs;
@@ -92,9 +93,10 @@ public enum ArithOp {
                 return REM;
             case ISHR:
             case LSHR:
+                return SHR;
             case IUSHR: // TODO : WRONG
             case LUSHR: // TODO : WRONG
-                return SHR;
+                return SHRU;
             case ISHL:
             case LSHL:
                 return SHL;
