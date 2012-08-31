@@ -38,4 +38,9 @@ public class ConstantPoolEntryInteger implements ConstantPoolEntry, ConstantPool
     public StackType getStackType() {
         return StackType.INT;
     }
+
+    @Override
+    public String toString() {
+        return ("CONSTANT_Integer value=" + value);
+    }
 }

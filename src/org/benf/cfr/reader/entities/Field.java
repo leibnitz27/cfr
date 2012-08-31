@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.attributes.Attribute;
+import org.benf.cfr.reader.entities.attributes.AttributeConstantValue;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.CollectionUtils;
@@ -11,7 +13,8 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -37,7 +40,8 @@ public class Field implements KnowsRawSize {
     private final short nameIndex;
     private final short descriptorIndex;
     private final Set<AccessFlag> accessFlags;
-    private final List<Attribute> attributes;
+    private final Map<String, Attribute> attributes;
+    private final TypedLiteral constantValue;
     private transient JavaTypeInstance cachedDecodedType;
 
 
@@ -53,10 +57,12 @@ public class Field implements KnowsRawSize {
                         return AttributeFactory.build(arg, cp);
                     }
                 });
-        this.attributes = tmpAttributes;
+        this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
         this.nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
+        Attribute cvAttribute = attributes.get(AttributeConstantValue.ATTRIBUTE_NAME);
+        this.constantValue = cvAttribute == null ? null : TypedLiteral.getConstantPoolEntry(cp, ((AttributeConstantValue) cvAttribute).getValue());
     }
 
     @Override
@@ -77,6 +83,9 @@ public class Field implements KnowsRawSize {
         if (!prefix.isEmpty()) sb.append(prefix);
         JavaTypeInstance type = getJavaTypeInstance(cp);
         sb.append(' ').append(type.toString()).append(' ').append(cp.getUTF8Entry(nameIndex).getValue());
+        if (constantValue != null) {
+            sb.append(" = ").append(constantValue);
+        }
         sb.append(";\n");
         d.print(sb.toString());
     }

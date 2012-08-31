@@ -65,7 +65,7 @@ public class Main {
 
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
-            // LoggerFactory.setGlobalLoggingLevel();
+            //LoggerFactory.setGlobalLoggingLevel();
             byte[] content = getBytesFromFile(fname);
             ByteData data = new BaseByteData(content);
             ClassFile c = new ClassFile(data);

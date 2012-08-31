@@ -56,4 +56,9 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
         return getJavaTypeInstance(cp).getStackType();
     }
 
+
+    @Override
+    public String toString() {
+        return "ConstantPool_FieldRef [classIndex:" + classIndex + ", nameAndTypeIndex:" + nameAndTypeIndex + "]";
+    }
 }

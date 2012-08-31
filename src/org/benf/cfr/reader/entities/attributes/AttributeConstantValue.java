@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -11,26 +12,30 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 19:01
  * To change this template use File | Settings | File Templates.
  */
-public class AttributeUnknown extends Attribute {
+public class AttributeConstantValue extends Attribute {
+    public static final String ATTRIBUTE_NAME = "ConstantValue";
+
     private static final long OFFSET_OF_ATTRIBUTE_LENGTH = 2;
     private static final long OFFSET_OF_REMAINDER = 6;
 
     private final int length;
-    private final String name;
+    private final ConstantPool cp;
+    private final ConstantPoolEntry value;
 
-    public AttributeUnknown(ByteData raw, String name) {
+    public AttributeConstantValue(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        this.name = name;
+        this.cp = cp;
+        this.value = cp.getEntry(raw.getS2At(OFFSET_OF_REMAINDER));
     }
 
     @Override
     public String getRawName() {
-        return name;
+        return ATTRIBUTE_NAME;
     }
 
     @Override
     public void dump(Dumper d, ConstantPool cp) {
-        d.print("Unknown Attribute : " + name);
+        d.print("ConstantValue : " + value);
     }
 
     @Override
@@ -40,6 +45,10 @@ public class AttributeUnknown extends Attribute {
 
     @Override
     public String toString() {
-        return "Unknown Attribute : " + name;
+        return "ConstantValue : " + value;
+    }
+
+    public ConstantPoolEntry getValue() {
+        return value;
     }
 }

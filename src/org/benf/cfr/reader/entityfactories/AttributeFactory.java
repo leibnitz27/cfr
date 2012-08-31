@@ -29,6 +29,8 @@ public class AttributeFactory {
             return new AttributeLocalVariableTable(raw, cp);
         } else if (AttributeSignature.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeSignature(raw, cp);
+        } else if (AttributeConstantValue.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeConstantValue(raw, cp);
         } else {
             return new AttributeUnknown(raw, attributeName);
         }
