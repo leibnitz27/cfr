@@ -104,7 +104,7 @@ public class GenericInfoSource {
         if (clazz.isPrimitive()) {
             return RawJavaType.getByName(clazz.getName());
         } else {
-            return new JavaRefTypeInstance(clazz.getName().replace(".", "/"), cp);
+            return new JavaRefTypeInstance(clazz.getName(), cp);
         }
     }
 

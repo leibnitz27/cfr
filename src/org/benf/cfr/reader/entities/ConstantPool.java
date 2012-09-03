@@ -137,17 +137,17 @@ public class ConstantPool {
     }
 
     public void markClassNameUsed(String className) {
-        int idxlast = className.lastIndexOf('/');
+        int idxlast = className.lastIndexOf('.');
         String partname = idxlast == -1 ? className : className.substring(idxlast + 1);
         if (!shortNameToLongName.containsKey(partname)) {
-            shortNameToLongName.put(partname, className.replace('/', '.'));
+            shortNameToLongName.put(partname, className);
             longNameToShortName.put(className, partname);
         }
     }
 
     public String getDisplayableClassName(String className) {
         String res = longNameToShortName.get(className);
-        if (res == null) return res;
-        return res.replace('/', '.');
+        if (res == null) return className;
+        return res;
     }
 }

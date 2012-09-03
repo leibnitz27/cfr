@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
@@ -44,7 +45,7 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEn
             if (rawType.startsWith("[")) {
                 javaTypeInstance = ConstantPoolUtils.decodeTypeTok(rawType, cp);
             } else {
-                javaTypeInstance = new JavaRefTypeInstance(rawType, cp);
+                javaTypeInstance = new JavaRefTypeInstance(ClassNameUtils.convert(rawType), cp);
             }
         }
         return javaTypeInstance;

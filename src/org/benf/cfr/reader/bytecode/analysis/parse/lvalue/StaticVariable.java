@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollect
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
@@ -24,15 +25,14 @@ public class StaticVariable extends AbstractLValue {
 
     private final ConstantPool cp;
     private final ConstantPoolEntryFieldRef field;
-    private final String className;
+    private final JavaTypeInstance clazz;
     private final String varName;
 
     public StaticVariable(ConstantPool cp, ConstantPoolEntry field) {
         super(new InferredJavaType(((ConstantPoolEntryFieldRef) field).getJavaTypeInstance(cp), InferredJavaType.Source.FIELD));
         this.field = (ConstantPoolEntryFieldRef) field;
         this.cp = cp;
-        this.className = cp.getUTF8Entry(cp.getClassEntry(this.field.getClassIndex()).getNameIndex()).getValue();
-        cp.markClassNameUsed(className);
+        this.clazz = cp.getClassEntry(this.field.getClassIndex()).getTypeInstance(cp);
         this.varName = this.field.getLocalName(cp);
     }
 
@@ -44,7 +44,7 @@ public class StaticVariable extends AbstractLValue {
 
     @Override
     public String toString() {
-        return cp.getDisplayableClassName(className) + "." + varName;
+        return clazz.toString() + "." + varName;
     }
 
     @Override
@@ -65,13 +65,13 @@ public class StaticVariable extends AbstractLValue {
     public boolean equals(Object o) {
         if (!(o instanceof StaticVariable)) return false;
         StaticVariable other = (StaticVariable) o;
-        if (!other.className.equals(className)) return false;
+        if (!other.clazz.equals(clazz)) return false;
         return other.varName.equals(varName);
     }
 
     @Override
     public int hashCode() {
-        int hashcode = className.hashCode();
+        int hashcode = clazz.hashCode();
         hashcode = (13 * hashcode) + varName.hashCode();
         return hashcode;
     }

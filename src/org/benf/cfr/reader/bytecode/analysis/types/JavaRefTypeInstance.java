@@ -12,10 +12,10 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
     private final ConstantPool cp;
 
-    public JavaRefTypeInstance(String className, ConstantPool cp) {
-        this.className = className;
+    public JavaRefTypeInstance(String rawClassName, ConstantPool cp) {
+        this.className = ClassNameUtils.convert(rawClassName);
         this.cp = cp;
-        cp.markClassNameUsed(className);
+        cp.markClassNameUsed(this.className);
     }
 
     @Override

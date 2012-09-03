@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
@@ -22,6 +23,7 @@ import java.util.List;
 public class ConstructorInvokation extends AbstractExpression {
     private final ConstantPoolEntryMethodRef function;
     private final ConstantPoolEntryClass type;
+    private final JavaTypeInstance clazz;
     private final List<Expression> args;
     private final ConstantPool cp;
 
@@ -31,6 +33,7 @@ public class ConstructorInvokation extends AbstractExpression {
         this.type = type;
         this.args = args;
         this.cp = cp;
+        this.clazz = type.getTypeInstance(cp);
     }
 
     @Override
@@ -44,7 +47,7 @@ public class ConstructorInvokation extends AbstractExpression {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("new ").append(cp.getUTF8Entry(type.getNameIndex()).getValue()).append("(");
+        sb.append("new ").append(clazz.toString()).append("(");
         boolean first = true;
         for (Expression arg : args) {
             if (!first) sb.append(", ");
