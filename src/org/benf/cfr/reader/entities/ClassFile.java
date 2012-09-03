@@ -115,7 +115,14 @@ public class ClassFile {
         this.attributes = tmpAttributes;
 
         thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_THIS_CLASS));
-        superClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_SUPER_CLASS));
+        constantPool.markClassNameUsed(constantPool.getUTF8Entry(thisClass.getNameIndex()).getValue());
+        short superClassIndex = data.getS2At(OFFSET_OF_SUPER_CLASS);
+        if (superClassIndex == 0) {
+            superClass = null;
+        } else {
+            superClass = superClassIndex == 0 ? null : (ConstantPoolEntryClass) constantPool.getEntry(superClassIndex);
+            constantPool.markClassNameUsed(constantPool.getUTF8Entry(superClass.getNameIndex()).getValue());
+        }
     }
 
     public void analyse() {
@@ -126,37 +133,44 @@ public class ClassFile {
 
     public void Dump(Dumper d) {
         d.line();
-        d.print("// Class\n");
-        thisClass.dump(d, constantPool);
-        d.line();
-        d.print("// Super\n");
-        superClass.dump(d, constantPool);
-        d.line();
-        d.print("// Interfaces\n");
-        for (ConstantPoolEntryClass iface : interfaces) {
-            d.newln();
-            iface.dump(d, constantPool);
-        }
-        d.line();
         d.print("// Imports\n");
         constantPool.dumpImports(d);
-        d.line();
-        d.print("// Fields\n");
-        for (Field field : fields) {
-            field.dump(d, constantPool);
+        d.print("class " + thisClass.getTypeInstance(constantPool) + "\n");
+        if (superClass != null) {
+            d.print("extends " + superClass.getTypeInstance(constantPool) + "\n");
         }
-        d.line();
-        d.print("// Attributes\n");
-        for (Attribute attr : attributes) {
-            d.newln();
-            attr.dump(d, constantPool);
+        if (!interfaces.isEmpty()) {
+            d.print("implements ");
+            int size = interfaces.size();
+            for (int x = 0; x < size; ++x) {
+                ConstantPoolEntryClass iface = interfaces.get(x);
+                d.print("" + iface.getTypeInstance(constantPool) + (x < (size - 1) ? ",\n" : "\n"));
+            }
         }
-        d.line();
-        d.print("// Methods\n");
-        for (Method meth : methods) {
-            d.newln();
-            meth.dump(d, constantPool);
+        d.removePendingCarriageReturn();
+        d.print("{\n");
+
+        if (!fields.isEmpty()) {
+            d.print("// Fields\n");
+            for (Field field : fields) {
+                field.dump(d, constantPool);
+            }
         }
+//        d.print("// Attributes\n");
+//        for (Attribute attr : attributes) {
+//            d.newln();
+//            attr.dump(d, constantPool);
+//        }
+//        d.line();
+        if (!methods.isEmpty()) {
+            d.print("// Methods\n");
+            for (Method meth : methods) {
+                d.newln();
+                meth.dump(d, constantPool);
+            }
+        }
+        d.newln();
+        d.print("}\n");
     }
 
     public void dumpMethod(String name, Dumper dumper) {

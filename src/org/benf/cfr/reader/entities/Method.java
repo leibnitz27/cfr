@@ -132,10 +132,8 @@ public class Method implements KnowsRawSize {
 
     public void dump(Dumper d, ConstantPool cp) {
         if (codeAttribute != null) {
-            d.newln();
             d.print(getSignatureText());
             codeAttribute.dump(d, cp);
         }
-        d.newln();
     }
 }
