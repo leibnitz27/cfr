@@ -46,6 +46,7 @@ public class Method implements KnowsRawSize {
     private final AttributeCode codeAttribute;
     private final ConstantPool cp;
     private final VariableNamer variableNamer;
+    private final MethodPrototype methodPrototype;
 
     public Method(ByteData raw, final ConstantPool cp) {
         this.cp = cp;
@@ -75,6 +76,7 @@ public class Method implements KnowsRawSize {
             this.variableNamer = VariableNamerFactory.getNamer(this.codeAttribute.getLocalVariableTable(), cp);
             this.codeAttribute.setMethod(this);
         }
+        this.methodPrototype = getMethodPrototypeUncached();
     }
 
     private AttributeSignature getSignatureAttribute() {
@@ -107,7 +109,7 @@ public class Method implements KnowsRawSize {
      * to validate this.
      *
      */
-    public MethodPrototype getMethodPrototype() {
+    private MethodPrototype getMethodPrototypeUncached() {
         AttributeSignature sig = getSignatureAttribute();
         ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
         ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
@@ -119,6 +121,10 @@ public class Method implements KnowsRawSize {
         }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         return ConstantPoolUtils.parseJavaMethodPrototype(isInstance, prototype, cp, variableNamer);
+    }
+
+    public MethodPrototype getMethodPrototype() {
+        return methodPrototype;
     }
 
     private String getSignatureText() {

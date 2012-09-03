@@ -23,6 +23,7 @@ import java.util.Map;
 public class VariableFactory {
     private final VariableNamer variableNamer;
     private final List<InferredJavaType> typedArgs;
+    private final Method method;
 
     private final Map<LValue, LValue> cache = MapFactory.newMap();
 
@@ -41,6 +42,11 @@ public class VariableFactory {
         for (JavaTypeInstance arg : args) {
             typedArgs.add(new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN));
         }
+        this.method = method;
+    }
+
+    public JavaTypeInstance getReturn() {
+        return method.getMethodPrototype().getReturnType();
     }
 
     public LValue localVariable(int idx, int origRawOffset) {

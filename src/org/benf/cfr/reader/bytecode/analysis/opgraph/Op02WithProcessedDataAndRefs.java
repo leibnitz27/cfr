@@ -17,6 +17,7 @@ import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
@@ -513,8 +514,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ARETURN:
             case LRETURN:
             case DRETURN:
-            case FRETURN:
-                return new ReturnValueStatement(getStackRValue(0));
+            case FRETURN: {
+                Expression retVal = getStackRValue(0);
+                JavaTypeInstance tgtType = variableFactory.getReturn();
+                if (tgtType instanceof RawJavaType) {
+                    retVal.getInferredJavaType().useAsWithoutCasting((RawJavaType) tgtType);
+                }
+                return new ReturnValueStatement(retVal);
+            }
             case GETFIELD: {
                 Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), cp, cpEntries[0]));
                 return new Assignment(getStackLValue(0), fieldExpression);
