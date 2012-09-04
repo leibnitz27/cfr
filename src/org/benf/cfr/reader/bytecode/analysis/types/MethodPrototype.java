@@ -27,7 +27,7 @@ public class MethodPrototype {
         this.variableNamer = variableNamer;
     }
 
-    public String getPrototype(String methName) {
+    public String getPrototype(String methName, boolean isConstructor) {
         StringBuilder sb = new StringBuilder();
         if (formalTypeParameters != null) {
             sb.append('<');
@@ -42,7 +42,10 @@ public class MethodPrototype {
             }
             sb.append("> ");
         }
-        sb.append(result.toString()).append(" ").append(methName).append("(");
+        if (!isConstructor) {
+            sb.append(result.toString()).append(" ");
+        }
+        sb.append(methName).append("(");
         boolean first = true;
         int offset = instanceMethod ? 1 : 0;
         for (JavaTypeInstance arg : args) {

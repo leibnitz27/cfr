@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
@@ -95,7 +96,7 @@ public class ClassFile {
                 new UnaryFunction<ByteData, Method>() {
                     @Override
                     public Method invoke(ByteData arg) {
-                        return new Method(arg, constantPool);
+                        return new Method(arg, ClassFile.this, constantPool);
                     }
                 });
         this.methods = tmpMethods;
@@ -129,6 +130,10 @@ public class ClassFile {
         for (Method method : methods) {
             method.analyse();
         }
+    }
+
+    public JavaTypeInstance getClassType() {
+        return thisClass.getTypeInstance(constantPool);
     }
 
     public void Dump(Dumper d) {

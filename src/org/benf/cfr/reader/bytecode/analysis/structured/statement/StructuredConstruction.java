@@ -18,7 +18,7 @@ public class StructuredConstruction extends AbstractStructuredStatement {
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print(invokation.toString() + "; // <-- constructor of (" + invokation.getObject() + ")\n");
+        dumper.print(invokation.toString() + ";\n");
     }
 
     @Override

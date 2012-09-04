@@ -36,8 +36,8 @@ public class VariableFactory {
         List<JavaTypeInstance> args = methodPrototype.getArgs();
         this.typedArgs = ListFactory.newList();
         if (methodPrototype.isInstanceMethod()) {
-            // we should type 'this'....
-            typedArgs.add(new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.UNKNOWN));
+            JavaTypeInstance thisType = method.getClassFile().getClassType();
+            typedArgs.add(new InferredJavaType(thisType, InferredJavaType.Source.UNKNOWN));
         }
         for (JavaTypeInstance arg : args) {
             typedArgs.add(new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN));

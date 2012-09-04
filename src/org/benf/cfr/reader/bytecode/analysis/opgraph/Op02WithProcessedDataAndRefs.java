@@ -452,15 +452,29 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     return new Assignment(getStackLValue(0), funcCall);
                 }
             }
-            case INVOKEVIRTUAL:
+            case INVOKEDYNAMIC:
+                throw new ConfusedCFRException("InvokeDynamic not supported (Java can't generate it!)");
             case INVOKESPECIAL:
+                // Invoke special == invokenonvirtual.
+                // In this case the specific class of the method is relevant.
+                // In java, the only way you can (???) reference a non-local method with this is a super call
+                // (inner class methods do not use this.)
+            case INVOKEVIRTUAL:
             case INVOKEINTERFACE: {
                 ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
                 StackValue object = getStackRValue(stackConsumed.size() - 1);
+                /*
+                 * See above re invokespecial
+                 */
+                boolean special = false;
+                if (instr == JVMInstr.INVOKESPECIAL) {
+                    // todo: Verify that the class being called is the super of the object.
+                    special = true;
+                }
                 MethodPrototype methodPrototype = function.getMethodPrototype(cp);
                 List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size() - 1);
                 methodPrototype.tightenArgs(args);
-                MemberFunctionInvokation funcCall = new MemberFunctionInvokation(cp, function, methodPrototype, object, args);
+                MemberFunctionInvokation funcCall = new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
                 if (function.isInitMethod(cp)) {
                     return new ConstructorStatement(funcCall);
                 } else {

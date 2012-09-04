@@ -47,9 +47,11 @@ public class Method implements KnowsRawSize {
     private final ConstantPool cp;
     private final VariableNamer variableNamer;
     private final MethodPrototype methodPrototype;
+    private final ClassFile classFile;
 
-    public Method(ByteData raw, final ConstantPool cp) {
+    public Method(ByteData raw, ClassFile classFile, final ConstantPool cp) {
         this.cp = cp;
+        this.classFile = classFile;
         this.nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         this.accessFlags = AccessFlagMethod.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
         this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
@@ -87,6 +89,10 @@ public class Method implements KnowsRawSize {
 
     public VariableNamer getVariableNamer() {
         return variableNamer;
+    }
+
+    public ClassFile getClassFile() {
+        return classFile;
     }
 
     @Override
@@ -129,7 +135,10 @@ public class Method implements KnowsRawSize {
 
     private String getSignatureText() {
         String prefix = CollectionUtils.join(accessFlags, " ");
-        return (prefix.isEmpty() ? "" : (prefix + " ")) + getMethodPrototype().getPrototype(cp.getUTF8Entry(nameIndex).getValue());
+        String methodName = cp.getUTF8Entry(nameIndex).getValue();
+        boolean constructor = methodName.equals("<init>");
+        if (constructor) methodName = classFile.getClassType().toString();
+        return (prefix.isEmpty() ? "" : (prefix + " ")) + getMethodPrototype().getPrototype(methodName, constructor);
     }
 
     public void analyse() {

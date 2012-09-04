@@ -31,8 +31,9 @@ public class MemberFunctionInvokation extends AbstractExpression {
     private final ConstantPool cp;
     private final MethodPrototype methodPrototype;
     private final String name;
+    private final boolean special;
 
-    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args) {
+    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, boolean special, List<Expression> args) {
         super(new InferredJavaType(methodPrototype.getReturnType(), InferredJavaType.Source.FIELD));
         this.function = function;
         this.methodPrototype = methodPrototype;
@@ -40,7 +41,9 @@ public class MemberFunctionInvokation extends AbstractExpression {
         this.args = args;
         this.cp = cp;
         ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
-        this.name = nameAndType.getName(cp).getValue();
+        String funcName = nameAndType.getName(cp).getValue();
+        this.name = funcName.equals("<init>") ? null : funcName;
+        this.special = special;
     }
 
     @Override
@@ -55,8 +58,19 @@ public class MemberFunctionInvokation extends AbstractExpression {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(object.toString());
-        sb.append(".").append(name).append("(");
+        if (special) {
+            JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
+            JavaTypeInstance callType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
+            if (callType.equals(objType)) {
+                sb.append(object.toString());
+            } else {
+                sb.append("super");
+            }
+        } else {
+            sb.append(object.toString());
+        }
+        if (name != null) sb.append(".").append(name);
+        sb.append("(");
         boolean first = true;
         for (int x = 0; x < args.size(); ++x) {
             Expression arg = args.get(x);
