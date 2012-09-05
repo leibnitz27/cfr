@@ -142,7 +142,12 @@ public class Method implements KnowsRawSize {
     }
 
     public void analyse() {
-        if (codeAttribute != null) codeAttribute.analyse();
+        try {
+            if (codeAttribute != null) codeAttribute.analyse();
+        } catch (RuntimeException e) {
+            System.out.println("While processing method : " + this.getName());
+            throw e;
+        }
     }
 
     public void dump(Dumper d, ConstantPool cp) {

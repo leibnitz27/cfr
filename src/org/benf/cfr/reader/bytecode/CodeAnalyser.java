@@ -118,6 +118,9 @@ public class CodeAnalyser {
 ////
 //        dumper.dump(op2list);
 
+        // DFS the instructions, unlink any which aren't reachable.
+        Op02WithProcessedDataAndRefs.unlinkUnreachable(op2list);
+
         // Create a non final version...
         final VariableFactory variableFactory = new VariableFactory(method);
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableFactory, blockIdentifierFactory);

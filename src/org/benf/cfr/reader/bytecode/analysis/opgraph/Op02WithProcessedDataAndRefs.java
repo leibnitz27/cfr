@@ -749,6 +749,37 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     }
 
+    public static void unlinkUnreachable(List<Op02WithProcessedDataAndRefs> op2list) {
+
+        final Set<Op02WithProcessedDataAndRefs> reached = SetFactory.newSet();
+        GraphVisitor<Op02WithProcessedDataAndRefs> reachableVisitor =
+                new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(op2list.get(0),
+                        new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
+                            @Override
+                            public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
+                                reached.add(arg1);
+                                for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {
+                                    arg2.enqueue(target);
+                                }
+                            }
+                        });
+        reachableVisitor.process();
+
+        /* Since we only look at nodes reachable from the start, we'll have the whole set we need to eliminate now.
+         *
+         */
+        for (Op02WithProcessedDataAndRefs op : op2list) {
+            if (!reached.contains(op)) {
+                /* Unlink node - remove as source from all its targets
+                 * (It doesn't have any reachable sources) */
+                for (Op02WithProcessedDataAndRefs target : op.targets) {
+                    target.removeSource(op);
+                }
+                op.targets.clear();
+            }
+        }
+    }
+
     public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list, final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory) {
 
         final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
@@ -758,7 +789,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         // By only processing reachable bytecode, we ignore deliberate corruption.   However, we could
         // Nop out unreachable code, so as to not have this ugliness.
         // We start at 0 as that's not controversial ;)
-        GraphVisitor o2Converter = new GraphVisitorDFS(op2list.get(0),
+        GraphVisitor<Op02WithProcessedDataAndRefs> o2Converter = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(op2list.get(0),
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override
                     public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
