@@ -955,6 +955,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             int originalIndex = lutByOffset.get((int) exceptionGroup.getBytecodeIndexFrom());
             Op02WithProcessedDataAndRefs startInstruction = op2list.get(originalIndex);
 
+            int inclusiveLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo());
+            Op02WithProcessedDataAndRefs lastTryInstruction = op2list.get(inclusiveLastIndex);
+
+
             List<Pair<Op02WithProcessedDataAndRefs, ExceptionGroup.Entry>> handlerTargets = ListFactory.newList();
             for (ExceptionGroup.Entry exceptionEntry : rawes) {
                 short handler = exceptionEntry.getBytecodeIndexHandler();
@@ -976,12 +980,27 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             tryOp.containedInTheseBlocks.remove(exceptionGroup.getTryBlockIdentifier());
             tryOp.exceptionGroups.add(exceptionGroup);
 
-            // All operations which pointed to start should now point to our TRY
-            if (startInstruction.getSources().isEmpty())
+            // All forward jumping operations which pointed to start should now point to our TRY.
+            // (we leave back jumps where they are, or they might interfere with loop analysis).
+            if (startInstruction.getSources().isEmpty()) {
                 throw new ConfusedCFRException("Can't install exception handler infront of nothing");
+            }
+            List<Op02WithProcessedDataAndRefs> removeThese = ListFactory.newList();
             for (Op02WithProcessedDataAndRefs source : startInstruction.getSources()) {
-                source.replaceTarget(startInstruction, tryOp);
-                tryOp.addSource(source);
+                // If it's a back jump from WITHIN the try block, we don't want to repoint at 'try'.
+                // However, we haven't yet 'splayed' the try block out to cover extra instructions, so we might
+                // miss something.....
+                if (startInstruction.getIndex().isBackJumpFrom(source.getIndex()) &&
+                        !lastTryInstruction.getIndex().isBackJumpFrom(source.getIndex())) {
+                    // it was a backjump inside the block.
+                } else {
+                    source.replaceTarget(startInstruction, tryOp);
+                    removeThese.add(source);
+                    tryOp.addSource(source);
+                }
+            }
+            for (Op02WithProcessedDataAndRefs remove : removeThese) {
+                startInstruction.removeSource(remove);
             }
 
             // Add tryBlockIdentifier to each block in the original.
@@ -1021,7 +1040,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 preCatchOp.catchExceptionGroups.add(catchTargets.getSecond());
             }
             tryOp.addTarget(startInstruction);
-            startInstruction.clearSources();   // todo: What about the nodes which TARGET startInstruction?
             startInstruction.addSource(tryOp);
             op2list.add(tryOp);
         }

@@ -1148,6 +1148,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         final InstrIndex startIndex = start.getIndex();
         logger.fine("Is this a do loop start ? " + start);
         List<Op03SimpleStatement> backJumpSources = start.getSources();
+        if (backJumpSources.isEmpty()) {
+            throw new ConfusedCFRException("Node doesn't have ANY sources! " + start);
+        }
         backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
             @Override
             public boolean test(Op03SimpleStatement in) {
@@ -1155,6 +1158,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         });
         Collections.sort(backJumpSources, new CompareByIndex());
+        if (backJumpSources.isEmpty()) {
+            throw new ConfusedCFRException("Node should have back jump sources.");
+        }
         Op03SimpleStatement lastJump = backJumpSources.get(backJumpSources.size() - 1);
         if (!(lastJump.containedStatement instanceof IfStatement)) {
             return false;
