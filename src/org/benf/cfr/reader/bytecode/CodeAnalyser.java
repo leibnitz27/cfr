@@ -119,6 +119,9 @@ public class CodeAnalyser {
 //        dumper.dump(op2list);
 
         // DFS the instructions, unlink any which aren't reachable.
+        // This is neccessary because some obfuscated code (and some unobfuscated clojure!!)
+        // can generate bytecode with unreachable operations, which confuses later stages which
+        // expect all parents of opcodes to have been processed in a DFS.
         Op02WithProcessedDataAndRefs.unlinkUnreachable(op2list);
 
         // Create a non final version...
@@ -236,9 +239,9 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
 
 
-//        dumper.print("Final Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
-//
+        dumper.print("Final Op3 statements:\n");
+        op03SimpleParseNodes.get(0).dump(dumper);
+
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 

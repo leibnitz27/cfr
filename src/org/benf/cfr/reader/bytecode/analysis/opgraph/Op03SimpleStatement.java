@@ -851,6 +851,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Set<LValue> res = SetFactory.newSet();
         Op03SimpleStatement current = start;
         while (current.containedInBlocks.contains(whileLoop)) {
+            /* Note that here we're checking for assignments to determine what is suitable for lifting into a
+             * for postcondition.
+             *
+             * This means that we will find x = x | fred ; x = x.doFred(); x = x + 1; etc.
+             * As such, we want to make sure that we haven't transformed assignments into ExprStatements of
+             * postAdjustExpressions yet.
+             */
             if (current.containedStatement instanceof Assignment) {
                 Assignment assignment = (Assignment) current.containedStatement;
                 if (assignment.isSelfMutatingOperation()) {
