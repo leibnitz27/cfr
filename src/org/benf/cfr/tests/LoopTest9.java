@@ -14,23 +14,9 @@ public class LoopTest9 {
     public void test(int end) {
         char ch;
         int x = 0;
-        while ((ch = ((x % 2 == 0) ? foo[x + 1] : foo[x])) != '*') {
-            System.out.println("" + x++ + ": " + ch);
+        while ((ch = foo[x++]) != '*') {
+            System.out.println("" + x + ": " + ch);
         }
-    }
-
-    public boolean test1() {
-        return true;
-    }
-
-    public void test2() {
-        Object o = (Object) test1();
-        System.out.println(o + " " + o.getClass());
-    }
-
-    public static void main(String args[]) {
-        LoopTest9 l = new LoopTest9();
-        l.test2();
     }
 
 }

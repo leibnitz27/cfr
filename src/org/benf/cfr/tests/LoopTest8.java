@@ -14,7 +14,7 @@ public class LoopTest8 {
     public void test(int end) {
         char ch;
         int x = 0;
-        while ((ch = foo[x++]) != '*') {
+        while ((ch = foo[++x]) != '*') {
             System.out.println("" + x + ": " + ch);
         }
     }

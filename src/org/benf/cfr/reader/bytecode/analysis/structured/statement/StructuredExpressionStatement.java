@@ -18,7 +18,7 @@ public class StructuredExpressionStatement extends AbstractStructuredStatement {
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print(expression.toString() + "\n");
+        dumper.print(expression.toString() + ";\n");
     }
 
     @Override

@@ -18,10 +18,10 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class ForStatement extends AbstractStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
-    private Assignment initial;
-    private Assignment assignment;
+    private AssignmentSimple initial;
+    private AbstractAssignment assignment;
 
-    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, Assignment initial, Assignment assignment) {
+    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, AssignmentSimple initial, AbstractAssignment assignment) {
         this.condition = conditionalExpression;
         this.blockIdentifier = blockIdentifier;
         this.initial = initial;
@@ -52,11 +52,11 @@ public class ForStatement extends AbstractStatement {
         return condition;
     }
 
-    public Assignment getInitial() {
+    public AssignmentSimple getInitial() {
         return initial;
     }
 
-    public Assignment getAssignment() {
+    public AbstractAssignment getAssignment() {
         return assignment;
     }
 }

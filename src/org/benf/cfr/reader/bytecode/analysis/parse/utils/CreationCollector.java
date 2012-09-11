@@ -8,7 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvo
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewObject;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.Assignment;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.Map;
@@ -60,7 +60,7 @@ public class CreationCollector {
             NewObject newObject = creationValue.getFirst();
 
 
-            Assignment replacement = new Assignment(lValue,
+            AssignmentSimple replacement = new AssignmentSimple(lValue,
                     new ConstructorInvokation(
                             memberFunctionInvokation.getCp(),
                             memberFunctionInvokation.getFunction(),

@@ -4,7 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,10 +15,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpressi
 public class LValueAssignmentExpressionRewriter implements LValueRewriter {
 
     private final LValue lValue;
-    private final AssignmentExpression lValueReplacement;
+    private final AbstractAssignmentExpression lValueReplacement;
     private final Op03SimpleStatement source;
 
-    public LValueAssignmentExpressionRewriter(LValue lValue, AssignmentExpression lValueReplacement, Op03SimpleStatement source) {
+    public LValueAssignmentExpressionRewriter(LValue lValue, AbstractAssignmentExpression lValueReplacement, Op03SimpleStatement source) {
         this.lValue = lValue;
         this.lValueReplacement = lValueReplacement;
         this.source = source;

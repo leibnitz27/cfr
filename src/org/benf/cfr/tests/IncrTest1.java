@@ -20,4 +20,10 @@ public class IncrTest1 {
         j = ++i / 3;
         return j;
     }
+
+    public int preincr2(int i, int j) {
+        j = (i += 3) / 3;
+        return j;
+    }
+
 }

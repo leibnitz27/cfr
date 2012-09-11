@@ -7,7 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.Assignment;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -137,12 +137,12 @@ public class LValueAssignmentCollector implements LValueRewriter {
             /* If it's an assignment, then put it in the 'possible alias'
              * list.
              */
-            if (statementContainer.getStatement() instanceof Assignment) {
-                Assignment assignment = (Assignment) (statementContainer.getStatement());
-                Expression rhs = assignment.getRValue();
+            if (statementContainer.getStatement() instanceof AssignmentSimple) {
+                AssignmentSimple assignmentSimple = (AssignmentSimple) (statementContainer.getStatement());
+                Expression rhs = assignmentSimple.getRValue();
                 if (rhs instanceof StackValue) {
                     if (((StackValue) rhs).getStackValue().equals(stackSSALabel)) {
-                        possibleAliases.get(stackSSALabel).add(new LValueStatementContainer(assignment.getCreatedLValue(), statementContainer));
+                        possibleAliases.get(stackSSALabel).add(new LValueStatementContainer(assignmentSimple.getCreatedLValue(), statementContainer));
                     }
                 }
             }

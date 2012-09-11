@@ -57,13 +57,15 @@ public class ArithmeticOperation extends AbstractExpression {
         return false;
     }
 
-    public boolean isIncr(LValue lValue) {
-        if (!(lhs instanceof LValueExpression)) return false;
-        LValue lv = ((LValueExpression) lhs).getLValue();
-        if (!lv.equals(lValue)) return false;
-        if (op != ArithOp.PLUS) return false;
-        if (!(rhs instanceof Literal)) return false;
-        return ((Literal) rhs).getValue().getValue().equals((Integer) 1);
+    public boolean isMutationOf(LValue lValue) {
+        return ((lhs instanceof LValueExpression) && isLValueExprFor((LValueExpression) lhs, lValue) && !op.isTemporary());
+    }
+
+    public ArithmeticMutationOperation getMutationOf(LValue lValue) {
+        if (!isMutationOf(lValue)) {
+            throw new ConfusedCFRException("Can't get a mutation where none exists");
+        }
+        return new ArithmeticMutationOperation(lValue, rhs, op);
     }
 
     @Override

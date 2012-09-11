@@ -240,97 +240,97 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LLOAD:
             case DLOAD:
             case FLOAD:
-                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset)));
+                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset)));
             case ALOAD_0:
             case ILOAD_0:
             case LLOAD_0:
             case DLOAD_0:
             case FLOAD_0:
-                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(0, originalRawOffset)));
+                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(0, originalRawOffset)));
             case ALOAD_1:
             case ILOAD_1:
             case LLOAD_1:
             case DLOAD_1:
             case FLOAD_1:
-                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(1, originalRawOffset)));
+                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(1, originalRawOffset)));
             case ALOAD_2:
             case ILOAD_2:
             case LLOAD_2:
             case DLOAD_2:
             case FLOAD_2:
-                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(2, originalRawOffset)));
+                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(2, originalRawOffset)));
             case ALOAD_3:
             case ILOAD_3:
             case LLOAD_3:
             case DLOAD_3:
             case FLOAD_3:
-                return new Assignment(getStackLValue(0), new LValueExpression(variableFactory.localVariable(3, originalRawOffset)));
+                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(3, originalRawOffset)));
             case ACONST_NULL:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getNull()));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getNull()));
             case ICONST_M1:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(-1)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(-1)));
             case ICONST_0:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(0)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(0)));
             case ICONST_1:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(1)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(1)));
             case ICONST_2:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(2)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(2)));
             case ICONST_3:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(3)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(3)));
             case ICONST_4:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(4)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(4)));
             case ICONST_5:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(5)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(5)));
             case LCONST_0:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getLong(0)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getLong(0)));
             case LCONST_1:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getLong(1)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getLong(1)));
             case FCONST_0:
             case DCONST_0:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getDouble(0)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getDouble(0)));
             case FCONST_1:
             case DCONST_1:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getDouble(1)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getDouble(1)));
             case FCONST_2:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getDouble(2)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getDouble(2)));
             case BIPUSH:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(rawData[0])));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(rawData[0])));
             case SIPUSH:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getInt(getInstrArgShort(0))));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(getInstrArgShort(0))));
             case ISTORE:
             case ASTORE:
             case LSTORE:
             case DSTORE:
             case FSTORE:
-                return new Assignment(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset), getStackRValue(0));
+                return new AssignmentSimple(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset), getStackRValue(0));
             case ISTORE_0:
             case ASTORE_0:
             case LSTORE_0:
             case DSTORE_0:
             case FSTORE_0:
-                return new Assignment(variableFactory.localVariable(0, originalRawOffset), getStackRValue(0));
+                return new AssignmentSimple(variableFactory.localVariable(0, originalRawOffset), getStackRValue(0));
             case ISTORE_1:
             case ASTORE_1:
             case LSTORE_1:
             case DSTORE_1:
             case FSTORE_1:
-                return new Assignment(variableFactory.localVariable(1, originalRawOffset), getStackRValue(0));
+                return new AssignmentSimple(variableFactory.localVariable(1, originalRawOffset), getStackRValue(0));
             case ISTORE_2:
             case ASTORE_2:
             case LSTORE_2:
             case DSTORE_2:
             case FSTORE_2:
-                return new Assignment(variableFactory.localVariable(2, originalRawOffset), getStackRValue(0));
+                return new AssignmentSimple(variableFactory.localVariable(2, originalRawOffset), getStackRValue(0));
             case ISTORE_3:
             case ASTORE_3:
             case LSTORE_3:
             case DSTORE_3:
             case FSTORE_3:
-                return new Assignment(variableFactory.localVariable(3, originalRawOffset), getStackRValue(0));
+                return new AssignmentSimple(variableFactory.localVariable(3, originalRawOffset), getStackRValue(0));
             case NEW:
-                return new Assignment(getStackLValue(0), new NewObject(cp, cpEntries[0]));
+                return new AssignmentSimple(getStackLValue(0), new NewObject(cp, cpEntries[0]));
             case NEWARRAY:
-                return new Assignment(getStackLValue(0), new NewPrimitiveArray(getStackRValue(0), rawData[0]));
+                return new AssignmentSimple(getStackLValue(0), new NewPrimitiveArray(getStackRValue(0), rawData[0]));
             case ANEWARRAY: {
                 List<Expression> tmp = ListFactory.newList();
                 tmp.add(getStackRValue(0));
@@ -343,7 +343,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 // Result instance is the same as inner instance with 1 extra dimension.
                 JavaTypeInstance resultInstance = new JavaArrayTypeInstance(1, innerInstance);
 
-                return new Assignment(getStackLValue(0), new NewObjectArray(tmp, innerInstance, resultInstance));
+                return new AssignmentSimple(getStackLValue(0), new NewObjectArray(tmp, innerInstance, resultInstance));
             }
             case MULTIANEWARRAY: {
                 int numDims = rawData[OperationFactoryMultiANewArray.OFFSET_OF_DIMS];
@@ -354,10 +354,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 // Result instance is the same as innerInstance
                 JavaTypeInstance resultInstance = innerInstance;
 
-                return new Assignment(getStackLValue(0), new NewObjectArray(getNStackRValuesAsExpressions(numDims), innerInstance, resultInstance));
+                return new AssignmentSimple(getStackLValue(0), new NewObjectArray(getNStackRValuesAsExpressions(numDims), innerInstance, resultInstance));
             }
             case ARRAYLENGTH:
-                return new Assignment(getStackLValue(0), new ArrayLength(getStackRValue(0)));
+                return new AssignmentSimple(getStackLValue(0), new ArrayLength(getStackRValue(0)));
             case AALOAD:
             case IALOAD:
             case BALOAD:
@@ -366,7 +366,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LALOAD:
             case DALOAD:
             case SALOAD:
-                return new Assignment(getStackLValue(0), new ArrayIndex(getStackRValue(1), getStackRValue(0)));
+                return new AssignmentSimple(getStackLValue(0), new ArrayIndex(getStackRValue(1), getStackRValue(0)));
             case AASTORE:
             case IASTORE:
             case BASTORE:
@@ -375,7 +375,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LASTORE:
             case DASTORE:
             case SASTORE:
-                return new Assignment(new ArrayVariable(new ArrayIndex(getStackRValue(2), getStackRValue(1))), getStackRValue(0));
+                return new AssignmentSimple(new ArrayVariable(new ArrayIndex(getStackRValue(2), getStackRValue(1))), getStackRValue(0));
             case LCMP:
             case DCMPG:
             case DCMPL:
@@ -414,7 +414,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case IUSHR:
             case LUSHR: {
                 Expression op = new ArithmeticOperation(getStackRValue(1), getStackRValue(0), ArithOp.getOpFor(instr));
-                return new Assignment(getStackLValue(0), op);
+                return new AssignmentSimple(getStackLValue(0), op);
             }
             case I2B:
             case I2C:
@@ -433,13 +433,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case D2L: {
                 LValue lValue = getStackLValue(0);
                 lValue.getInferredJavaType().useAsWithCast(instr.getRawJavaType());
-                return new Assignment(lValue, getStackRValue(0));
+                return new AssignmentSimple(lValue, getStackRValue(0));
             }
             case INSTANCEOF:
-                return new Assignment(getStackLValue(0), new InstanceOfExpression(getStackRValue(0), cp, cpEntries[0]));
+                return new AssignmentSimple(getStackLValue(0), new InstanceOfExpression(getStackRValue(0), cp, cpEntries[0]));
             case CHECKCAST:
                 // Not strictly true, but matches our intermediate form.
-                return new Assignment(getStackLValue(0), getStackRValue(0));
+                return new AssignmentSimple(getStackLValue(0), getStackRValue(0));
             case INVOKESTATIC: {
                 ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
                 MethodPrototype methodPrototype = function.getMethodPrototype(cp);
@@ -449,7 +449,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 if (stackProduced.size() == 0) {
                     return new ExpressionStatement(funcCall);
                 } else {
-                    return new Assignment(getStackLValue(0), funcCall);
+                    return new AssignmentSimple(getStackLValue(0), funcCall);
                 }
             }
             case INVOKEDYNAMIC:
@@ -481,7 +481,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     if (stackProduced.size() == 0) {
                         return new ExpressionStatement(funcCall);
                     } else {
-                        return new Assignment(getStackLValue(0), funcCall);
+                        return new AssignmentSimple(getStackLValue(0), funcCall);
                     }
                 }
             }
@@ -538,69 +538,69 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
             case GETFIELD: {
                 Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), cp, cpEntries[0]));
-                return new Assignment(getStackLValue(0), fieldExpression);
+                return new AssignmentSimple(getStackLValue(0), fieldExpression);
             }
             case GETSTATIC:
-                return new Assignment(getStackLValue(0), new LValueExpression(new StaticVariable(cp, cpEntries[0])));
+                return new AssignmentSimple(getStackLValue(0), new LValueExpression(new StaticVariable(cp, cpEntries[0])));
             case PUTSTATIC:
-                return new Assignment(new StaticVariable(cp, cpEntries[0]), getStackRValue(0));
+                return new AssignmentSimple(new StaticVariable(cp, cpEntries[0]), getStackRValue(0));
             case PUTFIELD:
-                return new Assignment(new FieldVariable(getStackRValue(1), cp, cpEntries[0]), getStackRValue(0));
+                return new AssignmentSimple(new FieldVariable(getStackRValue(1), cp, cpEntries[0]), getStackRValue(0));
             case SWAP: {
-                Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
+                Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
                 return new CompoundStatement(s1, s2);
             }
             case DUP: {
-                Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                Statement s2 = new Assignment(getStackLValue(1), getStackRValue(0));
+                Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(0));
                 return new CompoundStatement(s1, s2);
             }
             case DUP_X1: {
-                Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
+                Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(0));
                 return new CompoundStatement(s1, s2, s3);
             }
             case DUP_X2: {
                 if (stackConsumed.get(1).getStackEntry().getType().getComputationCategory() == 2) {
-                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
+                    Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(0));
                     return new CompoundStatement(s1, s2, s3);
                 } else {
-                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
-                    Statement s4 = new Assignment(getStackLValue(3), getStackRValue(0));
+                    Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(2));
+                    Statement s4 = new AssignmentSimple(getStackLValue(3), getStackRValue(0));
                     return new CompoundStatement(s1, s2, s3, s4);
                 }
             }
             case DUP2: {
                 if (stackConsumed.get(0).getStackEntry().getType().getComputationCategory() == 2) {
-                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(0));
+                    Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(0));
                     return new CompoundStatement(s1, s2);
                 } else {
-                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
-                    Statement s4 = new Assignment(getStackLValue(3), getStackRValue(1));
+                    Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(0));
+                    Statement s4 = new AssignmentSimple(getStackLValue(3), getStackRValue(1));
                     return new CompoundStatement(s1, s2, s3, s4);
                 }
             }
             case DUP2_X1: {
                 if (stackConsumed.get(0).getStackEntry().getType().getComputationCategory() == 2) {
-                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
+                    Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(0));
                     return new CompoundStatement(s1, s2, s3);
                 } else {
-                    Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                    Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                    Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
-                    Statement s4 = new Assignment(getStackLValue(3), getStackRValue(0));
-                    Statement s5 = new Assignment(getStackLValue(4), getStackRValue(1));
+                    Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                    Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(2));
+                    Statement s4 = new AssignmentSimple(getStackLValue(3), getStackRValue(0));
+                    Statement s5 = new AssignmentSimple(getStackLValue(4), getStackRValue(1));
                     return new CompoundStatement(s1, s2, s3, s4, s5);
                 }
             }
@@ -608,35 +608,35 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 if (stackConsumed.get(0).getStackEntry().getType().getComputationCategory() == 2) {
                     if (stackConsumed.get(1).getStackEntry().getType().getComputationCategory() == 2) {
                         // form 4
-                        Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                        Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                        Statement s3 = new Assignment(getStackLValue(2), getStackRValue(0));
+                        Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                        Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                        Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(0));
                         return new CompoundStatement(s1, s2, s3);
                     } else {
                         // form 2
-                        Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                        Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                        Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
-                        Statement s4 = new Assignment(getStackLValue(3), getStackRValue(0));
+                        Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                        Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                        Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(2));
+                        Statement s4 = new AssignmentSimple(getStackLValue(3), getStackRValue(0));
                         return new CompoundStatement(s1, s2, s3, s4);
                     }
                 } else {
                     if (stackConsumed.get(2).getStackEntry().getType().getComputationCategory() == 2) {
                         // form 3
-                        Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                        Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                        Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
-                        Statement s4 = new Assignment(getStackLValue(3), getStackRValue(0));
-                        Statement s5 = new Assignment(getStackLValue(4), getStackRValue(1));
+                        Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                        Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                        Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(2));
+                        Statement s4 = new AssignmentSimple(getStackLValue(3), getStackRValue(0));
+                        Statement s5 = new AssignmentSimple(getStackLValue(4), getStackRValue(1));
                         return new CompoundStatement(s1, s2, s3, s4, s5);
                     } else {
                         // form 1
-                        Statement s1 = new Assignment(getStackLValue(0), getStackRValue(0));
-                        Statement s2 = new Assignment(getStackLValue(1), getStackRValue(1));
-                        Statement s3 = new Assignment(getStackLValue(2), getStackRValue(2));
-                        Statement s4 = new Assignment(getStackLValue(3), getStackRValue(3));
-                        Statement s5 = new Assignment(getStackLValue(4), getStackRValue(0));
-                        Statement s6 = new Assignment(getStackLValue(5), getStackRValue(1));
+                        Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                        Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                        Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(2));
+                        Statement s4 = new AssignmentSimple(getStackLValue(3), getStackRValue(3));
+                        Statement s5 = new AssignmentSimple(getStackLValue(4), getStackRValue(0));
+                        Statement s6 = new AssignmentSimple(getStackLValue(5), getStackRValue(1));
                         return new CompoundStatement(s1, s2, s3, s4, s5, s6);
                     }
                 }
@@ -644,7 +644,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LDC:
             case LDC_W:
             case LDC2_W:
-                return new Assignment(getStackLValue(0), new Literal(TypedLiteral.getConstantPoolEntry(cp, cpEntries[0])));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getConstantPoolEntry(cp, cpEntries[0])));
             case MONITORENTER:
                 return new MonitorEnterStatement(getStackRValue(0), blockIdentifierFactory.getNextBlockIdentifier(BlockType.MONITOR));
             case MONITOREXIT:
@@ -678,7 +678,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     op = ArithOp.MINUS;
                 }
                 // Can we have ++ / += instead?
-                return new Assignment(variableFactory.localVariable(variableIndex, originalRawOffset),
+                return new AssignmentSimple(variableFactory.localVariable(variableIndex, originalRawOffset),
                         new ArithmeticOperation(new LValueExpression(variableFactory.localVariable(variableIndex, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
             case IINC_WIDE: {
@@ -690,7 +690,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     op = ArithOp.MINUS;
                 }
                 // Can we have ++ / += instead?
-                return new Assignment(variableFactory.localVariable(variableIndex, originalRawOffset),
+                return new AssignmentSimple(variableFactory.localVariable(variableIndex, originalRawOffset),
                         new ArithmeticOperation(new LValueExpression(variableFactory.localVariable(variableIndex, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
 
@@ -698,7 +698,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FNEG:
             case LNEG:
             case INEG: {
-                return new Assignment(getStackLValue(0),
+                return new AssignmentSimple(getStackLValue(0),
                         new ArithmeticMonOperation(getStackRValue(0), ArithOp.MINUS));
             }
             default:

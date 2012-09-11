@@ -14,7 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class AssignmentExpression extends AbstractExpression {
+public class AssignmentExpression extends AbstractAssignmentExpression {
     private final LValue lValue;
     private final Expression rValue;
 
@@ -33,6 +33,11 @@ public class AssignmentExpression extends AbstractExpression {
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         return this;
+    }
+
+    @Override
+    public boolean isSelfMutatingIncr1(LValue lValue) {
+        return false;
     }
 
     @Override

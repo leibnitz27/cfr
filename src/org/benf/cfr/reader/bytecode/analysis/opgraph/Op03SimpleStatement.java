@@ -492,6 +492,36 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    /* We're searching for something a bit too fiddly to use wildcards on,
+     * so lots of test casting :(
+     */
+    private static void replacePreChangeAssignment(Op03SimpleStatement statement) {
+        AssignmentSimple assignmentSimple = (AssignmentSimple) statement.containedStatement;
+
+        LValue lValue = assignmentSimple.getCreatedLValue();
+
+        // Is it an arithop
+        Expression rValue = assignmentSimple.getRValue();
+        if (!(rValue instanceof ArithmeticOperation)) return;
+
+        // Which is a mutation
+        ArithmeticOperation arithmeticOperation = (ArithmeticOperation) rValue;
+        if (!arithmeticOperation.isMutationOf(lValue)) return;
+
+        // Create an assignment prechange with the mutation
+        ArithmeticMutationOperation mutationOperation = arithmeticOperation.getMutationOf(lValue);
+
+        AssignmentMutation res = new AssignmentMutation(lValue, mutationOperation);
+        statement.replaceStatement(res);
+    }
+
+    public static void replacePreChangeAssignments(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
+        for (Op03SimpleStatement assignment : assignments) {
+            replacePreChangeAssignment(assignment);
+        }
+    }
+
     /*
      * Find all the constructors and initialisers.  If something is initialised and
      * constructed in one place each, we can guarantee that the construction happened
@@ -587,7 +617,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // we have a loop with no entry point...
             if (statement.getIndex().isBackJumpFrom(source)) break;
             Statement contained = source.containedStatement;
-            if (contained instanceof Assignment) {
+            if (contained instanceof AbstractAssignment) {
                 preCondAssignmentSeen |= (!extraCondSeen);
             } else if (contained instanceof IfStatement) {
                 extraCondSeen = true;
@@ -625,15 +655,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Op03SimpleStatement source = ifStatement.sources.get(0);
             if (source == previousSource) return;
             previousSource = source;
-            if (!(source.containedStatement instanceof Assignment)) return;
+            if (!(source.containedStatement instanceof AbstractAssignment)) return;
             LValue lValue = source.getCreatedLValue();
             // We don't have to worry about RHS having undesired side effects if we roll it into the
             // conditional - that has already happened.
             LValueUsageCollector lvc = new LValueUsageCollector();
             conditionalExpression.collectUsedLValues(lvc);
             if (!lvc.isUsed(lValue)) return;
-            Assignment assignment = (Assignment) (source.containedStatement);
-            AssignmentExpression assignmentExpression = new AssignmentExpression(assignment.getCreatedLValue(), assignment.getRValue());
+            AbstractAssignment assignment = (AbstractAssignment) (source.containedStatement);
+            AbstractAssignmentExpression assignmentExpression = assignment.getInliningExpression();
             if (!ifStatement.getSSAIdentifiers().isValidReplacement(lValue, source.getSSAIdentifiers())) return;
             LValueAssignmentExpressionRewriter rewriter = new LValueAssignmentExpressionRewriter(lValue, assignmentExpression, source);
             Expression replacement = conditionalExpression.replaceSingleUsageLValues(rewriter, ifStatement.getSSAIdentifiers(), ifStatement);
@@ -832,8 +862,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static Op03SimpleStatement getForInvariant(Op03SimpleStatement start, LValue invariant, BlockIdentifier whileLoop) {
         Op03SimpleStatement current = start;
         while (current.containedInBlocks.contains(whileLoop)) {
-            if (current.containedStatement instanceof Assignment) {
-                Assignment assignment = (Assignment) current.containedStatement;
+            if (current.containedStatement instanceof AbstractAssignment) {
+                AbstractAssignment assignment = (AbstractAssignment) current.containedStatement;
                 LValue assigned = assignment.getCreatedLValue();
                 if (invariant.equals(assigned)) {
                     if (assignment.isSelfMutatingOperation()) return current;
@@ -858,8 +888,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
              * As such, we want to make sure that we haven't transformed assignments into ExprStatements of
              * postAdjustExpressions yet.
              */
-            if (current.containedStatement instanceof Assignment) {
-                Assignment assignment = (Assignment) current.containedStatement;
+            if (current.containedStatement instanceof AbstractAssignment) {
+                AbstractAssignment assignment = (AbstractAssignment) current.containedStatement;
                 if (assignment.isSelfMutatingOperation()) {
                     res.add(assignment.getCreatedLValue());
                 }
@@ -884,11 +914,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static Op03SimpleStatement findMovableAssignment(Op03SimpleStatement start, LValue lValue) {
         Op03SimpleStatement current = findSingleBackSource(start);
         do {
-            if (current.containedStatement instanceof Assignment) {
-                Assignment assignment = (Assignment) current.containedStatement;
-                if (assignment.getCreatedLValue().equals(lValue)) {
+            if (current.containedStatement instanceof AssignmentSimple) {
+                AssignmentSimple assignmentSimple = (AssignmentSimple) current.containedStatement;
+                if (assignmentSimple.getCreatedLValue().equals(lValue)) {
                     /* Verify that everything on the RHS is at the correct version */
-                    Expression rhs = assignment.getRValue();
+                    Expression rhs = assignmentSimple.getRValue();
                     LValueUsageCollector lValueUsageCollector = new LValueUsageCollector();
                     rhs.collectUsedLValues(lValueUsageCollector);
                     if (SSAIdentifierUtils.isMovableUnder(lValueUsageCollector.getUsedLValues(), start.ssaIdentifiers, current.ssaIdentifiers)) {
@@ -979,19 +1009,19 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // We have to be sure that moving this to the for doesn't violate SSA versions.
         //
         Op03SimpleStatement initialValue = findMovableAssignment(statement, loopVariable);
-        Assignment initalAssignment = null;
+        AssignmentSimple initalAssignmentSimple = null;
 
         if (initialValue != null) {
-            initalAssignment = (Assignment) initialValue.containedStatement;
+            initalAssignmentSimple = (AssignmentSimple) initialValue.containedStatement;
             initialValue.nopOut();
         }
 
-        Assignment updateAssignment = (Assignment) baseline.containedStatement;
+        AbstractAssignment updateAssignment = (AbstractAssignment) baseline.containedStatement;
         for (Op03SimpleStatement incrStatement : mutations) {
             incrStatement.nopOut();
         }
         whileBlockIdentifier.setBlockType(BlockType.FORLOOP);
-        whileStatement.replaceWithForLoop(initalAssignment, updateAssignment);
+        whileStatement.replaceWithForLoop(initalAssignmentSimple, updateAssignment);
     }
 
     public static void rewriteWhilesAsFors(List<Op03SimpleStatement> statements) {
@@ -1617,7 +1647,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // todo : do I need to do a more complex merge?
             ifStatement.ssaIdentifiers = leaveIfBranchHolder.ssaIdentifiers;
             ifStatement.replaceStatement(
-                    new Assignment(
+                    new AssignmentSimple(
                             ternary.lValue,
                             new TernaryExpression(
                                     innerIfStatement.getCondition().getNegated(),
@@ -1881,7 +1911,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         WildcardMatch wildcardMatch = new WildcardMatch();
 
         if (!wildcardMatch.match(
-                new Assignment(wildcardMatch.getLValueWildCard("var"), wildcardMatch.getExpressionWildCard("e")),
+                new AssignmentSimple(wildcardMatch.getLValueWildCard("var"), wildcardMatch.getExpressionWildCard("e")),
                 variableAss.containedStatement)) {
             return false;
         }
@@ -2196,18 +2226,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         WildcardMatch wildcardMatch = new WildcardMatch();
 
         if (!wildcardMatch.match(
-                new Assignment(wildcardMatch.getLValueWildCard("iter"), new Literal(TypedLiteral.getInt(0))),
+                new AssignmentSimple(wildcardMatch.getLValueWildCard("iter"), new Literal(TypedLiteral.getInt(0))),
                 forStatement.getInitial())) return;
 
         LValue originalLoopVariable = wildcardMatch.getLValueWildCard("iter").getMatch();
 
-        if (!wildcardMatch.match(
-                new Assignment(
-                        originalLoopVariable,
-                        new ArithmeticOperation(
-                                new LValueExpression(originalLoopVariable),
-                                new Literal(TypedLiteral.getInt(1)),
-                                ArithOp.PLUS)), forStatement.getAssignment())) return;
+        // Assignments are fiddly, as they can be assignmentPreChange or regular Assignment.
+        AbstractAssignment assignment = forStatement.getAssignment();
+        boolean incrMatch = assignment.isSelfMutatingIncr1(originalLoopVariable);
+        if (!incrMatch) return;
 
         if (!wildcardMatch.match(
                 new ComparisonOperation(
@@ -2220,7 +2247,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // Bound should have been constructed RECENTLY, and should be an array length.
         // TODO: Let's just check the single backref from the for loop test.
         if (!wildcardMatch.match(
-                new Assignment(originalLoopBound, new ArrayLength(new LValueExpression(wildcardMatch.getLValueWildCard("array")))),
+                new AssignmentSimple(originalLoopBound, new ArrayLength(new LValueExpression(wildcardMatch.getLValueWildCard("array")))),
                 preceeding.containedStatement)) return;
 
         LValue originalArray = wildcardMatch.getLValueWildCard("array").getMatch();
@@ -2232,7 +2259,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          */
         if (preceeding.sources.size() == 1) {
             if (wildcardMatch.match(
-                    new Assignment(originalArray, wildcardMatch.getExpressionWildCard("value")),
+                    new AssignmentSimple(originalArray, wildcardMatch.getExpressionWildCard("value")),
                     preceeding.sources.get(0).containedStatement)) {
                 prepreceeding = preceeding.sources.get(0);
                 arrayStatement = wildcardMatch.getExpressionWildCard("value").getMatch();
@@ -2244,7 +2271,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
         if (!wildcardMatch.match(
-                new Assignment(wildcardMatch.getLValueWildCard("sugariter"),
+                new AssignmentSimple(wildcardMatch.getLValueWildCard("sugariter"),
                         new ArrayIndex(new LValueExpression(originalArray), new LValueExpression(originalLoopVariable))),
                 loopStart.containedStatement)) return;
 
@@ -2316,14 +2343,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
         if (!wildcardMatch.match(
-                new Assignment(wildcardMatch.getLValueWildCard("sugariter"),
+                new AssignmentSimple(wildcardMatch.getLValueWildCard("sugariter"),
                         wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")))),
                 loopStart.containedStatement)) return;
 
         LValue sugarIter = wildcardMatch.getLValueWildCard("sugariter").getMatch();
 
         if (!wildcardMatch.match(
-                new Assignment(wildcardMatch.getLValueWildCard("iterable"),
+                new AssignmentSimple(wildcardMatch.getLValueWildCard("iterable"),
                         wildcardMatch.getMemberFunction("iterator", "iterator", wildcardMatch.getExpressionWildCard("iteratorsource"))),
                 preceeding.containedStatement)) return;
 
@@ -2471,11 +2498,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
 
     private static void resugarAnonymousArray(Op03SimpleStatement newArray, List<Op03SimpleStatement> statements) {
-        Assignment assignment = (Assignment) newArray.containedStatement;
+        AssignmentSimple assignmentSimple = (AssignmentSimple) newArray.containedStatement;
         WildcardMatch start = new WildcardMatch();
         if (!start.match(
-                new Assignment(start.getLValueWildCard("array"), start.getNewArrayWildCard("def")),
-                assignment
+                new AssignmentSimple(start.getLValueWildCard("array"), start.getNewArrayWildCard("def")),
+                assignmentSimple
         )) {
             throw new ConfusedCFRException("Expecting new array");
         }
@@ -2505,7 +2532,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             WildcardMatch testAnon = new WildcardMatch();
             Literal idx = new Literal(TypedLiteral.getInt(x));
             if (!testAnon.match(
-                    new Assignment(
+                    new AssignmentSimple(
                             new ArrayVariable(new ArrayIndex(new StackValue(array), idx)),
                             testAnon.getExpressionWildCard("val")),
                     next.containedStatement)) {
@@ -2514,7 +2541,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             anon.add(testAnon.getExpressionWildCard("val").getMatch());
             anonAssigns.add(next);
         }
-        Assignment replacement = new Assignment(assignment.getCreatedLValue(), new NewAnonymousArray(anon, arrayDef.getInnerType()));
+        AssignmentSimple replacement = new AssignmentSimple(assignmentSimple.getCreatedLValue(), new NewAnonymousArray(anon, arrayDef.getInnerType()));
         newArray.replaceStatement(replacement);
         for (Op03SimpleStatement create : anonAssigns) {
             create.nopOut();
@@ -2536,16 +2563,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * array definition!)
      */
     public static void resugarAnonymousArrays(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<Assignment>(Assignment.class));
+        List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
         // filter for structure now
         assignments = Functional.filter(assignments, new Predicate<Op03SimpleStatement>() {
             @Override
             public boolean test(Op03SimpleStatement in) {
-                Assignment assignment = (Assignment) in.containedStatement;
+                AssignmentSimple assignmentSimple = (AssignmentSimple) in.containedStatement;
                 WildcardMatch wildcardMatch = new WildcardMatch();
                 return (wildcardMatch.match(
-                        new Assignment(wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1)),
-                        assignment
+                        new AssignmentSimple(wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1)),
+                        assignmentSimple
                 ));
             }
         });
@@ -2560,7 +2587,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     public static void findGenericTypes(List<Op03SimpleStatement> statements, ConstantPool cp) {
         GenericInfoSource genericInfoSource = new GenericInfoSource(cp);
-        statements = Functional.filter(statements, new TypeFilter<Assignment>(Assignment.class));
+        statements = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
         for (Op03SimpleStatement statement : statements) {
             findGenericTypes(statement, genericInfoSource);
         }

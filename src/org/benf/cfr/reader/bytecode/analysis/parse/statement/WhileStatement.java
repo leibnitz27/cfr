@@ -32,7 +32,7 @@ public class WhileStatement extends AbstractStatement {
         dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
     }
 
-    public void replaceWithForLoop(Assignment initial, Assignment assignment) {
+    public void replaceWithForLoop(AssignmentSimple initial, AbstractAssignment assignment) {
         ForStatement forStatement = new ForStatement(condition, blockIdentifier, initial, assignment);
         getContainer().replaceStatement(forStatement);
     }
