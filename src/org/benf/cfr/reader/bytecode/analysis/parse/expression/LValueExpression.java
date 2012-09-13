@@ -32,11 +32,12 @@ public class LValueExpression extends AbstractExpression {
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         if (lValueRewriter.explicitlyReplaceThisLValue(lValue)) {
-            return lValueRewriter.getLValueReplacement(lValue, ssaIdentifiers, statementContainer);
-        } else {
-            lValue = lValue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
-            return this;
+            Expression replacement = lValueRewriter.getLValueReplacement(lValue, ssaIdentifiers, statementContainer);
+            if (replacement != null) return replacement;
         }
+
+        lValue = lValue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+        return this;
     }
 
     @Override

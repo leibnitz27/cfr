@@ -57,7 +57,11 @@ public class AssignmentMutation extends AbstractAssignment {
 
     @Override
     public void getLValueEquivalences(LValueAssignmentCollector lValueAssigmentCollector) {
-        lvalue.determineLValueEquivalence(rvalue, this.getContainer(), lValueAssigmentCollector);
+        /*
+         * Here, we override the default behaviour of the LValue being collected, and collect it anyway.
+         * We will only want to allow a replacement if there is only a single usage of this value.
+         */
+        lValueAssigmentCollector.collectMutatedLValue(lvalue, this.getContainer(), rvalue);
     }
 
     @Override

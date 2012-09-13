@@ -36,4 +36,14 @@ public class SSAIdent {
         SSAIdent other = (SSAIdent) o;
         return val.equals(other.val);
     }
+
+    @Override
+    public int hashCode() {
+        return val.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return val.toString();
+    }
 }

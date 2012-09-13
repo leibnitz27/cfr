@@ -159,7 +159,7 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         // Now we've done our first stage condensation, we want to transform assignments which are
-        // self updates into preChanges, if we can.  I.e. x = x | 3  ->  x |= 3,  x = x + 1 -> ++x.
+        // self updates into preChanges, if we can.  I.e. x = x | 3  ->  x |= 3,  x = x + 1 -> x+=1 (===++x).
         // (we do this here rather than taking advantage of INC opcodes as this allows us to catch the former)
         Op03SimpleStatement.replacePreChangeAssignments(op03SimpleParseNodes);
 
@@ -245,8 +245,8 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
 
 
-        dumper.print("Final Op3 statements:\n");
-        op03SimpleParseNodes.get(0).dump(dumper);
+//        dumper.print("Final Op3 statements:\n");
+//        op03SimpleParseNodes.get(0).dump(dumper);
 
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);

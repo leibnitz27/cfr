@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -8,13 +9,16 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -32,7 +36,8 @@ public class LValueAssignmentCollector implements LValueRewriter {
     //
     private final Map<StackSSALabel, ExpressionStatement> found = MapFactory.newMap();
     //
-    //
+    // A chain of dup, copy assign can be considered to be an alias set.
+    // we can replace references to subsequent temporaries with references to the first LValue.
     //
     private final Map<StackSSALabel, Expression> aliasReplacements = MapFactory.newMap();
 
@@ -46,6 +51,12 @@ public class LValueAssignmentCollector implements LValueRewriter {
     // d = c
     private final Map<StackSSALabel, ExpressionStatement> multiFound = MapFactory.newMap();
 
+    //
+    // When we're EXPLICITLY being told that this NON SSA value can be moved to later in the
+    // code (i.e.  ++x;  if (x) -> if (++x) )
+    //
+    private final Map<VersionedLValue, ExpressionStatement> mutableFound = MapFactory.newMap();
+
 
     public void collect(StackSSALabel lValue, StatementContainer statementContainer, Expression value) {
         found.put(lValue, new ExpressionStatement(value, statementContainer));
@@ -53,6 +64,13 @@ public class LValueAssignmentCollector implements LValueRewriter {
 
     public void collectMultiUse(StackSSALabel lValue, StatementContainer statementContainer, Expression value) {
         multiFound.put(lValue, new ExpressionStatement(value, statementContainer));
+    }
+
+    public void collectMutatedLValue(LValue lValue, StatementContainer statementContainer, Expression value) {
+        SSAIdent version = statementContainer.getSSAIdentifiers().getSSAIdent(lValue);
+        if (null != mutableFound.put(new VersionedLValue(lValue, version), new ExpressionStatement(value, statementContainer))) {
+            throw new ConfusedCFRException("Duplicate versioned SSA Ident.");
+        }
     }
 
     @Override
@@ -106,11 +124,11 @@ public class LValueAssignmentCollector implements LValueRewriter {
         }
     }
 
-    public FirstPassRewriter getFirstPassRewriter() {
-        return new FirstPassRewriter();
+    public AliasRewriter getFirstPassRewriter() {
+        return new AliasRewriter();
     }
 
-    public class FirstPassRewriter implements LValueRewriter {
+    public class AliasRewriter implements LValueRewriter {
         private final Map<StackSSALabel, List<StatementContainer>> usages = MapFactory.newLazyMap(
                 new UnaryFunction<StackSSALabel, List<StatementContainer>>() {
                     @Override
@@ -216,6 +234,116 @@ public class LValueAssignmentCollector implements LValueRewriter {
     }
 
 
+    public MutationRewriterFirstPass getMutationRewriterFirstPass() {
+        if (mutableFound.isEmpty()) return null;
+        return new MutationRewriterFirstPass();
+    }
+
+
+    public class MutationRewriterFirstPass implements LValueRewriter {
+
+        private final Map<VersionedLValue, Set<StatementContainer>> mutableUseFound = MapFactory.newLazyMap(new UnaryFunction<VersionedLValue, Set<StatementContainer>>() {
+            @Override
+            public Set<StatementContainer> invoke(VersionedLValue arg) {
+                return SetFactory.newSet();
+            }
+        });
+
+        /* Bit cheeky, we'll never actually replace here, but use this pass to collect info. */
+        @Override
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+            SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(lValue);
+            if (ssaIdent != null) {
+                VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);
+                if (mutableFound.containsKey(versionedLValue)) {
+                    // Note a use of this @ statementContainer.
+                    mutableUseFound.get(versionedLValue).add(statementContainer);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public boolean explicitlyReplaceThisLValue(LValue lValue) {
+            return true;
+        }
+
+        /* Given an original statement (in which we're pre-incrementing x), and a number of uses of X at the value
+         * 'after' the pre-increment, we want to determine if there is a single use which dominates all others.
+         *
+         * We can accomplish this with a DFS starting at the start, which aborts at each node, but if it sees 2, then
+         * game over.
+         *
+         * We can further simplify - if we see a node with 2 targets, we can abort.
+         *
+         * todo : StatementContainer doesn't have children.
+         */
+        private StatementContainer getUniqueParent(StatementContainer start, final Set<StatementContainer> seen) {
+            Op03SimpleStatement o3current = (Op03SimpleStatement) start;
+
+            while (true) {
+                if (seen.contains(o3current)) {
+                    return o3current;
+                }
+                List<Op03SimpleStatement> targets = o3current.getTargets();
+                if (targets.size() != 1) return null;
+                o3current = targets.get(0);
+            }
+        }
+
+        public MutationRewriterSecondPass getSecondPassRewriter() {
+            /* Now, for Every entry in mutableUseFound, we will get a set of statements.
+             * We want to make sure that ONE of these statements is the 'ultimate parent'.
+             * (i.e. there is one which is always hit first when traversing the targets of the original
+             * declaration statement).
+             */
+            Map<VersionedLValue, StatementContainer> replacableUses = MapFactory.newMap();
+            for (Map.Entry<VersionedLValue, Set<StatementContainer>> entry : mutableUseFound.entrySet()) {
+                ExpressionStatement definition = mutableFound.get(entry.getKey());
+                StatementContainer uniqueParent = getUniqueParent(definition.statementContainer, entry.getValue());
+                if (uniqueParent != null) {
+                    replacableUses.put(entry.getKey(), uniqueParent);
+                }
+            }
+
+            if (replacableUses.isEmpty()) return null;
+
+            return new MutationRewriterSecondPass(replacableUses);
+        }
+    }
+
+
+    public class MutationRewriterSecondPass implements LValueRewriter {
+        private final Map<VersionedLValue, StatementContainer> mutableReplacable;
+
+        private MutationRewriterSecondPass(Map<VersionedLValue, StatementContainer> mutableReplacable) {
+            this.mutableReplacable = mutableReplacable;
+        }
+
+        @Override
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+            SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(lValue);
+            if (ssaIdent != null) {
+                VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);
+                StatementContainer canReplaceIn = mutableReplacable.get(versionedLValue);
+                if (canReplaceIn == statementContainer) {
+                    // Only the first time.
+                    mutableReplacable.remove(versionedLValue);
+                    ExpressionStatement replaceWith = mutableFound.get(versionedLValue);
+                    replaceWith.statementContainer.nopOut();
+                    return replaceWith.expression;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public boolean explicitlyReplaceThisLValue(LValue lValue) {
+            return true;
+        }
+    }
+
+
     private static class LValueStatementContainer {
         private final LValue lValue;
         private final StatementContainer statementContainer;
@@ -223,6 +351,31 @@ public class LValueAssignmentCollector implements LValueRewriter {
         private LValueStatementContainer(LValue lValue, StatementContainer statementContainer) {
             this.lValue = lValue;
             this.statementContainer = statementContainer;
+        }
+    }
+
+    private final static class VersionedLValue {
+        private final LValue lValue;
+        private final SSAIdent ssaIdent;
+
+        private VersionedLValue(LValue lValue, SSAIdent ssaIdent) {
+            this.lValue = lValue;
+            this.ssaIdent = ssaIdent;
+        }
+
+        @Override
+        public int hashCode() {
+            return lValue.hashCode() + 31 * ssaIdent.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (!(o instanceof VersionedLValue)) return false;
+
+            VersionedLValue other = (VersionedLValue) o;
+            return lValue.equals(other.lValue) &&
+                    ssaIdent.equals(other.ssaIdent);
         }
     }
 }

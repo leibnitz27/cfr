@@ -372,6 +372,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (BlockIdentifier blockIdentifier : containedInBlocks) {
             dumper.print(blockIdentifier + " ");
         }
+        dumper.print("{" + ssaIdentifiers + "}");
         getStatement().dump(dumper);
     }
 
@@ -481,7 +482,27 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             statement.collect(lValueAssigmentCollector);
         }
 
-        LValueAssignmentCollector.FirstPassRewriter multiRewriter = lValueAssigmentCollector.getFirstPassRewriter();
+        /*
+         * Can we replace any mutable values?
+         */
+        LValueAssignmentCollector.MutationRewriterFirstPass firstPassRewriter = lValueAssigmentCollector.getMutationRewriterFirstPass();
+        if (firstPassRewriter != null) {
+            for (Op03SimpleStatement statement : statements) {
+                statement.condense(firstPassRewriter);
+            }
+
+            LValueAssignmentCollector.MutationRewriterSecondPass secondPassRewriter = firstPassRewriter.getSecondPassRewriter();
+            if (secondPassRewriter != null) {
+                for (Op03SimpleStatement statement : statements) {
+                    statement.condense(secondPassRewriter);
+                }
+            }
+        }
+
+        /*
+         * Don't actually rewrite anything, but have an additional pass through to see if there are any aliases we can replace.
+         */
+        LValueAssignmentCollector.AliasRewriter multiRewriter = lValueAssigmentCollector.getFirstPassRewriter();
         for (Op03SimpleStatement statement : statements) {
             statement.condense(multiRewriter);
         }

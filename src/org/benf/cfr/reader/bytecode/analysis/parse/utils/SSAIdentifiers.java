@@ -46,6 +46,10 @@ public class SSAIdentifiers {
         return changed;
     }
 
+    public boolean isFixedHere(LValue lValue) {
+        return lValue.equals(fixedHere);
+    }
+
     public boolean isValidReplacement(LValue lValue, SSAIdentifiers other) {
         SSAIdent thisVersion = knownIdentifiers.get(lValue);
         SSAIdent otherVersion = other.knownIdentifiers.get(lValue);
@@ -54,7 +58,21 @@ public class SSAIdentifiers {
         return thisVersion.equals(otherVersion);
     }
 
+    public SSAIdent getSSAIdent(LValue lValue) {
+        return knownIdentifiers.get(lValue);
+    }
+
     public int size() {
         return knownIdentifiers.size();
     }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        for (Map.Entry<LValue, SSAIdent> entry : knownIdentifiers.entrySet()) {
+            sb.append("" + entry.getKey() + "@" + entry.getValue() + " ");
+        }
+        return sb.toString();
+    }
 }
+
