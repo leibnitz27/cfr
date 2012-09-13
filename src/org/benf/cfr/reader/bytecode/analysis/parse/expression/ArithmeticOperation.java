@@ -61,11 +61,15 @@ public class ArithmeticOperation extends AbstractExpression {
         return ((lhs instanceof LValueExpression) && isLValueExprFor((LValueExpression) lhs, lValue) && !op.isTemporary());
     }
 
-    public ArithmeticMutationOperation getMutationOf(LValue lValue) {
+    public AbstractMutatingAssignmentExpression getMutationOf(LValue lValue) {
         if (!isMutationOf(lValue)) {
             throw new ConfusedCFRException("Can't get a mutation where none exists");
         }
-        return new ArithmeticMutationOperation(lValue, rhs, op);
+        if (rhs.equals(new Literal(TypedLiteral.getInt(1)))) {
+            return new ArithmeticPreMutationOperation(lValue, op);
+        } else {
+            return new ArithmeticMutationOperation(lValue, rhs, op);
+        }
     }
 
     @Override

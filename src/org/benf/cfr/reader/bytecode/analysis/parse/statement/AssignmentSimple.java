@@ -2,10 +2,11 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -78,15 +79,22 @@ public class AssignmentSimple extends AbstractAssignment {
     }
 
     @Override
-    public boolean isSelfMutatingIncr1(LValue lValue) {
-        if (!lValue.equals(this.lvalue)) return false;
+    public boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp) {
+        return false;
+/*        if (!lValue.equals(this.lvalue)) return false;
         WildcardMatch wildcardMatch = new WildcardMatch();
 
         return wildcardMatch.match(
                 new ArithmeticOperation(
                         new LValueExpression(lValue),
                         new Literal(TypedLiteral.getInt(1)),
-                        ArithOp.PLUS), rvalue);
+                        arithOp), rvalue);
+                        */
+    }
+
+    @Override
+    public Expression getPostMutation() {
+        throw new IllegalStateException();
     }
 
     @Override

@@ -15,5 +15,7 @@ public abstract class AbstractAssignmentExpression extends AbstractExpression {
         super(inferredJavaType);
     }
 
-    public abstract boolean isSelfMutatingIncr1(LValue lValue);
+    public abstract boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp);
+
+    public abstract ArithmeticPostMutationOperation getPostMutation();
 }

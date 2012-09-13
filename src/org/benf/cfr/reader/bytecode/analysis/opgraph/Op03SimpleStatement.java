@@ -530,9 +530,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (!arithmeticOperation.isMutationOf(lValue)) return;
 
         // Create an assignment prechange with the mutation
-        ArithmeticMutationOperation mutationOperation = arithmeticOperation.getMutationOf(lValue);
+        AbstractMutatingAssignmentExpression mutationOperation = arithmeticOperation.getMutationOf(lValue);
 
-        AssignmentMutation res = new AssignmentMutation(lValue, mutationOperation);
+        AssignmentPreMutation res = new AssignmentPreMutation(lValue, mutationOperation);
         statement.replaceStatement(res);
     }
 
@@ -540,6 +540,101 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
         for (Op03SimpleStatement assignment : assignments) {
             replacePreChangeAssignment(assignment);
+        }
+    }
+
+
+    private static class UsageWatcher implements LValueRewriter {
+        private final LValue needle;
+        boolean found = false;
+
+        private UsageWatcher(LValue needle) {
+            this.needle = needle;
+        }
+
+        @Override
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+
+            return null;
+        }
+
+        @Override
+        public boolean explicitlyReplaceThisLValue(LValue lValue) {
+            return true;
+        }
+
+        public boolean isFound() {
+            return found;
+        }
+    }
+
+    /*
+    * preChange is --x / ++x.
+    *
+    * Can we find an immediate guaranteed TEMPORARY dominator which takes the previous value of x?
+    *
+    * ie
+    *
+    * v0 = x
+    * ++x
+    *
+    * -->
+    *
+    * v0 = x++
+    */
+    private static void pushPreChangeBack(Op03SimpleStatement preChange) {
+        AssignmentPreMutation mutation = (AssignmentPreMutation) preChange.containedStatement;
+        Op03SimpleStatement current = preChange;
+
+        LValue mutatedLValue = mutation.getCreatedLValue();
+        Expression lvalueExpression = new LValueExpression(mutatedLValue);
+        UsageWatcher usageWatcher = new UsageWatcher(mutatedLValue);
+
+        while (true) {
+            List<Op03SimpleStatement> sources = current.getSources();
+            if (sources.size() != 1) return;
+
+            current = sources.get(0);
+            /*
+             * If current makes use of x in any way OTHER than a simple assignment, we have to abort.
+             * Otherwise, if it's v0 = x, it's a candidate.
+             */
+            Statement innerStatement = current.getStatement();
+            if (innerStatement instanceof AssignmentSimple) {
+                AssignmentSimple assignmentSimple = (AssignmentSimple) innerStatement;
+                if (assignmentSimple.getRValue().equals(lvalueExpression)) {
+                    LValue tgt = assignmentSimple.getCreatedLValue();
+                    preChange.nopOut();
+                    current.replaceStatement(new AssignmentSimple(tgt, mutation.getPostMutation()));
+                    return;
+                }
+            }
+            current.condense(usageWatcher);
+            if (usageWatcher.isFound()) {
+                /*
+                 * Found a use "Before" assignment.
+                 */
+                return;
+            }
+        }
+    }
+
+    private static class StatementCanBePostMutation implements Predicate<Op03SimpleStatement> {
+        @Override
+        public boolean test(Op03SimpleStatement in) {
+            AssignmentPreMutation assignmentPreMutation = (AssignmentPreMutation) in.getStatement();
+            LValue lValue = assignmentPreMutation.getCreatedLValue();
+            return (assignmentPreMutation.isSelfMutatingOp1(lValue, ArithOp.PLUS) ||
+                    assignmentPreMutation.isSelfMutatingOp1(lValue, ArithOp.MINUS));
+        }
+    }
+
+    public static void pushPreChangeBack(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentPreMutation>(AssignmentPreMutation.class));
+        assignments = Functional.filter(assignments, new StatementCanBePostMutation());
+
+        for (Op03SimpleStatement assignment : assignments) {
+            pushPreChangeBack(assignment);
         }
     }
 
@@ -2254,7 +2349,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         // Assignments are fiddly, as they can be assignmentPreChange or regular Assignment.
         AbstractAssignment assignment = forStatement.getAssignment();
-        boolean incrMatch = assignment.isSelfMutatingIncr1(originalLoopVariable);
+        boolean incrMatch = assignment.isSelfMutatingOp1(originalLoopVariable, ArithOp.PLUS);
         if (!incrMatch) return;
 
         if (!wildcardMatch.match(

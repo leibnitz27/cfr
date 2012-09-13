@@ -36,8 +36,13 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
     }
 
     @Override
-    public boolean isSelfMutatingIncr1(LValue lValue) {
+    public boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp) {
         return false;
+    }
+
+    @Override
+    public ArithmeticPostMutationOperation getPostMutation() {
+        throw new IllegalStateException();
     }
 
     @Override

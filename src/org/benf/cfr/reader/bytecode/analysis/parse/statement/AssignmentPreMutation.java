@@ -3,7 +3,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticMutationOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractMutatingAssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
@@ -35,11 +36,11 @@ import org.benf.cfr.reader.util.output.Dumper;
  * x = ++x;
  * if (x ) ......
  */
-public class AssignmentMutation extends AbstractAssignment {
+public class AssignmentPreMutation extends AbstractAssignment {
     private LValue lvalue;
     private AbstractAssignmentExpression rvalue;
 
-    public AssignmentMutation(LValue lvalue, ArithmeticMutationOperation rvalue) {
+    public AssignmentPreMutation(LValue lvalue, AbstractMutatingAssignmentExpression rvalue) {
         this.lvalue = lvalue;
         this.rvalue = rvalue;
         lvalue.getInferredJavaType().chain(rvalue.getInferredJavaType());
@@ -89,9 +90,15 @@ public class AssignmentMutation extends AbstractAssignment {
         return true;
     }
 
+
     @Override
-    public boolean isSelfMutatingIncr1(LValue lValue) {
-        return rvalue.isSelfMutatingIncr1(lValue);
+    public boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp) {
+        return rvalue.isSelfMutatingOp1(lValue, arithOp);
+    }
+
+    @Override
+    public Expression getPostMutation() {
+        return rvalue.getPostMutation();
     }
 
     @Override
@@ -113,9 +120,9 @@ public class AssignmentMutation extends AbstractAssignment {
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof AssignmentMutation)) return false;
+        if (!(o instanceof AssignmentPreMutation)) return false;
 
-        AssignmentMutation other = (AssignmentMutation) o;
+        AssignmentPreMutation other = (AssignmentPreMutation) o;
         return lvalue.equals(other.lvalue) && rvalue.equals(other.rvalue);
     }
 }

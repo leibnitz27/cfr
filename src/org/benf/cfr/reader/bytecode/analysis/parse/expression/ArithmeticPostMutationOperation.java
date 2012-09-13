@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -15,55 +14,49 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
  * <p/>
  * (eg) x >>= 3,  ++x
  */
-public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpression {
+public class ArithmeticPostMutationOperation extends AbstractAssignmentExpression {
     private LValue mutated;
     private final ArithOp op;
-    private Expression mutation;
 
-    public ArithmeticMutationOperation(LValue mutated, Expression mutation, ArithOp op) {
+    public ArithmeticPostMutationOperation(LValue mutated, ArithOp op) {
         super(mutated.getInferredJavaType());
         this.mutated = mutated;
         this.op = op;
-        this.mutation = mutation;
     }
 
     @Override
     public String toString() {
-        return "" + mutated + "" + op.getShowAs() + "=" + mutation.toString();
+        return "" + mutated + ((op == ArithOp.PLUS) ? "++" : "--");
     }
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        mutation = mutation.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;
+    }
+
+    @Override
+    public ArithmeticPostMutationOperation getPostMutation() {
+        throw new IllegalStateException();
     }
 
     @Override
     public boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp) {
         return this.mutated.equals(lValue) &&
-                this.op == arithOp &&
-                this.mutation.equals(new Literal(TypedLiteral.getInt(1)));
-    }
-
-    @Override
-    public ArithmeticPostMutationOperation getPostMutation() {
-        return new ArithmeticPostMutationOperation(mutated, op);
+                this.op == arithOp;
     }
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        mutation.collectUsedLValues(lValueUsageCollector);
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof ArithmeticMutationOperation)) return false;
+        if (!(o instanceof ArithmeticPostMutationOperation)) return false;
 
-        ArithmeticMutationOperation other = (ArithmeticMutationOperation) o;
+        ArithmeticPostMutationOperation other = (ArithmeticPostMutationOperation) o;
 
         return mutated.equals(other.mutated) &&
-                op.equals(other.op) &&
-                mutation.equals(other.mutation);
+                op.equals(other.op);
     }
 }
