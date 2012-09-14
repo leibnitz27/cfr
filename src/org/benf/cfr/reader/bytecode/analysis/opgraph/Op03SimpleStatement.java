@@ -469,7 +469,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             for (Op03SimpleStatement source : statement.getSources()) {
                 if (ssaIdentifiers.mergeWith(source.ssaIdentifiers)) changed = true;
             }
-            /* If anything's changed, we need to check this statements children. */
+            // If anything's changed, we need to check this statements children.
             if (changed) {
                 toProcess.addAll(statement.getTargets());
             }
@@ -484,6 +484,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         /*
          * Can we replace any mutable values?
+         * If we found any on the first pass, we will try to move them here.
          */
         LValueAssignmentCollector.MutationRewriterFirstPass firstPassRewriter = lValueAssigmentCollector.getMutationRewriterFirstPass();
         if (firstPassRewriter != null) {
