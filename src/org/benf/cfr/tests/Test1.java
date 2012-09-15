@@ -11,6 +11,7 @@ public class Test1 {
         System.out.println("Test");
     }
 
+
     public String concat(String s) {
         return s + "Fred";
     }
