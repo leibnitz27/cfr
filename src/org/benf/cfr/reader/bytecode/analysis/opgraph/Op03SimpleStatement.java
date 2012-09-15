@@ -503,7 +503,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         /*
          * Don't actually rewrite anything, but have an additional pass through to see if there are any aliases we can replace.
          */
-        LValueAssignmentCollector.AliasRewriter multiRewriter = lValueAssigmentCollector.getFirstPassRewriter();
+        LValueAssignmentCollector.AliasRewriter multiRewriter = lValueAssigmentCollector.getAliasRewriter();
         for (Op03SimpleStatement statement : statements) {
             statement.condense(multiRewriter);
         }
@@ -544,6 +544,34 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    private static void eliminateCatchTemporary(Op03SimpleStatement catchh) {
+        if (catchh.targets.size() != 1) return;
+        Op03SimpleStatement maybeAssign = catchh.targets.get(0);
+
+        CatchStatement catchStatement = (CatchStatement) catchh.getStatement();
+        LValue catching = catchStatement.getCreatedLValue();
+
+        if (!(catching instanceof StackSSALabel)) return;
+        StackSSALabel catchingSSA = (StackSSALabel) catching;
+        if (catchingSSA.getStackEntry().getUsageCount() != 1) return;
+
+        WildcardMatch match = new WildcardMatch();
+        if (!match.match(new AssignmentSimple(match.getLValueWildCard("caught"), new StackValue(catchingSSA)),
+                maybeAssign.getStatement())) {
+            return;
+        }
+
+        // Hurrah - maybeAssign is an assignment of the caught value.
+        catchh.replaceStatement(new CatchStatement(catchStatement.getExceptions(), match.getLValueWildCard("caught").getMatch()));
+        maybeAssign.nopOut();
+    }
+
+    public static void eliminateCatchTemporaries(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> catches = Functional.filter(statements, new TypeFilter<CatchStatement>(CatchStatement.class));
+        for (Op03SimpleStatement catchh : catches) {
+            eliminateCatchTemporary(catchh);
+        }
+    }
 
     private static class UsageWatcher implements LValueRewriter {
         private final LValue needle;

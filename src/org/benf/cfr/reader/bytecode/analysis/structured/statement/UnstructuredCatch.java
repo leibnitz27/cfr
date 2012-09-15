@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -18,9 +18,9 @@ import java.util.Vector;
 public class UnstructuredCatch extends AbstractUnStructuredStatement {
     private final List<ExceptionGroup.Entry> exceptions;
     private final BlockIdentifier blockIdentifier;
-    private final Expression catching;
+    private final LValue catching;
 
-    public UnstructuredCatch(List<ExceptionGroup.Entry> exceptions, BlockIdentifier blockIdentifier, Expression catching) {
+    public UnstructuredCatch(List<ExceptionGroup.Entry> exceptions, BlockIdentifier blockIdentifier, LValue catching) {
         this.exceptions = exceptions;
         this.blockIdentifier = blockIdentifier;
         this.catching = catching;

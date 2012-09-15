@@ -652,7 +652,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FAKE_TRY:
                 return new TryStatement(getSingleExceptionGroup());
             case FAKE_CATCH:
-                return new CatchStatement(catchExceptionGroups, new LValueExpression(getStackLValue(0)));
+                return new CatchStatement(catchExceptionGroups, getStackLValue(0));
             case NOP:
                 return new Nop();
             case POP:
@@ -1027,7 +1027,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     // There was already a catch here.
 
                 } else {
-
+                    // Add a fake catch here.  This injects a stack value, which will later be popped into the
+                    // actual exception value.  (probably with an astore... but not neccessarily!)
                     preCatchOp = new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1);
                     tryTarget = adjustOrdering(insertions, tryTarget, exceptionGroup, preCatchOp);
                     preCatchOp.containedInTheseBlocks.addAll(tryTarget.getContainedInTheseBlocks());

@@ -124,7 +124,7 @@ public class LValueAssignmentCollector implements LValueRewriter {
         }
     }
 
-    public AliasRewriter getFirstPassRewriter() {
+    public AliasRewriter getAliasRewriter() {
         return new AliasRewriter();
     }
 

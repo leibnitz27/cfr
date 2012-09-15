@@ -152,6 +152,8 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
+        // Try to eliminate catch temporaries.
+        Op03SimpleStatement.eliminateCatchTemporaries(op03SimpleParseNodes);
 
         // Rewrite new / constructor pairs.
         Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes);

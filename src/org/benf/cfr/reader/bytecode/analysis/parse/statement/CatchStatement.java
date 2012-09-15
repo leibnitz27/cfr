@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -21,16 +21,16 @@ import java.util.List;
 public class CatchStatement extends AbstractStatement {
     private final List<ExceptionGroup.Entry> exceptions;
     private BlockIdentifier catchBlockIdent;
-    private Expression catching;
+    private LValue catching;
 
-    public CatchStatement(List<ExceptionGroup.Entry> exceptions, Expression catching) {
+    public CatchStatement(List<ExceptionGroup.Entry> exceptions, LValue catching) {
         this.exceptions = exceptions;
         this.catching = catching;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("catch ( " + exceptions + "{\n");
+        dumper.print("catch ( " + exceptions + " " + catching + " ) {\n");
     }
 
     public BlockIdentifier getCatchBlockIdent() {
@@ -43,7 +43,11 @@ public class CatchStatement extends AbstractStatement {
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        catching = catching.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+    }
+
+    @Override
+    public LValue getCreatedLValue() {
+        return catching;
     }
 
     @Override
