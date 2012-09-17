@@ -317,6 +317,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         containedStatement.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
     }
 
+    private void rewrite(ExpressionRewriter expressionRewriter) {
+        containedStatement.rewriteExpressions(expressionRewriter, ssaIdentifiers);
+    }
+
     private void findCreation(CreationCollector creationCollector) {
         containedStatement.collectObjectCreation(creationCollector);
     }
@@ -1166,7 +1170,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             incrStatement.nopOut();
         }
         whileBlockIdentifier.setBlockType(BlockType.FORLOOP);
-        whileStatement.replaceWithForLoop(initalAssignmentSimple, updateAssignment);
+        whileStatement.replaceWithForLoop(initalAssignmentSimple, updateAssignment.getInliningExpression());
     }
 
     public static void rewriteWhilesAsFors(List<Op03SimpleStatement> statements) {
@@ -1881,6 +1885,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         });
     }
 
+    public static List<Op03SimpleStatement> rewriteWith(List<Op03SimpleStatement> in, ExpressionRewriter expressionRewriter) {
+        for (Op03SimpleStatement op03SimpleStatement : in) {
+            op03SimpleStatement.rewrite(expressionRewriter);
+        }
+        return in;
+    }
+
     /*
      * Could be refactored out as uniquelyReachableFrom....
      */
@@ -2377,7 +2388,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         LValue originalLoopVariable = wildcardMatch.getLValueWildCard("iter").getMatch();
 
         // Assignments are fiddly, as they can be assignmentPreChange or regular Assignment.
-        AbstractAssignment assignment = forStatement.getAssignment();
+        AbstractAssignmentExpression assignment = forStatement.getAssignment();
         boolean incrMatch = assignment.isSelfMutatingOp1(originalLoopVariable, ArithOp.PLUS);
         if (!incrMatch) return;
 

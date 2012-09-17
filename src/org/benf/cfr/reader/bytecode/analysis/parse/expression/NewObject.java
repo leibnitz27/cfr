@@ -2,11 +2,11 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
@@ -26,7 +26,7 @@ public class NewObject extends AbstractExpression {
 
     public NewObject(ConstantPool constantPool, ConstantPoolEntry type) {
         // TODO : we have more information than this...
-        super(new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.EXPRESSION));
+        super(new InferredJavaType(((ConstantPoolEntryClass) type).getTypeInstance(constantPool), InferredJavaType.Source.EXPRESSION));
         this.cp = constantPool;
         this.type = (ConstantPoolEntryClass) type;
         this.typeInstance = ((ConstantPoolEntryClass) type).getTypeInstance(constantPool);
@@ -42,8 +42,17 @@ public class NewObject extends AbstractExpression {
         return this;
     }
 
+    @Override
+    public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        return this;
+    }
+
     public ConstantPoolEntryClass getType() {
         return type;
+    }
+
+    public JavaTypeInstance getTypeInstance() {
+        return typeInstance;
     }
 
     @Override

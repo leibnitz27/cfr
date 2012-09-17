@@ -7,10 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.BoolOp;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NotOperation;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.ConditionalUtils;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredBreak;
@@ -51,6 +48,11 @@ public class IfStatement extends GotoStatement {
         if (replacementCondition != condition) {
             this.condition = (ConditionalExpression) replacementCondition;
         }
+    }
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
+        condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer());
     }
 
     @Override

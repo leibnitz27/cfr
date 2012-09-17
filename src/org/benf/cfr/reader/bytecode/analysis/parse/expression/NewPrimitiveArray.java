@@ -2,10 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.ArrayType;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -53,6 +50,13 @@ public class NewPrimitiveArray extends AbstractNewArray {
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         size = size.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+        return this;
+    }
+
+
+    @Override
+    public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        size = expressionRewriter.rewriteExpression(size, ssaIdentifiers, statementContainer);
         return this;
     }
 

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -36,6 +37,12 @@ public class ForIterStatement extends AbstractStatement {
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         throw new UnsupportedOperationException("Shouldn't be called here.");
+    }
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
+        iterator = expressionRewriter.rewriteExpression(iterator, ssaIdentifiers, getContainer());
+        list = expressionRewriter.rewriteExpression(list, ssaIdentifiers, getContainer());
     }
 
     @Override

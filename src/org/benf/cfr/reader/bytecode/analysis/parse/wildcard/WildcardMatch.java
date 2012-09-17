@@ -143,6 +143,11 @@ public class WildcardMatch {
         }
 
         @Override
+        public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public boolean isSimple() {
             throw new UnsupportedOperationException();
         }

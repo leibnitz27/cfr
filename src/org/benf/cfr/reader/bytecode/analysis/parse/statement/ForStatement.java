@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -19,9 +21,9 @@ public class ForStatement extends AbstractStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
     private AssignmentSimple initial;
-    private AbstractAssignment assignment;
+    private AbstractAssignmentExpression assignment;
 
-    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, AssignmentSimple initial, AbstractAssignment assignment) {
+    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, AssignmentSimple initial, AbstractAssignmentExpression assignment) {
         this.condition = conditionalExpression;
         this.blockIdentifier = blockIdentifier;
         this.initial = initial;
@@ -37,6 +39,12 @@ public class ForStatement extends AbstractStatement {
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         throw new UnsupportedOperationException("Shouldn't be called here.");
+    }
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
+        condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer());
+        assignment = expressionRewriter.rewriteExpression(assignment, ssaIdentifiers, getContainer());
     }
 
     @Override
@@ -56,7 +64,7 @@ public class ForStatement extends AbstractStatement {
         return initial;
     }
 
-    public AbstractAssignment getAssignment() {
+    public AbstractAssignmentExpression getAssignment() {
         return assignment;
     }
 }

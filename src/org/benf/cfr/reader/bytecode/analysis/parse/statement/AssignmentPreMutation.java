@@ -113,6 +113,12 @@ public class AssignmentPreMutation extends AbstractAssignment {
     }
 
     @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
+        lvalue = expressionRewriter.rewriteExpression(lvalue, ssaIdentifiers, getContainer());
+        rvalue = expressionRewriter.rewriteExpression(rvalue, ssaIdentifiers, getContainer());
+    }
+
+    @Override
     public StructuredStatement getStructuredStatement() {
         return new StructuredExpressionStatement(rvalue);
     }

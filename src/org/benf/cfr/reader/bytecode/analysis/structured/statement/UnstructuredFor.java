@@ -1,8 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.AbstractAssignment;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -19,9 +19,9 @@ public class UnstructuredFor extends AbstractUnStructuredStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
     private AssignmentSimple initial;
-    private AbstractAssignment assignment;
+    private AbstractAssignmentExpression assignment;
 
-    public UnstructuredFor(ConditionalExpression condition, BlockIdentifier blockIdentifier, AssignmentSimple initial, AbstractAssignment assignment) {
+    public UnstructuredFor(ConditionalExpression condition, BlockIdentifier blockIdentifier, AssignmentSimple initial, AbstractAssignmentExpression assignment) {
         this.condition = condition;
         this.blockIdentifier = blockIdentifier;
         this.initial = initial;

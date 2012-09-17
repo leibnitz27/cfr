@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByt
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
@@ -251,6 +252,7 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
 
 
+        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter());
 //        dumper.print("Final Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
 

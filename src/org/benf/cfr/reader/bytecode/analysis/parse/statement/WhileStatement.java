@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -32,7 +34,7 @@ public class WhileStatement extends AbstractStatement {
         dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
     }
 
-    public void replaceWithForLoop(AssignmentSimple initial, AbstractAssignment assignment) {
+    public void replaceWithForLoop(AssignmentSimple initial, AbstractAssignmentExpression assignment) {
         ForStatement forStatement = new ForStatement(condition, blockIdentifier, initial, assignment);
         getContainer().replaceStatement(forStatement);
     }
@@ -41,6 +43,11 @@ public class WhileStatement extends AbstractStatement {
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         Expression replacementCondition = condition.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
         if (replacementCondition != condition) throw new ConfusedCFRException("Can't yet support replacing conditions");
+    }
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
+        condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer());
     }
 
     @Override

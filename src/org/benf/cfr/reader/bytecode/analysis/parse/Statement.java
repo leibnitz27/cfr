@@ -32,6 +32,8 @@ public interface Statement extends Dumpable {
 
     void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers);
 
+    void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers);
+
     void collectObjectCreation(CreationCollector creationCollector);
 
     SSAIdentifiers collectLocallyMutatedVariables(SSAIdentifierFactory ssaIdentifierFactory);

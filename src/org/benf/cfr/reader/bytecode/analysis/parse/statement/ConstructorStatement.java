@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -32,6 +33,11 @@ public class ConstructorStatement extends AbstractStatement {
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         // can't ever change, but its arguments can.
         invokation.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+    }
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
+        invokation.applyExpressionRewriter(expressionRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override
