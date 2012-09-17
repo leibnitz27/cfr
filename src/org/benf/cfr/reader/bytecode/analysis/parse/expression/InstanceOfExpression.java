@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
@@ -21,18 +22,18 @@ import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
  */
 public class InstanceOfExpression extends AbstractExpression {
     private Expression lhs;
-    private String className;
+    private JavaTypeInstance typeInstance;
 
     public InstanceOfExpression(Expression lhs, ConstantPool cp, ConstantPoolEntry cpe) {
         super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
         this.lhs = lhs;
         ConstantPoolEntryClass cpec = (ConstantPoolEntryClass) cpe;
-        this.className = cp.getUTF8Entry(cpec.getNameIndex()).getValue();
+        this.typeInstance = cpec.getTypeInstance(cp);
     }
 
     @Override
     public String toString() {
-        return "(" + lhs.toString() + " instanceof " + className + ")";
+        return "(" + lhs.toString() + " instanceof " + typeInstance + ")";
     }
 
     @Override
