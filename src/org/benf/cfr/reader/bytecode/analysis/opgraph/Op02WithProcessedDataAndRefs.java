@@ -515,10 +515,18 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(0), new Literal(TypedLiteral.getInt(0)), CompOp.getOpFor(instr));
                 return new IfStatement(conditionalExpression);
             }
-            case JSR:
-                return new GotoStatement();
-            case RET:
-                throw new ConfusedCFRException("Not implemented - RET (also requires JSR change)");
+            case JSR_W:
+            case JSR: {
+                return new CompoundStatement(
+                        new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(originalRawOffset))),
+                        new JSRCallStatement()
+                );
+            }
+            case RET: {
+                // This ret could return to after any JSR instruction which it is reachable from.  This is ... tricky.
+                Expression retVal = new LValueExpression(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset));
+                return new JSRRetStatement(retVal);
+            }
             case GOTO:
             case GOTO_W:
                 return new GotoStatement();
@@ -1102,4 +1110,42 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return containedInTheseBlocks;
     }
 
+    /*
+     * Find which JSRs this block is the target of.  This /WILL/ get confused by nested JSRs, and REALLY confused when
+     * the ret doesn't match the JSR.  Will need to revisit.
+     */
+    private static void linkRetToJSR(Op02WithProcessedDataAndRefs ret, List<Op02WithProcessedDataAndRefs> ops) {
+        final Set<Op02WithProcessedDataAndRefs> jsrParents = SetFactory.newSet();
+
+        GraphVisitor<Op02WithProcessedDataAndRefs> graphVisitor = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(
+                ret,
+                new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
+                    @Override
+                    public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
+                        if (arg1.instr == JVMInstr.JSR || arg1.instr == JVMInstr.JSR_W) {
+                            jsrParents.add(arg1);
+                            return;
+                        }
+                        for (Op02WithProcessedDataAndRefs source : arg1.sources) {
+                            arg2.enqueue(source);
+                        }
+                    }
+                });
+        graphVisitor.process();
+
+        for (Op02WithProcessedDataAndRefs jsr : jsrParents) {
+            int i = ops.indexOf(jsr);
+            Op02WithProcessedDataAndRefs jsrAfter = ops.get(i + 1);
+            ret.addTarget(jsrAfter);
+            jsrAfter.addSource(ret);
+        }
+    }
+
+    public static void linkRetsToJSR(List<Op02WithProcessedDataAndRefs> ops) {
+        for (Op02WithProcessedDataAndRefs op : ops) {
+            if (op.instr == JVMInstr.RET || op.instr == JVMInstr.RET_WIDE) {
+                linkRetToJSR(op, ops);
+            }
+        }
+    }
 }
