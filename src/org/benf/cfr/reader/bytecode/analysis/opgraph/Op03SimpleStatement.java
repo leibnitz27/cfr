@@ -277,7 +277,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     backJump.addSource(this);
                     backJump.addTarget(whileEndTarget);
                     // We have to manipulate the statement list immediately, as we're relying on spatial locality elsewhere.
-                    statements.add(statements.indexOf(blockEnd), backJump);
+                    // However, we can't just add infront of blockend naively, as there may be multiple blocks doing this.
+                    // We have to add after the last statement infront of blockend which is contained in all of containedInBlocks.
+                    int insertAfter = statements.indexOf(blockEnd) - 1;
+                    while (!statements.get(insertAfter).containedInBlocks.containsAll(containedInBlocks)) {
+                        insertAfter--;
+                        backJump.index = backJump.index.justBefore();
+                    }
+                    statements.add(insertAfter + 1, backJump);
                 }
                 break;
             }
@@ -355,7 +362,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     public static class CompareByIndex implements Comparator<Op03SimpleStatement> {
         @Override
         public int compare(Op03SimpleStatement a, Op03SimpleStatement b) {
-            return a.getIndex().compareTo(b.getIndex());
+            int res = a.getIndex().compareTo(b.getIndex());
+            if (res == 0) {
+                throw new ConfusedCFRException("Can't sort instructions");
+            }
+            return res;
         }
     }
 
@@ -371,12 +382,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return getIndex().toString();
     }
 
-    private void dumpInner(Dumper dumper) {
+    public void dumpInner(Dumper dumper) {
         if (needsLabel()) dumper.print(getLabel() + ":\n");
         for (BlockIdentifier blockIdentifier : containedInBlocks) {
             dumper.print(blockIdentifier + " ");
         }
-        dumper.print("{" + ssaIdentifiers + "}");
+//        dumper.print("{" + ssaIdentifiers + "}");
         getStatement().dump(dumper);
     }
 
