@@ -247,13 +247,14 @@ public class CodeAnalyser {
         logger.info("rewriteIteratorWhileLoops");
         Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
 
+        logger.info("findSynchronizedBlocks");
+        Op03SimpleStatement.findSynchronizedBlocks(op03SimpleParseNodes);
+//
 //        dumper.print("Raw Op3 statements:\n");
 //        for (Op03SimpleStatement node : op03SimpleParseNodes) {
 //            node.dumpInner(dumper);
 //        }
-//
-        logger.info("findSynchronizedBlocks");
-        Op03SimpleStatement.findSynchronizedBlocks(op03SimpleParseNodes);
+
 
 //        dumper.print("Raw Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
