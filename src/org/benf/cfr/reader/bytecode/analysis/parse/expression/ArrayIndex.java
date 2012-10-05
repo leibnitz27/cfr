@@ -2,10 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 
 /**
@@ -39,9 +36,9 @@ public class ArrayIndex extends AbstractExpression {
     }
 
     @Override
-    public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        array = expressionRewriter.rewriteExpression(array, ssaIdentifiers, statementContainer);
-        index = expressionRewriter.rewriteExpression(index, ssaIdentifiers, statementContainer);
+    public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        array = expressionRewriter.rewriteExpression(array, ssaIdentifiers, statementContainer, flags);
+        index = expressionRewriter.rewriteExpression(index, ssaIdentifiers, statementContainer, flags);
         return this;
     }
 

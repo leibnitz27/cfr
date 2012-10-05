@@ -8,9 +8,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AccountingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.entities.ConstantPool;
@@ -492,6 +494,19 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public static void condenseLValues(List<Op03SimpleStatement> statements) {
+
+        /*
+         * [todo - fix accounting].
+         * Unfortunately, the accounting for stack entries is a bit wrong.  This pass will make
+         * sure it's correct. :P
+         */
+        AccountingRewriter accountingRewriter = new AccountingRewriter();
+        for (Op03SimpleStatement statement : statements) {
+            statement.rewrite(accountingRewriter);
+        }
+        accountingRewriter.flush();
+
+
         LValueAssignmentCollector lValueAssigmentCollector = new LValueAssignmentCollector();
         for (Op03SimpleStatement statement : statements) {
             statement.collect(lValueAssigmentCollector);
@@ -2668,7 +2683,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
 
-    private static void resugarAnonymousArray(Op03SimpleStatement newArray, List<Op03SimpleStatement> statements) {
+    private static boolean resugarAnonymousArray(Op03SimpleStatement newArray, List<Op03SimpleStatement> statements) {
         AssignmentSimple assignmentSimple = (AssignmentSimple) newArray.containedStatement;
         WildcardMatch start = new WildcardMatch();
         if (!start.match(
@@ -2682,14 +2697,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          */
         LValue arrayLValue = start.getLValueWildCard("array").getMatch();
         if (!(arrayLValue instanceof StackSSALabel)) {
-            return;
+            return false;
         }
         StackSSALabel array = (StackSSALabel) arrayLValue;
         AbstractNewArray arrayDef = start.getNewArrayWildCard("def").getMatch();
         Expression dimSize0 = arrayDef.getDimSize(0);
-        if (!(dimSize0 instanceof Literal)) return;
+        if (!(dimSize0 instanceof Literal)) return false;
         Literal lit = (Literal) dimSize0;
-        if (lit.getValue().getType() != TypedLiteral.LiteralType.Integer) return;
+        if (lit.getValue().getType() != TypedLiteral.LiteralType.Integer) return false;
         int bound = (Integer) lit.getValue().getValue();
 
         Op03SimpleStatement next = newArray;
@@ -2697,7 +2712,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> anonAssigns = ListFactory.newList();
         for (int x = 0; x < bound; ++x) {
             if (next.targets.size() != 1) {
-                return;
+                return false;
             }
             next = next.targets.get(0);
             WildcardMatch testAnon = new WildcardMatch();
@@ -2707,16 +2722,19 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                             new ArrayVariable(new ArrayIndex(new StackValue(array), idx)),
                             testAnon.getExpressionWildCard("val")),
                     next.containedStatement)) {
-                return;
+                return false;
             }
             anon.add(testAnon.getExpressionWildCard("val").getMatch());
             anonAssigns.add(next);
         }
         AssignmentSimple replacement = new AssignmentSimple(assignmentSimple.getCreatedLValue(), new NewAnonymousArray(anon, arrayDef.getInnerType()));
         newArray.replaceStatement(replacement);
+        StackEntry arrayStackEntry = array.getStackEntry();
         for (Op03SimpleStatement create : anonAssigns) {
+            arrayStackEntry.decrementUsage();
             create.nopOut();
         }
+        return true;
     }
 
     /*
@@ -2734,22 +2752,30 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * array definition!)
      */
     public static void resugarAnonymousArrays(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
-        // filter for structure now
-        assignments = Functional.filter(assignments, new Predicate<Op03SimpleStatement>() {
-            @Override
-            public boolean test(Op03SimpleStatement in) {
-                AssignmentSimple assignmentSimple = (AssignmentSimple) in.containedStatement;
-                WildcardMatch wildcardMatch = new WildcardMatch();
-                return (wildcardMatch.match(
-                        new AssignmentSimple(wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1)),
-                        assignmentSimple
-                ));
+        boolean success = false;
+        do {
+            List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
+            // filter for structure now
+            assignments = Functional.filter(assignments, new Predicate<Op03SimpleStatement>() {
+                @Override
+                public boolean test(Op03SimpleStatement in) {
+                    AssignmentSimple assignmentSimple = (AssignmentSimple) in.containedStatement;
+                    WildcardMatch wildcardMatch = new WildcardMatch();
+                    return (wildcardMatch.match(
+                            new AssignmentSimple(wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1)),
+                            assignmentSimple
+                    ));
+                }
+            });
+            success = false;
+            for (Op03SimpleStatement assignment : assignments) {
+                success |= resugarAnonymousArray(assignment, statements);
             }
-        });
-        for (Op03SimpleStatement assignment : assignments) {
-            resugarAnonymousArray(assignment, statements);
+            if (success) {
+                condenseLValues(statements);
+            }
         }
+        while (success);
     }
 
     public static void findGenericTypes(Op03SimpleStatement statement, GenericInfoSource genericInfoSource) {

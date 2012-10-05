@@ -143,8 +143,8 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
-//        dumper.print("Raw Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
+        dumper.print("Raw Op3 statements:\n");
+        op03SimpleParseNodes.get(0).dump(dumper);
 
 //        Op03SimpleStatement.findGenericTypes(op03SimpleParseNodes, cp);
 
@@ -162,6 +162,10 @@ public class CodeAnalyser {
         // Condense pointless assignments
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+
+        dumper.print("Raw Op3 statements:\n");
+        op03SimpleParseNodes.get(0).dump(dumper);
+
 
         // Try to eliminate catch temporaries.
         Op03SimpleStatement.eliminateCatchTemporaries(op03SimpleParseNodes);

@@ -52,7 +52,7 @@ public class IfStatement extends GotoStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
-        condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer());
+        condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
     }
 
     @Override

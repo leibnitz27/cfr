@@ -41,6 +41,11 @@ public class StackEntry {
         return (--usageCount);
     }
 
+    public long forceUsageCount(long newCount) {
+        usageCount = newCount;
+        return usageCount;
+    }
+
     public void mergeWith(StackEntry other) {
         if (other.stackType != this.stackType) {
             throw new ConfusedCFRException("Trying to merge different stackTypes " + stackType + " vs " + other.stackType + " [" + id0 + "/" + other.id0 + "]");
@@ -72,5 +77,18 @@ public class StackEntry {
 
     public InferredJavaType getInferredJavaType() {
         return inferredJavaType;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) id0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof StackEntry)) return false;
+        return id0 == ((StackEntry) o).id0;
     }
 }

@@ -1,9 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
-import org.benf.cfr.reader.entities.attributes.LocalVariableEntry;
-
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -15,6 +11,6 @@ public class VariableNamerDefault implements VariableNamer {
 
     @Override
     public String getName(int originalRawOffset, long stackPosition) {
-        return "stackval_" + stackPosition;
+        return "v" + stackPosition;
     }
 }

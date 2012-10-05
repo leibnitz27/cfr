@@ -113,6 +113,11 @@ public class WildcardMatch {
         }
 
         @Override
+        public LValue applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            return this;
+        }
+
+        @Override
         public InferredJavaType getInferredJavaType() {
             return InferredJavaType.IGNORE;
         }
@@ -143,7 +148,7 @@ public class WildcardMatch {
         }
 
         @Override
-        public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
             throw new UnsupportedOperationException();
         }
 

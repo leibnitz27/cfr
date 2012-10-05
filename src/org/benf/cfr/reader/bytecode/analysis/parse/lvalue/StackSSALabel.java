@@ -3,10 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 
 /**
@@ -28,7 +25,7 @@ public class StackSSALabel extends AbstractLValue {
 
     @Override
     public String toString() {
-        return getInferredJavaType().toString() + "v" + id;
+        return getInferredJavaType().toString() + "v" + id + "(" + stackEntry.getUsageCount() + ")";
     }
 
     @Override
@@ -61,12 +58,25 @@ public class StackSSALabel extends AbstractLValue {
         return this;
     }
 
+    @Override
+    public LValue applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return this;
+    }
+
     public StackEntry getStackEntry() {
         return stackEntry;
     }
 
     @Override
+    public int hashCode() {
+        return (int) id;
+    }
+
+    @Override
     public boolean equals(Object o) {
-        return super.equals(o);
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof StackSSALabel)) return false;
+        return id == ((StackSSALabel) o).id;
     }
 }

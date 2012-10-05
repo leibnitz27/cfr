@@ -46,6 +46,11 @@ public class LocalVariable extends AbstractLValue {
     }
 
     @Override
+    public LValue applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return this;
+    }
+
+    @Override
     public int hashCode() {
         return name.hashCode();
     }

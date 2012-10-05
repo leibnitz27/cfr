@@ -55,8 +55,8 @@ public class NewPrimitiveArray extends AbstractNewArray {
 
 
     @Override
-    public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        size = expressionRewriter.rewriteExpression(size, ssaIdentifiers, statementContainer);
+    public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        size = expressionRewriter.rewriteExpression(size, ssaIdentifiers, statementContainer, flags);
         return this;
     }
 
