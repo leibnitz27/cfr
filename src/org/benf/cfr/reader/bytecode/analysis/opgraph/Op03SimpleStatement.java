@@ -361,6 +361,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    /*
+     * Op02 and 3 should both implement indexable, so we can share this.
+     */
     public static class CompareByIndex implements Comparator<Op03SimpleStatement> {
         @Override
         public int compare(Op03SimpleStatement a, Op03SimpleStatement b) {
