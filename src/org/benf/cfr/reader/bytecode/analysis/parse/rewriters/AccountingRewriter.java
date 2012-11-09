@@ -60,7 +60,7 @@ public class AccountingRewriter implements ExpressionRewriter {
     @Override
     public StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (flags != ExpressionRewriterFlags.LVALUE) {
-            System.out.println("Use of [" + lValue + "] in " + statementContainer);
+//            System.out.println("Use of [" + lValue + "] in " + statementContainer);
             count.put(lValue, count.get(lValue) + 1);
         }
         return lValue;
@@ -68,10 +68,10 @@ public class AccountingRewriter implements ExpressionRewriter {
 
     public void flush() {
         for (Map.Entry<StackSSALabel, Long> entry : count.entrySet()) {
-            System.out.println("Usage count of " + entry.getKey() + " = " + entry.getValue());
+//            System.out.println("Usage count of " + entry.getKey() + " = " + entry.getValue());
             StackSSALabel stackSSALabel = entry.getKey();
             stackSSALabel.getStackEntry().forceUsageCount(entry.getValue());
         }
-        System.out.println("-----\n");
+//        System.out.println("-----\n");
     }
 }
