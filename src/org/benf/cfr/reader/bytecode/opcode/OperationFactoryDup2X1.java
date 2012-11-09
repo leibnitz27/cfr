@@ -23,7 +23,7 @@ public class OperationFactoryDup2X1 extends OperationFactoryDupBase {
             checkCat(stackSim, 1, 1);
             checkCat(stackSim, 2, 1);
             return new StackDelta(
-                    getStackTypes(stackSim, 0, 1),
+                    getStackTypes(stackSim, 0, 1, 2),
                     getStackTypes(stackSim, 0, 1, 2, 0, 1)
             );
         } else {
