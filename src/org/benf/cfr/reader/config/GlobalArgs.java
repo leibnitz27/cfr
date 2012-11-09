@@ -12,4 +12,5 @@ public class GlobalArgs {
      * (i.e. allow illegal type combinations).
      */
     public static boolean lenient = false;
+    public static boolean hideExtremelyLongStrings = false;
 }

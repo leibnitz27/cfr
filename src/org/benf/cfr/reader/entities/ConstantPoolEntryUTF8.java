@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.config.GlobalArgs;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -24,7 +25,13 @@ public class ConstantPoolEntryUTF8 implements ConstantPoolEntry {
     public ConstantPoolEntryUTF8(ByteData data) {
         this.length = data.getS2At(OFFSET_OF_LENGTH);
         byte[] bytes = data.getBytesAt(length, OFFSET_OF_DATA);
-        this.value = new String(bytes, UTF8_CHARSET);
+        String tmpValue = new String(bytes, UTF8_CHARSET);
+        if (tmpValue.length() > 512 && GlobalArgs.hideExtremelyLongStrings) {
+            tmpValue = tmpValue.substring(0, 20) + "........";
+            tmpValue = tmpValue.replace('\n', '.');
+            tmpValue = tmpValue.replace('\r', '.');
+        }
+        this.value = tmpValue;
     }
 
     @Override

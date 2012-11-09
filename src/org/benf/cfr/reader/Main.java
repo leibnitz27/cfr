@@ -58,7 +58,10 @@ public class Main {
             System.err.println("requires arg 'classFile'");
             return;
         }
+
         GlobalArgs.lenient = true;
+        GlobalArgs.hideExtremelyLongStrings = true;
+
         String fname = args[0];
         String methname = null;
         if (args.length >= 2) {
