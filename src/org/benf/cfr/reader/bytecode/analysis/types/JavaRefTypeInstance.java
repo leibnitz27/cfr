@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.config.GlobalArgs;
 import org.benf.cfr.reader.entities.ConstantPool;
 
 /**
@@ -68,7 +69,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public JavaTypeInstance removeAnArrayIndirection() {
-        throw new UnsupportedOperationException();
+        if (GlobalArgs.lenient) {
+            return this;
+        } else {
+            throw new UnsupportedOperationException("Trying to remove an array indirection on a ref type");
+        }
     }
 
     @Override

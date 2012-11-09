@@ -1,5 +1,6 @@
 package org.benf.cfr.reader;
 
+import org.benf.cfr.reader.config.GlobalArgs;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
@@ -57,6 +58,7 @@ public class Main {
             System.err.println("requires arg 'classFile'");
             return;
         }
+        GlobalArgs.lenient = true;
         String fname = args[0];
         String methname = null;
         if (args.length >= 2) {

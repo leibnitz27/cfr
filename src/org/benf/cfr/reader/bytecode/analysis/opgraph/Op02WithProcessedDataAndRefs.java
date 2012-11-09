@@ -22,6 +22,7 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.bytecode.opcode.OperationFactoryMultiANewArray;
+import org.benf.cfr.reader.config.GlobalArgs;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
@@ -166,7 +167,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
 
             if (stackSim.getDepth() != stackDepthBeforeExecution) {
-                throw new ConfusedCFRException("Invalid stack depths @ " + this + " : expected " + stackSim.getDepth() + " previously set to " + stackDepthBeforeExecution);
+                throw new ConfusedCFRException("Invalid stack depths @ " + this + " : trying to set " + stackSim.getDepth() + " previously set to " + stackDepthBeforeExecution);
             }
 
             // Merge our current known arguments with these.
@@ -221,14 +222,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         for (StackEntryHolder stackEntryHolder : stackProduced) {
             d.print(stackEntryHolder.toString() + " ");
         }
-//        d.print("] <- nodes");
-//        for (Op02WithProcessedDataAndRefs source : sources) {
-//            d.print(" " + source.index);
-//        }
-//        d.print(" -> nodes");
-//        for (Op02WithProcessedDataAndRefs target : targets) {
-//            d.print(" " + target.index);
-//        }
+        d.print("] sources ");
+        for (Op02WithProcessedDataAndRefs source : sources) {
+            d.print(" " + source.index);
+        }
+        d.print(" targets ");
+        for (Op02WithProcessedDataAndRefs target : targets) {
+            d.print(" " + target.index);
+        }
         d.print("\n");
     }
 
@@ -972,7 +973,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 short handler = exceptionEntry.getBytecodeIndexHandler();
                 int handlerIndex = lutByOffset.get((int) handler);
                 if (handlerIndex <= originalIndex) {
-                    throw new ConfusedCFRException("Back jump on a try block " + exceptionEntry);
+                    if (!GlobalArgs.lenient) {
+                        throw new ConfusedCFRException("Back jump on a try block " + exceptionEntry);
+                    }
                 }
                 Op02WithProcessedDataAndRefs handerTarget = op2list.get(handlerIndex);
                 handlerTargets.add(Pair.make(handerTarget, exceptionEntry));
@@ -1022,27 +1025,53 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 * tryTarget should not have a previous FAKE_CATCH source.
                 */
                 List<Op02WithProcessedDataAndRefs> tryTargetSources = tryTarget.getSources();
-                Op02WithProcessedDataAndRefs preCatchOp;
-                if (!tryTargetSources.isEmpty()) {
-                    if (tryTargetSources.size() > 1) {
-                        throw new ConfusedCFRException("Try target has >1 source");
-                    }
-                    preCatchOp = tryTargetSources.get(0);
-                    if (preCatchOp.getInstr() != JVMInstr.FAKE_CATCH) {
-                        throw new ConfusedCFRException("non catch before exception catch block");
-                    }
+                Op02WithProcessedDataAndRefs preCatchOp = null;
 
-                    // There was already a catch here.
+                boolean addFakeCatch = false;
 
+                if (tryTargetSources.isEmpty()) {
+                    addFakeCatch = true;
                 } else {
+                    /* try target sources /SHOULD/ be empty (unless already processed)
+                     * because you can't fall into a catch block.
+                     *
+                     * If you ARE doing this, then it's probable that you're dealing with
+                     * obfuscated code.....
+                     *
+                     * (Previously, was checking sources = 1, source = CATCH).
+                     */
+                    for (Op02WithProcessedDataAndRefs source : tryTargetSources) {
+                        if (source.getInstr() == JVMInstr.FAKE_CATCH) {
+                            preCatchOp = source;
+                        } else {
+                            if (!GlobalArgs.lenient) {
+                                throw new ConfusedCFRException("non catch before exception catch block");
+                            }
+                        }
+                    }
+                    if (preCatchOp == null) {
+                        addFakeCatch = true;
+                    }
+                }
+
+                if (addFakeCatch) {
+                    ExceptionGroup.Entry entry = catchTargets.getSecond();
+                    byte[] data = null;
+                    if (entry.isJustThrowable()) {
+                        data = new byte[0];
+                    }
                     // Add a fake catch here.  This injects a stack value, which will later be popped into the
                     // actual exception value.  (probably with an astore... but not neccessarily!)
-                    preCatchOp = new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, null, tryTarget.getIndex().justBefore(), cp, null, -1);
+                    preCatchOp = new Op02WithProcessedDataAndRefs(JVMInstr.FAKE_CATCH, data, tryTarget.getIndex().justBefore(), cp, null, -1);
                     tryTarget = adjustOrdering(insertions, tryTarget, exceptionGroup, preCatchOp);
                     preCatchOp.containedInTheseBlocks.addAll(tryTarget.getContainedInTheseBlocks());
                     preCatchOp.addTarget(tryTarget);
                     tryTarget.addSource(preCatchOp);
                     op2list.add(preCatchOp);
+                }
+
+                if (preCatchOp == null) {
+                    throw new IllegalStateException("Bad precatch op state.");
                 }
                 preCatchOp.addSource(tryOp);
                 tryOp.addTarget(preCatchOp);
