@@ -127,9 +127,20 @@ public class ClassFile {
     }
 
     public void analyse() {
+        boolean exceptionRecovered = false;
         for (Method method : methods) {
-            method.analyse();
+            try {
+                method.analyse();
+            } catch (Exception e) {
+                System.out.println("Exception analysing " + method.getName());
+                System.out.println(e);
+                for (StackTraceElement s : e.getStackTrace()) {
+                    System.out.println(s);
+                }
+                exceptionRecovered = true;
+            }
         }
+        if (exceptionRecovered) throw new RuntimeException("Failed to analyse file");
     }
 
     public JavaTypeInstance getClassType() {
