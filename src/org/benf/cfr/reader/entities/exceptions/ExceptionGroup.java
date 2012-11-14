@@ -31,7 +31,7 @@ public class ExceptionGroup {
         if (entry.getBytecodeIndexHandler() < minHandlerStart) minHandlerStart = entry.getBytecodeIndexHandler();
         this.entries.add(new Entry(entry));
         if (entry.getBytecodeIndexTo() > byteCodeIndexTo) byteCodeIndexTo = entry.getBytecodeIndexTo();
-        if (byteCodeIndexTo > minHandlerStart) byteCodeIndexTo = minHandlerStart;
+//        if (byteCodeIndexTo > minHandlerStart) byteCodeIndexTo = minHandlerStart;
     }
 
     public List<Entry> getEntries() {

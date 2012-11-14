@@ -928,12 +928,26 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
+    private static int getLastIndex(Map<Integer, Integer> lutByOffset, int op2count, long codeLength, int offset) {
+        Integer iinclusiveLastIndex = lutByOffset.get(offset);
+        if (iinclusiveLastIndex == null) {
+            if (offset == codeLength) {
+                iinclusiveLastIndex = op2count - 1;
+            } else {
+                throw new ConfusedCFRException("Last index of " + offset + " is not a valid entry into the code block");
+            }
+        }
+        return iinclusiveLastIndex;
+    }
+
     public static List<Op02WithProcessedDataAndRefs> insertExceptionBlocks(
             List<Op02WithProcessedDataAndRefs> op2list,
             ExceptionAggregator exceptions,
             Map<Integer, Integer> lutByOffset,
-            ConstantPool cp
+            ConstantPool cp,
+            long codeLength
     ) {
+        int originalInstrCount = op2list.size();
 
         Map<InstrIndex, List<ExceptionTempStatement>> insertions = MapFactory.newLazyMap(
                 new UnaryFunction<InstrIndex, List<ExceptionTempStatement>>() {
@@ -948,7 +962,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
             BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
             int originalIndex = lutByOffset.get((int) exceptionGroup.getBytecodeIndexFrom());
-            int inclusiveLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo());
+            int inclusiveLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, (int) exceptionGroup.getByteCodeIndexTo());
+            System.out.println("Adding try block identifier " + tryBlockIdentifier + "[" + originalIndex + " -> " + inclusiveLastIndex + "]" + exceptionGroup);
             for (int x = originalIndex; x < inclusiveLastIndex; ++x) {
                 op2list.get(x).containedInTheseBlocks.add(tryBlockIdentifier);
             }
@@ -964,7 +979,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             int originalIndex = lutByOffset.get((int) exceptionGroup.getBytecodeIndexFrom());
             Op02WithProcessedDataAndRefs startInstruction = op2list.get(originalIndex);
 
-            int inclusiveLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo());
+            int inclusiveLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, (int) exceptionGroup.getByteCodeIndexTo());
             Op02WithProcessedDataAndRefs lastTryInstruction = op2list.get(inclusiveLastIndex);
 
 
@@ -1090,7 +1105,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          */
         for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
             BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
-            int beforeLastIndex = lutByOffset.get((int) exceptionGroup.getByteCodeIndexTo()) - 1;
+            int beforeLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, (int) exceptionGroup.getByteCodeIndexTo()) - 1;
+
             Op02WithProcessedDataAndRefs lastStatement = op2list.get(beforeLastIndex);
             Set<BlockIdentifier> blocks = SetFactory.newSet(lastStatement.containedInTheseBlocks);
             int x = beforeLastIndex + 1;

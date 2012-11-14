@@ -24,10 +24,11 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
     private final short catch_type;
 
     public ExceptionTableEntry(ByteData raw) {
-        this.bytecode_index_from = raw.getS2At(OFFSET_INDEX_FROM);
-        this.bytecode_index_to = raw.getS2At(OFFSET_INDEX_TO);
-        this.bytecode_index_handler = raw.getS2At(OFFSET_INDEX_HANDLER);
-        this.catch_type = raw.getS2At(OFFSET_CATCH_TYPE);
+        this(
+                raw.getS2At(OFFSET_INDEX_FROM),
+                raw.getS2At(OFFSET_INDEX_TO),
+                raw.getS2At(OFFSET_INDEX_HANDLER),
+                raw.getS2At(OFFSET_CATCH_TYPE));
     }
 
     private ExceptionTableEntry(short from, short to, short handler, short catchType) {
@@ -35,6 +36,9 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         this.bytecode_index_to = to;
         this.bytecode_index_handler = handler;
         this.catch_type = catchType;
+        if (to < from) {
+            throw new IllegalStateException("Malformed exception block, to < from");
+        }
     }
 
     public short getBytecodeIndexFrom() {

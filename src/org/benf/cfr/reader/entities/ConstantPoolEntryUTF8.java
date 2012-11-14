@@ -22,14 +22,14 @@ public class ConstantPoolEntryUTF8 implements ConstantPoolEntry {
     private final short length;
     private final String value;
 
+    private static int idx;
+
     public ConstantPoolEntryUTF8(ByteData data) {
         this.length = data.getS2At(OFFSET_OF_LENGTH);
         byte[] bytes = data.getBytesAt(length, OFFSET_OF_DATA);
         String tmpValue = new String(bytes, UTF8_CHARSET);
         if (tmpValue.length() > 512 && GlobalArgs.hideExtremelyLongStrings) {
-            tmpValue = tmpValue.substring(0, 20) + "........";
-            tmpValue = tmpValue.replace('\n', '.');
-            tmpValue = tmpValue.replace('\r', '.');
+            tmpValue = "longStr" + idx++ + "[" + tmpValue.substring(0, 10).replace('\r', '_').replace('\n', '_') + "]";
         }
         this.value = tmpValue;
     }
