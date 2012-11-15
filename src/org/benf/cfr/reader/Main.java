@@ -1,6 +1,5 @@
 package org.benf.cfr.reader;
 
-import org.benf.cfr.reader.config.GlobalArgs;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
@@ -59,8 +58,8 @@ public class Main {
             return;
         }
 
-        GlobalArgs.lenient = true;
-        GlobalArgs.hideExtremelyLongStrings = true;
+//        GlobalArgs.lenient = true;
+//        GlobalArgs.hideExtremelyLongStrings = true;
 
         String fname = args[0];
         String methname = null;
@@ -81,6 +80,7 @@ public class Main {
             } else {
                 c.dumpMethod(methname, d);
             }
+            d.print("");
         } catch (FileNotFoundException e) {
             System.err.println(e.toString());
             System.exit(1);

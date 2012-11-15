@@ -50,7 +50,16 @@ public class TypedLiteral {
         if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting char-as-int");
         int i = (Integer) o;
         char c = (char) i;
-        return "'" + c + "'";
+        switch (c) {
+            case '\r':
+                return "'\\r'";
+            case '\n':
+                return "'\\n'";
+            case '\t':
+                return "'\\t'";
+            default:
+                return "'" + c + "'";
+        }
     }
 
     private static String boolName(Object o) {

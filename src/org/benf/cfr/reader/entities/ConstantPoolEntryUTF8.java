@@ -31,6 +31,7 @@ public class ConstantPoolEntryUTF8 implements ConstantPoolEntry {
         if (tmpValue.length() > 512 && GlobalArgs.hideExtremelyLongStrings) {
             tmpValue = "longStr" + idx++ + "[" + tmpValue.substring(0, 10).replace('\r', '_').replace('\n', '_') + "]";
         }
+        tmpValue = tmpValue.replace("\n", "\\n").replace("\r", "\\r");
         this.value = tmpValue;
     }
 
