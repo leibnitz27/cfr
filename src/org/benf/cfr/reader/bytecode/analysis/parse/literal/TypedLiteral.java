@@ -51,6 +51,8 @@ public class TypedLiteral {
         int i = (Integer) o;
         char c = (char) i;
         switch (c) {
+            case '\"':
+                return "'\\\"'";
             case '\r':
                 return "'\\r'";
             case '\n':
@@ -89,7 +91,7 @@ public class TypedLiteral {
     public String toString() {
         switch (type) {
             case String:
-                return "\"" + value + "\"";
+                return (String) value;
             case NullObject:
                 return "null";
             case Integer:
@@ -129,11 +131,16 @@ public class TypedLiteral {
     }
 
     public static TypedLiteral getString(String v) {
-        return new TypedLiteral(LiteralType.String, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), v);
+        return new TypedLiteral(LiteralType.String, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), enQuote(v));
     }
 
     public static TypedLiteral getNull() {
         return new TypedLiteral(LiteralType.NullObject, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), null);
+    }
+
+    // TODO : Quote strings properly
+    private static String enQuote(String in) {
+        return "\"" + in + "\"";
     }
 
     public static TypedLiteral getConstantPoolEntry(ConstantPool cp, ConstantPoolEntry cpe) {
