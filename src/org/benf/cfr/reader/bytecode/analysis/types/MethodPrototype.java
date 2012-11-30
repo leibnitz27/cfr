@@ -18,16 +18,18 @@ public class MethodPrototype {
     private final JavaTypeInstance result;
     private final VariableNamer variableNamer;
     private final boolean instanceMethod;
+    private final boolean varargs;
 
-    public MethodPrototype(boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, VariableNamer variableNamer) {
+    public MethodPrototype(boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         this.args = args;
         this.result = result;
+        this.varargs = varargs;
         this.variableNamer = variableNamer;
     }
 
-    public String getPrototype(String methName, boolean isConstructor) {
+    public String getDeclarationSignature(String methName, boolean isConstructor) {
         StringBuilder sb = new StringBuilder();
         if (formalTypeParameters != null) {
             sb.append('<');
@@ -46,15 +48,26 @@ public class MethodPrototype {
             sb.append(result.toString()).append(" ");
         }
         sb.append(methName).append("(");
-        boolean first = true;
+        /* We don't get a vararg type to change itself, as it's a function of the method, not the type
+         *
+         */
+
         int offset = instanceMethod ? 1 : 0;
-        for (JavaTypeInstance arg : args) {
-            if (!first) {
+        int argssize = args.size();
+        for (int i = 0; i < argssize; ++i) {
+            JavaTypeInstance arg = args.get(i);
+            if (i > 0) {
                 sb.append(", ");
-            } else {
-                first = false;
             }
-            sb.append(arg.toString()).append(" ").append(variableNamer.getName(0, offset));
+            if (varargs && (i == argssize - 1)) {
+                if (!(arg instanceof JavaArrayTypeInstance)) {
+                    throw new ConfusedCFRException("VARARGS method doesn't have an array as last arg!!");
+                }
+                sb.append(((JavaArrayTypeInstance) arg).toVarargString());
+            } else {
+                sb.append(arg.toString());
+            }
+            sb.append(" ").append(variableNamer.getName(0, offset));
             offset += arg.getStackType().getComputationCategory();
         }
         sb.append(")");

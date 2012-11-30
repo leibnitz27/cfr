@@ -78,7 +78,7 @@ public class Method implements KnowsRawSize {
             this.variableNamer = VariableNamerFactory.getNamer(this.codeAttribute.getLocalVariableTable(), cp);
             this.codeAttribute.setMethod(this);
         }
-        this.methodPrototype = getMethodPrototypeUncached();
+        this.methodPrototype = generateMethodPrototype();
     }
 
     private AttributeSignature getSignatureAttribute() {
@@ -115,7 +115,7 @@ public class Method implements KnowsRawSize {
      * to validate this.
      *
      */
-    private MethodPrototype getMethodPrototypeUncached() {
+    private MethodPrototype generateMethodPrototype() {
         AttributeSignature sig = getSignatureAttribute();
         ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
         ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
@@ -126,7 +126,8 @@ public class Method implements KnowsRawSize {
             prototype = signature;
         }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
-        return ConstantPoolUtils.parseJavaMethodPrototype(isInstance, prototype, cp, variableNamer);
+        boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
+        return ConstantPoolUtils.parseJavaMethodPrototype(isInstance, prototype, cp, isVarargs, variableNamer);
     }
 
     public MethodPrototype getMethodPrototype() {
@@ -138,7 +139,7 @@ public class Method implements KnowsRawSize {
         String methodName = cp.getUTF8Entry(nameIndex).getValue();
         boolean constructor = methodName.equals("<init>");
         if (constructor) methodName = classFile.getClassType().toString();
-        return (prefix.isEmpty() ? "" : (prefix + " ")) + getMethodPrototype().getPrototype(methodName, constructor);
+        return (prefix.isEmpty() ? "" : (prefix + " ")) + getMethodPrototype().getDeclarationSignature(methodName, constructor);
     }
 
     public void analyse() {

@@ -16,12 +16,12 @@ public enum AccessFlagMethod {
     ACC_STATIC("static"),
     ACC_FINAL("final"),
     ACC_SYNCHRONISED("synchronised"),
-    ACC_BRIDGE("bridge"),
-    ACC_VARARGS("varargs"),
-    ACC_NATIVE("native"),
+    ACC_BRIDGE("/* bridge */"),
+    ACC_VARARGS("/* varargs */"),
+    ACC_NATIVE("/* native */"),
     ACC_ABSTRACT("abstract"),
-    ACC_STRICT("strict"),
-    ACC_SYNTHETIC("synthetic");
+    ACC_STRICT("/* strict */"),
+    ACC_SYNTHETIC("/* synthetic */");
 
     private final String name;
 

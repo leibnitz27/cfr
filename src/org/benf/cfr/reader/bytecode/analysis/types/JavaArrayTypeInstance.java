@@ -22,12 +22,20 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public String toString() {
+        return toCommonString(getNumArrayDimensions());
+    }
+
+    private String toCommonString(int numDims) {
         StringBuilder sb = new StringBuilder();
         sb.append(underlyingType.toString());
-        for (int x = 0; x < getNumArrayDimensions(); ++x) {
+        for (int x = 0; x < numDims; ++x) {
             sb.append("[]");
         }
         return sb.toString();
+    }
+
+    public String toVarargString() {
+        return toCommonString(getNumArrayDimensions() - 1) + " ...";
     }
 
     @Override

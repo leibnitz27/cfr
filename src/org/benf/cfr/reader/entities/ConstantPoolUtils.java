@@ -192,7 +192,7 @@ public class ConstantPoolUtils {
         return new FormalTypeParameter(name, classBound, interfaceBound);
     }
 
-    public static MethodPrototype parseJavaMethodPrototype(boolean instanceMethod, ConstantPoolEntryUTF8 prototype, ConstantPool cp, VariableNamer variableNamer) {
+    public static MethodPrototype parseJavaMethodPrototype(boolean instanceMethod, ConstantPoolEntryUTF8 prototype, ConstantPool cp, boolean varargs, VariableNamer variableNamer) {
         String proto = prototype.getValue();
         int curridx = 0;
         /*
@@ -227,7 +227,7 @@ public class ConstantPoolUtils {
                 resultType = decodeTypeTok(getNextTypeTok(proto, curridx), cp);
                 break;
         }
-        MethodPrototype res = new MethodPrototype(instanceMethod, formalTypeParameters, args, resultType, variableNamer);
+        MethodPrototype res = new MethodPrototype(instanceMethod, formalTypeParameters, args, resultType, varargs, variableNamer);
 //        logger.info("Parsed prototype " + proto + " as " + res);
         return res;
     }
