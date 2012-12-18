@@ -12,7 +12,7 @@ public class SwitchTest4 {
     // Disabled because I don't want to make this java7 yet!
 
     public int test0(String s) {
-/*        switch (s) {
+        switch (s) {
             default:
                 System.out.println("Test");
                 break;
@@ -25,7 +25,7 @@ public class SwitchTest4 {
             case "Aa":
                 return 13;
         }
-        System.out.println("Here");*/
+        System.out.println("Here");
         return 0;
     }
 
