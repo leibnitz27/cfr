@@ -150,6 +150,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         target.replaceSingleSourceWith(this, sources);
         sources.clear();
         targets.clear();
+        // And, take all the blocks which were ending here, and add them to the blocksEnding in target
+        target.immediatelyAfterBlocks.addAll(immediatelyAfterBlocks);
+        immediatelyAfterBlocks.clear();
     }
 
     /*
@@ -196,7 +199,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public Set<BlockIdentifier> getBlocksEnded() {
-        return immediatelyAfterBlocks;  //To change body of implemented methods use File | Settings | File Templates.
+        return immediatelyAfterBlocks;
     }
 
     @Override
@@ -2685,6 +2688,38 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    private static void removePointlessSwitchDefault(Op03SimpleStatement swtch) {
+        SwitchStatement switchStatement = (SwitchStatement) swtch.getStatement();
+        BlockIdentifier switchBlock = switchStatement.getSwitchBlock();
+        // If one of the targets is a "default", and it's definitely a target for this switch statement
+        // AND it hasn't been marked as belonging to the block, remove it.
+        // A default with no code is of course equivalent to no default.
+        for (Op03SimpleStatement tgt : swtch.getTargets()) {
+            Statement statement = tgt.getStatement();
+            if (statement instanceof CaseStatement) {
+                CaseStatement caseStatement = (CaseStatement) statement;
+                if (caseStatement.getSwitchBlock() == switchBlock) {
+                    if (caseStatement.isDefault()) {
+                        if (tgt.containedInBlocks.contains(switchBlock)) {
+                            return;
+                        } else {
+                            // We can remove this.
+                            tgt.nopOut();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static void removePointlessSwitchDefaults(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> switches = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
+
+        for (Op03SimpleStatement swtch : switches) {
+            removePointlessSwitchDefault(swtch);
+        }
+    }
 
     private static boolean resugarAnonymousArray(Op03SimpleStatement newArray, List<Op03SimpleStatement> statements) {
         AssignmentSimple assignmentSimple = (AssignmentSimple) newArray.containedStatement;

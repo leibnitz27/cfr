@@ -52,6 +52,14 @@ public class CaseStatement extends AbstractStatement {
 
     }
 
+    public BlockIdentifier getSwitchBlock() {
+        return switchBlock;
+    }
+
+    public boolean isDefault() {
+        return values.isEmpty();
+    }
+
     @Override
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredCase(values, caseBlock);

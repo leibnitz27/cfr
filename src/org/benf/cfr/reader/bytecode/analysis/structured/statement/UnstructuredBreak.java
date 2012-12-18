@@ -40,6 +40,7 @@ public class UnstructuredBreak extends AbstractUnStructuredStatement {
             }
         }
         if (bestBlock == null) {
+            System.out.println("Unstructured break doesn't know best block out of " + blocksEnding);
             return null;
         }
         boolean localBreak = false;

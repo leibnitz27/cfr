@@ -253,11 +253,9 @@ public class CodeAnalyser {
 
         logger.info("findSynchronizedBlocks");
         Op03SimpleStatement.findSynchronizedBlocks(op03SimpleParseNodes);
-//
-//        dumper.print("Raw Op3 statements:\n");
-//        for (Op03SimpleStatement node : op03SimpleParseNodes) {
-//            node.dumpInner(dumper);
-//        }
+
+        logger.info("removePointlessSwitchDefaults");
+        Op03SimpleStatement.removePointlessSwitchDefaults(op03SimpleParseNodes);
 
 
 //        dumper.print("Raw Op3 statements:\n");
@@ -266,6 +264,10 @@ public class CodeAnalyser {
         logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
 
+        dumper.print("Raw Op3 statements:\n");
+        for (Op03SimpleStatement node : op03SimpleParseNodes) {
+            node.dumpInner(dumper);
+        }
 
         Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter());
 //        dumper.print("Final Op3 statements:\n");
