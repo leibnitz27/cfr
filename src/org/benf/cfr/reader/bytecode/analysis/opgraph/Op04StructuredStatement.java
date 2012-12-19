@@ -30,6 +30,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     private static final Logger logger = LoggerFactory.create(Op04StructuredStatement.class);
 
     private InstrIndex instrIndex;
+    // Should we be bothering with sources and targets?  Not once we're "Properly" structured...
     private List<Op04StructuredStatement> sources = ListFactory.newList();
     private List<Op04StructuredStatement> targets = ListFactory.newList();
     private StructuredStatement structuredStatement;
@@ -408,6 +409,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void tidyTryCatch(Op04StructuredStatement root) {
         root.transform(new TryCatchTidier());
+    }
+
+    public static void removePointlessReturn(Op04StructuredStatement root) {
+        StructuredStatement statement = root.getStructuredStatement();
+        if (statement instanceof Block) {
+            Block block = (Block) statement;
+            block.removeLastNVReturn();
+        }
     }
 
 }

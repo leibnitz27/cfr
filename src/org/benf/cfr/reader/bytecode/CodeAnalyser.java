@@ -278,6 +278,7 @@ public class CodeAnalyser {
 
         logger.info("tidyTryCatch");
         Op04StructuredStatement.tidyTryCatch(block);
+        Op04StructuredStatement.removePointlessReturn(block);
 
         this.start = block;
     }

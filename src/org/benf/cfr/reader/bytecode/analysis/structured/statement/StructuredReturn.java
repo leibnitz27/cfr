@@ -11,6 +11,10 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class StructuredReturn extends AbstractStructuredStatement {
 
+    /*
+     * Note that this will be null if we're returning void.
+     * If we're ACTUALLY returning null, this will be a null-expr.
+     */
     private Expression value;
 
     public StructuredReturn() {
@@ -28,6 +32,10 @@ public class StructuredReturn extends AbstractStructuredStatement {
         } else {
             dumper.print("return " + value + ";\n");
         }
+    }
+
+    public Expression getValue() {
+        return value;
     }
 
     @Override

@@ -47,6 +47,20 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
+    public boolean removeLastNVReturn() {
+        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        if (structuredStatement instanceof StructuredReturn) {
+            Op04StructuredStatement oldReturn = containedStatements.getLast();
+            StructuredReturn structuredReturn = (StructuredReturn) structuredStatement;
+            if (structuredReturn.getValue() == null) {
+                oldReturn.replaceStatementWithNOP("");
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     // TODO : This is unsafe.  Replace with version which requires target.
     public boolean removeLastGoto() {
         StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
