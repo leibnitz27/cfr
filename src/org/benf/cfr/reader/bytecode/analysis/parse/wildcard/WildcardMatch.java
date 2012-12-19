@@ -182,6 +182,10 @@ public class WildcardMatch {
         public void findGenericTypeInfo(GenericInfoSource genericInfoSource) {
         }
 
+        @Override
+        public String toStringWithOuterPrecedence(int outerPrecedence) {
+            return toString();
+        }
     }
 
     public class ExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {

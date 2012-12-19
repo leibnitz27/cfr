@@ -23,6 +23,8 @@ public interface Expression {
 
     Expression pushDown(Expression toPush, Expression parent);
 
+    String toStringWithOuterPrecedence(int outerPrecedence);
+
     InferredJavaType getInferredJavaType();
 
     void findGenericTypeInfo(GenericInfoSource genericInfoSource);

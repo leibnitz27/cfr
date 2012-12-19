@@ -33,8 +33,18 @@ public class ArithmeticOperation extends AbstractExpression {
     }
 
     @Override
+    public String toStringWithOuterPrecedence(int outerPrecedence) {
+        int precedence = op.getPrecedence();
+        boolean braceNeeded = true;
+        if (outerPrecedence >= 0 && precedence >= 0) {
+            if (outerPrecedence <= precedence) braceNeeded = false;
+        }
+        return (braceNeeded ? "(" : "") + lhs.toStringWithOuterPrecedence(precedence) + " " + op.getShowAs() + " " + rhs.toStringWithOuterPrecedence(precedence) + (braceNeeded ? ")" : "");
+    }
+
+    @Override
     public String toString() {
-        return "(" + lhs.toString() + " " + op.getShowAs() + " " + rhs.toString() + ")";
+        return toStringWithOuterPrecedence(-1);
     }
 
     private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {

@@ -11,33 +11,31 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * To change this template use File | Settings | File Templates.
  */
 public enum ArithOp {
-    LCMP("LCMP", true),
-    DCMPL("DCMPL", true),
-    DCMPG("DCMPG", true),
-    FCMPL("FCMPL", true),
-    FCMPG("FCMPG", true),
-    PLUS("+"),
-    MINUS("-"),
-    MULTIPLY("*"),
-    DIVIDE("/"),
-    REM("%"),
-    OR("|"),
-    AND("&"),
-    SHR(">>"),
-    SHL("<<"),
-    SHRU(">>>"),
-    XOR("^");
+    LCMP("LCMP", true, -1),
+    DCMPL("DCMPL", true, -1),
+    DCMPG("DCMPG", true, -1),
+    FCMPL("FCMPL", true, -1),
+    FCMPG("FCMPG", true, -1),
+    PLUS("+", false, 0),
+    MINUS("-", false, 0),
+    MULTIPLY("*", false, 1),
+    DIVIDE("/", false, 2),
+    REM("%", false, -1),
+    OR("|", false, -1),
+    AND("&", false, -1),
+    SHR(">>", false, -1),
+    SHL("<<", false, -1),
+    SHRU(">>>", false, -1),
+    XOR("^", false, -1);
 
     private final String showAs;
     private final boolean temporary;
+    private final int precedence;
 
-    private ArithOp(String showAs, boolean temporary) {
+    private ArithOp(String showAs, boolean temporary, int precedence) {
         this.showAs = showAs;
         this.temporary = temporary;
-    }
-
-    private ArithOp(String showAs) {
-        this(showAs, false);
+        this.precedence = precedence;
     }
 
     public String getShowAs() {
@@ -46,6 +44,10 @@ public enum ArithOp {
 
     public boolean isTemporary() {
         return temporary;
+    }
+
+    public int getPrecedence() {
+        return precedence;
     }
 
     public static ArithOp getOpFor(JVMInstr instr) {

@@ -42,4 +42,9 @@ public abstract class AbstractExpression implements Expression {
     @Override
     public void findGenericTypeInfo(GenericInfoSource genericInfoSource) {
     }
+
+    @Override
+    public String toStringWithOuterPrecedence(int outerPrecedence) {
+        return toString();
+    }
 }
