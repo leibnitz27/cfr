@@ -7,6 +7,7 @@ import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.CFRParameters;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -126,11 +127,11 @@ public class ClassFile {
         }
     }
 
-    public void analyse() {
+    public void analyse(CFRParameters parameters) {
         boolean exceptionRecovered = false;
         for (Method method : methods) {
             try {
-                method.analyse();
+                method.analyse(parameters);
             } catch (Exception e) {
                 System.out.println("Exception analysing " + method.getName());
                 System.out.println(e);

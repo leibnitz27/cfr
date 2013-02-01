@@ -74,13 +74,12 @@ import java.util.Map;
 }
 
  */
-public class SwitchStringRewriter {
+public class SwitchStringRewriter implements Op04Rewriter {
+    @Override
     public void rewrite(Op04StructuredStatement root) {
 
         List<StructuredStatement> structuredStatements = ListFactory.newList();
         root.linearizeStatementsInto(structuredStatements);
-
-        root = root;
 
         // Rather than have a non-greedy kleene star at the start, we cheat and scan for valid start points.
         // switch OB (case OB (if-testalternativevalid OB assign break CB)* if-notvalid break assign break CB)+ CB

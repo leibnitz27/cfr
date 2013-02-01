@@ -11,7 +11,5 @@ public class GlobalArgs {
      * Are we being generous to try to get past anti-decompilation / hand written bytecode features?
      * (i.e. allow illegal type combinations).
      */
-    public static boolean lenient = false;
     public static boolean hideExtremelyLongStrings = false;
-    public static boolean resugarSwitchStrings = true;
 }

@@ -9,7 +9,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewrit
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
-import org.benf.cfr.reader.config.GlobalArgs;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
@@ -17,6 +16,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
+import org.benf.cfr.reader.util.getopt.CFRParameters;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
@@ -54,7 +54,7 @@ public class CodeAnalyser {
         this.method = method;
     }
 
-    public void analyse() {
+    public void analyse(CFRParameters parameters) {
 
         ByteData rawCode = originalCodeAttribute.getRawData();
         long codeLength = originalCodeAttribute.getCodeLength();
@@ -119,7 +119,7 @@ public class CodeAnalyser {
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
         //
-        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength);
+        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, parameters);
         lutByOffset = null; // No longer valid.
 
 
@@ -265,11 +265,11 @@ public class CodeAnalyser {
 
         logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
-
-        dumper.print("Raw Op3 statements:\n");
-        for (Op03SimpleStatement node : op03SimpleParseNodes) {
-            node.dumpInner(dumper);
-        }
+//
+//        dumper.print("Raw Op3 statements:\n");
+//        for (Op03SimpleStatement node : op03SimpleParseNodes) {
+//            node.dumpInner(dumper);
+//        }
 
         Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter());
 //        dumper.print("Final Op3 statements:\n");
@@ -284,7 +284,7 @@ public class CodeAnalyser {
 
         // Replace with a more generic interface, etc.
 
-        if (GlobalArgs.resugarSwitchStrings) new SwitchStringRewriter().rewrite(block);
+        if (!parameters.isNoStringSwitch()) new SwitchStringRewriter().rewrite(block);
 
         this.start = block;
     }

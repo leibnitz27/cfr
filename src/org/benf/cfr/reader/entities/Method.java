@@ -12,6 +12,7 @@ import org.benf.cfr.reader.util.CollectionUtils;
 import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.CFRParameters;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -142,9 +143,9 @@ public class Method implements KnowsRawSize {
         return (prefix.isEmpty() ? "" : (prefix + " ")) + getMethodPrototype().getDeclarationSignature(methodName, constructor);
     }
 
-    public void analyse() {
+    public void analyse(CFRParameters parameters) {
         try {
-            if (codeAttribute != null) codeAttribute.analyse();
+            if (codeAttribute != null) codeAttribute.analyse(parameters);
         } catch (RuntimeException e) {
             System.out.println("While processing method : " + this.getName());
             throw e;

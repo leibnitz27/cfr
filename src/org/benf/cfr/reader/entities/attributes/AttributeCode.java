@@ -7,6 +7,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.getopt.CFRParameters;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -73,8 +74,8 @@ public class AttributeCode extends Attribute {
         codeAnalyser.setMethod(method);
     }
 
-    public void analyse() {
-        codeAnalyser.analyse();
+    public void analyse(CFRParameters parameters) {
+        codeAnalyser.analyse(parameters);
     }
 
     public ConstantPool getConstantPool() {

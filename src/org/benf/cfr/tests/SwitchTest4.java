@@ -18,8 +18,6 @@ public class SwitchTest4 {
                 break;
             case "FRED":
                 return 1;
-            case "JIM":
-                return 2;
             case "BB":  // BB and Aa have the same hashcode.
                 return 12;
             case "Aa":

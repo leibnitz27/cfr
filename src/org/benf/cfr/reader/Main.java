@@ -4,6 +4,8 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.getopt.CFRParameters;
+import org.benf.cfr.reader.util.getopt.GetOptParser;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.io.*;
@@ -53,28 +55,20 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        if (args.length < 1) {
-            System.err.println("requires arg 'classFile'");
-            return;
-        }
 
-//        GlobalArgs.lenient = true;
-//        GlobalArgs.hideExtremelyLongStrings = true;
-
-        String fname = args[0];
-        String methname = null;
-        if (args.length >= 2) {
-            methname = args[1];
-        }
+        GetOptParser getOptParser = new GetOptParser();
 
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
+            CFRParameters params = getOptParser.parse(args);
+
             //LoggerFactory.setGlobalLoggingLevel();
-            byte[] content = getBytesFromFile(fname);
+            byte[] content = getBytesFromFile(params.getFileName());
             ByteData data = new BaseByteData(content);
             ClassFile c = new ClassFile(data);
-            c.analyse();
+            c.analyse(params);
             Dumper d = new Dumper();
+            String methname = params.getMethodName();
             if (methname == null) {
                 c.Dump(d);
             } else {

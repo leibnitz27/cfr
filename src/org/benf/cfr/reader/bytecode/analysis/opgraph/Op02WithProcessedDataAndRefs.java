@@ -22,7 +22,6 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.bytecode.opcode.OperationFactoryMultiANewArray;
-import org.benf.cfr.reader.config.GlobalArgs;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
@@ -36,6 +35,7 @@ import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.CFRParameters;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -945,7 +945,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             ExceptionAggregator exceptions,
             Map<Integer, Integer> lutByOffset,
             ConstantPool cp,
-            long codeLength
+            long codeLength,
+            CFRParameters parameters
     ) {
         int originalInstrCount = op2list.size();
 
@@ -988,7 +989,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 short handler = exceptionEntry.getBytecodeIndexHandler();
                 int handlerIndex = lutByOffset.get((int) handler);
                 if (handlerIndex <= originalIndex) {
-                    if (!GlobalArgs.lenient) {
+                    if (!parameters.isLenient()) {
                         throw new ConfusedCFRException("Back jump on a try block " + exceptionEntry);
                     }
                 }
@@ -1059,7 +1060,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                         if (source.getInstr() == JVMInstr.FAKE_CATCH) {
                             preCatchOp = source;
                         } else {
-                            if (!GlobalArgs.lenient) {
+                            if (!parameters.isLenient()) {
                                 throw new ConfusedCFRException("non catch before exception catch block");
                             }
                         }
