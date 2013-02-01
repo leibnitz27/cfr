@@ -4,6 +4,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.getopt.BadParametersException;
 import org.benf.cfr.reader.util.getopt.CFRParameters;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -81,6 +82,8 @@ public class Main {
         } catch (IOException e) {
             System.err.println(e.toString());
             System.exit(1);
+        } catch (BadParametersException e) {
+            System.err.print(e.toString());
         } catch (ConfusedCFRException e) {
             System.err.println(e.toString());
             for (Object x : e.getStackTrace()) {

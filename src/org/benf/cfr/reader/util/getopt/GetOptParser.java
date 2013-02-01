@@ -26,12 +26,12 @@ public class GetOptParser {
         put("nostringswitch", OptType.PRESENCE);
     }};
 
-    private String dumpOptTypes() {
+    public String getHelp() {
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, OptType> entry : optTypeMap.entrySet()) {
             switch (entry.getValue()) {
                 case PRESENCE:
-                    sb.append("   [ --").append(entry.getKey()).append("]\n");
+                    sb.append("   [ --").append(entry.getKey()).append(" ]\n");
                     break;
                 case STRING:
                     sb.append("   [ --").append(entry.getKey()).append(" value ]\n");
@@ -42,12 +42,12 @@ public class GetOptParser {
     }
 
     public CFRParameters parse(String[] args) {
-        if (args.length < 1) throw new ConfusedCFRException("filename [methodname]\n" + dumpOptTypes());
+        if (args.length < 1) throw new BadParametersException("missing filename\n", this);
 
         String fname = args[0];
         int start = 1;
         String methname = null;
-        if (args.length >= 2 && args[1].startsWith("-")) {
+        if (args.length >= 2 && !(args[1].startsWith("-"))) {
             methname = args[1];
             start = 2;
         }
@@ -62,7 +62,7 @@ public class GetOptParser {
             if (in[x].startsWith("--")) {
                 String name = in[x].substring(2);
                 if (!optTypeMap.containsKey(name)) {
-                    throw new ConfusedCFRException("Unknown argument " + name);
+                    throw new BadParametersException("Unknown argument " + name, this);
                 }
                 switch (optTypeMap.get(name)) {
                     case PRESENCE:
@@ -70,7 +70,7 @@ public class GetOptParser {
                         break;
                     case STRING:
                         if (x >= in.length - 1)
-                            throw new ConfusedCFRException("parameter " + name + " requires argument");
+                            throw new BadParametersException("parameter " + name + " requires argument", this);
                         res.put(name, in[++x]);
                         break;
                 }
