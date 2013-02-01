@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.ListFactory;
@@ -49,4 +50,15 @@ public class StructuredTry extends AbstractStructuredStatement {
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
         tryBlock.transform(transformer);
     }
+
+    @Override
+    public void linearizeInto(List<StructuredStatement> out) {
+        out.add(this);
+        tryBlock.linearizeStatementsInto(out);
+        for (Op04StructuredStatement catchBlock : catchBlocks) {
+            catchBlock.linearizeStatementsInto(out);
+        }
+
+    }
+
 }

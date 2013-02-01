@@ -5,8 +5,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignment
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.List;
 
 /**
  * Created:
@@ -38,5 +41,11 @@ public class StructuredFor extends AbstractStructuredStatement {
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
         body.transform(transformer);
+    }
+
+    @Override
+    public void linearizeInto(List<StructuredStatement> out) {
+        out.add(this);
+        body.linearizeStatementsInto(out);
     }
 }

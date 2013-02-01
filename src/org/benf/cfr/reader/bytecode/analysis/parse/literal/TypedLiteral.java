@@ -91,7 +91,7 @@ public class TypedLiteral {
     public String toString() {
         switch (type) {
             case String:
-                return (String) value;
+                return enQuote((String) value);
             case NullObject:
                 return "null";
             case Integer:
@@ -131,7 +131,7 @@ public class TypedLiteral {
     }
 
     public static TypedLiteral getString(String v) {
-        return new TypedLiteral(LiteralType.String, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), enQuote(v));
+        return new TypedLiteral(LiteralType.String, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), v);
     }
 
     public static TypedLiteral getNull() {

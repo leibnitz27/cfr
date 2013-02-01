@@ -1,8 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.List;
 
 /**
  * Created:
@@ -32,4 +37,19 @@ public class StructuredBreak extends AbstractStructuredStatement {
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
     }
 
+    @Override
+    public void linearizeInto(List<StructuredStatement> out) {
+        out.add(this);
+    }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        StructuredStatement o = matchIterator.getCurrent();
+        if (!(o instanceof StructuredBreak)) return false;
+        StructuredBreak other = (StructuredBreak) o;
+        if (!breakBlock.equals(other.breakBlock)) return false;
+        // Don't check locality.
+        matchIterator.advance();
+        return true;
+    }
 }

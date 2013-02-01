@@ -11,6 +11,8 @@ import org.benf.cfr.reader.entities.GenericInfoSource;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 
+import java.util.AbstractList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +31,23 @@ public class WildcardMatch {
     private Map<String, ExpressionWildcard> expressionMap = MapFactory.newMap();
     private Map<String, NewArrayWildcard> newArrayWildcardMap = MapFactory.newMap();
     private Map<String, MemberFunctionInvokationWildcard> memberFunctionMap = MapFactory.newMap();
+    private Map<String, BlockIdentifierWildcard> blockIdentifierWildcardMap = MapFactory.newMap();
+    private Map<String, ListWildcard> listMap = MapFactory.newMap();
+
+    private <T> void reset(Collection<? extends Wildcard<T>> coll) {
+        for (Wildcard<T> item : coll) {
+            item.resetMatch();
+        }
+    }
+
+    public void reset() {
+        reset(lValueMap.values());
+        reset(expressionMap.values());
+        reset(newArrayWildcardMap.values());
+        reset(memberFunctionMap.values());
+        reset(blockIdentifierWildcardMap.values());
+        reset(listMap.values());
+    }
 
     public LValueWildcard getLValueWildCard(String name) {
         LValueWildcard res = lValueMap.get(name);
@@ -67,6 +86,9 @@ public class WildcardMatch {
         return getMemberFunction(name, methodname, object, ListFactory.<Expression>newList());
     }
 
+    public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, Expression object, Expression... args) {
+        return getMemberFunction(name, methodname, object, ListFactory.<Expression>newList(args));
+    }
 
     /* When matching a function invokation, we don't really have all the details to construct a plausible
      * MemberFunctionInvokation expression, so just construct something which will match it!
@@ -77,6 +99,24 @@ public class WildcardMatch {
 
         res = new MemberFunctionInvokationWildcard(methodname, object, args);
         memberFunctionMap.put(name, res);
+        return res;
+    }
+
+    public BlockIdentifierWildcard getBlockIdentifier(String name) {
+        BlockIdentifierWildcard res = blockIdentifierWildcardMap.get(name);
+        if (res != null) return res;
+
+        res = new BlockIdentifierWildcard();
+        blockIdentifierWildcardMap.put(name, res);
+        return res;
+    }
+
+    public <T> ListWildcard getList(String name) {
+        ListWildcard res = listMap.get(name);
+        if (res != null) return res;
+
+        res = new ListWildcard();
+        listMap.put(name, res);
         return res;
     }
 
@@ -137,6 +177,11 @@ public class WildcardMatch {
         @Override
         public LValue getMatch() {
             return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
         }
     }
 
@@ -212,6 +257,12 @@ public class WildcardMatch {
         public Expression getMatch() {
             return matchedValue;
         }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
     }
 
     public class NewArrayWildcard extends AbstractBaseExpressionWildcard implements Wildcard<AbstractNewArray> {
@@ -242,6 +293,12 @@ public class WildcardMatch {
         public AbstractNewArray getMatch() {
             return matchedValue;
         }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
     }
 
     public class MemberFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
@@ -284,5 +341,83 @@ public class WildcardMatch {
         public Expression getMatch() {
             return matchedValue;
         }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
+    }
+
+    public class BlockIdentifierWildcard extends BlockIdentifier implements Wildcard<BlockIdentifier> {
+        private BlockIdentifier matchedValue;
+
+        public BlockIdentifierWildcard() {
+            super(0, null);
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null) return false;
+
+            if (matchedValue != null) return matchedValue.equals(o);
+
+            if (!(o instanceof BlockIdentifier)) return false;
+
+            BlockIdentifier other = (BlockIdentifier) o;
+            matchedValue = other;
+            return true;
+        }
+
+        @Override
+        public BlockIdentifier getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
+    }
+
+    public class ListWildcard extends AbstractList implements Wildcard<List> {
+        private List matchedValue;
+
+
+        @Override
+        public Object get(int index) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int size() {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null) return false;
+
+            if (matchedValue != null) return matchedValue.equals(o);
+
+            if (!(o instanceof List)) return false;
+
+            List other = (List) o;
+            matchedValue = other;
+            return true;
+        }
+
+        @Override
+        public List getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
     }
 }
+

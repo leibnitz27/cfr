@@ -1,12 +1,16 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.ElseBlock;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -53,5 +57,26 @@ public class StructuredIf extends AbstractStructuredStatement {
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
         ifTaken.transform(transformer);
         if (elseBlock != null) elseBlock.transform(transformer);
+    }
+
+    @Override
+    public void linearizeInto(List<StructuredStatement> out) {
+        out.add(this);
+        ifTaken.linearizeStatementsInto(out);
+        if (elseBlock != null) {
+            out.add(new ElseBlock());
+            elseBlock.linearizeStatementsInto(out);
+        }
+    }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        StructuredStatement o = matchIterator.getCurrent();
+        if (!(o instanceof StructuredIf)) return false;
+        StructuredIf other = (StructuredIf) o;
+        if (!conditionalExpression.equals(other.conditionalExpression)) return false;
+
+        matchIterator.advance();
+        return true;
     }
 }

@@ -1,7 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.List;
 
 /**
  * Created:
@@ -25,4 +29,10 @@ public class StructuredComment extends AbstractStructuredStatement {
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
     }
+
+    // Lose the comments.
+    @Override
+    public void linearizeInto(List<StructuredStatement> out) {
+    }
+
 }

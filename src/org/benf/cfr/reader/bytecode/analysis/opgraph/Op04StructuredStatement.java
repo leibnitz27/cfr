@@ -7,6 +7,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTrans
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
@@ -170,6 +172,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
         replacement.setTargets(original.getTargets());
         original.setTargets(ListFactory.<Op04StructuredStatement>newList());
+    }
+
+    public void linearizeStatementsInto(List<StructuredStatement> out) {
+        structuredStatement.linearizeInto(out);
     }
 
     public void removeLastContinue(BlockIdentifier block) {

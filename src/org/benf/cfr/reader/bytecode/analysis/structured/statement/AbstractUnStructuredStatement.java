@@ -1,6 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+
+import java.util.List;
 
 /**
  * Created:
@@ -17,4 +22,15 @@ public abstract class AbstractUnStructuredStatement extends AbstractStructuredSt
     public final boolean isProperlyStructured() {
         return false;
     }
+
+    @Override
+    public void linearizeInto(List<StructuredStatement> out) {
+        throw new UnsupportedOperationException("Can't linarise an unstructured statement");
+    }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        throw new UnsupportedOperationException();
+    }
+
 }

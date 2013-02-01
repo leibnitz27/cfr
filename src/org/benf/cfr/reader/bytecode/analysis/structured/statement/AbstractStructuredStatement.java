@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
@@ -37,4 +39,10 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     public boolean isProperlyStructured() {
         return true;
     }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        throw new UnsupportedOperationException();
+    }
+
 }

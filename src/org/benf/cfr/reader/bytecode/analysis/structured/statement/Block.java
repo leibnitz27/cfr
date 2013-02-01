@@ -1,9 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -145,6 +149,15 @@ public class Block extends AbstractStructuredStatement {
     }
 
     @Override
+    public void linearizeInto(List<StructuredStatement> out) {
+        out.add(new BeginBlock());
+        for (Op04StructuredStatement structuredBlock : containedStatements) {
+            structuredBlock.linearizeStatementsInto(out);
+        }
+        out.add(new EndBlock());
+    }
+
+    @Override
     public void dump(Dumper dumper) {
         if (containedStatements.isEmpty()) {
             dumper.print("\n");
@@ -162,5 +175,10 @@ public class Block extends AbstractStructuredStatement {
             dumper.print("}");
             dumper.enqueuePendingCarriageReturn();
         }
+    }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        throw new UnsupportedOperationException();
     }
 }

@@ -13,4 +13,5 @@ public class GlobalArgs {
      */
     public static boolean lenient = false;
     public static boolean hideExtremelyLongStrings = false;
+    public static boolean resugarSwitchStrings = true;
 }

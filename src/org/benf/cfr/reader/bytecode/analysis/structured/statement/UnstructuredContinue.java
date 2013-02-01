@@ -1,10 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -51,4 +54,15 @@ public class UnstructuredContinue extends AbstractStructuredContinue {
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
     }
+
+    @Override
+    public void linearizeInto(List<StructuredStatement> out) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        throw new UnsupportedOperationException();
+    }
+
 }

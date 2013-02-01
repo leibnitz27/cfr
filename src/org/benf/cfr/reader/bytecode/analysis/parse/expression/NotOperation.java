@@ -67,4 +67,15 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
     public ConditionalExpression optimiseForType() {
         return this;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+
+        if (!(obj instanceof NotOperation)) return false;
+
+        NotOperation other = (NotOperation) obj;
+        return inner.equals(other.inner);
+    }
 }
