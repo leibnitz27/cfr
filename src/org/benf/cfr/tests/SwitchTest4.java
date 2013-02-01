@@ -16,11 +16,10 @@ public class SwitchTest4 {
             default:
                 System.out.println("Test");
                 break;
-            case "FRED":
-                return 1;
             case "BB":  // BB and Aa have the same hashcode.
                 return 12;
             case "Aa":
+            case "FRED":
                 return 13;
         }
         System.out.println("Here");
