@@ -64,6 +64,7 @@ public class CodeAnalyser {
         OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(0);
         int idx = 1;
         int offset = 0;
+        Dumper dumper = new Dumper();
 
         // We insert a fake NOP right at the start, so that we always know that each operation has a valid
         // parent.  This sentinel assumption is used when inserting try { catch blocks.
@@ -92,6 +93,7 @@ public class CodeAnalyser {
             op2list.add(op2);
         }
 
+
         for (int x = 0; x < instrs.size(); ++x) {
             int offsetOfThisInstruction = lutByIdx.get(x);
             int[] targetIdxs = op1list.get(x).getAbsoluteIndexJumps(offsetOfThisInstruction, lutByOffset);
@@ -119,6 +121,7 @@ public class CodeAnalyser {
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
         //
+
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, parameters);
         lutByOffset = null; // No longer valid.
 
@@ -127,7 +130,6 @@ public class CodeAnalyser {
         // consumed / produced.
         Op02WithProcessedDataAndRefs.populateStackInfo(op2list);
 
-        Dumper dumper = new Dumper();
 ////
 //        dumper.dump(op2list);
 
@@ -145,9 +147,6 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
-//        dumper.print("Raw Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
-
 //        Op03SimpleStatement.findGenericTypes(op03SimpleParseNodes, cp);
 
         // Expand raw switch statements into more useful ones.
@@ -164,9 +163,6 @@ public class CodeAnalyser {
         // Condense pointless assignments
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
-
-//        dumper.print("Raw Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
 
 
         // Try to eliminate catch temporaries.
@@ -223,6 +219,7 @@ public class CodeAnalyser {
 
         logger.info("identifyCatchBlocks");
         Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         logger.info("removeSynchronizedCatchBlocks");
         Op03SimpleStatement.removeSynchronizedCatchBlocks(op03SimpleParseNodes);

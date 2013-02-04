@@ -22,6 +22,7 @@ public class StructuredComment extends AbstractStructuredStatement {
     @Override
     public void dump(Dumper dumper) {
         if (comment.length() > 0) {
+            dumper.print("// ");
             dumper.print(comment + "\n");
         }
     }

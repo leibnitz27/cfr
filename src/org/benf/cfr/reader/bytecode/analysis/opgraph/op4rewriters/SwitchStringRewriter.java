@@ -78,7 +78,12 @@ public class SwitchStringRewriter implements Op04Rewriter {
     public void rewrite(Op04StructuredStatement root) {
 
         List<StructuredStatement> structuredStatements = ListFactory.newList();
-        root.linearizeStatementsInto(structuredStatements);
+        try {
+            root.linearizeStatementsInto(structuredStatements);
+        } catch (UnsupportedOperationException e) {
+            // Todo : Should output something at the end about this failure.
+            return;
+        }
 
         // Rather than have a non-greedy kleene star at the start, we cheat and scan for valid start points.
         // switch OB (case OB (if-testalternativevalid OB assign break CB)* if-notvalid break assign break CB)+ CB

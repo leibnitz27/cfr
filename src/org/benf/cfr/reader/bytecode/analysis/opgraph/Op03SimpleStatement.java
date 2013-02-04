@@ -1929,9 +1929,28 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     /*
+     * The Op4 -> Structured op4 transform requires blocks to have a member, in order to trigger the parent being claimed.
+     * We may need to add synthetic block entries.
+     *
+     * Because there is an assumption that all statements are in 'statements'
+     * todo : remove this assumption!
+     * we need to link it to the end.
+     */
+    private static Op03SimpleStatement insertBlockPadding(String comment, Op03SimpleStatement insertAfter, Op03SimpleStatement insertBefore, BlockIdentifier blockIdentifier, List<Op03SimpleStatement> statements) {
+        Op03SimpleStatement between = new Op03SimpleStatement(insertAfter.getBlockIdentifiers(), new CommentStatement(comment), insertAfter.getIndex().justAfter());
+        insertAfter.replaceTarget(insertBefore, between);
+        insertBefore.replaceSource(insertAfter, between);
+        between.addSource(insertAfter);
+        between.addTarget(insertBefore);
+        between.getBlockIdentifiers().add(blockIdentifier);
+        statements.add(between);
+        return between;
+    }
+
+    /*
      * Could be refactored out as uniquelyReachableFrom....
      */
-    private static void identifyCatchBlock(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
+    private static void identifyCatchBlock(Op03SimpleStatement start, BlockIdentifier blockIdentifier, List<Op03SimpleStatement> statements) {
         Set<Op03SimpleStatement> knownMembers = SetFactory.newSet();
         Set<Op03SimpleStatement> seen = SetFactory.newSet();
         seen.add(start);
@@ -2017,6 +2036,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * Now we have to check how well it lines up with the linear code assumption.
          */
         knownMembers.remove(start);
+        if (knownMembers.isEmpty()) {
+            List<Op03SimpleStatement> targets = start.getTargets();
+            // actually already verified above, but I'm being paranoid.
+            if (targets.size() != 1) throw new ConfusedCFRException("Synthetic catch block has multiple targets");
+            knownMembers.add(insertBlockPadding("empty catch block", start, targets.get(0), blockIdentifier, statements));
+        }
         for (Op03SimpleStatement inBlock : knownMembers) {
             inBlock.containedInBlocks.add(blockIdentifier);
         }
@@ -2047,7 +2072,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (catchStatement.getCatchBlockIdent() == null) {
                 BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.CATCHBLOCK);
                 catchStatement.setCatchBlockIdent(blockIdentifier);
-                identifyCatchBlock(catchStart, blockIdentifier);
+                identifyCatchBlock(catchStart, blockIdentifier, in);
             }
         }
     }
