@@ -10,7 +10,7 @@ import java.util.Set;
  * Time: 18:48
  * To change this template use File | Settings | File Templates.
  */
-public class IfEmptyTest1 {
+public class IfEmptyTest7 {
 
     /* 0_6 has a problem with empty blocks */
 
@@ -24,8 +24,8 @@ public class IfEmptyTest1 {
         } else if (set == null) {
 //            System.out.println("D");
             if (list.isEmpty()) {
-                System.out.println("E");
             } else {
+                System.out.println("E");
             }
         }
 
