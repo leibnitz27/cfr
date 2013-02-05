@@ -1732,6 +1732,18 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         Set<Op03SimpleStatement> validForwardParents = SetFactory.newSet();
         validForwardParents.add(ifStatement);
+        /*
+         * Find the (possible) end of the if block, which is a forward unconditional jump.
+         * If that's the case, cache it and rewrite any jumps we see which go to the same place
+         * as double jumps via this unconditional.
+         */
+        Op03SimpleStatement stmtLastBlock = statements.get(idxTaken - 1);
+        Op03SimpleStatement stmtLastBlockRewrite = null;
+        Statement stmtLastBlockInner = stmtLastBlock.getStatement();
+        if (stmtLastBlockInner.getClass() == GotoStatement.class) {
+            stmtLastBlockRewrite = stmtLastBlock;
+        }
+
         do {
             Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
             /* Consider sources of this which jumped forward to get to it.
@@ -1769,9 +1781,24 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             ifBranch.add(statementCurrent);
             JumpType jumpType = statementCurrent.getJumpType();
             if (jumpType.isUnknown()) {
+                // Todo : Currently we can only cope with hitting
+                // the last jump as an unknown jump.  We ought to be able to rewrite
+                // i.e. if we have
+                /*
+                    if (list != null) goto lbl6;
+                    System.out.println("A");
+                    if (set != null) goto lbl8; <<-----
+                    System.out.println("B");
+                    goto lbl8;
+                    lbl6:
+                    ELSE BLOCK
+                    lbl8:
+                    return true;
+                 */
+                // this is a problem, because the highlighted statement will cause us to abandon processing.
                 if (idxCurrent == idxTaken - 1) {
                     Statement mGotoStatement = statementCurrent.containedStatement;
-                    if (!(mGotoStatement instanceof GotoStatement)) return false;
+                    if (!(mGotoStatement.getClass() == GotoStatement.class)) return false;
                     GotoStatement gotoStatement = (GotoStatement) mGotoStatement;
                     // It's unconditional, and it's a forward jump.
                     maybeElseEnd = statementCurrent.getTargets().get(0);
@@ -1781,7 +1808,22 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     leaveIfBranchGoto = gotoStatement;
                     maybeSimpleIfElse = true;
                 } else {
-                    return false;
+                    if (stmtLastBlockRewrite == null) return false;
+                    // We can try to rewrite this block to have an indirect jump via the end of the block,
+                    // if that's appropriate.
+                    List<Op03SimpleStatement> targets = statementCurrent.getTargets();
+
+                    Op03SimpleStatement eventualTarget = stmtLastBlockRewrite.getTargets().get(0);
+                    boolean found = false;
+                    for (int x = 0; x < targets.size(); ++x) {
+                        Op03SimpleStatement target = targets.get(x);
+                        if (target == eventualTarget) {
+                            targets.set(x, stmtLastBlockRewrite);
+                            eventualTarget.replaceSource(statementCurrent, stmtLastBlockRewrite);
+                            found = true;
+                        }
+                    }
+                    return found;
                 }
             }
             idxCurrent++;

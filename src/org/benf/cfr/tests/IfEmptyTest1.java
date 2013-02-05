@@ -18,12 +18,15 @@ public class IfEmptyTest1 {
         if (list == null) {
             System.out.println("A");
             if (set == null) {
-                System.out.println("B");
             } else {
-//                System.out.println("C");
+                System.out.println("B");
             }
         } else if (set == null) {
             System.out.println("D");
+            if (list.isEmpty()) {
+            } else {
+                System.out.println("E");
+            }
         }
 
 
