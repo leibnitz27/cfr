@@ -16,10 +16,14 @@ public class IfEmptyTest1 {
 
     public boolean test1(List<Object> list, Set<Object> set) {
         if (list == null) {
+            System.out.println("A");
             if (set == null) {
+                System.out.println("B");
             } else {
+//                System.out.println("C");
             }
         } else if (set == null) {
+            System.out.println("D");
         }
 
 
