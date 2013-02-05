@@ -1714,15 +1714,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Set<BlockIdentifier> blocksAtStart = ifStatement.containedInBlocks;
         if (idxCurrent == idxEnd) {
             // It's a trivial tautology? We can't nop it out unless it's side effect free.
-//            Dumper d = new Dumper();
-//            d.print("********\n");
-//            ifStatement.dumpInner(d);
-//            d.print("Taken:\n");
-//            takenTarget.dumpInner(d);
-//            d.print("Not taken:\n");
-//            notTakenTarget.dumpInner(d);
-//            throw new ConfusedCFRException("Tautology?");
-            return false;
+            // Instead insert a comment.
+            Op03SimpleStatement taken = new Op03SimpleStatement(blocksAtStart, new CommentStatement("empty if block"), notTakenTarget.index.justBefore());
+            taken.addSource(ifStatement);
+            taken.addTarget(notTakenTarget);
+            notTakenTarget.addSource(taken);
+            ifStatement.targets.set(0, taken);
+            statements.add(idxTaken, taken);
+
+            BlockIdentifier ifBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_TAKEN);
+            taken.markFirstStatementInBlock(ifBlockLabel);
+            // O(N) insertion here is annoying, but we need to fix up the list IMMEDIATELY.
+            taken.getBlockIdentifiers().add(ifBlockLabel);
+            innerIfStatement.setKnownBlocks(ifBlockLabel, null);
+            innerIfStatement.setJumpType(JumpType.GOTO_OUT_OF_IF);
+            return true;
         }
         Set<Op03SimpleStatement> validForwardParents = SetFactory.newSet();
         validForwardParents.add(ifStatement);
@@ -1799,7 +1805,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                      * if (a) { ... } else { ....} ; goto X
                      */
                     Statement mGotoStatement = statementCurrent.containedStatement;
-                    if (!(mGotoStatement instanceof GotoStatement)) return false;
+                    if (!(mGotoStatement.getClass() == GotoStatement.class)) return false;
                     GotoStatement gotoStatement = (GotoStatement) mGotoStatement;
                     // It's unconditional, and it's a forward jump.
                     if (statementCurrent.targets.get(0) == maybeElseEnd) {
@@ -1860,7 +1866,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         BlockIdentifier elseBlockLabel = null;
         if (maybeSimpleIfElse) {
             elseBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_ELSE);
-            markWholeBlock(elseBranch, elseBlockLabel);
+            if (elseBranch.isEmpty()) {
+                throw new IllegalStateException();
+            } else {
+                markWholeBlock(elseBranch, elseBlockLabel);
+            }
         }
 
         if (leaveIfBranchGoto != null) leaveIfBranchGoto.setJumpType(JumpType.GOTO_OUT_OF_IF);
