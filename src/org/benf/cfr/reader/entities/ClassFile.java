@@ -130,15 +130,17 @@ public class ClassFile {
     public void analyse(CFRParameters parameters) {
         boolean exceptionRecovered = false;
         for (Method method : methods) {
-            try {
-                method.analyse(parameters);
-            } catch (Exception e) {
-                System.out.println("Exception analysing " + method.getName());
-                System.out.println(e);
-                for (StackTraceElement s : e.getStackTrace()) {
-                    System.out.println(s);
+            if (parameters.analyseMethod(method.getName())) {
+                try {
+                    method.analyse(parameters);
+                } catch (Exception e) {
+                    System.out.println("Exception analysing " + method.getName());
+                    System.out.println(e);
+                    for (StackTraceElement s : e.getStackTrace()) {
+                        System.out.println(s);
+                    }
+                    exceptionRecovered = true;
                 }
-                exceptionRecovered = true;
             }
         }
         if (exceptionRecovered) throw new RuntimeException("Failed to analyse file");

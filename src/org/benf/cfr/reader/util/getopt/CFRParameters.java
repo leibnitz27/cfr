@@ -36,4 +36,8 @@ public class CFRParameters {
         return false;
     }
 
+    public boolean analyseMethod(String thisMethodName) {
+        if (methodName == null) return true;
+        return methodName.equals(thisMethodName);
+    }
 }
