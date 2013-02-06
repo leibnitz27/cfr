@@ -105,6 +105,8 @@ public class TypedLiteral {
                 }
             case Long:
                 return longName(value);
+            case Class:
+
             default:
                 return value.toString();
         }
@@ -155,7 +157,7 @@ public class TypedLiteral {
         } else if (cpe instanceof ConstantPoolEntryString) {
             return getString(((ConstantPoolEntryString) cpe).getValue(cp));
         } else if (cpe instanceof ConstantPoolEntryClass) {
-            return getClass(cp.getUTF8Entry(((ConstantPoolEntryClass) cpe).getNameIndex()).getValue());
+            return getClass(((ConstantPoolEntryClass) cpe).getTextName(cp));
         }
         throw new ConfusedCFRException("Can't turn ConstantPoolEntry into Literal - got " + cpe);
     }
