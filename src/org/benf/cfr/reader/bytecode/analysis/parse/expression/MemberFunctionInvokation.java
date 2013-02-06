@@ -68,7 +68,11 @@ public class MemberFunctionInvokation extends AbstractExpression {
         if (special) {
             JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
             JavaTypeInstance callType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
-            if (callType.equals(objType)) {
+            // [*] this is a hack.  We know if a special call is a private call or a super call if it's a local class
+            // type call - but sometimes we lose this information.....
+            // Should PROBABLY do this with isPrivate on the methodPrototype instead...
+            if (callType.equals(objType) ||
+                    objType.getRawName().equals("java.lang.Object")) { // see [*]
                 sb.append(object.toString());
             } else {
                 sb.append("super");
