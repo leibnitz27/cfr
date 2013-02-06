@@ -147,6 +147,8 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
+        // This has issues, as we'd need to call out to find definitions of foreign classes
+        // in order to (eg) know that get on a List<X> returns an X.
 //        Op03SimpleStatement.findGenericTypes(op03SimpleParseNodes, cp);
 
         // Expand raw switch statements into more useful ones.
