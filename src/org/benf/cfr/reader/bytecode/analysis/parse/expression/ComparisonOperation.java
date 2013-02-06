@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -130,6 +131,8 @@ public class ComparisonOperation extends AbstractExpression implements Condition
             default:
                 return BooleanComparisonType.NOT;
         }
+        if (a.getInferredJavaType().getJavaTypeInstance().getRawTypeOfSimpleType() != RawJavaType.BOOLEAN)
+            return BooleanComparisonType.NOT;
         if (!(b instanceof Literal)) return BooleanComparisonType.NOT;
         Literal literal = (Literal) b;
         TypedLiteral lit = literal.getValue();
