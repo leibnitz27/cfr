@@ -128,7 +128,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             return;
             // throw new ConfusedCFRException("Trying to nopOut a node which was already nopped.");
         }
-        if (this.targets.size() == 0) {
+        if (this.targets.isEmpty()) {
             this.containedStatement = new Nop();
             this.isNop = true;
             containedStatement.setContainer(this);
@@ -2455,6 +2455,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     private static void optimiseForTypes(Op03SimpleStatement statement) {
         IfStatement ifStatement = (IfStatement) (statement.containedStatement);
+        ifStatement.optimiseForTypes();
         ifStatement.optimiseForTypes();
     }
 
