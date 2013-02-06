@@ -68,8 +68,8 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
         if (!(elseStmt instanceof Block)) return elseBlock;
         Block block = (Block) elseStmt;
         if (!block.isJustOneStatement()) {
-            Dumper d = new Dumper();
-            block.dump(d);
+//            Dumper d = new Dumper();
+//            block.dump(d);
             return elseBlock;
         }
         Op04StructuredStatement inner = block.getSingleStatement();
