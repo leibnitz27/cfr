@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByt
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
@@ -284,6 +285,7 @@ public class CodeAnalyser {
         // Replace with a more generic interface, etc.
 
         if (!parameters.isNoStringSwitch()) new SwitchStringRewriter().rewrite(block);
+        new SwitchEnumRewriter().rewrite(block);
 
         this.start = block;
     }

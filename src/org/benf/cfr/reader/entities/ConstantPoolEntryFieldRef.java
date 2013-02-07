@@ -41,6 +41,14 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
         return classIndex;
     }
 
+    public ConstantPoolEntryClass getClassEntry(ConstantPool cp) {
+        return cp.getClassEntry(classIndex);
+    }
+
+    public ConstantPoolEntryNameAndType getNameAndTypeEntry(ConstantPool cp) {
+        return cp.getNameAndTypeEntry(nameAndTypeIndex);
+    }
+
     public String getLocalName(ConstantPool cp) {
         return cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue();
     }

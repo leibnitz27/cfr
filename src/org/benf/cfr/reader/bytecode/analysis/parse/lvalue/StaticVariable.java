@@ -6,9 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.ConstantPoolEntry;
-import org.benf.cfr.reader.entities.ConstantPoolEntryFieldRef;
+import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -38,6 +36,21 @@ public class StaticVariable extends AbstractLValue {
         throw new ConfusedCFRException("NYI");
     }
 
+    public JavaTypeInstance getJavaTypeInstance() {
+        return clazz;
+    }
+
+    public ConstantPoolEntryNameAndType getNameAndTypeEntry() {
+        return field.getNameAndTypeEntry(cp);
+    }
+
+    public ConstantPoolEntryClass getClassEntry() {
+        return field.getClassEntry(cp);
+    }
+
+    public String getVarName() {
+        return varName;
+    }
 
     @Override
     public String toString() {

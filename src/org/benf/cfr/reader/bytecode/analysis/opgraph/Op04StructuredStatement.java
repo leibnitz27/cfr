@@ -9,10 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComm
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.SetFactory;
-import org.benf.cfr.reader.util.StackFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -422,6 +419,27 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         if (statement instanceof Block) {
             Block block = (Block) statement;
             block.removeLastNVReturn();
+        }
+    }
+
+
+    public static class TypeFilter<T> implements Predicate<Op04StructuredStatement> {
+        private final Class<T> clazz;
+        private final boolean positive;
+
+        public TypeFilter(Class<T> clazz) {
+            this.clazz = clazz;
+            this.positive = true;
+        }
+
+        public TypeFilter(Class<T> clazz, boolean positive) {
+            this.clazz = clazz;
+            this.positive = positive;
+        }
+
+        @Override
+        public boolean test(Op04StructuredStatement in) {
+            return (positive == clazz.isInstance(in.structuredStatement));
         }
     }
 
