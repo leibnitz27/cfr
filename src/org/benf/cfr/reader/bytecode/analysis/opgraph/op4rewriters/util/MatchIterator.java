@@ -1,8 +1,7 @@
-package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
+package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util;
 
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**

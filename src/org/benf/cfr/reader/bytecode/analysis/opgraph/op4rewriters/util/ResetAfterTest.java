@@ -1,5 +1,8 @@
-package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
+package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.Matcher;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 

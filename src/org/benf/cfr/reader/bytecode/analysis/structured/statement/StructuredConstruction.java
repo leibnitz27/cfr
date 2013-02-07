@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;

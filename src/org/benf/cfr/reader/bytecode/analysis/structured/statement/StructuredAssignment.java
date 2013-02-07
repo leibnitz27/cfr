@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchIterator;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;

@@ -3,7 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.output.Dumpable;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.Matcher;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.Matcher;
 
 import java.util.List;
 import java.util.Vector;

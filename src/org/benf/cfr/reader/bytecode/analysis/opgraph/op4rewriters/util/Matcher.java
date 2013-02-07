@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
+package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util;
 
 /**
  * Created with IntelliJ IDEA.
