@@ -1,13 +1,14 @@
 package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.bytecode.CodeAnalyser;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
-import org.benf.cfr.reader.util.getopt.CFRParameters;
+import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -74,8 +75,8 @@ public class AttributeCode extends Attribute {
         codeAnalyser.setMethod(method);
     }
 
-    public void analyse(CFRParameters parameters) {
-        codeAnalyser.analyse(parameters);
+    public Op04StructuredStatement analyse(CFRState state) {
+        return codeAnalyser.getAnalysis(state);
     }
 
     public ConstantPool getConstantPool() {
@@ -117,7 +118,7 @@ public class AttributeCode extends Attribute {
 //            d.newln();
 //            a.dump(d, cp);
 //        }
-        codeAnalyser.dump(d);
+        codeAnalyser.getAnalysis().dump(d);
     }
 
     @Override

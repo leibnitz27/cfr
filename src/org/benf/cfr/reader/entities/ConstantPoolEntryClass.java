@@ -35,7 +35,7 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEn
     }
 
     public String getTextName(ConstantPool cp) {
-        return ClassNameUtils.convert(cp.getUTF8Entry(nameIndex).getValue()) + ".class";
+        return ClassNameUtils.convertFromPath(cp.getUTF8Entry(nameIndex).getValue()) + ".class";
     }
 
     @Override
@@ -49,7 +49,7 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEn
             if (rawType.startsWith("[")) {
                 javaTypeInstance = ConstantPoolUtils.decodeTypeTok(rawType, cp);
             } else {
-                javaTypeInstance = new JavaRefTypeInstance(ClassNameUtils.convert(rawType), cp);
+                javaTypeInstance = new JavaRefTypeInstance(ClassNameUtils.convertFromPath(rawType), cp);
             }
         }
         return javaTypeInstance;

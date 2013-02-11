@@ -31,6 +31,17 @@ public class StaticVariable extends AbstractLValue {
         this.varName = this.field.getLocalName(cp);
     }
 
+    /*
+     * Used only for matching
+     */
+    protected StaticVariable(InferredJavaType type, JavaTypeInstance clazz, String varName) {
+        super(type);
+        this.field = null;
+        this.cp = null;
+        this.varName = varName;
+        this.clazz = clazz;
+    }
+
     @Override
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");

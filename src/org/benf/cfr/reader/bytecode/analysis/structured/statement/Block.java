@@ -177,6 +177,10 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
+    public boolean isIndenting() {
+        return indenting;
+    }
+
     @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         throw new UnsupportedOperationException();

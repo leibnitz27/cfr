@@ -41,7 +41,7 @@ public class GenericInfoSource {
      */
     public JavaTypeInstance getGenericTypeInfo(JavaTypeInstance bestGuess, JavaGenericRefTypeInstance clazzInfo, final String methName, MethodPrototype methodPrototype) {
         String rawClassName = clazzInfo.getClassName();
-        rawClassName = ClassNameUtils.convert(rawClassName);
+        rawClassName = ClassNameUtils.convertFromPath(rawClassName);
         Class clazz = null;
         try {
             clazz = Class.forName(rawClassName, false, this.getClass().getClassLoader());

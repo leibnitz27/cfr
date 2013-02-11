@@ -77,12 +77,16 @@ public class Field implements KnowsRawSize {
         return cachedDecodedType;
     }
 
+    public String getFieldName(ConstantPool cp) {
+        return cp.getUTF8Entry(nameIndex).getValue();
+    }
+
     public void dump(Dumper d, ConstantPool cp) {
         StringBuilder sb = new StringBuilder();
         String prefix = CollectionUtils.join(accessFlags, " ");
         if (!prefix.isEmpty()) sb.append(prefix);
         JavaTypeInstance type = getJavaTypeInstance(cp);
-        sb.append(' ').append(type.toString()).append(' ').append(cp.getUTF8Entry(nameIndex).getValue());
+        sb.append(' ').append(type.toString()).append(' ').append(getFieldName(cp));
         if (constantValue != null) {
             sb.append(" = ").append(constantValue);
         }

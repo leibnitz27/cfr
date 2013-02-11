@@ -13,7 +13,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     private final ConstantPool cp;
 
     public JavaRefTypeInstance(String rawClassName, ConstantPool cp) {
-        this.className = ClassNameUtils.convert(rawClassName);
+        this.className = ClassNameUtils.convertFromPath(rawClassName);
         this.cp = cp;
         cp.markClassNameUsed(this.className);
     }
@@ -84,4 +84,6 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     public RawJavaType getRawTypeOfSimpleType() {
         return RawJavaType.REF;
     }
+
+
 }

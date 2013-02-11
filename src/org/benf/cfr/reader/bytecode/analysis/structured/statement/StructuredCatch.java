@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
@@ -45,5 +47,15 @@ public class StructuredCatch extends AbstractStructuredStatement {
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
         catchBlock.linearizeStatementsInto(out);
+    }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        StructuredStatement o = matchIterator.getCurrent();
+        if (!(o instanceof StructuredCatch)) return false;
+        StructuredCatch other = (StructuredCatch) o;
+        // we don't actually check any equality for a match.
+        matchIterator.advance();
+        return true;
     }
 }

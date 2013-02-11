@@ -49,6 +49,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         this.structuredStatement = justStatement;
         this.instrIndex = new InstrIndex(-1000);
         this.blockMembership = EMPTY_BLOCKSET;
+        justStatement.setContainer(this);
     }
 
     public Op04StructuredStatement(

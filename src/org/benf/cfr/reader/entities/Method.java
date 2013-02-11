@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -9,10 +10,11 @@ import org.benf.cfr.reader.entities.attributes.AttributeSignature;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.CollectionUtils;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.CFRParameters;
+import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -143,9 +145,14 @@ public class Method implements KnowsRawSize {
         return (prefix.isEmpty() ? "" : (prefix + " ")) + getMethodPrototype().getDeclarationSignature(methodName, constructor);
     }
 
-    public void analyse(CFRParameters parameters) {
+    public Op04StructuredStatement getAnalysis(CFRState state) {
+        if (codeAttribute == null) throw new ConfusedCFRException("No code in this method to analyze");
+        return codeAttribute.analyse(state);
+    }
+
+    public void analyse(CFRState state) {
         try {
-            if (codeAttribute != null) codeAttribute.analyse(parameters);
+            if (codeAttribute != null) codeAttribute.analyse(state);
         } catch (RuntimeException e) {
             System.out.println("While processing method : " + this.getName());
             throw e;

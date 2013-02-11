@@ -22,6 +22,7 @@ public class EnumSwitchTest1 {
                 System.out.println("Test");
                 break;
             case ONE:
+                return 9;
             case TWO:
                 return 2;
         }

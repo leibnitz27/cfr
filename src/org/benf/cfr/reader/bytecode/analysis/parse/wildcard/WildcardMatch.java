@@ -5,7 +5,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractNewArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.GenericInfoSource;
 import org.benf.cfr.reader.util.ListFactory;
@@ -31,8 +34,10 @@ public class WildcardMatch {
     private Map<String, ExpressionWildcard> expressionMap = MapFactory.newMap();
     private Map<String, NewArrayWildcard> newArrayWildcardMap = MapFactory.newMap();
     private Map<String, MemberFunctionInvokationWildcard> memberFunctionMap = MapFactory.newMap();
+    private Map<String, StaticFunctionInvokationWildcard> staticFunctionMap = MapFactory.newMap();
     private Map<String, BlockIdentifierWildcard> blockIdentifierWildcardMap = MapFactory.newMap();
     private Map<String, ListWildcard> listMap = MapFactory.newMap();
+    private Map<String, StaticVariableWildcard> staticVariableWildcardMap = MapFactory.newMap();
 
     private <T> void reset(Collection<? extends Wildcard<T>> coll) {
         for (Wildcard<T> item : coll) {
@@ -47,6 +52,8 @@ public class WildcardMatch {
         reset(memberFunctionMap.values());
         reset(blockIdentifierWildcardMap.values());
         reset(listMap.values());
+        reset(staticFunctionMap.values());
+        reset(staticVariableWildcardMap.values());
     }
 
     public LValueWildcard getLValueWildCard(String name) {
@@ -99,6 +106,39 @@ public class WildcardMatch {
 
         res = new MemberFunctionInvokationWildcard(methodname, object, args);
         memberFunctionMap.put(name, res);
+        return res;
+    }
+
+    public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, String methodname) {
+        return getStaticFunction(name, clazz, methodname, ListFactory.<Expression>newList());
+    }
+
+    public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, String methodname, Expression... args) {
+        return getStaticFunction(name, clazz, methodname, ListFactory.<Expression>newList(args));
+    }
+
+    /* When matching a function invokation, we don't really have all the details to construct a plausible
+     * StaticFunctionInvokation expression, so just construct something which will match it!
+     */
+    public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, String methodname, List<Expression> args) {
+        StaticFunctionInvokationWildcard res = staticFunctionMap.get(name);
+        if (res != null) return res;
+
+        res = new StaticFunctionInvokationWildcard(methodname, clazz, args);
+        staticFunctionMap.put(name, res);
+        return res;
+    }
+
+    public StaticVariableWildcard getStaticVariable(String name) {
+        return staticVariableWildcardMap.get(name);
+    }
+
+    public StaticVariableWildcard getStaticVariable(String name, JavaTypeInstance clazz, InferredJavaType varType) {
+        StaticVariableWildcard res = staticVariableWildcardMap.get(name);
+        if (res != null) return res;
+
+        res = new StaticVariableWildcard(varType, clazz);
+        staticVariableWildcardMap.put(name, res);
         return res;
     }
 
@@ -349,6 +389,55 @@ public class WildcardMatch {
 
     }
 
+    public class StaticFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
+        private final String name;
+        private final JavaTypeInstance clazz;
+        private final List<Expression> args;
+        private transient Expression matchedValue;
+
+        public StaticFunctionInvokationWildcard(String name, JavaTypeInstance clazz, List<Expression> args) {
+            this.name = name;
+            this.clazz = clazz;
+            this.args = args;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof StaticFunctionInvokation)) return false;
+            if (matchedValue != null) return matchedValue.equals(o);
+
+            /*
+             * See if this is a compatible member function.
+             *
+             * TODO : since it might fail, we need to rewind any captures!
+             */
+            StaticFunctionInvokation other = (StaticFunctionInvokation) o;
+            if (!name.equals(other.getName())) return false;
+            if (!clazz.equals(other.getClazz())) return false;
+            List<Expression> otherArgs = other.getArgs();
+            if (args.size() != otherArgs.size()) return false;
+            for (int x = 0; x < args.size(); ++x) {
+                Expression myArg = args.get(x);
+                Expression hisArg = otherArgs.get(x);
+                if (!myArg.equals(hisArg)) return false;
+            }
+            matchedValue = (Expression) o;
+            return true;
+        }
+
+        @Override
+        public Expression getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
+    }
+
+
     public class BlockIdentifierWildcard extends BlockIdentifier implements Wildcard<BlockIdentifier> {
         private BlockIdentifier matchedValue;
 
@@ -418,6 +507,39 @@ public class WildcardMatch {
             matchedValue = null;
         }
 
+    }
+
+    public class StaticVariableWildcard extends StaticVariable implements Wildcard<StaticVariable> {
+        private StaticVariable matchedValue;
+
+        public StaticVariableWildcard(InferredJavaType type, JavaTypeInstance clazz) {
+            super(type, clazz, null);
+        }
+
+        @Override
+        public StaticVariable getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null) return false;
+
+            if (matchedValue != null) return matchedValue.equals(o);
+
+            if (!(o instanceof StaticVariable)) return false;
+            StaticVariable other = (StaticVariable) o;
+
+            if (!this.getJavaTypeInstance().equals(other.getJavaTypeInstance())) return false;
+            matchedValue = other;
+            return true;
+        }
     }
 }
 

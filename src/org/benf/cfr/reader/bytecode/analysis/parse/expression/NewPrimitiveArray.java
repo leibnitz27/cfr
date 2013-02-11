@@ -20,11 +20,16 @@ public class NewPrimitiveArray extends AbstractNewArray {
     private final ArrayType type;
 
     public NewPrimitiveArray(Expression size, byte type) {
+        this(size, ArrayType.getArrayType(type));
+    }
+
+    public NewPrimitiveArray(Expression size, ArrayType type) {
         // We don't really know anything about the array dimensionality, just the underlying type. :P
         super(new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.EXPRESSION));
         this.size = size;
-        this.type = ArrayType.getArrayType(type);
+        this.type = type;
     }
+
 
     @Override
     public String toString() {
@@ -64,4 +69,14 @@ public class NewPrimitiveArray extends AbstractNewArray {
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null) return false;
+        if (!(o instanceof NewPrimitiveArray)) return false;
+        NewPrimitiveArray other = (NewPrimitiveArray) o;
+        if (!size.equals(other.size)) return false;
+        if (!type.equals(other.type)) return false;
+        return true;
+    }
 }

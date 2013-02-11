@@ -1,0 +1,140 @@
+package org.benf.cfr.reader.util.getopt;
+
+import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.LazyMap;
+import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.bytestream.BaseByteData;
+import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: lee
+ * Date: 01/02/2013
+ * Time: 16:29
+ */
+public class CFRState {
+
+    private final String fileName;
+    private final String methodName;
+    private final Map<String, String> opts;
+    private static final String NO_STRING_SWITCH_FLAG = "nostringswitch";
+    private static final String NO_ENUM_SWITCH_FLAG = "noenumswitch";
+
+    public CFRState(String fileName, String methodName, Map<String, String> opts) {
+        this.fileName = fileName;
+        this.methodName = methodName;
+        this.opts = opts;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public boolean isNoStringSwitch() {
+        return opts.containsKey("nostringswitch");
+    }
+
+    public boolean isNoEnumSwitch() {
+        return opts.containsKey("noenumswitch");
+    }
+
+    public boolean isLenient() {
+        return false;
+    }
+
+    public boolean analyseMethod(String thisMethodName) {
+        if (methodName == null) return true;
+        return methodName.equals(thisMethodName);
+    }
+
+    private static byte[] getBytesFromFile(String path) throws CannotLoadClassException {
+        try {
+            File file = new File(path);
+            InputStream is = new FileInputStream(path);
+
+            // Get the size of the file
+            long length = file.length();
+
+            // You cannot create an array using a long type.
+            // It needs to be an int type.
+            // Before converting to an int type, check
+            // to ensure that file is not larger than Integer.MAX_VALUE.
+            if (length > Integer.MAX_VALUE) {
+                // File is too large
+            }
+
+            // Create the byte array to hold the data
+            byte[] bytes = new byte[(int) length];
+
+            // Read in the bytes
+            int offset = 0;
+            int numRead = 0;
+            while (offset < bytes.length
+                    && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
+                offset += numRead;
+            }
+
+            // Ensure all the bytes have been read in
+            if (offset < bytes.length) {
+                throw new IOException("Could not completely read file " + file.getName());
+            }
+
+            // Close the input stream and return bytes
+            is.close();
+            return bytes;
+        } catch (IOException e) {
+            throw new CannotLoadClassException(path, e);
+        }
+    }
+
+    private Map<String, ClassFile> classFileCache = MapFactory.newLazyMap(new UnaryFunction<String, ClassFile>() {
+        @Override
+        public ClassFile invoke(String arg) {
+            byte[] content = getBytesFromFile(arg);
+            ByteData data = new BaseByteData(content);
+            return new ClassFile(data);
+        }
+    });
+
+    public ClassFile getClassFile(String path) throws CannotLoadClassException {
+        return classFileCache.get(path);
+    }
+
+    public ClassFile getClassFile(JavaTypeInstance classInfo) throws CannotLoadClassException {
+        String path = classInfo.getRawName();
+        path = ClassNameUtils.convertToPath(path) + ".class";
+        return getClassFile(path);
+    }
+
+    public static PermittedOptionProvider getPermittedOptions() {
+        return new CFRPermittedOptions();
+    }
+
+    private static class CFRPermittedOptions implements PermittedOptionProvider {
+        @Override
+        public List<String> getFlagNames() {
+            return ListFactory.newList(NO_ENUM_SWITCH_FLAG, NO_STRING_SWITCH_FLAG);
+        }
+
+        @Override
+        public List<String> getArgumentNames() {
+            return ListFactory.newList();
+        }
+    }
+}

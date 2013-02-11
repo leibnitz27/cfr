@@ -7,7 +7,12 @@ package org.benf.cfr.reader.bytecode.analysis.types;
  * Time: 18:00
  */
 public class ClassNameUtils {
-    public static String convert(String from) {
+    public static String convertFromPath(String from) {
         return from.replace('/', '.');
+    }
+
+
+    public static String convertToPath(String from) {
+        return from.replace('.', '/');
     }
 }

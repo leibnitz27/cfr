@@ -5,13 +5,15 @@ import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.CFRParameters;
+import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -38,7 +40,12 @@ public class ClassFile {
     private final ConstantPool constantPool;
     private final Set<AccessFlag> accessFlags;
     private final List<Field> fields;
+    private Map<String, Field> fieldsByName; // Lazily populated if interrogated.
+
     private final List<Method> methods;
+    private Map<String, Method> methodsByName; // Lazily populated if interrogated.
+
+
     private final List<Attribute> attributes;
     private final ConstantPoolEntryClass thisClass;
     private final ConstantPoolEntryClass superClass;
@@ -127,12 +134,40 @@ public class ClassFile {
         }
     }
 
-    public void analyse(CFRParameters parameters) {
+    public ConstantPool getConstantPool() {
+        return constantPool;
+    }
+
+    public Field getFieldByName(String name) throws NoSuchFieldException {
+        if (fieldsByName == null) {
+            fieldsByName = MapFactory.newMap();
+            for (Field field : fields) {
+                fieldsByName.put(field.getFieldName(constantPool), field);
+            }
+        }
+        Field field = fieldsByName.get(name);
+        if (field == null) throw new NoSuchFieldException(name);
+        return field;
+    }
+
+    public Method getMethodByName(String name) throws NoSuchMethodException {
+        if (methodsByName == null) {
+            methodsByName = MapFactory.newMap();
+            for (Method method : methods) {
+                methodsByName.put(method.getName(), method);
+            }
+        }
+        Method method = methodsByName.get(name);
+        if (method == null) throw new NoSuchMethodException(name);
+        return method;
+    }
+
+    public void analyseTop(CFRState state) {
         boolean exceptionRecovered = false;
         for (Method method : methods) {
-            if (parameters.analyseMethod(method.getName())) {
+            if (state.analyseMethod(method.getName())) {
                 try {
-                    method.analyse(parameters);
+                    method.analyse(state);
                 } catch (Exception e) {
                     System.out.println("Exception analysing " + method.getName());
                     System.out.println(e);
@@ -190,14 +225,5 @@ public class ClassFile {
         }
         d.newln();
         d.print("}\n");
-    }
-
-    public void dumpMethod(String name, Dumper dumper) {
-        for (Method method : methods) {
-            if (method.getName().equals(name)) {
-                dumper.newln();
-                method.dump(dumper, constantPool);
-            }
-        }
     }
 }

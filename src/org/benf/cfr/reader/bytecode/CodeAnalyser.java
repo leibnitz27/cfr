@@ -14,10 +14,11 @@ import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
-import org.benf.cfr.reader.util.getopt.CFRParameters;
+import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
@@ -43,7 +44,7 @@ public class CodeAnalyser {
 
     private Method method;
 
-    private Dumpable start;
+    private Op04StructuredStatement analysed;
 
 
     public CodeAnalyser(AttributeCode attributeCode) {
@@ -55,7 +56,16 @@ public class CodeAnalyser {
         this.method = method;
     }
 
-    public void analyse(CFRParameters parameters) {
+    public Op04StructuredStatement getAnalysis() {
+        if (analysed == null) {
+            throw new ConfusedCFRException("Not analysed, cannot return.");
+        }
+        return analysed;
+    }
+
+    public Op04StructuredStatement getAnalysis(CFRState state) {
+
+        if (analysed != null) return analysed;
 
         ByteData rawCode = originalCodeAttribute.getRawData();
         long codeLength = originalCodeAttribute.getCodeLength();
@@ -123,7 +133,7 @@ public class CodeAnalyser {
         // these ranges.
         //
 
-        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, parameters);
+        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, state);
         lutByOffset = null; // No longer valid.
 
 
@@ -284,16 +294,17 @@ public class CodeAnalyser {
 
         // Replace with a more generic interface, etc.
 
-        if (!parameters.isNoStringSwitch()) new SwitchStringRewriter().rewrite(block);
-        new SwitchEnumRewriter().rewrite(block);
+        new SwitchStringRewriter(state).rewrite(block);
+        new SwitchEnumRewriter(state).rewrite(block);
 
-        this.start = block;
+        this.analysed = block;
+        return analysed;
     }
 
 
     public void dump(Dumper d) {
         d.newln();
-        start.dump(d);
+        analysed.dump(d);
     }
 
 }

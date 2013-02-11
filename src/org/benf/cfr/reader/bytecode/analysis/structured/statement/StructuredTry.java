@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -61,4 +63,13 @@ public class StructuredTry extends AbstractStructuredStatement {
 
     }
 
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        StructuredStatement o = matchIterator.getCurrent();
+        if (!(o instanceof StructuredTry)) return false;
+        StructuredTry other = (StructuredTry) o;
+        // we don't actually check any equality for a match.
+        matchIterator.advance();
+        return true;
+    }
 }

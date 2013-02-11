@@ -4,6 +4,9 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
@@ -20,11 +23,26 @@ public class StructuredCase extends AbstractStructuredStatement {
     private List<Expression> values;
     private Op04StructuredStatement body;
     private final BlockIdentifier blockIdentifier;
+    // Because enum values inside a switch are written without the class name, (but ONLY in a switch
+    // on that enum!) we have to know about the context of usage.
+    private final boolean enumSwitch;
 
     public StructuredCase(List<Expression> values, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
+        this(values, body, blockIdentifier, false);
+    }
+
+    public StructuredCase(List<Expression> values, Op04StructuredStatement body, BlockIdentifier blockIdentifier, boolean enumSwitch) {
         this.values = values;
         this.body = body;
         this.blockIdentifier = blockIdentifier;
+        this.enumSwitch = enumSwitch;
+    }
+
+    private static StaticVariable getEnumStatic(Expression expression) {
+        if (!(expression instanceof LValueExpression)) return null;
+        LValue lValue = ((LValueExpression) expression).getLValue();
+        if (!(lValue instanceof StaticVariable)) return null;
+        return (StaticVariable) lValue;
     }
 
     @Override
@@ -33,6 +51,15 @@ public class StructuredCase extends AbstractStructuredStatement {
             dumper.print("default: ");
         } else {
             for (Expression value : values) {
+                if (enumSwitch) {
+                    // value should be an lvalue expression containing a static enum value.
+                    // don't show the case part of that.
+                    StaticVariable enumStatic = getEnumStatic(value);
+                    if (enumStatic != null) {
+                        dumper.print("case " + enumStatic.getVarName() + ": ");
+                        continue;
+                    }
+                }
                 dumper.print("case " + value + ": ");
             }
         }

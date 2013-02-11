@@ -73,4 +73,17 @@ public class StaticFunctionInvokation extends AbstractExpression {
         }
     }
 
+
+    public String getName() {
+        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
+        return nameAndType.getName(cp).getValue();
+    }
+
+    public JavaTypeInstance getClazz() {
+        return clazz;
+    }
+
+    public List<Expression> getArgs() {
+        return args;
+    }
 }

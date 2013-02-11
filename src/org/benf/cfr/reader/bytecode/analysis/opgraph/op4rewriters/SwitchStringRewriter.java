@@ -15,6 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.En
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -73,8 +74,15 @@ import java.util.Map;
 
  */
 public class SwitchStringRewriter implements Op04Rewriter {
+    private final CFRState state;
+
+    public SwitchStringRewriter(CFRState state) {
+        this.state = state;
+    }
+
     @Override
     public void rewrite(Op04StructuredStatement root) {
+        if (state.isNoStringSwitch()) return;
 
         List<StructuredStatement> structuredStatements = ListFactory.newList();
         try {
