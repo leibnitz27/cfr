@@ -41,6 +41,7 @@ public class ClassFile {
     private final Set<AccessFlag> accessFlags;
     private final List<Field> fields;
     private Map<String, Field> fieldsByName; // Lazily populated if interrogated.
+    private final boolean isInterface;
 
     private final List<Method> methods;
     private Map<String, Method> methodsByName; // Lazily populated if interrogated.
@@ -80,6 +81,7 @@ public class ClassFile {
 
 
         accessFlags = AccessFlag.build(data.getS2At(OFFSET_OF_ACCESS_FLAGS));
+        this.isInterface = accessFlags.contains(AccessFlag.ACC_INTERFACE);
 
         final long OFFSET_OF_FIELDS_COUNT = OFFSET_OF_INTERFACES + 2 * numInterfaces;
         final long OFFSET_OF_FIELDS = OFFSET_OF_FIELDS_COUNT + 2;
@@ -185,10 +187,20 @@ public class ClassFile {
         return thisClass.getTypeInstance(constantPool);
     }
 
-    public void Dump(Dumper d) {
-        d.line();
-        d.print("// Imports\n");
-        constantPool.dumpImports(d);
+    private void dumpInterfaceHeader(Dumper d) {
+        d.print("interface " + thisClass.getTypeInstance(constantPool) + "\n");
+        if (!interfaces.isEmpty()) {
+            d.print("extends ");
+            int size = interfaces.size();
+            for (int x = 0; x < size; ++x) {
+                ConstantPoolEntryClass iface = interfaces.get(x);
+                d.print("" + iface.getTypeInstance(constantPool) + (x < (size - 1) ? ",\n" : "\n"));
+            }
+        }
+        d.removePendingCarriageReturn();
+    }
+
+    private void dumpClassHeader(Dumper d) {
         d.print("class " + thisClass.getTypeInstance(constantPool) + "\n");
         if (superClass != null) {
             d.print("extends " + superClass.getTypeInstance(constantPool) + "\n");
@@ -202,6 +214,32 @@ public class ClassFile {
             }
         }
         d.removePendingCarriageReturn();
+    }
+
+    public void dumpAsInterface(Dumper d) {
+        d.line();
+        d.print("// Imports\n");
+        constantPool.dumpImports(d);
+        dumpInterfaceHeader(d);
+        d.print("{\n");
+
+        if (!methods.isEmpty()) {
+            d.print("// Methods\n");
+            for (Method meth : methods) {
+                d.newln();
+                d.print(meth.getSignatureText(false) + ";");
+            }
+        }
+        d.newln();
+        d.print("}\n");
+
+    }
+
+    public void dumpAsClass(Dumper d) {
+        d.line();
+        d.print("// Imports\n");
+        constantPool.dumpImports(d);
+        dumpClassHeader(d);
         d.print("{\n");
 
         if (!fields.isEmpty()) {
@@ -225,5 +263,14 @@ public class ClassFile {
         }
         d.newln();
         d.print("}\n");
+
+    }
+
+    public void Dump(Dumper d) {
+        if (isInterface) {
+            dumpAsInterface(d);
+        } else {
+            dumpAsClass(d);
+        }
     }
 }

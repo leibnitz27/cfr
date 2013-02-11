@@ -12,6 +12,7 @@ import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.CollectionUtils;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.KnowsRawSize;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
@@ -137,8 +138,14 @@ public class Method implements KnowsRawSize {
         return methodPrototype;
     }
 
-    private String getSignatureText() {
-        String prefix = CollectionUtils.join(accessFlags, " ");
+    public String getSignatureText(boolean asClass) {
+        Set<AccessFlagMethod> localAccessFlags = accessFlags;
+        if (!asClass) {
+            // Dumping as interface.
+            localAccessFlags = SetFactory.newSet(localAccessFlags);
+            localAccessFlags.remove(AccessFlagMethod.ACC_ABSTRACT);
+        }
+        String prefix = CollectionUtils.join(localAccessFlags, " ");
         String methodName = cp.getUTF8Entry(nameIndex).getValue();
         boolean constructor = methodName.equals("<init>");
         if (constructor) methodName = classFile.getClassType().toString();
@@ -160,9 +167,12 @@ public class Method implements KnowsRawSize {
     }
 
     public void dump(Dumper d, ConstantPool cp) {
-        if (codeAttribute != null) {
-            d.print(getSignatureText());
+        d.print(getSignatureText(true));
+        if (codeAttribute == null) {
+            d.print(";");
+        } else {
             codeAttribute.dump(d, cp);
         }
     }
+
 }
