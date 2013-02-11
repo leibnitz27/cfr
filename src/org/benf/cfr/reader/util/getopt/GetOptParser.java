@@ -1,10 +1,11 @@
 package org.benf.cfr.reader.util.getopt;
 
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,7 +21,7 @@ public class GetOptParser {
         PRESENCE
     }
 
-    public String getHelp(PermittedOptionProvider permittedOptionProvider) {
+    public static String getHelp(PermittedOptionProvider permittedOptionProvider) {
         StringBuilder sb = new StringBuilder();
         for (String flag : permittedOptionProvider.getFlagNames()) {
             sb.append("   [ --").append(flag).append(" ]\n");
@@ -42,20 +43,19 @@ public class GetOptParser {
         return optTypeMap;
     }
 
-    public CFRState parse(String[] args) {
-        PermittedOptionProvider permittedOptions = CFRState.getPermittedOptions();
-        if (args.length < 1) throw new BadParametersException("missing filename\n", this, permittedOptions);
+    public <T> T parse(String[] args, GetOptSinkFactory<T> getOptSinkFactory) {
+        if (args.length < 1) throw new BadParametersException("missing filename\n", getOptSinkFactory);
 
-        String fname = args[0];
-        int start = 1;
-        String methname = null;
-        if (args.length >= 2 && !(args[1].startsWith("-"))) {
-            methname = args[1];
-            start = 2;
+        List<String> unFlagged = ListFactory.newList();
+        int start = 0;
+        for (; start < args.length; ++start) {
+            String arg = args[start];
+            if (arg.startsWith("-")) break;
+            unFlagged.add(arg);
         }
 
-        Map<String, String> processed = process(Arrays.copyOfRange(args, start, args.length), permittedOptions);
-        return new CFRState(fname, methname, processed);
+        Map<String, String> processed = process(Arrays.copyOfRange(args, start, args.length), getOptSinkFactory);
+        return getOptSinkFactory.create(unFlagged, processed);
     }
 
     private Map<String, String> process(String[] in, PermittedOptionProvider optionProvider) {
@@ -65,7 +65,7 @@ public class GetOptParser {
             if (in[x].startsWith("--")) {
                 String name = in[x].substring(2);
                 if (!optTypeMap.containsKey(name)) {
-                    throw new BadParametersException("Unknown argument " + name, this, optionProvider);
+                    throw new BadParametersException("Unknown argument " + name, optionProvider);
                 }
                 switch (optTypeMap.get(name)) {
                     case PRESENCE:
@@ -73,7 +73,7 @@ public class GetOptParser {
                         break;
                     case STRING:
                         if (x >= in.length - 1)
-                            throw new BadParametersException("parameter " + name + " requires argument", this, optionProvider);
+                            throw new BadParametersException("parameter " + name + " requires argument", optionProvider);
                         res.put(name, in[++x]);
                         break;
                 }

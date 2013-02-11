@@ -122,11 +122,11 @@ public class CFRState {
         return getClassFile(path);
     }
 
-    public static PermittedOptionProvider getPermittedOptions() {
-        return new CFRPermittedOptions();
+    public static GetOptSinkFactory<CFRState> getFactory() {
+        return new CFRFactory();
     }
 
-    private static class CFRPermittedOptions implements PermittedOptionProvider {
+    private static class CFRFactory implements GetOptSinkFactory<CFRState> {
         @Override
         public List<String> getFlagNames() {
             return ListFactory.newList(NO_ENUM_SWITCH_FLAG, NO_STRING_SWITCH_FLAG);
@@ -135,6 +135,26 @@ public class CFRState {
         @Override
         public List<String> getArgumentNames() {
             return ListFactory.newList();
+        }
+
+        @Override
+        public CFRState create(List<String> args, Map<String, String> opts) {
+            String fname;
+            String methodName = null;
+            switch (args.size()) {
+                case 0:
+                    throw new BadParametersException("Insufficient parameters", this);
+                case 1:
+                    fname = args.get(0);
+                    break;
+                case 2:
+                    fname = args.get(0);
+                    methodName = args.get(1);
+                    break;
+                default:
+                    throw new BadParametersException("Too many unqualified parameters", this);
+            }
+            return new CFRState(fname, methodName, opts);
         }
     }
 }

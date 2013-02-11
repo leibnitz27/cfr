@@ -23,7 +23,7 @@ public class Main {
 
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
-            CFRState params = getOptParser.parse(args);
+            CFRState params = getOptParser.parse(args, CFRState.getFactory());
             ClassFile c = params.getClassFile(params.getFileName());
 
             c.analyseTop(params);
@@ -35,8 +35,7 @@ public class Main {
                 try {
                     c.getMethodByName(methname).dump(d, c.getConstantPool());
                 } catch (NoSuchMethodException e) {
-                    // TODO : throw badParameterException after refactor arg parsing.
-                    throw new ConfusedCFRException("No such method '" + methname + "'.");
+                    throw new BadParametersException("No such method '" + methname + "'.", CFRState.getFactory());
                 }
             }
             d.print("");
