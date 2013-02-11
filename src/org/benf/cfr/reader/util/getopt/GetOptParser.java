@@ -44,7 +44,6 @@ public class GetOptParser {
     }
 
     public <T> T parse(String[] args, GetOptSinkFactory<T> getOptSinkFactory) {
-        if (args.length < 1) throw new BadParametersException("missing filename\n", getOptSinkFactory);
 
         List<String> unFlagged = ListFactory.newList();
         int start = 0;
