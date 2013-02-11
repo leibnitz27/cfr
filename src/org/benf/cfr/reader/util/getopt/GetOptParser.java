@@ -78,7 +78,7 @@ public class GetOptParser {
                         break;
                 }
             } else {
-                throw new ConfusedCFRException("Unexpected argument " + in[x]);
+                throw new BadParametersException("Unexpected argument " + in[x], optionProvider);
             }
         }
         return res;
