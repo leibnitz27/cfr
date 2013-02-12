@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
+import org.benf.cfr.reader.util.CollectionUtils;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -187,8 +188,33 @@ public class ClassFile {
         return thisClass.getTypeInstance(constantPool);
     }
 
+    private static final AccessFlag[] dumpableAccessFlagsInterface = new AccessFlag[]{
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL
+    };
+    private static final AccessFlag[] dumpableAccessFlagsClass = new AccessFlag[]{
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
+    };
+
+    /*
+    * We don't want to just dump the access flags.
+    *
+    * They contain 'super', 'interface' etc which we'd never want to dump
+    * and 'abstract', which we'd not dump for an interface.
+    */
+    String dumpAccessFlags(AccessFlag[] dumpableAccessFlags) {
+        StringBuilder sb = new StringBuilder();
+
+        for (AccessFlag accessFlag : dumpableAccessFlags) {
+            if (accessFlags.contains(accessFlag)) sb.append(accessFlag).append(' ');
+        }
+        return sb.toString();
+    }
+
     private void dumpInterfaceHeader(Dumper d) {
-        d.print("interface " + thisClass.getTypeInstance(constantPool) + "\n");
+        StringBuilder sb = new StringBuilder();
+        sb.append(dumpAccessFlags(dumpableAccessFlagsInterface));
+        sb.append("interface " + thisClass.getTypeInstance(constantPool) + "\n");
+        d.print(sb.toString());
         if (!interfaces.isEmpty()) {
             d.print("extends ");
             int size = interfaces.size();
@@ -201,7 +227,10 @@ public class ClassFile {
     }
 
     private void dumpClassHeader(Dumper d) {
-        d.print("class " + thisClass.getTypeInstance(constantPool) + "\n");
+        StringBuilder sb = new StringBuilder();
+        sb.append(dumpAccessFlags(dumpableAccessFlagsClass));
+        sb.append("class " + thisClass.getTypeInstance(constantPool) + "\n");
+        d.print(sb.toString());
         if (superClass != null) {
             d.print("extends " + superClass.getTypeInstance(constantPool) + "\n");
         }
