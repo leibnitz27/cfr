@@ -253,7 +253,6 @@ public class ClassFile {
         d.print("{\n");
 
         if (!methods.isEmpty()) {
-            d.print("// Methods\n");
             for (Method meth : methods) {
                 d.newln();
                 d.print(meth.getSignatureText(false) + ";");
