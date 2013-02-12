@@ -213,7 +213,7 @@ public class ClassFile {
     private void dumpInterfaceHeader(Dumper d) {
         StringBuilder sb = new StringBuilder();
         sb.append(dumpAccessFlags(dumpableAccessFlagsInterface));
-        sb.append("interface " + thisClass.getTypeInstance(constantPool) + "\n");
+        sb.append("interface ").append(thisClass.getTypeInstance(constantPool)).append("\n");
         d.print(sb.toString());
         if (!interfaces.isEmpty()) {
             d.print("extends ");
@@ -229,7 +229,7 @@ public class ClassFile {
     private void dumpClassHeader(Dumper d) {
         StringBuilder sb = new StringBuilder();
         sb.append(dumpAccessFlags(dumpableAccessFlagsClass));
-        sb.append("class " + thisClass.getTypeInstance(constantPool) + "\n");
+        sb.append("class ").append(thisClass.getTypeInstance(constantPool)).append("\n");
         d.print(sb.toString());
         if (superClass != null) {
             d.print("extends " + superClass.getTypeInstance(constantPool) + "\n");
