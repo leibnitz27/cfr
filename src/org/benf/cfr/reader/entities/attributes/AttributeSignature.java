@@ -12,6 +12,35 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 19:01
  * To change this template use File | Settings | File Templates.
  */
+/*
+ * See 4.4.4 in Java class file format.
+ *
+ * ClassSignature:
+ *   FormalTypeParametersopt SuperclassSignature SuperinterfaceSignature*
+ *
+ * FormalTypeParameters:
+ *   <FormalTypeParameter+>
+ *
+ * FormalTypeParameter:
+ *   Identifier ClassBound InterfaceBound*
+ *
+ * ClassBound:
+ *  : FieldTypeSignatureopt
+ *
+ * InterfaceBound:
+ *  : FieldTypeSignature
+ *
+ * SuperclassSignature:
+ *   ClassTypeSignature
+ *
+ * SuperinterfaceSignature:
+ *   ClassTypeSignature
+ *
+ * FieldTypeSignature:
+ *   ClassTypeSignature
+ *   ArrayTypeSignature
+ *   TypeVariableSignature
+ */
 public class AttributeSignature extends Attribute {
     public static final String ATTRIBUTE_NAME = "Signature";
 
