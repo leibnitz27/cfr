@@ -73,7 +73,7 @@ public class Method implements KnowsRawSize {
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
         Attribute codeAttribute = attributes.get(AttributeCode.ATTRIBUTE_NAME);
         if (codeAttribute == null) {
-            this.variableNamer = null;
+            this.variableNamer = VariableNamerFactory.getNamer(null, cp);
             this.codeAttribute = null;
         } else {
             this.codeAttribute = (AttributeCode) codeAttribute;
