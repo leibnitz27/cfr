@@ -164,8 +164,7 @@ public class ConstantPoolUtils {
         return proto.substring(startidx, curridx);
     }
 
-    private static FormalTypeParameter decodeFormalTypeTok(String tok, ConstantPool cp) {
-        int idx = 0;
+    private static FormalTypeParameter decodeFormalTypeTok(String tok, ConstantPool cp, int idx) {
 
         while (tok.charAt(idx) != ':') {
             idx++;
@@ -192,6 +191,40 @@ public class ConstantPoolUtils {
         return new FormalTypeParameter(name, classBound, interfaceBound);
     }
 
+    public static ClassSignature parseClassSignature(ConstantPoolEntryUTF8 signature, ConstantPool cp) {
+        String sig = signature.getValue();
+        int curridx = 0;
+        /*
+         * Optional formal type parameters
+         */
+        List<FormalTypeParameter> formalTypeParameters = null;
+        if (sig.charAt(curridx) == '<') {
+            formalTypeParameters = ListFactory.newList();
+            curridx++;
+            while (sig.charAt(curridx) != '>') {
+                String formalTypeTok = getNextFormalTypeTok(sig, curridx);
+                formalTypeParameters.add(decodeFormalTypeTok(formalTypeTok, cp, 0));
+                curridx += formalTypeTok.length();
+            }
+            curridx++;
+        }
+        /*
+         * Superclass signature.
+         */
+        String superClassSignatureTok = getNextTypeTok(sig, curridx);
+        curridx += superClassSignatureTok.length();
+        JavaTypeInstance superClassSignature = decodeTypeTok(superClassSignatureTok, cp);
+
+        List<JavaTypeInstance> interfaceClassSignatures = ListFactory.newList();
+        while (curridx < sig.length()) {
+            String interfaceSignatureTok = getNextTypeTok(sig, curridx);
+            curridx += interfaceSignatureTok.length();
+            interfaceClassSignatures.add(decodeTypeTok(interfaceSignatureTok, cp));
+        }
+
+        return new ClassSignature(formalTypeParameters, superClassSignature, interfaceClassSignatures);
+    }
+
     public static MethodPrototype parseJavaMethodPrototype(boolean instanceMethod, ConstantPoolEntryUTF8 prototype, ConstantPool cp, boolean varargs, VariableNamer variableNamer) {
         String proto = prototype.getValue();
         int curridx = 0;
@@ -204,7 +237,7 @@ public class ConstantPoolUtils {
             curridx++;
             while (proto.charAt(curridx) != '>') {
                 String formalTypeTok = getNextFormalTypeTok(proto, curridx);
-                formalTypeParameters.add(decodeFormalTypeTok(formalTypeTok, cp));
+                formalTypeParameters.add(decodeFormalTypeTok(formalTypeTok, cp, 0));
                 curridx += formalTypeTok.length();
             }
             curridx++;

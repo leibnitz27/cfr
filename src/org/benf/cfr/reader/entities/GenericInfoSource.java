@@ -16,7 +16,10 @@ import java.util.Map;
  * Date: 10/08/2012
  * <p/>
  * Reflection based version of generic hunter.
+ * <p/>
+ * Should now use the class loading version.
  */
+@Deprecated
 public class GenericInfoSource {
     private final ConstantPool cp;
 

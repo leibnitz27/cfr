@@ -23,7 +23,7 @@ public class FormalTypeParameter {
         StringBuilder sb = new StringBuilder();
         sb.append(name);
         if (dispInterface != null) {
-            if (!"java/lang/Object".equals(dispInterface.getRawName())) {
+            if (!"java.lang.Object".equals(dispInterface.getRawName())) {
                 sb.append(" extends ");
                 sb.append(dispInterface.toString());
             }

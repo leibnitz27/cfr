@@ -1,11 +1,15 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
+import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.attributes.Attribute;
+import org.benf.cfr.reader.entities.attributes.AttributeSignature;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.CollectionUtils;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -50,8 +54,9 @@ public class ClassFile {
 
     private final List<Attribute> attributes;
     private final ConstantPoolEntryClass thisClass;
-    private final ConstantPoolEntryClass superClass;
-    private final List<ConstantPoolEntryClass> interfaces;
+    private final ConstantPoolEntryClass rawSuperClass;
+    private final List<ConstantPoolEntryClass> rawInterfaces;
+    private final ClassSignature classSignature;
 
     public ClassFile(final ByteData data) {
         int magic = data.getS4At(OFFSET_OF_MAGIC);
@@ -78,7 +83,7 @@ public class ClassFile {
                 }
         );
 
-        this.interfaces = tmpInterfaces;
+        this.rawInterfaces = tmpInterfaces;
 
 
         accessFlags = AccessFlag.build(data.getS2At(OFFSET_OF_ACCESS_FLAGS));
@@ -130,11 +135,12 @@ public class ClassFile {
 //        constantPool.markClassNameUsed(constantPool.getUTF8Entry(thisClass.getNameIndex()).getValue());
         short superClassIndex = data.getS2At(OFFSET_OF_SUPER_CLASS);
         if (superClassIndex == 0) {
-            superClass = null;
+            rawSuperClass = null;
         } else {
-            superClass = superClassIndex == 0 ? null : (ConstantPoolEntryClass) constantPool.getEntry(superClassIndex);
+            rawSuperClass = superClassIndex == 0 ? null : (ConstantPoolEntryClass) constantPool.getEntry(superClassIndex);
 //            constantPool.markClassNameUsed(constantPool.getUTF8Entry(superClass.getNameIndex()).getValue());
         }
+        this.classSignature = getSignature(attributes, constantPool, rawSuperClass, rawInterfaces);
     }
 
     public ConstantPool getConstantPool() {
@@ -163,6 +169,13 @@ public class ClassFile {
         Method method = methodsByName.get(name);
         if (method == null) throw new NoSuchMethodException(name);
         return method;
+    }
+
+    private static Attribute getAttributeByName(List<Attribute> attributes, String name) {
+        for (Attribute attribute : attributes) {
+            if (attribute.getRawName().equals(name)) return attribute;
+        }
+        return null;
     }
 
     public void analyseTop(CFRState state) {
@@ -210,36 +223,66 @@ public class ClassFile {
         return sb.toString();
     }
 
-    private void dumpInterfaceHeader(Dumper d) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(dumpAccessFlags(dumpableAccessFlagsInterface));
-        sb.append("interface ").append(thisClass.getTypeInstance(constantPool)).append("\n");
-        d.print(sb.toString());
-        if (!interfaces.isEmpty()) {
-            d.print("extends ");
-            int size = interfaces.size();
-            for (int x = 0; x < size; ++x) {
-                ConstantPoolEntryClass iface = interfaces.get(x);
-                d.print("" + iface.getTypeInstance(constantPool) + (x < (size - 1) ? ",\n" : "\n"));
+    private static ClassSignature getSignature(List<Attribute> attributes, ConstantPool cp,
+                                               ConstantPoolEntryClass rawSuperClass,
+                                               List<ConstantPoolEntryClass> rawInterfaces) {
+        Attribute rawSignature = getAttributeByName(attributes, AttributeSignature.ATTRIBUTE_NAME);
+        // If the class isn't generic (or has had the attribute removed), we have to use the
+        // runtime type info.
+        if (rawSignature == null) {
+            List<JavaTypeInstance> interfaces = ListFactory.newList();
+            for (ConstantPoolEntryClass rawInterface : rawInterfaces) {
+                interfaces.add(rawInterface.getTypeInstance(cp));
             }
+
+            return new ClassSignature(null,
+                    rawSuperClass == null ? null : rawSuperClass.getTypeInstance(cp),
+                    interfaces);
+
         }
-        d.removePendingCarriageReturn();
+        AttributeSignature signatureAttribute = (AttributeSignature) rawSignature;
+        return ConstantPoolUtils.parseClassSignature(signatureAttribute.getSignature(), cp);
     }
 
-    private void dumpClassHeader(Dumper d) {
+    private String getFormalParametersText() {
+        List<FormalTypeParameter> formalTypeParameters = classSignature.getFormalTypeParameters();
+        if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        sb.append('<');
+        boolean first = true;
+        for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append(formalTypeParameter.toString());
+        }
+        sb.append('>');
+        return sb.toString();
+    }
+
+    private void dumpHeader(Dumper d) {
         StringBuilder sb = new StringBuilder();
         sb.append(dumpAccessFlags(dumpableAccessFlagsClass));
-        sb.append("class ").append(thisClass.getTypeInstance(constantPool)).append("\n");
+
+        sb.append("class ").append(thisClass.getTypeInstance(constantPool));
+        sb.append(getFormalParametersText());
+        sb.append("\n");
         d.print(sb.toString());
-        if (superClass != null) {
-            d.print("extends " + superClass.getTypeInstance(constantPool) + "\n");
+        if (!isInterface) {
+            JavaTypeInstance superClass = classSignature.getSuperClass();
+            if (superClass != null) {
+                d.print("extends " + superClass + "\n");
+            }
         }
+        List<JavaTypeInstance> interfaces = classSignature.getInterfaces();
         if (!interfaces.isEmpty()) {
-            d.print("implements ");
+            d.print(isInterface ? "extends " : "implements ");
             int size = interfaces.size();
             for (int x = 0; x < size; ++x) {
-                ConstantPoolEntryClass iface = interfaces.get(x);
-                d.print("" + iface.getTypeInstance(constantPool) + (x < (size - 1) ? ",\n" : "\n"));
+                JavaTypeInstance iface = interfaces.get(x);
+                d.print("" + iface + (x < (size - 1) ? ",\n" : "\n"));
             }
         }
         d.removePendingCarriageReturn();
@@ -249,7 +292,7 @@ public class ClassFile {
         d.line();
         d.print("// Imports\n");
         constantPool.dumpImports(d);
-        dumpInterfaceHeader(d);
+        dumpHeader(d);
         d.print("{\n");
 
         if (!methods.isEmpty()) {
@@ -267,7 +310,7 @@ public class ClassFile {
         d.line();
         d.print("// Imports\n");
         constantPool.dumpImports(d);
-        dumpClassHeader(d);
+        dumpHeader(d);
         d.print("{\n");
 
         if (!fields.isEmpty()) {
