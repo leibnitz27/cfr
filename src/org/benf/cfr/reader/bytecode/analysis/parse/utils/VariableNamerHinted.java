@@ -33,7 +33,6 @@ public class VariableNamerHinted implements VariableNamer {
                 (lve.getStartPc() + lve.getLength()) >= originalRawOffset) {
             return cp.getUTF8Entry(lve.getNameIndex()).getValue();
         } else {
-            Dumper d = new Dumper();
             String lveName = cp.getUTF8Entry(lve.getNameIndex()).getValue();
             return "unnamed_local_" + lveName + "_" + stackPosition;
         }

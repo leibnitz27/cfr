@@ -24,7 +24,10 @@ public class InterfaceTestDerivedSigImpl implements InterfaceTestDerivedSig<Inte
 
     @Override
     public void doit(Integer integer, List<? super Integer> x) {
+    }
 
+    public void doit2(Integer integer, List<? super Integer> x) {
+        x = x;
     }
 
     @Override
