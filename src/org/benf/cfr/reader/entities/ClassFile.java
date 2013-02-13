@@ -273,7 +273,9 @@ public class ClassFile {
         if (!isInterface) {
             JavaTypeInstance superClass = classSignature.getSuperClass();
             if (superClass != null) {
-                d.print("extends " + superClass + "\n");
+                if (!superClass.getRawName().equals("java.lang.Object")) {
+                    d.print("extends " + superClass + "\n");
+                }
             }
         }
         List<JavaTypeInstance> interfaces = classSignature.getInterfaces();
