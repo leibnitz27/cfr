@@ -73,6 +73,7 @@ public class Method implements KnowsRawSize {
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
         Attribute codeAttribute = attributes.get(AttributeCode.ATTRIBUTE_NAME);
         if (codeAttribute == null) {
+            // Because we don't have a code attribute, we don't have a local variable table.
             this.variableNamer = VariableNamerFactory.getNamer(null, cp);
             this.codeAttribute = null;
         } else {
