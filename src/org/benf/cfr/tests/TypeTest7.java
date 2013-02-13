@@ -1,26 +1,18 @@
 package org.benf.cfr.tests;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 05/05/2011
- * Time: 18:48
- * To change this template use File | Settings | File Templates.
- */
 public class TypeTest7 {
 
-
-    public boolean test1(int x) {
-        return x % 2 == 0;
+    // Test 2 and test 3 produce EXACTLY the same bytecode
+    public int test2(int x) {
+        boolean a = false;
+        if (x > 4) a = true;
+        return a ? 5 : 2;
     }
 
-
-    public boolean test2(int x) {
-        boolean a = test1(x);
-        if (!a) {
-            a = test1(x);
-        }
-        return a;
+    // ....
+    public int test3(int x) {
+        int a = 0;
+        if (x > 4) a = 1;
+        return a != 0 ? 5 : 2;
     }
-
 }
