@@ -10,5 +10,5 @@ package org.benf.cfr.tests;
 import java.util.Map;
 
 public interface InterfaceTestBaseSig<A, B, T extends Map<A, B>> {
-    T test2();
+    T test2(T arg);
 }

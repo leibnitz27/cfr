@@ -124,7 +124,7 @@ public class Method implements KnowsRawSize {
         ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
         ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
         ConstantPoolEntryUTF8 prototype = null;
-        if (signature == null || signature.getValue().length() < descriptor.getValue().length()) {
+        if (signature == null) {
             prototype = descriptor;
         } else {
             prototype = signature;
