@@ -264,9 +264,9 @@ public class ClassFile {
 
     private void dumpHeader(Dumper d) {
         StringBuilder sb = new StringBuilder();
-        sb.append(dumpAccessFlags(dumpableAccessFlagsClass));
+        sb.append(dumpAccessFlags(isInterface ? dumpableAccessFlagsInterface : dumpableAccessFlagsClass));
 
-        sb.append("class ").append(thisClass.getTypeInstance(constantPool));
+        sb.append(isInterface ? "interface " : "class ").append(thisClass.getTypeInstance(constantPool));
         sb.append(getFormalParametersText());
         sb.append("\n");
         d.print(sb.toString());
