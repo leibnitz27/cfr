@@ -50,6 +50,18 @@ public enum RawJavaType implements JavaTypeInstance {
         return false;
     }
 
+    /*
+     * Compare integral type priorities.
+     *
+     * Int, Bool -> -ve
+     * Bool, Int -> +ve
+     */
+    public int compareTypePriorityTo(RawJavaType other) {
+        if (stackType != StackType.INT) throw new IllegalArgumentException();
+        if (other.stackType != StackType.INT) throw new IllegalArgumentException();
+        return this.ordinal() - other.ordinal();
+    }
+
     @Override
     public boolean isUsableType() {
         return usableType;

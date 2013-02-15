@@ -25,8 +25,7 @@ public class StackSSALabel extends AbstractLValue {
 
     @Override
     public String toString() {
-        return getInferredJavaType().toString() + "v" + id;
-//        return getInferredJavaType().toString() + "v" + id + "(" + stackEntry.getUsageCount() + ")";
+        return "v" + id + typeToString();
     }
 
     @Override

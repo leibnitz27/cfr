@@ -73,7 +73,8 @@ public class TypedLiteral {
             case 1:
                 return "true";
             default:
-                throw new ConfusedCFRException("Expecting a boolean, got " + i);
+                return "BADBOOL " + i;
+//                throw new ConfusedCFRException("Expecting a boolean, got " + i);
         }
     }
 
@@ -118,6 +119,13 @@ public class TypedLiteral {
 
     public static TypedLiteral getInt(int v) {
         return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL), v);
+    }
+
+    // We don't know that a literal 1 or 0 is an integer, short or boolean.
+    // We always guess at boolean, that way if we're proved wrong we can easily
+    // promote the type to integer.
+    public static TypedLiteral getBoolean(int v) {
+        return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.LITERAL), v);
     }
 
     public static TypedLiteral getDouble(double v) {

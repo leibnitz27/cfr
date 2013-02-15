@@ -19,6 +19,10 @@ public abstract class AbstractExpression implements Expression {
         this.inferredJavaType = inferredJavaType;
     }
 
+    protected String typeToString() {
+        return inferredJavaType.toString();
+    }
+
     @Override
     public boolean canPushDownInto() {
         return false;

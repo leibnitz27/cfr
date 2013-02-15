@@ -28,7 +28,7 @@ public class LocalVariable extends AbstractLValue {
 
     @Override
     public String toString() {
-        return getInferredJavaType().toString() + name;
+        return name + typeToString();
     }
 
     @Override

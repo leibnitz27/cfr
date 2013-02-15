@@ -22,7 +22,7 @@ public class StackValue extends AbstractExpression {
 
     @Override
     public String toString() {
-        return stackValue.toString();
+        return stackValue.toString(); // + typeToString();
     }
 
     @Override

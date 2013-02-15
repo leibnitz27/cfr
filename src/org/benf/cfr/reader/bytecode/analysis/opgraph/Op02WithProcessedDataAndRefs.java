@@ -271,9 +271,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ICONST_M1:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(-1)));
             case ICONST_0:
-                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(0)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getBoolean(0)));
             case ICONST_1:
-                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(1)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getBoolean(1)));
             case ICONST_2:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(2)));
             case ICONST_3:
@@ -294,7 +294,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getDouble(1)));
             case FCONST_2:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getDouble(2)));
-            case BIPUSH:
+            case BIPUSH: // TODO: Try a boolean if value = 0.
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(rawData[0])));
             case SIPUSH:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(getInstrArgShort(0))));
@@ -508,7 +508,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new IfStatement(conditionalExpression);
             }
             case IFEQ:
-            case IFNE:
+            case IFNE: {
+                ConditionalExpression conditionalExpression = new ComparisonOperation(getStackRValue(0), new Literal(TypedLiteral.getBoolean(0)), CompOp.getOpFor(instr));
+                return new IfStatement(conditionalExpression);
+            }
             case IFLE:
             case IFLT:
             case IFGT:

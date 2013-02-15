@@ -15,4 +15,12 @@ public class TypeTest7 {
         if (x > 4) a = 1;
         return a != 0 ? 5 : 2;
     }
+
+    public int test4(int x) {
+        int a = 0;
+        if (x > 4) a = 2;
+        return a != 0 ? 5 : 2;
+    }
+
 }
+

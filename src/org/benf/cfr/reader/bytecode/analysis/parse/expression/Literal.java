@@ -22,7 +22,7 @@ public class Literal extends AbstractExpression {
 
     @Override
     public String toString() {
-        return "" + getInferredJavaType() + value;
+        return "" + value + typeToString();
     }
 
     @Override

@@ -45,110 +45,82 @@ public class InferredJavaType {
         GENERICCALL
     }
 
-    private interface IJTInternal {
-        RawJavaType getRawType();
 
-        JavaTypeInstance getJavaTypeInstance();
+    private static int global_id = 0;
 
-        boolean isChained();
+    private static class IJTInternal {
 
-        void chain(InferredJavaType chainTo);
-
-        void force(RawJavaType rawJavaType);
-
-        void forceGeneric(JavaTypeInstance rawJavaType);
-
-    }
-
-    private class IJTLocal implements IJTInternal {
+        private boolean isDelegate = false;
+        // When not delegating
         private JavaTypeInstance type;
         private final Source source;
+        private final int id;
+        // When delegating
+        private IJTInternal delegate;
 
-        private IJTLocal(JavaTypeInstance type, Source source) {
+        private IJTInternal(JavaTypeInstance type, Source source) {
             this.type = type;
             this.source = source;
+            this.id = global_id++;
         }
 
-        @Override
         public RawJavaType getRawType() {
             // Think this might bite me later?
-            return type.getRawTypeOfSimpleType();
+            if (isDelegate) {
+                return delegate.getRawType();
+            } else {
+                return type.getRawTypeOfSimpleType();
+            }
         }
 
-        @Override
         public JavaTypeInstance getJavaTypeInstance() {
-            return type;
+            if (isDelegate) {
+                return delegate.getJavaTypeInstance();
+            } else {
+                return type;
+            }
         }
 
-        @Override
-        public boolean isChained() {
-            return false;
+        public int getFinalId() {
+            if (isDelegate) {
+                return delegate.getFinalId();
+            } else {
+                return id;
+            }
         }
 
-        @Override
-        public void chain(InferredJavaType chainTo) {
-            throw new UnsupportedOperationException();
+        public void mkDelegate(IJTInternal newDelegate) {
+            if (isDelegate) {
+                delegate.mkDelegate(newDelegate);
+            } else {
+//                System.out.println("Making " + this + " a delegate to " + newDelegate);
+                isDelegate = true;
+                delegate = newDelegate;
+            }
         }
 
-        @Override
         public void force(RawJavaType rawJavaType) {
-            /*
-             * TODO : verify.
-             */
-            this.type = rawJavaType;
+            if (isDelegate) {
+                delegate.force(rawJavaType);
+            } else {
+                this.type = rawJavaType;
+            }
         }
 
-        @Override
         public void forceGeneric(JavaTypeInstance rawJavaType) {
-            this.type = rawJavaType;
+            if (isDelegate) {
+                delegate.forceGeneric(rawJavaType);
+            } else {
+                this.type = rawJavaType;
+            }
         }
 
-        @Override
         public String toString() {
-            return type.toString();
-        }
-    }
-
-    private class IJTDelegate implements IJTInternal {
-        private final InferredJavaType delegate;
-
-        private IJTDelegate(InferredJavaType delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public RawJavaType getRawType() {
-            return delegate.getRawType();
-        }
-
-        @Override
-        public JavaTypeInstance getJavaTypeInstance() {
-            return delegate.getJavaTypeInstance();
-        }
-
-        @Override
-        public boolean isChained() {
-            return true;
-        }
-
-        @Override
-        public void chain(InferredJavaType chainTo) {
-            delegate.chain(chainTo);
-        }
-
-        @Override
-        public void force(RawJavaType rawJavaType) {
-            delegate.useAsWithoutCasting(rawJavaType);
-        }
-
-        @Override
-        public void forceGeneric(JavaTypeInstance rawJavaType) {
-            delegate.value.forceGeneric(rawJavaType);
-        }
-
-        @Override
-        public String toString() {
-            return delegate.toString();
+            if (isDelegate) {
+                return "#" + id + " -> " + delegate.toString();
+            } else {
+                return "#" + id + " " + type.toString();
+            }
         }
     }
 
@@ -157,19 +129,40 @@ public class InferredJavaType {
     public static final InferredJavaType IGNORE = new InferredJavaType();
 
     public InferredJavaType() {
-        value = new IJTLocal(RawJavaType.VOID, Source.UNKNOWN);
+        value = new IJTInternal(RawJavaType.VOID, Source.UNKNOWN);
     }
 
     public InferredJavaType(JavaTypeInstance type, Source source) {
-        value = new IJTLocal(type, source);
+        value = new IJTInternal(type, source);
     }
 
     private void chainFrom(InferredJavaType other) {
         if (this == other) return;
-        /*
-         * Or if this would introduce a cycle.  This is madly inefficient - do it a more sensible way.
-         */
+        mkDelegate(this.value, other.value);
         this.value = other.value; // new IJTDelegate(other);
+    }
+
+    private static void mkDelegate(IJTInternal a, IJTInternal b) {
+        if (a.getFinalId() != b.getFinalId()) {
+            a.mkDelegate(b);
+        }
+    }
+
+    /*
+    * v0 [t1<-] = true [t1]
+    * v1 [t2<-] = true [t2]
+    * v3 [t2<-] = v1;
+    * v3 = v0;
+    */
+    private void chainIntegralTypes(InferredJavaType other) {
+        if (this == other) return;
+        int pri = getRawType().compareTypePriorityTo(other.getRawType());
+        if (pri >= 0) {
+            mkDelegate(other.value, this.value);
+        } else {
+            mkDelegate(this.value, other.value);
+            this.value = other.value;
+        }
     }
 
     /*
@@ -178,7 +171,7 @@ public class InferredJavaType {
     public void useAsWithCast(RawJavaType otherRaw) {
         if (this == IGNORE) return;
 
-        this.value = new IJTLocal(otherRaw, Source.OPERATION);
+        this.value = new IJTInternal(otherRaw, Source.OPERATION);
     }
 
     public static void compareAsWithoutCasting(InferredJavaType a, InferredJavaType b) {
@@ -190,18 +183,19 @@ public class InferredJavaType {
         if (art.getStackType() != StackType.INT ||
                 brt.getStackType() != StackType.INT) return;
 
-        RawJavaType takeFromType = null;
+        InferredJavaType takeFromType = null;
         InferredJavaType pushToType = null;
         if (art == RawJavaType.INT) {
-            takeFromType = brt;
+            takeFromType = b;
             pushToType = a;
         } else if (brt == RawJavaType.INT) {
-            takeFromType = art;
+            takeFromType = a;
             pushToType = b;
         } else {
             return;
         }
-        pushToType.useAsWithoutCasting(takeFromType);
+        pushToType.chainIntegralTypes(takeFromType);
+//        pushToType.useAsWithoutCasting(takeFromType);
     }
 
     /*
@@ -217,33 +211,15 @@ public class InferredJavaType {
          */
         RawJavaType thisRaw = getRawType();
         if (thisRaw.getStackType() != otherRaw.getStackType()) return;
-        switch (thisRaw) {
-            case INT:
-                switch (otherRaw) {
-                    case INT:
-                        return;
-                    case SHORT:
-                    case BOOLEAN:
-                    case BYTE:
-                    case CHAR:
-                        value.force(otherRaw);
-                        return;
-                    default:
-                        throw new ConfusedCFRException("This " + thisRaw + " other " + otherRaw);
-                }
-            case BOOLEAN:
-                switch (otherRaw) {
-                    case INT:
-                    case SHORT:
-                    case BOOLEAN:
-                    case BYTE:
-                    case CHAR:
-                        return;
-                    default:
-                        throw new IllegalStateException();
-                }
-            default:
-                break;
+        if (thisRaw.getStackType() == StackType.INT) {
+            // Find the 'least' specific, tie to that.
+            int cmp = thisRaw.compareTypePriorityTo(otherRaw);
+            if (cmp < 0) {
+                this.value.force(otherRaw);
+            } else if (cmp > 0) {
+                int x = 3;
+//                other.value.force(thisRaw);
+            }
         }
     }
 
@@ -268,55 +244,29 @@ public class InferredJavaType {
         if (other.getRawType() == RawJavaType.VOID) {
             return;
         }
-        if (value.isChained()) {
-            value.chain(other);
-            return;
-        }
 
         RawJavaType thisRaw = value.getRawType();
+        RawJavaType otherRaw = other.getRawType();
+
         if (thisRaw == RawJavaType.VOID) {
             chainFrom(other);
             return;
         }
-        RawJavaType otherRaw = other.getRawType();
 
         if (thisRaw.getStackType() != otherRaw.getStackType()) {
             // throw new ConfusedCFRException("Can't tighten from " + thisRaw + " to " + otherRaw);
             return;
         }
-        if (thisRaw == otherRaw) {
+        if (thisRaw == otherRaw && thisRaw.getStackType() != StackType.INT) {
             chainFrom(other);
             return;
         }
-        switch (thisRaw) {
-            case INT:
-                switch (otherRaw) {
-                    case INT:
-                    case SHORT:
-                    case BOOLEAN:
-                    case BYTE:
-                    case CHAR:
-                        chainFrom(other);
-                        return;
-                    default:
-                        throw new IllegalStateException();
-                }
-            case CHAR:
-            case BOOLEAN:
-            case BYTE:
-            case SHORT:
-                switch (otherRaw) {
-                    case INT:
-                    case SHORT:
-                    case BOOLEAN:
-                    case BYTE:
-                    case CHAR:
-                        return;
-                    default:
-                        throw new IllegalStateException();
-                }
-            default:
-                break;
+        if (thisRaw.getStackType() == StackType.INT) {
+            if (otherRaw.getStackType() != StackType.INT) {
+                throw new IllegalStateException();
+            }
+            chainIntegralTypes(other);
+            return;
         }
         throw new ConfusedCFRException("Don't know how to tighten from " + thisRaw + " to " + otherRaw);
     }
@@ -332,7 +282,6 @@ public class InferredJavaType {
 
     @Override
     public String toString() {
-        return "";
-        //return "(" + value + ")";
+        return ""; // "[" + value.toString() + "]";
     }
 }

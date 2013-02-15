@@ -47,7 +47,7 @@ public class LValueExpression extends AbstractExpression {
 
     @Override
     public String toString() {
-        return lValue.toString();
+        return lValue.toString(); // + typeToString();
     }
 
     public LValue getLValue() {
