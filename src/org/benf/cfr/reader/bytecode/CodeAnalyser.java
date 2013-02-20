@@ -37,6 +37,10 @@ import java.util.logging.Logger;
  * To change this template use File | Settings | File Templates.
  */
 public class CodeAnalyser {
+
+    private static final int SHOW_L2_OPS = 1;
+    private static final int SHOW_L3_RAW = 2;
+
     private final static Logger logger = LoggerFactory.create(CodeAnalyser.class);
 
     private final AttributeCode originalCodeAttribute;
@@ -142,7 +146,11 @@ public class CodeAnalyser {
         Op02WithProcessedDataAndRefs.populateStackInfo(op2list);
 
 ////
-//        dumper.dump(op2list);
+        if (state.getShowOps() == SHOW_L2_OPS) {
+            dumper.print("Op2 statements:\n");
+            dumper.dump(op2list);
+            dumper.newln().newln();
+        }
 
         // DFS the instructions, unlink any which aren't reachable.
         // This is neccessary because some obfuscated code (and some unobfuscated clojure!!)
@@ -157,6 +165,14 @@ public class CodeAnalyser {
 
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
+
+        if (state.getShowOps() == SHOW_L3_RAW) {
+            dumper.print("Raw Op3 statements:\n");
+            for (Op03SimpleStatement node : op03SimpleParseNodes) {
+                node.dumpInner(dumper);
+            }
+            dumper.newln().newln();
+        }
 
         // This has issues, as we'd need to call out to find definitions of foreign classes
         // in order to (eg) know that get on a List<X> returns an X.

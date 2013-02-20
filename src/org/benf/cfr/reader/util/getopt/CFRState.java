@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.getopt;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -31,6 +32,18 @@ public class CFRState {
     private final Map<String, String> opts;
     private static final String NO_STRING_SWITCH_FLAG = "nostringswitch";
     private static final String NO_ENUM_SWITCH_FLAG = "noenumswitch";
+    private static final PermittedOptionProvider.Argument<Integer> SHOWOPS = new PermittedOptionProvider.Argument<Integer>(
+            "showops",
+            new UnaryFunction<String, Integer>() {
+                @Override
+                public Integer invoke(String arg) {
+                    if (arg == null) return 0;
+                    int x = Integer.parseInt(arg);
+                    if (x < 0) throw new IllegalArgumentException("required int >= 0");
+                    return x;
+                }
+            }
+    );
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -47,11 +60,15 @@ public class CFRState {
     }
 
     public boolean isNoStringSwitch() {
-        return opts.containsKey("nostringswitch");
+        return opts.containsKey(NO_STRING_SWITCH_FLAG);
     }
 
     public boolean isNoEnumSwitch() {
-        return opts.containsKey("noenumswitch");
+        return opts.containsKey(NO_ENUM_SWITCH_FLAG);
+    }
+
+    public int getShowOps() {
+        return SHOWOPS.getFn().invoke(opts.get(SHOWOPS.getName()));
     }
 
     public boolean isLenient() {
@@ -128,13 +145,13 @@ public class CFRState {
 
     private static class CFRFactory implements GetOptSinkFactory<CFRState> {
         @Override
-        public List<String> getFlagNames() {
+        public List<String> getFlags() {
             return ListFactory.newList(NO_ENUM_SWITCH_FLAG, NO_STRING_SWITCH_FLAG);
         }
 
         @Override
-        public List<String> getArgumentNames() {
-            return ListFactory.newList();
+        public List<? extends Argument<?>> getArguments() {
+            return ListFactory.newList(SHOWOPS);
         }
 
         @Override

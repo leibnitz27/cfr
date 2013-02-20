@@ -15,29 +15,54 @@ import java.util.Map;
  */
 public class GetOptParser {
 
-    private static enum OptType {
-        STRING,
-        PRESENCE
+    private static class OptData {
+        private final boolean isFlag;
+        private final String name;
+        private final PermittedOptionProvider.Argument<?> argument;
+
+        private OptData(String name) {
+            this.name = name;
+            this.isFlag = true;
+            this.argument = null;
+        }
+
+        private OptData(PermittedOptionProvider.Argument<?> argument) {
+            this.argument = argument;
+            this.isFlag = false;
+            this.name = argument.getName();
+        }
+
+        public boolean isFlag() {
+            return isFlag;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public PermittedOptionProvider.Argument<?> getArgument() {
+            return argument;
+        }
     }
 
     public static String getHelp(PermittedOptionProvider permittedOptionProvider) {
         StringBuilder sb = new StringBuilder();
-        for (String flag : permittedOptionProvider.getFlagNames()) {
+        for (String flag : permittedOptionProvider.getFlags()) {
             sb.append("   [ --").append(flag).append(" ]\n");
         }
-        for (String param : permittedOptionProvider.getArgumentNames()) {
-            sb.append("   [ --").append(param).append(" value ]\n");
+        for (PermittedOptionProvider.Argument param : permittedOptionProvider.getArguments()) {
+            sb.append("   [ --").append(param.getName()).append(" value ]\n");
         }
         return sb.toString();
     }
 
-    private static Map<String, OptType> buildOptTypeMap(PermittedOptionProvider optionProvider) {
-        Map<String, OptType> optTypeMap = MapFactory.newMap();
-        for (String flagName : optionProvider.getFlagNames()) {
-            optTypeMap.put(flagName, OptType.PRESENCE);
+    private static Map<String, OptData> buildOptTypeMap(PermittedOptionProvider optionProvider) {
+        Map<String, OptData> optTypeMap = MapFactory.newMap();
+        for (String flagName : optionProvider.getFlags()) {
+            optTypeMap.put(flagName, new OptData(flagName));
         }
-        for (String argName : optionProvider.getArgumentNames()) {
-            optTypeMap.put(argName, OptType.STRING);
+        for (PermittedOptionProvider.Argument arg : optionProvider.getArguments()) {
+            optTypeMap.put(arg.getName(), new OptData(arg));
         }
         return optTypeMap;
     }
@@ -57,23 +82,22 @@ public class GetOptParser {
     }
 
     private Map<String, String> process(String[] in, PermittedOptionProvider optionProvider) {
-        Map<String, OptType> optTypeMap = buildOptTypeMap(optionProvider);
+        Map<String, OptData> optTypeMap = buildOptTypeMap(optionProvider);
         Map<String, String> res = MapFactory.newMap();
         for (int x = 0; x < in.length; ++x) {
             if (in[x].startsWith("--")) {
                 String name = in[x].substring(2);
-                if (!optTypeMap.containsKey(name)) {
+                OptData optData = optTypeMap.get(name);
+                if (optData == null) {
                     throw new BadParametersException("Unknown argument " + name, optionProvider);
                 }
-                switch (optTypeMap.get(name)) {
-                    case PRESENCE:
-                        res.put(name, null);
-                        break;
-                    case STRING:
-                        if (x >= in.length - 1)
-                            throw new BadParametersException("parameter " + name + " requires argument", optionProvider);
-                        res.put(name, in[++x]);
-                        break;
+                if (optData.isFlag()) {
+                    res.put(name, null);
+                } else {
+                    if (x >= in.length - 1)
+                        throw new BadParametersException("parameter " + name + " requires argument", optionProvider);
+                    res.put(name, in[++x]);
+                    optData.getArgument().getFn().invoke(res.get(name));
                 }
             } else {
                 throw new BadParametersException("Unexpected argument " + in[x], optionProvider);
