@@ -1,0 +1,5 @@
+TODO:
+
+Inner / inline objects
+variable declarations
+generic type determinations (for x : )
