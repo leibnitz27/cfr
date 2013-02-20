@@ -3,3 +3,4 @@ TODO:
 Inner / inline objects
 variable declarations
 generic type determinations (for x : )
+static blocks vs static initialisers
