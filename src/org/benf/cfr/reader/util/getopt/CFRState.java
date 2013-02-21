@@ -125,7 +125,7 @@ public class CFRState {
         public ClassFile invoke(String arg) {
             byte[] content = getBytesFromFile(arg);
             ByteData data = new BaseByteData(content);
-            return new ClassFile(data);
+            return new ClassFile(data, CFRState.this);
         }
     });
 

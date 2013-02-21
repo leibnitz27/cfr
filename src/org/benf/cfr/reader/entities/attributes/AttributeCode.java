@@ -75,8 +75,8 @@ public class AttributeCode extends Attribute {
         codeAnalyser.setMethod(method);
     }
 
-    public Op04StructuredStatement analyse(CFRState state) {
-        return codeAnalyser.getAnalysis(state);
+    public Op04StructuredStatement analyse() {
+        return codeAnalyser.getAnalysis();
     }
 
     public ConstantPool getConstantPool() {

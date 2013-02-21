@@ -58,14 +58,14 @@ public class ClassFile {
     private final List<ConstantPoolEntryClass> rawInterfaces;
     private final ClassSignature classSignature;
 
-    public ClassFile(final ByteData data) {
+    public ClassFile(final ByteData data, CFRState cfrState) {
         int magic = data.getS4At(OFFSET_OF_MAGIC);
         if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe");
 
         minorVer = data.getS2At(OFFSET_OF_MINOR);
         majorVer = data.getS2At(OFFSET_OF_MAJOR);
         short constantPoolCount = data.getS2At(OFFSET_OF_CONSTANT_POOL_COUNT);
-        this.constantPool = new ConstantPool(data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
+        this.constantPool = new ConstantPool(cfrState, data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
         final long OFFSET_OF_ACCESS_FLAGS = OFFSET_OF_CONSTANT_POOL + constantPool.getRawByteLength();
         final long OFFSET_OF_THIS_CLASS = OFFSET_OF_ACCESS_FLAGS + 2;
         final long OFFSET_OF_SUPER_CLASS = OFFSET_OF_THIS_CLASS + 2;
@@ -183,7 +183,7 @@ public class ClassFile {
         for (Method method : methods) {
             if (state.analyseMethod(method.getName())) {
                 try {
-                    method.analyse(state);
+                    method.analyse();
                 } catch (Exception e) {
                     System.out.println("Exception analysing " + method.getName());
                     System.out.println(e);

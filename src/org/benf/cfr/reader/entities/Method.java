@@ -153,14 +153,14 @@ public class Method implements KnowsRawSize {
         return (prefix.isEmpty() ? "" : (prefix + " ")) + getMethodPrototype().getDeclarationSignature(methodName, constructor);
     }
 
-    public Op04StructuredStatement getAnalysis(CFRState state) {
+    public Op04StructuredStatement getAnalysis() {
         if (codeAttribute == null) throw new ConfusedCFRException("No code in this method to analyze");
-        return codeAttribute.analyse(state);
+        return codeAttribute.analyse();
     }
 
-    public void analyse(CFRState state) {
+    public void analyse() {
         try {
-            if (codeAttribute != null) codeAttribute.analyse(state);
+            if (codeAttribute != null) codeAttribute.analyse();
         } catch (RuntimeException e) {
             System.out.println("While processing method : " + this.getName());
             throw e;

@@ -50,7 +50,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         try {
             root.linearizeStatementsInto(structuredStatements);
         } catch (UnsupportedOperationException e) {
-            // Todo : Should output something at the end about this failure.
+            // Todo : Should output something at the end about this failure?
             return;
         }
 
@@ -60,7 +60,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                 return in.getClass() == StructuredSwitch.class;
             }
         });
-        MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
+        MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(switchStatements);
 
         WildcardMatch wcm = new WildcardMatch();
 
@@ -147,7 +147,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         } catch (NoSuchMethodException e) {
             return;
         }
-        Op04StructuredStatement lutStaticInitCode = lutStaticInit.getAnalysis(state);
+        Op04StructuredStatement lutStaticInitCode = lutStaticInit.getAnalysis();
 
         List<StructuredStatement> structuredStatements = ListFactory.newList();
         try {

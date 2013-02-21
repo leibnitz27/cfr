@@ -260,7 +260,7 @@ public class ConstantPoolUtils {
                 resultType = decodeTypeTok(getNextTypeTok(proto, curridx), cp);
                 break;
         }
-        MethodPrototype res = new MethodPrototype(instanceMethod, formalTypeParameters, args, resultType, varargs, variableNamer);
+        MethodPrototype res = new MethodPrototype(instanceMethod, formalTypeParameters, args, resultType, varargs, variableNamer, cp);
 //        logger.info("Parsed prototype " + proto + " as " + res);
         return res;
     }

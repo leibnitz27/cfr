@@ -2,7 +2,12 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
 
@@ -19,14 +24,16 @@ public class MethodPrototype {
     private final VariableNamer variableNamer;
     private final boolean instanceMethod;
     private final boolean varargs;
+    private final ConstantPool cp;
 
-    public MethodPrototype(boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer) {
+    public MethodPrototype(boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         this.args = args;
         this.result = result;
         this.varargs = varargs;
         this.variableNamer = variableNamer;
+        this.cp = cp;
     }
 
     public String getDeclarationSignature(String methName, boolean isConstructor) {
@@ -76,6 +83,27 @@ public class MethodPrototype {
 
     public JavaTypeInstance getReturnType() {
         return result;
+    }
+
+    public JavaTypeInstance getReturnType(InferredJavaType thisType) {
+        JavaTypeInstance thisTypeInstance = thisType.getJavaTypeInstance();
+        if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
+            // We're calling a method against a generic object.
+            // we should be able to figure out more information
+            // I.e. iterator on List<String> returns Iterator<String>, not Iterator.
+            // TODO : Should cache this, REALLY!
+
+            JavaGenericRefTypeInstance genericRefTypeInstance = (JavaGenericRefTypeInstance) thisTypeInstance;
+            try {
+                ClassFile classFile = cp.getCFRState().getClassFile(genericRefTypeInstance.getDeGenerifiedType());
+            } catch (CannotLoadClassException _) {
+                return result;
+            }
+
+            return result;
+        } else {
+            return result;
+        }
     }
 
     public List<JavaTypeInstance> getArgs() {

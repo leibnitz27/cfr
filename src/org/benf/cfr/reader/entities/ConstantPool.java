@@ -5,6 +5,7 @@ import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
+import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
@@ -28,8 +29,10 @@ public class ConstantPool {
     private final List<ConstantPoolEntry> entries;
     private final Map<String, String> longNameToShortName = MapFactory.newMap();
     private final Map<String, String> shortNameToLongName = MapFactory.newMap();
+    private final CFRState cfrState;
 
-    public ConstantPool(ByteData raw, short count) {
+    public ConstantPool(CFRState cfrState, ByteData raw, short count) {
+        this.cfrState = cfrState;
         ArrayList<ConstantPoolEntry> res = new ArrayList<ConstantPoolEntry>();
         count--;
         res.ensureCapacity(count);
@@ -37,6 +40,11 @@ public class ConstantPool {
         length = processRaw(raw, count, res);
         entries = res;
     }
+
+    public CFRState getCFRState() {
+        return cfrState;
+    }
+
 
     public void dumpImports(Dumper d) {
         if (shortNameToLongName.isEmpty()) return;

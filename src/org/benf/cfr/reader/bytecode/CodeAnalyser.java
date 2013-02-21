@@ -61,16 +61,10 @@ public class CodeAnalyser {
     }
 
     public Op04StructuredStatement getAnalysis() {
-        if (analysed == null) {
-            throw new ConfusedCFRException("Not analysed, cannot return.");
-        }
-        return analysed;
-    }
-
-    public Op04StructuredStatement getAnalysis(CFRState state) {
 
         if (analysed != null) return analysed;
 
+        CFRState cfrState = cp.getCFRState();
         ByteData rawCode = originalCodeAttribute.getRawData();
         long codeLength = originalCodeAttribute.getCodeLength();
         ArrayList<Op01WithProcessedDataAndByteJumps> instrs = new ArrayList<Op01WithProcessedDataAndByteJumps>();
@@ -137,7 +131,7 @@ public class CodeAnalyser {
         // these ranges.
         //
 
-        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, state);
+        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength);
         lutByOffset = null; // No longer valid.
 
 
@@ -146,7 +140,7 @@ public class CodeAnalyser {
         Op02WithProcessedDataAndRefs.populateStackInfo(op2list);
 
 ////
-        if (state.getShowOps() == SHOW_L2_OPS) {
+        if (cfrState.getShowOps() == SHOW_L2_OPS) {
             dumper.print("Op2 statements:\n");
             dumper.dump(op2list);
             dumper.newln().newln();
@@ -166,7 +160,7 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
-        if (state.getShowOps() == SHOW_L3_RAW) {
+        if (cfrState.getShowOps() == SHOW_L3_RAW) {
             dumper.print("Raw Op3 statements:\n");
             for (Op03SimpleStatement node : op03SimpleParseNodes) {
                 node.dumpInner(dumper);
@@ -310,8 +304,8 @@ public class CodeAnalyser {
 
         // Replace with a more generic interface, etc.
 
-        new SwitchStringRewriter(state).rewrite(block);
-        new SwitchEnumRewriter(state).rewrite(block);
+        new SwitchStringRewriter(cfrState).rewrite(block);
+        new SwitchEnumRewriter(cfrState).rewrite(block);
 
         this.analysed = block;
         return analysed;
