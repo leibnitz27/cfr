@@ -268,10 +268,12 @@ public class CodeAnalyser {
 
         // Introduce java 6 style for (x : array)
         logger.info("rewriteArrayForLoops");
-        Op03SimpleStatement.rewriteArrayForLoops(op03SimpleParseNodes);
+        if (cfrState.getBooleanOpt(CFRState.ARRAY_ITERATOR))
+            Op03SimpleStatement.rewriteArrayForLoops(op03SimpleParseNodes);
         // and for (x : iterable)
         logger.info("rewriteIteratorWhileLoops");
-        Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
+        if (cfrState.getBooleanOpt(CFRState.COLLECTION_ITERATOR))
+            Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
 
         logger.info("findSynchronizedBlocks");
         Op03SimpleStatement.findSynchronizedBlocks(op03SimpleParseNodes);

@@ -82,7 +82,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        if (state.isNoStringSwitch()) return;
+        if (!state.getBooleanOpt(CFRState.STRING_SWITCH)) return;
 
         List<StructuredStatement> structuredStatements = ListFactory.newList();
         try {

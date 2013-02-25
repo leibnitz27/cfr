@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
 
@@ -11,7 +12,7 @@ import java.util.List;
  * Date: 13/07/2012
  * Time: 08:01
  */
-public class JavaGenericRefTypeInstance implements JavaTypeInstance {
+public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     private final JavaTypeInstance typeInstance;
     private final List<JavaTypeInstance> genericTypes;
     private final ConstantPool cp;
@@ -20,6 +21,15 @@ public class JavaGenericRefTypeInstance implements JavaTypeInstance {
         this.typeInstance = typeInstance;
         this.cp = cp;
         this.genericTypes = genericTypes;
+    }
+
+    @Override
+    public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
+        List<JavaTypeInstance> res = ListFactory.newList();
+        for (JavaTypeInstance genericType : genericTypes) {
+            res.add(genericTypeBinder.getBindingFor(genericType));
+        }
+        return new JavaGenericRefTypeInstance(typeInstance, res, cp);
     }
 
     @Override

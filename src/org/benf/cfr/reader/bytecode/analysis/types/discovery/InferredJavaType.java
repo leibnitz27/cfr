@@ -282,6 +282,7 @@ public class InferredJavaType {
 
     @Override
     public String toString() {
-        return ""; // "[" + value.toString() + "]";
+        return "";
+        // return "[" + value.toString() + "]";
     }
 }

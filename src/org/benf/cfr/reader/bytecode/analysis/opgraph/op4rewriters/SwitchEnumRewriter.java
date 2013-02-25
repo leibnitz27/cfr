@@ -44,7 +44,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        if (state.isNoEnumSwitch()) return;
+        if (!state.getBooleanOpt(CFRState.ENUM_SWITCH)) return;
 
         List<StructuredStatement> structuredStatements = ListFactory.newList();
         try {

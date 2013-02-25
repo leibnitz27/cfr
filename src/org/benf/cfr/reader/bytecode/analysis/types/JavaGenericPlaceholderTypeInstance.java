@@ -8,13 +8,18 @@ import org.benf.cfr.reader.entities.ConstantPool;
  * Date: 13/07/2012
  * Time: 08:01
  */
-public class JavaGenericPlaceholderTypeInstance implements JavaTypeInstance {
+public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstance {
     private final String className;
     private final ConstantPool cp;
 
     public JavaGenericPlaceholderTypeInstance(String className, ConstantPool cp) {
         this.className = className;
         this.cp = cp;
+    }
+
+    @Override
+    public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
+        return genericTypeBinder.getBindingFor(this);
     }
 
     @Override

@@ -3,14 +3,12 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
-import org.benf.cfr.reader.util.CollectionUtils;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
@@ -159,6 +157,24 @@ public class ClassFile {
         return field;
     }
 
+    // We need to make sure we get the 'correct' method...
+    public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
+        List<Method> named = Functional.filter(methods, new Predicate<Method>() {
+            @Override
+            public boolean test(Method in) {
+                return in.getName().equals(prototype.getName());
+            }
+        });
+        for (Method method : named) {
+            MethodPrototype tgt = method.getMethodPrototype();
+            if (tgt.equalsGeneric(prototype)) {
+                return method;
+            }
+        }
+        throw new NoSuchMethodException();
+    }
+
+    // Can't handle duplicates.  Remove?
     public Method getMethodByName(String name) throws NoSuchMethodException {
         if (methodsByName == null) {
             methodsByName = MapFactory.newMap();
@@ -201,6 +217,10 @@ public class ClassFile {
         return thisClass.getTypeInstance(constantPool);
     }
 
+    public ClassSignature getClassSignature() {
+        return classSignature;
+    }
+
     private static final AccessFlag[] dumpableAccessFlagsInterface = new AccessFlag[]{
             AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL
     };
@@ -222,6 +242,7 @@ public class ClassFile {
         }
         return sb.toString();
     }
+
 
     private static ClassSignature getSignature(List<Attribute> attributes, ConstantPool cp,
                                                ConstantPoolEntryClass rawSuperClass,

@@ -16,8 +16,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,8 +33,6 @@ public class CFRState {
     private final String fileName;
     private final String methodName;
     private final Map<String, String> opts;
-    private static final String NO_STRING_SWITCH_FLAG = "nostringswitch";
-    private static final String NO_ENUM_SWITCH_FLAG = "noenumswitch";
     private static final PermittedOptionProvider.Argument<Integer> SHOWOPS = new PermittedOptionProvider.Argument<Integer>(
             "showops",
             new UnaryFunction<String, Integer>() {
@@ -44,6 +45,22 @@ public class CFRState {
                 }
             }
     );
+    private static final UnaryFunction<String, Boolean> defaultTrueBooleanDecoder = new UnaryFunction<String, Boolean>() {
+        @Override
+        public Boolean invoke(String arg) {
+            if (arg == null) return true;
+            if (arg.toLowerCase().equals("false")) return false;
+            return true;
+        }
+    };
+    public static final PermittedOptionProvider.Argument<Boolean> ENUM_SWITCH = new PermittedOptionProvider.Argument<Boolean>(
+            "decodeenumswitch", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> STRING_SWITCH = new PermittedOptionProvider.Argument<Boolean>(
+            "decodestringswitch", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> ARRAY_ITERATOR = new PermittedOptionProvider.Argument<Boolean>(
+            "arrayiter", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> COLLECTION_ITERATOR = new PermittedOptionProvider.Argument<Boolean>(
+            "collectioniter", defaultTrueBooleanDecoder);
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -59,12 +76,8 @@ public class CFRState {
         return methodName;
     }
 
-    public boolean isNoStringSwitch() {
-        return opts.containsKey(NO_STRING_SWITCH_FLAG);
-    }
-
-    public boolean isNoEnumSwitch() {
-        return opts.containsKey(NO_ENUM_SWITCH_FLAG);
+    public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean> argument) {
+        return argument.getFn().invoke(opts.get(argument.getName()));
     }
 
     public int getShowOps() {
@@ -80,54 +93,117 @@ public class CFRState {
         return methodName.equals(thisMethodName);
     }
 
-    private static byte[] getBytesFromFile(String path) throws CannotLoadClassException {
+    private byte[] getBytesFromFile(InputStream is, long length) throws IOException {
+        // You cannot create an array using a long type.
+        // It needs to be an int type.
+        // Before converting to an int type, check
+        // to ensure that file is not larger than Integer.MAX_VALUE.
+        if (length > Integer.MAX_VALUE) {
+            // File is too large
+        }
+
+        // Create the byte array to hold the data
+        byte[] bytes = new byte[(int) length];
+
+        // Read in the bytes
+        int offset = 0;
+        int numRead = 0;
+        while (offset < bytes.length
+                && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
+            offset += numRead;
+        }
+
+        // Ensure all the bytes have been read in
+        if (offset < bytes.length) {
+            throw new IOException("Could not completely read file");
+        }
+
+        // Close the input stream and return bytes
+        is.close();
+        return bytes;
+    }
+
+    private Map<String, ClassFile> classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
+        @Override
+        public ClassFile invoke(String arg) {
+            return loadClassFileAtPath(arg);
+        }
+    });
+
+    private ClassFile loadClassFileAtPath(String path) {
+        Map<String, String> classPathFiles = getClassPathClasses();
+        String jarName = classPathFiles.get(path);
+        ZipFile zipFile = null;
         try {
-            File file = new File(path);
-            InputStream is = new FileInputStream(path);
-
-            // Get the size of the file
-            long length = file.length();
-
-            // You cannot create an array using a long type.
-            // It needs to be an int type.
-            // Before converting to an int type, check
-            // to ensure that file is not larger than Integer.MAX_VALUE.
-            if (length > Integer.MAX_VALUE) {
-                // File is too large
+            InputStream is = null;
+            long length = 0;
+            if (jarName == null) {
+                File file = new File(path);
+                is = new FileInputStream(file);
+                length = file.length();
+            } else {
+                zipFile = new ZipFile(new File(jarName), ZipFile.OPEN_READ);
+                ZipEntry zipEntry = zipFile.getEntry(path);
+                length = zipEntry.getSize();
+                is = zipFile.getInputStream(zipEntry);
             }
 
-            // Create the byte array to hold the data
-            byte[] bytes = new byte[(int) length];
-
-            // Read in the bytes
-            int offset = 0;
-            int numRead = 0;
-            while (offset < bytes.length
-                    && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
-                offset += numRead;
+            try {
+                byte[] content = getBytesFromFile(is, length);
+                ByteData data = new BaseByteData(content);
+                return new ClassFile(data, CFRState.this);
+            } finally {
+                if (zipFile != null) zipFile.close();
             }
-
-            // Ensure all the bytes have been read in
-            if (offset < bytes.length) {
-                throw new IOException("Could not completely read file " + file.getName());
-            }
-
-            // Close the input stream and return bytes
-            is.close();
-            return bytes;
         } catch (IOException e) {
             throw new CannotLoadClassException(path, e);
         }
     }
 
-    private Map<String, ClassFile> classFileCache = MapFactory.newLazyMap(new UnaryFunction<String, ClassFile>() {
-        @Override
-        public ClassFile invoke(String arg) {
-            byte[] content = getBytesFromFile(arg);
-            ByteData data = new BaseByteData(content);
-            return new ClassFile(data, CFRState.this);
+    private void processClassPathFile(File file, String path, Map<String, String> classToPathMap) {
+        try {
+//            System.err.println("Processclasspathfile " + path);
+            ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
+            try {
+                Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
+                while (enumeration.hasMoreElements()) {
+                    ZipEntry entry = enumeration.nextElement();
+                    if (!entry.isDirectory()) {
+                        String name = entry.getName();
+                        if (name.endsWith(".class")) {
+                            classToPathMap.put(name, path);
+                        }
+                    }
+                }
+            } finally {
+                zipFile.close();
+            }
+        } catch (IOException e) {
         }
-    });
+    }
+
+    private Map<String, String> classToPathMap;
+
+    private Map<String, String> getClassPathClasses() {
+//        System.err.println("getClassPathClasses");
+        if (classToPathMap == null) {
+            classToPathMap = MapFactory.newMap();
+            String classPath = System.getProperty("java.class.path") + ":" + System.getProperty("sun.boot.class.path");
+//            System.err.println("ClassPath:" + classPath);
+            String[] classPaths = classPath.split(":");
+            for (String path : classPaths) {
+                File f = new File(path);
+                if (f.exists()) {
+                    if (f.isDirectory()) {
+                        // Ignore for now.
+                    } else {
+                        processClassPathFile(f, path, classToPathMap);
+                    }
+                }
+            }
+        }
+        return classToPathMap;
+    }
 
     public ClassFile getClassFile(String path) throws CannotLoadClassException {
         return classFileCache.get(path);
@@ -146,12 +222,12 @@ public class CFRState {
     private static class CFRFactory implements GetOptSinkFactory<CFRState> {
         @Override
         public List<String> getFlags() {
-            return ListFactory.newList(NO_ENUM_SWITCH_FLAG, NO_STRING_SWITCH_FLAG);
+            return ListFactory.newList();
         }
 
         @Override
         public List<? extends Argument<?>> getArguments() {
-            return ListFactory.newList(SHOWOPS);
+            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR);
         }
 
         @Override

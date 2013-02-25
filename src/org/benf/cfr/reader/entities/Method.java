@@ -3,7 +3,7 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
-import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
@@ -18,10 +18,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -132,7 +129,7 @@ public class Method implements KnowsRawSize {
         }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
-        return ConstantPoolUtils.parseJavaMethodPrototype(isInstance, prototype, cp, isVarargs, variableNamer);
+        return ConstantPoolUtils.parseJavaMethodPrototype(getName(), isInstance, prototype, cp, isVarargs, variableNamer);
     }
 
     public MethodPrototype getMethodPrototype() {
@@ -175,5 +172,6 @@ public class Method implements KnowsRawSize {
             codeAttribute.dump(d, cp);
         }
     }
+
 
 }

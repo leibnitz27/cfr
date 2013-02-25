@@ -17,6 +17,10 @@ public class FormalTypeParameter {
         this.interfaceBound = interfaceBound;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public String toString() {
         JavaTypeInstance dispInterface = classBound == null ? interfaceBound : classBound;
