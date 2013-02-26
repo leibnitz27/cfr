@@ -2,7 +2,6 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.GenericInfoSource;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -41,10 +40,6 @@ public abstract class AbstractExpression implements Expression {
     @Override
     public InferredJavaType getInferredJavaType() {
         return inferredJavaType;
-    }
-
-    @Override
-    public void findGenericTypeInfo(GenericInfoSource genericInfoSource) {
     }
 
     @Override

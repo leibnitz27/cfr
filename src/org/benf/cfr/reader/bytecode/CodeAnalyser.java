@@ -168,10 +168,6 @@ public class CodeAnalyser {
             dumper.newln().newln();
         }
 
-        // This has issues, as we'd need to call out to find definitions of foreign classes
-        // in order to (eg) know that get on a List<X> returns an X.
-//        Op03SimpleStatement.findGenericTypes(op03SimpleParseNodes, cp);
-
         // Expand raw switch statements into more useful ones.
         Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);

@@ -15,8 +15,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.GenericInfoSource;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -2892,18 +2890,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
         while (success);
-    }
-
-    public static void findGenericTypes(Op03SimpleStatement statement, GenericInfoSource genericInfoSource) {
-        statement.containedStatement.getRValue().findGenericTypeInfo(genericInfoSource);
-    }
-
-    public static void findGenericTypes(List<Op03SimpleStatement> statements, ConstantPool cp) {
-        GenericInfoSource genericInfoSource = new GenericInfoSource(cp);
-        statements = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
-        for (Op03SimpleStatement statement : statements) {
-            findGenericTypes(statement, genericInfoSource);
-        }
     }
 
     @Override

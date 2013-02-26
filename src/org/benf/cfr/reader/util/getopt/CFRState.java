@@ -156,6 +156,7 @@ public class CFRState {
                 if (zipFile != null) zipFile.close();
             }
         } catch (IOException e) {
+            System.err.println("** Unable to load " + path);
             throw new CannotLoadClassException(path, e);
         }
     }

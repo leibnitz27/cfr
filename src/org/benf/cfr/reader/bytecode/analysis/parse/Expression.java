@@ -2,7 +2,6 @@ package org.benf.cfr.reader.bytecode.analysis.parse;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.GenericInfoSource;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,6 +25,4 @@ public interface Expression {
     String toStringWithOuterPrecedence(int outerPrecedence);
 
     InferredJavaType getInferredJavaType();
-
-    void findGenericTypeInfo(GenericInfoSource genericInfoSource);
 }
