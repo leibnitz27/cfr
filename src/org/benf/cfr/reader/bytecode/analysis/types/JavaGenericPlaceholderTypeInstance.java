@@ -2,6 +2,8 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.ConstantPool;
 
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -20,6 +22,14 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     @Override
     public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
         return genericTypeBinder.getBindingFor(this);
+    }
+
+    /*
+     * TODO : Strictly speaking we should only be adding the binding here if className is in formal parameters.
+     */
+    @Override
+    public void tryFindBinding(JavaTypeInstance other, List<FormalTypeParameter> parameters, GenericTypeBinder target) {
+        target.addBindingFor(className, other);
     }
 
     @Override

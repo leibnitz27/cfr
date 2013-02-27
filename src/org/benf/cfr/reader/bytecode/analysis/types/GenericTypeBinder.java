@@ -14,18 +14,39 @@ import java.util.Map;
 public class GenericTypeBinder {
     private final Map<String, JavaTypeInstance> nameToBoundType = MapFactory.newMap();
 
-    public GenericTypeBinder(ClassSignature classSignature, JavaGenericRefTypeInstance boundInstance) {
-        List<FormalTypeParameter> unboundParameters = classSignature.getFormalTypeParameters();
-        List<JavaTypeInstance> boundParameters = boundInstance.getGenericTypes();
+    // TODO : AND BIND ARGS!
+    public GenericTypeBinder(List<FormalTypeParameter> methodFormalTypeParameters,
+                             ClassSignature classSignature, List<JavaTypeInstance> args,
+                             JavaGenericRefTypeInstance boundInstance, List<JavaTypeInstance> boundArgs) {
 
-        if (boundParameters.size() != unboundParameters.size()) {
-            // I suspect this will happen all the time, but on the face of it I can't see why it should
-            // be valid right now.
-            throw new UnsupportedOperationException();
+        if (boundInstance != null) {    // null for static.
+            List<FormalTypeParameter> unboundParameters = classSignature.getFormalTypeParameters();
+            List<JavaTypeInstance> boundParameters = boundInstance.getGenericTypes();
+
+            if (boundParameters.size() != unboundParameters.size()) {
+                // I suspect this will happen all the time, but on the face of it I can't see why it should
+                // be valid right now.
+                throw new UnsupportedOperationException();
+            }
+
+            for (int x = 0; x < boundParameters.size(); ++x) {
+                nameToBoundType.put(unboundParameters.get(x).getName(), boundParameters.get(x));
+            }
         }
 
-        for (int x = 0; x < boundParameters.size(); ++x) {
-            nameToBoundType.put(unboundParameters.get(x).getName(), boundParameters.get(x));
+        if (methodFormalTypeParameters != null && !methodFormalTypeParameters.isEmpty()) {
+            if (args.size() != boundArgs.size())
+                throw new IllegalArgumentException(); // should be verified before we get here!
+
+
+            for (int x = 0; x < args.size(); ++x) {
+                JavaTypeInstance unbound = args.get(x);
+                JavaTypeInstance bound = boundArgs.get(x);
+                if (unbound instanceof JavaGenericBaseInstance) {
+                    JavaGenericBaseInstance unboundGeneric = (JavaGenericBaseInstance) unbound;
+                    unboundGeneric.tryFindBinding(bound, methodFormalTypeParameters, this);
+                }
+            }
         }
     }
 
@@ -39,5 +60,9 @@ public class GenericTypeBinder {
             }
         }
         return maybeUnbound;
+    }
+
+    public void addBindingFor(String name, JavaTypeInstance binding) {
+        nameToBoundType.put(name, binding);
     }
 }

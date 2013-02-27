@@ -2,7 +2,9 @@ package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerDefault;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -54,9 +56,26 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
         return nameAndTypeIndex;
     }
 
+    //
+    // This is inferior to the method based version, as we don't have generic signatures.
+    //
     public MethodPrototype getMethodPrototype(ConstantPool cp) {
         if (methodPrototype == null) {
-            methodPrototype = ConstantPoolUtils.parseJavaMethodPrototype(getName(cp), interfaceMethod, cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp), cp, false /* we can't tell */, fakeNamer);
+            JavaTypeInstance classType = cp.getClassEntry(classIndex).getTypeInstance(cp);
+            // Figure out the non generic version of this
+            MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(getName(cp), interfaceMethod, cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp), cp, false /* we can't tell */, fakeNamer);
+            // See if we can load the class to get a signature version of this prototype.
+            // TODO : Improve the caching?
+
+            try {
+                ClassFile classFile = cp.getCFRState().getClassFile(classType.getDeGenerifiedType());
+                MethodPrototype replacement = classFile.getMethodByPrototype(basePrototype).getMethodPrototype();
+                basePrototype = replacement;
+            } catch (NoSuchMethodException _) {
+            } catch (CannotLoadClassException _) {
+            }
+
+            methodPrototype = basePrototype;
         }
         return methodPrototype;
     }

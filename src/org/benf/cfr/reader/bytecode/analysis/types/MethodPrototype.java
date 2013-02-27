@@ -8,6 +8,7 @@ import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
@@ -92,23 +93,28 @@ public class MethodPrototype {
         return name;
     }
 
-    public JavaTypeInstance getReturnType(InferredJavaType thisType) {
-        JavaTypeInstance thisTypeInstance = thisType.getJavaTypeInstance();
-        if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
+    private boolean hasFormalTypeParameters() {
+        return formalTypeParameters != null && !formalTypeParameters.isEmpty();
+    }
+
+    public JavaTypeInstance getReturnType(JavaTypeInstance thisTypeInstance, List<Expression> invokingArgs) {
+        boolean genericThis = (thisTypeInstance instanceof JavaGenericRefTypeInstance);
+        if (genericThis || hasFormalTypeParameters()) {
             // We're calling a method against a generic object.
             // we should be able to figure out more information
             // I.e. iterator on List<String> returns Iterator<String>, not Iterator.
-            // TODO : Should cache this, REALLY!
 
-            JavaGenericRefTypeInstance genericRefTypeInstance = (JavaGenericRefTypeInstance) thisTypeInstance;
-            Method method = null;
+            JavaGenericRefTypeInstance genericRefTypeInstance = null;
+            if (genericThis) {
+                genericRefTypeInstance = (JavaGenericRefTypeInstance) thisTypeInstance;
+                thisTypeInstance = genericRefTypeInstance.getDeGenerifiedType();
+            }
             ClassFile classFile = null;
 
             try {
-                classFile = cp.getCFRState().getClassFile(genericRefTypeInstance.getDeGenerifiedType());
-                method = classFile.getMethodByPrototype(this);
-            } catch (NoSuchMethodException _) {
-                return result;
+                // Wouldn't be neccessary if we kept a back ref?
+                // However, we should /always/ get a hit immediately here?
+                classFile = cp.getCFRState().getClassFile(thisTypeInstance);
             } catch (CannotLoadClassException _) {
                 return result;
             }
@@ -118,11 +124,8 @@ public class MethodPrototype {
              * the instance.
              *
              * i.e. given that genericRefTypeInstance has the correct bindings, apply those to method.
-             *
-             * Note that we're calling a method on the FOREIGN method prototype, even though it looks
-             * very much like this one - this is because the foreign one has all the generic information.
              */
-            JavaTypeInstance boundResult = method.getMethodPrototype().getResultBoundAccordingly(classFile.getClassSignature(), genericRefTypeInstance);
+            JavaTypeInstance boundResult = getResultBoundAccordingly(classFile.getClassSignature(), genericRefTypeInstance, invokingArgs);
             return boundResult;
         } else {
             return result;
@@ -167,9 +170,11 @@ public class MethodPrototype {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append(getName()).append('(');
         for (JavaTypeInstance arg : args) {
             sb.append(arg).append(" ");
         }
+        sb.append(')');
         return sb.toString();
     }
 
@@ -183,21 +188,27 @@ public class MethodPrototype {
         // TODO : This needs a bit of work ... (!)
         // TODO : Will return false positives at the moment.
         for (int x = 0; x < args.size(); ++x) {
-            if (!args.get(x).equals(otherArgs.get(x))) return false;
+            if (!args.get(x).getDeGenerifiedType().equals(otherArgs.get(x).getDeGenerifiedType())) return false;
         }
         return true;
     }
 
-    public JavaTypeInstance getResultBoundAccordingly(ClassSignature classSignature, JavaGenericRefTypeInstance boundInstance) {
+    public JavaTypeInstance getResultBoundAccordingly(ClassSignature classSignature, JavaGenericRefTypeInstance boundInstance, List<Expression> invokingArgs) {
         if (!(result instanceof JavaGenericBaseInstance)) {
             // Don't care - (i.e. iterator<E> hasNext
             return result;
         }
+
+        List<JavaTypeInstance> invokingTypes = ListFactory.newList();
+        for (Expression invokingArg : invokingArgs) {
+            invokingTypes.add(invokingArg.getInferredJavaType().getJavaTypeInstance());
+        }
+
         /*
          * For each of the formal type parameters of the class signature, what has it been bound to in the
          * instance?
          */
-        GenericTypeBinder genericTypeBinder = new GenericTypeBinder(classSignature, boundInstance);
+        GenericTypeBinder genericTypeBinder = new GenericTypeBinder(formalTypeParameters, classSignature, args, boundInstance, invokingTypes);
 
         JavaGenericBaseInstance genericResult = (JavaGenericBaseInstance) result;
         return genericResult.getBoundInstance(genericTypeBinder);

@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -8,4 +10,6 @@ package org.benf.cfr.reader.bytecode.analysis.types;
  */
 public interface JavaGenericBaseInstance extends JavaTypeInstance {
     public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder);
+
+    public void tryFindBinding(JavaTypeInstance other, List<FormalTypeParameter> parameters, GenericTypeBinder target);
 }

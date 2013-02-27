@@ -33,6 +33,23 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
+    public void tryFindBinding(JavaTypeInstance other, List<FormalTypeParameter> parameters, GenericTypeBinder target) {
+        if (other instanceof JavaGenericRefTypeInstance) {
+            // We can dig deeper.
+            JavaGenericRefTypeInstance otherJavaGenericRef = (JavaGenericRefTypeInstance) other;
+            if (genericTypes.size() == otherJavaGenericRef.genericTypes.size()) {
+                for (int x = 0; x < genericTypes.size(); ++x) {
+                    JavaTypeInstance genericType = genericTypes.get(x);
+                    if (genericType instanceof JavaGenericBaseInstance) {
+                        JavaGenericBaseInstance genericBaseInstance = (JavaGenericBaseInstance) genericType;
+                        genericBaseInstance.tryFindBinding(otherJavaGenericRef.genericTypes.get(x), parameters, target);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public StackType getStackType() {
         return StackType.REF;
     }

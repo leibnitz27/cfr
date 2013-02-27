@@ -31,7 +31,7 @@ public class MemberFunctionInvokation extends AbstractExpression {
     public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, boolean special, List<Expression> args) {
         super(new InferredJavaType(
                 methodPrototype.getReturnType(
-                        object.getInferredJavaType()
+                        object.getInferredJavaType().getJavaTypeInstance(), args
                 ), InferredJavaType.Source.FIELD
         ));
         this.function = function;
