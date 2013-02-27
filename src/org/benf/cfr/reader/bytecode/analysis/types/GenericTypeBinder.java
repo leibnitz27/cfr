@@ -14,7 +14,6 @@ import java.util.Map;
 public class GenericTypeBinder {
     private final Map<String, JavaTypeInstance> nameToBoundType = MapFactory.newMap();
 
-    // TODO : AND BIND ARGS!
     public GenericTypeBinder(List<FormalTypeParameter> methodFormalTypeParameters,
                              ClassSignature classSignature, List<JavaTypeInstance> args,
                              JavaGenericRefTypeInstance boundInstance, List<JavaTypeInstance> boundArgs) {
