@@ -145,6 +145,12 @@ public class ClassFile {
         return constantPool;
     }
 
+    public boolean hasFormalTypeParameters() {
+        List<FormalTypeParameter> formalTypeParameters = classSignature.getFormalTypeParameters();
+        return formalTypeParameters != null && !formalTypeParameters.isEmpty();
+    }
+
+
     public Field getFieldByName(String name) throws NoSuchFieldException {
         if (fieldsByName == null) {
             fieldsByName = MapFactory.newMap();

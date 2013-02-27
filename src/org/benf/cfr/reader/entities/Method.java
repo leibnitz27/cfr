@@ -129,7 +129,7 @@ public class Method implements KnowsRawSize {
         }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
-        return ConstantPoolUtils.parseJavaMethodPrototype(getName(), isInstance, prototype, cp, isVarargs, variableNamer);
+        return ConstantPoolUtils.parseJavaMethodPrototype(classFile, getName(), isInstance, prototype, cp, isVarargs, variableNamer);
     }
 
     public MethodPrototype getMethodPrototype() {

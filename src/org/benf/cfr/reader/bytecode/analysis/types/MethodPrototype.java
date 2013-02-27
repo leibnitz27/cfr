@@ -28,8 +28,9 @@ public class MethodPrototype {
     private final boolean varargs;
     private final String name;
     private final ConstantPool cp;
+    private final ClassFile classFile;
 
-    public MethodPrototype(String name, boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
+    public MethodPrototype(ClassFile classFile, String name, boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         this.args = args;
@@ -38,6 +39,7 @@ public class MethodPrototype {
         this.variableNamer = variableNamer;
         this.name = name;
         this.cp = cp;
+        this.classFile = classFile;
     }
 
     public String getDeclarationSignature(String methName, boolean isConstructor) {
@@ -93,31 +95,31 @@ public class MethodPrototype {
         return name;
     }
 
-    private boolean hasFormalTypeParameters() {
+    public boolean hasFormalTypeParameters() {
         return formalTypeParameters != null && !formalTypeParameters.isEmpty();
     }
 
     public JavaTypeInstance getReturnType(JavaTypeInstance thisTypeInstance, List<Expression> invokingArgs) {
-        boolean genericThis = (thisTypeInstance instanceof JavaGenericRefTypeInstance);
-        if (genericThis || hasFormalTypeParameters()) {
+        if (classFile == null) return result;
+        if (hasFormalTypeParameters() || classFile.hasFormalTypeParameters()) {
             // We're calling a method against a generic object.
             // we should be able to figure out more information
             // I.e. iterator on List<String> returns Iterator<String>, not Iterator.
 
             JavaGenericRefTypeInstance genericRefTypeInstance = null;
-            if (genericThis) {
+            if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
                 genericRefTypeInstance = (JavaGenericRefTypeInstance) thisTypeInstance;
                 thisTypeInstance = genericRefTypeInstance.getDeGenerifiedType();
             }
-            ClassFile classFile = null;
-
-            try {
-                // Wouldn't be neccessary if we kept a back ref?
-                // However, we should /always/ get a hit immediately here?
-                classFile = cp.getCFRState().getClassFile(thisTypeInstance);
-            } catch (CannotLoadClassException _) {
-                return result;
-            }
+//            ClassFile classFile = null;
+//
+//            try {
+//                // Wouldn't be neccessary if we kept a back ref?
+//                // However, we should /always/ get a hit immediately here?
+//                classFile = cp.getCFRState().getClassFile(thisTypeInstance);
+//            } catch (CannotLoadClassException _) {
+//                return result;
+//            }
 
             /*
              * Now we need to specialise the method according to the existing specialisation on
