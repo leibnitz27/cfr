@@ -9,16 +9,16 @@ import java.util.List;
  * Date: 04/09/2012
  * Time: 07:09
  */
-public class InnerClassTest1 {
+public class InnerClassTest2 {
 
     public int getX() {
         return new Inner1(new ArrayList<String>()).getX(4);
     }
 
-    public class Inner1 {
-        private final List arg;
+    public class Inner1<E> {
+        private final List<E> arg;
 
-        public Inner1(List arg) {
+        public Inner1(List<E> arg) {
             this.arg = arg;
         }
 
