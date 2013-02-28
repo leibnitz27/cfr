@@ -113,8 +113,6 @@ public class Method implements KnowsRawSize {
      * Descriptor ConstantUTF8[(Ljava/lang/String;I)V]
      * Signature Signature:ConstantUTF8[()V]
      *
-     * Since the signature is only ever the descriptor with more data, we can just do a length check
-     * to validate this.
      *
      */
     private MethodPrototype generateMethodPrototype() {
