@@ -23,7 +23,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (expression instanceof MemberFunctionInvokation) {
             MemberFunctionInvokation memberFunctionInvokation = (MemberFunctionInvokation) expression;
-            if (memberFunctionInvokation.getName().equals("toString")) {
+            if ("toString".equals(memberFunctionInvokation.getName())) {
                 Expression lhs = memberFunctionInvokation.getObject();
                 Expression result = testAppendChain(lhs);
                 if (result != null) return result;

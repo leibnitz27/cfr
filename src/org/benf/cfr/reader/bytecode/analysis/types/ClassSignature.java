@@ -1,5 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.util.ListFactory;
+
 import java.util.List;
 
 /**
@@ -29,5 +32,16 @@ public class ClassSignature {
 
     public List<JavaTypeInstance> getInterfaces() {
         return interfaces;
+    }
+
+    public JavaTypeInstance getThisGeneralTypeClass(JavaTypeInstance nonGenericInstance, ConstantPool cp) {
+        if (nonGenericInstance instanceof JavaGenericBaseInstance) return nonGenericInstance;
+        if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return nonGenericInstance;
+        List<JavaTypeInstance> typeParameterNames = ListFactory.newList();
+        for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
+            typeParameterNames.add(new JavaGenericPlaceholderTypeInstance(formalTypeParameter.getName(), cp));
+        }
+        JavaTypeInstance res = new JavaGenericRefTypeInstance(nonGenericInstance, typeParameterNames, cp);
+        return res;
     }
 }

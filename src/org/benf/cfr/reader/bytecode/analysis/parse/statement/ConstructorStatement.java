@@ -13,17 +13,20 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Date: 16/03/2012
  * <p/>
  * This is a temporary statement - it should be replaced with an Assignment of a ConstructorInvokation
+ * However, it can force the type of the constructed object, which NEW is not capable of doing....
  */
 public class ConstructorStatement extends AbstractStatement {
     private MemberFunctionInvokation invokation;
 
     public ConstructorStatement(MemberFunctionInvokation construction) {
         this.invokation = construction;
+        Expression object = invokation.getObject();
+        object.getInferredJavaType().chain(invokation.getInferredJavaType());
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print(invokation.toString() + ";\n");
+        dumper.print("<init>" + invokation.toString() + ";\n");
     }
 
     @Override

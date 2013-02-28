@@ -100,6 +100,7 @@ public class ClassFile {
                     }
                 });
         this.fields = tmpFields;
+        thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_THIS_CLASS));
 
         final long OFFSET_OF_METHODS_COUNT = OFFSET_OF_FIELDS + fieldsLength;
         final long OFFSET_OF_METHODS = OFFSET_OF_METHODS_COUNT + 2;
@@ -129,7 +130,6 @@ public class ClassFile {
                 });
         this.attributes = tmpAttributes;
 
-        thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_THIS_CLASS));
 //        constantPool.markClassNameUsed(constantPool.getUTF8Entry(thisClass.getNameIndex()).getValue());
         short superClassIndex = data.getS2At(OFFSET_OF_SUPER_CLASS);
         if (superClassIndex == 0) {

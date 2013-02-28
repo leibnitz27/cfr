@@ -157,9 +157,6 @@ public class CodeAnalyser {
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableFactory, blockIdentifierFactory);
 
 
-        // Expand any 'multiple' statements (eg from dups)
-        Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
-
         if (cfrState.getShowOps() == SHOW_L3_RAW) {
             dumper.print("Raw Op3 statements:\n");
             for (Op03SimpleStatement node : op03SimpleParseNodes) {
@@ -167,6 +164,9 @@ public class CodeAnalyser {
             }
             dumper.newln().newln();
         }
+
+        // Expand any 'multiple' statements (eg from dups)
+        Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
         // Expand raw switch statements into more useful ones.
         Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);

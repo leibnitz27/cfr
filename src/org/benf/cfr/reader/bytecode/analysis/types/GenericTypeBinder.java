@@ -33,7 +33,10 @@ public class GenericTypeBinder {
             }
         }
 
-        if (methodFormalTypeParameters != null && !methodFormalTypeParameters.isEmpty()) {
+        List<FormalTypeParameter> classFormalTypeParamters = classSignature.getFormalTypeParameters();
+        // TODO: Pretty sure this is a tautology given the calling pattern.
+        if ((methodFormalTypeParameters != null && !methodFormalTypeParameters.isEmpty()) ||
+                (classFormalTypeParamters != null && !classFormalTypeParamters.isEmpty())) {
             if (args.size() != boundArgs.size())
                 throw new IllegalArgumentException(); // should be verified before we get here!
 
@@ -43,7 +46,7 @@ public class GenericTypeBinder {
                 JavaTypeInstance bound = boundArgs.get(x);
                 if (unbound instanceof JavaGenericBaseInstance) {
                     JavaGenericBaseInstance unboundGeneric = (JavaGenericBaseInstance) unbound;
-                    unboundGeneric.tryFindBinding(bound, methodFormalTypeParameters, this);
+                    unboundGeneric.tryFindBinding(bound, null, this);
                 }
             }
         }

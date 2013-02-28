@@ -1,18 +1,39 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.util.ListFactory;
+
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
  * Date: 13/07/2012
  * Time: 08:01
  */
-public class JavaWildcardTypeInstance implements JavaTypeInstance {
+public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     private final WildcardType wildcardType;
     private final JavaTypeInstance underlyingType;
 
     public JavaWildcardTypeInstance(WildcardType wildcardType, JavaTypeInstance underlyingType) {
         this.wildcardType = wildcardType;
         this.underlyingType = underlyingType;
+    }
+
+    @Override
+    public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
+        // TODO : Loses wildcard, do we care?
+        if (underlyingType instanceof JavaGenericBaseInstance) {
+            return ((JavaGenericBaseInstance) underlyingType).getBoundInstance(genericTypeBinder);
+        } else {
+            return underlyingType;
+        }
+    }
+
+    @Override
+    public void tryFindBinding(JavaTypeInstance other, List<FormalTypeParameter> parameters, GenericTypeBinder target) {
+        if (underlyingType instanceof JavaGenericBaseInstance) {
+            ((JavaGenericBaseInstance) underlyingType).tryFindBinding(other, parameters, target);
+        }
     }
 
     @Override

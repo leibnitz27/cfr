@@ -22,7 +22,7 @@ import java.util.List;
 public class MethodPrototype {
     private final List<FormalTypeParameter> formalTypeParameters;
     private final List<JavaTypeInstance> args;
-    private final JavaTypeInstance result;
+    private JavaTypeInstance result;
     private final VariableNamer variableNamer;
     private final boolean instanceMethod;
     private final boolean varargs;
@@ -34,7 +34,7 @@ public class MethodPrototype {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         this.args = args;
-        this.result = result;
+        this.result = "<init>".equals(name) ? null : result;
         this.varargs = varargs;
         this.variableNamer = variableNamer;
         this.name = name;
@@ -100,6 +100,18 @@ public class MethodPrototype {
     }
 
     public JavaTypeInstance getReturnType(JavaTypeInstance thisTypeInstance, List<Expression> invokingArgs) {
+        if (result == null) {
+            if ("<init>".equals(getName())) {
+                if (classFile != null) {
+                    result = classFile.getClassSignature().getThisGeneralTypeClass(thisTypeInstance, cp);
+                } else {
+                    // best we can say is 'this'.
+                    result = thisTypeInstance;
+                }
+            } else {
+                throw new IllegalStateException();
+            }
+        }
         if (classFile == null) return result;
         if (hasFormalTypeParameters() || classFile.hasFormalTypeParameters()) {
             // We're calling a method against a generic object.
@@ -197,7 +209,7 @@ public class MethodPrototype {
 
     public JavaTypeInstance getResultBoundAccordingly(ClassSignature classSignature, JavaGenericRefTypeInstance boundInstance, List<Expression> invokingArgs) {
         if (!(result instanceof JavaGenericBaseInstance)) {
-            // Don't care - (i.e. iterator<E> hasNext
+            // Don't care - (i.e. iterator<E> hasNext)
             return result;
         }
 
