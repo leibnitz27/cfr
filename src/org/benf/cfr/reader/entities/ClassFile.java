@@ -141,6 +141,11 @@ public class ClassFile {
         this.classSignature = getSignature(attributes, constantPool, rawSuperClass, rawInterfaces);
     }
 
+    public boolean isInnerClass() {
+        if (thisClass == null) return false;
+        return thisClass.getTextName(constantPool).contains("$");
+    }
+
     public ConstantPool getConstantPool() {
         return constantPool;
     }

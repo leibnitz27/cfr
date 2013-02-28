@@ -127,7 +127,43 @@ public class Method implements KnowsRawSize {
         }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
-        return ConstantPoolUtils.parseJavaMethodPrototype(classFile, getName(), isInstance, prototype, cp, isVarargs, variableNamer);
+        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(classFile, getName(), isInstance, prototype, cp, isVarargs, variableNamer);
+        /*
+         * Work around bug in inner class signatures.
+         *
+         * http://stackoverflow.com/questions/15131040/java-inner-class-inconsistency-between-descriptor-and-signature-attribute-clas
+         */
+        if (classFile.isInnerClass()) {
+            if (signature != null) {
+                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(classFile, getName(), isInstance, descriptor, cp, isVarargs, variableNamer);
+                if (descriptorProto.getArgs().size() != res.getArgs().size()) {
+                    // error due to inner class sig bug.
+                    res = fixupInnerClassSignature(descriptorProto, res);
+                }
+            }
+        }
+        return res;
+    }
+
+    private static MethodPrototype fixupInnerClassSignature(MethodPrototype descriptor, MethodPrototype signature) {
+        List<JavaTypeInstance> descriptorArgs = descriptor.getArgs();
+        List<JavaTypeInstance> signatureArgs = signature.getArgs();
+        if (signatureArgs.size() != descriptorArgs.size() - 1) {
+            // It's not the known issue, can't really deal with it.
+            return signature;
+        }
+        for (int x = 0; x < signatureArgs.size(); ++x) {
+            if (!descriptorArgs.get(x + 1).equals(signatureArgs.get(x).getDeGenerifiedType())) {
+                // Incompatible.
+                return signature;
+            }
+        }
+        // Ok.  We've fallen foul of the bad signature-on-inner-class
+        // compiler bug.  Patch up the inner class signature so that it takes the implicit
+        // outer this pointer.
+        // Since we've got the ref to the mutable signatureArgs, let's be DISGUSTING and mutate that.
+        signatureArgs.add(0, descriptorArgs.get(0));
+        return signature;
     }
 
     public MethodPrototype getMethodPrototype() {
