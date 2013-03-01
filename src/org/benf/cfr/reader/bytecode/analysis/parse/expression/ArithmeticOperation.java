@@ -21,14 +21,14 @@ public class ArithmeticOperation extends AbstractExpression {
     private final ArithOp op;
 
     public ArithmeticOperation(Expression lhs, Expression rhs, ArithOp op) {
-        super(inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType()));
+        super(inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType(), op));
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;
     }
 
-    private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b) {
-        // TODO : verify same
+    private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b, ArithOp op) {
+        InferredJavaType.useInArithOp(a, b, op);
         return new InferredJavaType(a.getRawType(), InferredJavaType.Source.OPERATION);
     }
 

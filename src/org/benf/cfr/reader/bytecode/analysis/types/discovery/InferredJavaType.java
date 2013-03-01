@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types.discovery;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
@@ -196,6 +197,38 @@ public class InferredJavaType {
         }
         pushToType.chainIntegralTypes(takeFromType);
 //        pushToType.useAsWithoutCasting(takeFromType);
+    }
+
+    public void useInArithOp(InferredJavaType other, boolean forbidBool) {
+        if (this == IGNORE) return;
+        if (other == IGNORE) return;
+        RawJavaType thisRaw = getRawType();
+        RawJavaType otherRaw = other.getRawType();
+        if (thisRaw.getStackType() != otherRaw.getStackType()) {
+            // TODO : Might have to be some casting going on.
+            // This would never happen in raw bytecode, as everything would have correct intermediate
+            // casts - but we might have stripped these now....
+            return;
+        }
+        if (thisRaw.getStackType() == StackType.INT) {
+            // Find the 'least' specific, tie to that.
+            // (We've probably got an arithop between an inferred boolean and a real int... )
+            int cmp = thisRaw.compareTypePriorityTo(otherRaw);
+            if (cmp < 0) {
+                this.value.force(otherRaw);
+            } else if (cmp == 0) {
+                if (thisRaw == RawJavaType.BOOLEAN && forbidBool) {
+                    this.value.force(RawJavaType.INT);
+                }
+            }
+        }
+    }
+
+    public static void useInArithOp(InferredJavaType lhs, InferredJavaType rhs, ArithOp op) {
+        boolean forbidBool = true;
+        if (op == ArithOp.OR || op == ArithOp.AND) forbidBool = false;
+        lhs.useInArithOp(rhs, forbidBool);
+        rhs.useInArithOp(lhs, forbidBool);
     }
 
     /*
