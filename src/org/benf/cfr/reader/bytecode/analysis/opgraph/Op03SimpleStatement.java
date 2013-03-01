@@ -2454,7 +2454,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static void optimiseForTypes(Op03SimpleStatement statement) {
         IfStatement ifStatement = (IfStatement) (statement.containedStatement);
         ifStatement.optimiseForTypes();
-        ifStatement.optimiseForTypes();
     }
 
     public static void optimiseForTypes(List<Op03SimpleStatement> statements) {
