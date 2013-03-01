@@ -30,10 +30,11 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public void tryFindBinding(JavaTypeInstance other, List<FormalTypeParameter> parameters, GenericTypeBinder target) {
+    public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target) {
         if (underlyingType instanceof JavaGenericBaseInstance) {
-            ((JavaGenericBaseInstance) underlyingType).tryFindBinding(other, parameters, target);
+            return ((JavaGenericBaseInstance) underlyingType).tryFindBinding(other, target);
         }
+        return false;
     }
 
     @Override

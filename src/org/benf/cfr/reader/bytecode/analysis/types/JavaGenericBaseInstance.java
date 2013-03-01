@@ -11,5 +11,5 @@ import java.util.List;
 public interface JavaGenericBaseInstance extends JavaTypeInstance {
     public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder);
 
-    public void tryFindBinding(JavaTypeInstance other, List<FormalTypeParameter> parameters, GenericTypeBinder target);
+    public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target);
 }

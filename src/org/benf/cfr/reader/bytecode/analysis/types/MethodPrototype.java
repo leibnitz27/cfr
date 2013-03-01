@@ -201,8 +201,20 @@ public class MethodPrototype {
         }
         // TODO : This needs a bit of work ... (!)
         // TODO : Will return false positives at the moment.
+
+        GenericTypeBinder genericTypeBinder = new GenericTypeBinder();
         for (int x = 0; x < args.size(); ++x) {
-            if (!args.get(x).getDeGenerifiedType().equals(otherArgs.get(x).getDeGenerifiedType())) return false;
+            JavaTypeInstance lhs = args.get(x);
+            JavaTypeInstance rhs = otherArgs.get(x);
+            JavaTypeInstance deGenerifiedLhs = lhs.getDeGenerifiedType();
+            JavaTypeInstance deGenerifiedRhs = rhs.getDeGenerifiedType();
+            if (!deGenerifiedLhs.equals(deGenerifiedRhs)) {
+                if (lhs instanceof JavaGenericBaseInstance) {
+                    if (!((JavaGenericBaseInstance) lhs).tryFindBinding(rhs, genericTypeBinder)) return false;
+                } else {
+                    return false;
+                }
+            }
         }
         return true;
     }
@@ -222,7 +234,7 @@ public class MethodPrototype {
          * For each of the formal type parameters of the class signature, what has it been bound to in the
          * instance?
          */
-        GenericTypeBinder genericTypeBinder = new GenericTypeBinder(formalTypeParameters, classSignature, args, boundInstance, invokingTypes);
+        GenericTypeBinder genericTypeBinder = new GenericTypeBinder().bind(formalTypeParameters, classSignature, args, boundInstance, invokingTypes);
 
         JavaGenericBaseInstance genericResult = (JavaGenericBaseInstance) result;
         return genericResult.getBoundInstance(genericTypeBinder);

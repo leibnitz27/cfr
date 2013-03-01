@@ -33,7 +33,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public void tryFindBinding(JavaTypeInstance other, List<FormalTypeParameter> parameters, GenericTypeBinder target) {
+    public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target) {
         if (other instanceof JavaGenericRefTypeInstance) {
             // We can dig deeper.
             JavaGenericRefTypeInstance otherJavaGenericRef = (JavaGenericRefTypeInstance) other;
@@ -42,11 +42,12 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
                     JavaTypeInstance genericType = genericTypes.get(x);
                     if (genericType instanceof JavaGenericBaseInstance) {
                         JavaGenericBaseInstance genericBaseInstance = (JavaGenericBaseInstance) genericType;
-                        genericBaseInstance.tryFindBinding(otherJavaGenericRef.genericTypes.get(x), parameters, target);
+                        return genericBaseInstance.tryFindBinding(otherJavaGenericRef.genericTypes.get(x), target);
                     }
                 }
             }
         }
+        return false;
     }
 
     @Override

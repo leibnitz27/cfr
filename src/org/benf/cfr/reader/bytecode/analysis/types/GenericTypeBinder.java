@@ -14,9 +14,12 @@ import java.util.Map;
 public class GenericTypeBinder {
     private final Map<String, JavaTypeInstance> nameToBoundType = MapFactory.newMap();
 
-    public GenericTypeBinder(List<FormalTypeParameter> methodFormalTypeParameters,
-                             ClassSignature classSignature, List<JavaTypeInstance> args,
-                             JavaGenericRefTypeInstance boundInstance, List<JavaTypeInstance> boundArgs) {
+    public GenericTypeBinder() {
+    }
+
+    public GenericTypeBinder bind(List<FormalTypeParameter> methodFormalTypeParameters,
+                                  ClassSignature classSignature, List<JavaTypeInstance> args,
+                                  JavaGenericRefTypeInstance boundInstance, List<JavaTypeInstance> boundArgs) {
 
         if (boundInstance != null) {    // null for static.
             List<FormalTypeParameter> unboundParameters = classSignature.getFormalTypeParameters();
@@ -46,10 +49,11 @@ public class GenericTypeBinder {
                 JavaTypeInstance bound = boundArgs.get(x);
                 if (unbound instanceof JavaGenericBaseInstance) {
                     JavaGenericBaseInstance unboundGeneric = (JavaGenericBaseInstance) unbound;
-                    unboundGeneric.tryFindBinding(bound, null, this);
+                    unboundGeneric.tryFindBinding(bound, this);
                 }
             }
         }
+        return this;
     }
 
     public JavaTypeInstance getBindingFor(JavaTypeInstance maybeUnbound) {

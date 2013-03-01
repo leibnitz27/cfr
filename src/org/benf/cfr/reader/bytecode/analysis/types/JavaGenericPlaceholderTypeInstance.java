@@ -28,8 +28,9 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
      * TODO : Strictly speaking we should only be adding the binding here if className is in formal parameters.
      */
     @Override
-    public void tryFindBinding(JavaTypeInstance other, List<FormalTypeParameter> parameters, GenericTypeBinder target) {
+    public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target) {
         target.addBindingFor(className, other);
+        return true;
     }
 
     @Override
