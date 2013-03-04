@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeConstantValue;
+import org.benf.cfr.reader.entities.attributes.AttributeSignature;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.CollectionUtils;
@@ -70,9 +71,27 @@ public class Field implements KnowsRawSize {
         return length;
     }
 
+    private AttributeSignature getSignatureAttribute() {
+        Attribute attribute = attributes.get(AttributeSignature.ATTRIBUTE_NAME);
+        if (attribute == null) return null;
+        return (AttributeSignature) attribute;
+    }
+
     public JavaTypeInstance getJavaTypeInstance(ConstantPool cp) {
         if (cachedDecodedType == null) {
-            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getUTF8Entry(descriptorIndex).getValue(), cp);
+            AttributeSignature sig = getSignatureAttribute();
+            ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
+            ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
+            ConstantPoolEntryUTF8 prototype = null;
+            if (signature == null) {
+                prototype = descriptor;
+            } else {
+                prototype = signature;
+            }
+            /*
+             * If we've got a signature, use that, otherwise use the descriptor.
+             */
+            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(prototype.getValue(), cp);
         }
         return cachedDecodedType;
     }
