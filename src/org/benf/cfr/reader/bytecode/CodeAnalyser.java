@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewrit
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
@@ -154,7 +155,8 @@ public class CodeAnalyser {
 
         // Create a non final version...
         final VariableFactory variableFactory = new VariableFactory(method);
-        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, variableFactory, blockIdentifierFactory);
+        final ClassFile classFile = method.getClassFile();
+        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, classFile, variableFactory, blockIdentifierFactory);
 
 
         if (cfrState.getShowOps() == SHOW_L3_RAW) {

@@ -5,9 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.ConstantPoolEntry;
-import org.benf.cfr.reader.entities.ConstantPoolEntryFieldRef;
+import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -23,8 +21,19 @@ public class FieldVariable extends AbstractLValue {
     private final ConstantPool cp;
     private final ConstantPoolEntryFieldRef field;
 
-    public FieldVariable(Expression object, ConstantPool cp, ConstantPoolEntry field) {
-        super(new InferredJavaType(((ConstantPoolEntryFieldRef) field).getJavaTypeInstance(cp), InferredJavaType.Source.FIELD));
+    private static InferredJavaType getFieldType(ConstantPoolEntry fieldentry, ClassFile classFile, ConstantPool cp) {
+        ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) fieldentry;
+        String name = fieldRef.getLocalName(cp);
+        try {
+            Field field = classFile.getFieldByName(name);
+            return new InferredJavaType(field.getJavaTypeInstance(cp), InferredJavaType.Source.FIELD);
+        } catch (NoSuchFieldException _) {
+            return new InferredJavaType(fieldRef.getJavaTypeInstance(cp), InferredJavaType.Source.FIELD);
+        }
+    }
+
+    public FieldVariable(Expression object, ClassFile classFile, ConstantPool cp, ConstantPoolEntry field) {
+        super(getFieldType(field, classFile, cp));
         this.object = object;
         this.field = (ConstantPoolEntryFieldRef) field;
         this.cp = cp;

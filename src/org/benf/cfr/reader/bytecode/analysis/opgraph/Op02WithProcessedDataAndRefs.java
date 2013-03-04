@@ -22,10 +22,7 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.bytecode.opcode.OperationFactoryMultiANewArray;
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.ConstantPoolEntry;
-import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
-import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -234,7 +231,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
 
-    public Statement createStatement(VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory) {
+    public Statement createStatement(final ClassFile classFile, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory) {
         switch (instr) {
             case ALOAD:
             case ILOAD:
@@ -549,7 +546,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new ReturnValueStatement(retVal);
             }
             case GETFIELD: {
-                Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), cp, cpEntries[0]));
+                Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), classFile, cp, cpEntries[0]));
                 return new AssignmentSimple(getStackLValue(0), fieldExpression);
             }
             case GETSTATIC:
@@ -557,7 +554,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case PUTSTATIC:
                 return new AssignmentSimple(new StaticVariable(cp, cpEntries[0]), getStackRValue(0));
             case PUTFIELD:
-                return new AssignmentSimple(new FieldVariable(getStackRValue(1), cp, cpEntries[0]), getStackRValue(0));
+                return new AssignmentSimple(new FieldVariable(getStackRValue(1), classFile, cp, cpEntries[0]), getStackRValue(0));
             case SWAP: {
                 Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
                 Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
@@ -792,7 +789,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
-    public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list, final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory) {
+    public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list, final ClassFile classFile, final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory) {
 
         final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
         // Convert the op2s into a simple set of statements.
@@ -805,7 +802,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override
                     public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(variableFactory, blockIdentifierFactory));
+                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(classFile, variableFactory, blockIdentifierFactory));
                         conversionHelper.registerOriginalAndNew(arg1, res);
                         op03SimpleParseNodesTmp.add(res);
                         for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {
