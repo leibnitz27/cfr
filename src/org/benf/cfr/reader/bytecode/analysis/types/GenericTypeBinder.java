@@ -68,7 +68,16 @@ public class GenericTypeBinder {
         return maybeUnbound;
     }
 
-    public void addBindingFor(String name, JavaTypeInstance binding) {
-        nameToBoundType.put(name, binding);
+    private static boolean isBetterBinding(JavaTypeInstance isBetter, JavaTypeInstance than) {
+        if (than == null) return true;
+        if (isBetter instanceof JavaGenericPlaceholderTypeInstance) return false;
+        return true;
+    }
+
+    public void suggestBindingFor(String name, JavaTypeInstance binding) {
+        JavaTypeInstance alreadyBound = nameToBoundType.get(name);
+        if (isBetterBinding(binding, alreadyBound)) {
+            nameToBoundType.put(name, binding);
+        }
     }
 }

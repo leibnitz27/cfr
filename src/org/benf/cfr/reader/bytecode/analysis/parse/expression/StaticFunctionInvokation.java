@@ -24,11 +24,15 @@ public class StaticFunctionInvokation extends AbstractExpression {
     private final ConstantPool cp;
     private final JavaTypeInstance clazz;
 
-    public StaticFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, List<Expression> args) {
-        super(new InferredJavaType(
+    private static InferredJavaType getTypeForFunction(ConstantPool cp, ConstantPoolEntryMethodRef function, List<Expression> args) {
+        InferredJavaType res = new InferredJavaType(
                 function.getMethodPrototype(cp).getReturnType(cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp), args),
-                InferredJavaType.Source.EXPRESSION)
-        );
+                InferredJavaType.Source.EXPRESSION);
+        return res;
+    }
+
+    public StaticFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, List<Expression> args) {
+        super(getTypeForFunction(cp, function, args));
         this.function = function;
         this.args = args;
         this.cp = cp;

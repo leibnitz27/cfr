@@ -2,8 +2,6 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.ConstantPool;
 
-import java.util.List;
-
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -29,7 +27,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
      */
     @Override
     public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target) {
-        target.addBindingFor(className, other);
+        target.suggestBindingFor(className, other);
         return true;
     }
 
