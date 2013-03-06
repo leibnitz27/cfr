@@ -38,12 +38,12 @@ public class UnstructuredSwitch extends AbstractUnStructuredStatement {
          * If the last statement is an unstructured case, then we've got a case with no body.  Transform it into a structured
          * case.
          */
-        if (innerBlock.getStructuredStatement() instanceof Block) {
-            Block block = (Block) innerBlock.getStructuredStatement();
+        if (innerBlock.getStatement() instanceof Block) {
+            Block block = (Block) innerBlock.getStatement();
             List<Op04StructuredStatement> statements = block.getBlockStatements();
             Op04StructuredStatement last = statements.get(statements.size() - 1);
-            if (last.getStructuredStatement() instanceof UnstructuredCase) {
-                UnstructuredCase caseStatement = (UnstructuredCase) (last.getStructuredStatement());
+            if (last.getStatement() instanceof UnstructuredCase) {
+                UnstructuredCase caseStatement = (UnstructuredCase) (last.getStatement());
                 last.replaceContainedStatement(caseStatement.getEmptyStructuredCase());
             }
         }

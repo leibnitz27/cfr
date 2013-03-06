@@ -161,7 +161,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
         Op04StructuredStatement body = original.getBody();
         BlockIdentifier blockIdentifier = original.getBlockIdentifier();
 
-        StructuredStatement inner = body.getStructuredStatement();
+        StructuredStatement inner = body.getStatement();
         if (!(inner instanceof Block)) {
             throw new FailedRewriteException("Switch body is not a block, is a " + inner.getClass());
         }
@@ -172,7 +172,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
         List<Op04StructuredStatement> caseStatements = block.getBlockStatements();
         LinkedList<Op04StructuredStatement> tgt = ListFactory.newLinkedList();
         for (Op04StructuredStatement op04StructuredStatement : caseStatements) {
-            inner = op04StructuredStatement.getStructuredStatement();
+            inner = op04StructuredStatement.getStatement();
             if (!(inner instanceof StructuredCase)) {
                 throw new FailedRewriteException("Block member is not a case, it's a " + inner.getClass());
             }

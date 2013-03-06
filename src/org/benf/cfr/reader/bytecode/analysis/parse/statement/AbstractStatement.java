@@ -17,10 +17,10 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AbstractStatement implements Statement {
-    private StatementContainer container;
+    private StatementContainer<Statement> container;
 
     @Override
-    public void setContainer(StatementContainer container) {
+    public void setContainer(StatementContainer<Statement> container) {
         if (container == null) throw new ConfusedCFRException("Trying to setContainer null!");
         this.container = container;
     }
@@ -44,7 +44,7 @@ public abstract class AbstractStatement implements Statement {
     }
 
     @Override
-    public StatementContainer getContainer() {
+    public StatementContainer<Statement> getContainer() {
         if (container == null) throw new ConfusedCFRException("Null container!");
         return container;
     }

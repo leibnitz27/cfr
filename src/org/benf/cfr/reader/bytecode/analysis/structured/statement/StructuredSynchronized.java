@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIter
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -16,21 +17,20 @@ import java.util.List;
  * User: lee
  * Date: 15/05/2012
  */
-public class StructuredSynchronized extends AbstractStructuredStatement {
+public class StructuredSynchronized extends AbstractStructuredBlockStatement {
     private Expression monitor;
     private BlockIdentifier blockIdentifier;
-    private Op04StructuredStatement body;
 
     public StructuredSynchronized(Expression monitor, BlockIdentifier blockIdentifier, Op04StructuredStatement body) {
+        super(body);
         this.monitor = monitor;
         this.blockIdentifier = blockIdentifier;
-        this.body = body;
     }
 
     @Override
     public void dump(Dumper dumper) {
         dumper.print("synchronized (" + monitor.toString() + ") ");
-        body.dump(dumper);
+        getBody().dump(dumper);
     }
 
     @Override
@@ -40,13 +40,13 @@ public class StructuredSynchronized extends AbstractStructuredStatement {
 
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
-        body.transform(transformer);
+        getBody().transform(transformer);
     }
 
     @Override
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
-        body.linearizeStatementsInto(out);
+        getBody().linearizeStatementsInto(out);
     }
 
     @Override

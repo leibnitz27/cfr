@@ -64,7 +64,7 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
      * Maybe this could be put somewhere more general....
      */
     private static Op04StructuredStatement unpackElseIfBlock(Op04StructuredStatement elseBlock) {
-        StructuredStatement elseStmt = elseBlock.getStructuredStatement();
+        StructuredStatement elseStmt = elseBlock.getStatement();
         if (!(elseStmt instanceof Block)) return elseBlock;
         Block block = (Block) elseStmt;
         if (!block.isJustOneStatement()) {
@@ -73,7 +73,7 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
             return elseBlock;
         }
         Op04StructuredStatement inner = block.getSingleStatement();
-        if (inner.getStructuredStatement() instanceof StructuredIf) {
+        if (inner.getStatement() instanceof StructuredIf) {
             return inner;
         }
         return elseBlock;

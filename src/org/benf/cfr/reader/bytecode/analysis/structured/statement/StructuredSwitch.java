@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIter
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -16,21 +17,20 @@ import java.util.List;
  * User: lee
  * Date: 15/05/2012
  */
-public class StructuredSwitch extends AbstractStructuredStatement {
+public class StructuredSwitch extends AbstractStructuredBlockStatement {
     private Expression switchOn;
-    private Op04StructuredStatement body;
     private final BlockIdentifier blockIdentifier;
 
     public StructuredSwitch(Expression switchOn, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
+        super(body);
         this.switchOn = switchOn;
-        this.body = body;
         this.blockIdentifier = blockIdentifier;
     }
 
     @Override
     public void dump(Dumper dumper) {
         dumper.print("switch (" + switchOn + ") ");
-        body.dump(dumper);
+        getBody().dump(dumper);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class StructuredSwitch extends AbstractStructuredStatement {
 
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
-        body.transform(transformer);
+        getBody().transform(transformer);
     }
 
     public Expression getSwitchOn() {
@@ -48,7 +48,7 @@ public class StructuredSwitch extends AbstractStructuredStatement {
     }
 
     public Op04StructuredStatement getBody() {
-        return body;
+        return super.getBody();
     }
 
     public BlockIdentifier getBlockIdentifier() {
@@ -58,7 +58,7 @@ public class StructuredSwitch extends AbstractStructuredStatement {
     @Override
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
-        body.linearizeStatementsInto(out);
+        getBody().linearizeStatementsInto(out);
     }
 
     @Override

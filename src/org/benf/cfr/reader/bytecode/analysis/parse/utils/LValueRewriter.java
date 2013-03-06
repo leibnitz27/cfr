@@ -10,8 +10,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
  * Date: 24/06/2012
  * Time: 22:03
  */
-public interface LValueRewriter {
-    Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
+public interface LValueRewriter<T> {
+    Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<T> statementContainer);
 
     boolean explicitlyReplaceThisLValue(LValue lValue);
 }

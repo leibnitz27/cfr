@@ -35,7 +35,7 @@ import java.util.logging.Logger;
  * Time: 06:52
  * To change this template use File | Settings | File Templates.
  */
-public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, Dumpable, StatementContainer, IndexedStatement {
+public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, Dumpable, StatementContainer<Statement>, IndexedStatement {
     private static final Logger logger = LoggerFactory.create(Op03SimpleStatement.class);
 
     private final List<Op03SimpleStatement> sources = ListFactory.newList();
@@ -607,7 +607,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    private static class UsageWatcher implements LValueRewriter {
+    private static class UsageWatcher implements LValueRewriter<Statement> {
         private final LValue needle;
         boolean found = false;
 
@@ -616,7 +616,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
 
         @Override
-        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
 
             return null;
         }

@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.Matcher;
 
@@ -22,8 +23,17 @@ public interface StructuredStatement extends Dumpable, Matcher<StructuredStateme
 
     public void transformStructuredChildren(StructuredStatementTransformer transformer);
 
+    /*
+     * Is THIS a structured statement?
+     */
     public boolean isProperlyStructured();
+
+    /*
+     * Is this and its children structured?
+     */
+    public boolean isRecursivelyStructured();
 
     public void linearizeInto(List<StructuredStatement> out);
 
+    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer);
 }

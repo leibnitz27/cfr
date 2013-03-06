@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -27,6 +28,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
+    public boolean isRecursivelyStructured() {
+        return false;
+    }
+
+    @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
         throw new UnsupportedOperationException();
     }
@@ -43,6 +49,12 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
 
     @Override
     public void setContainer(Op04StructuredStatement container) {
+        throw new UnsupportedOperationException();
+    }
+
+    // These should never make it into generated code.
+    @Override
+    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
         throw new UnsupportedOperationException();
     }
 

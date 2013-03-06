@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -19,9 +20,8 @@ import java.util.List;
  * User: lee
  * Date: 15/05/2012
  */
-public class StructuredCase extends AbstractStructuredStatement {
+public class StructuredCase extends AbstractStructuredBlockStatement {
     private List<Expression> values;
-    private Op04StructuredStatement body;
     private final BlockIdentifier blockIdentifier;
     // Because enum values inside a switch are written without the class name, (but ONLY in a switch
     // on that enum!) we have to know about the context of usage.
@@ -32,8 +32,8 @@ public class StructuredCase extends AbstractStructuredStatement {
     }
 
     public StructuredCase(List<Expression> values, Op04StructuredStatement body, BlockIdentifier blockIdentifier, boolean enumSwitch) {
+        super(body);
         this.values = values;
-        this.body = body;
         this.blockIdentifier = blockIdentifier;
         this.enumSwitch = enumSwitch;
     }
@@ -63,7 +63,7 @@ public class StructuredCase extends AbstractStructuredStatement {
                 dumper.print("case " + value + ": ");
             }
         }
-        body.dump(dumper);
+        getBody().dump(dumper);
     }
 
     @Override
@@ -76,7 +76,7 @@ public class StructuredCase extends AbstractStructuredStatement {
     }
 
     public Op04StructuredStatement getBody() {
-        return body;
+        return super.getBody();
     }
 
     public BlockIdentifier getBlockIdentifier() {
@@ -85,13 +85,13 @@ public class StructuredCase extends AbstractStructuredStatement {
 
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
-        body.transform(transformer);
+        getBody().transform(transformer);
     }
 
     @Override
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
-        body.linearizeStatementsInto(out);
+        getBody().linearizeStatementsInto(out);
     }
 
     @Override

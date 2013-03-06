@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
 import java.util.Vector;
@@ -38,6 +39,18 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     @Override
     public boolean isProperlyStructured() {
         return true;
+    }
+
+    @Override
+    public boolean isRecursivelyStructured() {
+        return true;
+    }
+
+    /*
+    * Unless we're an assignment or a block which could contain an assignment, there's no need to implement.
+    */
+    @Override
+    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
     }
 
     @Override

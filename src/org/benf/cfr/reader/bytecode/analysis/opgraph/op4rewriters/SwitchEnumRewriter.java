@@ -224,7 +224,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
          * We can only do the rewrite if ALL the entries in the case list are in the map we found above.
          */
         Op04StructuredStatement switchBlock = structuredSwitch.getBody();
-        StructuredStatement switchBlockStatement = switchBlock.getStructuredStatement();
+        StructuredStatement switchBlockStatement = switchBlock.getStatement();
         if (!(switchBlockStatement instanceof Block)) {
             throw new IllegalStateException("Inside switch should be a block");
         }
@@ -237,7 +237,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
          */
         LinkedList<Op04StructuredStatement> newBlockContent = ListFactory.newLinkedList();
         for (Op04StructuredStatement caseOuter : caseStatements) {
-            StructuredStatement caseInner = caseOuter.getStructuredStatement();
+            StructuredStatement caseInner = caseOuter.getStatement();
             if (!(caseInner instanceof StructuredCase)) {
                 return;
             }

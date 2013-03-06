@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 
@@ -12,7 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignment
  * Date: 11/07/2012
  * Time: 18:13
  */
-public class LValueAssignmentExpressionRewriter implements LValueRewriter {
+public class LValueAssignmentExpressionRewriter implements LValueRewriter<Statement> {
 
     private final LValue lValue;
     private final AbstractAssignmentExpression lValueReplacement;
@@ -25,7 +26,7 @@ public class LValueAssignmentExpressionRewriter implements LValueRewriter {
     }
 
     @Override
-    public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+    public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
         if (!lValue.equals(this.lValue)) return null;
         if (!ssaIdentifiers.isValidReplacement(lValue, statementContainer.getSSAIdentifiers())) return null;
         source.nopOut();

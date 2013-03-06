@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIter
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.ElseBlock;
@@ -67,6 +68,21 @@ public class StructuredIf extends AbstractStructuredStatement {
             out.add(new ElseBlock());
             elseBlock.linearizeStatementsInto(out);
         }
+    }
+
+    @Override
+    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+        ifTaken.traceLocalVariableScope(scopeDiscoverer);
+        if (elseBlock != null) {
+            elseBlock.traceLocalVariableScope(scopeDiscoverer);
+        }
+    }
+
+    @Override
+    public boolean isRecursivelyStructured() {
+        if (!ifTaken.isFullyStructured()) return false;
+        if (elseBlock != null && !elseBlock.isFullyStructured()) return false;
+        return true;
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
  * Date: 20/03/2012
  * Time: 18:06
  */
-public class LValueAssignmentAndAliasCondenser implements LValueRewriter, LValueAssignmentCollector {
+public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Statement>, LValueAssignmentCollector<Statement> {
 
     private static final Logger logger = LoggerFactory.create(LValueAssignmentAndAliasCondenser.class);
 
@@ -60,17 +61,17 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter, LValue
 
 
     @Override
-    public void collect(StackSSALabel lValue, StatementContainer statementContainer, Expression value) {
+    public void collect(StackSSALabel lValue, StatementContainer<Statement> statementContainer, Expression value) {
         found.put(lValue, new ExpressionStatement(value, statementContainer));
     }
 
     @Override
-    public void collectMultiUse(StackSSALabel lValue, StatementContainer statementContainer, Expression value) {
+    public void collectMultiUse(StackSSALabel lValue, StatementContainer<Statement> statementContainer, Expression value) {
         multiFound.put(lValue, new ExpressionStatement(value, statementContainer));
     }
 
     @Override
-    public void collectMutatedLValue(LValue lValue, StatementContainer statementContainer, Expression value) {
+    public void collectMutatedLValue(LValue lValue, StatementContainer<Statement> statementContainer, Expression value) {
         SSAIdent version = statementContainer.getSSAIdentifiers().getSSAIdent(lValue);
         if (null != mutableFound.put(new VersionedLValue(lValue, version), new ExpressionStatement(value, statementContainer))) {
             throw new ConfusedCFRException("Duplicate versioned SSA Ident.");
@@ -79,12 +80,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter, LValue
 
     // We're not interested in local variable assignments here.
     @Override
-    public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer statementContainer, Expression value) {
-
+    public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<Statement> statementContainer, Expression value) {
     }
 
     @Override
-    public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer lvSc) {
+    public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> lvSc) {
         if (!(lValue instanceof StackSSALabel)) return null;
 
         StackSSALabel stackSSALabel = (StackSSALabel) lValue;
@@ -138,7 +138,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter, LValue
         return new AliasRewriter();
     }
 
-    public class AliasRewriter implements LValueRewriter {
+    public class AliasRewriter implements LValueRewriter<Statement> {
         private final Map<StackSSALabel, List<StatementContainer>> usages = MapFactory.newLazyMap(
                 new UnaryFunction<StackSSALabel, List<StatementContainer>>() {
                     @Override
@@ -157,7 +157,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter, LValue
         );
 
         @Override
-        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
             if (!(lValue instanceof StackSSALabel)) return null;
             StackSSALabel stackSSALabel = (StackSSALabel) lValue;
 
@@ -250,7 +250,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter, LValue
     }
 
 
-    public class MutationRewriterFirstPass implements LValueRewriter {
+    public class MutationRewriterFirstPass implements LValueRewriter<Statement> {
 
         private final Map<VersionedLValue, Set<StatementContainer>> mutableUseFound = MapFactory.newLazyMap(new UnaryFunction<VersionedLValue, Set<StatementContainer>>() {
             @Override
@@ -261,7 +261,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter, LValue
 
         /* Bit cheeky, we'll never actually replace here, but use this pass to collect info. */
         @Override
-        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
             SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(lValue);
             if (ssaIdent != null) {
                 VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);
@@ -323,7 +323,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter, LValue
     }
 
 
-    public class MutationRewriterSecondPass implements LValueRewriter {
+    public class MutationRewriterSecondPass implements LValueRewriter<Statement> {
         private final Map<VersionedLValue, StatementContainer> mutableReplacable;
 
         private MutationRewriterSecondPass(Map<VersionedLValue, StatementContainer> mutableReplacable) {
@@ -331,7 +331,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter, LValue
         }
 
         @Override
-        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
             SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(lValue);
             if (ssaIdent != null) {
                 VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -61,6 +62,23 @@ public class StructuredTry extends AbstractStructuredStatement {
             catchBlock.linearizeStatementsInto(out);
         }
 
+    }
+
+    @Override
+    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+        tryBlock.traceLocalVariableScope(scopeDiscoverer);
+        for (Op04StructuredStatement catchBlock : catchBlocks) {
+            catchBlock.traceLocalVariableScope(scopeDiscoverer);
+        }
+    }
+
+    @Override
+    public boolean isRecursivelyStructured() {
+        if (!tryBlock.isFullyStructured()) return false;
+        for (Op04StructuredStatement catchBlock : catchBlocks) {
+            if (!catchBlock.isFullyStructured()) return false;
+        }
+        return true;
     }
 
     @Override

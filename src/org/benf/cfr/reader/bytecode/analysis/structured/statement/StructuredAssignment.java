@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIter
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -39,6 +40,12 @@ public class StructuredAssignment extends AbstractStructuredStatement {
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
     }
+
+    @Override
+    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+        lvalue.collectLValueAssignments(rvalue, getContainer(), scopeDiscoverer);
+    }
+
 
     @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {

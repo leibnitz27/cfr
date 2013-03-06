@@ -39,7 +39,7 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
         Op04StructuredStatement container = getContainer();
         return new StructuredCase(values,
                 new Op04StructuredStatement(
-                        container.getInstrIndex().justAfter(),
+                        container.getIndex().justAfter(),
                         container.getBlockMembership(),
                         Block.getEmptyBlock()),
                 blockIdentifier);

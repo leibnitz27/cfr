@@ -1,7 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
@@ -25,7 +28,7 @@ import java.util.logging.Logger;
  * <p/>
  * Structured statements
  */
-public class Op04StructuredStatement implements MutableGraph<Op04StructuredStatement>, Dumpable {
+public class Op04StructuredStatement implements MutableGraph<Op04StructuredStatement>, Dumpable, StatementContainer<StructuredStatement> {
     private static final Logger logger = LoggerFactory.create(Op04StructuredStatement.class);
 
     private InstrIndex instrIndex;
@@ -69,9 +72,66 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return replacement;
     }
 
-    public StructuredStatement getStructuredStatement() {
+    @Override
+    public StructuredStatement getStatement() {
         return structuredStatement;
     }
+
+    @Override
+    public StructuredStatement getTargetStatement(int idx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getLabel() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public InstrIndex getIndex() {
+        return instrIndex;
+    }
+
+    @Override
+    public void nopOut() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void replaceStatement(StructuredStatement newTarget) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void nopOutConditional() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public SSAIdentifiers getSSAIdentifiers() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Set<BlockIdentifier> getBlockIdentifiers() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public BlockIdentifier getBlockStarted() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Set<BlockIdentifier> getBlocksEnded() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void copyBlockInformationFrom(StatementContainer<StructuredStatement> other) {
+        throw new UnsupportedOperationException();
+    }
+
 
     private boolean hasUnstructuredSource() {
         for (Op04StructuredStatement source : sources) {
@@ -82,9 +142,6 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return false;
     }
 
-    public InstrIndex getInstrIndex() {
-        return instrIndex;
-    }
 
     public Collection<BlockIdentifier> getBlockMembership() {
         return blockMembership;
@@ -120,6 +177,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public String getTargetLabel(int idx) {
         return targets.get(idx).instrIndex.toString();
+    }
+
+    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+        structuredStatement.traceLocalVariableScope(scopeDiscoverer);
     }
 
     /* 
@@ -327,6 +388,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    public boolean isFullyStructured() {
+        return structuredStatement.isRecursivelyStructured();
+    }
+
     /*
     *
     */
@@ -416,7 +481,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     public static void removePointlessReturn(Op04StructuredStatement root) {
-        StructuredStatement statement = root.getStructuredStatement();
+        StructuredStatement statement = root.getStatement();
         if (statement instanceof Block) {
             Block block = (Block) statement;
             block.removeLastNVReturn();
@@ -431,7 +496,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * in what looks like invalid variable re-use, which we can now convert.
      */
     public static void discoverVariableScopes(Op04StructuredStatement root) {
-
+        LValueAssignmentScopeDiscoverer scopeDiscoverer = new LValueAssignmentScopeDiscoverer();
+        root.traceLocalVariableScope(scopeDiscoverer);
     }
 
 

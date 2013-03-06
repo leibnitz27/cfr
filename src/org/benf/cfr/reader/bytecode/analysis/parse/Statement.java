@@ -26,7 +26,7 @@ import java.util.List;
  *   goto label
  */
 public interface Statement extends Dumpable {
-    void setContainer(StatementContainer container);
+    void setContainer(StatementContainer<Statement> container);
 
     void collectLValueAssignments(LValueAssignmentCollector lValueAssigmentCollector);
 
@@ -50,7 +50,7 @@ public interface Statement extends Dumpable {
     // Only sensible to call on an assignment
     Expression getRValue();
 
-    StatementContainer getContainer();
+    StatementContainer<Statement> getContainer();
 
     List<Statement> getCompoundParts();
 

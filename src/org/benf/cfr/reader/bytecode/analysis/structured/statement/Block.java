@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
@@ -36,7 +37,7 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public boolean removeLastContinue(BlockIdentifier block) {
-        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof AbstractStructuredContinue) {
             AbstractStructuredContinue structuredContinue = (AbstractStructuredContinue) structuredStatement;
             if (structuredContinue.getContinueTgt() == block) {
@@ -52,7 +53,7 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public boolean removeLastNVReturn() {
-        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof StructuredReturn) {
             Op04StructuredStatement oldReturn = containedStatements.getLast();
             StructuredReturn structuredReturn = (StructuredReturn) structuredStatement;
@@ -67,7 +68,7 @@ public class Block extends AbstractStructuredStatement {
 
     // TODO : This is unsafe.  Replace with version which requires target.
     public boolean removeLastGoto() {
-        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof UnstructuredGoto) {
             Op04StructuredStatement oldGoto = containedStatements.getLast();
             oldGoto.replaceStatementWithNOP("");
@@ -78,7 +79,7 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public boolean removeLastGoto(Op04StructuredStatement toHere) {
-        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof UnstructuredGoto) {
             Op04StructuredStatement oldGoto = containedStatements.getLast();
             if (oldGoto.getTargets().get(0) == toHere) {
@@ -90,7 +91,7 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public UnstructuredWhile removeLastEndWhile() {
-        StructuredStatement structuredStatement = containedStatements.getLast().getStructuredStatement();
+        StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof UnstructuredWhile) {
             Op04StructuredStatement endWhile = containedStatements.getLast();
             endWhile.replaceStatementWithNOP("");
@@ -115,11 +116,11 @@ public class Block extends AbstractStructuredStatement {
         int size = containedStatements.size();
         for (int x = 0; x < size; ++x) {
             Op04StructuredStatement statement = containedStatements.get(x);
-            if (statement.getStructuredStatement() instanceof StructuredTry) {
-                StructuredTry structuredTry = (StructuredTry) statement.getStructuredStatement();
+            if (statement.getStatement() instanceof StructuredTry) {
+                StructuredTry structuredTry = (StructuredTry) statement.getStatement();
                 ++x;
                 Op04StructuredStatement next = containedStatements.get(x);
-                while (x < size && next.getStructuredStatement() instanceof StructuredCatch) {
+                while (x < size && next.getStatement() instanceof StructuredCatch) {
                     structuredTry.addCatch(next.nopThisAndReplace());
                     ++x;
                     if (x < size) {
@@ -144,6 +145,14 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
+    @Override
+    public boolean isRecursivelyStructured() {
+        for (Op04StructuredStatement structuredStatement : containedStatements) {
+            if (!structuredStatement.isFullyStructured()) return false;
+        }
+        return true;
+    }
+
     public List<Op04StructuredStatement> getBlockStatements() {
         return containedStatements;
     }
@@ -155,6 +164,13 @@ public class Block extends AbstractStructuredStatement {
             structuredBlock.linearizeStatementsInto(out);
         }
         out.add(new EndBlock());
+    }
+
+    @Override
+    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+        for (Op04StructuredStatement item : containedStatements) {
+            item.traceLocalVariableScope(scopeDiscoverer);
+        }
     }
 
     @Override

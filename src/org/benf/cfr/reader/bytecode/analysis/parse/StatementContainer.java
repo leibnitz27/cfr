@@ -13,10 +13,10 @@ import java.util.Set;
  * Time: 06:53
  * To change this template use File | Settings | File Templates.
  */
-public interface StatementContainer {
-    Statement getStatement();
+public interface StatementContainer<T> {
+    T getStatement();
 
-    Statement getTargetStatement(int idx);
+    T getTargetStatement(int idx);
 
     String getLabel();
 
@@ -24,7 +24,7 @@ public interface StatementContainer {
 
     void nopOut();
 
-    void replaceStatement(Statement newTarget);
+    void replaceStatement(T newTarget);
 
     void nopOutConditional();
 
@@ -36,5 +36,5 @@ public interface StatementContainer {
 
     Set<BlockIdentifier> getBlocksEnded();
 
-    void copyBlockInformationFrom(StatementContainer other);
+    void copyBlockInformationFrom(StatementContainer<T> other);
 }
