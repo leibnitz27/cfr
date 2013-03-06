@@ -32,7 +32,7 @@ public class LocalVariable extends AbstractLValue {
     }
 
     @Override
-    public void collectLValueAssignments(Expression assignedTo, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
+    public <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector<T> lValueAssigmentCollector) {
         lValueAssigmentCollector.collectLocalVariableAssignment(this, statementContainer, assignedTo);
     }
 

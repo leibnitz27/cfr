@@ -13,7 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 public interface LValue {
     int getNumberOfCreators();
 
-    <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector lValueAssigmentCollector);
+    <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector<T> lValueAssigmentCollector);
 
     SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory);
 
