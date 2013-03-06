@@ -40,8 +40,8 @@ public class AssignmentSimple extends AbstractAssignment {
     }
 
     @Override
-    public void getLValueEquivalences(LValueAssignmentCollector lValueAssigmentCollector) {
-        lvalue.determineLValueEquivalence(rvalue, this.getContainer(), lValueAssigmentCollector);
+    public void collectLValueAssignments(LValueAssignmentCollector lValueAssigmentCollector) {
+        lvalue.collectLValueAssignments(rvalue, this.getContainer(), lValueAssigmentCollector);
     }
 
     @Override

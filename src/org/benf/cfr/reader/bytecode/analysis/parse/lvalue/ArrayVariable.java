@@ -34,7 +34,7 @@ public class ArrayVariable extends AbstractLValue {
     }
 
     @Override
-    public void determineLValueEquivalence(Expression assignedTo, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
+    public void collectLValueAssignments(Expression assignedTo, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
     }
 
     @Override

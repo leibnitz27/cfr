@@ -319,8 +319,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         containedInBlocks.add(blockIdentifier);
     }
 
-    private void collect(LValueAssignmentCollector lValueAssigmentCollector) {
-        containedStatement.getLValueEquivalences(lValueAssigmentCollector);
+    private void collect(LValueAssignmentAndAliasCondenser lValueAssigmentCollector) {
+        containedStatement.collectLValueAssignments(lValueAssigmentCollector);
     }
 
     private void condense(LValueRewriter lValueRewriter) {
@@ -511,7 +511,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         accountingRewriter.flush();
 
 
-        LValueAssignmentCollector lValueAssigmentCollector = new LValueAssignmentCollector();
+        LValueAssignmentAndAliasCondenser lValueAssigmentCollector = new LValueAssignmentAndAliasCondenser();
         for (Op03SimpleStatement statement : statements) {
             statement.collect(lValueAssigmentCollector);
         }
@@ -520,13 +520,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * Can we replace any mutable values?
          * If we found any on the first pass, we will try to move them here.
          */
-        LValueAssignmentCollector.MutationRewriterFirstPass firstPassRewriter = lValueAssigmentCollector.getMutationRewriterFirstPass();
+        LValueAssignmentAndAliasCondenser.MutationRewriterFirstPass firstPassRewriter = lValueAssigmentCollector.getMutationRewriterFirstPass();
         if (firstPassRewriter != null) {
             for (Op03SimpleStatement statement : statements) {
                 statement.condense(firstPassRewriter);
             }
 
-            LValueAssignmentCollector.MutationRewriterSecondPass secondPassRewriter = firstPassRewriter.getSecondPassRewriter();
+            LValueAssignmentAndAliasCondenser.MutationRewriterSecondPass secondPassRewriter = firstPassRewriter.getSecondPassRewriter();
             if (secondPassRewriter != null) {
                 for (Op03SimpleStatement statement : statements) {
                     statement.condense(secondPassRewriter);
@@ -537,7 +537,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         /*
          * Don't actually rewrite anything, but have an additional pass through to see if there are any aliases we can replace.
          */
-        LValueAssignmentCollector.AliasRewriter multiRewriter = lValueAssigmentCollector.getAliasRewriter();
+        LValueAssignmentAndAliasCondenser.AliasRewriter multiRewriter = lValueAssigmentCollector.getAliasRewriter();
         for (Op03SimpleStatement statement : statements) {
             statement.condense(multiRewriter);
         }

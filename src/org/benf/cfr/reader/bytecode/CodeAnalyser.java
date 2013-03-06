@@ -307,6 +307,9 @@ public class CodeAnalyser {
         new SwitchStringRewriter(cfrState).rewrite(block);
         new SwitchEnumRewriter(cfrState).rewrite(block);
 
+        // Now we've got everything nicely block structured, we can have an easier time
+        Op04StructuredStatement.discoverVariableScopes(block);
+
         this.analysed = block;
         return analysed;
     }

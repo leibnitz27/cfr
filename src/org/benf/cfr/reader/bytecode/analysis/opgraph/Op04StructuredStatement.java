@@ -423,6 +423,17 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    /*
+     * We've got structured (hopefully) code now, so we can find the initial unbranched assignment points
+     * for any given variable.
+     *
+     * We can also discover if stack locations have been re-used with a type change - this would have resulted
+     * in what looks like invalid variable re-use, which we can now convert.
+     */
+    public static void discoverVariableScopes(Op04StructuredStatement root) {
+
+    }
+
 
     public static class TypeFilter<T> implements Predicate<Op04StructuredStatement> {
         private final Class<T> clazz;

@@ -38,7 +38,7 @@ public class StackSSALabel extends AbstractLValue {
      * (Assuming that values in the RHS are not mutated)
      */
     @Override
-    public void determineLValueEquivalence(Expression rhsAssigned, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
+    public void collectLValueAssignments(Expression rhsAssigned, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
         if (getNumberOfCreators() == 1) {
             if ((rhsAssigned.isSimple() || stackEntry.getUsageCount() == 1)) {
                 lValueAssigmentCollector.collect(this, statementContainer, rhsAssigned);

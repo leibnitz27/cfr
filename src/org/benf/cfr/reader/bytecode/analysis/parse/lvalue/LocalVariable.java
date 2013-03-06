@@ -32,7 +32,8 @@ public class LocalVariable extends AbstractLValue {
     }
 
     @Override
-    public void determineLValueEquivalence(Expression assignedTo, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
+    public void collectLValueAssignments(Expression assignedTo, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
+        lValueAssigmentCollector.collectLocalVariableAssignment(this, statementContainer, assignedTo);
     }
 
     @Override
