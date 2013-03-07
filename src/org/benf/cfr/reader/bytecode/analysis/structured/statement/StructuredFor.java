@@ -41,6 +41,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         dumper.print("for (");
         if (initial != null) {
+            // It's a big grotty to have creator here, but no worse that pushing it into Assignmentsimple
             if (isCreator) {
                 dumper.print(initial.getCreatedLValue().getInferredJavaType().getJavaTypeInstance().toString() + " ");
             }
