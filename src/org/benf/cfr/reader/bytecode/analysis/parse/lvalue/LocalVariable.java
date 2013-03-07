@@ -31,6 +31,10 @@ public class LocalVariable extends AbstractLValue {
         return name + typeToString();
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector<T> lValueAssigmentCollector) {
         lValueAssigmentCollector.collectLocalVariableAssignment(this, statementContainer, assignedTo);

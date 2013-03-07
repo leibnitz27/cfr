@@ -31,7 +31,7 @@ public abstract class AbstractStatement implements Statement {
     }
 
     @Override
-    public void collectLValueAssignments(LValueAssignmentCollector lValueAssigmentCollector) {
+    public void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -55,6 +56,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     // These should never make it into generated code.
     @Override
     public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void markCreator(LocalVariable localVariable) {
         throw new UnsupportedOperationException();
     }
 

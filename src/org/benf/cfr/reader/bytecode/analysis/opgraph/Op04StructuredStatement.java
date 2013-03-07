@@ -498,6 +498,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public static void discoverVariableScopes(Op04StructuredStatement root) {
         LValueAssignmentScopeDiscoverer scopeDiscoverer = new LValueAssignmentScopeDiscoverer();
         root.traceLocalVariableScope(scopeDiscoverer);
+        // We should have found scopes, now update to reflect this.
+        scopeDiscoverer.markDiscoveredCreations();
     }
 
 

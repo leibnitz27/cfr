@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -36,4 +37,6 @@ public interface StructuredStatement extends Dumpable, Matcher<StructuredStateme
     public void linearizeInto(List<StructuredStatement> out);
 
     public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer);
+
+    public void markCreator(LocalVariable localVariable);
 }

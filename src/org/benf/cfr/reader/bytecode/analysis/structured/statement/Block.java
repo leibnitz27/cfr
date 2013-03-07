@@ -168,9 +168,11 @@ public class Block extends AbstractStructuredStatement {
 
     @Override
     public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+        scopeDiscoverer.enterBlock();
         for (Op04StructuredStatement item : containedStatements) {
             item.traceLocalVariableScope(scopeDiscoverer);
         }
+        scopeDiscoverer.leaveBlock();
     }
 
     @Override

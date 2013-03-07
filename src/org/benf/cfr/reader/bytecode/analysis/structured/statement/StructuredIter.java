@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -55,4 +56,18 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
         getBody().linearizeStatementsInto(out);
     }
 
+    @Override
+    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+        // While it's not strictly speaking 2 blocks, we can model it as the statement / definition
+        // section of the for as being an enclosing block.  (otherwise we add the variable in the wrong scope).
+        scopeDiscoverer.enterBlock();
+        iterator.collectLValueAssignments(null, this.getContainer(), scopeDiscoverer);
+        super.traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.leaveBlock();
+    }
+
+    @Override
+    public void markCreator(LocalVariable localVariable) {
+        // Nop.  Structured iter is always the creator.
+    }
 }

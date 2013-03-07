@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
@@ -40,7 +41,7 @@ public class AssignmentSimple extends AbstractAssignment {
     }
 
     @Override
-    public void collectLValueAssignments(LValueAssignmentCollector lValueAssigmentCollector) {
+    public void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
         lvalue.collectLValueAssignments(rvalue, this.getContainer(), lValueAssigmentCollector);
     }
 

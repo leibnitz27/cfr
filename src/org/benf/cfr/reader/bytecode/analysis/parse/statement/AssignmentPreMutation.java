@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractMutatingAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
@@ -57,7 +58,7 @@ public class AssignmentPreMutation extends AbstractAssignment {
     }
 
     @Override
-    public void collectLValueAssignments(LValueAssignmentCollector lValueAssigmentCollector) {
+    public void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
         /*
          * Here, we override the default behaviour of the LValue being collected, and collect it anyway.
          * We will only want to allow a replacement if there is only a single usage of this value.

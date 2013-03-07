@@ -36,7 +36,7 @@ public class CompoundStatement extends AbstractStatement {
     }
 
     @Override
-    public void collectLValueAssignments(LValueAssignmentCollector lValueAssigmentCollector) {
+    public void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
         throw new ConfusedCFRException("Should not be using compound statements here");
     }
 

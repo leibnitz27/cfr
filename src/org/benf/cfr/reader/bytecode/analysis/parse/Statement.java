@@ -28,7 +28,7 @@ import java.util.List;
 public interface Statement extends Dumpable {
     void setContainer(StatementContainer<Statement> container);
 
-    void collectLValueAssignments(LValueAssignmentCollector lValueAssigmentCollector);
+    void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector);
 
     void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers);
 

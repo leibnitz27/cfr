@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIter
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
@@ -21,14 +22,19 @@ public class StructuredAssignment extends AbstractStructuredStatement {
 
     private LValue lvalue;
     private Expression rvalue;
+    boolean isCreator;
 
     public StructuredAssignment(LValue lvalue, Expression rvalue) {
         this.lvalue = lvalue;
         this.rvalue = rvalue;
+        this.isCreator = false;
     }
 
     @Override
     public void dump(Dumper dumper) {
+        if (isCreator) {
+            dumper.print(lvalue.getInferredJavaType().getJavaTypeInstance().toString() + " ");
+        }
         dumper.print(lvalue.toString() + " = " + rvalue.toString() + ";\n");
     }
 
@@ -46,6 +52,13 @@ public class StructuredAssignment extends AbstractStructuredStatement {
         lvalue.collectLValueAssignments(rvalue, getContainer(), scopeDiscoverer);
     }
 
+    @Override
+    public void markCreator(LocalVariable localVariable) {
+        if (!localVariable.equals(lvalue)) {
+            throw new IllegalArgumentException("Being asked to mark creator for wrong variable");
+        }
+        isCreator = true;
+    }
 
     @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
