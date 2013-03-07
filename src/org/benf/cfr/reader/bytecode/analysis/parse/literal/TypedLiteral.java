@@ -150,7 +150,7 @@ public class TypedLiteral {
 
     // TODO : Quote strings properly
     private static String enQuote(String in) {
-        return "\"" + in + "\"";
+        return '\"' + in.replaceAll("\"", "\\\\\"") + '\"';
     }
 
     public static TypedLiteral getConstantPoolEntry(ConstantPool cp, ConstantPoolEntry cpe) {
