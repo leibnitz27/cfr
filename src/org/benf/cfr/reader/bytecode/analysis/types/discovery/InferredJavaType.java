@@ -52,6 +52,7 @@ public class InferredJavaType {
     private static class IJTInternal {
 
         private boolean isDelegate = false;
+        private final boolean locked;
         // When not delegating
         private JavaTypeInstance type;
         private final Source source;
@@ -59,10 +60,11 @@ public class InferredJavaType {
         // When delegating
         private IJTInternal delegate;
 
-        private IJTInternal(JavaTypeInstance type, Source source) {
+        private IJTInternal(JavaTypeInstance type, Source source, boolean locked) {
             this.type = type;
             this.source = source;
             this.id = global_id++;
+            this.locked = locked;
         }
 
         public RawJavaType getRawType() {
@@ -123,6 +125,10 @@ public class InferredJavaType {
                 return "#" + id + " " + type.toString();
             }
         }
+
+        public boolean isLocked() {
+            return locked;
+        }
     }
 
     private IJTInternal value;
@@ -130,11 +136,11 @@ public class InferredJavaType {
     public static final InferredJavaType IGNORE = new InferredJavaType();
 
     public InferredJavaType() {
-        value = new IJTInternal(RawJavaType.VOID, Source.UNKNOWN);
+        value = new IJTInternal(RawJavaType.VOID, Source.UNKNOWN, false);
     }
 
     public InferredJavaType(JavaTypeInstance type, Source source) {
-        value = new IJTInternal(type, source);
+        value = new IJTInternal(type, source, false);
     }
 
     private void chainFrom(InferredJavaType other) {
@@ -159,8 +165,10 @@ public class InferredJavaType {
         if (this == other) return;
         int pri = getRawType().compareTypePriorityTo(other.getRawType());
         if (pri >= 0) {
+            if (other.value.isLocked()) return;
             mkDelegate(other.value, this.value);
         } else {
+            if (this.value.isLocked()) return;
             mkDelegate(this.value, other.value);
             this.value = other.value;
         }
@@ -172,7 +180,7 @@ public class InferredJavaType {
     public void useAsWithCast(RawJavaType otherRaw) {
         if (this == IGNORE) return;
 
-        this.value = new IJTInternal(otherRaw, Source.OPERATION);
+        this.value = new IJTInternal(otherRaw, Source.OPERATION, true);
     }
 
     public static void compareAsWithoutCasting(InferredJavaType a, InferredJavaType b) {
@@ -247,9 +255,9 @@ public class InferredJavaType {
         if (thisRaw.getStackType() == StackType.INT) {
             // Find the 'least' specific, tie to that.
             int cmp = thisRaw.compareTypePriorityTo(otherRaw);
-            if (cmp < 0) {
+            if (cmp > 0) {
                 this.value.force(otherRaw);
-            } else if (cmp > 0) {
+            } else if (cmp < 0) {
                 int x = 3;
 //                other.value.force(thisRaw);
             }
