@@ -78,7 +78,7 @@ public class LValueAssignmentScopeDiscoverer implements LValueAssignmentCollecto
         ScopeDefinition previousDef = earliestDefinition.get(name);
         if (previousDef == null) {
             // First use is here.
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, statementContainer, localVariable, value);
+            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, statementContainer, localVariable, value, name);
             earliestDefinition.put(name, scopeDefinition);
             earliestDefinitionsByLevel.get(currentDepth).add(name);
             discoveredCreations.add(scopeDefinition);
@@ -91,7 +91,18 @@ public class LValueAssignmentScopeDiscoverer implements LValueAssignmentCollecto
         JavaTypeInstance oldType = previousDef.getJavaTypeInstance();
         JavaTypeInstance newType = localVariable.getInferredJavaType().getJavaTypeInstance();
         if (!oldType.equals(newType)) {
-            throw new UnsupportedOperationException("Type mismatch for local stack re-use");
+            //
+            // TODO : Should rename variable, or we'll have a clash.
+            //
+            earliestDefinitionsByLevel.get(previousDef.getDepth()).remove(previousDef.getName());
+            if (previousDef.getDepth() == currentDepth) {
+                throw new UnsupportedOperationException("Re-use of anonymous local variable in same scope with different type.  Renaming required. NYI.");
+            }
+
+            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, statementContainer, localVariable, value, name);
+            earliestDefinition.put(name, scopeDefinition);
+            earliestDefinitionsByLevel.get(currentDepth).add(name);
+            discoveredCreations.add(scopeDefinition);
         }
     }
 
@@ -108,13 +119,15 @@ public class LValueAssignmentScopeDiscoverer implements LValueAssignmentCollecto
         private final LocalVariable lValue;
         private final Expression rValue;
         private final JavaTypeInstance lValueType;
+        private final String name;
 
-        private ScopeDefinition(int depth, StatementContainer<StructuredStatement> statementContainer, LocalVariable lValue, Expression rValue) {
+        private ScopeDefinition(int depth, StatementContainer<StructuredStatement> statementContainer, LocalVariable lValue, Expression rValue, String name) {
             this.depth = depth;
             this.statementContainer = statementContainer;
             this.lValue = lValue;
             this.rValue = rValue;
             this.lValueType = lValue.getInferredJavaType().getJavaTypeInstance();
+            this.name = name;
         }
 
         public JavaTypeInstance getJavaTypeInstance() {
@@ -127,6 +140,14 @@ public class LValueAssignmentScopeDiscoverer implements LValueAssignmentCollecto
 
         public LocalVariable getlValue() {
             return lValue;
+        }
+
+        public int getDepth() {
+            return depth;
+        }
+
+        public String getName() {
+            return name;
         }
     }
 

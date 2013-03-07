@@ -25,6 +25,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     private AssignmentSimple initial;
     private AbstractAssignmentExpression assignment;
     private final BlockIdentifier block;
+    private boolean isCreator;
 
     public StructuredFor(ConditionalExpression condition, AssignmentSimple initial, AbstractAssignmentExpression assignment, Op04StructuredStatement body, BlockIdentifier block) {
         super(body);
@@ -32,12 +33,20 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         this.initial = initial;
         this.assignment = assignment;
         this.block = block;
+        this.isCreator = false;
     }
 
     @Override
     public void dump(Dumper dumper) {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
-        dumper.print("for (" + (initial == null ? "" : initial.toString()) + ";" + condition.toString() + "; " + assignment + ") ");
+        dumper.print("for (");
+        if (initial != null) {
+            if (isCreator) {
+                dumper.print(initial.getCreatedLValue().getInferredJavaType().getJavaTypeInstance().toString() + " ");
+            }
+            dumper.print(initial.toString());
+        }
+        dumper.print(";" + condition.toString() + "; " + assignment + ") ");
         getBody().dump(dumper);
     }
 
@@ -70,5 +79,6 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
 
     @Override
     public void markCreator(LocalVariable localVariable) {
+        this.isCreator = true;
     }
 }
