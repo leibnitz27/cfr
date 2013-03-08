@@ -31,6 +31,8 @@ public class AttributeFactory {
             return new AttributeSignature(raw, cp);
         } else if (AttributeConstantValue.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeConstantValue(raw, cp);
+        } else if (AttributeExceptions.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeExceptions(raw, cp);
         } else {
             return new AttributeUnknown(raw, attributeName);
         }

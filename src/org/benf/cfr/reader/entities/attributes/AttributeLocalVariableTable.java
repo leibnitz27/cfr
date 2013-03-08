@@ -47,11 +47,6 @@ public class AttributeLocalVariableTable extends Attribute {
 
     @Override
     public void dump(Dumper d, ConstantPool cp) {
-/*        d.print("Local Variable table\n");
-        for (LocalVariableEntry entry : localVariableEntryList) {
-            entry.dump(d,cp);
-        }
-*/
     }
 
     public List<LocalVariableEntry> getLocalVariableEntryList() {

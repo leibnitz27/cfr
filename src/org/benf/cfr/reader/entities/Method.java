@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
+import org.benf.cfr.reader.entities.attributes.AttributeExceptions;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
@@ -181,7 +182,25 @@ public class Method implements KnowsRawSize {
         String methodName = cp.getUTF8Entry(nameIndex).getValue();
         boolean constructor = methodName.equals("<init>");
         if (constructor) methodName = classFile.getClassType().toString();
-        return (prefix.isEmpty() ? "" : (prefix + " ")) + getMethodPrototype().getDeclarationSignature(methodName, constructor);
+        StringBuilder sb = new StringBuilder();
+        if (!prefix.isEmpty()) sb.append(prefix).append(' ');
+        sb.append(getMethodPrototype().getDeclarationSignature(methodName, constructor));
+        Attribute exceptionsAttribute = attributes.get(AttributeExceptions.ATTRIBUTE_NAME);
+        if (exceptionsAttribute != null) {
+            sb.append(" throws ");
+            boolean first = true;
+            List<ConstantPoolEntryClass> exceptionClasses = ((AttributeExceptions) exceptionsAttribute).getExceptionClassList();
+            for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(", ");
+                }
+                sb.append(exceptionClass.getTypeInstance(cp).getRawName());
+            }
+            if (asClass) sb.append(' '); // This is the kind of fiddly display we don't want to be doing here.. :(
+        }
+        return sb.toString();
     }
 
     public Op04StructuredStatement getAnalysis() {
