@@ -7,9 +7,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.Troolean;
 
 import java.util.Set;
 
@@ -27,9 +29,32 @@ public class ComparisonOperation extends AbstractExpression implements Condition
         super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
         this.lhs = lhs;
         this.rhs = rhs;
+        /*
+         * RE: Integral types.
+         *
+         * If we're comparing two non literals, we can't really tell anything.  In fact, we should
+         * use the widest type (if appropriate).
+         *
+         * If one is a literal, we can see if that literal supports conversion to the type we've guessed
+         * for the lhs.  If so, we can tighten that literal.
+         *
+         * i.e.
+         *
+         * int x = ..
+         * if (x == 97)
+         *
+         * vs
+         *
+         * char x = .. (creates a KNOWN char type, i.e. string.charAt)
+         * if (x == 'a') .... comparison in both types will be the same...
+         *
+         * but if we've incorrectly guessed the literal as a narrower type before (eg boolean), we need to
+         * bring it back up to the other type.
+         */
         InferredJavaType.compareAsWithoutCasting(lhs.getInferredJavaType(), rhs.getInferredJavaType());
         this.op = op;
     }
+
 
     @Override
     public int getSize() {

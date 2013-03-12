@@ -1,10 +1,12 @@
 package org.benf.cfr.reader.bytecode.analysis.types.discovery;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.Troolean;
 
 /**
  * Created with IntelliJ IDEA.
@@ -55,6 +57,7 @@ public class InferredJavaType {
         private final boolean locked;
         // When not delegating
         private JavaTypeInstance type;
+        private JavaTypeInstance narrowestType;
         private final Source source;
         private final int id;
         // When delegating
@@ -81,6 +84,14 @@ public class InferredJavaType {
                 return delegate.getJavaTypeInstance();
             } else {
                 return type;
+            }
+        }
+
+        public Source getSource() {
+            if (isDelegate) {
+                return delegate.getSource();
+            } else {
+                return source;
             }
         }
 
@@ -143,6 +154,10 @@ public class InferredJavaType {
         value = new IJTInternal(type, source, false);
     }
 
+    public Source getSource() {
+        return value.getSource();
+    }
+
     private void chainFrom(InferredJavaType other) {
         if (this == other) return;
         mkDelegate(this.value, other.value);
@@ -174,6 +189,42 @@ public class InferredJavaType {
         }
     }
 
+    public static void compareAsWithoutCasting(InferredJavaType a, InferredJavaType b) {
+        if (a == InferredJavaType.IGNORE) return;
+        if (b == InferredJavaType.IGNORE) return;
+
+        RawJavaType art = a.getRawType();
+        RawJavaType brt = b.getRawType();
+        if (art.getStackType() != StackType.INT ||
+                brt.getStackType() != StackType.INT) return;
+
+        InferredJavaType litType = null;
+        InferredJavaType betterType = null;
+        Expression litExp = null;
+        switch (Troolean.get(
+                a.getSource() == InferredJavaType.Source.LITERAL,
+                b.getSource() == InferredJavaType.Source.LITERAL)) {
+            case NEITHER:
+                return;
+            case FIRST:
+                litType = a;
+                betterType = b;
+                break;
+            case SECOND:
+                litType = b;
+                betterType = a;
+                break;
+            case BOTH:
+                return; // for now.
+        }
+        // If betterType is wider than litType, just use it.  If it's NARROWER than litType,
+        // we need to see if litType can support it. (i.e. 34343 can't be cast to a char).
+        //
+        // ACTUALLY, we can cheat here!  this is because in java we CAN compare an int to a char...
+        litType.chainFrom(betterType);
+    }
+
+
     /*
      * This is being explicitly casted by (eg) i2c.  We need to cut the chain.
      */
@@ -181,30 +232,6 @@ public class InferredJavaType {
         if (this == IGNORE) return;
 
         this.value = new IJTInternal(otherRaw, Source.OPERATION, true);
-    }
-
-    public static void compareAsWithoutCasting(InferredJavaType a, InferredJavaType b) {
-        if (a == IGNORE) return;
-        if (b == IGNORE) return;
-
-        RawJavaType art = a.getRawType();
-        RawJavaType brt = b.getRawType();
-        if (art.getStackType() != StackType.INT ||
-                brt.getStackType() != StackType.INT) return;
-
-        InferredJavaType takeFromType = null;
-        InferredJavaType pushToType = null;
-        if (art == RawJavaType.INT) {
-            takeFromType = b;
-            pushToType = a;
-        } else if (brt == RawJavaType.INT) {
-            takeFromType = a;
-            pushToType = b;
-        } else {
-            return;
-        }
-        pushToType.chainIntegralTypes(takeFromType);
-//        pushToType.useAsWithoutCasting(takeFromType);
     }
 
     public void useInArithOp(InferredJavaType other, boolean forbidBool) {

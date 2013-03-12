@@ -49,18 +49,22 @@ public class TypedLiteral {
     private static String charName(Object o) {
         if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting char-as-int");
         int i = (Integer) o;
-        char c = (char) i;
-        switch (c) {
-            case '\"':
-                return "'\\\"'";
-            case '\r':
-                return "'\\r'";
-            case '\n':
-                return "'\\n'";
-            case '\t':
-                return "'\\t'";
-            default:
-                return "'" + c + "'";
+        if (i < 32 || i >= 254) {
+            return Integer.toString(i);
+        } else {
+            char c = (char) i;
+            switch (c) {
+                case '\"':
+                    return "'\\\"'";
+                case '\r':
+                    return "'\\r'";
+                case '\n':
+                    return "'\\n'";
+                case '\t':
+                    return "'\\t'";
+                default:
+                    return "'" + c + "'";
+            }
         }
     }
 
