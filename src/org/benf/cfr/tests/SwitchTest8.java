@@ -24,20 +24,7 @@ public class SwitchTest8 {
         }
     }
 
-    public void test(hasIntVal a, hasIntVal b) {
-        switch (Troolean.get(a.getX() == 3, b.getX() == 4)) {
-            case NEITHER:
-                System.out.println("Neither");
-                break;
-            case FIRST:
-                System.out.println("first");
-                break;
-            case SECOND:
-                System.out.println("second");
-                break;
-            case BOTH:
-                System.out.println("both");
-                break;
-        }
+    public boolean test(hasIntVal a, hasIntVal b) {
+        return Troolean.get(a.getX() == 3, b.getX() == 4) == Troolean.BOTH;
     }
 }
