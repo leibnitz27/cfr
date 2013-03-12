@@ -50,6 +50,8 @@ public class TypedLiteral {
         if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting char-as-int");
         int i = (Integer) o;
         if (i < 32 || i >= 254) {
+            // perversely, java will allow you to compare non-char values to chars
+            // happily..... (also pretty print for out of range.)
             return Integer.toString(i);
         } else {
             char c = (char) i;
