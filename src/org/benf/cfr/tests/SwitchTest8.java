@@ -24,7 +24,11 @@ public class SwitchTest8 {
         }
     }
 
-    public boolean test(hasIntVal a, hasIntVal b) {
-        return Troolean.get(a.getX() == 3, b.getX() == 4) == Troolean.BOTH;
+    private int test(boolean a, boolean b) {
+        return a ? 4 : b ? 2 : 1;
+    }
+
+    public int test(hasIntVal a, hasIntVal b) {
+        return test(a.getX() == 3, b.getX() == 4);
     }
 }
