@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.ArrayType;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
@@ -68,7 +69,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                 new CollectMatch("switch", new StructuredSwitch(
                         new ArrayIndex(
                                 new LValueExpression(wcm.getLValueWildCard("lut")),
-                                wcm.getMemberFunction("fncall", "ordinal", new LValueExpression(wcm.getLValueWildCard("object")))),
+                                wcm.getMemberFunction("fncall", "ordinal", wcm.getExpressionWildCard("object"))),
                         null, wcm.getBlockIdentifier("block"))));
 
 
@@ -107,7 +108,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
     private void tryRewrite(SwitchEnumMatchResultCollector mrc) {
         StructuredSwitch structuredSwitch = mrc.getStructuredSwitch();
         LValue lookupTable = mrc.getLookupTable();
-        LValue enumObject = mrc.getEnumObject();
+        Expression enumObject = mrc.getEnumObject();
 
         if (!(lookupTable instanceof StaticVariable)) {
             return;
@@ -261,7 +262,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         Block replacementBlock = new Block(newBlockContent, block.isIndenting());
 
         StructuredSwitch newSwitch = new StructuredSwitch(
-                new LValueExpression(enumObject),
+                enumObject,
                 new Op04StructuredStatement(replacementBlock),
                 structuredSwitch.getBlockIdentifier());
 
@@ -285,7 +286,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         private final WildcardMatch wcm;
 
         private LValue lookupTable;
-        private LValue enumObject;
+        private Expression enumObject;
         private StructuredSwitch structuredSwitch;
 
         private SwitchEnumMatchResultCollector(WildcardMatch wcm) {
@@ -308,14 +309,14 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         @Override
         public void collectMatches(WildcardMatch wcm) {
             lookupTable = wcm.getLValueWildCard("lut").getMatch();
-            enumObject = wcm.getLValueWildCard("object").getMatch();
+            enumObject = wcm.getExpressionWildCard("object").getMatch();
         }
 
         public LValue getLookupTable() {
             return lookupTable;
         }
 
-        public LValue getEnumObject() {
+        public Expression getEnumObject() {
             return enumObject;
         }
 
