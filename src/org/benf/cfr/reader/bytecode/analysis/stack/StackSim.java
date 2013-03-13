@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.stack;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
 
@@ -40,6 +41,21 @@ public class StackSim {
             throw new ConfusedCFRException("Underrun type stack");
         }
         return thisSim.stackEntryHolder.getStackEntry();
+    }
+
+    public List<StackEntryHolder> getHolders(int offset, long num) {
+        StackSim thisSim = this;
+        List<StackEntryHolder> res = ListFactory.newList();
+        while (num > 0) {
+            if (offset > 0) {
+                offset--;
+            } else {
+                res.add(thisSim.stackEntryHolder);
+                num--;
+            }
+            thisSim = thisSim.getParent();
+        }
+        return res;
     }
 
     public long getDepth() {

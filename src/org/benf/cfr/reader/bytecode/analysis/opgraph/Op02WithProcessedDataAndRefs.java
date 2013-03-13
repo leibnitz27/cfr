@@ -14,10 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntryHolder;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
@@ -70,6 +67,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private long stackDepthAfterExecution;
     private final List<StackEntryHolder> stackConsumed = ListFactory.newList();
     private final List<StackEntryHolder> stackProduced = ListFactory.newList();
+    private StackSim unconsumedJoinedStack = null;
 
     public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, int index, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset) {
         this(instr, rawData, new InstrIndex(index), cp, cpEntries, originalRawOffset);
@@ -157,7 +155,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     public void populateStackInfo(StackSim stackSim) {
         StackDelta stackDelta = instr.getStackDelta(rawData, cp, cpEntries, stackSim);
         if (stackDepthBeforeExecution != -1) {
-
             /* Catch instructions are funny, as we know we'll get here with 1 thing on the stack. */
             if (instr == JVMInstr.FAKE_CATCH) {
                 return;
@@ -167,18 +164,28 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 throw new ConfusedCFRException("Invalid stack depths @ " + this + " : trying to set " + stackSim.getDepth() + " previously set to " + stackDepthBeforeExecution);
             }
 
-            // Merge our current known arguments with these.
-            // Since we merge into extant objects, we populate all the downstream
-            // dependencies here, and don't need to recurse any futher.
 
             List<StackEntryHolder> alsoConsumed = ListFactory.newList();
             List<StackEntryHolder> alsoProduced = ListFactory.newList();
-            StackSim unusedStack = stackSim.getChange(stackDelta, alsoConsumed, alsoProduced);
+            StackSim newStackSim = stackSim.getChange(stackDelta, alsoConsumed, alsoProduced);
             if (alsoConsumed.size() != stackConsumed.size()) {
                 throw new ConfusedCFRException("Unexpected stack sizes on merge");
             }
             for (int i = 0; i < stackConsumed.size(); ++i) {
                 stackConsumed.get(i).mergeWith(alsoConsumed.get(i));
+            }
+            /*
+             * If unconsumed joined stack is set, see below, we must be merging something this instruction doesn't
+             * know about.
+             */
+            if (unconsumedJoinedStack != null) {
+                // Need to take the unconsumedJoinedStack, ignore the
+                long depth = unconsumedJoinedStack.getDepth() - alsoProduced.size();
+                List<StackEntryHolder> unconsumedEntriesOld = unconsumedJoinedStack.getHolders(alsoProduced.size(), depth);
+                List<StackEntryHolder> unconsumedEntriesNew = newStackSim.getHolders(alsoProduced.size(), depth);
+                for (int i = 0; i < unconsumedEntriesOld.size(); ++i) {
+                    unconsumedEntriesOld.get(i).mergeWith(unconsumedEntriesNew.get(i));
+                }
             }
 
         } else {
@@ -191,6 +198,17 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             this.stackDepthAfterExecution = stackDepthBeforeExecution + stackDelta.getChange();
 
             StackSim newStackSim = stackSim.getChange(stackDelta, stackConsumed, stackProduced);
+
+            if (this.sources.size() > 1 && newStackSim.getDepth() > stackProduced.size()) {
+                // We're merging stacks here, and haven't consumed everything from the branch we came
+                // in on.
+                //
+                // eg f(a == 3 ? 1 : 0, 2) // the push for the 2 sees the merge, but doesn't consume either.
+                //
+                // This will potentially contain uneccessary references to BEFORE the stacks diverged.
+                // TODO: eliminate this - I can see how an obfuscator would use that....
+                this.unconsumedJoinedStack = newStackSim;
+            }
 
             for (Op02WithProcessedDataAndRefs target : targets) {
                 target.populateStackInfo(newStackSim);
