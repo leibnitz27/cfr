@@ -139,9 +139,10 @@ public class CodeAnalyser {
 
         // Populate stack info (each instruction gets references to stack objects
         // consumed / produced.
+        // This is the point at which we combine temporaries from merging
+        // stacks.
         Op02WithProcessedDataAndRefs.populateStackInfo(op2list);
 
-////
         if (cfrState.getShowOps() == SHOW_L2_OPS) {
             dumper.print("Op2 statements:\n");
             dumper.dump(op2list);
