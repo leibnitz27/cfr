@@ -1093,6 +1093,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     private static Op03SimpleStatement findMovableAssignment(Op03SimpleStatement start, LValue lValue) {
         Op03SimpleStatement current = findSingleBackSource(start);
+        if (current == null) {
+            return null;
+        }
         do {
             if (current.containedStatement instanceof AssignmentSimple) {
                 AssignmentSimple assignmentSimple = (AssignmentSimple) current.containedStatement;
