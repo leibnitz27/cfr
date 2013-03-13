@@ -285,8 +285,12 @@ public class InferredJavaType {
             if (cmp > 0) {
                 this.value.force(otherRaw);
             } else if (cmp < 0) {
-                int x = 3;
-//                other.value.force(thisRaw);
+                // This special case is because we aggressively try to treat 0/1 as boolean,
+                // which comes back to bite us if they're used as arguments to a wider typed function
+                // we can't see foo((int)false))!
+                if (thisRaw == RawJavaType.BOOLEAN) {
+                    this.value.force(otherRaw);
+                }
             }
         }
     }
