@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackDeltaImpl;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
 import org.benf.cfr.reader.entities.ConstantPool;
@@ -21,7 +22,7 @@ public class OperationFactorySwap extends OperationFactoryDefault {
     public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
         StackTypes popped = getStackTypes(stackSim, 1, 0);
         StackTypes pushed = getStackTypes(stackSim, 0, 1);
-        return new StackDelta(popped, pushed);
+        return new StackDeltaImpl(popped, pushed);
     }
 
     @Override

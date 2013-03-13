@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackDeltaImpl;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
@@ -24,7 +25,7 @@ public class OperationFactoryPop extends OperationFactoryDefault {
         StackType topType = stackSim.getEntry(0).getType();
         if (topType.getComputationCategory() != 1)
             throw new ConfusedCFRException("Can only pop computation category 1");
-        return new StackDelta(topType.asList(), StackTypes.EMPTY);
+        return new StackDeltaImpl(topType.asList(), StackTypes.EMPTY);
     }
 
     @Override

@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackDeltaImpl;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
@@ -20,12 +21,12 @@ public class OperationFactoryDup2 extends OperationFactoryDupBase {
     public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
         if (getCat(stackSim, 0) == 1) {
             checkCat(stackSim, 1, 1);
-            return new StackDelta(
+            return new StackDeltaImpl(
                     getStackTypes(stackSim, 0, 1),
                     getStackTypes(stackSim, 0, 1, 0, 1)
             );
         } else {
-            return new StackDelta(
+            return new StackDeltaImpl(
                     getStackTypes(stackSim, 0),
                     getStackTypes(stackSim, 0, 0)
             );

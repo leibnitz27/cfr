@@ -2,6 +2,7 @@ package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackDeltaImpl;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
@@ -302,7 +303,7 @@ public class ConstantPoolUtils {
                 resultType = decodeTypeTok(getNextTypeTok(proto, curridx), cp).getStackType().asList();
                 break;
         }
-        StackDelta res = new StackDelta(argumentTypes, resultType);
+        StackDelta res = new StackDeltaImpl(argumentTypes, resultType);
 //        logger.info("Parsed prototype " + proto + " as " + res);
         return res;
     }

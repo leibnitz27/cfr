@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackDeltaImpl;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
@@ -44,6 +45,6 @@ public class OperationFactoryMultiANewArray extends OperationFactoryDefault {
         for (int x = 0; x < numDims; ++x) {
             stackTypeList.add(StackType.INT);
         }
-        return new StackDelta(new StackTypes(stackTypeList), StackType.REF.asList());
+        return new StackDeltaImpl(new StackTypes(stackTypeList), StackType.REF.asList());
     }
 }

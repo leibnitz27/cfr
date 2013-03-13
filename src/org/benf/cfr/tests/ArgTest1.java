@@ -1,7 +1,5 @@
 package org.benf.cfr.tests;
 
-import org.benf.cfr.reader.util.Troolean;
-
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -12,12 +10,16 @@ import org.benf.cfr.reader.util.Troolean;
  */
 public class ArgTest1 {
 
-    private int test(boolean a, boolean b) {
+    private int foo(boolean a, boolean b) {
         return a ? 4 : b ? 2 : 1;
     }
 
+    public int test(int a) {
+        return foo(a == 3, true);
+    }
+
     public int test2(int a, int b) {
-        return test(a == 3, b == 4);
+        return foo(a == 3, b == 2);
     }
 
 }

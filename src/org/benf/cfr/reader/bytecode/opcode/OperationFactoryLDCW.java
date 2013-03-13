@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackDeltaImpl;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
@@ -30,7 +31,7 @@ public class OperationFactoryLDCW extends OperationFactoryCPEntryW {
             throw new ConfusedCFRException("Got a literal, but expected a different category");
         }
 
-        return new StackDelta(StackTypes.EMPTY, stackType.asList());
+        return new StackDeltaImpl(StackTypes.EMPTY, stackType.asList());
     }
 
     protected int getRequiredComputationCategory() {

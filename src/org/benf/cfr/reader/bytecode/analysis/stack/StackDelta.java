@@ -1,45 +1,19 @@
 package org.benf.cfr.reader.bytecode.analysis.stack;
 
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
-import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
- * Created by IntelliJ IDEA.
+ * Created with IntelliJ IDEA.
  * User: lee
- * Date: 12/03/2012
- * Time: 17:56
- * To change this template use File | Settings | File Templates.
+ * Date: 13/03/2013
+ * Time: 09:26
  */
-public class StackDelta {
-    private final StackTypes consumed;
-    private final StackTypes produced;
+public interface StackDelta {
+    boolean isNoOp();
 
-    public StackDelta(StackTypes consumed, StackTypes produced) {
-        if (consumed == null || produced == null) {
-            throw new ConfusedCFRException("Must not have null stackTypes");
-        }
-        this.consumed = consumed;
-        this.produced = produced;
-    }
+    StackTypes getConsumed();
 
-    public boolean isNoOp() {
-        return consumed.isEmpty() && produced.isEmpty();
-    }
+    StackTypes getProduced();
 
-    public StackTypes getConsumed() {
-        return consumed;
-    }
-
-    public StackTypes getProduced() {
-        return produced;
-    }
-
-    public long getChange() {
-        return produced.size() - consumed.size();
-    }
-
-    @Override
-    public String toString() {
-        return "Consumes " + consumed + ", Produces " + produced;
-    }
+    long getChange();
 }
