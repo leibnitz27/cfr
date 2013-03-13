@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -1623,6 +1624,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             this.e1 = e1;
             this.e2 = e2;
         }
+
+        private static Troolean isOneOrZeroLiteral(Expression e) {
+            if (!(e instanceof Literal)) return Troolean.NEITHER;
+            TypedLiteral typedLiteral = ((Literal) e).getValue();
+            Object value = typedLiteral.getValue();
+            if (!(value instanceof Integer)) return Troolean.NEITHER;
+            int iValue = (Integer) value;
+            if (iValue == 1) return Troolean.FIRST;
+            if (iValue == 0) return Troolean.SECOND;
+            return Troolean.NEITHER;
+        }
+
+        private boolean isPointlessBoolean() {
+            if (!(e1.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN &&
+                    e2.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN)) return false;
+
+            if (isOneOrZeroLiteral(e1) != Troolean.FIRST) return false;
+            if (isOneOrZeroLiteral(e2) != Troolean.SECOND) return false;
+            return true;
+        }
     }
 
     private static class TypeFilter<T> implements Predicate<Op03SimpleStatement> {
@@ -1877,14 +1898,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             for (Op03SimpleStatement statement : elseBranch) statement.nopOut();
             // todo : do I need to do a more complex merge?
             ifStatement.ssaIdentifiers = leaveIfBranchHolder.ssaIdentifiers;
+
+            // We need to be careful we don't replace x ? 1 : 0 with x here unless we're ABSOLUTELY
+            // sure that the final expression type is boolean.....
+            // this may come back to bite. (at which point we can inject a (? 1 : 0) ternary...
+            Expression rhs = ternary.isPointlessBoolean() ?
+                    innerIfStatement.getCondition().getNegated() :
+                    new TernaryExpression(
+                            innerIfStatement.getCondition().getNegated(),
+                            ternary.e1, ternary.e2);
+
             ifStatement.replaceStatement(
                     new AssignmentSimple(
                             ternary.lValue,
-                            new TernaryExpression(
-                                    innerIfStatement.getCondition().getNegated(),
-                                    ternary.e1, ternary.e2)
+                            rhs
                     )
             );
+
             // If statement now should have only one target.
             List<Op03SimpleStatement> tmp = ListFactory.uniqueList(ifStatement.targets);
             ifStatement.targets.clear();

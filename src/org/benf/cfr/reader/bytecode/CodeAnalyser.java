@@ -258,6 +258,8 @@ public class CodeAnalyser {
         // We need another pass of this to remove jumps which are next to each other except for nops
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
+        // Identify simple (nested) conditionals - note that this also generates ternary expressions,
+        // if the conditional is simple enough.
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         logger.info("removeUselessNops");
