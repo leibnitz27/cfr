@@ -42,6 +42,7 @@ public class CodeAnalyser {
     private static final int SHOW_L2_OPS = 1;
     private static final int SHOW_L3_RAW = 2;
     private static final int SHOW_L3_ORDERED = 3;
+    private static final int SHOW_L4_FINAL_OP3 = 4;
 
     private final static Logger logger = LoggerFactory.create(CodeAnalyser.class);
 
@@ -304,6 +305,11 @@ public class CodeAnalyser {
 //        dumper.print("Final Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
 
+        if (cfrState.getShowOps() == SHOW_L4_FINAL_OP3) {
+            dumper.newln().newln();
+            dumper.print("Linked Op3 statements:\n");
+            op03SimpleParseNodes.get(0).dump(dumper);
+        }
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 

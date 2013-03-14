@@ -2102,6 +2102,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         seen.add(target);
                         if (target.getIndex().isBackJumpTo(start)) {
                             pendingPossibilities.add(target);
+                        } else {
+                            knownMembers.remove(maybe);
+                            continue;
                         }
                     }
                 }
