@@ -62,6 +62,29 @@ public class ConstantPoolUtils {
                 javaTypeInstance = parseRefType(tok.substring(idx + 1, tok.length() - 1), cp, true);
                 break;
             case 'B':   // byte
+            case 'C':   // char
+            case 'I':   // integer
+            case 'S':   // short
+            case 'Z':   // boolean
+            case 'F':   // float
+            case 'D':   // double
+            case 'J':   // long
+                javaTypeInstance = decodeRawJavaType(c);
+                break;
+            default:
+                throw new ConfusedCFRException("Invalid type string " + tok);
+        }
+        if (numArrayDims > 0) javaTypeInstance = new JavaArrayTypeInstance(numArrayDims, javaTypeInstance);
+        if (wildcardType != WildcardType.NONE) {
+            javaTypeInstance = new JavaWildcardTypeInstance(wildcardType, javaTypeInstance);
+        }
+        return javaTypeInstance;
+    }
+
+    public static RawJavaType decodeRawJavaType(char c) {
+        RawJavaType javaTypeInstance;
+        switch (c) {
+            case 'B':   // byte
                 javaTypeInstance = RawJavaType.BYTE;
                 break;
             case 'C':   // char
@@ -86,11 +109,7 @@ public class ConstantPoolUtils {
                 javaTypeInstance = RawJavaType.LONG;
                 break;
             default:
-                throw new ConfusedCFRException("Invalid type string " + tok);
-        }
-        if (numArrayDims > 0) javaTypeInstance = new JavaArrayTypeInstance(numArrayDims, javaTypeInstance);
-        if (wildcardType != WildcardType.NONE) {
-            javaTypeInstance = new JavaWildcardTypeInstance(wildcardType, javaTypeInstance);
+                throw new ConfusedCFRException("Illegal raw java type");
         }
         return javaTypeInstance;
     }
