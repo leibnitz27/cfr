@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -29,6 +31,7 @@ public class MethodPrototype {
     private final String name;
     private final ConstantPool cp;
     private final ClassFile classFile;
+    private transient List<LocalVariable> parameterLValues = null;
 
     public MethodPrototype(ClassFile classFile, String name, boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
         this.formalTypeParameters = formalTypeParameters;
@@ -85,6 +88,20 @@ public class MethodPrototype {
         }
         sb.append(")");
         return sb.toString();
+    }
+
+    public List<LocalVariable> getParameters() {
+        if (parameterLValues != null) return parameterLValues;
+
+        parameterLValues = ListFactory.newList();
+        int offset = instanceMethod ? 1 : 0;
+        int argssize = args.size();
+        for (int i = 0; i < argssize; ++i) {
+            JavaTypeInstance arg = args.get(i);
+            parameterLValues.add(new LocalVariable(offset, variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)));
+            offset += arg.getStackType().getComputationCategory();
+        }
+        return parameterLValues;
     }
 
     public JavaTypeInstance getReturnType() {

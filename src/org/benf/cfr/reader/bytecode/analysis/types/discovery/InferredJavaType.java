@@ -154,6 +154,10 @@ public class InferredJavaType {
         value = new IJTInternal(type, source, false);
     }
 
+    public InferredJavaType(JavaTypeInstance type, Source source, boolean locked) {
+        value = new IJTInternal(type, source, locked);
+    }
+
     public Source getSource() {
         return value.getSource();
     }

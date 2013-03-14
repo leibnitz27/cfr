@@ -318,7 +318,7 @@ public class CodeAnalyser {
 
         if (block.isFullyStructured()) {
             // Now we've got everything nicely block structured, we can have an easier time
-            Op04StructuredStatement.discoverVariableScopes(block);
+            Op04StructuredStatement.discoverVariableScopes(method.getMethodPrototype(), block);
         }
 
         this.analysed = block;

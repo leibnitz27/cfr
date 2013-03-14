@@ -1,10 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
@@ -12,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComm
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -495,8 +493,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * We can also discover if stack locations have been re-used with a type change - this would have resulted
      * in what looks like invalid variable re-use, which we can now convert.
      */
-    public static void discoverVariableScopes(Op04StructuredStatement root) {
-        LValueAssignmentScopeDiscoverer scopeDiscoverer = new LValueAssignmentScopeDiscoverer();
+    public static void discoverVariableScopes(MethodPrototype methodPrototype, Op04StructuredStatement root) {
+        LValueAssignmentScopeDiscoverer scopeDiscoverer = new LValueAssignmentScopeDiscoverer(methodPrototype);
         root.traceLocalVariableScope(scopeDiscoverer);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();

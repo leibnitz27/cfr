@@ -3,10 +3,12 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -40,6 +42,14 @@ public class LValueAssignmentScopeDiscoverer implements LValueAssignmentCollecto
     private transient int currentDepth = 0;
 
     private final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
+
+    public LValueAssignmentScopeDiscoverer(MethodPrototype prototype) {
+        final List<LocalVariable> parameters = prototype.getParameters();
+        for (LocalVariable parameter : parameters) {
+            final ScopeDefinition prototypeScope = new ScopeDefinition(0, null, parameter, null, parameter.getName());
+            earliestDefinition.put(parameter.getName(), prototypeScope);
+        }
+    }
 
     public void enterBlock() {
         currentDepth++;
