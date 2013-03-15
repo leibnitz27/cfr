@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -171,6 +172,22 @@ public class MethodPrototype {
         return instanceMethod;
     }
 
+    public Expression getAppropriatelyCastedArgument(Expression expression, int argidx) {
+        JavaTypeInstance type = args.get(argidx);
+        if (type.isComplexType()) {
+            return expression;
+        } else {
+            RawJavaType expectedRawJavaType = type.getRawTypeOfSimpleType();
+            RawJavaType providedRawJavaType = expression.getInferredJavaType().getRawType();
+            if (expectedRawJavaType == providedRawJavaType) {
+                return expression;
+            }
+            return new CastExpression(new InferredJavaType(expectedRawJavaType, InferredJavaType.Source.EXPRESSION, true), expression);
+        }
+
+    }
+
+    // Saves us using the above if we don't need to create the cast expression.
     public String getAppropriatelyCastedArgumentString(Expression expression, int argidx) {
         JavaTypeInstance type = args.get(argidx);
         if (type.isComplexType()) {

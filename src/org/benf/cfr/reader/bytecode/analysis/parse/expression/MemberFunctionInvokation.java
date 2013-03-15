@@ -114,6 +114,10 @@ public class MemberFunctionInvokation extends AbstractExpression {
         return args;
     }
 
+    public Expression getAppropriatelyCastArgument(int idx) {
+        return methodPrototype.getAppropriatelyCastedArgument(args.get(idx), idx);
+    }
+
     public ConstantPool getCp() {
         return cp;
     }
