@@ -4,6 +4,7 @@ import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.Predicate;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -89,11 +90,18 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
     }
 
     /* Ouch - should be set lookups.  */
-    public static boolean isInAllBlocks(List<BlockIdentifier> mustBeIn, List<BlockIdentifier> isIn) {
+    public static boolean isInAllBlocks(Collection<BlockIdentifier> mustBeIn, Collection<BlockIdentifier> isIn) {
         for (BlockIdentifier must : mustBeIn) {
             if (!isIn.contains(must)) return false;
         }
         return true;
+    }
+
+    public static boolean isInAnyBlock(Collection<BlockIdentifier> mustBeInOneOf, Collection<BlockIdentifier> isIn) {
+        for (BlockIdentifier block : isIn) {
+            if (mustBeInOneOf.contains(block)) return true;
+        }
+        return false;
     }
 
     @Override
