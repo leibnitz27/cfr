@@ -10,16 +10,14 @@ package org.benf.cfr.tests;
  * <p/>
  * (some decompilers fail to get the inner while.  (cfr did at 0_3).
  */
-public class ControlFlowTest2 {
+public class ControlFlowTest2a {
     public int foo(int i, int j) {
         while (true) {
-//            System.out.println("b");
+            System.out.println("b");
             if (i++ < 5) {
-                System.out.println("a");
+//                System.out.println("a");
             } else if (i < 10) {
 //                System.out.println("F");
-                continue;
-            } else {
                 continue;
             }
 //            System.out.println("Fred");
