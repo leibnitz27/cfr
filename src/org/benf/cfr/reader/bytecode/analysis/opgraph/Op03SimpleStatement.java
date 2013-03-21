@@ -967,29 +967,41 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * a->z,y
      * z->x
      *
+     * OR, better still
+     *
+     * a: if (!cond) goto y [else x]
+     * [z REMOVED]
+     * x: blah
+     * y:
+     *
      * We assume that statements are ordered.
      */
     public static void rewriteNegativeJumps(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> removeThese = ListFactory.newList();
         for (int x = 0; x < statements.size() - 2; ++x) {
             Op03SimpleStatement aStatement = statements.get(x);
             Statement innerAStatement = aStatement.getStatement();
             if (innerAStatement instanceof IfStatement) {
-                if (aStatement.targets.get(0) == statements.get(x + 1) &&
-                        aStatement.targets.get(1) == statements.get(x + 2)) {
-                    Op03SimpleStatement zStatement = statements.get(x + 1);
+                Op03SimpleStatement zStatement = statements.get(x + 1);
+                Op03SimpleStatement xStatement = statements.get(x + 2);
+
+                if (aStatement.targets.get(0) == zStatement &&
+                        aStatement.targets.get(1) == xStatement) {
+
                     Statement innerZStatement = zStatement.getStatement();
                     if (innerZStatement instanceof GotoStatement) {
                         // Yep, this is it.
                         Op03SimpleStatement yStatement = zStatement.targets.get(0);
-                        Op03SimpleStatement xStatement = statements.get(x + 2);
 
                         // Order is important.
-                        aStatement.targets.set(1, yStatement);
+                        aStatement.replaceTarget(xStatement, yStatement);
+                        aStatement.replaceTarget(zStatement, xStatement);
 
                         yStatement.replaceSource(zStatement, aStatement);
-                        xStatement.replaceSource(aStatement, zStatement);
-                        zStatement.replaceTarget(yStatement, xStatement);
+                        zStatement.sources.clear();
+                        zStatement.targets.clear();
                         zStatement.containedStatement = new Nop();
+                        removeThese.add(zStatement);
 
                         IfStatement innerAIfStatement = (IfStatement) innerAStatement;
                         innerAIfStatement.negateCondition();
@@ -997,6 +1009,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             }
         }
+        statements.removeAll(removeThese);
     }
 
     /* DEAD CODE */
