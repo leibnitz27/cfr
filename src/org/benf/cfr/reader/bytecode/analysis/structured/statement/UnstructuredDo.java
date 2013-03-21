@@ -51,17 +51,21 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
          *  break;
          * } while (true);
          */
-        if (this.getContainer().getSources().size() > 1) {
-            StructuredStatement inner = innerBlock.getStatement();
-            if (!(inner instanceof Block)) {
-                LinkedList<Op04StructuredStatement> blockContent = ListFactory.newLinkedList();
-                blockContent.add(new Op04StructuredStatement(inner));
-                inner = new Block(blockContent, true);
-                innerBlock.replaceContainedStatement(inner);
-            }
-            Block block = (Block) inner;
-            block.getBlockStatements().add(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
+        /*
+         * Can't do this
+         * TODO : Fails controlflowtest7
+         */
+//        if (this.getContainer().getSources().size() > 1) {
+        StructuredStatement inner = innerBlock.getStatement();
+        if (!(inner instanceof Block)) {
+            LinkedList<Op04StructuredStatement> blockContent = ListFactory.newLinkedList();
+            blockContent.add(new Op04StructuredStatement(inner));
+            inner = new Block(blockContent, true);
+            innerBlock.replaceContainedStatement(inner);
         }
+        Block block = (Block) inner;
+        block.getBlockStatements().add(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
+//        }
         return new StructuredDo(null, innerBlock, blockIdentifier);
     }
 
