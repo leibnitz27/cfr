@@ -234,10 +234,14 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.optimiseForTypes(op03SimpleParseNodes);
 
-
         // Identify simple while loops.
         logger.info("identifyLoops1");
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
+
+        logger.info("identifyCatchBlocks");
+        Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+        Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         // Perform this before simple forward if detection, as it allows us to not have to consider
         // gotos which have been relabelled as continue/break.
@@ -246,9 +250,6 @@ public class CodeAnalyser {
         logger.info("rewriteWhilesAsFors");
         Op03SimpleStatement.rewriteWhilesAsFors(op03SimpleParseNodes);
 
-        logger.info("identifyCatchBlocks");
-        Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
-        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         logger.info("removeSynchronizedCatchBlocks");
         Op03SimpleStatement.removeSynchronizedCatchBlocks(op03SimpleParseNodes);
@@ -304,6 +305,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter());
 //        dumper.print("Final Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
+
 
         if (cfrState.getShowOps() == SHOW_L4_FINAL_OP3) {
             dumper.newln().newln();

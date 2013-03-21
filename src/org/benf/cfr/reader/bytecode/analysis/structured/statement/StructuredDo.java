@@ -31,7 +31,7 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
         dumper.print("do ");
         getBody().dump(dumper);
         dumper.removePendingCarriageReturn();
-        dumper.print(" while (" + condition.toString() + ");\n");
+        dumper.print(" while (" + (condition == null ? "true" : condition.toString()) + ");\n");
     }
 
     @Override

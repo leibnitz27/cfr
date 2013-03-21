@@ -97,7 +97,8 @@ public class Block extends AbstractStructuredStatement {
             endWhile.replaceStatementWithNOP("");
             return (UnstructuredWhile) structuredStatement;
         } else {
-            throw new ConfusedCFRException("Trying to remove last while of a block, but it's not an unstructured WHILE - " + structuredStatement.getClass());
+            // Not a valid xfrm
+            return null;
         }
     }
 

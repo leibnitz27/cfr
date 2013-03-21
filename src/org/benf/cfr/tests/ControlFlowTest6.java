@@ -1,12 +1,16 @@
-package org.benf.cfr.tests.thirdparty;
+package org.benf.cfr.tests;
 
 /**
- * Created with IntelliJ IDEA.
+ * Created by IntelliJ IDEA.
  * User: lee
- * Date: 14/03/2013
- * Time: 15:14
+ * Date: 05/05/2011
+ * Time: 06:28
+ * <p/>
+ * http://www.program-transformation.org/Transform/DecompilerControlFlowTestSource
+ * <p/>
+ * (some decompilers fail to get the inner while.  (cfr did at 0_3).
  */
-public class ControlFlow2 {
+public class ControlFlowTest6 {
     public int foo(int i, int j) {
         while (true) {
             try {

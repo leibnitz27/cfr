@@ -257,7 +257,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.index = index;
     }
 
-    private void markBlockStatement(BlockIdentifier blockIdentifier, Op03SimpleStatement blockEnd, List<Op03SimpleStatement> statements) {
+    private void markBlockStatement(BlockIdentifier blockIdentifier, Op03SimpleStatement lastInBlock, Op03SimpleStatement blockEnd, List<Op03SimpleStatement> statements) {
         if (thisComparisonBlock != null) {
             throw new ConfusedCFRException("Statement marked as the start of multiple blocks");
         }
@@ -267,12 +267,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 IfStatement ifStatement = (IfStatement) containedStatement;
                 ifStatement.replaceWithWhileLoopStart(blockIdentifier);
                 Op03SimpleStatement whileEndTarget = targets.get(1);
-                if (index.isBackJumpTo(whileEndTarget)) {
-                    // If the while statement's 'not taken' is a back jump, we normalise
-                    // to a forward jump to after the block, and THAT gets to be the back jump.
-                    // Note that this can't be done before "Remove pointless jumps".
-                    // The blocks that this new statement is in are the same as my blocks, barring
-                    // blockIdentifier.
+                // If the while statement's 'not taken' is a back jump, we normalise
+                // to a forward jump to after the block, and THAT gets to be the back jump.
+                // Note that this can't be done before "Remove pointless jumps".
+                // The blocks that this new statement is in are the same as my blocks, barring
+                // blockIdentifier.
+                boolean pullOutJump = index.isBackJumpTo(whileEndTarget);
+                if (!pullOutJump) {
+                    // OR, if it's a forward jump, but to AFTER the end of the block
+                    // TODO : ORDERCHEAT.
+                    if (statements.indexOf(lastInBlock) != statements.indexOf(blockEnd) - 1) {
+                        pullOutJump = true;
+                    }
+                }
+                if (pullOutJump) {
                     Set<BlockIdentifier> backJumpContainedIn = SetFactory.newSet(containedInBlocks);
                     backJumpContainedIn.remove(blockIdentifier);
                     Op03SimpleStatement backJump = new Op03SimpleStatement(backJumpContainedIn, new GotoStatement(), blockEnd.index.justBefore());
@@ -286,10 +294,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     int insertAfter = statements.indexOf(blockEnd) - 1;
                     while (!statements.get(insertAfter).containedInBlocks.containsAll(containedInBlocks)) {
                         insertAfter--;
-                        backJump.index = backJump.index.justBefore();
                     }
+                    backJump.index = statements.get(insertAfter).index.justAfter();
                     statements.add(insertAfter + 1, backJump);
                 }
+                break;
+            }
+            case UNCONDITIONALDOLOOP: {
+                containedStatement.getContainer().replaceStatement(new WhileStatement(null, blockIdentifier));
                 break;
             }
             case DOLOOP: {
@@ -1386,20 +1398,22 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             throw new ConfusedCFRException("Node should have back jump sources.");
         }
         Op03SimpleStatement lastJump = backJumpSources.get(backJumpSources.size() - 1);
-        if (!(lastJump.containedStatement instanceof IfStatement)) {
-            return false;
+        boolean conditional = false;
+        if (lastJump.containedStatement instanceof IfStatement) {
+            conditional = true;
+            IfStatement ifStatement = (IfStatement) lastJump.containedStatement;
+            if (ifStatement.getJumpTarget().getContainer() != start) {
+                return false;
+            }
         }
-        IfStatement ifStatement = (IfStatement) lastJump.containedStatement;
-        if (ifStatement.getJumpTarget().getContainer() != start) {
-            return false;
-        }
+//        if (!conditional) return false;
 
         int startIdx = statements.indexOf(start);
         int endIdx = statements.indexOf(lastJump);
 
         if (startIdx >= endIdx) return false;
 
-        BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.DOLOOP);
+        BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(conditional ? BlockType.DOLOOP : BlockType.UNCONDITIONALDOLOOP);
 
         /* Given that the potential statements inside this block are idxConditional+1 -> idxAfterEnd-1, [a->b]
         * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
@@ -1423,9 +1437,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         doStatement.addTarget(start);
         start.addSource(doStatement);
-        Op03SimpleStatement postBlock = lastJump.getTargets().get(0);
+        Op03SimpleStatement postBlock;
+        if (conditional) {
+            postBlock = lastJump.getTargets().get(0);
+        } else {
+            /*
+             * The best we can do is know it's a fall through to whatever WOULD have happened.
+             */
+            int newIdx = statements.indexOf(lastJump) + 1;
+            if (newIdx >= statements.size()) {
+                throw new ConfusedCFRException("Unconditional while with break but no following statement.");
+            } else {
+                postBlock = statements.get(newIdx);
+            }
+        }
+
         statements.add(statements.indexOf(start), doStatement);
-        lastJump.markBlockStatement(blockIdentifier, lastJump, statements);
+        lastJump.markBlockStatement(blockIdentifier, null, lastJump, statements);
         start.markFirstStatementInBlock(blockIdentifier);
         postBlock.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, postBlock);
@@ -1540,10 +1568,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
         * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
         */
-        validateAndAssignLoopIdentifier(statements, idxConditional + 1, idxAfterEnd, blockIdentifier);
+        int lastIdx = validateAndAssignLoopIdentifier(statements, idxConditional + 1, idxAfterEnd, blockIdentifier);
 
+        Op03SimpleStatement lastInBlock = statements.get(lastIdx);
         Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
-        start.markBlockStatement(blockIdentifier, blockEnd, statements);
+        start.markBlockStatement(blockIdentifier, lastInBlock, blockEnd, statements);
         statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
         blockEnd.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, blockEnd);
@@ -1583,12 +1612,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     }
 
-    private static void validateAndAssignLoopIdentifier(List<Op03SimpleStatement> statements, int idxTestStart, int idxAfterEnd, BlockIdentifier blockIdentifier) {
+    private static int validateAndAssignLoopIdentifier(List<Op03SimpleStatement> statements, int idxTestStart, int idxAfterEnd, BlockIdentifier blockIdentifier) {
         int last = getFarthestReachableInRange(statements, idxTestStart, idxAfterEnd);
 
         for (int x = idxTestStart; x <= last; ++x) {
             statements.get(x).markBlock(blockIdentifier);
         }
+        return last;
     }
 
     private static class IsForwardIf implements Predicate<Op03SimpleStatement> {
@@ -2009,6 +2039,72 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             op03SimpleStatement.rewrite(expressionRewriter);
         }
         return in;
+    }
+
+    private static class GraphVisitorBlockReachable implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
+
+        private final Op03SimpleStatement start;
+        private final BlockIdentifier blockIdentifier;
+        private final Set<Op03SimpleStatement> found = SetFactory.newSet();
+
+        private GraphVisitorBlockReachable(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
+            this.start = start;
+            this.blockIdentifier = blockIdentifier;
+        }
+
+        @Override
+        public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+            if (arg1 == start || arg1.getBlockIdentifiers().contains(blockIdentifier)) {
+                found.add(arg1);
+                for (Op03SimpleStatement target : arg1.getTargets()) arg2.enqueue(target);
+            }
+        }
+
+        public Set<Op03SimpleStatement> run() {
+            GraphVisitorDFS<Op03SimpleStatement> reachableInBlock = new GraphVisitorDFS<Op03SimpleStatement>(
+                    start,
+                    this
+            );
+            reachableInBlock.process();
+            return found;
+        }
+
+    }
+
+
+    private static void combineTryCatchBlocks(final Op03SimpleStatement tryStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+        Set<Op03SimpleStatement> allStatements = SetFactory.newSet();
+        TryStatement innerTryStatement = (TryStatement) tryStatement.getStatement();
+
+        allStatements.addAll(new GraphVisitorBlockReachable(tryStatement, innerTryStatement.getBlockIdentifier()).run());
+
+        // all in block, reachable
+        for (Op03SimpleStatement target : tryStatement.getTargets()) {
+            if (target.containedStatement instanceof CatchStatement) {
+                CatchStatement catchStatement = (CatchStatement) target.containedStatement;
+                allStatements.addAll(new GraphVisitorBlockReachable(target, catchStatement.getCatchBlockIdent()).run());
+            }
+        }
+
+        /* Add something inFRONT of the try statement which is NOT going to be in this block, which can adopt it
+         * (This is obviously an unreal artifact)
+         */
+        Set<BlockIdentifier> tryBlocks = tryStatement.containedInBlocks;
+        for (Op03SimpleStatement statement : allStatements) {
+            statement.containedInBlocks.addAll(tryBlocks);
+        }
+
+
+    }
+
+    // Up to now, try and catch blocks, while related, are treated in isolation.
+    // We need to make sure they're logically grouped, so we can see when a block constraint is being violated.
+    public static void combineTryCatchBlocks(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+        List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
+        for (Op03SimpleStatement tryStatement : tries) {
+            combineTryCatchBlocks(tryStatement, in, blockIdentifierFactory);
+        }
+
     }
 
     /*

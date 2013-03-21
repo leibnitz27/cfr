@@ -10,7 +10,7 @@ package org.benf.cfr.tests;
  * <p/>
  * (some decompilers fail to get the inner while.  (cfr did at 0_3).
  */
-public class ControlFlowTest2 {
+public class ControlFlowTest3 {
     public int foo(int i, int j) {
         while (true) {
             System.out.println("b");
@@ -22,7 +22,7 @@ public class ControlFlowTest2 {
             } else {
                 continue;
             }
-//            System.out.println("Fred");
+            System.out.println("Fred");
             break;
         }
         return j;

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -31,7 +32,32 @@ public class UnstructuredWhile extends AbstractUnStructuredStatement {
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("** while (" + condition.toString() + ")\n");
+        dumper.print("** while (" + (condition == null ? "true" : condition.toString()) + ")\n");
+    }
+
+    @Override
+    public StructuredStatement informBlockHeirachy(Vector<BlockIdentifier> blockIdentifiers) {
+        switch (blockIdentifier.getBlockType()) {
+            case DOLOOP:
+            case UNCONDITIONALDOLOOP:
+                break;
+            default:
+                return null;
+        }
+        if (blockIdentifier != blockIdentifiers.get(blockIdentifiers.size() - 1)) {
+            // We think we're ending a block, but we're inside something else?  This must have been a backjump
+            // on an unterminated loop.  We need to convert this into a continue statement.
+            // (and the loop will get turned into a  ..... break; }  while (true) when it is finished. )
+            StructuredStatement res = new UnstructuredContinue(blockIdentifier);
+            StructuredStatement resInform = res.informBlockHeirachy(blockIdentifiers);
+            if (resInform != null) res = resInform;
+
+            if (condition == null) return res;
+            // Else we need to make up an if block as well!!
+            StructuredIf fakeIf = new StructuredIf(condition, new Op04StructuredStatement(res));
+            return fakeIf;
+        }
+        return null;
     }
 
     @Override

@@ -25,31 +25,40 @@ public class WhileStatement extends AbstractStatement {
         this.blockIdentifier = blockIdentifier;
     }
 
+    private int getBackJumpIndex() {
+        return condition == null ? 0 : 1;
+    }
+
     @Override
     public void dump(Dumper dumper) {
-        dumper.print("while (" + condition.toString() + ") ");
-        dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
+        dumper.print("while (" + (condition != null ? condition.toString() : "true") + ") ");
+        dumper.print(" // ends " + getTargetStatement(getBackJumpIndex()).getContainer().getLabel() + ";\n");
     }
 
     public void replaceWithForLoop(AssignmentSimple initial, AbstractAssignmentExpression assignment) {
+        if (condition == null) {
+            throw new UnsupportedOperationException();
+        }
         ForStatement forStatement = new ForStatement(condition, blockIdentifier, initial, assignment);
         getContainer().replaceStatement(forStatement);
     }
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
+        if (condition == null) return;
         Expression replacementCondition = condition.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
         if (replacementCondition != condition) throw new ConfusedCFRException("Can't yet support replacing conditions");
     }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
+        if (condition == null) return;
         condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
     }
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredWhile(condition, blockIdentifier, getTargetStatement(1).getContainer().getBlocksEnded());
+        return new UnstructuredWhile(condition, blockIdentifier, getTargetStatement(getBackJumpIndex()).getContainer().getBlocksEnded());
     }
 
     public BlockIdentifier getBlockIdentifier() {

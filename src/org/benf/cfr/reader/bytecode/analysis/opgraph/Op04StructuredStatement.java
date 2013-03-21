@@ -264,7 +264,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         if (structuredStatement instanceof Block) {
             return ((Block) structuredStatement).removeLastEndWhile();
         } else {
-            throw new ConfusedCFRException("Trying to remove last ending while, but statement isn't a block!");
+            return null; // Can't find.
         }
     }
 
