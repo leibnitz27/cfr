@@ -69,7 +69,12 @@ public class GotoStatement extends JumpingStatement {
             ForIterStatement forStatement = (ForIterStatement) statement;
             return forStatement.getBlockIdentifier();
         } else {
-            throw new ConfusedCFRException("CONTINUE without a while");
+            BlockIdentifier blockStarted = statement.getContainer().getBlockStarted();
+            if (blockStarted != null && blockStarted.getBlockType() == BlockType.UNCONDITIONALDOLOOP) {
+                return blockStarted;
+            } else {
+                throw new ConfusedCFRException("CONTINUE without a while " + statement.getClass());
+            }
         }
     }
 

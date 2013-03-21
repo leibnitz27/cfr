@@ -35,6 +35,10 @@ public class DoStatement extends AbstractStatement {
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
     }
 
+    public BlockIdentifier getBlockIdentifier() {
+        return blockIdentifier;
+    }
+
     @Override
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredDo(blockIdentifier);

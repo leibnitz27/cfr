@@ -1258,9 +1258,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 if (jumpingStatement.getJumpType().isUnknown()) {
                     Statement targetInnerStatement = jumpingStatement.getJumpTarget();
                     Op03SimpleStatement targetStatement = (Op03SimpleStatement) targetInnerStatement.getContainer();
+                    // TODO : Should we be checking if this is a 'breakable' block?
                     if (targetStatement.thisComparisonBlock != null) {  // Jumps to the comparison test of a WHILE
                         // Continue loopBlock, IF this statement is INSIDE that block.
                         if (BlockIdentifier.blockIsOneOf(targetStatement.thisComparisonBlock, statement.containedInBlocks)) {
+                            jumpingStatement.setJumpType(JumpType.CONTINUE);
+                        }
+                    } else if (targetStatement.getBlockStarted() != null &&
+                            targetStatement.getBlockStarted().getBlockType() == BlockType.UNCONDITIONALDOLOOP) {
+                        if (BlockIdentifier.blockIsOneOf(targetStatement.getBlockStarted(), statement.containedInBlocks)) {
                             jumpingStatement.setJumpType(JumpType.CONTINUE);
                         }
                     } else if (!targetStatement.immediatelyAfterBlocks.isEmpty()) {
