@@ -15,6 +15,8 @@ public class AnnotationTest1 {
     void foo(int x) {
     }
 
+    @AnnotationTestAnnotation(value = {"fred", "jim"}, fred = 1)
+    @AnnotationTestAnnotation2("fred")
     void foo(int x, @Nullable Double y) {
         System.out.println("Foo!");
     }

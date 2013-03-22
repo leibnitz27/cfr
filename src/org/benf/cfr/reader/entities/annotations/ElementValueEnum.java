@@ -16,4 +16,9 @@ public class ElementValueEnum implements ElementValue {
         this.className = className;
         this.valueName = valueName;
     }
+
+    @Override
+    public void getTextInto(StringBuilder sb) {
+        sb.append(className).append('.').append(valueName);
+    }
 }

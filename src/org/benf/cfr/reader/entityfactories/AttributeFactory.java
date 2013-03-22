@@ -31,12 +31,20 @@ public class AttributeFactory {
             return new AttributeSignature(raw, cp);
         } else if (AttributeConstantValue.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeConstantValue(raw, cp);
+        } else if (AttributeLineNumberTable.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeLineNumberTable(raw, cp);
         } else if (AttributeExceptions.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeExceptions(raw, cp);
         } else if (AttributeDeprecated.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeDeprecated(raw, cp);
         } else if (AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeRuntimeVisibleAnnotations(raw, cp);
+        } else if (AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeRuntimeInvisibleAnnotations(raw, cp);
+        } else if (AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeRuntimeVisibleParameterAnnotations(raw, cp);
+        } else if (AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeRuntimeInvisibleParameterAnnotations(raw, cp);
         } else {
             return new AttributeUnknown(raw, attributeName);
         }

@@ -12,4 +12,9 @@ public class ElementValueAnnotation implements ElementValue {
     public ElementValueAnnotation(AnnotationTableEntry annotationTableEntry) {
         this.annotationTableEntry = annotationTableEntry;
     }
+
+    @Override
+    public void getTextInto(StringBuilder sb) {
+        annotationTableEntry.getTextInto(sb);
+    }
 }

@@ -43,14 +43,18 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEn
         d.print("Class " + cp.getUTF8Entry(nameIndex).getValue());
     }
 
+    public static JavaTypeInstance convertFromString(String rawType, ConstantPool cp) {
+        if (rawType.startsWith("[")) {
+            return ConstantPoolUtils.decodeTypeTok(rawType, cp);
+        } else {
+            return new JavaRefTypeInstance(ClassNameUtils.convertFromPath(rawType), cp);
+        }
+    }
+
     public JavaTypeInstance getTypeInstance(ConstantPool cp) {
         if (javaTypeInstance == null) {
             String rawType = cp.getUTF8Entry(nameIndex).getValue();
-            if (rawType.startsWith("[")) {
-                javaTypeInstance = ConstantPoolUtils.decodeTypeTok(rawType, cp);
-            } else {
-                javaTypeInstance = new JavaRefTypeInstance(ClassNameUtils.convertFromPath(rawType), cp);
-            }
+            javaTypeInstance = convertFromString(rawType, cp);
         }
         return javaTypeInstance;
     }

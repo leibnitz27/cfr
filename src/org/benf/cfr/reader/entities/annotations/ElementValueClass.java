@@ -12,4 +12,9 @@ public class ElementValueClass implements ElementValue {
     public ElementValueClass(String className) {
         this.className = className;
     }
+
+    @Override
+    public void getTextInto(StringBuilder sb) {
+        sb.append(className);
+    }
 }

@@ -159,6 +159,10 @@ public class TypedLiteral {
         return '\"' + in.replaceAll("\"", "\\\\\"") + '\"';
     }
 
+    public static TypedLiteral getConstantPoolEntryUTF8(ConstantPool cp, ConstantPoolEntryUTF8 cpe) {
+        return getString(cpe.getValue());
+    }
+
     public static TypedLiteral getConstantPoolEntry(ConstantPool cp, ConstantPoolEntry cpe) {
         if (cpe instanceof ConstantPoolEntryDouble) {
             return getDouble(((ConstantPoolEntryDouble) cpe).getValue());

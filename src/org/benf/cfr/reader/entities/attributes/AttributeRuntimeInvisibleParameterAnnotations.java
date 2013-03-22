@@ -9,10 +9,10 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
  * Date: 21/03/2013
  * Time: 18:03
  */
-public class AttributeRuntimeVisibleAnnotations extends AttributeAnnotations {
-    public static final String ATTRIBUTE_NAME = "RuntimeVisibleAnnotations";
+public class AttributeRuntimeInvisibleParameterAnnotations extends AttributeParameterAnnotations {
+    public static final String ATTRIBUTE_NAME = "RuntimeInvisibleParameterAnnotations";
 
-    public AttributeRuntimeVisibleAnnotations(ByteData raw, ConstantPool cp) {
+    public AttributeRuntimeInvisibleParameterAnnotations(ByteData raw, ConstantPool cp) {
         super(raw, cp);
     }
 

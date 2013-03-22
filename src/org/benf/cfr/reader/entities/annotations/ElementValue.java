@@ -7,4 +7,5 @@ package org.benf.cfr.reader.entities.annotations;
  * Time: 06:44
  */
 public interface ElementValue {
+    void getTextInto(StringBuilder sb);
 }

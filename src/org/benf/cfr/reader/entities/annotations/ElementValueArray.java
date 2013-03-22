@@ -14,4 +14,19 @@ public class ElementValueArray implements ElementValue {
     public ElementValueArray(List<ElementValue> content) {
         this.content = content;
     }
+
+    @Override
+    public void getTextInto(StringBuilder sb) {
+        sb.append('{');
+        boolean first = true;
+        for (ElementValue value : content) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            value.getTextInto(sb);
+        }
+        sb.append('}');
+    }
 }

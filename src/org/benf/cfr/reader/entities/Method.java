@@ -4,10 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
-import org.benf.cfr.reader.entities.attributes.Attribute;
-import org.benf.cfr.reader.entities.attributes.AttributeCode;
-import org.benf.cfr.reader.entities.attributes.AttributeExceptions;
-import org.benf.cfr.reader.entities.attributes.AttributeSignature;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
+import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.CollectionUtils;
@@ -85,9 +83,14 @@ public class Method implements KnowsRawSize {
     }
 
     private AttributeSignature getSignatureAttribute() {
-        Attribute attribute = attributes.get(AttributeSignature.ATTRIBUTE_NAME);
+        return this.<AttributeSignature>getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Attribute> T getAttributeByName(String name) {
+        Attribute attribute = attributes.get(name);
         if (attribute == null) return null;
-        return (AttributeSignature) attribute;
+        return (T) attribute;
     }
 
     public VariableNamer getVariableNamer() {
@@ -171,6 +174,13 @@ public class Method implements KnowsRawSize {
         return methodPrototype;
     }
 
+    private void getMethodAnnotationsInto(StringBuilder sb) {
+        AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
+        AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
+        if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.getTextInto(sb);
+        if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.getTextInto(sb);
+    }
+
     public String getSignatureText(boolean asClass) {
         Set<AccessFlagMethod> localAccessFlags = accessFlags;
         if (!asClass) {
@@ -183,13 +193,17 @@ public class Method implements KnowsRawSize {
         boolean constructor = methodName.equals("<init>");
         if (constructor) methodName = classFile.getClassType().toString();
         StringBuilder sb = new StringBuilder();
+
+        getMethodAnnotationsInto(sb);
+
         if (!prefix.isEmpty()) sb.append(prefix).append(' ');
+
         sb.append(getMethodPrototype().getDeclarationSignature(methodName, constructor));
-        Attribute exceptionsAttribute = attributes.get(AttributeExceptions.ATTRIBUTE_NAME);
+        AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
             sb.append(" throws ");
             boolean first = true;
-            List<ConstantPoolEntryClass> exceptionClasses = ((AttributeExceptions) exceptionsAttribute).getExceptionClassList();
+            List<ConstantPoolEntryClass> exceptionClasses = exceptionsAttribute.getExceptionClassList();
             for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
                 if (first) {
                     first = false;

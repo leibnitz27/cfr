@@ -14,4 +14,9 @@ public class ElementValueConst implements ElementValue {
     public ElementValueConst(TypedLiteral value) {
         this.value = value;
     }
+
+    @Override
+    public void getTextInto(StringBuilder sb) {
+        sb.append(value);
+    }
 }
