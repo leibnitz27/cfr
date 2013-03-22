@@ -198,7 +198,11 @@ public class Method implements KnowsRawSize {
 
         if (!prefix.isEmpty()) sb.append(prefix).append(' ');
 
-        sb.append(getMethodPrototype().getDeclarationSignature(methodName, constructor));
+        MethodPrototypeAnnotationsHelper paramAnnotationsHelper = new MethodPrototypeAnnotationsHelper(
+                this.<AttributeRuntimeVisibleParameterAnnotations>getAttributeByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME),
+                this.<AttributeRuntimeInvisibleParameterAnnotations>getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME)
+        );
+        sb.append(getMethodPrototype().getDeclarationSignature(methodName, constructor, paramAnnotationsHelper));
         AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
             sb.append(" throws ");

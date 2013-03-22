@@ -46,7 +46,7 @@ public class MethodPrototype {
         this.classFile = classFile;
     }
 
-    public String getDeclarationSignature(String methName, boolean isConstructor) {
+    public String getDeclarationSignature(String methName, boolean isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
         StringBuilder sb = new StringBuilder();
         if (formalTypeParameters != null) {
             sb.append('<');
@@ -76,6 +76,7 @@ public class MethodPrototype {
             if (i > 0) {
                 sb.append(", ");
             }
+            annotationsHelper.addAnnotationTextForParameterInto(i, sb);
             if (varargs && (i == argssize - 1)) {
                 if (!(arg instanceof JavaArrayTypeInstance)) {
                     throw new ConfusedCFRException("VARARGS method doesn't have an array as last arg!!");

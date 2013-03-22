@@ -45,6 +45,11 @@ public abstract class AttributeParameterAnnotations extends Attribute {
         }
     }
 
+    public List<AnnotationTableEntry> getAnnotationsForParamIdx(int idx) {
+        if (idx < 0 || idx >= annotationTableEntryListList.size()) return null;
+        return annotationTableEntryListList.get(idx);
+    }
+
     @Override
     public void dump(Dumper d, ConstantPool cp) {
     }

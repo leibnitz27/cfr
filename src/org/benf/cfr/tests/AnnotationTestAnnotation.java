@@ -9,5 +9,5 @@ package org.benf.cfr.tests;
 public @interface AnnotationTestAnnotation {
     String[] value();
 
-    int fred();
+    int fred() default 3;
 }

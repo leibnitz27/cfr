@@ -20,4 +20,11 @@ public class AnnotationTest1 {
     void foo(int x, @Nullable Double y) {
         System.out.println("Foo!");
     }
+
+    @AnnotationTestAnnotation({"fred", "jim"})
+    @AnnotationTestAnnotation2("fred")
+    static void foo2(int x, @Nullable @AnnotationTestAnnotation2("pants") @Deprecated Double y) {
+        System.out.println("Foo!");
+    }
+
 }
