@@ -7,5 +7,5 @@ package org.benf.cfr.tests;
  * Time: 07:24
  */
 public @interface AnnotationTestAnnotation2 {
-    String value();
+    String value() default "wibble";
 }
