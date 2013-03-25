@@ -394,6 +394,7 @@ public class ClassFile {
         }
         dumpHeader(d);
         d.print("{\n");
+        d.indent(1);
 
         if (!fields.isEmpty()) {
             d.print("// Fields\n");
@@ -416,6 +417,7 @@ public class ClassFile {
         }
         d.newln();
         dumpNamedInnerClasses(d);
+        d.indent(-1);
         d.print("}\n");
 
     }
