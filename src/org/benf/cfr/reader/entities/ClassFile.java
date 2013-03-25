@@ -329,11 +329,11 @@ public class ClassFile {
         return sb.toString();
     }
 
-    private void dumpHeader(Dumper d) {
+    private void dumpHeader(Dumper d, boolean isAnnotation) {
         StringBuilder sb = new StringBuilder();
         sb.append(dumpAccessFlags(isInterface ? dumpableAccessFlagsInterface : dumpableAccessFlagsClass));
 
-        sb.append(isInterface ? "interface " : "class ").append(thisClass.getTypeInstance(constantPool));
+        sb.append(isInterface ? ((isAnnotation ? "@" : "") + "interface ") : "class ").append(thisClass.getTypeInstance(constantPool));
         sb.append(getFormalParametersText());
         sb.append("\n");
         d.print(sb.toString());
@@ -345,13 +345,15 @@ public class ClassFile {
                 }
             }
         }
-        List<JavaTypeInstance> interfaces = classSignature.getInterfaces();
-        if (!interfaces.isEmpty()) {
-            d.print(isInterface ? "extends " : "implements ");
-            int size = interfaces.size();
-            for (int x = 0; x < size; ++x) {
-                JavaTypeInstance iface = interfaces.get(x);
-                d.print("" + iface + (x < (size - 1) ? ",\n" : "\n"));
+        if (!isAnnotation) {
+            List<JavaTypeInstance> interfaces = classSignature.getInterfaces();
+            if (!interfaces.isEmpty()) {
+                d.print(isInterface ? "extends " : "implements ");
+                int size = interfaces.size();
+                for (int x = 0; x < size; ++x) {
+                    JavaTypeInstance iface = interfaces.get(x);
+                    d.print("" + iface + (x < (size - 1) ? ",\n" : "\n"));
+                }
             }
         }
         d.removePendingCarriageReturn();
@@ -371,9 +373,9 @@ public class ClassFile {
         d.line();
         d.print("// Imports\n");
         constantPool.dumpImports(d);
-        dumpHeader(d);
+        dumpHeader(d, accessFlags.contains(AccessFlag.ACC_ANNOTATION));
         d.print("{\n");
-
+        d.indent(1);
         if (!methods.isEmpty()) {
             for (Method meth : methods) {
                 d.newln();
@@ -382,6 +384,7 @@ public class ClassFile {
         }
         d.newln();
         dumpNamedInnerClasses(d);
+        d.indent(-1);
         d.print("}\n");
 
     }
@@ -392,7 +395,7 @@ public class ClassFile {
             d.print("// Imports\n");
             constantPool.dumpImports(d);
         }
-        dumpHeader(d);
+        dumpHeader(d, false);
         d.print("{\n");
         d.indent(1);
 
