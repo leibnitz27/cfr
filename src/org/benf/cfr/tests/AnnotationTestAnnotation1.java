@@ -7,6 +7,9 @@ import java.lang.annotation.Annotation;
  * User: lee
  * Date: 22/03/2013
  * Time: 07:24
+ * <p/>
+ * This is not an annotation.  The only difference in the synthetic 'annotation' access flag.
+ * Make sure it doesn't think it is! ;)
  */
 public interface AnnotationTestAnnotation1 extends Annotation {
     String[] value();
