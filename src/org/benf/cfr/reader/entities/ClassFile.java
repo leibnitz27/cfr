@@ -402,12 +402,6 @@ public class ClassFile {
                 field.dump(d, constantPool);
             }
         }
-//        d.print("// Attributes\n");
-//        for (Attribute attr : attributes) {
-//            d.newln();
-//            attr.dump(d, constantPool);
-//        }
-//        d.line();
         if (!methods.isEmpty()) {
             d.print("// Methods\n");
             for (Method meth : methods) {
