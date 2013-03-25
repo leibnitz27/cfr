@@ -30,7 +30,7 @@ public class Main {
             Dumper d = new Dumper();
             String methname = params.getMethodName();
             if (methname == null) {
-                c.Dump(d);
+                c.dump(d);
             } else {
                 try {
                     c.getMethodByName(methname).dump(d, c.getConstantPool());

@@ -45,6 +45,10 @@ public class AttributeFactory {
             return new AttributeRuntimeVisibleParameterAnnotations(raw, cp);
         } else if (AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeRuntimeInvisibleParameterAnnotations(raw, cp);
+        } else if (AttributeSourceFile.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeSourceFile(raw, cp);
+        } else if (AttributeInnerClasses.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeInnerClasses(raw, cp);
         } else {
             return new AttributeUnknown(raw, attributeName);
         }

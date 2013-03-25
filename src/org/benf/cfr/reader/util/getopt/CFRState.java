@@ -91,6 +91,11 @@ public class CFRState {
         return methodName.equals(thisMethodName);
     }
 
+    public boolean analyseInnerClasses() {
+        if (methodName == null) return true;
+        return false;
+    }
+
     private byte[] getBytesFromFile(InputStream is, long length) throws IOException {
         // You cannot create an array using a long type.
         // It needs to be an int type.

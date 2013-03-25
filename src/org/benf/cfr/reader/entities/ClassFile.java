@@ -1,11 +1,14 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.attributes.Attribute;
+import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
+import org.benf.cfr.reader.entities.innerclass.InnerClassInfo;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.*;
@@ -14,10 +17,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,12 +49,16 @@ public class ClassFile {
     private final List<Method> methods;
     private Map<String, Method> methodsByName; // Lazily populated if interrogated.
 
+    private Map<String, Pair<InnerClassInfo, ClassFile>> innerClassesByName; // populated if analysed.
 
-    private final List<Attribute> attributes;
+
+    private final Map<String, Attribute> attributes;
     private final ConstantPoolEntryClass thisClass;
     private final ConstantPoolEntryClass rawSuperClass;
     private final List<ConstantPoolEntryClass> rawInterfaces;
     private final ClassSignature classSignature;
+
+    private boolean begunAnalysis;
 
     public ClassFile(final ByteData data, CFRState cfrState) {
         int magic = data.getS4At(OFFSET_OF_MAGIC);
@@ -128,7 +132,7 @@ public class ClassFile {
                         return AttributeFactory.build(arg, constantPool);
                     }
                 });
-        this.attributes = tmpAttributes;
+        this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
 
 //        constantPool.markClassNameUsed(constantPool.getUTF8Entry(thisClass.getNameIndex()).getValue());
         short superClassIndex = data.getS2At(OFFSET_OF_SUPER_CLASS);
@@ -138,7 +142,7 @@ public class ClassFile {
             rawSuperClass = superClassIndex == 0 ? null : (ConstantPoolEntryClass) constantPool.getEntry(superClassIndex);
 //            constantPool.markClassNameUsed(constantPool.getUTF8Entry(superClass.getNameIndex()).getValue());
         }
-        this.classSignature = getSignature(attributes, constantPool, rawSuperClass, rawInterfaces);
+        this.classSignature = getSignature(constantPool, rawSuperClass, rawInterfaces);
     }
 
     public boolean isInnerClass() {
@@ -198,15 +202,47 @@ public class ClassFile {
         return method;
     }
 
-    private static Attribute getAttributeByName(List<Attribute> attributes, String name) {
-        for (Attribute attribute : attributes) {
-            if (attribute.getRawName().equals(name)) return attribute;
+    private <X extends Attribute> X getAttributeByName(String name) {
+        Attribute attribute = attributes.get(name);
+        if (attribute == null) return null;
+        return (X) attribute;
+    }
+
+    private void analyseInnerClasses(CFRState cfrState) {
+        AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
+        if (attributeInnerClasses == null) return;
+        List<InnerClassInfo> innerClassInfoList = attributeInnerClasses.getInnerClassInfoList();
+
+        JavaTypeInstance thisType = thisClass.getTypeInstance(constantPool);
+        String thisTypeName = thisType.getRawName();
+
+        this.innerClassesByName = new LinkedHashMap<String, Pair<InnerClassInfo, ClassFile>>();
+
+        for (InnerClassInfo innerClassInfo : innerClassInfoList) {
+            JavaTypeInstance innerType = innerClassInfo.getInnerClassInfo();
+            if (innerType == null) continue;
+            // Outer-inner-class.
+            if (thisTypeName.startsWith(innerType.getRawName())) {
+                continue;
+            }
+
+            ClassFile innerClass = cfrState.getClassFile(innerType);
+            innerClass.analyseTop(cfrState);
+
+            innerClassesByName.put(innerType.toString(), new Pair<InnerClassInfo, ClassFile>(innerClassInfo, innerClass));
         }
-        return null;
     }
 
     public void analyseTop(CFRState state) {
+        if (this.begunAnalysis) {
+            return;
+        }
+        this.begunAnalysis = true;
         boolean exceptionRecovered = false;
+        // Analyse inner classes first, so we can decide to inline (maybe).
+        if (state.analyseInnerClasses()) {
+            analyseInnerClasses(state);
+        }
         for (Method method : methods) {
             if (state.analyseMethod(method.getName())) {
                 try {
@@ -255,13 +291,13 @@ public class ClassFile {
     }
 
 
-    private static ClassSignature getSignature(List<Attribute> attributes, ConstantPool cp,
-                                               ConstantPoolEntryClass rawSuperClass,
-                                               List<ConstantPoolEntryClass> rawInterfaces) {
-        Attribute rawSignature = getAttributeByName(attributes, AttributeSignature.ATTRIBUTE_NAME);
+    private ClassSignature getSignature(ConstantPool cp,
+                                        ConstantPoolEntryClass rawSuperClass,
+                                        List<ConstantPoolEntryClass> rawInterfaces) {
+        AttributeSignature signatureAttribute = getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
         // If the class isn't generic (or has had the attribute removed), we have to use the
         // runtime type info.
-        if (rawSignature == null) {
+        if (signatureAttribute == null) {
             List<JavaTypeInstance> interfaces = ListFactory.newList();
             for (ConstantPoolEntryClass rawInterface : rawInterfaces) {
                 interfaces.add(rawInterface.getTypeInstance(cp));
@@ -272,7 +308,6 @@ public class ClassFile {
                     interfaces);
 
         }
-        AttributeSignature signatureAttribute = (AttributeSignature) rawSignature;
         return ConstantPoolUtils.parseClassSignature(signatureAttribute.getSignature(), cp);
     }
 
@@ -322,6 +357,16 @@ public class ClassFile {
         d.removePendingCarriageReturn();
     }
 
+    private void dumpNamedInnerClasses(Dumper d) {
+        if (innerClassesByName == null) return;
+
+        for (Map.Entry<String, Pair<InnerClassInfo, ClassFile>> innerClassEntry : innerClassesByName.entrySet()) {
+            InnerClassInfo innerClassInfo = innerClassEntry.getValue().getFirst();
+            ClassFile classFile = innerClassEntry.getValue().getSecond();
+            classFile.dumpAsInnerClass(d);
+        }
+    }
+
     public void dumpAsInterface(Dumper d) {
         d.line();
         d.print("// Imports\n");
@@ -336,14 +381,17 @@ public class ClassFile {
             }
         }
         d.newln();
+        dumpNamedInnerClasses(d);
         d.print("}\n");
 
     }
 
-    public void dumpAsClass(Dumper d) {
-        d.line();
-        d.print("// Imports\n");
-        constantPool.dumpImports(d);
+    public void dumpAsClass(Dumper d, boolean showImports) {
+        if (showImports) {
+            d.line();
+            d.print("// Imports\n");
+            constantPool.dumpImports(d);
+        }
         dumpHeader(d);
         d.print("{\n");
 
@@ -367,15 +415,20 @@ public class ClassFile {
             }
         }
         d.newln();
+        dumpNamedInnerClasses(d);
         d.print("}\n");
 
     }
 
-    public void Dump(Dumper d) {
+    private void dumpAsInnerClass(Dumper d) {
+        dumpAsClass(d, false);
+    }
+
+    public void dump(Dumper d) {
         if (isInterface) {
             dumpAsInterface(d);
         } else {
-            dumpAsClass(d);
+            dumpAsClass(d, true);
         }
     }
 }
