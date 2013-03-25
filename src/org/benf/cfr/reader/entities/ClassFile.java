@@ -369,6 +369,10 @@ public class ClassFile {
         }
     }
 
+
+    /*
+     * The whole header dumping is a bit messy, tidy...
+     */
     public void dumpAsInterface(Dumper d) {
         d.line();
         d.print("// Imports\n");
