@@ -102,6 +102,11 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
         return toString();
     }
 
+    @Override
+    public boolean isDirectInnerClassType(JavaTypeInstance possibleChild) {
+        return typeInstance.isDirectInnerClassType(possibleChild);
+    }
+
     public JavaTypeInstance getTypeInstance() {
         return typeInstance;
     }

@@ -56,6 +56,11 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
+    public boolean isDirectInnerClassType(JavaTypeInstance possibleChild) {
+        return underlyingType.isDirectInnerClassType(possibleChild);
+    }
+
+    @Override
     public JavaTypeInstance getArrayStrippedType() {
         return underlyingType.getArrayStrippedType();
     }

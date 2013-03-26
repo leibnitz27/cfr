@@ -49,6 +49,19 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public boolean isDirectInnerClassType(JavaTypeInstance possibleChild) {
+        if (!(possibleChild instanceof JavaRefTypeInstance)) return false;
+
+        String thisClassname = className;
+        String otherClassname = ((JavaRefTypeInstance) possibleChild).className;
+        if (!otherClassname.startsWith(thisClassname)) return false;
+        if (otherClassname.length() < thisClassname.length() + 1) return false;
+        String postfix = otherClassname.substring(thisClassname.length() + 1);
+        if (postfix.contains("$")) return false;
+        return true;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof JavaRefTypeInstance)) return false;

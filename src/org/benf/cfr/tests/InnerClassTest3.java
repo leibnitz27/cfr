@@ -17,7 +17,7 @@ public class InnerClassTest3 {
         this.x = x;
     }
 
-    public int getX() {
+    private int getX() {
         return new Inner1(new ArrayList<String>()).getX(4);
     }
 
@@ -29,8 +29,20 @@ public class InnerClassTest3 {
         }
 
         public int getX(int y) {
-            return 2 + y + InnerClassTest3.this.x;
+            return 2 + y + InnerClassTest3.this.getX();
         }
 
+        public class Inner2 {
+
+            int z;
+
+            private Inner2(int z) {
+                this.z = z;
+            }
+
+            int getZ() {
+                return InnerClassTest3.this.x + Inner1.this.getX(3) + z;
+            }
+        }
     }
 }

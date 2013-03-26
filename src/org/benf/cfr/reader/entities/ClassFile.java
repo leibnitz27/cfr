@@ -214,20 +214,25 @@ public class ClassFile {
         List<InnerClassInfo> innerClassInfoList = attributeInnerClasses.getInnerClassInfoList();
 
         JavaTypeInstance thisType = thisClass.getTypeInstance(constantPool);
-        String thisTypeName = thisType.getRawName();
 
         this.innerClassesByName = new LinkedHashMap<String, Pair<InnerClassInfo, ClassFile>>();
 
         for (InnerClassInfo innerClassInfo : innerClassInfoList) {
             JavaTypeInstance innerType = innerClassInfo.getInnerClassInfo();
             if (innerType == null) continue;
-            // Outer-inner-class.
-            if (thisTypeName.startsWith(innerType.getRawName())) {
-                continue;
-            }
+
+            /*
+             * Inner classes can be referred to when they are not direct inner classes.
+             * We even refer to inner classes which belong to entirely different classes!
+             */
+            if (!thisType.isDirectInnerClassType(innerType)) continue;
 
             ClassFile innerClass = cfrState.getClassFile(innerType);
-            innerClass.analyseTop(cfrState);
+            try {
+                innerClass.analyseTop(cfrState);
+            } catch (ConfusedCFRException c) {
+                throw new ConfusedCFRException("In : " + innerType.toString() + ":" + c);
+            }
 
             innerClassesByName.put(innerType.toString(), new Pair<InnerClassInfo, ClassFile>(innerClassInfo, innerClass));
         }
@@ -239,10 +244,6 @@ public class ClassFile {
         }
         this.begunAnalysis = true;
         boolean exceptionRecovered = false;
-        // Analyse inner classes first, so we can decide to inline (maybe).
-        if (state.analyseInnerClasses()) {
-            analyseInnerClasses(state);
-        }
         for (Method method : methods) {
             if (state.analyseMethod(method.getName())) {
                 try {
@@ -257,7 +258,11 @@ public class ClassFile {
                 }
             }
         }
-        if (exceptionRecovered) throw new RuntimeException("Failed to analyse file");
+        // Analyse inner classes last, so we can undo synthetic accessor methods.
+        if (state.analyseInnerClasses()) {
+            analyseInnerClasses(state);
+        }
+        if (exceptionRecovered) throw new ConfusedCFRException("Failed to analyse file");
     }
 
     public JavaTypeInstance getClassType() {
@@ -366,6 +371,7 @@ public class ClassFile {
             InnerClassInfo innerClassInfo = innerClassEntry.getValue().getFirst();
             ClassFile classFile = innerClassEntry.getValue().getSecond();
             classFile.dumpAsInnerClass(d);
+            d.newln();
         }
     }
 
@@ -393,8 +399,8 @@ public class ClassFile {
 
     }
 
-    public void dumpAsClass(Dumper d, boolean showImports) {
-        if (showImports) {
+    public void dumpAsClass(Dumper d, boolean innerClass) {
+        if (!innerClass) {
             d.line();
             d.print("// Imports\n");
             constantPool.dumpImports(d);
@@ -424,14 +430,14 @@ public class ClassFile {
     }
 
     private void dumpAsInnerClass(Dumper d) {
-        dumpAsClass(d, false);
+        dumpAsClass(d, true);
     }
 
     public void dump(Dumper d) {
         if (isInterface) {
             dumpAsInterface(d);
         } else {
-            dumpAsClass(d, true);
+            dumpAsClass(d, false);
         }
     }
 }

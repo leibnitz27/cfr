@@ -59,6 +59,8 @@ public class CFRState {
             "arrayiter", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> COLLECTION_ITERATOR = new PermittedOptionProvider.Argument<Boolean>(
             "collectioniter", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean>(
+            "innerclasses", defaultTrueBooleanDecoder);
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -92,7 +94,7 @@ public class CFRState {
     }
 
     public boolean analyseInnerClasses() {
-        if (methodName == null) return true;
+        if (methodName == null) return getBooleanOpt(DECOMPILE_INNER_CLASSES);
         return false;
     }
 
@@ -231,7 +233,7 @@ public class CFRState {
 
         @Override
         public List<? extends Argument<?>> getArguments() {
-            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR);
+            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES);
         }
 
         @Override

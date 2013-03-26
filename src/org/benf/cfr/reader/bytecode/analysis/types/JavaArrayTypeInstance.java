@@ -44,6 +44,11 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public boolean isDirectInnerClassType(JavaTypeInstance possibleChild) {
+        return false;
+    }
+
+    @Override
     public JavaTypeInstance getArrayStrippedType() {
         return underlyingType.getArrayStrippedType();
     }

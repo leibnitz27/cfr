@@ -31,4 +31,6 @@ public interface JavaTypeInstance {
     public int getNumArrayDimensions();
 
     public String getRawName();
+
+    public boolean isDirectInnerClassType(JavaTypeInstance possibleChild);
 }
