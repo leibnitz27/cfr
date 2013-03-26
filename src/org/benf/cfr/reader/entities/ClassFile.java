@@ -1,10 +1,7 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
-import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
@@ -49,7 +46,7 @@ public class ClassFile {
     private final List<Method> methods;
     private Map<String, Method> methodsByName; // Lazily populated if interrogated.
 
-    private Map<String, Pair<InnerClassInfo, ClassFile>> innerClassesByName; // populated if analysed.
+    private Map<JavaTypeInstance, Pair<InnerClassInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
 
 
     private final Map<String, Attribute> attributes;
@@ -215,7 +212,7 @@ public class ClassFile {
 
         JavaTypeInstance thisType = thisClass.getTypeInstance(constantPool);
 
-        this.innerClassesByName = new LinkedHashMap<String, Pair<InnerClassInfo, ClassFile>>();
+        this.innerClassesByTypeInfo = new LinkedHashMap<JavaTypeInstance, Pair<InnerClassInfo, ClassFile>>();
 
         for (InnerClassInfo innerClassInfo : innerClassInfoList) {
             JavaTypeInstance innerType = innerClassInfo.getInnerClassInfo();
@@ -234,7 +231,7 @@ public class ClassFile {
                 throw new ConfusedCFRException("In : " + innerType.toString() + ":" + c);
             }
 
-            innerClassesByName.put(innerType.toString(), new Pair<InnerClassInfo, ClassFile>(innerClassInfo, innerClass));
+            innerClassesByTypeInfo.put(innerType, new Pair<InnerClassInfo, ClassFile>(innerClassInfo, innerClass));
         }
     }
 
@@ -364,11 +361,11 @@ public class ClassFile {
     }
 
     private void dumpNamedInnerClasses(Dumper d) {
-        if (innerClassesByName == null) return;
+        if (innerClassesByTypeInfo == null) return;
 
-        for (Map.Entry<String, Pair<InnerClassInfo, ClassFile>> innerClassEntry : innerClassesByName.entrySet()) {
-            InnerClassInfo innerClassInfo = innerClassEntry.getValue().getFirst();
-            ClassFile classFile = innerClassEntry.getValue().getSecond();
+        for (Pair<InnerClassInfo, ClassFile> innerClassEntry : innerClassesByTypeInfo.values()) {
+//            InnerClassInfo innerClassInfo = innerClassEntry.getFirst();
+            ClassFile classFile = innerClassEntry.getSecond();
             classFile.dumpAsInnerClass(d);
             d.newln();
         }
