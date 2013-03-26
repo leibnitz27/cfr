@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -30,6 +32,7 @@ public class ConstantPool {
     private final Map<String, String> longNameToShortName = MapFactory.newMap();
     private final Map<String, String> shortNameToLongName = MapFactory.newMap();
     private final CFRState cfrState;
+    private final Map<String, JavaRefTypeInstance> refClassTypeCache = MapFactory.newMap();
 
     public ConstantPool(CFRState cfrState, ByteData raw, short count) {
         this.cfrState = cfrState;
@@ -157,5 +160,17 @@ public class ConstantPool {
         String res = longNameToShortName.get(className);
         if (res == null) return className;
         return res;
+    }
+
+    public JavaRefTypeInstance getRefClassFor(String rawClassName) {
+        String name = ClassNameUtils.convertFromPath(rawClassName);
+        JavaRefTypeInstance typeInstance = refClassTypeCache.get(name);
+        if (typeInstance != null) return typeInstance;
+
+        markClassNameUsed(name);
+        typeInstance = JavaRefTypeInstance.create(name, this);
+        refClassTypeCache.put(name, typeInstance);
+        return typeInstance;
+
     }
 }

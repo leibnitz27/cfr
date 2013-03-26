@@ -103,6 +103,12 @@ public enum RawJavaType implements JavaTypeInstance {
         return false;
     }
 
+    @Override
+    public boolean isInnerClass() {
+        return false;
+    }
+
+
     public String getCastString() {
         return "(" + name + ")";
     }

@@ -27,13 +27,13 @@ public class ConstantPoolUtils {
         if (idxGen != -1) {
             String pre = tok.substring(0, idxGen);
             String gen = tok.substring(idxGen + 1, tok.length() - 1);
-            JavaRefTypeInstance clazzType = new JavaRefTypeInstance(pre, cp);
+            JavaRefTypeInstance clazzType = cp.getRefClassFor(pre);
             List<JavaTypeInstance> genericTypes = parseTypeList(gen, cp);
             return new JavaGenericRefTypeInstance(clazzType, genericTypes, cp);
         } else if (isTemplate) {
             return new JavaGenericPlaceholderTypeInstance(tok, cp);
         } else {
-            return new JavaRefTypeInstance(tok, cp);
+            return cp.getRefClassFor(tok);
         }
     }
 

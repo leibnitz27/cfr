@@ -11,11 +11,24 @@ import org.benf.cfr.reader.entities.ConstantPool;
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
     private final ConstantPool cp;
+    private final JavaRefTypeInstance outerClass;
 
-    public JavaRefTypeInstance(String rawClassName, ConstantPool cp) {
-        this.className = ClassNameUtils.convertFromPath(rawClassName);
+    private JavaRefTypeInstance(String className, ConstantPool cp) {
+        this.className = className;
         this.cp = cp;
-        cp.markClassNameUsed(this.className);
+        JavaRefTypeInstance outerClassTmp = null;
+        if (className.contains("$")) {
+            String outer = className.substring(0, className.lastIndexOf('$'));
+            outerClassTmp = cp.getRefClassFor(outer);
+        }
+        this.outerClass = outerClassTmp;
+    }
+
+    /*
+     * Only call from constPool cache.
+     */
+    public static JavaRefTypeInstance create(String rawClassName, ConstantPool cp) {
+        return new JavaRefTypeInstance(rawClassName, cp);
     }
 
     @Override
@@ -50,15 +63,16 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public boolean isDirectInnerClassType(JavaTypeInstance possibleChild) {
+        if (!possibleChild.isInnerClass()) return false;
         if (!(possibleChild instanceof JavaRefTypeInstance)) return false;
 
-        String thisClassname = className;
-        String otherClassname = ((JavaRefTypeInstance) possibleChild).className;
-        if (!otherClassname.startsWith(thisClassname)) return false;
-        if (otherClassname.length() < thisClassname.length() + 1) return false;
-        String postfix = otherClassname.substring(thisClassname.length() + 1);
-        if (postfix.contains("$")) return false;
-        return true;
+        JavaRefTypeInstance possibleChildClass = (JavaRefTypeInstance) possibleChild;
+        return this.equals(possibleChildClass.outerClass);
+    }
+
+    @Override
+    public boolean isInnerClass() {
+        return (outerClass != null);
     }
 
     @Override

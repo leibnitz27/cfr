@@ -62,6 +62,11 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     @Override
+    public boolean isInnerClass() {
+        return false;
+    }
+
+    @Override
     public int hashCode() {
         return 31 + className.hashCode();
     }
