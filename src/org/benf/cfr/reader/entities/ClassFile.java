@@ -243,6 +243,9 @@ public class ClassFile {
             return;
         }
         this.begunAnalysis = true;
+        if (state.analyseInnerClasses()) {
+            analyseInnerClasses(state);
+        }
         boolean exceptionRecovered = false;
         for (Method method : methods) {
             if (state.analyseMethod(method.getName())) {
@@ -257,10 +260,6 @@ public class ClassFile {
                     exceptionRecovered = true;
                 }
             }
-        }
-        // Analyse inner classes last, so we can undo synthetic accessor methods.
-        if (state.analyseInnerClasses()) {
-            analyseInnerClasses(state);
         }
         if (exceptionRecovered) throw new ConfusedCFRException("Failed to analyse file");
     }
