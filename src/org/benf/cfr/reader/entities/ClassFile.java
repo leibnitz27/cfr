@@ -225,7 +225,7 @@ public class ClassFile {
              * Inner classes can be referred to when they are not direct inner classes.
              * We even refer to inner classes which belong to entirely different classes!
              */
-            if (!thisType.isDirectInnerClassType(innerType)) continue;
+            if (!innerType.isInnerClassOf(thisType)) continue;
 
             ClassFile innerClass = cfrState.getClassFile(innerType);
             try {

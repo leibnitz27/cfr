@@ -32,7 +32,7 @@ public interface JavaTypeInstance {
 
     public String getRawName();
 
-    public boolean isDirectInnerClassType(JavaTypeInstance possibleChild);
+    public boolean isInnerClassOf(JavaTypeInstance possibleParent);
 
     public boolean isInnerClass();
 }

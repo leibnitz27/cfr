@@ -62,12 +62,9 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public boolean isDirectInnerClassType(JavaTypeInstance possibleChild) {
-        if (!possibleChild.isInnerClass()) return false;
-        if (!(possibleChild instanceof JavaRefTypeInstance)) return false;
-
-        JavaRefTypeInstance possibleChildClass = (JavaRefTypeInstance) possibleChild;
-        return this.equals(possibleChildClass.outerClass);
+    public boolean isInnerClassOf(JavaTypeInstance possibleParent) {
+        if (outerClass == null) return false;
+        return outerClass.equals(possibleParent);
     }
 
     @Override

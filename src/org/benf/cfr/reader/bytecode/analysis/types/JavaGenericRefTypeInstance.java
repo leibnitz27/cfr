@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
-import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
 
@@ -103,8 +102,8 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public boolean isDirectInnerClassType(JavaTypeInstance possibleChild) {
-        return typeInstance.isDirectInnerClassType(possibleChild);
+    public boolean isInnerClassOf(JavaTypeInstance possibleParent) {
+        return typeInstance.isInnerClassOf(possibleParent);
     }
 
     @Override
