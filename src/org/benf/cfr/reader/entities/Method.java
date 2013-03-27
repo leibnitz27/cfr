@@ -41,7 +41,8 @@ public class Method implements KnowsRawSize {
     private final long length;
     private final Set<AccessFlagMethod> accessFlags;
     private final Map<String, Attribute> attributes;
-    private final short nameIndex;
+    private final String name;
+    private final boolean isConstructor;
     private final short descriptorIndex;
     private final AttributeCode codeAttribute;
     private final ConstantPool cp;
@@ -52,9 +53,9 @@ public class Method implements KnowsRawSize {
     public Method(ByteData raw, ClassFile classFile, final ConstantPool cp) {
         this.cp = cp;
         this.classFile = classFile;
-        this.nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         this.accessFlags = AccessFlagMethod.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
         this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
+        short nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         short numAttributes = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
@@ -79,6 +80,12 @@ public class Method implements KnowsRawSize {
             this.variableNamer = VariableNamerFactory.getNamer(this.codeAttribute.getLocalVariableTable(), cp);
             this.codeAttribute.setMethod(this);
         }
+
+        String methodName = cp.getUTF8Entry(nameIndex).getValue();
+        this.isConstructor = methodName.equals("<init>");
+        if (isConstructor) methodName = classFile.getClassType().toString();
+        this.name = methodName;
+
         this.methodPrototype = generateMethodPrototype();
     }
 
@@ -107,7 +114,7 @@ public class Method implements KnowsRawSize {
     }
 
     public String getName() {
-        return cp.getUTF8Entry(nameIndex).getValue();
+        return name;
     }
 
     /* This is a bit ugly - otherwise though we need to tie a variable namer to this earlier.
@@ -189,9 +196,6 @@ public class Method implements KnowsRawSize {
             localAccessFlags.remove(AccessFlagMethod.ACC_ABSTRACT);
         }
         String prefix = CollectionUtils.join(localAccessFlags, " ");
-        String methodName = cp.getUTF8Entry(nameIndex).getValue();
-        boolean constructor = methodName.equals("<init>");
-        if (constructor) methodName = classFile.getClassType().toString();
         StringBuilder sb = new StringBuilder();
 
         getMethodAnnotationsInto(sb);
@@ -202,7 +206,7 @@ public class Method implements KnowsRawSize {
                 this.<AttributeRuntimeVisibleParameterAnnotations>getAttributeByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME),
                 this.<AttributeRuntimeInvisibleParameterAnnotations>getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME)
         );
-        sb.append(getMethodPrototype().getDeclarationSignature(methodName, constructor, paramAnnotationsHelper));
+        sb.append(getMethodPrototype().getDeclarationSignature(name, isConstructor, paramAnnotationsHelper));
         AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
             sb.append(" throws ");
@@ -223,7 +227,12 @@ public class Method implements KnowsRawSize {
 
     public Op04StructuredStatement getAnalysis() {
         if (codeAttribute == null) throw new ConfusedCFRException("No code in this method to analyze");
-        return codeAttribute.analyse();
+        Op04StructuredStatement analysis = codeAttribute.analyse();
+        return analysis;
+    }
+
+    public boolean isConstructor() {
+        return isConstructor;
     }
 
     public void analyse() {

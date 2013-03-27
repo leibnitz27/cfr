@@ -324,9 +324,19 @@ public class CodeAnalyser {
         new SwitchStringRewriter(cfrState).rewrite(block);
         new SwitchEnumRewriter(cfrState).rewrite(block);
 
-        if (block.isFullyStructured()) {
-            // Now we've got everything nicely block structured, we can have an easier time
-            Op04StructuredStatement.discoverVariableScopes(method.getMethodPrototype(), block);
+        /*
+         * If we can't fully structure the code, we bow out here.
+         */
+        if (!block.isFullyStructured()) {
+            this.analysed = block;
+            return analysed;
+        }
+
+        // Now we've got everything nicely block structured, we can have an easier time
+        Op04StructuredStatement.discoverVariableScopes(method.getMethodPrototype(), block);
+
+        if (cfrState.removeBoilerplate()) {
+//            if (this.method.isConstructor()) block = Op04StructuredStatement.removeConstructorBoilerplate(block);
         }
 
         this.analysed = block;

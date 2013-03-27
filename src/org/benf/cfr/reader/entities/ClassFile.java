@@ -151,6 +151,10 @@ public class ClassFile {
         return constantPool;
     }
 
+    private void markAsStatic() {
+        accessFlags.add(AccessFlag.ACC_STATIC);
+    }
+
     public boolean hasFormalTypeParameters() {
         List<FormalTypeParameter> formalTypeParameters = classSignature.getFormalTypeParameters();
         return formalTypeParameters != null && !formalTypeParameters.isEmpty();
@@ -199,10 +203,39 @@ public class ClassFile {
         return method;
     }
 
+    public List<Method> getConstructors() {
+        List<Method> res = ListFactory.newList();
+        for (Method method : methods) {
+            if (method.isConstructor()) res.add(method);
+        }
+        return res;
+    }
+
     private <X extends Attribute> X getAttributeByName(String name) {
         Attribute attribute = attributes.get(name);
         if (attribute == null) return null;
         return (X) attribute;
+    }
+
+    private void markInnerClassAsStatic(ClassFile innerClass, JavaTypeInstance thisType) {
+        /*
+        * We need to tell the inner class it's a static, if it doesn't have the outer
+        * class as a first constructor parameter, which is assigned to a synthetic local.
+        *
+        * TODO : Check assignment to synthetic local.
+        *
+        * (Either all will have it or none will).
+        */
+        List<Method> constructors = innerClass.getConstructors();
+        for (Method constructor : constructors) {
+            List<JavaTypeInstance> params = constructor.getMethodPrototype().getArgs();
+            if (params == null ||
+                    params.isEmpty() ||
+                    !params.get(0).equals(thisType)) {
+                innerClass.markAsStatic();
+                return;
+            }
+        }
     }
 
     private void analyseInnerClasses(CFRState cfrState) {
@@ -230,6 +263,8 @@ public class ClassFile {
             } catch (ConfusedCFRException c) {
                 throw new ConfusedCFRException("In : " + innerType.toString() + ":" + c);
             }
+
+            markInnerClassAsStatic(innerClass, thisType);
 
             innerClassesByTypeInfo.put(innerType, new Pair<InnerClassInfo, ClassFile>(innerClassInfo, innerClass));
         }
