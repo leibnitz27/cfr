@@ -15,7 +15,7 @@ public class InnerClassTest8 {
 
     public class Inner1 {
 
-        public int getX(int y) {
+        public int tweakX(int y) {
             x += y;
             return x;
         }

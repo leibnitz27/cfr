@@ -226,7 +226,9 @@ public class ClassFile {
     private <X extends Attribute> X getAttributeByName(String name) {
         Attribute attribute = attributes.get(name);
         if (attribute == null) return null;
-        return (X) attribute;
+        @SuppressWarnings("unchecked")
+        X tmp = (X) attribute;
+        return tmp;
     }
 
     //    FIXME - inside constructor for inner class classfile
