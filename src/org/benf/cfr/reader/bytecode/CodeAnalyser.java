@@ -335,6 +335,8 @@ public class CodeAnalyser {
         // Now we've got everything nicely block structured, we can have an easier time
         Op04StructuredStatement.discoverVariableScopes(method.getMethodPrototype(), block);
 
+        Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);
+
         if (cfrState.removeBoilerplate()) {
 //            if (this.method.isConstructor()) block = Op04StructuredStatement.removeConstructorBoilerplate(block);
         }

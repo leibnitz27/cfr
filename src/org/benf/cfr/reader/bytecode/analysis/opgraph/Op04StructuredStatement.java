@@ -10,8 +10,12 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWh
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.entities.AccessFlag;
+import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
@@ -498,6 +502,32 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         root.traceLocalVariableScope(scopeDiscoverer);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
+    }
+
+    private static void removeSyntheticConstructorParam(Method method, Op04StructuredStatement root) {
+    }
+
+    /*
+     * a)
+     * Find all calls to a constructor of an inner class, if the inner class isn't static, remove the first
+     * argument.
+     * b)
+     * Also, if we are ourselves an inner class constructor, remove the first argument, and remove usages of it
+     * downstream, plus mark the synthetic outer this as invisible.
+     */
+    public static void fixInnerClassConstruction(CFRState cfrState, Method method, Op04StructuredStatement root) {
+        if (!cfrState.removeInnerClassSynthetics()) return;
+
+        /*
+         * b)
+         */
+        if (method.isConstructor()) {
+            ClassFile classFile = method.getClassFile();
+            if (classFile.isInnerClass() && !classFile.testAccessFlag(AccessFlag.ACC_STATIC)) {
+                removeSyntheticConstructorParam(method, root);
+            }
+
+        }
     }
 
 

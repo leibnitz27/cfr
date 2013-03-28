@@ -68,7 +68,7 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
             // TODO : Improve the caching?
 
             try {
-                ClassFile classFile = cp.getCFRState().getClassFile(classType.getDeGenerifiedType());
+                ClassFile classFile = cp.getCFRState().getClassFile(classType.getDeGenerifiedType(), false);
                 MethodPrototype replacement = classFile.getMethodByPrototype(basePrototype).getMethodPrototype();
                 basePrototype = replacement;
             } catch (NoSuchMethodException _) {

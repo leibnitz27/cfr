@@ -24,7 +24,7 @@ public class Main {
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
             CFRState params = getOptParser.parse(args, CFRState.getFactory());
-            ClassFile c = params.getClassFile(params.getFileName());
+            ClassFile c = params.getClassFile(params.getFileName(), true);
 
             c.analyseTop(params);
             Dumper d = new Dumper();

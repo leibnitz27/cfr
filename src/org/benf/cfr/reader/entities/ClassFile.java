@@ -46,7 +46,7 @@ public class ClassFile {
     private final List<Method> methods;
     private Map<String, Method> methodsByName; // Lazily populated if interrogated.
 
-    private Map<JavaTypeInstance, Pair<InnerClassInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
+    private final Map<JavaTypeInstance, Pair<InnerClassInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
 
 
     private final Map<String, Attribute> attributes;
@@ -57,7 +57,7 @@ public class ClassFile {
 
     private boolean begunAnalysis;
 
-    public ClassFile(final ByteData data, CFRState cfrState) {
+    public ClassFile(final ByteData data, CFRState cfrState, boolean withInnerClasses) {
         int magic = data.getS4At(OFFSET_OF_MAGIC);
         if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe");
 
@@ -140,6 +140,14 @@ public class ClassFile {
 //            constantPool.markClassNameUsed(constantPool.getUTF8Entry(superClass.getNameIndex()).getValue());
         }
         this.classSignature = getSignature(constantPool, rawSuperClass, rawInterfaces);
+
+        // Need to load inner classes now so we can infer staticness before any analysis.
+        if (withInnerClasses) {
+            this.innerClassesByTypeInfo = new LinkedHashMap<JavaTypeInstance, Pair<InnerClassInfo, ClassFile>>();
+            loadInnerClasses(cfrState);
+        } else {
+            this.innerClassesByTypeInfo = null;
+        }
     }
 
     public boolean isInnerClass() {
@@ -149,6 +157,10 @@ public class ClassFile {
 
     public ConstantPool getConstantPool() {
         return constantPool;
+    }
+
+    public boolean testAccessFlag(AccessFlag accessFlag) {
+        return accessFlags.contains(accessFlag);
     }
 
     private void markAsStatic() {
@@ -217,6 +229,7 @@ public class ClassFile {
         return (X) attribute;
     }
 
+    //    FIXME - inside constructor for inner class classfile
     private void markInnerClassAsStatic(ClassFile innerClass, JavaTypeInstance thisType) {
         /*
         * We need to tell the inner class it's a static, if it doesn't have the outer
@@ -238,14 +251,16 @@ public class ClassFile {
         }
     }
 
-    private void analyseInnerClasses(CFRState cfrState) {
+    // during construction
+    private void loadInnerClasses(CFRState cfrState) {
         AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
-        if (attributeInnerClasses == null) return;
+        if (attributeInnerClasses == null) {
+            return;
+        }
         List<InnerClassInfo> innerClassInfoList = attributeInnerClasses.getInnerClassInfoList();
 
         JavaTypeInstance thisType = thisClass.getTypeInstance(constantPool);
 
-        this.innerClassesByTypeInfo = new LinkedHashMap<JavaTypeInstance, Pair<InnerClassInfo, ClassFile>>();
 
         for (InnerClassInfo innerClassInfo : innerClassInfoList) {
             JavaTypeInstance innerType = innerClassInfo.getInnerClassInfo();
@@ -257,16 +272,20 @@ public class ClassFile {
              */
             if (!innerType.isInnerClassOf(thisType)) continue;
 
-            ClassFile innerClass = cfrState.getClassFile(innerType);
-            try {
-                innerClass.analyseTop(cfrState);
-            } catch (ConfusedCFRException c) {
-                throw new ConfusedCFRException("In : " + innerType.toString() + ":" + c);
-            }
-
+            /* If we're loading inner classes, then we definitely want to recursively apply that
+             */
+            ClassFile innerClass = cfrState.getClassFile(innerType, true);
             markInnerClassAsStatic(innerClass, thisType);
 
             innerClassesByTypeInfo.put(innerType, new Pair<InnerClassInfo, ClassFile>(innerClassInfo, innerClass));
+        }
+    }
+
+    private void analyseInnerClasses(CFRState state) {
+        if (innerClassesByTypeInfo == null) return;
+        for (Pair<InnerClassInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
+            ClassFile classFile = innerClassInfoClassFilePair.getSecond();
+            classFile.analyseTop(state);
         }
     }
 
@@ -275,6 +294,10 @@ public class ClassFile {
             return;
         }
         this.begunAnalysis = true;
+        /*
+         * Analyse inner classes first, so we know if they're static when we reference them
+         * from the outer class.
+         */
         if (state.analyseInnerClasses()) {
             analyseInnerClasses(state);
         }
@@ -470,5 +493,10 @@ public class ClassFile {
         } else {
             dumpAsClass(d, false);
         }
+    }
+
+    @Override
+    public String toString() {
+        return thisClass.getTextName(constantPool);
     }
 }

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.getopt;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -63,6 +64,8 @@ public class CFRState {
             "innerclasses", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_BOILERPLATE = new PermittedOptionProvider.Argument<Boolean>(
             "removeboilerplate", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> REMOVE_INNER_CLASS_SYNTHETICS = new PermittedOptionProvider.Argument<Boolean>(
+            "removeinnerclasssynthetics", defaultTrueBooleanDecoder);
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -104,6 +107,10 @@ public class CFRState {
         return getBooleanOpt(REMOVE_BOILERPLATE);
     }
 
+    public boolean removeInnerClassSynthetics() {
+        return getBooleanOpt(REMOVE_INNER_CLASS_SYNTHETICS);
+    }
+
     private byte[] getBytesFromFile(InputStream is, long length) throws IOException {
         // You cannot create an array using a long type.
         // It needs to be an int type.
@@ -134,14 +141,14 @@ public class CFRState {
         return bytes;
     }
 
-    private Map<String, ClassFile> classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
+    private Map<Pair<String, Boolean>, ClassFile> classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<Pair<String, Boolean>, ClassFile>() {
         @Override
-        public ClassFile invoke(String arg) {
-            return loadClassFileAtPath(arg);
+        public ClassFile invoke(Pair<String, Boolean> arg) {
+            return loadClassFileAtPath(arg.getFirst(), arg.getSecond());
         }
     });
 
-    private ClassFile loadClassFileAtPath(String path) {
+    private ClassFile loadClassFileAtPath(String path, boolean withInnerClasses) {
         Map<String, String> classPathFiles = getClassPathClasses();
         String jarName = classPathFiles.get(path);
         ZipFile zipFile = null;
@@ -162,7 +169,7 @@ public class CFRState {
             try {
                 byte[] content = getBytesFromFile(is, length);
                 ByteData data = new BaseByteData(content);
-                return new ClassFile(data, CFRState.this);
+                return new ClassFile(data, CFRState.this, withInnerClasses);
             } finally {
                 if (zipFile != null) zipFile.close();
             }
@@ -217,14 +224,14 @@ public class CFRState {
         return classToPathMap;
     }
 
-    public ClassFile getClassFile(String path) throws CannotLoadClassException {
-        return classFileCache.get(path);
+    public ClassFile getClassFile(String path, boolean needInnerClasses) throws CannotLoadClassException {
+        return classFileCache.get(new Pair<String, Boolean>(path, needInnerClasses));
     }
 
-    public ClassFile getClassFile(JavaTypeInstance classInfo) throws CannotLoadClassException {
+    public ClassFile getClassFile(JavaTypeInstance classInfo, boolean needInnerClasses) throws CannotLoadClassException {
         String path = classInfo.getRawName();
         path = ClassNameUtils.convertToPath(path) + ".class";
-        return getClassFile(path);
+        return getClassFile(path, needInnerClasses);
     }
 
     public static GetOptSinkFactory<CFRState> getFactory() {
@@ -239,7 +246,7 @@ public class CFRState {
 
         @Override
         public List<? extends Argument<?>> getArguments() {
-            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE);
+            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE, REMOVE_INNER_CLASS_SYNTHETICS);
         }
 
         @Override

@@ -214,6 +214,7 @@ public class ConstantPoolUtils {
     public static ClassSignature parseClassSignature(ConstantPoolEntryUTF8 signature, ConstantPool cp) {
         String sig = signature.getValue();
         int curridx = 0;
+
         /*
          * Optional formal type parameters
          */
