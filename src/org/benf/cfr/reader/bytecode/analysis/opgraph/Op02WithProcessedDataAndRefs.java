@@ -483,16 +483,29 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                  * See above re invokespecial
                  */
                 boolean special = false;
+                boolean isSuper = false;
                 if (instr == JVMInstr.INVOKESPECIAL) {
                     // todo: Verify that the class being called is the super of the object.
                     special = true;
+                    JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
+                    JavaTypeInstance callType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
+                    ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
+                    String funcName = nameAndType.getName(cp).getValue();
+                    if (funcName.equals("<init>")) {
+                        if (!(callType.equals(objType) ||
+                                (objType.getRawName().equals("java.lang.Object")))) {
+                            isSuper = true;
+                        }
+                    }
                 }
                 MethodPrototype methodPrototype = function.getMethodPrototype(cp);
                 List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size() - 1);
                 methodPrototype.tightenArgs(args);
-                MemberFunctionInvokation funcCall = new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
-                if (function.isInitMethod(cp)) {
-                    return new ConstructorStatement(funcCall);
+                AbstractFunctionInvokation funcCall = isSuper ?
+                        new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
+                        new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
+                if (!isSuper && function.isInitMethod(cp)) {
+                    return new ConstructorStatement((MemberFunctionInvokation) funcCall);
                 } else {
                     if (stackProduced.size() == 0) {
                         return new ExpressionStatement(funcCall);

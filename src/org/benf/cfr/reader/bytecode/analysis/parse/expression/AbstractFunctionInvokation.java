@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
@@ -19,28 +18,24 @@ import java.util.List;
  * Time: 17:26
  * To change this template use File | Settings | File Templates.
  */
-public class MemberFunctionInvokation extends AbstractFunctionInvokation {
+public abstract class AbstractFunctionInvokation extends AbstractExpression {
     private final ConstantPoolEntryMethodRef function;
     private Expression object;
     private final List<Expression> args;
     private final ConstantPool cp;
     private final MethodPrototype methodPrototype;
-    private final String name;
-    private final boolean special;
 
-    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, boolean special, List<Expression> args) {
-        super(cp, function, methodPrototype, object, args);
+    public AbstractFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args) {
+        super(new InferredJavaType(
+                methodPrototype.getReturnType(
+                        object.getInferredJavaType().getJavaTypeInstance(), args
+                ), InferredJavaType.Source.FIELD
+        ));
         this.function = function;
         this.methodPrototype = methodPrototype;
         this.object = object;
         this.args = args;
         this.cp = cp;
-        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
-        String funcName = nameAndType.getName(cp).getValue();
-        // Most of the time a member function invokation for a constructor will
-        // get pulled up into a constructorInvokation, however, when it's a super call, it won't.
-        this.name = funcName.equals("<init>") ? null : funcName;
-        this.special = special;
     }
 
     @Override
@@ -61,37 +56,12 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         return this;
     }
 
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        String comment = null;
-        sb.append(object.toString());
-
-        if (name != null) sb.append(".").append(name);
-        sb.append("(");
-        boolean first = true;
-        for (int x = 0; x < args.size(); ++x) {
-            Expression arg = args.get(x);
-            if (!first) sb.append(", ");
-            first = false;
-            sb.append(methodPrototype.getAppropriatelyCastedArgumentString(arg, x));
-        }
-        sb.append(")");
-        if (comment != null) sb.append(comment);
-        return sb.toString();
-    }
-
     public Expression getObject() {
         return object;
     }
 
     public ConstantPoolEntryMethodRef getFunction() {
         return function;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public List<Expression> getArgs() {

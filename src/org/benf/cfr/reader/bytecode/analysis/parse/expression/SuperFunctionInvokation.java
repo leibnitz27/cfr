@@ -19,16 +19,14 @@ import java.util.List;
  * Time: 17:26
  * To change this template use File | Settings | File Templates.
  */
-public class MemberFunctionInvokation extends AbstractFunctionInvokation {
+public class SuperFunctionInvokation extends AbstractFunctionInvokation {
     private final ConstantPoolEntryMethodRef function;
     private Expression object;
     private final List<Expression> args;
     private final ConstantPool cp;
     private final MethodPrototype methodPrototype;
-    private final String name;
-    private final boolean special;
 
-    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, boolean special, List<Expression> args) {
+    public SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args) {
         super(cp, function, methodPrototype, object, args);
         this.function = function;
         this.methodPrototype = methodPrototype;
@@ -37,10 +35,6 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         this.cp = cp;
         ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
         String funcName = nameAndType.getName(cp).getValue();
-        // Most of the time a member function invokation for a constructor will
-        // get pulled up into a constructorInvokation, however, when it's a super call, it won't.
-        this.name = funcName.equals("<init>") ? null : funcName;
-        this.special = special;
     }
 
     @Override
@@ -65,20 +59,17 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        String comment = null;
-        sb.append(object.toString());
-
-        if (name != null) sb.append(".").append(name);
-        sb.append("(");
+        sb.append("super(");
         boolean first = true;
-        for (int x = 0; x < args.size(); ++x) {
+        JavaTypeInstance superType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
+        int start = superType.getInnerClassHereInfo().isHideSyntheticThis() ? 1 : 0;
+        for (int x = start; x < args.size(); ++x) {
             Expression arg = args.get(x);
             if (!first) sb.append(", ");
             first = false;
             sb.append(methodPrototype.getAppropriatelyCastedArgumentString(arg, x));
         }
         sb.append(")");
-        if (comment != null) sb.append(comment);
         return sb.toString();
     }
 
@@ -88,10 +79,6 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
 
     public ConstantPoolEntryMethodRef getFunction() {
         return function;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public List<Expression> getArgs() {
