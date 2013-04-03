@@ -41,6 +41,8 @@ public class MemberFunctionInvokation extends AbstractExpression {
         this.cp = cp;
         ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
         String funcName = nameAndType.getName(cp).getValue();
+        // Most of the time a member function invokation for a constructor will
+        // get pulled up into a constructorInvokation, however, when it's a super call, it won't.
         this.name = funcName.equals("<init>") ? null : funcName;
         this.special = special;
     }
@@ -63,10 +65,13 @@ public class MemberFunctionInvokation extends AbstractExpression {
         return this;
     }
 
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         String comment = null;
+        boolean isSuper = false;
+        int start = 0;
         if (special) {
             JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
             JavaTypeInstance callType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
@@ -79,15 +84,18 @@ public class MemberFunctionInvokation extends AbstractExpression {
                 sb.append(object.toString());
                 comment = " /* TODO : Bad type info */ ";
             } else {
+                isSuper = true;
+                if (callType.getInnerClassHereInfo().isHideSyntheticThis()) start = 1;
                 sb.append("super");
             }
         } else {
             sb.append(object.toString());
         }
+
         if (name != null) sb.append(".").append(name);
         sb.append("(");
         boolean first = true;
-        for (int x = 0; x < args.size(); ++x) {
+        for (int x = start; x < args.size(); ++x) {
             Expression arg = args.get(x);
             if (!first) sb.append(", ");
             first = false;

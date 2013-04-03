@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ConstantPool;
 
 /**
@@ -10,25 +11,26 @@ import org.benf.cfr.reader.entities.ConstantPool;
  */
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
-    private final ConstantPool cp;
-    private final JavaRefTypeInstance outerClass;
+    private final ClassCache classCache;
+    private final InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
 
-    private JavaRefTypeInstance(String className, ConstantPool cp) {
+    private JavaRefTypeInstance(String className, ClassCache classCache) {
         this.className = className;
-        this.cp = cp;
-        JavaRefTypeInstance outerClassTmp = null;
+        this.classCache = classCache;
+        InnerClassInfo innerClassInfo = InnerClassInfo.NOT;
         if (className.contains("$")) {
             String outer = className.substring(0, className.lastIndexOf('$'));
-            outerClassTmp = cp.getRefClassFor(outer);
+            JavaRefTypeInstance outerClassTmp = classCache.getRefClassFor(outer);
+            innerClassInfo = new RefTypeInnerClassInfo(outerClassTmp);
         }
-        this.outerClass = outerClassTmp;
+        this.innerClassInfo = innerClassInfo;
     }
 
     /*
      * Only call from constPool cache.
      */
-    public static JavaRefTypeInstance create(String rawClassName, ConstantPool cp) {
-        return new JavaRefTypeInstance(rawClassName, cp);
+    public static JavaRefTypeInstance create(String rawClassName, ClassCache classCache) {
+        return new JavaRefTypeInstance(rawClassName, classCache);
     }
 
     @Override
@@ -38,7 +40,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public String toString() {
-        return cp.getDisplayableClassName(className);
+        return classCache.getDisplayableClassName(className);
     }
 
     @Override
@@ -62,14 +64,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public boolean isInnerClassOf(JavaTypeInstance possibleParent) {
-        if (outerClass == null) return false;
-        return outerClass.equals(possibleParent);
-    }
-
-    @Override
-    public boolean isInnerClass() {
-        return (outerClass != null);
+    public InnerClassInfo getInnerClassHereInfo() {
+        return innerClassInfo;
     }
 
     @Override
@@ -109,5 +105,33 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         return RawJavaType.REF;
     }
 
+    private static class RefTypeInnerClassInfo implements InnerClassInfo {
+        private final JavaRefTypeInstance outerClass;
+        private boolean hideSyntheticThis = false;
 
+        private RefTypeInnerClassInfo(JavaRefTypeInstance outerClass) {
+            this.outerClass = outerClass;
+        }
+
+        @Override
+        public boolean isInnerClass() {
+            return true;
+        }
+
+        @Override
+        public boolean isInnerClassOf(JavaTypeInstance possibleParent) {
+            if (outerClass == null) return false;
+            return possibleParent.equals(outerClass);
+        }
+
+        @Override
+        public void setHideSyntheticThis() {
+            hideSyntheticThis = true;
+        }
+
+        @Override
+        public boolean isHideSyntheticThis() {
+            return hideSyntheticThis;
+        }
+    }
 }

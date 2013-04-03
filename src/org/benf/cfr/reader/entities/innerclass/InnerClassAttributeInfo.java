@@ -12,7 +12,7 @@ import java.util.Set;
  * Date: 22/03/2013
  * Time: 17:56
  */
-public class InnerClassInfo {
+public class InnerClassAttributeInfo {
     private final
     @Nullable
     JavaTypeInstance innerClassInfo;
@@ -24,7 +24,7 @@ public class InnerClassInfo {
     String innerName;
     private final Set<AccessFlag> accessFlags;
 
-    public InnerClassInfo(JavaTypeInstance innerClassInfo, JavaTypeInstance outerClassInfo, String innerName, Set<AccessFlag> accessFlags) {
+    public InnerClassAttributeInfo(JavaTypeInstance innerClassInfo, JavaTypeInstance outerClassInfo, String innerName, Set<AccessFlag> accessFlags) {
         this.innerClassInfo = innerClassInfo;
         this.outerClassInfo = outerClassInfo;
         this.innerName = innerName;

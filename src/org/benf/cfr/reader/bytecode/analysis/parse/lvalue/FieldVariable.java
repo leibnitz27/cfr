@@ -20,6 +20,7 @@ public class FieldVariable extends AbstractLValue {
     private Expression object;
     private final ConstantPool cp;
     private final ConstantPoolEntryFieldRef field;
+    private transient String name;
 
     private static InferredJavaType getFieldType(ConstantPoolEntry fieldentry, ClassFile classFile, ConstantPool cp) {
         ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) fieldentry;
@@ -46,7 +47,7 @@ public class FieldVariable extends AbstractLValue {
 
     @Override
     public String toString() {
-        return "" + object + "." + field.getLocalName(cp);
+        return object + "." + field.getLocalName(cp);
     }
 
     @Override

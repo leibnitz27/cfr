@@ -29,10 +29,8 @@ public class ConstantPool {
 
     private final long length;
     private final List<ConstantPoolEntry> entries;
-    private final Map<String, String> longNameToShortName = MapFactory.newMap();
-    private final Map<String, String> shortNameToLongName = MapFactory.newMap();
     private final CFRState cfrState;
-    private final Map<String, JavaRefTypeInstance> refClassTypeCache = MapFactory.newMap();
+    private final ClassCache classCache;
 
     public ConstantPool(CFRState cfrState, ByteData raw, short count) {
         this.cfrState = cfrState;
@@ -42,6 +40,7 @@ public class ConstantPool {
 
         length = processRaw(raw, count, res);
         entries = res;
+        this.classCache = cfrState.getClassCache();
     }
 
     public CFRState getCFRState() {
@@ -50,9 +49,8 @@ public class ConstantPool {
 
 
     public void dumpImports(Dumper d) {
-        if (shortNameToLongName.isEmpty()) return;
-        d.print("\n");
-        List<String> names = ListFactory.newList(shortNameToLongName.values());
+        List<String> names = classCache.getImports();
+        if (names.isEmpty()) return;
         Collections.sort(names);
         for (String shortenedName : names) {
             d.print("import " + shortenedName + ";\n");
@@ -147,30 +145,7 @@ public class ConstantPool {
         return (ConstantPoolEntryClass) getEntry(index);
     }
 
-    public void markClassNameUsed(String className) {
-        int idxlast = className.lastIndexOf('.');
-        String partname = idxlast == -1 ? className : className.substring(idxlast + 1);
-        if (!shortNameToLongName.containsKey(partname)) {
-            shortNameToLongName.put(partname, className);
-            longNameToShortName.put(className, partname);
-        }
-    }
-
-    public String getDisplayableClassName(String className) {
-        String res = longNameToShortName.get(className);
-        if (res == null) return className;
-        return res;
-    }
-
-    public JavaRefTypeInstance getRefClassFor(String rawClassName) {
-        String name = ClassNameUtils.convertFromPath(rawClassName);
-        JavaRefTypeInstance typeInstance = refClassTypeCache.get(name);
-        if (typeInstance != null) return typeInstance;
-
-        markClassNameUsed(name);
-        typeInstance = JavaRefTypeInstance.create(name, this);
-        refClassTypeCache.put(name, typeInstance);
-        return typeInstance;
-
+    public ClassCache getClassCache() {
+        return classCache;
     }
 }

@@ -16,6 +16,9 @@ import java.util.Vector;
  * Date: 14/05/2012
  */
 public interface StructuredStatement extends Dumpable, Matcher<StructuredStatement> {
+
+    public Op04StructuredStatement getContainer();
+
     public void setContainer(Op04StructuredStatement container);
 
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn);

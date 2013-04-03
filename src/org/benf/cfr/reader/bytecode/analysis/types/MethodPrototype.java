@@ -33,6 +33,7 @@ public class MethodPrototype {
     private final ConstantPool cp;
     private final ClassFile classFile;
     private transient List<LocalVariable> parameterLValues = null;
+    private transient boolean explicitThisRemoval = false;
 
     public MethodPrototype(ClassFile classFile, String name, boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
         this.formalTypeParameters = formalTypeParameters;
@@ -44,6 +45,10 @@ public class MethodPrototype {
         this.name = name;
         this.cp = cp;
         this.classFile = classFile;
+    }
+
+    public void setExplicitThisRemoval(boolean explicitThisRemoval) {
+        this.explicitThisRemoval = explicitThisRemoval;
     }
 
     public String getDeclarationSignature(String methName, boolean isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
@@ -69,11 +74,15 @@ public class MethodPrototype {
          *
          */
 
-        int offset = instanceMethod ? 1 : 0;
+        List<LocalVariable> parameterLValues = getParameters();
         int argssize = args.size();
-        for (int i = 0; i < argssize; ++i) {
+        int start = explicitThisRemoval ? 1 : 0;
+        boolean first = true;
+        for (int i = start; i < argssize; ++i) {
             JavaTypeInstance arg = args.get(i);
-            if (i > 0) {
+            if (first) {
+                first = false;
+            } else {
                 sb.append(", ");
             }
             annotationsHelper.addAnnotationTextForParameterInto(i, sb);
@@ -85,8 +94,7 @@ public class MethodPrototype {
             } else {
                 sb.append(arg.toString());
             }
-            sb.append(" ").append(variableNamer.getName(0, offset));
-            offset += arg.getStackType().getComputationCategory();
+            sb.append(" ").append(parameterLValues.get(i).getName());
         }
         sb.append(")");
         return sb.toString();

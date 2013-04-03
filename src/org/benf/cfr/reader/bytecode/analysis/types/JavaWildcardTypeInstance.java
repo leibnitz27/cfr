@@ -52,13 +52,8 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public boolean isInnerClassOf(JavaTypeInstance possibleParent) {
-        return underlyingType.isInnerClassOf(possibleParent);
-    }
-
-    @Override
-    public boolean isInnerClass() {
-        return underlyingType.isInnerClass();
+    public InnerClassInfo getInnerClassHereInfo() {
+        return underlyingType.getInnerClassHereInfo();
     }
 
     @Override

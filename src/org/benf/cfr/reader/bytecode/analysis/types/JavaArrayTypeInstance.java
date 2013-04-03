@@ -44,13 +44,8 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public boolean isInnerClassOf(JavaTypeInstance possibleParent) {
-        return false;
-    }
-
-    @Override
-    public boolean isInnerClass() {
-        return false;
+    public InnerClassInfo getInnerClassHereInfo() {
+        return InnerClassInfo.NOT;
     }
 
     @Override

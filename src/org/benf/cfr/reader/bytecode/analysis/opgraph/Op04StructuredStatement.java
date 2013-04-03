@@ -1,14 +1,14 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.InnerClassConstructorRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -96,7 +96,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     @Override
     public void nopOut() {
-        throw new UnsupportedOperationException();
+        replaceStatementWithNOP("");
     }
 
     @Override
@@ -505,12 +505,23 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     private static void removeSyntheticConstructorParam(Method method, Op04StructuredStatement root) {
+        MethodPrototype prototype = method.getMethodPrototype();
+        List<LocalVariable> vars = prototype.getParameters();
+        LocalVariable outerThis = vars.get(0);
+        // Todo : Should we test that it's the right type?  Already been done, really....
+        prototype.setExplicitThisRemoval(true);
+
+        /* Now we need to remove the usage of outerThis */
+        new InnerClassConstructorRewriter(outerThis).rewrite(root);
     }
 
     /*
+     * This is performed in 2 parts, only (b) is implemented here, (a) is in ConstructiorInvokation /
+     * MemberFunctionInvokation (for super).
+     *
      * a)
-     * Find all calls to a constructor of an inner class, if the inner class isn't static, remove the first
-     * argument.
+     * Remove first arg to calls which use inner <init> on non-statics.
+     *
      * b)
      * Also, if we are ourselves an inner class constructor, remove the first argument, and remove usages of it
      * downstream, plus mark the synthetic outer this as invisible.
@@ -526,7 +537,6 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             if (classFile.isInnerClass() && !classFile.testAccessFlag(AccessFlag.ACC_STATIC)) {
                 removeSyntheticConstructorParam(method, root);
             }
-
         }
     }
 

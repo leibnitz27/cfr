@@ -49,6 +49,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
+    public Op04StructuredStatement getContainer() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void setContainer(Op04StructuredStatement container) {
         throw new UnsupportedOperationException();
     }

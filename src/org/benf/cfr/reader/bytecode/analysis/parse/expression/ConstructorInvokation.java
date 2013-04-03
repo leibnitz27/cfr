@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
@@ -56,9 +57,12 @@ public class ConstructorInvokation extends AbstractExpression {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
         sb.append("new ").append(clazz.toString()).append("(");
         boolean first = true;
-        for (Expression arg : args) {
+        int start = innerClassInfo.isHideSyntheticThis() ? 1 : 0;
+        for (int i = start; i < args.size(); ++i) {
+            Expression arg = args.get(i);
             if (!first) sb.append(", ");
             first = false;
             sb.append(arg.toString());

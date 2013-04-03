@@ -47,7 +47,7 @@ public class ConstantPoolEntryClass implements ConstantPoolEntry, ConstantPoolEn
         if (rawType.startsWith("[")) {
             return ConstantPoolUtils.decodeTypeTok(rawType, cp);
         } else {
-            return cp.getRefClassFor(ClassNameUtils.convertFromPath(rawType));
+            return cp.getClassCache().getRefClassFor(ClassNameUtils.convertFromPath(rawType));
         }
     }
 

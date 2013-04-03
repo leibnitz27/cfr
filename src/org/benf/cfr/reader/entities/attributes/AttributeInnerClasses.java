@@ -3,7 +3,7 @@ package org.benf.cfr.reader.entities.attributes;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.innerclass.InnerClassInfo;
+import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -27,7 +27,7 @@ public class AttributeInnerClasses extends Attribute {
 
 
     private final int length;
-    private final List<InnerClassInfo> innerClassInfoList = ListFactory.newList();
+    private final List<InnerClassAttributeInfo> innerClassAttributeInfoList = ListFactory.newList();
 
     private static JavaTypeInstance getOptClass(int idx, ConstantPool cp) {
         if (idx == 0) {
@@ -56,7 +56,7 @@ public class AttributeInnerClasses extends Attribute {
             offset += 2;
             int innerAccessFlags = raw.getS2At(offset);
             offset += 2;
-            innerClassInfoList.add(new InnerClassInfo(
+            innerClassAttributeInfoList.add(new InnerClassAttributeInfo(
                     getOptClass(innerClassInfoIdx, cp),
                     getOptClass(outerClassInfoIdx, cp),
                     getOptName(innerNameIdx, cp),
@@ -80,8 +80,8 @@ public class AttributeInnerClasses extends Attribute {
         return OFFSET_OF_REMAINDER + length;
     }
 
-    public List<InnerClassInfo> getInnerClassInfoList() {
-        return innerClassInfoList;
+    public List<InnerClassAttributeInfo> getInnerClassAttributeInfoList() {
+        return innerClassAttributeInfoList;
     }
 
     @Override

@@ -5,7 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
-import org.benf.cfr.reader.entities.innerclass.InnerClassInfo;
+import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.*;
@@ -46,7 +46,7 @@ public class ClassFile {
     private final List<Method> methods;
     private Map<String, Method> methodsByName; // Lazily populated if interrogated.
 
-    private final Map<JavaTypeInstance, Pair<InnerClassInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
+    private final Map<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
 
 
     private final Map<String, Attribute> attributes;
@@ -143,7 +143,7 @@ public class ClassFile {
 
         // Need to load inner classes now so we can infer staticness before any analysis.
         if (withInnerClasses) {
-            this.innerClassesByTypeInfo = new LinkedHashMap<JavaTypeInstance, Pair<InnerClassInfo, ClassFile>>();
+            this.innerClassesByTypeInfo = new LinkedHashMap<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>>();
             loadInnerClasses(cfrState);
         } else {
             this.innerClassesByTypeInfo = null;
@@ -232,7 +232,7 @@ public class ClassFile {
     }
 
     //    FIXME - inside constructor for inner class classfile
-    private void markInnerClassAsStatic(ClassFile innerClass, JavaTypeInstance thisType) {
+    private void markInnerClassAsStatic(CFRState cfrState, ClassFile innerClass, JavaTypeInstance thisType) {
         /*
         * We need to tell the inner class it's a static, if it doesn't have the outer
         * class as a first constructor parameter, which is assigned to a synthetic local.
@@ -242,6 +242,8 @@ public class ClassFile {
         * (Either all will have it or none will).
         */
         List<Method> constructors = innerClass.getConstructors();
+        InnerClassInfo innerClassInfo = innerClass.getClassType().getInnerClassHereInfo();
+        if (!innerClassInfo.isInnerClass()) return;
         for (Method constructor : constructors) {
             List<JavaTypeInstance> params = constructor.getMethodPrototype().getArgs();
             if (params == null ||
@@ -251,6 +253,14 @@ public class ClassFile {
                 return;
             }
         }
+        /*
+         * Else it's not static.  If the params say so, tweak the inner class info to let
+         * users know the first parameter is to be elided.
+         */
+        if (cfrState.removeInnerClassSynthetics()) {
+            innerClassInfo.setHideSyntheticThis();
+        }
+
     }
 
     // during construction
@@ -259,33 +269,33 @@ public class ClassFile {
         if (attributeInnerClasses == null) {
             return;
         }
-        List<InnerClassInfo> innerClassInfoList = attributeInnerClasses.getInnerClassInfoList();
+        List<InnerClassAttributeInfo> innerClassAttributeInfoList = attributeInnerClasses.getInnerClassAttributeInfoList();
 
         JavaTypeInstance thisType = thisClass.getTypeInstance(constantPool);
 
 
-        for (InnerClassInfo innerClassInfo : innerClassInfoList) {
-            JavaTypeInstance innerType = innerClassInfo.getInnerClassInfo();
+        for (InnerClassAttributeInfo innerClassAttributeInfo : innerClassAttributeInfoList) {
+            JavaTypeInstance innerType = innerClassAttributeInfo.getInnerClassInfo();
             if (innerType == null) continue;
 
             /*
              * Inner classes can be referred to when they are not direct inner classes.
              * We even refer to inner classes which belong to entirely different classes!
              */
-            if (!innerType.isInnerClassOf(thisType)) continue;
+            if (!innerType.getInnerClassHereInfo().isInnerClassOf(thisType)) continue;
 
             /* If we're loading inner classes, then we definitely want to recursively apply that
              */
             ClassFile innerClass = cfrState.getClassFile(innerType, true);
-            markInnerClassAsStatic(innerClass, thisType);
+            markInnerClassAsStatic(cfrState, innerClass, thisType);
 
-            innerClassesByTypeInfo.put(innerType, new Pair<InnerClassInfo, ClassFile>(innerClassInfo, innerClass));
+            innerClassesByTypeInfo.put(innerType, new Pair<InnerClassAttributeInfo, ClassFile>(innerClassAttributeInfo, innerClass));
         }
     }
 
     private void analyseInnerClasses(CFRState state) {
         if (innerClassesByTypeInfo == null) return;
-        for (Pair<InnerClassInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
+        for (Pair<InnerClassAttributeInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
             ClassFile classFile = innerClassInfoClassFilePair.getSecond();
             classFile.analyseTop(state);
         }
@@ -423,7 +433,7 @@ public class ClassFile {
     private void dumpNamedInnerClasses(Dumper d) {
         if (innerClassesByTypeInfo == null) return;
 
-        for (Pair<InnerClassInfo, ClassFile> innerClassEntry : innerClassesByTypeInfo.values()) {
+        for (Pair<InnerClassAttributeInfo, ClassFile> innerClassEntry : innerClassesByTypeInfo.values()) {
 //            InnerClassInfo innerClassInfo = innerClassEntry.getFirst();
             ClassFile classFile = innerClassEntry.getSecond();
             classFile.dumpAsInnerClass(d);

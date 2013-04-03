@@ -3,6 +3,7 @@ package org.benf.cfr.reader.util.getopt;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ListFactory;
@@ -28,6 +29,8 @@ import java.util.zip.ZipFile;
  * Time: 16:29
  */
 public class CFRState {
+
+    private final ClassCache classCache = new ClassCache();
 
     private final String fileName;
     private final String methodName;
@@ -268,5 +271,10 @@ public class CFRState {
             }
             return new CFRState(fname, methodName, opts);
         }
+    }
+
+
+    public ClassCache getClassCache() {
+        return classCache;
     }
 }

@@ -32,7 +32,8 @@ public interface JavaTypeInstance {
 
     public String getRawName();
 
-    public boolean isInnerClassOf(JavaTypeInstance possibleParent);
+    //    public boolean isInnerClassOf(JavaTypeInstance possibleParent);
+    // Get info about this class as an inner class, not inner classes of this.....
+    public InnerClassInfo getInnerClassHereInfo();
 
-    public boolean isInnerClass();
 }

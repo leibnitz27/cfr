@@ -102,13 +102,8 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public boolean isInnerClassOf(JavaTypeInstance possibleParent) {
-        return typeInstance.isInnerClassOf(possibleParent);
-    }
-
-    @Override
-    public boolean isInnerClass() {
-        return typeInstance.isInnerClass();
+    public InnerClassInfo getInnerClassHereInfo() {
+        return typeInstance.getInnerClassHereInfo();
     }
 
     public JavaTypeInstance getTypeInstance() {
