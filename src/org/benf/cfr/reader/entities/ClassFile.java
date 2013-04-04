@@ -152,7 +152,7 @@ public class ClassFile {
 
     public boolean isInnerClass() {
         if (thisClass == null) return false;
-        return thisClass.getTextName(constantPool).contains("$");
+        return thisClass.getTypeInstance(constantPool).getInnerClassHereInfo().isInnerClass();
     }
 
     public ConstantPool getConstantPool() {

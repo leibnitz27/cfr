@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.ListFactory;
@@ -24,14 +25,23 @@ public class ClassCache {
     private final Map<String, JavaRefTypeInstance> refClassTypeCache = MapFactory.newMap();
     private final Set<String> importableClasses = SetFactory.newSet();
 
-    public void markClassNameUsed(String className, JavaTypeInstance typeInstance) {
+    private void markClassNameUsed(JavaRefTypeInstance typeInstance) {
+        String className = typeInstance.getRawName();
         int idxlast = className.lastIndexOf('.');
         String partname = idxlast == -1 ? className : className.substring(idxlast + 1);
+        InnerClassInfo innerClassInfo = typeInstance.getInnerClassHereInfo();
         if (!shortNameToLongName.containsKey(partname)) {
             shortNameToLongName.put(partname, className);
             longNameToShortName.put(className, partname);
-            if (!typeInstance.getInnerClassHereInfo().isInnerClass()) {
+            if (!innerClassInfo.isInnerClass()) { // actually, should only veto inners of main class.
                 importableClasses.add(className);
+            }
+        }
+        if (innerClassInfo.isInnerClass()) {
+            JavaRefTypeInstance outerClass = innerClassInfo.getOuterClass();
+            if (outerClass != null) {
+                String innerName = className.substring(outerClass.getRawName().length() + 1);
+                longNameToShortName.put(className, innerName);
             }
         }
     }
@@ -48,10 +58,12 @@ public class ClassCache {
         if (typeInstance != null) return typeInstance;
 
         typeInstance = JavaRefTypeInstance.create(name, this);
-        markClassNameUsed(name, typeInstance);
+
+        // Find an appropriate 'displayable' name.
+        markClassNameUsed(typeInstance);
+
         refClassTypeCache.put(name, typeInstance);
         return typeInstance;
-
     }
 
     public List<String> getImports() {

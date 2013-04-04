@@ -15,6 +15,8 @@ public interface InnerClassInfo {
 
     boolean isHideSyntheticThis();
 
+    JavaRefTypeInstance getOuterClass();
+
     public static InnerClassInfo NOT = new InnerClassInfo() {
         @Override
         public boolean isInnerClass() {
@@ -28,6 +30,11 @@ public interface InnerClassInfo {
 
         @Override
         public void setHideSyntheticThis() {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public JavaRefTypeInstance getOuterClass() {
             throw new IllegalStateException();
         }
 

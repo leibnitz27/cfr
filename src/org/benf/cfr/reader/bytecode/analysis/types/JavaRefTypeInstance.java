@@ -15,14 +15,15 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     private final InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
 
     private JavaRefTypeInstance(String className, ClassCache classCache) {
-        this.className = className;
-        this.classCache = classCache;
         InnerClassInfo innerClassInfo = InnerClassInfo.NOT;
+        // We should be careful to ONLY check for "$" here, as we'll eliminate it elsewhere.
         if (className.contains("$")) {
             String outer = className.substring(0, className.lastIndexOf('$'));
             JavaRefTypeInstance outerClassTmp = classCache.getRefClassFor(outer);
             innerClassInfo = new RefTypeInnerClassInfo(outerClassTmp);
         }
+        this.className = className;
+        this.classCache = classCache;
         this.innerClassInfo = innerClassInfo;
     }
 
@@ -127,6 +128,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         @Override
         public void setHideSyntheticThis() {
             hideSyntheticThis = true;
+        }
+
+        @Override
+        public JavaRefTypeInstance getOuterClass() {
+            return outerClass;
         }
 
         @Override
