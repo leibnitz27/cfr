@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
@@ -32,5 +34,16 @@ public class StructuredExpressionStatement extends AbstractStructuredStatement {
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
     }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        StructuredStatement o = matchIterator.getCurrent();
+        if (!(o instanceof StructuredExpressionStatement)) return false;
+        StructuredExpressionStatement other = (StructuredExpressionStatement) o;
+        if (!expression.equals(other.expression)) return false;
+        matchIterator.advance();
+        return true;
+    }
+
 
 }

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.InnerClassConstructorRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.RedundantSuperRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -235,6 +236,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         original.setTargets(ListFactory.<Op04StructuredStatement>newList());
     }
 
+    /*
+     * This is called far too much for transforms - should make them work on native structures
+     * where possible.
+     */
     public void linearizeStatementsInto(List<StructuredStatement> out) {
         structuredStatement.linearizeInto(out);
     }
@@ -540,6 +545,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    public static void removeConstructorBoilerplate(Op04StructuredStatement root) {
+        new RedundantSuperRewriter().rewrite(root);
+    }
 
     public static class TypeFilter<T> implements Predicate<Op04StructuredStatement> {
         private final Class<T> clazz;

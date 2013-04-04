@@ -33,8 +33,6 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
         this.object = object;
         this.args = args;
         this.cp = cp;
-        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
-        String funcName = nameAndType.getName(cp).getValue();
     }
 
     @Override
@@ -55,14 +53,22 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
         return this;
     }
 
+    private boolean isSyntheticThisFirstArg() {
+        JavaTypeInstance superType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
+        return superType.getInnerClassHereInfo().isHideSyntheticThis();
+    }
+
+    public boolean isEmptyIgnoringSynthetics() {
+        return (args.size() == (isSyntheticThisFirstArg() ? 1 : 0));
+    }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("super(");
         boolean first = true;
-        JavaTypeInstance superType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
-        int start = superType.getInnerClassHereInfo().isHideSyntheticThis() ? 1 : 0;
+
+        int start = isSyntheticThisFirstArg() ? 1 : 0;
         for (int x = start; x < args.size(); ++x) {
             Expression arg = args.get(x);
             if (!first) sb.append(", ");

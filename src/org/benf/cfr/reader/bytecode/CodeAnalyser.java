@@ -277,12 +277,14 @@ public class CodeAnalyser {
 
         // Introduce java 6 style for (x : array)
         logger.info("rewriteArrayForLoops");
-        if (cfrState.getBooleanOpt(CFRState.ARRAY_ITERATOR))
+        if (cfrState.getBooleanOpt(CFRState.ARRAY_ITERATOR)) {
             Op03SimpleStatement.rewriteArrayForLoops(op03SimpleParseNodes);
+        }
         // and for (x : iterable)
         logger.info("rewriteIteratorWhileLoops");
-        if (cfrState.getBooleanOpt(CFRState.COLLECTION_ITERATOR))
+        if (cfrState.getBooleanOpt(CFRState.COLLECTION_ITERATOR)) {
             Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
+        }
 
         logger.info("findSynchronizedBlocks");
         Op03SimpleStatement.findSynchronizedBlocks(op03SimpleParseNodes);
@@ -338,7 +340,7 @@ public class CodeAnalyser {
         Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);
 
         if (cfrState.removeBoilerplate()) {
-//            if (this.method.isConstructor()) block = Op04StructuredStatement.removeConstructorBoilerplate(block);
+            if (this.method.isConstructor()) Op04StructuredStatement.removeConstructorBoilerplate(block);
         }
 
         this.analysed = block;

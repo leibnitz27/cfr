@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractNewArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -33,6 +34,7 @@ public class WildcardMatch {
     private Map<String, ExpressionWildcard> expressionMap = MapFactory.newMap();
     private Map<String, NewArrayWildcard> newArrayWildcardMap = MapFactory.newMap();
     private Map<String, MemberFunctionInvokationWildcard> memberFunctionMap = MapFactory.newMap();
+    private Map<String, SuperFunctionInvokationWildcard> superFunctionMap = MapFactory.newMap();
     private Map<String, StaticFunctionInvokationWildcard> staticFunctionMap = MapFactory.newMap();
     private Map<String, BlockIdentifierWildcard> blockIdentifierWildcardMap = MapFactory.newMap();
     private Map<String, ListWildcard> listMap = MapFactory.newMap();
@@ -53,6 +55,7 @@ public class WildcardMatch {
         reset(listMap.values());
         reset(staticFunctionMap.values());
         reset(staticVariableWildcardMap.values());
+        reset(superFunctionMap.values());
     }
 
     public LValueWildcard getLValueWildCard(String name) {
@@ -86,6 +89,19 @@ public class WildcardMatch {
         newArrayWildcardMap.put(name, res);
         return res;
 
+    }
+
+    public SuperFunctionInvokationWildcard getSuperFunction(String name) {
+        return getSuperFunction(name, null);
+    }
+
+    public SuperFunctionInvokationWildcard getSuperFunction(String name, List<Expression> args) {
+        SuperFunctionInvokationWildcard res = superFunctionMap.get(name);
+        if (res != null) return res;
+
+        res = new SuperFunctionInvokationWildcard(args);
+        superFunctionMap.put(name, res);
+        return res;
     }
 
     public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, Expression object) {
@@ -383,6 +399,51 @@ public class WildcardMatch {
         }
 
     }
+
+    public class SuperFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<SuperFunctionInvokation> {
+        private final List<Expression> args;
+        private transient SuperFunctionInvokation matchedValue;
+
+        public SuperFunctionInvokationWildcard(List<Expression> args) {
+            this.args = args;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof SuperFunctionInvokation)) return false;
+            if (matchedValue != null) return matchedValue.equals(o);
+
+            /*
+             * See if this is a compatible member function.
+             *
+             * TODO : since it might fail, we need to rewind any captures!
+             */
+            SuperFunctionInvokation other = (SuperFunctionInvokation) o;
+            if (args != null) {
+                List<Expression> otherArgs = other.getArgs();
+                if (args.size() != otherArgs.size()) return false;
+                for (int x = 0; x < args.size(); ++x) {
+                    Expression myArg = args.get(x);
+                    Expression hisArg = otherArgs.get(x);
+                    if (!myArg.equals(hisArg)) return false;
+                }
+            }
+            matchedValue = other;
+            return true;
+        }
+
+        @Override
+        public SuperFunctionInvokation getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
+    }
+
 
     public class StaticFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
         private final String name;
