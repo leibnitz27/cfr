@@ -2,11 +2,14 @@ package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,13 +22,17 @@ public class ClassCache {
     private final Map<String, String> longNameToShortName = MapFactory.newMap();
     private final Map<String, String> shortNameToLongName = MapFactory.newMap();
     private final Map<String, JavaRefTypeInstance> refClassTypeCache = MapFactory.newMap();
+    private final Set<String> importableClasses = SetFactory.newSet();
 
-    public void markClassNameUsed(String className) {
+    public void markClassNameUsed(String className, JavaTypeInstance typeInstance) {
         int idxlast = className.lastIndexOf('.');
         String partname = idxlast == -1 ? className : className.substring(idxlast + 1);
         if (!shortNameToLongName.containsKey(partname)) {
             shortNameToLongName.put(partname, className);
             longNameToShortName.put(className, partname);
+            if (!typeInstance.getInnerClassHereInfo().isInnerClass()) {
+                importableClasses.add(className);
+            }
         }
     }
 
@@ -40,14 +47,14 @@ public class ClassCache {
         JavaRefTypeInstance typeInstance = refClassTypeCache.get(name);
         if (typeInstance != null) return typeInstance;
 
-        markClassNameUsed(name);
         typeInstance = JavaRefTypeInstance.create(name, this);
+        markClassNameUsed(name, typeInstance);
         refClassTypeCache.put(name, typeInstance);
         return typeInstance;
 
     }
 
     public List<String> getImports() {
-        return ListFactory.newList(shortNameToLongName.values());
+        return ListFactory.newList(importableClasses);
     }
 }

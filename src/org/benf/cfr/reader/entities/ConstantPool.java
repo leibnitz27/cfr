@@ -52,8 +52,8 @@ public class ConstantPool {
         List<String> names = classCache.getImports();
         if (names.isEmpty()) return;
         Collections.sort(names);
-        for (String shortenedName : names) {
-            d.print("import " + shortenedName + ";\n");
+        for (String name : names) {
+            d.print("import " + name + ";\n");
         }
         d.print("\n");
     }
