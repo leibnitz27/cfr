@@ -29,6 +29,7 @@ public class ClassCache {
 
     private boolean importClass(JavaRefTypeInstance clazz) {
         InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
+        if (clazz == analysisType) return false; // yes, reference equality.
         if (!innerClassInfo.isInnerClass()) return true;
         if (clazz.getRawName().startsWith(analysisType.getRawName())) return false;
         return true;

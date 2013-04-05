@@ -468,7 +468,6 @@ public class ClassFile {
     public void dumpAsClass(Dumper d, boolean innerClass) {
         if (!innerClass) {
             d.line();
-            d.print("// Imports\n");
             constantPool.dumpImports(d);
         }
         dumpHeader(d, false);
@@ -476,13 +475,11 @@ public class ClassFile {
         d.indent(1);
 
         if (!fields.isEmpty()) {
-            d.print("// Fields\n");
             for (Field field : fields) {
                 field.dump(d, constantPool);
             }
         }
         if (!methods.isEmpty()) {
-            d.print("// Methods\n");
             for (Method meth : methods) {
                 d.newln();
                 meth.dump(d, constantPool);
