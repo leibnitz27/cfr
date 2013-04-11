@@ -25,7 +25,10 @@ public class Main {
         try {
             CFRState params = getOptParser.parse(args, CFRState.getFactory());
             ClassFile c = params.getClassFile(params.getFileName(), params.analyseInnerClasses());
-
+            // We set the class file version for the analysis, so any unspecified parameters
+            // can default to a class file appropriate version.
+            params.setClassFileVersion(c.getClassFileVersion());
+            // THEN analyse.
             c.analyseTop(params);
             Dumper d = new Dumper();
             String methname = params.getMethodName();

@@ -150,6 +150,10 @@ public class ClassFile {
         }
     }
 
+    public ClassFileVersion getClassFileVersion() {
+        return new ClassFileVersion(majorVer, minorVer);
+    }
+
     public boolean isInnerClass() {
         if (thisClass == null) return false;
         return thisClass.getTypeInstance(constantPool).getInnerClassHereInfo().isInnerClass();

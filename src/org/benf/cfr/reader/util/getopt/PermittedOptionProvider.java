@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.getopt;
 
+import org.benf.cfr.reader.util.functors.BinaryFunction;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.List;
@@ -13,13 +14,13 @@ import java.util.List;
 public interface PermittedOptionProvider {
     List<String> getFlags();
 
-    List<? extends Argument<?>> getArguments();
+    List<? extends Argument<?, ?>> getArguments();
 
-    public final static class Argument<X> {
+    public final static class Argument<X, InputType> {
         private final String name;
-        private final UnaryFunction<String, X> fn;
+        private final BinaryFunction<String, InputType, X> fn;
 
-        public Argument(String name, UnaryFunction<String, X> fn) {
+        public Argument(String name, BinaryFunction<String, InputType, X> fn) {
             this.name = name;
             this.fn = fn;
         }
@@ -28,7 +29,7 @@ public interface PermittedOptionProvider {
             return name;
         }
 
-        public UnaryFunction<String, X> getFn() {
+        public BinaryFunction<String, InputType, X> getFn() {
             return fn;
         }
     }

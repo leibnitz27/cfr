@@ -18,7 +18,7 @@ public class GetOptParser {
     private static class OptData {
         private final boolean isFlag;
         private final String name;
-        private final PermittedOptionProvider.Argument<?> argument;
+        private final PermittedOptionProvider.Argument<?, ?> argument;
 
         private OptData(String name) {
             this.name = name;
@@ -26,7 +26,7 @@ public class GetOptParser {
             this.argument = null;
         }
 
-        private OptData(PermittedOptionProvider.Argument<?> argument) {
+        private OptData(PermittedOptionProvider.Argument<?, ?> argument) {
             this.argument = argument;
             this.isFlag = false;
             this.name = argument.getName();
@@ -40,7 +40,7 @@ public class GetOptParser {
             return name;
         }
 
-        public PermittedOptionProvider.Argument<?> getArgument() {
+        public PermittedOptionProvider.Argument<?, ?> getArgument() {
             return argument;
         }
     }
@@ -97,7 +97,7 @@ public class GetOptParser {
                     if (x >= in.length - 1)
                         throw new BadParametersException("parameter " + name + " requires argument", optionProvider);
                     res.put(name, in[++x]);
-                    optData.getArgument().getFn().invoke(res.get(name));
+                    optData.getArgument().getFn().invoke(res.get(name), null);
                 }
             } else {
                 throw new BadParametersException("Unexpected argument " + in[x], optionProvider);

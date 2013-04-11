@@ -6,10 +6,12 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.functors.BinaryFunction;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.io.File;
@@ -35,11 +37,13 @@ public class CFRState {
     private final String fileName;
     private final String methodName;
     private final Map<String, String> opts;
-    private static final PermittedOptionProvider.Argument<Integer> SHOWOPS = new PermittedOptionProvider.Argument<Integer>(
+    private ClassFileVersion classFileVersion = new ClassFileVersion(46, 0);
+
+    private static final PermittedOptionProvider.Argument<Integer, CFRState> SHOWOPS = new PermittedOptionProvider.Argument<Integer, CFRState>(
             "showops",
-            new UnaryFunction<String, Integer>() {
+            new BinaryFunction<String, CFRState, Integer>() {
                 @Override
-                public Integer invoke(String arg) {
+                public Integer invoke(String arg, CFRState state) {
                     if (arg == null) return 0;
                     int x = Integer.parseInt(arg);
                     if (x < 0) throw new IllegalArgumentException("required int >= 0");
@@ -47,33 +51,55 @@ public class CFRState {
                 }
             }
     );
-    private static final UnaryFunction<String, Boolean> defaultTrueBooleanDecoder = new UnaryFunction<String, Boolean>() {
+    private static final BinaryFunction<String, CFRState, Boolean> defaultTrueBooleanDecoder = new BinaryFunction<String, CFRState, Boolean>() {
         @Override
-        public Boolean invoke(String arg) {
+        public Boolean invoke(String arg, CFRState _) {
             if (arg == null) return true;
-            if (arg.toLowerCase().equals("false")) return false;
-            return true;
+            return Boolean.parseBoolean(arg);
         }
     };
-    public static final PermittedOptionProvider.Argument<Boolean> ENUM_SWITCH = new PermittedOptionProvider.Argument<Boolean>(
-            "decodeenumswitch", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean> STRING_SWITCH = new PermittedOptionProvider.Argument<Boolean>(
-            "decodestringswitch", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean> ARRAY_ITERATOR = new PermittedOptionProvider.Argument<Boolean>(
-            "arrayiter", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean> COLLECTION_ITERATOR = new PermittedOptionProvider.Argument<Boolean>(
-            "collectioniter", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean>(
+
+    private static class VersionSpecificDefaulter implements BinaryFunction<String, CFRState, Boolean> {
+
+        public ClassFileVersion versionGreaterThanOrEqual;
+        public boolean resultIfGreaterThanOrEqual;
+
+        private VersionSpecificDefaulter(ClassFileVersion versionGreaterThanOrEqual, boolean resultIfGreaterThanOrEqual) {
+            this.versionGreaterThanOrEqual = versionGreaterThanOrEqual;
+            this.resultIfGreaterThanOrEqual = resultIfGreaterThanOrEqual;
+        }
+
+        @Override
+        public Boolean invoke(String arg, CFRState state) {
+            if (arg != null) return Boolean.parseBoolean(arg);
+            if (state == null) throw new IllegalStateException(); // ho ho ho.
+            return (state.classFileVersion.equalOrLater(versionGreaterThanOrEqual)) ? resultIfGreaterThanOrEqual : !resultIfGreaterThanOrEqual;
+        }
+    }
+
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> ENUM_SWITCH = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "decodeenumswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> STRING_SWITCH = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true));
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> ARRAY_ITERATOR = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true));
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> COLLECTION_ITERATOR = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true));
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "innerclasses", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean> REMOVE_BOILERPLATE = new PermittedOptionProvider.Argument<Boolean>(
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> REMOVE_BOILERPLATE = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "removeboilerplate", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean> REMOVE_INNER_CLASS_SYNTHETICS = new PermittedOptionProvider.Argument<Boolean>(
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> REMOVE_INNER_CLASS_SYNTHETICS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "removeinnerclasssynthetics", defaultTrueBooleanDecoder);
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
         this.methodName = methodName;
         this.opts = opts;
+    }
+
+    public void setClassFileVersion(ClassFileVersion classFileVersion) {
+        this.classFileVersion = classFileVersion;
     }
 
     public String getFileName() {
@@ -84,12 +110,12 @@ public class CFRState {
         return methodName;
     }
 
-    public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean> argument) {
-        return argument.getFn().invoke(opts.get(argument.getName()));
+    public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, CFRState> argument) {
+        return argument.getFn().invoke(opts.get(argument.getName()), this);
     }
 
     public int getShowOps() {
-        return SHOWOPS.getFn().invoke(opts.get(SHOWOPS.getName()));
+        return SHOWOPS.getFn().invoke(opts.get(SHOWOPS.getName()), this);
     }
 
     public boolean isLenient() {
@@ -248,7 +274,7 @@ public class CFRState {
         }
 
         @Override
-        public List<? extends Argument<?>> getArguments() {
+        public List<? extends Argument<?, ?>> getArguments() {
             return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE, REMOVE_INNER_CLASS_SYNTHETICS);
         }
 
