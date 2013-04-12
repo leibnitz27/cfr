@@ -162,7 +162,7 @@ public enum JVMInstr {
     IMUL(0x68, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
     INEG(0x74, 0, StackType.INT.asList(), StackType.INT.asList(), RawJavaType.INT),
     INSTANCEOF(0xc1, 2, StackType.REF.asList(), StackType.INT.asList(), RawJavaType.BOOLEAN, new OperationFactoryCPEntryW()),
-    INVOKEDYNAMIC(0xba, 1, null, null, null),
+    INVOKEDYNAMIC(0xba, 4, null, null, null, new OperationFactoryInvokeDynamic()),
     INVOKEINTERFACE(0xb9, 4, null, null, null, new OperationFactoryInvokeInterface()),
     INVOKESPECIAL(0xb7, 2, null, null, null, new OperationFactoryInvoke(true)),
     INVOKESTATIC(0xb8, 2, null, null, null, new OperationFactoryInvoke(false)),
