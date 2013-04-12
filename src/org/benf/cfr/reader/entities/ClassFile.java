@@ -438,7 +438,10 @@ public class ClassFile {
         if (innerClassesByTypeInfo == null) return;
 
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassEntry : innerClassesByTypeInfo.values()) {
-//            InnerClassInfo innerClassInfo = innerClassEntry.getFirst();
+            // catchy!
+            if (innerClassEntry.getFirst().getInnerClassInfo().getInnerClassHereInfo().isAnoynmousInnerClass()) {
+                continue;
+            }
             ClassFile classFile = innerClassEntry.getSecond();
             classFile.dumpAsInnerClass(d);
             d.newln();

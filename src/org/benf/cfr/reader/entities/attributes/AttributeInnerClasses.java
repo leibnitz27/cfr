@@ -56,9 +56,15 @@ public class AttributeInnerClasses extends Attribute {
             offset += 2;
             int innerAccessFlags = raw.getS2At(offset);
             offset += 2;
+            JavaTypeInstance innerClassType = getOptClass(innerClassInfoIdx, cp);
+            JavaTypeInstance outerClassType = getOptClass(outerClassInfoIdx, cp);
+            // MarkAnonymous feels like a bit of a hack, but otherwise we need to propagate this information
+            // the whole way down the type creation path, and this is the only place we care about it.
+            // May add that in later.
+            if (outerClassType == null) innerClassType.getInnerClassHereInfo().markAnonymous();
             innerClassAttributeInfoList.add(new InnerClassAttributeInfo(
-                    getOptClass(innerClassInfoIdx, cp),
-                    getOptClass(outerClassInfoIdx, cp),
+                    innerClassType,
+                    outerClassType,
                     getOptName(innerNameIdx, cp),
                     AccessFlag.build(innerAccessFlags)
             ));

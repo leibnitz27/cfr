@@ -15,12 +15,30 @@ public interface InnerClassInfo {
 
     boolean isHideSyntheticThis();
 
+    /*
+     * I'd rather not have this in the interface, but at the point when we're creating the class, we only
+     * know its name, not if it has a 'legit outer'.
+     */
+    void markAnonymous();
+
+    boolean isAnoynmousInnerClass();
+
     JavaRefTypeInstance getOuterClass();
 
     public static InnerClassInfo NOT = new InnerClassInfo() {
         @Override
         public boolean isInnerClass() {
             return false;
+        }
+
+        @Override
+        public boolean isAnoynmousInnerClass() {
+            return false;
+        }
+
+        @Override
+        public void markAnonymous() {
+            throw new UnsupportedOperationException();
         }
 
         @Override

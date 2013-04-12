@@ -108,6 +108,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     private static class RefTypeInnerClassInfo implements InnerClassInfo {
         private final JavaRefTypeInstance outerClass;
+        private boolean isAnonymous = false;
         private boolean hideSyntheticThis = false;
 
         private RefTypeInnerClassInfo(JavaRefTypeInstance outerClass) {
@@ -117,6 +118,16 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         @Override
         public boolean isInnerClass() {
             return true;
+        }
+
+        @Override
+        public boolean isAnoynmousInnerClass() {
+            return isAnonymous;
+        }
+
+        @Override
+        public void markAnonymous() {
+            isAnonymous = true;
         }
 
         @Override
