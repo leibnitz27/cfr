@@ -472,11 +472,13 @@ public class ClassFile {
 
     }
 
-    public void dumpAsClass(Dumper d, boolean innerClass) {
-        if (!innerClass) {
-            d.line();
-            constantPool.dumpImports(d);
-        }
+    public void dumpAsClass(Dumper d) {
+        d.line();
+        constantPool.dumpImports(d);
+        dumpAsClassCommon(d);
+    }
+
+    private void dumpAsClassCommon(Dumper d) {
         dumpHeader(d, false);
         d.print("{\n");
         d.indent(1);
@@ -499,15 +501,40 @@ public class ClassFile {
 
     }
 
-    private void dumpAsInnerClass(Dumper d) {
-        dumpAsClass(d, true);
+    public void dumpAsInnerClass(Dumper d) {
+        dumpAsClassCommon(d);
+    }
+
+    public void dumpAsAnonymousInnerClass(Dumper d) {
+        dumpHeader(d, false);
+        d.print("{\n");
+        d.indent(1);
+
+        if (!fields.isEmpty()) {
+            for (Field field : fields) {
+                field.dump(d, constantPool);
+            }
+        }
+        if (!methods.isEmpty()) {
+            for (Method meth : methods) {
+                if (meth.isConstructor()) continue;
+                ;
+                d.newln();
+                meth.dump(d, constantPool);
+            }
+        }
+        d.newln();
+        // Yes, anonymous inner classes can have inner classes (!)
+        dumpNamedInnerClasses(d);
+        d.indent(-1);
+        d.print("}\n");
     }
 
     public void dump(Dumper d) {
         if (isInterface) {
             dumpAsInterface(d);
         } else {
-            dumpAsClass(d, false);
+            dumpAsClass(d);
         }
     }
 

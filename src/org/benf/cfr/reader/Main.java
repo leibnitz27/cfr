@@ -7,6 +7,7 @@ import org.benf.cfr.reader.util.getopt.BadParametersException;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.StdOutDumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,7 +31,7 @@ public class Main {
             params.setClassFileVersion(c.getClassFileVersion());
             // THEN analyse.
             c.analyseTop(params);
-            Dumper d = new Dumper();
+            Dumper d = new StdOutDumper();
             String methname = params.getMethodName();
             if (methname == null) {
                 c.dump(d);

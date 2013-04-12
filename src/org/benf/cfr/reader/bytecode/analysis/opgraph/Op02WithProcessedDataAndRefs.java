@@ -35,6 +35,7 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
+import org.benf.cfr.reader.util.output.StdOutDumper;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -779,7 +780,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         try {
             o2start.populateStackInfo(new StackSim());
         } catch (ConfusedCFRException e) {
-            Dumper dmp = new Dumper();
+            Dumper dmp = new StdOutDumper();
             dmp.print("----[known stack info]------------\n\n");
             for (Op02WithProcessedDataAndRefs op : op2list) {
                 op.dump(dmp);

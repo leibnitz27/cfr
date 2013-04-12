@@ -6,9 +6,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.StdOutDumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 
@@ -54,10 +58,26 @@ public class ConstructorInvokation extends AbstractExpression {
         return type.getTypeInstance(cp);
     }
 
+    private String toStringAsAnonymousConstruction() {
+        StringBuilder sb = new StringBuilder();
+        // We need the inner classes on the anonymous class (!)
+        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(clazz, true);
+
+        ToStringDumper d = new ToStringDumper();
+        sb.append("new ");
+        anonymousClassFile.dumpAsAnonymousInnerClass(d);
+        sb.append(d.toString());
+        return sb.toString();
+    }
+
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
         InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
+        if (innerClassInfo.isAnoynmousInnerClass()) {
+            return toStringAsAnonymousConstruction();
+        }
+
+        StringBuilder sb = new StringBuilder();
         sb.append("new ").append(clazz.toString()).append("(");
         boolean first = true;
         int start = innerClassInfo.isHideSyntheticThis() ? 1 : 0;

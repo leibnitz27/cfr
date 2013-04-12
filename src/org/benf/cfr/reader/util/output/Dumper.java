@@ -3,76 +3,27 @@ package org.benf.cfr.reader.util.output;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
+ * Created with IntelliJ IDEA.
  * User: lee
- * Date: 18/04/2011
- * Time: 11:24
- * To change this template use File | Settings | File Templates.
+ * Date: 12/04/2013
+ * Time: 08:26
  */
-public class Dumper {
-    private int indent;
-    private boolean atStart = true;
-    private boolean pendingCR = false;
+public interface Dumper {
+    void printLabel(String s);
 
-    public void printLabel(String s) {
-        processPendingCR();
-        System.out.println(s + ":");
-        atStart = true;
-    }
+    void enqueuePendingCarriageReturn();
 
-    public void enqueuePendingCarriageReturn() {
-        pendingCR = true;
-    }
+    void removePendingCarriageReturn();
 
-    public void removePendingCarriageReturn() {
-        pendingCR = false;
-    }
+    void print(String s);
 
-    private void processPendingCR() {
-        if (pendingCR) {
-            System.out.println();
-            atStart = true;
-            pendingCR = false;
-        }
-    }
+    Dumper newln();
 
-    public void print(String s) {
-        processPendingCR();
-        doIndent();
-        System.out.print(s);
-        atStart = false;
-        if (s.endsWith("\n")) atStart = true;
-    }
+    void line();
 
-    public Dumper newln() {
-        System.out.println("");
-        atStart = true;
-        return this;
-    }
+    int getIndent();
 
-    private void doIndent() {
-        if (!atStart) return;
-        String indents = "    ";
-        for (int x = 0; x < indent; ++x) System.out.print(indents);
-        atStart = false;
-    }
+    void indent(int diff);
 
-    public void line() {
-        System.out.println("\n// -------------------");
-        atStart = true;
-    }
-
-    public int getIndent() {
-        return indent;
-    }
-
-    public void indent(int diff) {
-        indent += diff;
-    }
-
-    public void dump(List<? extends Dumpable> d) {
-        for (Dumpable dumpable : d) {
-            dumpable.dump(this);
-        }
-    }
+    void dump(List<? extends Dumpable> d);
 }

@@ -15,14 +15,13 @@ import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
-import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
 import org.benf.cfr.reader.util.getopt.CFRState;
-import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
+import org.benf.cfr.reader.util.output.StdOutDumper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,7 +75,7 @@ public class CodeAnalyser {
         OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(0);
         int idx = 1;
         int offset = 0;
-        Dumper dumper = new Dumper();
+        Dumper dumper = new StdOutDumper();
 
         // We insert a fake NOP right at the start, so that we always know that each operation has a valid
         // parent.  This sentinel assumption is used when inserting try { catch blocks.
