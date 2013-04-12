@@ -13,10 +13,10 @@ import org.benf.cfr.reader.util.output.Dumper;
 public interface ConstantPoolEntry {
 
     long getRawByteLength();
+
     void dump(Dumper d, ConstantPool cp);
 
-    public static enum Type
-    {
+    public static enum Type {
         CPT_UTF8,
         CPT_Integer,
         CPT_Float,
@@ -27,7 +27,10 @@ public interface ConstantPoolEntry {
         CPT_FieldRef,
         CPT_MethodRef,
         CPT_InterfaceMethodRef,
-        CPT_NameAndType;
+        CPT_NameAndType,
+        CPT_MethodHandle,
+        CPT_MethodType,
+        CPT_InvokeDynamic;
 
         private static final byte VAL_UTF8 = 1;
         private static final byte VAL_Integer = 3;
@@ -40,11 +43,12 @@ public interface ConstantPoolEntry {
         private static final byte VAL_MethodRef = 10;
         private static final byte VAL_InterfaceMethodRef = 11;
         private static final byte VAL_NameAndType = 12;
+        private static final byte VAL_MethodHandle = 15;
+        private static final byte VAL_MethodType = 16;
+        private static final byte VAL_InvokeDynamic = 18;
 
-        public static Type get(byte val)
-        {
-            switch (val)
-            {
+        public static Type get(byte val) {
+            switch (val) {
                 case VAL_UTF8:
                     return CPT_UTF8;
                 case VAL_Integer:
@@ -67,6 +71,12 @@ public interface ConstantPoolEntry {
                     return CPT_InterfaceMethodRef;
                 case VAL_NameAndType:
                     return CPT_NameAndType;
+                case VAL_MethodHandle:
+                    return CPT_MethodHandle;
+                case VAL_MethodType:
+                    return CPT_MethodType;
+                case VAL_InvokeDynamic:
+                    return CPT_InvokeDynamic;
                 default:
                     throw new ConfusedCFRException("Invalid constant pool entry type : " + val);
             }

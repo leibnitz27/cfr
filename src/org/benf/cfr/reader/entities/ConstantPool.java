@@ -98,8 +98,17 @@ public class ConstantPool {
                 case CPT_UTF8:
                     cpe = new ConstantPoolEntryUTF8(data);
                     break;
+                case CPT_MethodHandle:
+                    cpe = new ConstantPoolEntryMethodHandle(data);
+                    break;
+                case CPT_MethodType:
+                    cpe = new ConstantPoolEntryMethodType(data);
+                    break;
+                case CPT_InvokeDynamic:
+                    cpe = new ConstantPoolEntryInvokeDynamic(data);
+                    break;
                 default:
-                    throw new ConfusedCFRException("Invalid constant pool entry : ");
+                    throw new ConfusedCFRException("Invalid constant pool entry : " + type);
             }
             logger.info("" + (x + 1) + " : " + cpe);
             tgt.add(cpe);
