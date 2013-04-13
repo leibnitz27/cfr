@@ -19,7 +19,7 @@ public class ArrayTest9 {
     public static void main(String[] args) {
         test1(1, 2, 3);
         test1(1);
-        test1(null);
+        test1((Integer[]) null);
         test1();
     }
 
