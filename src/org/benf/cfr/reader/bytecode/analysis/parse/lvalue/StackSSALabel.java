@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
@@ -38,7 +39,7 @@ public class StackSSALabel extends AbstractLValue {
      * (Assuming that values in the RHS are not mutated)
      */
     @Override
-    public void collectLValueAssignments(Expression rhsAssigned, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
+    public <Statement> void collectLValueAssignments(Expression rhsAssigned, StatementContainer<Statement> statementContainer, LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
         if (getNumberOfCreators() == 1) {
             if ((rhsAssigned.isSimple() || stackEntry.getUsageCount() == 1)) {
                 lValueAssigmentCollector.collect(this, statementContainer, rhsAssigned);
