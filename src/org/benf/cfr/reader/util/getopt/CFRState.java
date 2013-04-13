@@ -53,7 +53,7 @@ public class CFRState {
     );
     private static final BinaryFunction<String, CFRState, Boolean> defaultTrueBooleanDecoder = new BinaryFunction<String, CFRState, Boolean>() {
         @Override
-        public Boolean invoke(String arg, CFRState _) {
+        public Boolean invoke(String arg, CFRState ignore) {
             if (arg == null) return true;
             return Boolean.parseBoolean(arg);
         }
@@ -274,6 +274,7 @@ public class CFRState {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public List<? extends Argument<?, ?>> getArguments() {
             return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE, REMOVE_INNER_CLASS_SYNTHETICS);
         }
