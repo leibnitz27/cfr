@@ -3,7 +3,10 @@ package org.benf.cfr.reader.bytecode.opcode;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.attributes.AttributeBootstrapMethods;
+import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
 /**
@@ -31,10 +34,16 @@ public class OperationFactoryInvokeDynamic extends OperationFactoryDefault {
         ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
 
         ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(invokeDynamic.getNameAndTypeIndex());
-
-        System.out.println("Name and type " + nameAndType.getDescriptor(cp));
-        System.out.println("Bootstrap index " + invokeDynamic.getBootstrapMethodAttrIndex());
-        //return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true, cp);
-        throw new UnsupportedOperationException("Can't decode INVOKE_DYNAMIC yet " + nameAndType.getDescriptor(cp));
+        return nameAndType.getStackDelta(false, cp);
+//
+//        int idx = invokeDynamic.getBootstrapMethodAttrIndex();
+//        System.out.println("Name and type " + nameAndType.getDescriptor(cp));
+//        System.out.println("Bootstrap index " + idx);
+//
+//        BootstrapMethodInfo bootstrapMethodInfo = method.getClassFile().getBootstrapMethods().getBootStrapMethodInfo(idx);
+//        ConstantPoolEntryMethodRef methodRef = bootstrapMethodInfo.getConstantPoolEntryMethodRef();
+//        MethodPrototype prototype = methodRef.getMethodPrototype(cp);
+//        //return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true, cp);
+//        throw new UnsupportedOperationException("Can't decode INVOKE_DYNAMIC yet " + nameAndType.getDescriptor(cp));
     }
 }

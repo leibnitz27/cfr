@@ -150,6 +150,14 @@ public class ConstantPool {
         return (ConstantPoolEntryNameAndType) getEntry(index);
     }
 
+    public ConstantPoolEntryMethodHandle getMethodHandleEntry(int index) {
+        return (ConstantPoolEntryMethodHandle) getEntry(index);
+    }
+
+    public ConstantPoolEntryMethodRef getMethodRefEntry(int index) {
+        return (ConstantPoolEntryMethodRef) getEntry(index);
+    }
+
     public ConstantPoolEntryClass getClassEntry(int index) {
         return (ConstantPoolEntryClass) getEntry(index);
     }

@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.ConstantPoolEntryMethodHandle;
 import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -31,6 +33,13 @@ public class AttributeBootstrapMethods extends Attribute {
         this.methodInfoList = decodeMethods(raw, cp);
     }
 
+    public BootstrapMethodInfo getBootStrapMethodInfo(int idx) {
+        if (idx < 0 || idx >= methodInfoList.size()) {
+            throw new IllegalArgumentException("Invalid bootstrap index.");
+        }
+        return methodInfoList.get(idx);
+    }
+
     private static List<BootstrapMethodInfo> decodeMethods(ByteData raw, ConstantPool cp) {
 
         List<BootstrapMethodInfo> res = ListFactory.newList();
@@ -38,15 +47,17 @@ public class AttributeBootstrapMethods extends Attribute {
         long offset = OFFSET_OF_NUM_METHODS + 2;
         for (int x = 0; x < numMethods; ++x) {
             short methodRef = raw.getS2At(offset);
+            ConstantPoolEntryMethodHandle methodHandle = cp.getMethodHandleEntry(methodRef);
+
             offset += 2;
             short numBootstrapArguments = raw.getS2At(offset);
             offset += 2;
-            short[] bootstrapArguments = new short[numBootstrapArguments];
+            ConstantPoolEntry[] bootstrapArguments = new ConstantPoolEntry[numBootstrapArguments];
             for (int y = 0; y < numBootstrapArguments; ++y) {
-                bootstrapArguments[y] = raw.getS2At(offset);
+                bootstrapArguments[y] = cp.getEntry(raw.getS2At(offset));
                 offset += 2;
             }
-            res.add(new BootstrapMethodInfo(methodRef, bootstrapArguments));
+            res.add(new BootstrapMethodInfo(methodHandle, bootstrapArguments, cp));
         }
         return res;
     }

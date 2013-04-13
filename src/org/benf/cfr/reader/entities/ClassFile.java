@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.Attribute;
+import org.benf.cfr.reader.entities.attributes.AttributeBootstrapMethods;
 import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
@@ -233,6 +234,10 @@ public class ClassFile {
         @SuppressWarnings("unchecked")
         X tmp = (X) attribute;
         return tmp;
+    }
+
+    public AttributeBootstrapMethods getBootstrapMethods() {
+        return getAttributeByName(AttributeBootstrapMethods.ATTRIBUTE_NAME);
     }
 
     //    FIXME - inside constructor for inner class classfile

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -14,11 +15,11 @@ public class ConstantPoolEntryMethodHandle implements ConstantPoolEntry {
     private static final long OFFSET_OF_REFERENCE_KIND = 1;
     private static final long OFFSET_OF_REFERENCE_INDEX = 2;
 
-    private final byte referenceKind;
+    private final MethodHandleBehaviour referenceKind;
     private final short referenceIndex;
 
     public ConstantPoolEntryMethodHandle(ByteData data) {
-        this.referenceKind = data.getS1At(OFFSET_OF_REFERENCE_KIND);
+        this.referenceKind = MethodHandleBehaviour.decode(data.getS1At(OFFSET_OF_REFERENCE_KIND));
         this.referenceIndex = data.getS2At(OFFSET_OF_REFERENCE_INDEX);
     }
 
@@ -30,6 +31,14 @@ public class ConstantPoolEntryMethodHandle implements ConstantPoolEntry {
     @Override
     public void dump(Dumper d, ConstantPool cp) {
         d.print(this.toString());
+    }
+
+    public MethodHandleBehaviour getReferenceKind() {
+        return referenceKind;
+    }
+
+    public short getReferenceIndex() {
+        return referenceIndex;
     }
 
     @Override

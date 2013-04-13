@@ -93,11 +93,12 @@ public class Method implements KnowsRawSize {
         return this.<AttributeSignature>getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
     }
 
-    @SuppressWarnings("unchecked")
     private <T extends Attribute> T getAttributeByName(String name) {
         Attribute attribute = attributes.get(name);
         if (attribute == null) return null;
-        return (T) attribute;
+        @SuppressWarnings("unchecked")
+        T tmp = (T) attribute;
+        return tmp;
     }
 
     public VariableNamer getVariableNamer() {
