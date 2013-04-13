@@ -93,7 +93,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         ExpressionStatement pair = found.get(stackSSALabel);
         // res is a valid replacement for lValue in an rValue, IF no mutable fields have different version
         // identifiers (SSA tags)
-        StatementContainer statementContainer = pair.statementContainer;
+        StatementContainer<Statement> statementContainer = pair.statementContainer;
         SSAIdentifiers replacementIdentifiers = statementContainer == null ? null : statementContainer.getSSAIdentifiers();
         // We're saying we can replace lValue with res.
         // This is only valid if res has a single possible value in ssaIdentifiers, and it's the same as in replacementIdentifiers.
@@ -126,9 +126,9 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
 
     private static class ExpressionStatement {
         private final Expression expression;
-        private final StatementContainer statementContainer;
+        private final StatementContainer<Statement> statementContainer;
 
-        private ExpressionStatement(Expression expression, StatementContainer statementContainer) {
+        private ExpressionStatement(Expression expression, StatementContainer<Statement> statementContainer) {
             this.expression = expression;
             this.statementContainer = statementContainer;
         }
