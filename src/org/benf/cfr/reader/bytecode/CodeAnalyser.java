@@ -157,8 +157,7 @@ public class CodeAnalyser {
 
         // Create a non final version...
         final VariableFactory variableFactory = new VariableFactory(method);
-        final ClassFile classFile = method.getClassFile();
-        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, classFile, variableFactory, blockIdentifierFactory);
+        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory);
 
 
         if (cfrState.getShowOps() == SHOW_L3_RAW) {

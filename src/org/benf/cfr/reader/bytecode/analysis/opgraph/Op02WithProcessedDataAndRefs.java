@@ -20,6 +20,7 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.bytecode.opcode.OperationFactoryMultiANewArray;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -249,8 +250,75 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         d.print("\n");
     }
 
+    private Statement buildInvoke() {
+        ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
+        StackValue object = getStackRValue(stackConsumed.size() - 1);
+                /*
+                 * See above re invokespecial
+                 */
+        boolean special = false;
+        boolean isSuper = false;
+        if (instr == JVMInstr.INVOKESPECIAL) {
+            // todo: Verify that the class being called is the super of the object.
+            special = true;
+            JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
+            JavaTypeInstance callType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
+            ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
+            String funcName = nameAndType.getName(cp).getValue();
+            if (funcName.equals("<init>")) {
+                if (!(callType.equals(objType) ||
+                        (objType.getRawName().equals("java.lang.Object")))) {
+                    isSuper = true;
+                }
+            }
+        }
+        MethodPrototype methodPrototype = function.getMethodPrototype(cp);
+        List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size() - 1);
+        methodPrototype.tightenArgs(args);
+        AbstractFunctionInvokation funcCall = isSuper ?
+                new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
+                new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
+        if (!isSuper && function.isInitMethod(cp)) {
+            return new ConstructorStatement((MemberFunctionInvokation) funcCall);
+        } else {
+            if (stackProduced.size() == 0) {
+                return new ExpressionStatement(funcCall);
+            } else {
+                return new AssignmentSimple(getStackLValue(0), funcCall);
+            }
+        }
+    }
 
-    public Statement createStatement(final ClassFile classFile, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory) {
+    private Statement buildInvokeDynamic(Method method) {
+        ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
+
+        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(invokeDynamic.getNameAndTypeIndex());
+
+        int idx = invokeDynamic.getBootstrapMethodAttrIndex();
+        System.out.println("Name and type name " + nameAndType.getName(cp));
+        System.out.println("Name and type descriptor " + nameAndType.getDescriptor(cp));
+        System.out.println("Bootstrap index " + idx);
+
+        BootstrapMethodInfo bootstrapMethodInfo = method.getClassFile().getBootstrapMethods().getBootStrapMethodInfo(idx);
+        ConstantPoolEntryMethodRef methodRef = bootstrapMethodInfo.getConstantPoolEntryMethodRef();
+        MethodPrototype prototype = methodRef.getMethodPrototype(cp);
+        //return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true, cp);
+
+        /*
+         * First 3 arguments to an invoke dynamic are stacked automatically by the JVM.
+         *  MethodHandles.Lookup caller,
+         *  String invokedName,
+         *  MethodType invokedType,
+         *
+         * [ Guess (vaguely), see LambdaMetaFactory documentation, but it's not clear if that's special case. ]
+         *
+         * So we expect our prototype to be equal to these 3, plus the arguments from our bootstrap.
+         */
+
+        throw new UnsupportedOperationException();
+    }
+
+    public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory) {
         switch (instr) {
             case ALOAD:
             case ILOAD:
@@ -469,8 +537,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     return new AssignmentSimple(getStackLValue(0), funcCall);
                 }
             }
-            case INVOKEDYNAMIC:
-                throw new ConfusedCFRException("InvokeDynamic not supported (Java can't generate it!)");
+            case INVOKEDYNAMIC: {
+                // Java uses invokedynamic for lambda expressions.
+                // see http://download.java.net/jdk8/docs/api/java/lang/invoke/LambdaMetafactory.html
+                return buildInvokeDynamic(method);
+            }
             case INVOKESPECIAL:
                 // Invoke special == invokenonvirtual.
                 // In this case the specific class of the method is relevant.
@@ -478,42 +549,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 // (inner class methods do not use this.)
             case INVOKEVIRTUAL:
             case INVOKEINTERFACE: {
-                ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
-                StackValue object = getStackRValue(stackConsumed.size() - 1);
-                /*
-                 * See above re invokespecial
-                 */
-                boolean special = false;
-                boolean isSuper = false;
-                if (instr == JVMInstr.INVOKESPECIAL) {
-                    // todo: Verify that the class being called is the super of the object.
-                    special = true;
-                    JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
-                    JavaTypeInstance callType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
-                    ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
-                    String funcName = nameAndType.getName(cp).getValue();
-                    if (funcName.equals("<init>")) {
-                        if (!(callType.equals(objType) ||
-                                (objType.getRawName().equals("java.lang.Object")))) {
-                            isSuper = true;
-                        }
-                    }
-                }
-                MethodPrototype methodPrototype = function.getMethodPrototype(cp);
-                List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size() - 1);
-                methodPrototype.tightenArgs(args);
-                AbstractFunctionInvokation funcCall = isSuper ?
-                        new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
-                        new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
-                if (!isSuper && function.isInitMethod(cp)) {
-                    return new ConstructorStatement((MemberFunctionInvokation) funcCall);
-                } else {
-                    if (stackProduced.size() == 0) {
-                        return new ExpressionStatement(funcCall);
-                    } else {
-                        return new AssignmentSimple(getStackLValue(0), funcCall);
-                    }
-                }
+                return buildInvoke();
             }
             case RETURN:
                 return new ReturnNothingStatement();
@@ -578,7 +614,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new ReturnValueStatement(retVal);
             }
             case GETFIELD: {
-                Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), classFile, cp, cpEntries[0]));
+                Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), method.getClassFile(), cp, cpEntries[0]));
                 return new AssignmentSimple(getStackLValue(0), fieldExpression);
             }
             case GETSTATIC:
@@ -586,7 +622,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case PUTSTATIC:
                 return new AssignmentSimple(new StaticVariable(cp, cpEntries[0]), getStackRValue(0));
             case PUTFIELD:
-                return new AssignmentSimple(new FieldVariable(getStackRValue(1), classFile, cp, cpEntries[0]), getStackRValue(0));
+                return new AssignmentSimple(new FieldVariable(getStackRValue(1), method.getClassFile(), cp, cpEntries[0]), getStackRValue(0));
             case SWAP: {
                 Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
                 Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
@@ -821,7 +857,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
-    public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list, final ClassFile classFile, final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory) {
+    public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list,
+                                                              final Method method,
+                                                              final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory) {
 
         final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
         // Convert the op2s into a simple set of statements.
@@ -834,7 +872,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override
                     public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(classFile, variableFactory, blockIdentifierFactory));
+                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(method, variableFactory, blockIdentifierFactory));
                         conversionHelper.registerOriginalAndNew(arg1, res);
                         op03SimpleParseNodesTmp.add(res);
                         for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {

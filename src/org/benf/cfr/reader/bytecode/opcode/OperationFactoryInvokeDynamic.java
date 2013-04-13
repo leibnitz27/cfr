@@ -35,15 +35,5 @@ public class OperationFactoryInvokeDynamic extends OperationFactoryDefault {
 
         ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(invokeDynamic.getNameAndTypeIndex());
         return nameAndType.getStackDelta(false, cp);
-//
-//        int idx = invokeDynamic.getBootstrapMethodAttrIndex();
-//        System.out.println("Name and type " + nameAndType.getDescriptor(cp));
-//        System.out.println("Bootstrap index " + idx);
-//
-//        BootstrapMethodInfo bootstrapMethodInfo = method.getClassFile().getBootstrapMethods().getBootStrapMethodInfo(idx);
-//        ConstantPoolEntryMethodRef methodRef = bootstrapMethodInfo.getConstantPoolEntryMethodRef();
-//        MethodPrototype prototype = methodRef.getMethodPrototype(cp);
-//        //return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true, cp);
-//        throw new UnsupportedOperationException("Can't decode INVOKE_DYNAMIC yet " + nameAndType.getDescriptor(cp));
     }
 }
