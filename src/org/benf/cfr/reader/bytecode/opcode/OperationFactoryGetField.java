@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryFieldRef;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -19,7 +20,8 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 public class OperationFactoryGetField extends OperationFactoryCPEntryW {
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+                                    StackSim stackSim, Method method) {
         ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) cpEntries[0];
         if (fieldRef == null) throw new ConfusedCFRException("Expecting fieldRef");
         StackType stackType = fieldRef.getStackType(cp);

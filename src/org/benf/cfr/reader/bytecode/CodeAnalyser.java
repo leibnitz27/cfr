@@ -141,7 +141,7 @@ public class CodeAnalyser {
         // consumed / produced.
         // This is the point at which we combine temporaries from merging
         // stacks.
-        Op02WithProcessedDataAndRefs.populateStackInfo(op2list);
+        Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
 
         if (cfrState.getShowOps() == SHOW_L2_OPS) {
             dumper.print("Op2 statements:\n");

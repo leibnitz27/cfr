@@ -153,8 +153,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return sources;
     }
 
-    public void populateStackInfo(StackSim stackSim) {
-        StackDelta stackDelta = instr.getStackDelta(rawData, cp, cpEntries, stackSim);
+    public void populateStackInfo(StackSim stackSim, Method method) {
+        StackDelta stackDelta = instr.getStackDelta(rawData, cp, cpEntries, stackSim, method);
         if (stackDepthBeforeExecution != -1) {
             /* Catch instructions are funny, as we know we'll get here with 1 thing on the stack. */
             if (instr == JVMInstr.FAKE_CATCH) {
@@ -212,7 +212,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
 
             for (Op02WithProcessedDataAndRefs target : targets) {
-                target.populateStackInfo(newStackSim);
+                target.populateStackInfo(newStackSim, method);
             }
         }
     }
@@ -774,11 +774,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
 
-    public static void populateStackInfo(List<Op02WithProcessedDataAndRefs> op2list) {
+    public static void populateStackInfo(List<Op02WithProcessedDataAndRefs> op2list, Method method) {
         // This dump block only exists because we're debugging bad stack size calcuations.
         Op02WithProcessedDataAndRefs o2start = op2list.get(0);
         try {
-            o2start.populateStackInfo(new StackSim());
+            o2start.populateStackInfo(new StackSim(), method);
         } catch (ConfusedCFRException e) {
             Dumper dmp = new StdOutDumper();
             dmp.print("----[known stack info]------------\n\n");

@@ -71,8 +71,8 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
                 ClassFile classFile = cp.getCFRState().getClassFile(classType.getDeGenerifiedType(), false);
                 MethodPrototype replacement = classFile.getMethodByPrototype(basePrototype).getMethodPrototype();
                 basePrototype = replacement;
-            } catch (NoSuchMethodException _) {
-            } catch (CannotLoadClassException _) {
+            } catch (NoSuchMethodException ignore) {
+            } catch (CannotLoadClassException ignore) {
             }
 
             methodPrototype = basePrototype;

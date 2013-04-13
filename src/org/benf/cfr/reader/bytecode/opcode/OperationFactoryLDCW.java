@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryLiteral;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -20,7 +21,8 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 public class OperationFactoryLDCW extends OperationFactoryCPEntryW {
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+                                    StackSim stackSim, Method method) {
         ConstantPoolEntryLiteral constantPoolEntryLiteral = (ConstantPoolEntryLiteral) cpEntries[0];
         if (constantPoolEntryLiteral == null) {
             throw new ConfusedCFRException("Expecting ConstantPoolEntryLiteral");

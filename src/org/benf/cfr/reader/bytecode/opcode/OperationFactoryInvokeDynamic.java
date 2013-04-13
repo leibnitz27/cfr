@@ -3,10 +3,7 @@ package org.benf.cfr.reader.bytecode.opcode;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.ConstantPoolEntry;
-import org.benf.cfr.reader.entities.ConstantPoolEntryInvokeDynamic;
-import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
 /**
@@ -29,10 +26,15 @@ public class OperationFactoryInvokeDynamic extends OperationFactoryDefault {
     }
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+                                    StackSim stackSim, Method method) {
         ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
 
+        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(invokeDynamic.getNameAndTypeIndex());
+
+        System.out.println("Name and type " + nameAndType.getDescriptor(cp));
+        System.out.println("Bootstrap index " + invokeDynamic.getBootstrapMethodAttrIndex());
         //return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true, cp);
-        throw new UnsupportedOperationException("Can't decode INVOKE_DYNAMIC yet");
+        throw new UnsupportedOperationException("Can't decode INVOKE_DYNAMIC yet " + nameAndType.getDescriptor(cp));
     }
 }

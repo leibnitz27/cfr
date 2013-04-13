@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
 /**
@@ -34,7 +35,8 @@ public class OperationFactoryInvokeInterface extends OperationFactoryDefault {
     }
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+                                    StackSim stackSim, Method method) {
         ConstantPoolEntryMethodRef methodRef = (ConstantPoolEntryMethodRef) cpEntries[0];
 
         return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true, cp);

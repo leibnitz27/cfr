@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -24,7 +25,8 @@ import java.util.List;
 public class OperationFactoryFakeCatch extends OperationFactoryDefault {
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+                                    StackSim stackSim, Method method) {
         StackTypes pushed = StackType.REF.asList();
         List<StackType> popped = ListFactory.newList();
         for (int x = 0; x < stackSim.getDepth(); ++x) {

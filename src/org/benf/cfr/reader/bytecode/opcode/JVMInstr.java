@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
@@ -306,8 +307,8 @@ public enum JVMInstr {
         return stackPopped;
     }
 
-    public StackDelta getStackDelta(byte[] data, ConstantPool cp, ConstantPoolEntry[] constantPoolEntries, StackSim stackSim) {
-        return handler.getStackDelta(this, data, cp, constantPoolEntries, stackSim);
+    public StackDelta getStackDelta(byte[] data, ConstantPool cp, ConstantPoolEntry[] constantPoolEntries, StackSim stackSim, Method method) {
+        return handler.getStackDelta(this, data, cp, constantPoolEntries, stackSim, method);
     }
 
     public Op01WithProcessedDataAndByteJumps createOperation(ByteData bd, ConstantPool cp, int offset) {

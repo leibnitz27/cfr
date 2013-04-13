@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
@@ -21,7 +22,8 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 public class OperationFactoryPop extends OperationFactoryDefault {
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries, StackSim stackSim) {
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+                                    StackSim stackSim, Method method) {
         StackType topType = stackSim.getEntry(0).getType();
         if (topType.getComputationCategory() != 1)
             throw new ConfusedCFRException("Can only pop computation category 1");

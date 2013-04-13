@@ -35,6 +35,14 @@ public class ConstantPoolEntryInvokeDynamic implements ConstantPoolEntry {
         d.print(this.toString());
     }
 
+    public short getBootstrapMethodAttrIndex() {
+        return bootstrapMethodAttrIndex;
+    }
+
+    public short getNameAndTypeIndex() {
+        return nameAndTypeIndex;
+    }
+
     @Override
     public String toString() {
         return "InvokeDynamic value=" + bootstrapMethodAttrIndex + "," + nameAndTypeIndex;
