@@ -26,7 +26,7 @@ public class StaticFunctionInvokation extends AbstractExpression {
 
     private static InferredJavaType getTypeForFunction(ConstantPool cp, ConstantPoolEntryMethodRef function, List<Expression> args) {
         InferredJavaType res = new InferredJavaType(
-                function.getMethodPrototype(cp).getReturnType(cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp), args),
+                function.getMethodPrototype().getReturnType(cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp), args),
                 InferredJavaType.Source.EXPRESSION);
         return res;
     }

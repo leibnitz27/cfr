@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import com.sun.javafx.fxml.expression.LiteralExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -15,12 +16,14 @@ import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntryHolder;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedLookupSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedTableSwitch;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.bytecode.opcode.OperationFactoryMultiANewArray;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
+import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -272,13 +275,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 }
             }
         }
-        MethodPrototype methodPrototype = function.getMethodPrototype(cp);
+        MethodPrototype methodPrototype = function.getMethodPrototype();
         List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size() - 1);
         methodPrototype.tightenArgs(args);
         AbstractFunctionInvokation funcCall = isSuper ?
                 new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
                 new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
-        if (!isSuper && function.isInitMethod(cp)) {
+        if (!isSuper && function.isInitMethod()) {
             return new ConstructorStatement((MemberFunctionInvokation) funcCall);
         } else {
             if (stackProduced.size() == 0) {
@@ -294,15 +297,17 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(invokeDynamic.getNameAndTypeIndex());
 
+        // Should have this as a member on name and type
+        ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor(cp);
+        // Todo : Not happy about hardcoding if this is an instance function.
+        MethodPrototype resproto = ConstantPoolUtils.parseJavaMethodPrototype(null, "", false, descriptor, cp, false, new VariableNamerDefault());
+
         int idx = invokeDynamic.getBootstrapMethodAttrIndex();
-        System.out.println("Name and type name " + nameAndType.getName(cp));
-        System.out.println("Name and type descriptor " + nameAndType.getDescriptor(cp));
-        System.out.println("Bootstrap index " + idx);
 
         BootstrapMethodInfo bootstrapMethodInfo = method.getClassFile().getBootstrapMethods().getBootStrapMethodInfo(idx);
         ConstantPoolEntryMethodRef methodRef = bootstrapMethodInfo.getConstantPoolEntryMethodRef();
-        MethodPrototype prototype = methodRef.getMethodPrototype(cp);
-        //return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true, cp);
+        MethodPrototype prototype = methodRef.getMethodPrototype();
+        MethodHandleBehaviour bootstrapBehaviour = bootstrapMethodInfo.getMethodHandleBehaviour();
 
         /*
          * First 3 arguments to an invoke dynamic are stacked automatically by the JVM.
@@ -314,8 +319,47 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          *
          * So we expect our prototype to be equal to these 3, plus the arguments from our bootstrap.
          */
+        List<JavaTypeInstance> argTypes = prototype.getArgs();
+        final int ARG_OFFSET = 3;
+        ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
+        if ((bootstrapArguments.length + ARG_OFFSET) != argTypes.size()) {
+            throw new IllegalStateException("Dynamic invoke arg count mismatch " + bootstrapArguments.length + "(+3) vs " + argTypes.size());
+        }
 
-        throw new UnsupportedOperationException();
+        List<Expression> callargs = ListFactory.newList();
+        Expression nullExp = new Literal(TypedLiteral.getNull());
+        callargs.add(nullExp);
+        callargs.add(nullExp);
+        callargs.add(nullExp);
+
+        for (int x = 0; x < bootstrapArguments.length; ++x) {
+            JavaTypeInstance expected = argTypes.get(ARG_OFFSET + x);
+            ConstantPoolEntry entry = bootstrapArguments[x];
+            TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntry(cp, entry);
+            if (!expected.equals(typedLiteral.getInferredJavaType().getJavaTypeInstance())) {
+                throw new IllegalStateException("Expected " + expected + ", got " + typedLiteral);
+            }
+            callargs.add(new Literal(typedLiteral));
+        }
+
+        Expression funcCall = null;
+        switch (bootstrapBehaviour) {
+            case INVOKE_STATIC:
+                funcCall = new StaticFunctionInvokation(cp, methodRef, callargs);
+                break;
+            case NEW_INVOKE_SPECIAL:
+            default:
+                throw new UnsupportedOperationException();
+
+        }
+
+        funcCall = new CastExpression(new InferredJavaType(resproto.getReturnType(), InferredJavaType.Source.OPERATION), funcCall);
+        if (stackProduced.size() == 0) {
+            return new ExpressionStatement(funcCall);
+        } else {
+            return new AssignmentSimple(getStackLValue(0), funcCall);
+        }
+
     }
 
     public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory) {
@@ -527,7 +571,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new AssignmentSimple(getStackLValue(0), getStackRValue(0));
             case INVOKESTATIC: {
                 ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
-                MethodPrototype methodPrototype = function.getMethodPrototype(cp);
+                MethodPrototype methodPrototype = function.getMethodPrototype();
                 List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size());
                 methodPrototype.tightenArgs(args);
                 StaticFunctionInvokation funcCall = new StaticFunctionInvokation(cp, function, args);

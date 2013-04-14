@@ -207,7 +207,7 @@ public class MethodPrototype {
             if (expectedRawJavaType == providedRawJavaType) {
                 return expression.toString();
             }
-            return expectedRawJavaType.getCastString() + expression.toString();
+            return "(" + expectedRawJavaType.getCastString() + ")" + expression.toString();
         }
     }
 

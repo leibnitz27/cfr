@@ -23,7 +23,7 @@ public class CastExpression extends AbstractExpression {
 
     @Override
     public String toString() {
-        return getInferredJavaType().getRawType().getCastString() + child;
+        return "(" + getInferredJavaType().getCastString() + ")" + child;
     }
 
     @Override

@@ -105,7 +105,7 @@ public enum RawJavaType implements JavaTypeInstance {
 
 
     public String getCastString() {
-        return "(" + name + ")";
+        return name;
     }
 
     @Override

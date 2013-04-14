@@ -17,10 +17,12 @@ public class ConstantPoolEntryMethodHandle implements ConstantPoolEntry {
 
     private final MethodHandleBehaviour referenceKind;
     private final short referenceIndex;
+    private final ConstantPool cp;
 
-    public ConstantPoolEntryMethodHandle(ByteData data) {
+    public ConstantPoolEntryMethodHandle(ByteData data, ConstantPool cp) {
         this.referenceKind = MethodHandleBehaviour.decode(data.getS1At(OFFSET_OF_REFERENCE_KIND));
         this.referenceIndex = data.getS2At(OFFSET_OF_REFERENCE_INDEX);
+        this.cp = cp;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.literal;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
@@ -20,7 +22,9 @@ public class TypedLiteral {
         Double,
         String,
         NullObject,
-        Class;
+        Class,
+        MethodHandle,  // Only used for invokedynamic arguments
+        MethodType;    // Only used for invokedynamic arguments
     }
 
     private final InferredJavaType inferredJavaType;
@@ -94,6 +98,16 @@ public class TypedLiteral {
         return o.toString();
     }
 
+    private static String methodRefName(Object o) {
+        ConstantPoolEntryMethodRef methodRef = (ConstantPoolEntryMethodRef) o;
+        return methodRef.getMethodPrototype().toString();
+    }
+
+    private static String methodTypeName(Object o) {
+        ConstantPoolEntryUTF8 methodTypeString = (ConstantPoolEntryUTF8) o;
+        return methodTypeString.toString();
+    }
+
     @Override
     public String toString() {
         switch (type) {
@@ -112,8 +126,11 @@ public class TypedLiteral {
                 }
             case Long:
                 return longName(value);
+            case MethodType:
+                return methodTypeName(value);
+            case MethodHandle:
+                return methodRefName(value);
             case Class:
-
             default:
                 return value.toString();
         }
@@ -154,6 +171,18 @@ public class TypedLiteral {
         return new TypedLiteral(LiteralType.NullObject, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), null);
     }
 
+    public static TypedLiteral getMethodHandle(ConstantPoolEntryMethodHandle methodHandle, ConstantPool cp) {
+        ConstantPoolEntryMethodRef methodRef = cp.getMethodRefEntry(methodHandle.getReferenceIndex());
+        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodHandle");
+        return new TypedLiteral(LiteralType.MethodHandle, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodRef);
+    }
+
+    public static TypedLiteral getMethodType(ConstantPoolEntryMethodType methodType, ConstantPool cp) {
+        ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(methodType.getDescriptorIndex());
+        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodType");
+        return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), descriptor);
+    }
+
     // TODO : Quote strings properly
     private static String enQuote(String in) {
         return '\"' + in.replaceAll("\"", "\\\\\"") + '\"';
@@ -176,6 +205,10 @@ public class TypedLiteral {
             return getString(((ConstantPoolEntryString) cpe).getValue(cp));
         } else if (cpe instanceof ConstantPoolEntryClass) {
             return getClass(((ConstantPoolEntryClass) cpe).getTextName(cp));
+        } else if (cpe instanceof ConstantPoolEntryMethodHandle) {
+            return getMethodHandle((ConstantPoolEntryMethodHandle) cpe, cp);
+        } else if (cpe instanceof ConstantPoolEntryMethodType) {
+            return getMethodType((ConstantPoolEntryMethodType) cpe, cp);
         }
         throw new ConfusedCFRException("Can't turn ConstantPoolEntry into Literal - got " + cpe);
     }

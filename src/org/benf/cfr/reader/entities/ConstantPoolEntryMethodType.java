@@ -29,6 +29,10 @@ public class ConstantPoolEntryMethodType implements ConstantPoolEntry {
         d.print(this.toString());
     }
 
+    public short getDescriptorIndex() {
+        return descriptorIndex;
+    }
+
     @Override
     public String toString() {
         return "MethodType value=" + descriptorIndex;

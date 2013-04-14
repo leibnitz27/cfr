@@ -352,6 +352,10 @@ public class InferredJavaType {
         return value.getRawType();
     }
 
+    public String getCastString() {
+        return value.getJavaTypeInstance().toString();
+    }
+
     public JavaTypeInstance getJavaTypeInstance() {
         return value.getJavaTypeInstance();
     }

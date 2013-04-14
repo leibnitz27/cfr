@@ -1,5 +1,7 @@
 package org.benf.cfr.tests;
 
+import jdk.nashorn.internal.ir.annotations.Ignore;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +13,7 @@ import java.util.List;
  */
 public class InnerClassTest2 {
 
+    @SuppressWarnings("unchecked")
     public int getX() {
         return new Inner1(new ArrayList<String>()).getX(4);
     }

@@ -24,11 +24,13 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
 
     private final short classIndex;
     private final short nameAndTypeIndex;
+    private final ConstantPool cp;
 
-    public ConstantPoolEntryMethodRef(ByteData data, boolean interfaceMethod) {
+    public ConstantPoolEntryMethodRef(ByteData data, boolean interfaceMethod, ConstantPool cp) {
         this.classIndex = data.getS2At(OFFSET_OF_CLASS_INDEX);
         this.nameAndTypeIndex = data.getS2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
         this.interfaceMethod = interfaceMethod;
+        this.cp = cp;
     }
 
     @Override
@@ -59,11 +61,11 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
     //
     // This is inferior to the method based version, as we don't have generic signatures.
     //
-    public MethodPrototype getMethodPrototype(ConstantPool cp) {
+    public MethodPrototype getMethodPrototype() {
         if (methodPrototype == null) {
             JavaTypeInstance classType = cp.getClassEntry(classIndex).getTypeInstance(cp);
             // Figure out the non generic version of this
-            MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, getName(cp), interfaceMethod, cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp), cp, false /* we can't tell */, fakeNamer);
+            MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, getName(), interfaceMethod, cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp), cp, false /* we can't tell */, fakeNamer);
             // See if we can load the class to get a signature version of this prototype.
             // TODO : Improve the caching?
 
@@ -80,12 +82,12 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
         return methodPrototype;
     }
 
-    public String getName(ConstantPool cp) {
+    public String getName() {
         return cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue();
     }
 
-    public boolean isInitMethod(ConstantPool cp) {
-        String name = getName(cp);
+    public boolean isInitMethod() {
+        String name = getName();
         return "<init>".equals(name);
     }
 }

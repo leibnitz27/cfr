@@ -36,4 +36,12 @@ public class BootstrapMethodInfo {
     public ConstantPoolEntryMethodRef getConstantPoolEntryMethodRef() {
         return constantPoolEntryMethodRef;
     }
+
+    public ConstantPoolEntry[] getBootstrapArguments() {
+        return bootstrapArguments;
+    }
+
+    public MethodHandleBehaviour getMethodHandleBehaviour() {
+        return methodHandleBehaviour;
+    }
 }

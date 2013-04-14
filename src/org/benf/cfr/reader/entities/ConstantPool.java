@@ -58,7 +58,7 @@ public class ConstantPool {
         d.print("\n");
     }
 
-    private static long processRaw(ByteData raw, short count, List<ConstantPoolEntry> tgt) {
+    private long processRaw(ByteData raw, short count, List<ConstantPoolEntry> tgt) {
         OffsettingByteData data = raw.getOffsettingOffsetData(0);
         logger.info("Processing " + count + " constpool entries.");
         for (short x = 0; x < count; ++x) {
@@ -75,10 +75,10 @@ public class ConstantPool {
                     cpe = new ConstantPoolEntryFieldRef(data);
                     break;
                 case CPT_MethodRef:
-                    cpe = new ConstantPoolEntryMethodRef(data, false);
+                    cpe = new ConstantPoolEntryMethodRef(data, false, this);
                     break;
                 case CPT_InterfaceMethodRef:
-                    cpe = new ConstantPoolEntryMethodRef(data, true);
+                    cpe = new ConstantPoolEntryMethodRef(data, true, this);
                     break;
                 case CPT_Class:
                     cpe = new ConstantPoolEntryClass(data);
@@ -99,7 +99,7 @@ public class ConstantPool {
                     cpe = new ConstantPoolEntryUTF8(data);
                     break;
                 case CPT_MethodHandle:
-                    cpe = new ConstantPoolEntryMethodHandle(data);
+                    cpe = new ConstantPoolEntryMethodHandle(data, this);
                     break;
                 case CPT_MethodType:
                     cpe = new ConstantPoolEntryMethodType(data);
