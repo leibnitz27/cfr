@@ -301,7 +301,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor(cp);
         // Todo : Not happy about hardcoding if this is an instance function.
         // also - we have a descriptor, but NOT a signature here.  Is that right?
-        MethodPrototype resproto = ConstantPoolUtils.parseJavaMethodPrototype(null, "", false, descriptor, cp, false, new VariableNamerDefault());
+        MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, "", false, descriptor, cp, false, new VariableNamerDefault());
 
         int idx = invokeDynamic.getBootstrapMethodAttrIndex();
 
@@ -343,6 +343,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             callargs.add(new Literal(typedLiteral));
         }
 
+        /*
+         * We slightly lie about the dynamic arguments, currently.
+         */
+        dynamicPrototype.getArgs();
+        List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
+        dynamicPrototype.tightenArgs(dynamicArgs);
+        callargs.addAll(dynamicArgs);
+
         Expression funcCall = null;
         switch (bootstrapBehaviour) {
             case INVOKE_STATIC:
@@ -354,7 +362,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         }
 
-        funcCall = new CastExpression(new InferredJavaType(resproto.getReturnType(), InferredJavaType.Source.OPERATION), funcCall);
+        funcCall = new CastExpression(new InferredJavaType(dynamicPrototype.getReturnType(), InferredJavaType.Source.OPERATION), funcCall);
         if (stackProduced.size() == 0) {
             return new ExpressionStatement(funcCall);
         } else {
