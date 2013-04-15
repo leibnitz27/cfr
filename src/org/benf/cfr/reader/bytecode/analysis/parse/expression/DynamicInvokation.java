@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 
 import java.util.List;
 
@@ -18,8 +19,8 @@ public class DynamicInvokation extends AbstractExpression {
     private Expression innerInvokation;
     private List<Expression> dynamicArgs;
 
-    public DynamicInvokation(Expression innerInvokation, List<Expression> dynamicArgs) {
-        super(innerInvokation.getInferredJavaType());
+    public DynamicInvokation(InferredJavaType castJavaType, Expression innerInvokation, List<Expression> dynamicArgs) {
+        super(castJavaType);
         this.innerInvokation = innerInvokation;
         this.dynamicArgs = dynamicArgs;
     }
@@ -45,6 +46,7 @@ public class DynamicInvokation extends AbstractExpression {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("(").append(getInferredJavaType().getCastString()).append(")");
         sb.append(innerInvokation.toString());
         sb.append("(");
         boolean first = true;

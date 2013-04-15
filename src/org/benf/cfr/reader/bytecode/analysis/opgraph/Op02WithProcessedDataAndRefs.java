@@ -363,8 +363,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 throw new UnsupportedOperationException("Only static invoke dynamic calls supported currently. This is " + bootstrapBehaviour);
         }
 
-        funcCall = new DynamicInvokation(funcCall, dynamicArgs);
-        funcCall = new CastExpression(new InferredJavaType(dynamicPrototype.getReturnType(), InferredJavaType.Source.OPERATION), funcCall);
+        funcCall = new DynamicInvokation(new InferredJavaType(dynamicPrototype.getReturnType(), InferredJavaType.Source.OPERATION), funcCall, dynamicArgs);
         if (stackProduced.size() == 0) {
             return new ExpressionStatement(funcCall);
         } else {

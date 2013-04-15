@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.InnerClassConstructorRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.LambdaRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.RedundantSuperRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -552,6 +553,6 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public static void rewriteLambdas(CFRState cfrState, Op04StructuredStatement root) {
         if (!cfrState.rewriteLambdas()) return;
 
-
+        new LambdaRewriter().rewrite(root);
     }
 }

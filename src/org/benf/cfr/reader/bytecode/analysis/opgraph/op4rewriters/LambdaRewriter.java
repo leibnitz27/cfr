@@ -52,8 +52,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (expression instanceof DynamicInvokation) {
-            Expression rewritten = rewriteDynamicExpression(expression);
-            if (rewritten != null) return rewritten;
+            return rewriteDynamicExpression(expression);
         }
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
@@ -85,6 +84,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
      *
      */
     Expression rewriteDynamicExpression(Expression dynamicExpression) {
-        return null;
+        return dynamicExpression;
+//        throw new UnsupportedOperationException();
     }
 }

@@ -41,7 +41,6 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
