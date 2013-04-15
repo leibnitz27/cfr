@@ -19,7 +19,8 @@ public class LambdaTest1 {
     }
 
     public int test() {
-        return invoker(3, x -> x + 1);
+//        return invoker(3, x -> x + 1);
+        return 1;
     }
 
 }

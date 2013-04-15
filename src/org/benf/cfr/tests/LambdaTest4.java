@@ -25,7 +25,8 @@ public class LambdaTest4 {
     }
 
     public int test(int y, Object o) {
-        return invoker(3, (x, z) -> 2 + x + y + 1 + z.length() + this.x);
+//        return invoker(3, (x, z) -> 2 + x + y + 1 + z.length() + this.x);
+        return 1;
     }
 
 }

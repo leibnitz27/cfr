@@ -1,7 +1,5 @@
 package org.benf.cfr.tests;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
-
 import java.util.ArrayList;
 import java.util.List;
 
