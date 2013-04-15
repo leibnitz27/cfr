@@ -41,7 +41,10 @@ public class LambdaExpression extends AbstractExpression {
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        throw new UnsupportedOperationException();
+        for (int x = 0; x < curriedArgs.size(); ++x) {
+            curriedArgs.set(x, expressionRewriter.rewriteExpression(curriedArgs.get(x), ssaIdentifiers, statementContainer, flags));
+        }
+        return this;
     }
 
     private boolean comma(boolean first, StringBuilder sb) {
