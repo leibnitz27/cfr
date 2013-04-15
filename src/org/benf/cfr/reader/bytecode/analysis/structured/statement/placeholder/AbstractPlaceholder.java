@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -35,6 +36,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
 
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
         throw new UnsupportedOperationException();
     }
 

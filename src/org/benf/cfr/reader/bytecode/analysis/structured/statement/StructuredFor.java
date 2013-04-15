@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
@@ -82,4 +83,11 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     public void markCreator(LocalVariable localVariable) {
         this.isCreator = true;
     }
+
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
+        condition = expressionRewriter.rewriteExpression(condition, null, this.getContainer(), null);
+    }
+
 }

@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -21,7 +22,7 @@ import java.util.List;
 public class StructuredIter extends AbstractStructuredBlockStatement {
     private final BlockIdentifier block;
     private final LValue iterator;
-    private final Expression list;
+    private Expression list;
     private final JavaTypeInstance itertype;
 
     public StructuredIter(BlockIdentifier block, LValue iterator, Expression list, Op04StructuredStatement body) {
@@ -70,4 +71,11 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     public void markCreator(LocalVariable localVariable) {
         // Nop.  Structured iter is always the creator.
     }
+
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
+        list = expressionRewriter.rewriteExpression(list, null, this.getContainer(), null);
+    }
+
 }

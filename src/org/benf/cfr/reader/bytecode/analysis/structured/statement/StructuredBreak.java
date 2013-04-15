@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
@@ -52,4 +53,10 @@ public class StructuredBreak extends AbstractStructuredStatement {
         matchIterator.advance();
         return true;
     }
+
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
+    }
+
 }

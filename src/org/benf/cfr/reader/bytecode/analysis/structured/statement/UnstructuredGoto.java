@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -16,5 +17,4 @@ public class UnstructuredGoto extends AbstractUnStructuredStatement {
     public void dump(Dumper dumper) {
         dumper.print("** GOTO " + getContainer().getTargetLabel(0) + "\n");
     }
-
 }

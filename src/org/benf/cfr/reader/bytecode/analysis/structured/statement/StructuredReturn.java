@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -48,6 +49,12 @@ public class StructuredReturn extends AbstractStructuredStatement {
     @Override
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
+    }
+
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
+        value = expressionRewriter.rewriteExpression(value, null, this.getContainer(), null);
     }
 
 }

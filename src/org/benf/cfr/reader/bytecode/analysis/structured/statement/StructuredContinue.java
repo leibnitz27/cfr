@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
@@ -43,6 +44,11 @@ public class StructuredContinue extends AbstractStructuredContinue {
     @Override
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
+    }
+
+
+    @Override
+    public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
     }
 
 }
