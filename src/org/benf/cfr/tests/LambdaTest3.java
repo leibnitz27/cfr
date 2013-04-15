@@ -17,7 +17,7 @@ public class LambdaTest3 {
 
     public int test(int y, Object o) {
 //        return invoker(3, x -> x + y + 1 + (o.toString().length()));
-        return 1;
+        return 2;
     }
 
 }
