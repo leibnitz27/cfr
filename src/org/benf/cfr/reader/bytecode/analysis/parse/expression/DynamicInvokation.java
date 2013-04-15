@@ -66,4 +66,12 @@ public class DynamicInvokation extends AbstractExpression {
             expression.collectUsedLValues(lValueUsageCollector);
         }
     }
+
+    public Expression getInnerInvokation() {
+        return innerInvokation;
+    }
+
+    public List<Expression> getDynamicArgs() {
+        return dynamicArgs;
+    }
 }

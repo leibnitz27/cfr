@@ -265,7 +265,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             // todo: Verify that the class being called is the super of the object.
             special = true;
             JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
-            JavaTypeInstance callType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
+            JavaTypeInstance callType = function.getClassEntry().getTypeInstance(cp);
             ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
             String funcName = nameAndType.getName(cp).getValue();
             if (funcName.equals("<init>")) {

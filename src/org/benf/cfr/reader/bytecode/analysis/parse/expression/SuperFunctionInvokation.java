@@ -54,7 +54,7 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
     }
 
     private boolean isSyntheticThisFirstArg() {
-        JavaTypeInstance superType = cp.getClassEntry(function.getClassIndex()).getTypeInstance(cp);
+        JavaTypeInstance superType = function.getClassEntry().getTypeInstance(cp);
         return superType.getInnerClassHereInfo().isHideSyntheticThis();
     }
 

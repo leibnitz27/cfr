@@ -4,14 +4,16 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.DynamicInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
@@ -52,7 +54,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (expression instanceof DynamicInvokation) {
-            return rewriteDynamicExpression(expression);
+            return rewriteDynamicExpression((DynamicInvokation) expression);
         }
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
@@ -83,8 +85,50 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
      * Back to the main event.
      *
      */
-    Expression rewriteDynamicExpression(Expression dynamicExpression) {
+    private Expression rewriteDynamicExpression(DynamicInvokation dynamicExpression) {
+        List<Expression> curriedArgs = dynamicExpression.getDynamicArgs();
+        Expression functionCall = dynamicExpression.getInnerInvokation();
+        if (functionCall instanceof StaticFunctionInvokation) {
+            return rewriteDynamicExpression(dynamicExpression, (StaticFunctionInvokation) functionCall, curriedArgs);
+        }
         return dynamicExpression;
-//        throw new UnsupportedOperationException();
     }
+
+    private static MethodPrototype getRef(Expression e) {
+        if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
+        TypedLiteral t = ((Literal) e).getValue();
+        if (t.getType() != TypedLiteral.LiteralType.MethodHandle)
+            throw new IllegalArgumentException("Expecting method handle");
+        ConstantPoolEntryMethodRef methodRef = (ConstantPoolEntryMethodRef) t.getValue();
+        return methodRef.getMethodPrototype();
+    }
+
+    private Expression rewriteDynamicExpression(Expression dynamicExpression, StaticFunctionInvokation functionInvokation, List<Expression> curriedArgs) {
+        String name = functionInvokation.getName();
+        JavaTypeInstance typeInstance = functionInvokation.getClazz();
+        if (!typeInstance.getRawName().equals("java.lang.invoke.LambdaMetafactory")) return dynamicExpression;
+        if (!functionInvokation.getName().equals("metaFactory")) return dynamicExpression;
+
+        List<Expression> metaFactoryArgs = functionInvokation.getArgs();
+        if (metaFactoryArgs.size() != 6) return dynamicExpression;
+        /*
+         * Right, it's the 6 argument form of LambdaMetafactory.metaFactory, which we understand.
+         *
+         */
+        MethodPrototype targetFn = getRef(metaFactoryArgs.get(3));
+        MethodPrototype lambdaFn = getRef(metaFactoryArgs.get(4));
+        String lambdaFnName = lambdaFn.getName();
+        List<JavaTypeInstance> lambdaFnArgTypes = lambdaFn.getArgs();
+        List<JavaTypeInstance> targetFnArgTypes = targetFn.getArgs();
+
+        boolean instance = lambdaFn.isInstanceMethod();
+
+        if (curriedArgs.size() + targetFnArgTypes.size() - (instance ? 1 : 0) != lambdaFnArgTypes.size()) {
+            throw new IllegalStateException("Bad argument counts!");
+        }
+
+        return new LambdaExpression(dynamicExpression.getInferredJavaType(), lambdaFnName, targetFnArgTypes, curriedArgs, instance);
+    }
+
+
 }

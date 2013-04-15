@@ -50,8 +50,8 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
         return "Method classIndex " + classIndex + " nameAndTypeIndex " + nameAndTypeIndex;
     }
 
-    public short getClassIndex() {
-        return classIndex;
+    public ConstantPoolEntryClass getClassEntry() {
+        return cp.getClassEntry(classIndex);
     }
 
     public short getNameAndTypeIndex() {
