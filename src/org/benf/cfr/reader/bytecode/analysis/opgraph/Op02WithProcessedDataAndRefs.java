@@ -344,7 +344,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
 
         /*
-         * We slightly lie about the dynamic arguments, currently.
+         * We slightly lie about the dynamic arguments, currently, by putting them in a structure which is
+         * invalid java.  The alternative is to explicitly return a callsite, and call that, but that's
+         * needless complexity, which we're going to unwind back into a lambda or the like as soon as possible
+         * anyway,
          */
         dynamicPrototype.getArgs();
         List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
