@@ -349,7 +349,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         dynamicPrototype.getArgs();
         List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
         dynamicPrototype.tightenArgs(dynamicArgs);
-        callargs.addAll(dynamicArgs);
 
         Expression funcCall = null;
         switch (bootstrapBehaviour) {
@@ -362,6 +361,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         }
 
+        funcCall = new DynamicInvokation(funcCall, dynamicArgs);
         funcCall = new CastExpression(new InferredJavaType(dynamicPrototype.getReturnType(), InferredJavaType.Source.OPERATION), funcCall);
         if (stackProduced.size() == 0) {
             return new ExpressionStatement(funcCall);
