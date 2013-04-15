@@ -549,24 +549,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new RedundantSuperRewriter().rewrite(root);
     }
 
-    public static class TypeFilter<T> implements Predicate<Op04StructuredStatement> {
-        private final Class<T> clazz;
-        private final boolean positive;
+    public static void rewriteLambdas(CFRState cfrState, Op04StructuredStatement root) {
+        if (!cfrState.rewriteLambdas()) return;
 
-        public TypeFilter(Class<T> clazz) {
-            this.clazz = clazz;
-            this.positive = true;
-        }
 
-        public TypeFilter(Class<T> clazz, boolean positive) {
-            this.clazz = clazz;
-            this.positive = positive;
-        }
-
-        @Override
-        public boolean test(Op04StructuredStatement in) {
-            return (positive == clazz.isInstance(in.structuredStatement));
-        }
     }
-
 }

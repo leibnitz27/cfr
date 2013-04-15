@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.bytecode.analysis.parse.utils;
+package org.benf.cfr.reader.bytecode.analysis.parse.rewriters;
 
 /**
  * Created with IntelliJ IDEA.

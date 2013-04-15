@@ -341,6 +341,8 @@ public class CodeAnalyser {
             if (this.method.isConstructor()) Op04StructuredStatement.removeConstructorBoilerplate(block);
         }
 
+        Op04StructuredStatement.rewriteLambdas(cfrState, block);
+
         this.analysed = block;
         return analysed;
     }

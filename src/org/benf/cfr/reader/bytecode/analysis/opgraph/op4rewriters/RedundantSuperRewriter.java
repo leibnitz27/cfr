@@ -32,6 +32,7 @@ public class RedundantSuperRewriter implements Op04Rewriter {
     public void rewrite(Op04StructuredStatement root) {
         List<StructuredStatement> structuredStatements = ListFactory.newList();
         try {
+            // This is being done multiple times, it's very inefficient!
             root.linearizeStatementsInto(structuredStatements);
         } catch (UnsupportedOperationException e) {
             // Todo : Should output something at the end about this failure.

@@ -85,6 +85,8 @@ public class CFRState {
             "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true));
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> COLLECTION_ITERATOR = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true));
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> REWRITE_LAMBDAS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_8, true));
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "innerclasses", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> REMOVE_BOILERPLATE = new PermittedOptionProvider.Argument<Boolean, CFRState>(
@@ -138,6 +140,10 @@ public class CFRState {
 
     public boolean removeInnerClassSynthetics() {
         return getBooleanOpt(REMOVE_INNER_CLASS_SYNTHETICS);
+    }
+
+    public boolean rewriteLambdas() {
+        return getBooleanOpt(REWRITE_LAMBDAS);
     }
 
     private byte[] getBytesFromFile(InputStream is, long length) throws IOException {
