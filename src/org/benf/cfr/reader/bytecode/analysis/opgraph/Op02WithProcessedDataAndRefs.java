@@ -338,7 +338,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             ConstantPoolEntry entry = bootstrapArguments[x];
             TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntry(cp, entry);
             if (!expected.equals(typedLiteral.getInferredJavaType().getJavaTypeInstance())) {
-                throw new IllegalStateException("Expected " + expected + ", got " + typedLiteral);
+                throw new IllegalStateException("Dynamic invoke Expected " + expected + ", got " + typedLiteral);
             }
             callargs.add(new Literal(typedLiteral));
         }
@@ -357,8 +357,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 break;
             case NEW_INVOKE_SPECIAL:
             default:
-                throw new UnsupportedOperationException();
-
+                throw new UnsupportedOperationException("Only static invoke dynamic calls supported currently. This is " + bootstrapBehaviour);
         }
 
         funcCall = new DynamicInvokation(funcCall, dynamicArgs);
