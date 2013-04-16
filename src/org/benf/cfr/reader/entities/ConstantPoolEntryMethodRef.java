@@ -65,6 +65,8 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
         if (methodPrototype == null) {
             JavaTypeInstance classType = cp.getClassEntry(classIndex).getTypeInstance(cp);
             // Figure out the non generic version of this
+            ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(nameAndTypeIndex);
+            ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor(cp);
             MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, getName(), interfaceMethod, cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp), cp, false /* we can't tell */, fakeNamer);
             // See if we can load the class to get a signature version of this prototype.
             // TODO : Improve the caching?

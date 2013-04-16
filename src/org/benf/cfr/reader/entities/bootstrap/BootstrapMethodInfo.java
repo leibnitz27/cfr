@@ -29,7 +29,7 @@ public class BootstrapMethodInfo {
                 methodHandleBehaviour != MethodHandleBehaviour.NEW_INVOKE_SPECIAL) {
             throw new IllegalArgumentException("Expected INVOKE_STATIC / NEWINVOKE_SPECIAL, got " + methodHandleBehaviour);
         }
-        this.constantPoolEntryMethodRef = cp.getMethodRefEntry(methodHandle.getReferenceIndex());
+        this.constantPoolEntryMethodRef = methodHandle.getMethodRef();
         this.bootstrapArguments = bootstrapArguments;
     }
 

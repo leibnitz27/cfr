@@ -172,9 +172,8 @@ public class TypedLiteral {
     }
 
     public static TypedLiteral getMethodHandle(ConstantPoolEntryMethodHandle methodHandle, ConstantPool cp) {
-        ConstantPoolEntryMethodRef methodRef = cp.getMethodRefEntry(methodHandle.getReferenceIndex());
         JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodHandle");
-        return new TypedLiteral(LiteralType.MethodHandle, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodRef);
+        return new TypedLiteral(LiteralType.MethodHandle, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodHandle);
     }
 
     public static TypedLiteral getMethodType(ConstantPoolEntryMethodType methodType, ConstantPool cp) {

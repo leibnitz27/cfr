@@ -13,7 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.ConstantPoolEntryMethodHandle;
 import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
@@ -94,13 +94,12 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         return dynamicExpression;
     }
 
-    private static MethodPrototype getRef(Expression e) {
+    private static ConstantPoolEntryMethodHandle getHandle(Expression e) {
         if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
         TypedLiteral t = ((Literal) e).getValue();
         if (t.getType() != TypedLiteral.LiteralType.MethodHandle)
             throw new IllegalArgumentException("Expecting method handle");
-        ConstantPoolEntryMethodRef methodRef = (ConstantPoolEntryMethodRef) t.getValue();
-        return methodRef.getMethodPrototype();
+        return (ConstantPoolEntryMethodHandle) t.getValue();
     }
 
     private Expression rewriteDynamicExpression(Expression dynamicExpression, StaticFunctionInvokation functionInvokation, List<Expression> curriedArgs) {
@@ -115,13 +114,23 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
          * Right, it's the 6 argument form of LambdaMetafactory.metaFactory, which we understand.
          *
          */
-        MethodPrototype targetFn = getRef(metaFactoryArgs.get(3));
-        MethodPrototype lambdaFn = getRef(metaFactoryArgs.get(4));
+        ConstantPoolEntryMethodHandle targetFnHandle = getHandle(metaFactoryArgs.get(3));
+        ConstantPoolEntryMethodHandle lambdaFnHandle = getHandle(metaFactoryArgs.get(4));
+        MethodPrototype targetFn = targetFnHandle.getMethodRef().getMethodPrototype();
+        MethodPrototype lambdaFn = lambdaFnHandle.getMethodRef().getMethodPrototype();
         String lambdaFnName = lambdaFn.getName();
         List<JavaTypeInstance> lambdaFnArgTypes = lambdaFn.getArgs();
         List<JavaTypeInstance> targetFnArgTypes = targetFn.getArgs();
 
-        boolean instance = lambdaFn.isInstanceMethod();
+        // We can't ask the prototype for instance behaviour, we have to get it from the
+        // handle, as it will point to a ref.
+        boolean instance = false;
+        switch (lambdaFnHandle.getReferenceKind()) {
+            case INVOKE_INTERFACE:
+            case INVOKE_SPECIAL:
+                instance = true;
+                break;
+        }
 
         if (curriedArgs.size() + targetFnArgTypes.size() - (instance ? 1 : 0) != lambdaFnArgTypes.size()) {
             throw new IllegalStateException("Bad argument counts!");

@@ -39,8 +39,8 @@ public class ConstantPoolEntryMethodHandle implements ConstantPoolEntry {
         return referenceKind;
     }
 
-    public short getReferenceIndex() {
-        return referenceIndex;
+    public ConstantPoolEntryMethodRef getMethodRef() {
+        return cp.getMethodRefEntry(referenceIndex);
     }
 
     @Override
