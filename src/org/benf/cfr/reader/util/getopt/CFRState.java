@@ -282,7 +282,7 @@ public class CFRState {
         @Override
         @SuppressWarnings("unchecked")
         public List<? extends Argument<?, ?>> getArguments() {
-            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE, REMOVE_INNER_CLASS_SYNTHETICS);
+            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE, REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS);
         }
 
         @Override
