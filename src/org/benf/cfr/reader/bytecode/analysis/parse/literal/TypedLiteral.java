@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.literal;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -98,8 +97,9 @@ public class TypedLiteral {
         return o.toString();
     }
 
-    private static String methodRefName(Object o) {
-        ConstantPoolEntryMethodRef methodRef = (ConstantPoolEntryMethodRef) o;
+    private static String methodHandleName(Object o) {
+        ConstantPoolEntryMethodHandle methodHandle = (ConstantPoolEntryMethodHandle) o;
+        ConstantPoolEntryMethodRef methodRef = methodHandle.getMethodRef();
         return methodRef.getMethodPrototype().toString();
     }
 
@@ -129,7 +129,7 @@ public class TypedLiteral {
             case MethodType:
                 return methodTypeName(value);
             case MethodHandle:
-                return methodRefName(value);
+                return methodHandleName(value);
             case Class:
             default:
                 return value.toString();
