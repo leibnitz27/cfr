@@ -229,9 +229,9 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             lambdaMethod.hideSynthetic();
             return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaStatement));
         } catch (CannotDelambaException e) {
-            // Ok, just call the synthetic method directly.
         }
 
+        // Ok, just call the synthetic method directly.
         return new LambdaExpressionFallback(dynamicExpression.getInferredJavaType(), lambdaFnName, targetFnArgTypes, curriedArgs, instance);
     }
 
