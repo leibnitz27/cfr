@@ -40,6 +40,6 @@ public class ExpressionStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredExpressionStatement(expression);
+        return new StructuredExpressionStatement(expression, false);
     }
 }

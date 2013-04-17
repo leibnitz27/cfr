@@ -50,6 +50,6 @@ public class ConstructorStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredExpressionStatement(invokation);
+        return new StructuredExpressionStatement(invokation, false);
     }
 }

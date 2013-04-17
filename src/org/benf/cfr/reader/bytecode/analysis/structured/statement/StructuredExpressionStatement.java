@@ -17,14 +17,17 @@ import java.util.List;
  */
 public class StructuredExpressionStatement extends AbstractStructuredStatement {
     private Expression expression;
+    private boolean inline;
 
-    public StructuredExpressionStatement(Expression expression) {
+    public StructuredExpressionStatement(Expression expression, boolean inline) {
         this.expression = expression;
+        this.inline = inline;
     }
 
     @Override
     public void dump(Dumper dumper) {
-        dumper.print(expression.toString() + ";\n");
+
+        dumper.print(expression.toString() + (inline ? "" : ";\n"));
     }
 
     @Override

@@ -14,6 +14,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.ExpressionStatement
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredStatementExpression;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -215,9 +217,17 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             for (StructuredStatement lambdaStatement : structuredLambdaStatements) {
                 lambdaStatement.rewriteExpressions(variableRenamer);
             }
+            StructuredStatement lambdaStatement = lambdaCode.getStatement();
+            if (structuredLambdaStatements.size() == 3 && (structuredLambdaStatements.get(1) instanceof StructuredReturn)) {
+                /*
+                 * it's a single element lambda expression - we can just use a statement!
+                 */
+                StructuredReturn structuredReturn = (StructuredReturn) structuredLambdaStatements.get(1);
+                lambdaStatement = new StructuredExpressionStatement(structuredReturn.getValue(), true);
+            }
 
             lambdaMethod.hideSynthetic();
-            return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaCode.getStatement()));
+            return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaStatement));
         } catch (CannotDelambaException e) {
             // Ok, just call the synthetic method directly.
         }

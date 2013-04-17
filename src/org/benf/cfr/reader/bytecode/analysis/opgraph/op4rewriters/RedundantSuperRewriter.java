@@ -41,7 +41,7 @@ public class RedundantSuperRewriter implements Op04Rewriter {
 
         WildcardMatch wcm1 = new WildcardMatch();
 
-        Matcher<StructuredStatement> m = new CollectMatch("ass1", new StructuredExpressionStatement(wcm1.getSuperFunction("s1")));
+        Matcher<StructuredStatement> m = new CollectMatch("ass1", new StructuredExpressionStatement(wcm1.getSuperFunction("s1"), false));
 
 
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);

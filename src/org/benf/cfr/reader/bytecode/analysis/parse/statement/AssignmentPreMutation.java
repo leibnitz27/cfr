@@ -123,7 +123,7 @@ public class AssignmentPreMutation extends AbstractAssignment {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredExpressionStatement(rvalue);
+        return new StructuredExpressionStatement(rvalue, false);
     }
 
     @Override
