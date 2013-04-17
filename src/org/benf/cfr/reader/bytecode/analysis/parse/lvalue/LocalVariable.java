@@ -23,6 +23,11 @@ public class LocalVariable extends AbstractLValue {
         this.name = variableNamer.getName(originalRawOffset, index);
     }
 
+    public LocalVariable(String name, InferredJavaType inferredJavaType) {
+        super(inferredJavaType);
+        this.name = name;
+    }
+
     @Override
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");

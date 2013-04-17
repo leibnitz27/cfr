@@ -49,6 +49,7 @@ public class Method implements KnowsRawSize {
     private final VariableNamer variableNamer;
     private final MethodPrototype methodPrototype;
     private final ClassFile classFile;
+    private boolean hidden;
 
     public Method(ByteData raw, ClassFile classFile, final ConstantPool cp) {
         this.cp = cp;
@@ -87,6 +88,14 @@ public class Method implements KnowsRawSize {
         this.name = methodName;
 
         this.methodPrototype = generateMethodPrototype();
+    }
+
+    public void hideSynthetic() {
+        this.hidden = true;
+    }
+
+    public boolean isHiddenSynthetic() {
+        return hidden;
     }
 
     private AttributeSignature getSignatureAttribute() {

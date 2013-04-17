@@ -6,17 +6,25 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.ExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredStatementExpression;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodHandle;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,6 +33,13 @@ import java.util.List;
  * Time: 06:26
  */
 public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
+
+    private final ClassFile classFile;
+
+    public LambdaRewriter(ClassFile classFile) {
+        this.classFile = classFile;
+    }
+
     @Override
     public void rewrite(Op04StructuredStatement root) {
         List<StructuredStatement> structuredStatements = ListFactory.newList();
@@ -102,6 +117,17 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         return (ConstantPoolEntryMethodHandle) t.getValue();
     }
 
+    private static class CannotDelambaException extends IllegalStateException {
+    }
+
+    private static LocalVariable getLocalVariable(Expression e) {
+        if (!(e instanceof LValueExpression)) throw new CannotDelambaException();
+        LValueExpression lValueExpression = (LValueExpression) e;
+        LValue lValue = lValueExpression.getLValue();
+        if (!(lValue instanceof LocalVariable)) throw new CannotDelambaException();
+        return (LocalVariable) lValue;
+    }
+
     private Expression rewriteDynamicExpression(Expression dynamicExpression, StaticFunctionInvokation functionInvokation, List<Expression> curriedArgs) {
         String name = functionInvokation.getName();
         JavaTypeInstance typeInstance = functionInvokation.getClazz();
@@ -136,8 +162,103 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             throw new IllegalStateException("Bad argument counts!");
         }
 
-        return new LambdaExpression(dynamicExpression.getInferredJavaType(), lambdaFnName, targetFnArgTypes, curriedArgs, instance);
+        /* Now, we can call the synthetic function directly and emit it, or we could inline the synthetic, and no
+         * longer emit it.
+         */
+        Method lambdaMethod = null;
+        try {
+            lambdaMethod = classFile.getMethodByPrototype(lambdaFn);
+        } catch (NoSuchMethodException e) {
+        }
+        if (lambdaMethod == null) {
+            throw new IllegalStateException("Can't find lambda target " + lambdaFn);
+        }
+        try {
+            Op04StructuredStatement lambdaCode = lambdaMethod.getAnalysis();
+            int nLambdaArgs = targetFnArgTypes.size();
+            /* We will be
+             * \arg0 ... arg(n-1) -> curriedArgs, arg0 ... arg(n-1)
+             * where curriedArgs will lose first arg if instance method.
+             */
+            List<LValue> replacementParameters = ListFactory.newList();
+            for (int n = instance ? 1 : 0, m = curriedArgs.size(); n < m; ++n) {
+                replacementParameters.add(getLocalVariable(curriedArgs.get(n)));
+            }
+            List<LValue> anonymousLambdaArgs = ListFactory.newList();
+            for (int n = 0; n < nLambdaArgs; ++n) {
+                LocalVariable tmp = new LocalVariable("arg_" + n, new InferredJavaType(targetFnArgTypes.get(n), InferredJavaType.Source.EXPRESSION));
+                anonymousLambdaArgs.add(tmp);
+                replacementParameters.add(tmp);
+            }
+            List<LocalVariable> originalParameters = lambdaMethod.getMethodPrototype().getParameters();
+
+            /*
+             * Now we need to take the arguments for the lambda function, and replace them with names
+             * in the body.
+             */
+            if (originalParameters.size() != replacementParameters.size()) throw new CannotDelambaException();
+
+            Map<LValue, LValue> rewrites = MapFactory.newMap();
+            for (int x = 0; x < originalParameters.size(); ++x) {
+                rewrites.put(originalParameters.get(x), replacementParameters.get(x));
+            }
+
+            List<StructuredStatement> structuredLambdaStatements = ListFactory.newList();
+            try {
+                // This is being done multiple times, it's very inefficient!
+                lambdaCode.linearizeStatementsInto(structuredLambdaStatements);
+            } catch (UnsupportedOperationException e) {
+                throw new CannotDelambaException();
+            }
+
+            ExpressionRewriter variableRenamer = new LambdaInternalRewriter(rewrites);
+            for (StructuredStatement lambdaStatement : structuredLambdaStatements) {
+                lambdaStatement.rewriteExpressions(variableRenamer);
+            }
+
+            lambdaMethod.hideSynthetic();
+            return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaCode.getStatement()));
+        } catch (CannotDelambaException e) {
+            // Ok, just call the synthetic method directly.
+        }
+
+        return new LambdaExpressionFallback(dynamicExpression.getInferredJavaType(), lambdaFnName, targetFnArgTypes, curriedArgs, instance);
     }
 
+    public static class LambdaInternalRewriter implements ExpressionRewriter {
+        private final Map<LValue, LValue> rewrites;
 
+
+        public LambdaInternalRewriter(Map<LValue, LValue> rewrites) {
+            this.rewrites = rewrites;
+        }
+
+        @Override
+        public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        }
+
+        @Override
+        public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+            return (ConditionalExpression) res;
+        }
+
+        @Override
+        public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+            return (AbstractAssignmentExpression) res;
+        }
+
+        @Override
+        public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            LValue replacement = rewrites.get(lValue);
+            return replacement == null ? lValue : replacement;
+        }
+
+        @Override
+        public StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            return lValue;
+        }
+    }
 }

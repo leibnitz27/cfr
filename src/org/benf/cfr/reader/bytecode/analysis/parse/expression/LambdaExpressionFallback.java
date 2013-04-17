@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -18,16 +17,24 @@ import java.util.List;
  * User: lee
  * Date: 14/04/2013
  * Time: 23:47
+ * <p/>
+ * This shouldn't really exist - we should be able to construct this in terms of function invokations.
+ * However, that requires some tidying, so we'll iterate via this.
  */
-public class LambdaExpression extends AbstractExpression {
+public class LambdaExpressionFallback extends AbstractExpression {
 
-    private List<LValue> args;
-    private Expression result;
+    private String lambdaFnName;
+    private List<JavaTypeInstance> targetFnArgTypes;
+    private List<Expression> curriedArgs;
+    private boolean instance;
 
-    public LambdaExpression(InferredJavaType castJavaType, List<LValue> args, Expression result) {
+
+    public LambdaExpressionFallback(InferredJavaType castJavaType, String lambdaFnName, List<JavaTypeInstance> targetFnArgTypes, List<Expression> curriedArgs, boolean instance) {
         super(castJavaType);
-        this.args = args;
-        this.result = result;
+        this.lambdaFnName = lambdaFnName;
+        this.targetFnArgTypes = targetFnArgTypes;
+        this.curriedArgs = curriedArgs;
+        this.instance = instance;
     }
 
     @Override
@@ -37,10 +44,9 @@ public class LambdaExpression extends AbstractExpression {
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        for (int x = 0; x < args.size(); ++x) {
-            args.set(x, expressionRewriter.rewriteExpression(args.get(x), ssaIdentifiers, statementContainer, flags));
+        for (int x = 0; x < curriedArgs.size(); ++x) {
+            curriedArgs.set(x, expressionRewriter.rewriteExpression(curriedArgs.get(x), ssaIdentifiers, statementContainer, flags));
         }
-        result = expressionRewriter.rewriteExpression(result, ssaIdentifiers, statementContainer, flags);
         return this;
     }
 
@@ -54,16 +60,27 @@ public class LambdaExpression extends AbstractExpression {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        boolean multi = args.size() > 1;
-        boolean first = true;
-        if (multi) sb.append('(');
-        for (LValue lValue : args) {
-            first = comma(first, sb);
-            sb.append(lValue);
+        int n = targetFnArgTypes.size();
+        if (n > 1) sb.append('(');
+        for (int x = 0; x < n; ++x) {
+            if (x > 0) sb.append(", ");
+            sb.append("arg_").append(x);
         }
-        if (multi) sb.append(')');
+        if (n > 1) sb.append(')');
         sb.append(" -> ");
-        sb.append(result);
+        sb.append(lambdaFnName);
+        sb.append('(');
+        boolean first = true;
+        for (int x = instance ? 1 : 0, cnt = curriedArgs.size(); x < cnt; ++x) {
+            Expression c = curriedArgs.get(x);
+            first = comma(first, sb);
+            sb.append(c.toString());
+        }
+        for (int x = 0; x < n; ++x) {
+            first = comma(first, sb);
+            sb.append("arg_").append(x);
+        }
+        sb.append(')');
         return sb.toString();
     }
 

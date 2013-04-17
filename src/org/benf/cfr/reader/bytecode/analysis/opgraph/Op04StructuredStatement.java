@@ -550,9 +550,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new RedundantSuperRewriter().rewrite(root);
     }
 
-    public static void rewriteLambdas(CFRState cfrState, Op04StructuredStatement root) {
+    public static void rewriteLambdas(CFRState cfrState, Method method, Op04StructuredStatement root) {
         if (!cfrState.rewriteLambdas()) return;
 
-        new LambdaRewriter().rewrite(root);
+        new LambdaRewriter(method.getClassFile()).rewrite(root);
     }
 }

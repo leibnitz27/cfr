@@ -29,6 +29,7 @@ public interface StructuredStatement extends Dumpable, Matcher<StructuredStateme
 
     void transformStructuredChildren(StructuredStatementTransformer transformer);
 
+    // This isn't recursive - maybe it should be.
     void rewriteExpressions(ExpressionRewriter expressionRewriter);
 
     /*

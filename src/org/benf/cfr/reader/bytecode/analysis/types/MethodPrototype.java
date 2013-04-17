@@ -108,6 +108,8 @@ public class MethodPrototype {
         int argssize = args.size();
         for (int i = 0; i < argssize; ++i) {
             JavaTypeInstance arg = args.get(i);
+            // TODO : This should share a variable factory with the method, so we're sure they're
+            // the same instance.
             parameterLValues.add(new LocalVariable(offset, variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)));
             offset += arg.getStackType().getComputationCategory();
         }
