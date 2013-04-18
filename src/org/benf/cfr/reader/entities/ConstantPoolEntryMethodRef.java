@@ -41,8 +41,8 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     public void dump(Dumper d) {
         ConstantPool cp = getCp();
         d.print("Method " +
-                cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue() + ":" +
-                cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue());
+                cp.getNameAndTypeEntry(nameAndTypeIndex).getName().getValue() + ":" +
+                cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor().getValue());
     }
 
     @Override
@@ -67,8 +67,8 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
             JavaTypeInstance classType = cp.getClassEntry(classIndex).getTypeInstance();
             // Figure out the non generic version of this
             ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(nameAndTypeIndex);
-            ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor(cp);
-            MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, getName(), interfaceMethod, cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp), cp, false /* we can't tell */, fakeNamer);
+            ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
+            MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, getName(), interfaceMethod, descriptor, cp, false /* we can't tell */, fakeNamer);
             // See if we can load the class to get a signature version of this prototype.
             // TODO : Improve the caching?
 
@@ -86,7 +86,7 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     }
 
     public String getName() {
-        return getCp().getNameAndTypeEntry(nameAndTypeIndex).getName(getCp()).getValue();
+        return getCp().getNameAndTypeEntry(nameAndTypeIndex).getName().getValue();
     }
 
     public boolean isInitMethod() {

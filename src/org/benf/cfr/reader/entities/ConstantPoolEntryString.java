@@ -32,8 +32,8 @@ public class ConstantPoolEntryString extends AbstractConstantPoolEntry implement
         d.print("String " + cp.getUTF8Entry((int) stringIndex).getValue());
     }
 
-    public String getValue(ConstantPool cp) {
-        return cp.getUTF8Entry((int) stringIndex).getValue();
+    public String getValue() {
+        return getCp().getUTF8Entry((int) stringIndex).getValue();
     }
 
     @Override

@@ -39,6 +39,6 @@ public class OperationFactoryInvokeInterface extends OperationFactoryDefault {
                                     StackSim stackSim, Method method) {
         ConstantPoolEntryMethodRef methodRef = (ConstantPoolEntryMethodRef) cpEntries[0];
 
-        return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true, cp);
+        return cp.getNameAndTypeEntry(methodRef.getNameAndTypeIndex()).getStackDelta(true);
     }
 }

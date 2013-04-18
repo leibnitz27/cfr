@@ -40,20 +40,17 @@ public class ConstantPoolEntryNameAndType extends AbstractConstantPoolEntry {
         return "CONSTANT_NameAndType nameIndex=" + nameIndex + ", descriptorIndex=" + descriptorIndex;
     }
 
-    public ConstantPoolEntryUTF8 getName(ConstantPool cp) {
-        return cp.getUTF8Entry(nameIndex);
+    public ConstantPoolEntryUTF8 getName() {
+        return getCp().getUTF8Entry(nameIndex);
     }
 
-    public ConstantPoolEntryUTF8 getDescriptor(ConstantPool cp) {
-        return cp.getUTF8Entry(descriptorIndex);
+    public ConstantPoolEntryUTF8 getDescriptor() {
+        return getCp().getUTF8Entry(descriptorIndex);
     }
 
-    public short getDescriptorIndex() {
-        return descriptorIndex;
-    }
-
-    public StackDelta getStackDelta(boolean member, ConstantPool cp) {
+    public StackDelta getStackDelta(boolean member) {
         int idx = member ? 1 : 0;
+        ConstantPool cp = getCp();
         if (stackDelta[idx] == null)
             stackDelta[idx] = ConstantPoolUtils.parseMethodPrototype(member, cp.getUTF8Entry(descriptorIndex), cp);
         return stackDelta[idx];

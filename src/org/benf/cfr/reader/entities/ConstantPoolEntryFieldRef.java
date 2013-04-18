@@ -35,35 +35,36 @@ public class ConstantPoolEntryFieldRef extends AbstractConstantPoolEntry {
     public void dump(Dumper d) {
         ConstantPool cp = getCp();
         d.print("Field " +
-                cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue() + ":" +
-                getJavaTypeInstance(cp));
+                cp.getNameAndTypeEntry(nameAndTypeIndex).getName().getValue() + ":" +
+                getJavaTypeInstance());
     }
 
     public short getClassIndex() {
         return classIndex;
     }
 
-    public ConstantPoolEntryClass getClassEntry(ConstantPool cp) {
-        return cp.getClassEntry(classIndex);
+    public ConstantPoolEntryClass getClassEntry() {
+        return getCp().getClassEntry(classIndex);
     }
 
-    public ConstantPoolEntryNameAndType getNameAndTypeEntry(ConstantPool cp) {
-        return cp.getNameAndTypeEntry(nameAndTypeIndex);
+    public ConstantPoolEntryNameAndType getNameAndTypeEntry() {
+        return getCp().getNameAndTypeEntry(nameAndTypeIndex);
     }
 
-    public String getLocalName(ConstantPool cp) {
-        return cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue();
+    public String getLocalName() {
+        return getCp().getNameAndTypeEntry(nameAndTypeIndex).getName().getValue();
     }
 
-    public JavaTypeInstance getJavaTypeInstance(ConstantPool cp) {
+    public JavaTypeInstance getJavaTypeInstance() {
         if (cachedDecodedType == null) {
-            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue(), cp);
+            ConstantPool cp = getCp();
+            cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor().getValue(), cp);
         }
         return cachedDecodedType;
     }
 
-    public StackType getStackType(ConstantPool cp) {
-        return getJavaTypeInstance(cp).getStackType();
+    public StackType getStackType() {
+        return getJavaTypeInstance().getStackType();
     }
 
 

@@ -22,7 +22,7 @@ public class OperationFactoryGetStatic extends OperationFactoryCPEntryW {
                                     StackSim stackSim, Method method) {
         ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) cpEntries[0];
         if (fieldRef == null) throw new ConfusedCFRException("Expecting fieldRef");
-        StackType stackType = fieldRef.getStackType(cp);
+        StackType stackType = fieldRef.getStackType();
         return new StackDeltaImpl(StackTypes.EMPTY, stackType.asList());
     }
 

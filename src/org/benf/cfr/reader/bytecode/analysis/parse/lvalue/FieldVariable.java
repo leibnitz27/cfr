@@ -26,12 +26,12 @@ public class FieldVariable extends AbstractLValue {
 
     private static InferredJavaType getFieldType(ConstantPoolEntry fieldentry, ClassFile classFile, ConstantPool cp) {
         ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) fieldentry;
-        String name = fieldRef.getLocalName(cp);
+        String name = fieldRef.getLocalName();
         try {
             Field field = classFile.getFieldByName(name);
             return new InferredJavaType(field.getJavaTypeInstance(cp), InferredJavaType.Source.FIELD);
         } catch (NoSuchFieldException ignore) {
-            return new InferredJavaType(fieldRef.getJavaTypeInstance(cp), InferredJavaType.Source.FIELD);
+            return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
         }
     }
 
@@ -49,7 +49,7 @@ public class FieldVariable extends AbstractLValue {
 
     @Override
     public String toString() {
-        return object + "." + field.getLocalName(cp);
+        return object + "." + field.getLocalName();
     }
 
     @Override

@@ -34,6 +34,6 @@ public class OperationFactoryInvokeDynamic extends OperationFactoryDefault {
         ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
 
         ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(invokeDynamic.getNameAndTypeIndex());
-        return nameAndType.getStackDelta(false, cp);
+        return nameAndType.getStackDelta(false);
     }
 }

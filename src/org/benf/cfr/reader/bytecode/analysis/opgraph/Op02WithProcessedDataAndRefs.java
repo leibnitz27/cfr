@@ -266,7 +266,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
             JavaTypeInstance callType = function.getClassEntry().getTypeInstance();
             ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
-            String funcName = nameAndType.getName(cp).getValue();
+            String funcName = nameAndType.getName().getValue();
             if (funcName.equals("<init>")) {
                 if (!(callType.equals(objType) ||
                         (objType.getRawName().equals("java.lang.Object")))) {
@@ -297,7 +297,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(invokeDynamic.getNameAndTypeIndex());
 
         // Should have this as a member on name and type
-        ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor(cp);
+        ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
         // Todo : Not happy about hardcoding if this is an instance function.
         // also - we have a descriptor, but NOT a signature here.  Is that right?
         MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, "", false, descriptor, cp, false, new VariableNamerDefault());
