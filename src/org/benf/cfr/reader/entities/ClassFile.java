@@ -157,7 +157,7 @@ public class ClassFile {
 
     public boolean isInnerClass() {
         if (thisClass == null) return false;
-        return thisClass.getTypeInstance(constantPool).getInnerClassHereInfo().isInnerClass();
+        return thisClass.getTypeInstance().getInnerClassHereInfo().isInnerClass();
     }
 
     public ConstantPool getConstantPool() {
@@ -280,7 +280,7 @@ public class ClassFile {
         }
         List<InnerClassAttributeInfo> innerClassAttributeInfoList = attributeInnerClasses.getInnerClassAttributeInfoList();
 
-        JavaTypeInstance thisType = thisClass.getTypeInstance(constantPool);
+        JavaTypeInstance thisType = thisClass.getTypeInstance();
 
 
         for (InnerClassAttributeInfo innerClassAttributeInfo : innerClassAttributeInfoList) {
@@ -341,7 +341,7 @@ public class ClassFile {
     }
 
     public JavaTypeInstance getClassType() {
-        return thisClass.getTypeInstance(constantPool);
+        return thisClass.getTypeInstance();
     }
 
     public ClassSignature getClassSignature() {
@@ -380,11 +380,11 @@ public class ClassFile {
         if (signatureAttribute == null) {
             List<JavaTypeInstance> interfaces = ListFactory.newList();
             for (ConstantPoolEntryClass rawInterface : rawInterfaces) {
-                interfaces.add(rawInterface.getTypeInstance(cp));
+                interfaces.add(rawInterface.getTypeInstance());
             }
 
             return new ClassSignature(null,
-                    rawSuperClass == null ? null : rawSuperClass.getTypeInstance(cp),
+                    rawSuperClass == null ? null : rawSuperClass.getTypeInstance(),
                     interfaces);
 
         }
@@ -413,7 +413,7 @@ public class ClassFile {
         StringBuilder sb = new StringBuilder();
         sb.append(dumpAccessFlags(isInterface ? dumpableAccessFlagsInterface : dumpableAccessFlagsClass));
 
-        sb.append(isInterface ? ((isAnnotation ? "@" : "") + "interface ") : "class ").append(thisClass.getTypeInstance(constantPool));
+        sb.append(isInterface ? ((isAnnotation ? "@" : "") + "interface ") : "class ").append(thisClass.getTypeInstance());
         sb.append(getFormalParametersText());
         sb.append("\n");
         d.print(sb.toString());
@@ -547,6 +547,6 @@ public class ClassFile {
 
     @Override
     public String toString() {
-        return thisClass.getTextName(constantPool);
+        return thisClass.getTextName();
     }
 }

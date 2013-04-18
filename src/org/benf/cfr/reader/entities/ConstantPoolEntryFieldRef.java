@@ -32,7 +32,8 @@ public class ConstantPoolEntryFieldRef extends AbstractConstantPoolEntry {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
+        ConstantPool cp = getCp();
         d.print("Field " +
                 cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue() + ":" +
                 getJavaTypeInstance(cp));

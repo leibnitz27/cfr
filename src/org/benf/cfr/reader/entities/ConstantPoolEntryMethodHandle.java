@@ -30,7 +30,7 @@ public class ConstantPoolEntryMethodHandle extends AbstractConstantPoolEntry {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         d.print(this.toString());
     }
 

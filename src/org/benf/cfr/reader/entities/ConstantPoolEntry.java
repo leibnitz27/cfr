@@ -14,7 +14,7 @@ public interface ConstantPoolEntry {
 
     long getRawByteLength();
 
-    void dump(Dumper d, ConstantPool cp);
+    void dump(Dumper d);
 
     public static enum Type {
         CPT_UTF8,

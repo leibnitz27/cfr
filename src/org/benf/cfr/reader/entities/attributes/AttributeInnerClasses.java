@@ -33,7 +33,7 @@ public class AttributeInnerClasses extends Attribute {
         if (idx == 0) {
             return null;
         }
-        return cp.getClassEntry(idx).getTypeInstance(cp);
+        return cp.getClassEntry(idx).getTypeInstance();
     }
 
     private static String getOptName(int idx, ConstantPool cp) {

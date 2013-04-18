@@ -203,7 +203,7 @@ public class TypedLiteral {
         } else if (cpe instanceof ConstantPoolEntryString) {
             return getString(((ConstantPoolEntryString) cpe).getValue(cp));
         } else if (cpe instanceof ConstantPoolEntryClass) {
-            return getClass(((ConstantPoolEntryClass) cpe).getTextName(cp));
+            return getClass(((ConstantPoolEntryClass) cpe).getTextName());
         } else if (cpe instanceof ConstantPoolEntryMethodHandle) {
             return getMethodHandle((ConstantPoolEntryMethodHandle) cpe, cp);
         } else if (cpe instanceof ConstantPoolEntryMethodType) {

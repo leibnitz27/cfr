@@ -46,7 +46,7 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         d.print("CONSTANT_UTF8 value=" + value);
     }
 

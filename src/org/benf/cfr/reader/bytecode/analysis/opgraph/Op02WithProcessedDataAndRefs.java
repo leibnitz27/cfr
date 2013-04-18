@@ -264,7 +264,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             // todo: Verify that the class being called is the super of the object.
             special = true;
             JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
-            JavaTypeInstance callType = function.getClassEntry().getTypeInstance(cp);
+            JavaTypeInstance callType = function.getClassEntry().getTypeInstance();
             ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
             String funcName = nameAndType.getName(cp).getValue();
             if (funcName.equals("<init>")) {
@@ -466,7 +466,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FSTORE_3:
                 return new AssignmentSimple(variableFactory.localVariable(3, originalRawOffset), getStackRValue(0));
             case NEW:
-                return new AssignmentSimple(getStackLValue(0), new NewObject(cp, cpEntries[0]));
+                return new AssignmentSimple(getStackLValue(0), new NewObject(cpEntries[0]));
             case NEWARRAY:
                 return new AssignmentSimple(getStackLValue(0), new NewPrimitiveArray(getStackRValue(0), rawData[0]));
             case ANEWARRAY: {
@@ -477,7 +477,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 //      for A a[] = new A[2] it will be A.
                 // Resulting type needs an extra dimension attached for the dim being allocated.
                 ConstantPoolEntryClass clazz = (ConstantPoolEntryClass) (cpEntries[0]);
-                JavaTypeInstance innerInstance = clazz.getTypeInstance(cp);
+                JavaTypeInstance innerInstance = clazz.getTypeInstance();
                 // Result instance is the same as inner instance with 1 extra dimension.
                 JavaTypeInstance resultInstance = new JavaArrayTypeInstance(1, innerInstance);
 
@@ -488,7 +488,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 // Type of cpEntries[0] will be the type of the whole array.
                 // I.e. for A a[][] = new A[2][3]  it will be [[LA
                 ConstantPoolEntryClass clazz = (ConstantPoolEntryClass) (cpEntries[0]);
-                JavaTypeInstance innerInstance = clazz.getTypeInstance(cp);
+                JavaTypeInstance innerInstance = clazz.getTypeInstance();
                 // Result instance is the same as innerInstance
                 JavaTypeInstance resultInstance = innerInstance;
 
@@ -574,7 +574,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new AssignmentSimple(lValue, getStackRValue(0));
             }
             case INSTANCEOF:
-                return new AssignmentSimple(getStackLValue(0), new InstanceOfExpression(getStackRValue(0), cp, cpEntries[0]));
+                return new AssignmentSimple(getStackLValue(0), new InstanceOfExpression(getStackRValue(0), cpEntries[0]));
             case CHECKCAST:
                 // Not strictly true, but matches our intermediate form.
                 return new AssignmentSimple(getStackLValue(0), getStackRValue(0));

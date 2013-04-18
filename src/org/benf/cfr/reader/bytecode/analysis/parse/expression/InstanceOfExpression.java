@@ -23,11 +23,11 @@ public class InstanceOfExpression extends AbstractExpression {
     private Expression lhs;
     private JavaTypeInstance typeInstance;
 
-    public InstanceOfExpression(Expression lhs, ConstantPool cp, ConstantPoolEntry cpe) {
+    public InstanceOfExpression(Expression lhs, ConstantPoolEntry cpe) {
         super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
         this.lhs = lhs;
         ConstantPoolEntryClass cpec = (ConstantPoolEntryClass) cpe;
-        this.typeInstance = cpec.getTypeInstance(cp);
+        this.typeInstance = cpec.getTypeInstance();
     }
 
     @Override

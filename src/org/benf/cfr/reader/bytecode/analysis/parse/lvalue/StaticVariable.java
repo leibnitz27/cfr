@@ -29,7 +29,7 @@ public class StaticVariable extends AbstractLValue {
         super(new InferredJavaType(((ConstantPoolEntryFieldRef) field).getJavaTypeInstance(cp), InferredJavaType.Source.FIELD));
         this.field = (ConstantPoolEntryFieldRef) field;
         this.cp = cp;
-        this.clazz = cp.getClassEntry(this.field.getClassIndex()).getTypeInstance(cp);
+        this.clazz = cp.getClassEntry(this.field.getClassIndex()).getTypeInstance();
         this.varName = this.field.getLocalName(cp);
     }
 

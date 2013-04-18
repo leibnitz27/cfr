@@ -30,12 +30,12 @@ public class ConstructorInvokation extends AbstractExpression {
     private final ConstantPool cp;
 
     public ConstructorInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, ConstantPoolEntryClass type, List<Expression> args) {
-        super(new InferredJavaType(type.getTypeInstance(cp), InferredJavaType.Source.EXPRESSION));
+        super(new InferredJavaType(type.getTypeInstance(), InferredJavaType.Source.EXPRESSION));
         this.function = function;
         this.type = type;
         this.args = args;
         this.cp = cp;
-        this.clazz = type.getTypeInstance(cp);
+        this.clazz = type.getTypeInstance();
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ConstructorInvokation extends AbstractExpression {
     }
 
     public JavaTypeInstance getTypeInstance() {
-        return type.getTypeInstance(cp);
+        return type.getTypeInstance();
     }
 
     private String toStringAsAnonymousConstruction() {

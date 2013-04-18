@@ -25,7 +25,7 @@ public class ConstantPoolEntryDouble extends AbstractConstantPoolEntry implement
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         d.print("CONSTANT_Double " + value);
     }
 

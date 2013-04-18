@@ -25,7 +25,7 @@ public class ConstantPoolEntryFloat extends AbstractConstantPoolEntry implements
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         d.print("CONSTANT_Float");
     }
 

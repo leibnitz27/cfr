@@ -82,7 +82,7 @@ public class ExceptionGroup {
             if (type == 0) {
                 name = "java.lang.Throwable";
             } else {
-                name = cp.getClassEntry(type).getTypeInstance(cp).toString();
+                name = cp.getClassEntry(type).getTypeInstance().toString();
             }
             return name;
         }

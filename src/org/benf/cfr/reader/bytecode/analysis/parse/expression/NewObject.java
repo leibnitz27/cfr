@@ -19,16 +19,14 @@ import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
  * To change this template use File | Settings | File Templates.
  */
 public class NewObject extends AbstractExpression {
-    private final ConstantPool cp;
     private final ConstantPoolEntryClass type;
     private final JavaTypeInstance typeInstance;
 
-    public NewObject(ConstantPool constantPool, ConstantPoolEntry type) {
+    public NewObject(ConstantPoolEntry type) {
         // TODO : we have more information than this...
-        super(new InferredJavaType(((ConstantPoolEntryClass) type).getTypeInstance(constantPool), InferredJavaType.Source.EXPRESSION));
-        this.cp = constantPool;
+        super(new InferredJavaType(((ConstantPoolEntryClass) type).getTypeInstance(), InferredJavaType.Source.EXPRESSION));
         this.type = (ConstantPoolEntryClass) type;
-        this.typeInstance = ((ConstantPoolEntryClass) type).getTypeInstance(constantPool);
+        this.typeInstance = ((ConstantPoolEntryClass) type).getTypeInstance();
     }
 
     @Override

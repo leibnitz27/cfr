@@ -228,7 +228,7 @@ public class Method implements KnowsRawSize {
                 } else {
                     sb.append(", ");
                 }
-                sb.append(exceptionClass.getTypeInstance(cp).getRawName());
+                sb.append(exceptionClass.getTypeInstance().getRawName());
             }
             if (asClass) sb.append(' '); // This is the kind of fiddly display we don't want to be doing here.. :(
         }

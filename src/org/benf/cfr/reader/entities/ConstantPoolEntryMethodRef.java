@@ -38,7 +38,8 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
+        ConstantPool cp = getCp();
         d.print("Method " +
                 cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue() + ":" +
                 cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor(cp).getValue());
@@ -63,7 +64,7 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     public MethodPrototype getMethodPrototype() {
         if (methodPrototype == null) {
             ConstantPool cp = getCp();
-            JavaTypeInstance classType = cp.getClassEntry(classIndex).getTypeInstance(cp);
+            JavaTypeInstance classType = cp.getClassEntry(classIndex).getTypeInstance();
             // Figure out the non generic version of this
             ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(nameAndTypeIndex);
             ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor(cp);

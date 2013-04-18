@@ -31,7 +31,7 @@ public class ConstantPoolEntryNameAndType extends AbstractConstantPoolEntry {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         d.print("CONSTANT_NameAndType nameIndex=" + nameIndex + ", descriptorIndex=" + descriptorIndex);
     }
 

@@ -27,7 +27,8 @@ public class ConstantPoolEntryString extends AbstractConstantPoolEntry implement
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
+        ConstantPool cp = getCp();
         d.print("String " + cp.getUTF8Entry((int) stringIndex).getValue());
     }
 

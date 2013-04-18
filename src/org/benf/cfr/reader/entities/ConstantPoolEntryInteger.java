@@ -27,7 +27,7 @@ public class ConstantPoolEntryInteger extends AbstractConstantPoolEntry implemen
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         d.print("CONSTANT_Integer value=" + value);
     }
 
