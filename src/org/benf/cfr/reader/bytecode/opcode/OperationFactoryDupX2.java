@@ -19,7 +19,7 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 public class OperationFactoryDupX2 extends OperationFactoryDupBase {
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPoolEntry[] cpEntries,
                                     StackSim stackSim, Method method) {
         if (getCat(stackSim, 1) == 2) {
             checkCat(stackSim, 0, 1);

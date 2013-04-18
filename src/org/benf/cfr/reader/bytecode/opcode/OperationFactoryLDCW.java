@@ -21,7 +21,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 public class OperationFactoryLDCW extends OperationFactoryCPEntryW {
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPoolEntry[] cpEntries,
                                     StackSim stackSim, Method method) {
         ConstantPoolEntryLiteral constantPoolEntryLiteral = (ConstantPoolEntryLiteral) cpEntries[0];
         if (constantPoolEntryLiteral == null) {

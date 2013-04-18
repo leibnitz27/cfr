@@ -36,7 +36,7 @@ public class OperationFactoryMultiANewArray extends OperationFactoryDefault {
     }
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPoolEntry[] cpEntries,
                                     StackSim stackSim, Method method) {
         short numDims = data[OFFSET_OF_DIMS];
         if (numDims < 0) {

@@ -307,8 +307,8 @@ public enum JVMInstr {
         return stackPopped;
     }
 
-    public StackDelta getStackDelta(byte[] data, ConstantPool cp, ConstantPoolEntry[] constantPoolEntries, StackSim stackSim, Method method) {
-        return handler.getStackDelta(this, data, cp, constantPoolEntries, stackSim, method);
+    public StackDelta getStackDelta(byte[] data, ConstantPoolEntry[] constantPoolEntries, StackSim stackSim, Method method) {
+        return handler.getStackDelta(this, data, constantPoolEntries, stackSim, method);
     }
 
     public Op01WithProcessedDataAndByteJumps createOperation(ByteData bd, ConstantPool cp, int offset) {

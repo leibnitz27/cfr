@@ -157,7 +157,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     public void populateStackInfo(StackSim stackSim, Method method) {
-        StackDelta stackDelta = instr.getStackDelta(rawData, cp, cpEntries, stackSim, method);
+        StackDelta stackDelta = instr.getStackDelta(rawData, cpEntries, stackSim, method);
         if (stackDepthBeforeExecution != -1) {
             /* Catch instructions are funny, as we know we'll get here with 1 thing on the stack. */
             if (instr == JVMInstr.FAKE_CATCH) {

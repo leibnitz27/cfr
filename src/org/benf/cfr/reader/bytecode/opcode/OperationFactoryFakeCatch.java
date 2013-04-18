@@ -25,7 +25,7 @@ import java.util.List;
 public class OperationFactoryFakeCatch extends OperationFactoryDefault {
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPoolEntry[] cpEntries,
                                     StackSim stackSim, Method method) {
         StackTypes pushed = StackType.REF.asList();
         List<StackType> popped = ListFactory.newList();

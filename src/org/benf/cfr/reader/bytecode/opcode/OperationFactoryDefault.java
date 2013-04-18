@@ -39,7 +39,7 @@ public class OperationFactoryDefault implements OperationFactory {
     }
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPoolEntry[] cpEntries,
                                     StackSim stackSim, Method method) {
         return new StackDeltaImpl(instr.getRawStackPopped(), instr.getRawStackPushed());
     }

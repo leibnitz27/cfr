@@ -21,7 +21,7 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 public class OperationFactoryPop2 extends OperationFactoryDefault {
 
     @Override
-    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPool cp, ConstantPoolEntry[] cpEntries,
+    public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPoolEntry[] cpEntries,
                                     StackSim stackSim, Method method) {
         StackType topStackEntry = stackSim.getEntry(0).getType();
         if (topStackEntry.getComputationCategory() == 2) {
