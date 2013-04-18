@@ -11,18 +11,17 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 20:38
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantPoolEntryMethodHandle implements ConstantPoolEntry {
+public class ConstantPoolEntryMethodHandle extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_REFERENCE_KIND = 1;
     private static final long OFFSET_OF_REFERENCE_INDEX = 2;
 
     private final MethodHandleBehaviour referenceKind;
     private final short referenceIndex;
-    private final ConstantPool cp;
 
-    public ConstantPoolEntryMethodHandle(ByteData data, ConstantPool cp) {
+    public ConstantPoolEntryMethodHandle(ConstantPool cp, ByteData data) {
+        super(cp);
         this.referenceKind = MethodHandleBehaviour.decode(data.getS1At(OFFSET_OF_REFERENCE_KIND));
         this.referenceIndex = data.getS2At(OFFSET_OF_REFERENCE_INDEX);
-        this.cp = cp;
     }
 
     @Override
@@ -40,7 +39,7 @@ public class ConstantPoolEntryMethodHandle implements ConstantPoolEntry {
     }
 
     public ConstantPoolEntryMethodRef getMethodRef() {
-        return cp.getMethodRefEntry(referenceIndex);
+        return getCp().getMethodRefEntry(referenceIndex);
     }
 
     @Override

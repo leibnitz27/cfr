@@ -12,7 +12,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 20:36
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
+public class ConstantPoolEntryFieldRef extends AbstractConstantPoolEntry {
     private final long OFFSET_OF_CLASS_INDEX = 1;
     private final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
 
@@ -20,7 +20,8 @@ public class ConstantPoolEntryFieldRef implements ConstantPoolEntry {
     final short nameAndTypeIndex;
     JavaTypeInstance cachedDecodedType;
 
-    public ConstantPoolEntryFieldRef(ByteData data) {
+    public ConstantPoolEntryFieldRef(ConstantPool cp, ByteData data) {
+        super(cp);
         this.classIndex = data.getS2At(OFFSET_OF_CLASS_INDEX);
         this.nameAndTypeIndex = data.getS2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
     }

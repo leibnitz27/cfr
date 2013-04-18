@@ -13,14 +13,15 @@ import java.nio.charset.Charset;
  * Time: 20:38
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantPoolEntryInvokeDynamic implements ConstantPoolEntry {
+public class ConstantPoolEntryInvokeDynamic extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_BOOTSTRAP_METHOD_ATTR_INDEX = 1;
     private static final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
 
     private final short bootstrapMethodAttrIndex;
     private final short nameAndTypeIndex;
 
-    public ConstantPoolEntryInvokeDynamic(ByteData data) {
+    public ConstantPoolEntryInvokeDynamic(ConstantPool cp, ByteData data) {
+        super(cp);
         this.bootstrapMethodAttrIndex = data.getS2At(OFFSET_OF_BOOTSTRAP_METHOD_ATTR_INDEX);
         this.nameAndTypeIndex = data.getS2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
     }

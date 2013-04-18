@@ -15,7 +15,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 20:37
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
+public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     private final long OFFSET_OF_CLASS_INDEX = 1;
     private final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
     private final boolean interfaceMethod;
@@ -24,13 +24,12 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
 
     private final short classIndex;
     private final short nameAndTypeIndex;
-    private final ConstantPool cp;
 
-    public ConstantPoolEntryMethodRef(ByteData data, boolean interfaceMethod, ConstantPool cp) {
+    public ConstantPoolEntryMethodRef(ConstantPool cp, ByteData data, boolean interfaceMethod) {
+        super(cp);
         this.classIndex = data.getS2At(OFFSET_OF_CLASS_INDEX);
         this.nameAndTypeIndex = data.getS2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
         this.interfaceMethod = interfaceMethod;
-        this.cp = cp;
     }
 
     @Override
@@ -51,7 +50,7 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
     }
 
     public ConstantPoolEntryClass getClassEntry() {
-        return cp.getClassEntry(classIndex);
+        return getCp().getClassEntry(classIndex);
     }
 
     public short getNameAndTypeIndex() {
@@ -63,6 +62,7 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
     //
     public MethodPrototype getMethodPrototype() {
         if (methodPrototype == null) {
+            ConstantPool cp = getCp();
             JavaTypeInstance classType = cp.getClassEntry(classIndex).getTypeInstance(cp);
             // Figure out the non generic version of this
             ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(nameAndTypeIndex);
@@ -85,7 +85,7 @@ public class ConstantPoolEntryMethodRef implements ConstantPoolEntry {
     }
 
     public String getName() {
-        return cp.getNameAndTypeEntry(nameAndTypeIndex).getName(cp).getValue();
+        return getCp().getNameAndTypeEntry(nameAndTypeIndex).getName(getCp()).getValue();
     }
 
     public boolean isInitMethod() {

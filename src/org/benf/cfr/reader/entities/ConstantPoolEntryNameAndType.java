@@ -11,7 +11,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 20:34
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantPoolEntryNameAndType implements ConstantPoolEntry {
+public class ConstantPoolEntryNameAndType extends AbstractConstantPoolEntry {
     private final long OFFSET_OF_NAME_INDEX = 1;
     private final long OFFSET_OF_DESCRIPTOR_INDEX = 3;
 
@@ -19,7 +19,8 @@ public class ConstantPoolEntryNameAndType implements ConstantPoolEntry {
     private final short descriptorIndex;
     private StackDelta[] stackDelta = new StackDelta[2];
 
-    public ConstantPoolEntryNameAndType(ByteData data) {
+    public ConstantPoolEntryNameAndType(ConstantPool cp, ByteData data) {
+        super(cp);
         this.nameIndex = data.getS2At(OFFSET_OF_NAME_INDEX);
         this.descriptorIndex = data.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
     }

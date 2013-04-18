@@ -11,12 +11,13 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 20:35
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantPoolEntryInteger implements ConstantPoolEntry, ConstantPoolEntryLiteral {
+public class ConstantPoolEntryInteger extends AbstractConstantPoolEntry implements ConstantPoolEntryLiteral {
     private final long OFFSET_OF_BYTES = 1;
 
     private final int value;
 
-    public ConstantPoolEntryInteger(ByteData data) {
+    public ConstantPoolEntryInteger(ConstantPool cp, ByteData data) {
+        super(cp);
         this.value = data.getS4At(OFFSET_OF_BYTES);
     }
 

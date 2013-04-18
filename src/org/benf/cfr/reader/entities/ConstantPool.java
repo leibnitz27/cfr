@@ -31,6 +31,7 @@ public class ConstantPool {
     private final List<ConstantPoolEntry> entries;
     private final CFRState cfrState;
     private final ClassCache classCache;
+    private boolean isLoaded = false;
 
     public ConstantPool(CFRState cfrState, ByteData raw, short count) {
         this.cfrState = cfrState;
@@ -41,6 +42,7 @@ public class ConstantPool {
         length = processRaw(raw, count, res);
         entries = res;
         this.classCache = cfrState.getClassCache();
+        this.isLoaded = true;
     }
 
     public CFRState getCFRState() {
@@ -58,6 +60,10 @@ public class ConstantPool {
         d.print("\n");
     }
 
+    public boolean isLoaded() {
+        return isLoaded;
+    }
+
     private long processRaw(ByteData raw, short count, List<ConstantPoolEntry> tgt) {
         OffsettingByteData data = raw.getOffsettingOffsetData(0);
         logger.info("Processing " + count + " constpool entries.");
@@ -66,46 +72,46 @@ public class ConstantPool {
             ConstantPoolEntry cpe;
             switch (type) {
                 case CPT_NameAndType:
-                    cpe = new ConstantPoolEntryNameAndType(data);
+                    cpe = new ConstantPoolEntryNameAndType(this, data);
                     break;
                 case CPT_String:
-                    cpe = new ConstantPoolEntryString(data);
+                    cpe = new ConstantPoolEntryString(this, data);
                     break;
                 case CPT_FieldRef:
-                    cpe = new ConstantPoolEntryFieldRef(data);
+                    cpe = new ConstantPoolEntryFieldRef(this, data);
                     break;
                 case CPT_MethodRef:
-                    cpe = new ConstantPoolEntryMethodRef(data, false, this);
+                    cpe = new ConstantPoolEntryMethodRef(this, data, false);
                     break;
                 case CPT_InterfaceMethodRef:
-                    cpe = new ConstantPoolEntryMethodRef(data, true, this);
+                    cpe = new ConstantPoolEntryMethodRef(this, data, true);
                     break;
                 case CPT_Class:
-                    cpe = new ConstantPoolEntryClass(data);
+                    cpe = new ConstantPoolEntryClass(this, data);
                     break;
                 case CPT_Double:
-                    cpe = new ConstantPoolEntryDouble(data);
+                    cpe = new ConstantPoolEntryDouble(this, data);
                     break;
                 case CPT_Float:
-                    cpe = new ConstantPoolEntryFloat(data);
+                    cpe = new ConstantPoolEntryFloat(this, data);
                     break;
                 case CPT_Long:
-                    cpe = new ConstantPoolEntryLong(data);
+                    cpe = new ConstantPoolEntryLong(this, data);
                     break;
                 case CPT_Integer:
-                    cpe = new ConstantPoolEntryInteger(data);
+                    cpe = new ConstantPoolEntryInteger(this, data);
                     break;
                 case CPT_UTF8:
-                    cpe = new ConstantPoolEntryUTF8(data);
+                    cpe = new ConstantPoolEntryUTF8(this, data);
                     break;
                 case CPT_MethodHandle:
-                    cpe = new ConstantPoolEntryMethodHandle(data, this);
+                    cpe = new ConstantPoolEntryMethodHandle(this, data);
                     break;
                 case CPT_MethodType:
-                    cpe = new ConstantPoolEntryMethodType(data);
+                    cpe = new ConstantPoolEntryMethodType(this, data);
                     break;
                 case CPT_InvokeDynamic:
-                    cpe = new ConstantPoolEntryInvokeDynamic(data);
+                    cpe = new ConstantPoolEntryInvokeDynamic(this, data);
                     break;
                 default:
                     throw new ConfusedCFRException("Invalid constant pool entry : " + type);

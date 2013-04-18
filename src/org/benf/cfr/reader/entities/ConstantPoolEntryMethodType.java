@@ -10,12 +10,13 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 20:38
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantPoolEntryMethodType implements ConstantPoolEntry {
+public class ConstantPoolEntryMethodType extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_DESCRIPTOR_INDEX = 1;
 
     private final short descriptorIndex;
 
-    public ConstantPoolEntryMethodType(ByteData data) {
+    public ConstantPoolEntryMethodType(ConstantPool cp, ByteData data) {
+        super(cp);
         this.descriptorIndex = data.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
     }
 
