@@ -54,8 +54,8 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
         return getCp().getClassEntry(classIndex);
     }
 
-    public short getNameAndTypeIndex() {
-        return nameAndTypeIndex;
+    public ConstantPoolEntryNameAndType getNameAndTypeEntry() {
+        return getCp().getNameAndTypeEntry(nameAndTypeIndex);
     }
 
     //

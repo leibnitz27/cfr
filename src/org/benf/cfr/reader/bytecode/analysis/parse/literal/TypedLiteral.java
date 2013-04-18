@@ -177,7 +177,7 @@ public class TypedLiteral {
     }
 
     public static TypedLiteral getMethodType(ConstantPoolEntryMethodType methodType, ConstantPool cp) {
-        ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(methodType.getDescriptorIndex());
+        ConstantPoolEntryUTF8 descriptor = methodType.getDescriptor();
         JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodType");
         return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), descriptor);
     }

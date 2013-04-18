@@ -40,8 +40,8 @@ public class ConstantPoolEntryInvokeDynamic extends AbstractConstantPoolEntry {
         return bootstrapMethodAttrIndex;
     }
 
-    public short getNameAndTypeIndex() {
-        return nameAndTypeIndex;
+    public ConstantPoolEntryNameAndType getNameAndTypeEntry() {
+        return getCp().getNameAndTypeEntry(nameAndTypeIndex);
     }
 
     @Override

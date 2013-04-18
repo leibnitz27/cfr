@@ -35,7 +35,7 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         this.object = object;
         this.args = args;
         this.cp = cp;
-        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
+        ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
         String funcName = nameAndType.getName().getValue();
         // Most of the time a member function invokation for a constructor will
         // get pulled up into a constructorInvokation, however, when it's a super call, it won't.

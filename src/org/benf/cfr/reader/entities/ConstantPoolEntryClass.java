@@ -60,10 +60,6 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
         return javaTypeInstance;
     }
 
-    public short getNameIndex() {
-        return nameIndex;
-    }
-
     @Override
     public StackType getStackType() {
         return StackType.REF;

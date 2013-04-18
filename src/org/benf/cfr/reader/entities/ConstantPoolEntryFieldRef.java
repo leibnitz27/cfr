@@ -39,10 +39,6 @@ public class ConstantPoolEntryFieldRef extends AbstractConstantPoolEntry {
                 getJavaTypeInstance());
     }
 
-    public short getClassIndex() {
-        return classIndex;
-    }
-
     public ConstantPoolEntryClass getClassEntry() {
         return getCp().getClassEntry(classIndex);
     }

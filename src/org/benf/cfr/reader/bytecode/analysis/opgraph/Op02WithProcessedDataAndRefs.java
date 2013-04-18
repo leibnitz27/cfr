@@ -265,7 +265,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             special = true;
             JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
             JavaTypeInstance callType = function.getClassEntry().getTypeInstance();
-            ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
+            ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
             String funcName = nameAndType.getName().getValue();
             if (funcName.equals("<init>")) {
                 if (!(callType.equals(objType) ||
@@ -294,7 +294,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private Statement buildInvokeDynamic(Method method) {
         ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
 
-        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(invokeDynamic.getNameAndTypeIndex());
+        ConstantPoolEntryNameAndType nameAndType = invokeDynamic.getNameAndTypeEntry();
 
         // Should have this as a member on name and type
         ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();

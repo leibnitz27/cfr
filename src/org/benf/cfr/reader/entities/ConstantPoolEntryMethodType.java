@@ -30,8 +30,8 @@ public class ConstantPoolEntryMethodType extends AbstractConstantPoolEntry {
         d.print(this.toString());
     }
 
-    public short getDescriptorIndex() {
-        return descriptorIndex;
+    public ConstantPoolEntryUTF8 getDescriptor() {
+        return getCp().getUTF8Entry(descriptorIndex);
     }
 
     @Override

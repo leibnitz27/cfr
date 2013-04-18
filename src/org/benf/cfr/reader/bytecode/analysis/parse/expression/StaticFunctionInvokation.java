@@ -62,7 +62,7 @@ public class StaticFunctionInvokation extends AbstractExpression {
         StringBuilder sb = new StringBuilder();
         sb.append(clazz.toString());
         sb.append(".");
-        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
+        ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
         sb.append(nameAndType.getName().getValue());
         sb.append("(");
         boolean first = true;
@@ -84,7 +84,7 @@ public class StaticFunctionInvokation extends AbstractExpression {
 
 
     public String getName() {
-        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(function.getNameAndTypeIndex());
+        ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
         return nameAndType.getName().getValue();
     }
 

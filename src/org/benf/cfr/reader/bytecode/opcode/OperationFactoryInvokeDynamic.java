@@ -33,7 +33,7 @@ public class OperationFactoryInvokeDynamic extends OperationFactoryDefault {
                                     StackSim stackSim, Method method) {
         ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
 
-        ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(invokeDynamic.getNameAndTypeIndex());
+        ConstantPoolEntryNameAndType nameAndType = invokeDynamic.getNameAndTypeEntry();
         return nameAndType.getStackDelta(false);
     }
 }
