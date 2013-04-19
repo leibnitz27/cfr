@@ -3,10 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokation;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewObject;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.util.MapFactory;
@@ -59,14 +56,21 @@ public class CreationCollector {
             MemberFunctionInvokation memberFunctionInvokation = constructionValue.getFirst();
             NewObject newObject = creationValue.getFirst();
 
+            AbstractConstructorInvokation constructorInvokation = null;
+            if (newObject.getType().getTypeInstance().getInnerClassHereInfo().isAnoynmousInnerClass()) {
+                constructorInvokation = new ConstructorInvokationAnoynmousInner(
+                        memberFunctionInvokation.getCp(),
+                        newObject.getType(),
+                        memberFunctionInvokation.getArgs());
+            } else {
+                constructorInvokation = new ConstructorInvokationSimple(
+                        memberFunctionInvokation.getCp(),
+                        memberFunctionInvokation.getFunction(),
+                        newObject.getType(),
+                        memberFunctionInvokation.getArgs());
+            }
 
-            AssignmentSimple replacement = new AssignmentSimple(lValue,
-                    new ConstructorInvokation(
-                            memberFunctionInvokation.getCp(),
-                            memberFunctionInvokation.getFunction(),
-                            newObject.getType(),
-                            memberFunctionInvokation.getArgs())
-            );
+            AssignmentSimple replacement = new AssignmentSimple(lValue, constructorInvokation);
 
             lValue.getStackEntry().decrementUsage();
             StatementContainer constructionContainer = constructionValue.getSecond();

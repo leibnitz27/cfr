@@ -496,10 +496,9 @@ public class ClassFile {
         }
         if (!methods.isEmpty()) {
             for (Method meth : methods) {
-                if (!meth.isHiddenSynthetic()) {
-                    d.newln();
-                    meth.dump(d, true, constantPool);
-                }
+                if (meth.isHiddenFromDisplay()) continue;
+                d.newln();
+                meth.dump(d, true, constantPool);
             }
         }
         d.newln();
@@ -526,6 +525,7 @@ public class ClassFile {
         if (!methods.isEmpty()) {
             for (Method meth : methods) {
                 if (meth.isConstructor()) continue;
+                if (meth.isHiddenFromDisplay()) continue;
                 d.newln();
                 meth.dump(d, true, constantPool);
             }

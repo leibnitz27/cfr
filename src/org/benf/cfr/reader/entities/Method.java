@@ -88,13 +88,17 @@ public class Method implements KnowsRawSize {
         this.name = methodName;
 
         this.methodPrototype = generateMethodPrototype();
+        if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
+                cp.getCFRState().hideBridgeMethods()) {
+            this.hidden = true;
+        }
     }
 
     public void hideSynthetic() {
         this.hidden = true;
     }
 
-    public boolean isHiddenSynthetic() {
+    public boolean isHiddenFromDisplay() {
         return hidden;
     }
 

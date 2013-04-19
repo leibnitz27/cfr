@@ -4,7 +4,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -13,7 +15,6 @@ import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 
@@ -23,20 +24,18 @@ import java.util.List;
  * Date: 16/03/2012
  * Time: 17:26
  */
-public class ConstructorInvokation extends AbstractExpression {
-    private final ConstantPoolEntryMethodRef function;
+public abstract class AbstractConstructorInvokation extends AbstractExpression {
     private final ConstantPoolEntryClass type;
-    private final JavaTypeInstance clazz;
     private final List<Expression> args;
-    private final ConstantPool cp;
 
-    public ConstructorInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, ConstantPoolEntryClass type, List<Expression> args) {
+    public AbstractConstructorInvokation(ConstantPoolEntryClass type, List<Expression> args) {
         super(new InferredJavaType(type.getTypeInstance(), InferredJavaType.Source.EXPRESSION));
-        this.function = function;
         this.type = type;
         this.args = args;
-        this.cp = cp;
-        this.clazz = type.getTypeInstance();
+    }
+
+    public List<Expression> getArgs() {
+        return args;
     }
 
     @Override
@@ -58,36 +57,6 @@ public class ConstructorInvokation extends AbstractExpression {
     public JavaTypeInstance getTypeInstance() {
         return type.getTypeInstance();
     }
-
-    private Dumper toStringAsAnonymousConstruction(Dumper d) {
-        // We need the inner classes on the anonymous class (!)
-        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(clazz, true);
-
-        d.print("new ");
-        anonymousClassFile.dumpAsAnonymousInnerClass(d);
-        return d;
-    }
-
-    @Override
-    public Dumper dump(Dumper d) {
-        InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
-        if (innerClassInfo.isAnoynmousInnerClass()) {
-            return toStringAsAnonymousConstruction(d);
-        }
-
-        d.print("new ").print(clazz.toString()).print("(");
-        boolean first = true;
-        int start = innerClassInfo.isHideSyntheticThis() ? 1 : 0;
-        for (int i = start; i < args.size(); ++i) {
-            Expression arg = args.get(i);
-            if (!first) d.print(", ");
-            first = false;
-            d.dump(arg);
-        }
-        d.print(")");
-        return d;
-    }
-
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {

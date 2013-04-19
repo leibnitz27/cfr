@@ -93,6 +93,8 @@ public class CFRState {
             "removeboilerplate", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> REMOVE_INNER_CLASS_SYNTHETICS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "removeinnerclasssynthetics", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> HIDE_BRIDGE_METHODS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "hidebridgemethods", defaultTrueBooleanDecoder);
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -122,6 +124,10 @@ public class CFRState {
 
     public boolean isLenient() {
         return false;
+    }
+
+    public boolean hideBridgeMethods() {
+        return getBooleanOpt(HIDE_BRIDGE_METHODS);
     }
 
     public boolean analyseMethod(String thisMethodName) {
@@ -282,7 +288,9 @@ public class CFRState {
         @Override
         @SuppressWarnings("unchecked")
         public List<? extends Argument<?, ?>> getArguments() {
-            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR, COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE, REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS);
+            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR,
+                    COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
+                    REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS);
         }
 
         @Override
