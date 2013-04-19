@@ -24,8 +24,8 @@ public class JSRRetStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("Ret");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("Ret");
     }
 
     @Override
@@ -36,11 +36,6 @@ public class JSRRetStatement extends AbstractStatement {
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
         ret = expressionRewriter.rewriteExpression(ret, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
-    }
-
-    @Override
-    public String toString() {
-        return "JSRRet statement";
     }
 
     @Override

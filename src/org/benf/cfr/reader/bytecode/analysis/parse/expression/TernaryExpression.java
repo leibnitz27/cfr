@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,10 +35,9 @@ public class TernaryExpression extends AbstractExpression {
         return new InferredJavaType(a.getRawType(), InferredJavaType.Source.OPERATION);
     }
 
-
     @Override
-    public String toString() {
-        return "(" + condition.toString() + ") ? (" + lhs.toString() + ") : (" + rhs.toString() + ")";
+    public Dumper dump(Dumper d) {
+        return d.print("(").dump(condition).print(") ? (").dump(lhs).print(") : (").dump(rhs).print(")");
     }
 
     @Override

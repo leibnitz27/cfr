@@ -29,8 +29,8 @@ public class UnstructuredFor extends AbstractUnStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("** for (" + initial + ";" + condition + "; " + assignment + ")\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("** for (").dump(initial).print("; ").dump(condition).print("; ").dump(assignment).print(")\n");
     }
 
     @Override

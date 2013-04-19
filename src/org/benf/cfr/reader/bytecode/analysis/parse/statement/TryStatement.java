@@ -24,8 +24,8 @@ public class TryStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("try {\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("try {\n");
     }
 
     @Override
@@ -34,11 +34,6 @@ public class TryStatement extends AbstractStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
-    }
-
-    @Override
-    public String toString() {
-        return "TryStatement";
     }
 
     @Override

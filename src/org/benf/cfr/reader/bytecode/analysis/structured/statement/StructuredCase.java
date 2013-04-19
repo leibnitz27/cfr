@@ -47,7 +47,7 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         if (values.isEmpty()) {
             dumper.print("default: ");
         } else {
@@ -61,10 +61,11 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
                         continue;
                     }
                 }
-                dumper.print("case " + value + ": ");
+                dumper.print("case ").dump(value).print(": ");
             }
         }
         getBody().dump(dumper);
+        return dumper;
     }
 
     @Override

@@ -19,8 +19,8 @@ public class Nop extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("NOP\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("NOP\n");
     }
 
     @Override

@@ -25,8 +25,8 @@ public class MonitorEnterStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("MONITORENTER : " + monitor + " [" + blockIdentifier + "]\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("MONITORENTER : ").dump(monitor).print(" [" + blockIdentifier + "]\n");
     }
 
     @Override
@@ -37,11 +37,6 @@ public class MonitorEnterStatement extends AbstractStatement {
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
         monitor = expressionRewriter.rewriteExpression(monitor, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
-    }
-
-    @Override
-    public String toString() {
-        return "MonitorEnter : " + monitor;
     }
 
     public Expression getMonitor() {

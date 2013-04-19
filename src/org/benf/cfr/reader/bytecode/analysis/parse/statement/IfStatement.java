@@ -39,9 +39,9 @@ public class IfStatement extends GotoStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("if (" + condition.toString() + ") ");
-        super.dump(dumper);
+    public Dumper dump(Dumper dumper) {
+        dumper.print("if (").dump(condition).print(") ");
+        return super.dump(dumper);
     }
 
     @Override

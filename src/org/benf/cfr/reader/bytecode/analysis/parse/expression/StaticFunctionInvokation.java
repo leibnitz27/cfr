@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.ConstantPoolEntryNameAndType;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -58,21 +59,18 @@ public class StaticFunctionInvokation extends AbstractExpression {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(clazz.toString());
-        sb.append(".");
+    public Dumper dump(Dumper d) {
+        d.print(clazz.toString() + ".");
         ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
-        sb.append(nameAndType.getName().getValue());
-        sb.append("(");
+        d.print(nameAndType.getName().getValue() + "(");
         boolean first = true;
         for (Expression arg : args) {
-            if (!first) sb.append(", ");
+            if (!first) d.print(", ");
             first = false;
-            sb.append(arg.toString());
+            d.dump(arg);
         }
-        sb.append(")");
-        return sb.toString();
+        d.print(")");
+        return d;
     }
 
     @Override

@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -66,8 +67,8 @@ public class StaticVariable extends AbstractLValue {
     }
 
     @Override
-    public String toString() {
-        return clazz.toString() + "." + varName;
+    public Dumper dump(Dumper d) {
+        return d.print(clazz.toString() + "." + varName);
     }
 
     @Override

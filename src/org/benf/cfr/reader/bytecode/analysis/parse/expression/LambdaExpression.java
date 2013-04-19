@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -44,27 +45,24 @@ public class LambdaExpression extends AbstractExpression {
         return this;
     }
 
-    private boolean comma(boolean first, StringBuilder sb) {
+    private boolean comma(boolean first, Dumper d) {
         if (!first) {
-            sb.append(", ");
+            d.print(", ");
         }
         return false;
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
+    public Dumper dump(Dumper d) {
         boolean multi = args.size() > 1;
         boolean first = true;
-        if (multi) sb.append('(');
+        if (multi) d.print("(");
         for (LValue lValue : args) {
-            first = comma(first, sb);
-            sb.append(lValue);
+            first = comma(first, d);
+            d.dump(lValue);
         }
-        if (multi) sb.append(')');
-        sb.append(" -> ");
-        sb.append(result);
-        return sb.toString();
+        if (multi) d.print(")");
+        return d.print(" -> ").dump(result);
     }
 
     @Override

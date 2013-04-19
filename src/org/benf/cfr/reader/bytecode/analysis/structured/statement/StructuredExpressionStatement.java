@@ -25,9 +25,10 @@ public class StructuredExpressionStatement extends AbstractStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-
-        dumper.print(expression.toString() + (inline ? "" : ";\n"));
+    public Dumper dump(Dumper dumper) {
+        dumper.dump(expression);
+        if (!inline) dumper.endCodeln();
+        return dumper;
     }
 
     @Override

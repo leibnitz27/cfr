@@ -15,6 +15,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.output.Dumpable;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.AbstractList;
 import java.util.Collection;
@@ -181,7 +183,14 @@ public class WildcardMatch {
         return pattern.equals(test);
     }
 
-    public class LValueWildcard implements LValue, Wildcard<LValue> {
+    private static class DebugDumpable implements Dumpable {
+        @Override
+        public Dumper dump(Dumper dumper) {
+            return dumper.print("" + getClass() + " : " + toString());
+        }
+    }
+
+    public class LValueWildcard extends DebugDumpable implements LValue, Wildcard<LValue> {
         private final String name;
         private transient LValue matchedValue;
 
@@ -242,7 +251,7 @@ public class WildcardMatch {
         }
     }
 
-    private abstract class AbstractBaseExpressionWildcard implements Expression {
+    private abstract class AbstractBaseExpressionWildcard extends DebugDumpable implements Expression {
 
         @Override
         public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
@@ -279,10 +288,9 @@ public class WildcardMatch {
             return InferredJavaType.IGNORE;
         }
 
-
         @Override
-        public String toStringWithOuterPrecedence(int outerPrecedence) {
-            return toString();
+        public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
+            return dump(d);
         }
     }
 

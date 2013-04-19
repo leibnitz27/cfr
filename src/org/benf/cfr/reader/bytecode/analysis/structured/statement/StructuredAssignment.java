@@ -31,12 +31,14 @@ public class StructuredAssignment extends AbstractStructuredStatement {
         this.isCreator = false;
     }
 
+
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         if (isCreator) {
             dumper.print(lvalue.getInferredJavaType().getJavaTypeInstance().toString() + " ");
         }
-        dumper.print(lvalue.toString() + " = " + rvalue.toString() + ";\n");
+        dumper.dump(lvalue).print(" = ").dump(rvalue).endCodeln();
+        return dumper;
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -48,8 +49,8 @@ public class FieldVariable extends AbstractLValue {
     }
 
     @Override
-    public String toString() {
-        return object + "." + field.getLocalName();
+    public Dumper dump(Dumper d) {
+        return object.dump(d).print(".").print(field.getLocalName());
     }
 
     @Override

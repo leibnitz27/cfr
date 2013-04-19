@@ -15,9 +15,11 @@ public interface Dumper {
 
     void removePendingCarriageReturn();
 
-    void print(String s);
+    Dumper print(String s);
 
     Dumper newln();
+
+    Dumper endCodeln();
 
     void line();
 
@@ -26,4 +28,6 @@ public interface Dumper {
     void indent(int diff);
 
     void dump(List<? extends Dumpable> d);
+
+    Dumper dump(Dumpable d);
 }

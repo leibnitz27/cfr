@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.ConstantPoolEntryNameAndType;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -61,25 +62,23 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         return this;
     }
 
-
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
+    public Dumper dump(Dumper d) {
         String comment = null;
-        sb.append(object.toString());
+        d.dump(object);
 
-        if (name != null) sb.append(".").append(name);
-        sb.append("(");
+        if (name != null) d.print("." + name);
+        d.print("(");
         boolean first = true;
         for (int x = 0; x < args.size(); ++x) {
             Expression arg = args.get(x);
-            if (!first) sb.append(", ");
+            if (!first) d.print(", ");
             first = false;
-            sb.append(methodPrototype.getAppropriatelyCastedArgumentString(arg, x));
+            methodPrototype.dumpAppropriatelyCastedArgumentString(arg, x, d);
         }
-        sb.append(")");
-        if (comment != null) sb.append(comment);
-        return sb.toString();
+        d.print(")");
+        if (comment != null) d.print(comment);
+        return d;
     }
 
     public Expression getObject() {

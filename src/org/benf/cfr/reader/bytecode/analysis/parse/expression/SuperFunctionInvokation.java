@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -62,21 +63,21 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
         return (args.size() == (isSyntheticThisFirstArg() ? 1 : 0));
     }
 
+
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("super(");
+    public Dumper dump(Dumper d) {
+        d.print("super(");
         boolean first = true;
 
         int start = isSyntheticThisFirstArg() ? 1 : 0;
         for (int x = start; x < args.size(); ++x) {
             Expression arg = args.get(x);
-            if (!first) sb.append(", ");
+            if (!first) d.print(", ");
             first = false;
-            sb.append(methodPrototype.getAppropriatelyCastedArgumentString(arg, x));
+            methodPrototype.dumpAppropriatelyCastedArgumentString(arg, x, d);
         }
-        sb.append(")");
-        return sb.toString();
+        d.print(")");
+        return d;
     }
 
     public Expression getObject() {

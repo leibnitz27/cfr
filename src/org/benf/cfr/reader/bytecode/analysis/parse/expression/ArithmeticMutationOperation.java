@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,8 +29,8 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
     }
 
     @Override
-    public String toString() {
-        return "" + mutated + "" + op.getShowAs() + "=" + mutation.toString();
+    public Dumper dump(Dumper d) {
+        return d.dump(mutated).print(op.getShowAs() + "=").dump(mutation);
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,10 +33,9 @@ public class NewPrimitiveArray extends AbstractNewArray {
         this.type = type;
     }
 
-
     @Override
-    public String toString() {
-        return "new " + type + "[" + size + "]";
+    public Dumper dump(Dumper d) {
+        return d.print("new " + type + "[").dump(size).print("]");
     }
 
     @Override

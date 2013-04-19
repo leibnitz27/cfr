@@ -50,13 +50,8 @@ public class AssignmentPreMutation extends AbstractAssignment {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print(this.toString() + ";\n");
-    }
-
-    @Override
-    public String toString() {
-        return (rvalue.toString());
+    public Dumper dump(Dumper dumper) {
+        return rvalue.dump(dumper).endCodeln();
     }
 
     @Override

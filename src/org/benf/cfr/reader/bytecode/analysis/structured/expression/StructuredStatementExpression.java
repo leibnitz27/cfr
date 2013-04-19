@@ -44,9 +44,7 @@ public class StructuredStatementExpression extends AbstractExpression {
     }
 
     @Override
-    public String toString() {
-        Dumper stringDumper = new ToStringDumper();
-        content.dump(stringDumper);
-        return stringDumper.toString();
+    public Dumper dump(Dumper d) {
+        return content.dump(d);
     }
 }

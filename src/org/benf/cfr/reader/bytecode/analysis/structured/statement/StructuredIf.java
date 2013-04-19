@@ -38,14 +38,15 @@ public class StructuredIf extends AbstractStructuredStatement {
 
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("if (" + conditionalExpression + ") ");
+    public Dumper dump(Dumper dumper) {
+        dumper.print("if (").dump(conditionalExpression).print(") ");
         ifTaken.dump(dumper);
         if (elseBlock != null) {
             dumper.removePendingCarriageReturn();
             dumper.print(" else ");
             elseBlock.dump(dumper);
         }
+        return dumper;
     }
 
     @Override

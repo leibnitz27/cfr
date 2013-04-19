@@ -30,12 +30,13 @@ public class StructuredReturn extends AbstractStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         if (value == null) {
             dumper.print("return;\n");
         } else {
-            dumper.print("return " + value + ";\n");
+            dumper.print("return ").dump(value).print(";\n");
         }
+        return dumper;
     }
 
     public Expression getValue() {

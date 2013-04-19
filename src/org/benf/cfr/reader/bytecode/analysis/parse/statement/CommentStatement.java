@@ -22,8 +22,8 @@ public class CommentStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print(text + "\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print(text + "\n");
     }
 
     @Override
@@ -32,11 +32,6 @@ public class CommentStatement extends AbstractStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
-    }
-
-    @Override
-    public String toString() {
-        return "CommentStatement : " + text;
     }
 
     @Override

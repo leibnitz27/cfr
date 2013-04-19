@@ -11,6 +11,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.output.Dumpable;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Set;
 
@@ -60,14 +62,17 @@ public class ComparisonOperation extends AbstractExpression implements Condition
         return 3;
     }
 
-    private String brace(Expression e) {
-        if (e instanceof ComparisonOperation) return "(" + e + ")";
-        return e.toString();
+    private Dumper brace(Expression e, Dumper d) {
+        if (e instanceof ComparisonOperation) return d.print("(").dump(e).print(")");
+        return e.dump(d);
     }
 
     @Override
-    public String toString() {
-        return brace(lhs) + " " + op.getShowAs() + " " + brace(rhs);
+    public Dumper dump(Dumper d) {
+        brace(lhs, d);
+        d.print(" " + op.getShowAs() + " ");
+        brace(rhs, d);
+        return d;
     }
 
     @Override

@@ -40,10 +40,11 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
-        dumper.print("for (" + itertype + " " + iterator + " : " + list + ") ");
+        dumper.print("for (" + itertype + " ").dump(iterator).print(" : ").dump(list).print(") ");
         getBody().dump(dumper);
+        return dumper;
     }
 
     @Override

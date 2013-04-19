@@ -24,8 +24,8 @@ public class MonitorExitStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("MONITOREXIT : " + monitor + "\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("MONITOREXIT : ").dump(monitor).newln();
     }
 
     @Override
@@ -36,11 +36,6 @@ public class MonitorExitStatement extends AbstractStatement {
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
         monitor = expressionRewriter.rewriteExpression(monitor, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
-    }
-
-    @Override
-    public String toString() {
-        return "MonitorExit : " + monitor;
     }
 
     @Override

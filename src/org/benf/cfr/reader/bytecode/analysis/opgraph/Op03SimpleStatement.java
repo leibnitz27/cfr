@@ -418,7 +418,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         dumper.print("**********\n");
         List<Op03SimpleStatement> reachableNodes = ListFactory.newList();
         GraphVisitorCallee graphVisitorCallee = new GraphVisitorCallee(reachableNodes);
@@ -430,6 +430,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             op.dumpInner(dumper);
         }
         dumper.print("**********\n");
+        return dumper;
     }
 
     public Op04StructuredStatement getStructuredStatementPlaceHolder() {

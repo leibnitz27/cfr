@@ -38,7 +38,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         dumper.print("for (");
         if (initial != null) {
@@ -46,10 +46,11 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
             if (isCreator) {
                 dumper.print(initial.getCreatedLValue().getInferredJavaType().getJavaTypeInstance().toString() + " ");
             }
-            dumper.print(initial.toString());
+            dumper.dump(initial);
         }
-        dumper.print(";" + condition.toString() + "; " + assignment + ") ");
+        dumper.print(";").dump(condition).print("; ").dump(assignment).print(") ");
         getBody().dump(dumper);
+        return dumper;
     }
 
     @Override

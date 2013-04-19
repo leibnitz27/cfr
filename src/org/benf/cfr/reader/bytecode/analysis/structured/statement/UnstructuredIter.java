@@ -26,8 +26,8 @@ public class UnstructuredIter extends AbstractUnStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("** for (" + iterator + " : " + list + ")\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("** for (").dump(iterator).print(" : ").dump(list).print(")\n");
     }
 
     @Override

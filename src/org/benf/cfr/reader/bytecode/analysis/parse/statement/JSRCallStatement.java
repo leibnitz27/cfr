@@ -20,8 +20,8 @@ public class JSRCallStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("CALL " + getTargetStatement(0).getContainer().getLabel() + ";\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("CALL " + getTargetStatement(0).getContainer().getLabel() + ";\n");
     }
 
     @Override
@@ -30,11 +30,6 @@ public class JSRCallStatement extends AbstractStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
-    }
-
-    @Override
-    public String toString() {
-        return "JSRCall statement";
     }
 
     @Override

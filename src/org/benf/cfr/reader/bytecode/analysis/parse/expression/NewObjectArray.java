@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -30,17 +31,16 @@ public class NewObjectArray extends AbstractNewArray {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("new ").append(resultType.getArrayStrippedType());
+    public Dumper dump(Dumper d) {
+        d.print("new " + resultType.getArrayStrippedType());
         int numDims = resultType.getNumArrayDimensions();
         for (Expression dimSize : dimSizes) {
-            sb.append("[").append(dimSize).append("]");
+            d.print("[" + dimSize + "]");
         }
         for (int x = dimSizes.size(); x < numDims; ++x) {
-            sb.append("[]");
+            d.print("[]");
         }
-        return sb.toString();
+        return d;
     }
 
     @Override

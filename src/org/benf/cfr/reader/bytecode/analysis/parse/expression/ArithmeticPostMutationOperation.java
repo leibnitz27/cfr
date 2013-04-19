@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,8 +26,8 @@ public class ArithmeticPostMutationOperation extends AbstractAssignmentExpressio
     }
 
     @Override
-    public String toString() {
-        return "" + mutated + ((op == ArithOp.PLUS) ? "++" : "--");
+    public Dumper dump(Dumper d) {
+        return d.dump(mutated).print((op == ArithOp.PLUS) ? "++" : "--");
     }
 
     @Override

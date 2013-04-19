@@ -29,9 +29,10 @@ public class StructuredSynchronized extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("synchronized (" + monitor.toString() + ") ");
+    public Dumper dump(Dumper dumper) {
+        dumper.print("synchronized (").dump(monitor).print(") ");
         getBody().dump(dumper);
+        return dumper;
     }
 
     @Override

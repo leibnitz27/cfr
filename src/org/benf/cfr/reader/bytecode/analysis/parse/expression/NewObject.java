@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,8 +31,8 @@ public class NewObject extends AbstractExpression {
     }
 
     @Override
-    public String toString() {
-        return "new " + typeInstance;
+    public Dumper dump(Dumper d) {
+        return d.print("new " + typeInstance);
     }
 
     @Override

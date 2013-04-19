@@ -26,8 +26,8 @@ public class UnstructuredSwitch extends AbstractUnStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("** switch (" + switchOn + ")\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("** switch (").dump(switchOn).print(")\n");
     }
 
     @Override

@@ -24,8 +24,8 @@ public class ExpressionStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print(expression.toString() + ";\n");
+    public Dumper dump(Dumper d) {
+        return expression.dump(d).endCodeln();
     }
 
     @Override

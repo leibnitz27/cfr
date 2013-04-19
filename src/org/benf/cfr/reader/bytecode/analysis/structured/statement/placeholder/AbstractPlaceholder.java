@@ -75,6 +75,7 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
+        return dumper;
     }
 }

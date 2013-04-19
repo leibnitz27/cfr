@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Set;
 
@@ -43,8 +44,8 @@ public class BooleanExpression extends AbstractExpression implements Conditional
     }
 
     @Override
-    public String toString() {
-        return inner.toString();
+    public Dumper dump(Dumper d) {
+        return inner.dump(d);
     }
 
     @Override

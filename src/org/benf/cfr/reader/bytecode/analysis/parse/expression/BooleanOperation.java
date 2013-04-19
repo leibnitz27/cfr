@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Set;
 
@@ -49,8 +50,8 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     }
 
     @Override
-    public String toString() {
-        return "(" + lhs.toString() + ") " + op.getShowAs() + " (" + rhs.toString() + ")";
+    public Dumper dump(Dumper d) {
+        return d.print("(").dump(lhs).print(") " + op.getShowAs() + " (").dump(rhs).print(")");
     }
 
     @Override

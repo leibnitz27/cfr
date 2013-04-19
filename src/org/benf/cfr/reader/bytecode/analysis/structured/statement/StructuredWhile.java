@@ -27,10 +27,11 @@ public class StructuredWhile extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
-        dumper.print("while (" + condition.toString() + ") ");
+        dumper.print("while (").dump(condition).print(") ");
         getBody().dump(dumper);
+        return dumper;
     }
 
     @Override

@@ -28,9 +28,10 @@ public class StructuredCatch extends AbstractStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("catch (" + typeName + " " + catching + ") ");
+    public Dumper dump(Dumper dumper) {
+        dumper.print("catch (" + typeName + " ").dump(catching).print(") ");
         catchBlock.dump(dumper);
+        return dumper;
     }
 
 

@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -29,20 +30,19 @@ public class NewAnonymousArray extends AbstractExpression {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("new ").append(resultType.getArrayStrippedType()).append("[]{");
+    public Dumper dump(Dumper d) {
+        d.print("new " + resultType.getArrayStrippedType() + "[]{");
         boolean first = true;
         for (Expression value : values) {
             if (!first) {
-                sb.append(", ");
+                d.print(", ");
             } else {
                 first = false;
             }
-            sb.append(value);
+            d.dump(value);
         }
-        sb.append("}");
-        return sb.toString();
+        d.print("}");
+        return d;
     }
 
     @Override

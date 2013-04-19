@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -44,19 +45,18 @@ public class DynamicInvokation extends AbstractExpression {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("(").append(getInferredJavaType().getCastString()).append(")");
-        sb.append(innerInvokation.toString());
-        sb.append("(");
+    public Dumper dump(Dumper d) {
+        d.print("(" + getInferredJavaType().getCastString() + ")");
+        d.dump(innerInvokation);
+        d.print("(");
         boolean first = true;
         for (Expression arg : dynamicArgs) {
-            if (!first) sb.append(", ");
+            if (!first) d.print(", ");
             first = false;
-            sb.append(arg.toString());
+            d.dump(arg);
         }
-        sb.append(")");
-        return sb.toString();
+        d.print(")");
+        return d;
     }
 
     @Override

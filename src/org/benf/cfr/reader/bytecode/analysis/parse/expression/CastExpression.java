@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,8 +24,8 @@ public class CastExpression extends AbstractExpression {
     }
 
     @Override
-    public String toString() {
-        return "(" + getInferredJavaType().getCastString() + ")" + child;
+    public Dumper dump(Dumper d) {
+        return d.print("(" + getInferredJavaType().getCastString() + ")").dump(child);
     }
 
     @Override

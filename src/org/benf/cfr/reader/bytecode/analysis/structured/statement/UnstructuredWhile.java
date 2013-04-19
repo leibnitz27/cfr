@@ -32,8 +32,14 @@ public class UnstructuredWhile extends AbstractUnStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("** while (" + (condition == null ? "true" : condition.toString()) + ")\n");
+    public Dumper dump(Dumper dumper) {
+        dumper.print("** while (");
+        if (condition == null) {
+            dumper.print("true");
+        } else {
+            dumper.dump(condition);
+        }
+        return dumper.print(")\n");
     }
 
     @Override

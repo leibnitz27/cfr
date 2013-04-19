@@ -13,6 +13,7 @@ import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -199,17 +200,17 @@ public class MethodPrototype {
     }
 
     // Saves us using the above if we don't need to create the cast expression.
-    public String getAppropriatelyCastedArgumentString(Expression expression, int argidx) {
+    public Dumper dumpAppropriatelyCastedArgumentString(Expression expression, int argidx, Dumper d) {
         JavaTypeInstance type = args.get(argidx);
         if (type.isComplexType()) {
-            return expression.toString();
+            return expression.dump(d);
         } else {
             RawJavaType expectedRawJavaType = type.getRawTypeOfSimpleType();
             RawJavaType providedRawJavaType = expression.getInferredJavaType().getRawType();
             if (expectedRawJavaType == providedRawJavaType) {
-                return expression.toString();
+                return expression.dump(d);
             }
-            return "(" + expectedRawJavaType.getCastString() + ")" + expression.toString();
+            return d.print("(" + expectedRawJavaType.getCastString() + ")").dump(expression);
         }
     }
 

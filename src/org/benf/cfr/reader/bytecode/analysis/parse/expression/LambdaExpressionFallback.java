@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -50,38 +51,36 @@ public class LambdaExpressionFallback extends AbstractExpression {
         return this;
     }
 
-    private boolean comma(boolean first, StringBuilder sb) {
+    private boolean comma(boolean first, Dumper d) {
         if (!first) {
-            sb.append(", ");
+            d.print(", ");
         }
         return false;
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
+    public Dumper dump(Dumper d) {
         int n = targetFnArgTypes.size();
-        if (n > 1) sb.append('(');
+        if (n > 1) d.print("(");
         for (int x = 0; x < n; ++x) {
-            if (x > 0) sb.append(", ");
-            sb.append("arg_").append(x);
+            if (x > 0) d.print(", ");
+            d.print("arg_" + x);
         }
-        if (n > 1) sb.append(')');
-        sb.append(" -> ");
-        sb.append(lambdaFnName);
-        sb.append('(');
+        if (n > 1) d.print(")");
+        d.print(" -> ").print(lambdaFnName);
+        d.print("(");
         boolean first = true;
         for (int x = instance ? 1 : 0, cnt = curriedArgs.size(); x < cnt; ++x) {
             Expression c = curriedArgs.get(x);
-            first = comma(first, sb);
-            sb.append(c.toString());
+            first = comma(first, d);
+            d.dump(c);
         }
         for (int x = 0; x < n; ++x) {
-            first = comma(first, sb);
-            sb.append("arg_").append(x);
+            first = comma(first, d);
+            d.print("arg_" + x);
         }
-        sb.append(')');
-        return sb.toString();
+        d.print(")");
+        return d;
     }
 
     @Override

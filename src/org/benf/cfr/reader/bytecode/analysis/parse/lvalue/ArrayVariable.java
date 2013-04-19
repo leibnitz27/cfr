@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,10 +30,9 @@ public class ArrayVariable extends AbstractLValue {
         throw new ConfusedCFRException("NYI");
     }
 
-
     @Override
-    public String toString() {
-        return arrayIndex.toString();
+    public Dumper dump(Dumper d) {
+        return arrayIndex.dump(d);
     }
 
     @Override

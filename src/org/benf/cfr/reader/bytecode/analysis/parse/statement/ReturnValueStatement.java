@@ -24,8 +24,8 @@ public class ReturnValueStatement extends ReturnStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("return " + rvalue.toString() + ";\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("return ").dump(rvalue).endCodeln();
     }
 
     @Override

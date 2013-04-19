@@ -19,8 +19,8 @@ public class ReturnNothingStatement extends ReturnStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("return;\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("return;\n");
     }
 
     @Override

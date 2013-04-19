@@ -30,9 +30,12 @@ public class ForStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("for (" + (initial == null ? "" : initial) + ";" + condition.toString() + "; " + assignment + ") ");
+    public Dumper dump(Dumper dumper) {
+        dumper.print("for (");
+        if (initial != null) dumper.dump(initial);
+        dumper.print("; ").dump(condition).print("; ").dump(assignment).print(") ");
         dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
+        return dumper;
     }
 
     @Override

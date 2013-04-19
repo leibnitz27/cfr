@@ -29,12 +29,13 @@ public class StructuredTry extends AbstractStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         dumper.print("try ");
         tryBlock.dump(dumper);
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             catchBlock.dump(dumper);
         }
+        return dumper;
     }
 
     @Override

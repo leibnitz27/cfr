@@ -28,9 +28,10 @@ public class ForIterStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("for (" + iterator + " : " + list + ")");
+    public Dumper dump(Dumper dumper) {
+        dumper.print("for (").dump(iterator).print(" : ").dump(list).print(")");
         dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
+        return dumper;
     }
 
     @Override

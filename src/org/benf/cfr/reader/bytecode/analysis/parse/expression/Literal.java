@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,10 +22,9 @@ public class Literal extends AbstractExpression {
         this.value = value;
     }
 
-
     @Override
-    public String toString() {
-        return "" + value + typeToString();
+    public Dumper dump(Dumper d) {
+        return d.print("" + value + typeToString());
     }
 
     @Override

@@ -33,13 +33,8 @@ public class AssignmentSimple extends AbstractAssignment {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print(this.toString() + ";\n");
-    }
-
-    @Override
-    public String toString() {
-        return (lvalue.toString() + " = " + rvalue.toString());
+    public Dumper dump(Dumper d) {
+        return d.dump(lvalue).print(" = ").dump(rvalue).endCodeln();
     }
 
     @Override

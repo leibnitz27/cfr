@@ -178,23 +178,23 @@ public class Block extends AbstractStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper d) {
         if (containedStatements.isEmpty()) {
-            dumper.print("\n");
-            return;
+            d.print("\n");
+            return d;
         }
-        ;
         try {
-            dumper.print("{\n");
-            dumper.indent(1);
+            d.print("{\n");
+            d.indent(1);
             for (Op04StructuredStatement structuredBlock : containedStatements) {
-                structuredBlock.dump(dumper);
+                structuredBlock.dump(d);
             }
         } finally {
-            dumper.indent(-1);
-            dumper.print("}");
-            dumper.enqueuePendingCarriageReturn();
+            d.indent(-1);
+            d.print("}");
+            d.enqueuePendingCarriageReturn();
         }
+        return d;
     }
 
     public boolean isIndenting() {

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,19 +36,25 @@ public class ArithmeticOperation extends AbstractExpression {
     }
 
     @Override
-    public String toStringWithOuterPrecedence(int outerPrecedence) {
+    public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
         int precedence = op.getPrecedence();
         boolean braceNeeded = true;
         if (outerPrecedence >= 0 && precedence >= 0) {
             if (outerPrecedence <= precedence) braceNeeded = false;
         }
-        return (braceNeeded ? "(" : "") + lhs.toStringWithOuterPrecedence(precedence) + " " + op.getShowAs() + " " + rhs.toStringWithOuterPrecedence(precedence) + (braceNeeded ? ")" : "");
+        if (braceNeeded) d.print("(");
+        lhs.dumpWithOuterPrecedence(d, precedence);
+        d.print(" " + op.getShowAs() + " ");
+        rhs.dumpWithOuterPrecedence(d, precedence);
+        if (braceNeeded) d.print(")");
+        return d;
     }
 
     @Override
-    public String toString() {
-        return toStringWithOuterPrecedence(-1);
+    public Dumper dump(Dumper d) {
+        return dumpWithOuterPrecedence(d, -1);
     }
+
 
     private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {
         LValue contained = expression.getLValue();

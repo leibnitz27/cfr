@@ -28,12 +28,13 @@ public class CompoundStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         dumper.print("{\n");
         for (Statement statement : statements) {
             statement.dump(dumper);
         }
         dumper.print("}\n");
+        return dumper;
     }
 
     @Override

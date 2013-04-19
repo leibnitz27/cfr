@@ -228,7 +228,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     @Override
-    public void dump(Dumper d) {
+    public Dumper dump(Dumper d) {
         for (BlockIdentifier blockIdentifier : containedInTheseBlocks) {
             d.print(" " + blockIdentifier);
         }
@@ -250,6 +250,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             d.print(" " + target.index);
         }
         d.print("\n");
+        return d;
     }
 
     private Statement buildInvoke() {

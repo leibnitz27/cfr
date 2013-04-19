@@ -27,12 +27,18 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         dumper.print("do ");
         getBody().dump(dumper);
         dumper.removePendingCarriageReturn();
-        dumper.print(" while (" + (condition == null ? "true" : condition.toString()) + ");\n");
+        dumper.print(" while (");
+        if (condition == null) {
+            dumper.print("true");
+        } else {
+            dumper.dump(condition);
+        }
+        return dumper.print(");\n");
     }
 
     @Override

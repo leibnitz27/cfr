@@ -29,9 +29,10 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("switch (" + switchOn + ") ");
+    public Dumper dump(Dumper dumper) {
+        dumper.print("switch (").dump(switchOn).print(") ");
         getBody().dump(dumper);
+        return dumper;
     }
 
     @Override

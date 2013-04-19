@@ -12,6 +12,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
@@ -58,37 +59,33 @@ public class ConstructorInvokation extends AbstractExpression {
         return type.getTypeInstance();
     }
 
-    private String toStringAsAnonymousConstruction() {
-        StringBuilder sb = new StringBuilder();
+    private Dumper toStringAsAnonymousConstruction(Dumper d) {
         // We need the inner classes on the anonymous class (!)
         ClassFile anonymousClassFile = cp.getCFRState().getClassFile(clazz, true);
 
-        ToStringDumper d = new ToStringDumper();
-        sb.append("new ");
+        d.print("new ");
         anonymousClassFile.dumpAsAnonymousInnerClass(d);
-        sb.append(d.toString());
-        return sb.toString();
+        return d;
     }
 
     @Override
-    public String toString() {
+    public Dumper dump(Dumper d) {
         InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
         if (innerClassInfo.isAnoynmousInnerClass()) {
-            return toStringAsAnonymousConstruction();
+            return toStringAsAnonymousConstruction(d);
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("new ").append(clazz.toString()).append("(");
+        d.print("new ").print(clazz.toString()).print("(");
         boolean first = true;
         int start = innerClassInfo.isHideSyntheticThis() ? 1 : 0;
         for (int i = start; i < args.size(); ++i) {
             Expression arg = args.get(i);
-            if (!first) sb.append(", ");
+            if (!first) d.print(", ");
             first = false;
-            sb.append(arg.toString());
+            d.dump(arg);
         }
-        sb.append(")");
-        return sb.toString();
+        d.print(")");
+        return d;
     }
 
 

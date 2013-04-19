@@ -25,8 +25,8 @@ public class UnstructuredContinue extends AbstractStructuredContinue {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("** continue;\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("** continue;\n");
     }
 
     @Override

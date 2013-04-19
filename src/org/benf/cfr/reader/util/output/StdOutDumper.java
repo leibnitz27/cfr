@@ -40,17 +40,25 @@ public class StdOutDumper implements Dumper {
     }
 
     @Override
-    public void print(String s) {
+    public Dumper print(String s) {
         processPendingCR();
         doIndent();
         System.out.print(s);
         atStart = false;
         if (s.endsWith("\n")) atStart = true;
+        return this;
     }
 
     @Override
     public Dumper newln() {
         System.out.println("");
+        atStart = true;
+        return this;
+    }
+
+    @Override
+    public Dumper endCodeln() {
+        System.out.println(";");
         atStart = true;
         return this;
     }
@@ -83,5 +91,15 @@ public class StdOutDumper implements Dumper {
         for (Dumpable dumpable : d) {
             dumpable.dump(this);
         }
+    }
+
+    @Override
+    public Dumper dump(Dumpable d) {
+        if (d == null) {
+            print("null");
+            return this;
+        }
+        d.dump(this);
+        return this;
     }
 }

@@ -32,9 +32,16 @@ public class WhileStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("while (" + (condition != null ? condition.toString() : "true") + ") ");
+    public Dumper dump(Dumper dumper) {
+        dumper.print("while (");
+        if (condition == null) {
+            dumper.print("true");
+        } else {
+            dumper.dump(condition);
+        }
+        dumper.print(") ");
         dumper.print(" // ends " + getTargetStatement(getBackJumpIndex()).getContainer().getLabel() + ";\n");
+        return dumper;
     }
 
     public void replaceWithForLoop(AssignmentSimple initial, AbstractAssignmentExpression assignment) {

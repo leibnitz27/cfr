@@ -25,14 +25,15 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         if (values.isEmpty()) {
             dumper.print("** default:\n");
         } else {
             for (Expression value : values) {
-                dumper.print("** case " + value + ":\n");
+                dumper.print("** case ").dump(value).print(":\n");
             }
         }
+        return dumper;
     }
 
     public StructuredStatement getEmptyStructuredCase() {

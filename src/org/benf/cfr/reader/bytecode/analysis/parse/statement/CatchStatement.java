@@ -30,8 +30,8 @@ public class CatchStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("catch ( " + exceptions + " " + catching + " ) {\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("catch ( " + exceptions + " ").dump(catching).print(" ) {\n");
     }
 
     public BlockIdentifier getCatchBlockIdent() {
@@ -53,11 +53,6 @@ public class CatchStatement extends AbstractStatement {
     @Override
     public LValue getCreatedLValue() {
         return catching;
-    }
-
-    @Override
-    public String toString() {
-        return "CatchStatement";
     }
 
     public List<ExceptionGroup.Entry> getExceptions() {

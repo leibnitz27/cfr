@@ -27,8 +27,9 @@ public class UnstructuredCatch extends AbstractUnStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         dumper.print("** catch " + exceptions + " { \n");
+        return dumper;
     }
 
     @Override

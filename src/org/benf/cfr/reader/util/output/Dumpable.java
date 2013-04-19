@@ -8,5 +8,5 @@ package org.benf.cfr.reader.util.output;
  * To change this template use File | Settings | File Templates.
  */
 public interface Dumpable {
-    void dump(Dumper dumper);
+    Dumper dump(Dumper d);
 }

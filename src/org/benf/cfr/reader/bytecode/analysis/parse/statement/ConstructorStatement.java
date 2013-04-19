@@ -27,8 +27,8 @@ public class ConstructorStatement extends AbstractStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("<init>" + invokation.toString() + ";\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("<init>").dump(invokation).print(";\n");
     }
 
     @Override

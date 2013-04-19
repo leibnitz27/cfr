@@ -2,6 +2,9 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.StdOutDumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,5 +26,12 @@ public abstract class AbstractLValue implements LValue {
     @Override
     public InferredJavaType getInferredJavaType() {
         return inferredJavaType;
+    }
+
+    @Override
+    public final String toString() {
+        Dumper d = new ToStringDumper();
+        this.dump(d);
+        return d.toString();
     }
 }

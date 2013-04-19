@@ -21,8 +21,8 @@ public class StructuredThrow extends AbstractStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("throw " + value + ";\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("throw ").dump(value).endCodeln();
     }
 
     @Override

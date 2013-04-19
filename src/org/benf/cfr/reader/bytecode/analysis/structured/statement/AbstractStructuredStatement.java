@@ -7,6 +7,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.StdOutDumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.Vector;
 
@@ -63,5 +66,12 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     @Override
     public void markCreator(LocalVariable localVariable) {
         throw new IllegalArgumentException("Shouldn't be calling markCreator on " + this);
+    }
+
+    @Override
+    public final String toString() {
+        Dumper d = new ToStringDumper();
+        d.print(getClass().toString()).dump(this);
+        return d.toString();
     }
 }

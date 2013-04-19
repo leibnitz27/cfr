@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,9 +25,8 @@ public class ArrayLength extends AbstractExpression {
     }
 
     @Override
-    public String toString() {
-
-        return "" + array + ".length";
+    public Dumper dump(Dumper d) {
+        return d.dump(array).print(".length");
     }
 
     @Override

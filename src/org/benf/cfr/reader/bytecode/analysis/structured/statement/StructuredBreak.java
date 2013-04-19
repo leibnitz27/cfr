@@ -26,12 +26,13 @@ public class StructuredBreak extends AbstractStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
+    public Dumper dump(Dumper dumper) {
         if (localBreak) {
             dumper.print("break;\n");
         } else {
             dumper.print("break " + breakBlock.getName() + ";\n");
         }
+        return dumper;
     }
 
     @Override

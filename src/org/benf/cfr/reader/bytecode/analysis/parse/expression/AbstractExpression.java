@@ -3,6 +3,9 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.StdOutDumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 /**
  * Created with IntelliJ IDEA.
@@ -43,7 +46,15 @@ public abstract class AbstractExpression implements Expression {
     }
 
     @Override
-    public String toStringWithOuterPrecedence(int outerPrecedence) {
-        return toString();
+    public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
+        return dump(d);
     }
+
+    @Override
+    public final String toString() {
+        Dumper d = new ToStringDumper();
+        d.print(getClass().toString()).dump(this);
+        return d.toString();
+    }
+
 }

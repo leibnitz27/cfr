@@ -21,8 +21,8 @@ public class UnstructuredBreak extends AbstractUnStructuredStatement {
     }
 
     @Override
-    public void dump(Dumper dumper) {
-        dumper.print("** break;\n");
+    public Dumper dump(Dumper dumper) {
+        return dumper.print("** break;\n");
     }
 
     @Override
