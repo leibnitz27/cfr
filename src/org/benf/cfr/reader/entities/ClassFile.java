@@ -513,8 +513,9 @@ public class ClassFile {
     }
 
     public void dumpAsAnonymousInnerClass(Dumper d) {
-        dumpHeader(d, false);
-        d.print("{\n");
+        JavaTypeInstance interfaceType = classSignature.getInterfaces().get(0);
+        d.print(interfaceType.toString());
+        d.print("() {\n");
         d.indent(1);
 
         if (!fields.isEmpty()) {
@@ -524,7 +525,7 @@ public class ClassFile {
         }
         if (!methods.isEmpty()) {
             for (Method meth : methods) {
-                if (meth.isConstructor()) continue;
+//                if (meth.isConstructor()) continue;
                 if (meth.isHiddenFromDisplay()) continue;
                 d.newln();
                 meth.dump(d, true, constantPool);

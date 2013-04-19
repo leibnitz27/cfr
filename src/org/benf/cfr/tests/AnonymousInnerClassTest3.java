@@ -8,7 +8,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
  * Date: 11/04/2013
  * Time: 17:49
  */
-public class AnonymousInnerClassTest2 {
+public class AnonymousInnerClassTest3 {
 
     Integer invoker(int arg, UnaryFunction<Integer, Integer> fn) {
         return fn.invoke(arg);
@@ -19,7 +19,11 @@ public class AnonymousInnerClassTest2 {
 
             @Override
             public Integer invoke(Integer arg) {
-                return arg * hashCode() + x;
+                return arg * (new X()).hashCode() + x;
+            }
+
+            class X {
+
             }
         });
     }
