@@ -75,7 +75,7 @@ public class CodeAnalyser {
         OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(0);
         int idx = 1;
         int offset = 0;
-        Dumper dumper = new StdOutDumper();
+        Dumper debugDumper = new StdOutDumper();
 
         // We insert a fake NOP right at the start, so that we always know that each operation has a valid
         // parent.  This sentinel assumption is used when inserting try { catch blocks.
@@ -144,9 +144,9 @@ public class CodeAnalyser {
         Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
 
         if (cfrState.getShowOps() == SHOW_L2_OPS) {
-            dumper.print("Op2 statements:\n");
-            dumper.dump(op2list);
-            dumper.newln().newln();
+            debugDumper.print("Op2 statements:\n");
+            debugDumper.dump(op2list);
+            debugDumper.newln().newln();
         }
 
         // DFS the instructions, unlink any which aren't reachable.
@@ -161,16 +161,16 @@ public class CodeAnalyser {
 
 
         if (cfrState.getShowOps() == SHOW_L3_RAW) {
-            dumper.print("Raw Op3 statements:\n");
+            debugDumper.print("Raw Op3 statements:\n");
             for (Op03SimpleStatement node : op03SimpleParseNodes) {
-                node.dumpInner(dumper);
+                node.dumpInner(debugDumper);
             }
         }
 
         if (cfrState.getShowOps() == SHOW_L3_ORDERED) {
-            dumper.newln().newln();
-            dumper.print("Linked Op3 statements:\n");
-            op03SimpleParseNodes.get(0).dump(dumper);
+            debugDumper.newln().newln();
+            debugDumper.print("Linked Op3 statements:\n");
+            op03SimpleParseNodes.get(0).dump(debugDumper);
         }
 
         // Expand any 'multiple' statements (eg from dups)
@@ -308,9 +308,9 @@ public class CodeAnalyser {
 
 
         if (cfrState.getShowOps() == SHOW_L4_FINAL_OP3) {
-            dumper.newln().newln();
-            dumper.print("Linked Op3 statements:\n");
-            op03SimpleParseNodes.get(0).dump(dumper);
+            debugDumper.newln().newln();
+            debugDumper.print("Linked Op3 statements:\n");
+            op03SimpleParseNodes.get(0).dump(debugDumper);
         }
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
