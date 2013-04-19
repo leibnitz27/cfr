@@ -23,14 +23,4 @@ public class AnonymousInnerClassTest1 {
         });
     }
 
-    public int doit2(int x) {
-        return invoker(x, new Fred());
-    }
-
-    private static class Fred implements UnaryFunction<Integer, Integer> {
-        @Override
-        public Integer invoke(Integer arg) {
-            return arg * 3;
-        }
-    }
 }
