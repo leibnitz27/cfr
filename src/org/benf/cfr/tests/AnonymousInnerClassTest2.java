@@ -14,12 +14,12 @@ public class AnonymousInnerClassTest2 {
         return fn.invoke(arg);
     }
 
-    public int doit(final int x) {
+    public int doit(final int x, final int y) {
         return invoker(x, new UnaryFunction<Integer, Integer>() {
 
             @Override
             public Integer invoke(Integer arg) {
-                return arg * hashCode() + x;
+                return arg * hashCode() + x + y;
             }
         });
     }
