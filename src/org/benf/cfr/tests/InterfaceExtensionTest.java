@@ -9,7 +9,7 @@ package org.benf.cfr.tests;
 public interface InterfaceExtensionTest {
     void test1();
 
-    default public void test2() {
-        System.out.println("fred");
-    }
+//    default public void test2() {
+//        System.out.println("fred");
+//    }
 }

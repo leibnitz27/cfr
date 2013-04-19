@@ -10,7 +10,7 @@ public class InterfaceExtensionImplTest implements InterfaceExtensionTest {
     @Override
     public void test1() {
         System.out.println("Fred");
-        test2();
+        // test2();
     }
 
 }
