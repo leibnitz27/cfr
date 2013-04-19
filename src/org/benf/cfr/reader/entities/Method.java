@@ -199,16 +199,18 @@ public class Method implements KnowsRawSize {
     }
 
     public String getSignatureText(boolean asClass) {
+        StringBuilder sb = new StringBuilder();
+
+        getMethodAnnotationsInto(sb);
+
         Set<AccessFlagMethod> localAccessFlags = accessFlags;
         if (!asClass) {
+            if (codeAttribute != null) sb.append("default ");
             // Dumping as interface.
             localAccessFlags = SetFactory.newSet(localAccessFlags);
             localAccessFlags.remove(AccessFlagMethod.ACC_ABSTRACT);
         }
         String prefix = CollectionUtils.join(localAccessFlags, " ");
-        StringBuilder sb = new StringBuilder();
-
-        getMethodAnnotationsInto(sb);
 
         if (!prefix.isEmpty()) sb.append(prefix).append(' ');
 
@@ -254,8 +256,8 @@ public class Method implements KnowsRawSize {
         }
     }
 
-    public void dump(Dumper d, ConstantPool cp) {
-        d.print(getSignatureText(true));
+    public void dump(Dumper d, boolean asClass, ConstantPool cp) {
+        d.print(getSignatureText(asClass));
         if (codeAttribute == null) {
             d.print(";");
         } else {
