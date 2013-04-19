@@ -535,7 +535,7 @@ public class ClassFile {
         // Yes, anonymous inner classes can have inner classes (!)
         dumpNamedInnerClasses(d);
         d.indent(-1);
-        d.print("}\n");
+        d.print("}");
     }
 
     public void dump(Dumper d) {
