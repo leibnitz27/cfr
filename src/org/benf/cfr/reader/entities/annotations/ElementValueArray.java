@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.entities.annotations;
 
+import org.benf.cfr.reader.util.output.CommaHelp;
+
 import java.util.List;
 
 /**
@@ -20,11 +22,7 @@ public class ElementValueArray implements ElementValue {
         sb.append('{');
         boolean first = true;
         for (ElementValue value : content) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
+            first = CommaHelp.comma(first, sb);
             value.getTextInto(sb);
         }
         sb.append('}');

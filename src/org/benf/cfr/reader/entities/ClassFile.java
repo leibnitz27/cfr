@@ -13,6 +13,7 @@ import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.*;
@@ -398,11 +399,7 @@ public class ClassFile {
         sb.append('<');
         boolean first = true;
         for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
+            first = CommaHelp.comma(first, sb);
             sb.append(formalTypeParameter.toString());
         }
         sb.append('>');

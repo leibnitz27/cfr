@@ -13,6 +13,7 @@ import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -81,11 +82,7 @@ public class MethodPrototype {
         boolean first = true;
         for (int i = start; i < argssize; ++i) {
             JavaTypeInstance arg = args.get(i);
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
+            first = CommaHelp.comma(first, sb);
             annotationsHelper.addAnnotationTextForParameterInto(i, sb);
             if (varargs && (i == argssize - 1)) {
                 if (!(arg instanceof JavaArrayTypeInstance)) {

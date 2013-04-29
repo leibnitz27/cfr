@@ -15,6 +15,7 @@ import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.*;
@@ -229,11 +230,7 @@ public class Method implements KnowsRawSize {
             boolean first = true;
             List<ConstantPoolEntryClass> exceptionClasses = exceptionsAttribute.getExceptionClassList();
             for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(", ");
-                }
+                first = CommaHelp.comma(first, sb);
                 sb.append(exceptionClass.getTypeInstance().getRawName());
             }
             if (asClass) sb.append(' '); // This is the kind of fiddly display we don't want to be doing here.. :(

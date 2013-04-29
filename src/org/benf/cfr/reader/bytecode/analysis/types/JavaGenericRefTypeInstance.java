@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.output.CommaHelp;
 
 import java.util.List;
 
@@ -61,11 +62,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
         sb.append("<");
         boolean first = true;
         for (JavaTypeInstance type : genericTypes) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
+            first = CommaHelp.comma(first, sb);
             sb.append(type.toString());
         }
         sb.append(">");
