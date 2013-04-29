@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.InnerClassConstructorRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.LambdaRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.RedundantSuperRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SyntheticAccessorRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -11,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTrans
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -545,6 +547,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                 removeSyntheticConstructorParam(method, root);
             }
         }
+    }
+
+    public static void inlineSyntheticAccessors(CFRState cfrState, Method method, Op04StructuredStatement root) {
+        JavaTypeInstance classType = method.getClassFile().getClassType();
+        new SyntheticAccessorRewriter(cfrState, classType).rewrite(root);
     }
 
     public static void removeConstructorBoilerplate(Op04StructuredStatement root) {

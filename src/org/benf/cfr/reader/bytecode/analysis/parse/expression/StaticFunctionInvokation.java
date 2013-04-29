@@ -24,21 +24,19 @@ import java.util.List;
 public class StaticFunctionInvokation extends AbstractExpression {
     private final ConstantPoolEntryMethodRef function;
     private final List<Expression> args;
-    private final ConstantPool cp;
     private final JavaTypeInstance clazz;
 
-    private static InferredJavaType getTypeForFunction(ConstantPool cp, ConstantPoolEntryMethodRef function, List<Expression> args) {
+    private static InferredJavaType getTypeForFunction(ConstantPoolEntryMethodRef function, List<Expression> args) {
         InferredJavaType res = new InferredJavaType(
                 function.getMethodPrototype().getReturnType(function.getClassEntry().getTypeInstance(), args),
                 InferredJavaType.Source.EXPRESSION);
         return res;
     }
 
-    public StaticFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, List<Expression> args) {
-        super(getTypeForFunction(cp, function, args));
+    public StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args) {
+        super(getTypeForFunction(function, args));
         this.function = function;
         this.args = args;
-        this.cp = cp;
         this.clazz = function.getClassEntry().getTypeInstance();
     }
 

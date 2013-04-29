@@ -337,6 +337,8 @@ public class CodeAnalyser {
 
         Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);
 
+        Op04StructuredStatement.inlineSyntheticAccessors(cfrState, method, block);
+
         if (cfrState.removeBoilerplate()) {
             if (this.method.isConstructor()) Op04StructuredStatement.removeConstructorBoilerplate(block);
         }

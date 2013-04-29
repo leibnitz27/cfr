@@ -356,7 +356,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         Expression funcCall = null;
         switch (bootstrapBehaviour) {
             case INVOKE_STATIC:
-                funcCall = new StaticFunctionInvokation(cp, methodRef, callargs);
+                funcCall = new StaticFunctionInvokation(methodRef, callargs);
                 break;
             case NEW_INVOKE_SPECIAL:
             default:
@@ -584,7 +584,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 MethodPrototype methodPrototype = function.getMethodPrototype();
                 List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size());
                 methodPrototype.tightenArgs(args);
-                StaticFunctionInvokation funcCall = new StaticFunctionInvokation(cp, function, args);
+                StaticFunctionInvokation funcCall = new StaticFunctionInvokation(function, args);
                 if (stackProduced.size() == 0) {
                     return new ExpressionStatement(funcCall);
                 } else {
