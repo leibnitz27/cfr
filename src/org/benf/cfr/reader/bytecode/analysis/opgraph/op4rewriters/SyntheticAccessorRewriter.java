@@ -95,12 +95,32 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         return lValue;
     }
 
-    private Expression rewriteFunctionExpression(StaticFunctionInvokation functionInvokation) {
+    private Expression rewriteFunctionExpression(final StaticFunctionInvokation functionInvokation) {
         JavaTypeInstance tgtType = functionInvokation.getClazz();
         // Does tgtType have an inner relationship with this?
         boolean child = thisClassType.getInnerClassHereInfo().isInnerClassOf(tgtType);
         boolean parent = tgtType.getInnerClassHereInfo().isInnerClassOf(thisClassType);
         if (!(child || parent)) return functionInvokation;
+
+        ClassFile otherClass = cfrState.getClassFile(tgtType, true);
+        MethodPrototype otherPrototype = functionInvokation.getFunction().getMethodPrototype();
+        /*
+         * We require that the first argument to this method is an instance of the other class.
+         */
+        List<JavaTypeInstance> otherArgs = otherPrototype.getArgs();
+        if (otherArgs.isEmpty()) return functionInvokation;
+        if (!tgtType.equals(otherArgs.get(0))) return functionInvokation;
+
+        Method otherMethod = null;
+        try {
+            otherMethod = otherClass.getMethodByPrototype(otherPrototype);
+        } catch (NoSuchMethodException e) {
+            // Ignore and return.
+        }
+        if (otherMethod == null) return functionInvokation;
+
+        Op04StructuredStatement otherCode = otherMethod.getAnalysis();
+        if (otherCode == null) return functionInvokation;
 
         return functionInvokation;
     }

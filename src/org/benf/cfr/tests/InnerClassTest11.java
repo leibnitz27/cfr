@@ -20,6 +20,7 @@ public class InnerClassTest11 {
         private int x;
 
         public Inner1(int x) {
+            a += x;
             this.x = x + 1 + a;
         }
 

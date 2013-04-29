@@ -91,4 +91,8 @@ public class StaticFunctionInvokation extends AbstractExpression {
     public List<Expression> getArgs() {
         return args;
     }
+
+    public ConstantPoolEntryMethodRef getFunction() {
+        return function;
+    }
 }
