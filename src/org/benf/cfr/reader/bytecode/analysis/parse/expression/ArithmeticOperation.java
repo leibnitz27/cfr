@@ -75,7 +75,10 @@ public class ArithmeticOperation extends AbstractExpression {
     }
 
     public boolean isMutationOf(LValue lValue) {
-        return ((lhs instanceof LValueExpression) && isLValueExprFor((LValueExpression) lhs, lValue) && !op.isTemporary());
+        if (!(lhs instanceof LValueExpression)) return false;
+        if (!isLValueExprFor((LValueExpression) lhs, lValue)) return false;
+        if (op.isTemporary()) return false;
+        return true;
     }
 
     public AbstractMutatingAssignmentExpression getMutationOf(LValue lValue) {
