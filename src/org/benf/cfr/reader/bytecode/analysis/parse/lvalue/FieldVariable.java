@@ -21,9 +21,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class FieldVariable extends AbstractLValue {
 
     private Expression object;
-    private final ConstantPool cp;
     private final ConstantPoolEntryFieldRef field;
-    private transient String name;
 
     private static InferredJavaType getFieldType(ConstantPoolEntry fieldentry, ClassFile classFile, ConstantPool cp) {
         ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) fieldentry;
@@ -40,7 +38,6 @@ public class FieldVariable extends AbstractLValue {
         super(getFieldType(field, classFile, cp));
         this.object = object;
         this.field = (ConstantPoolEntryFieldRef) field;
-        this.cp = cp;
     }
 
     @Override
@@ -48,9 +45,13 @@ public class FieldVariable extends AbstractLValue {
         throw new ConfusedCFRException("NYI");
     }
 
+    private String getFieldName() {
+        return field.getLocalName();
+    }
+
     @Override
     public Dumper dump(Dumper d) {
-        return object.dump(d).print(".").print(field.getLocalName());
+        return object.dump(d).print(".").print(getFieldName());
     }
 
     @Override
@@ -71,5 +72,18 @@ public class FieldVariable extends AbstractLValue {
     @Override
     public LValue applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
+
+        if (!(o instanceof FieldVariable)) return false;
+        FieldVariable other = (FieldVariable) o;
+
+        if (!object.equals(other.object)) return false;
+        if (!getFieldName().equals(other.getFieldName())) return false;
+        return true;
     }
 }
