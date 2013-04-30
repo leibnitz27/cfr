@@ -84,7 +84,7 @@ public abstract class AbstractStatement implements Statement {
     @Override
     public final String toString() {
         Dumper d = new ToStringDumper();
-        d.print(getClass().toString()).dump(this);
+        d.print(getClass().getSimpleName()).print(": ").dump(this);
         return d.toString();
     }
 }
