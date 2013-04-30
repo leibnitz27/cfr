@@ -55,7 +55,9 @@ public class StructuredReturn extends AbstractStructuredStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
-        value = expressionRewriter.rewriteExpression(value, null, this.getContainer(), null);
+        if (value != null) {
+            value = expressionRewriter.rewriteExpression(value, null, this.getContainer(), null);
+        }
     }
 
 }
