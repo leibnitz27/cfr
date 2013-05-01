@@ -455,8 +455,8 @@ public class ClassFile {
      * The whole header dumping is a bit messy, tidy...
      */
     public void dumpAsInterface(Dumper d) {
-        d.line();
-        d.print("// Imports\n");
+        d.print(MiscConstants.CFR_HEADER);
+        d.print("package ").print(thisClass.getPackageName()).endCodeln().newln();
         constantPool.dumpImports(d);
         dumpHeader(d, accessFlags.contains(AccessFlag.ACC_ANNOTATION));
         d.print("{\n");
