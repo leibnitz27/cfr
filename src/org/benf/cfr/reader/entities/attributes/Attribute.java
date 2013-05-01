@@ -15,11 +15,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public abstract class Attribute implements KnowsRawSize, KnowsRawName, Dumpable {
 
-    /*
-     * NB : we need the constant pool, as eg annotations have entries.
-     */
     @Override
     public abstract Dumper dump(Dumper d);
-
 
 }
