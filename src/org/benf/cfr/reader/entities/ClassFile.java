@@ -476,7 +476,8 @@ public class ClassFile {
     }
 
     public void dumpAsClass(Dumper d) {
-        d.line();
+        d.print(MiscConstants.CFR_HEADER);
+        d.print("package ").print(thisClass.getPackageName()).endCodeln().newln();
         constantPool.dumpImports(d);
         dumpAsClassCommon(d);
     }
@@ -545,6 +546,6 @@ public class ClassFile {
 
     @Override
     public String toString() {
-        return thisClass.getTextName();
+        return thisClass.getTextPath();
     }
 }

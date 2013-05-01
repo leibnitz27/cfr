@@ -35,13 +35,20 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
         return "CONSTANT_Class " + nameIndex;
     }
 
-    public String getTextName() {
+    public String getTextPath() {
         return ClassNameUtils.convertFromPath(getCp().getUTF8Entry(nameIndex).getValue()) + ".class";
     }
 
     @Override
     public void dump(Dumper d) {
         d.print("Class " + getCp().getUTF8Entry(nameIndex).getValue());
+    }
+
+    public String getPackageName() {
+        String full = ClassNameUtils.convertFromPath(getCp().getUTF8Entry(nameIndex).getValue());
+        int idx = full.lastIndexOf('.');
+        if (idx == -1) return full;
+        return full.substring(0, idx);
     }
 
     public JavaTypeInstance convertFromString(String rawType) {
