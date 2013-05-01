@@ -46,7 +46,7 @@ public class AttributeLocalVariableTable extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
     }
 
     public List<LocalVariableEntry> getLocalVariableEntryList() {

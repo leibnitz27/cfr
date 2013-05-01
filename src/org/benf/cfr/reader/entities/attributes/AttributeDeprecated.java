@@ -32,7 +32,7 @@ public class AttributeDeprecated extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         d.print("Deprecated");
     }
 

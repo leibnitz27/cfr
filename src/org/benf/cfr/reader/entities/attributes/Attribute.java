@@ -17,7 +17,7 @@ public abstract class Attribute implements KnowsRawSize, KnowsRawName {
     /*
      * NB : we need the constant pool, as eg annotations have entries.
      */
-    public abstract void dump(Dumper d, ConstantPool cp);
+    public abstract void dump(Dumper d);
 
 
 }

@@ -253,7 +253,7 @@ public class Method implements KnowsRawSize {
         }
     }
 
-    public void dump(Dumper d, boolean asClass, ConstantPool cp) {
+    public void dump(Dumper d, boolean asClass) {
         dumpSignatureText(asClass, d);
         if (codeAttribute == null) {
             AttributeAnnotationDefault annotationDefault = getAttributeByName(AttributeAnnotationDefault.ATTRIBUTE_NAME);
@@ -262,7 +262,7 @@ public class Method implements KnowsRawSize {
             }
             d.print(";");
         } else {
-            codeAttribute.dump(d, cp);
+            codeAttribute.dump(d);
         }
     }
 

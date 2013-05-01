@@ -29,7 +29,7 @@ public class AttributeUnknown extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         d.print("Unknown Attribute : " + name);
     }
 

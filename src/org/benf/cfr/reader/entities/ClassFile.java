@@ -465,7 +465,7 @@ public class ClassFile {
             for (Method meth : methods) {
                 d.newln();
                 // Java 8 supports 'defender' interfaces, i.e. method bodies on interfaces (eww).
-                meth.dump(d, false, constantPool);
+                meth.dump(d, false);
             }
         }
         d.newln();
@@ -496,7 +496,7 @@ public class ClassFile {
             for (Method meth : methods) {
                 if (meth.isHiddenFromDisplay()) continue;
                 d.newln();
-                meth.dump(d, true, constantPool);
+                meth.dump(d, true);
             }
         }
         d.newln();
@@ -526,7 +526,7 @@ public class ClassFile {
 //                if (meth.isConstructor()) continue;
                 if (meth.isHiddenFromDisplay()) continue;
                 d.newln();
-                meth.dump(d, true, constantPool);
+                meth.dump(d, true);
             }
         }
         d.newln();

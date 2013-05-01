@@ -35,7 +35,7 @@ public class AttributeAnnotationDefault extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         elementValue.dump(d);
     }
 

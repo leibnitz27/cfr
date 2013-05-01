@@ -32,7 +32,7 @@ public class AttributeConstantValue extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
         d.print("ConstantValue : " + value);
     }
 

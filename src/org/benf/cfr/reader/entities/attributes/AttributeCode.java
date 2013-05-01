@@ -111,7 +111,7 @@ public class AttributeCode extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d) {
 //        d.newln().print("Code Attribute, length " + codeLength);
 //        d.newln().print("MaxStack " + maxStack + ", maxLocals " + maxLocals);
 //        for (Attribute a : attributes) {

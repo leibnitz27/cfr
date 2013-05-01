@@ -41,6 +41,7 @@ public abstract class AttributeAnnotations extends Attribute {
         return annotationTableEntryList;
     }
 
+    @Override
     public void dump(Dumper d) {
         for (AnnotationTableEntry annotationTableEntry : annotationTableEntryList) {
             annotationTableEntry.dump(d);
@@ -48,10 +49,6 @@ public abstract class AttributeAnnotations extends Attribute {
         }
     }
 
-    @Override
-    public void dump(Dumper d, ConstantPool cp) {
-        dump(d);
-    }
 
     @Override
     public long getRawByteLength() {

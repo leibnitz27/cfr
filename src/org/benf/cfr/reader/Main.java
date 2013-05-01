@@ -37,7 +37,7 @@ public class Main {
                 c.dump(d);
             } else {
                 try {
-                    c.getMethodByName(methname).dump(d, true, c.getConstantPool());
+                    c.getMethodByName(methname).dump(d, true);
                 } catch (NoSuchMethodException e) {
                     throw new BadParametersException("No such method '" + methname + "'.", CFRState.getFactory());
                 }
