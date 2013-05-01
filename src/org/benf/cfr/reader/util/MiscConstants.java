@@ -7,5 +7,5 @@ package org.benf.cfr.reader.util;
  * Time: 05:44
  */
 public interface MiscConstants {
-    public static String CFR_HEADER = "/*\n *Decompiled with CFR.\n */\n";
+    public static String CFR_HEADER = "/*\n * Decompiled with CFR.\n */\n";
 }
