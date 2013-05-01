@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities.annotations;
 
+import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -8,6 +9,5 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Date: 14/03/2013
  * Time: 06:44
  */
-public interface ElementValue {
-    void dump(Dumper d);
+public interface ElementValue extends Dumpable {
 }

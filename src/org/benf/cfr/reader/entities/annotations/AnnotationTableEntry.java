@@ -22,7 +22,7 @@ public class AnnotationTableEntry {
         this.elementValueMap = elementValueMap;
     }
 
-    public void dump(Dumper d) {
+    public Dumper dump(Dumper d) {
         d.print('@').print(clazz.toString());
         if (elementValueMap != null && !elementValueMap.isEmpty()) {
             d.print('(');
@@ -34,5 +34,6 @@ public class AnnotationTableEntry {
             }
             d.print(')');
         }
+        return d;
     }
 }

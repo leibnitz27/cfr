@@ -16,7 +16,7 @@ public class ElementValueAnnotation implements ElementValue {
     }
 
     @Override
-    public void dump(Dumper d) {
-        annotationTableEntry.dump(d);
+    public Dumper dump(Dumper d) {
+        return annotationTableEntry.dump(d);
     }
 }

@@ -42,7 +42,7 @@ public class AnnotationHelpers {
         return offset;
     }
 
-    private static Pair<Long, ElementValue> getElementValue(ByteData raw, long offset, ConstantPool cp) {
+    public static Pair<Long, ElementValue> getElementValue(ByteData raw, long offset, ConstantPool cp) {
 
         char c = (char) raw.getU1At(offset);
         offset++;

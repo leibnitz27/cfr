@@ -16,7 +16,7 @@ public class ElementValueClass implements ElementValue {
     }
 
     @Override
-    public void dump(Dumper d) {
-        d.print(className);
+    public Dumper dump(Dumper d) {
+        return d.print(className);
     }
 }

@@ -17,7 +17,7 @@ public class ElementValueConst implements ElementValue {
     }
 
     @Override
-    public void dump(Dumper d) {
-        d.print(value.toString());
+    public Dumper dump(Dumper d) {
+        return d.print(value.toString());
     }
 }

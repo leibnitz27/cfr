@@ -19,7 +19,7 @@ public class ElementValueEnum implements ElementValue {
     }
 
     @Override
-    public void dump(Dumper d) {
-        d.print(className).print('.').print(valueName);
+    public Dumper dump(Dumper d) {
+        return d.print(className).print('.').print(valueName);
     }
 }

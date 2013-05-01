@@ -19,7 +19,7 @@ public class ElementValueArray implements ElementValue {
     }
 
     @Override
-    public void dump(Dumper d) {
+    public Dumper dump(Dumper d) {
         d.print('{');
         boolean first = true;
         for (ElementValue value : content) {
@@ -27,5 +27,6 @@ public class ElementValueArray implements ElementValue {
             value.dump(d);
         }
         d.print('}');
+        return d;
     }
 }

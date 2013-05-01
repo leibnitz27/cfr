@@ -51,6 +51,8 @@ public class AttributeFactory {
             return new AttributeInnerClasses(raw, cp);
         } else if (AttributeBootstrapMethods.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeBootstrapMethods(raw, cp);
+        } else if (AttributeAnnotationDefault.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeAnnotationDefault(raw, cp);
         } else {
             return new AttributeUnknown(raw, attributeName);
         }

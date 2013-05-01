@@ -256,6 +256,10 @@ public class Method implements KnowsRawSize {
     public void dump(Dumper d, boolean asClass, ConstantPool cp) {
         dumpSignatureText(asClass, d);
         if (codeAttribute == null) {
+            AttributeAnnotationDefault annotationDefault = getAttributeByName(AttributeAnnotationDefault.ATTRIBUTE_NAME);
+            if (annotationDefault != null) {
+                d.print(" default ").dump(annotationDefault.getElementValue());
+            }
             d.print(";");
         } else {
             codeAttribute.dump(d, cp);
