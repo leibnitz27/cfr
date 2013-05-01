@@ -19,12 +19,10 @@ public class AttributeConstantValue extends Attribute {
     private static final long OFFSET_OF_REMAINDER = 6;
 
     private final int length;
-    private final ConstantPool cp;
     private final ConstantPoolEntry value;
 
     public AttributeConstantValue(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        this.cp = cp;
         this.value = cp.getEntry(raw.getS2At(OFFSET_OF_REMAINDER));
     }
 
