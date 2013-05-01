@@ -11,7 +11,7 @@ import org.benf.cfr.reader.entities.ConstantPool;
  */
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
-    private final ClassCache classCache;
+    private final String displayableName;
     private final InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
 
     private JavaRefTypeInstance(String className, ClassCache classCache) {
@@ -23,8 +23,15 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             innerClassInfo = new RefTypeInnerClassInfo(outerClassTmp);
         }
         this.className = className;
-        this.classCache = classCache;
         this.innerClassInfo = innerClassInfo;
+        classCache.markClassNameUsed(this);
+        this.displayableName = classCache.getDisplayableClassName(className);
+    }
+
+    private JavaRefTypeInstance(String className, String displayableName) {
+        this.innerClassInfo = InnerClassInfo.NOT;
+        this.className = className;
+        this.displayableName = displayableName;
     }
 
     /*
@@ -34,6 +41,13 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         return new JavaRefTypeInstance(rawClassName, classCache);
     }
 
+    /*
+     * ONLY call from TypeConstants.
+     */
+    public static JavaRefTypeInstance createTypeConstant(String rawClassName, String displayableName) {
+        return new JavaRefTypeInstance(rawClassName, displayableName);
+    }
+
     @Override
     public StackType getStackType() {
         return StackType.REF;
@@ -41,7 +55,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public String toString() {
-        return classCache.getDisplayableClassName(className);
+        return displayableName;
     }
 
     @Override

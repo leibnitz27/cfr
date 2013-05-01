@@ -1,9 +1,6 @@
 package org.benf.cfr.reader.entities;
 
-import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
-import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.SetFactory;
@@ -26,6 +23,10 @@ public class ClassCache {
     private final Set<String> importableClasses = SetFactory.newSet();
 
     private transient JavaRefTypeInstance analysisType;
+
+    public ClassCache() {
+        refClassTypeCache.put(TypeConstants.STRING.getRawName(), TypeConstants.STRING);
+    }
 
     private boolean importClass(JavaRefTypeInstance clazz) {
         InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
@@ -53,7 +54,7 @@ public class ClassCache {
         return longNameToShortName.get(clazzRawName).replace('$', '.');
     }
 
-    private void markClassNameUsed(JavaRefTypeInstance typeInstance) {
+    public void markClassNameUsed(JavaRefTypeInstance typeInstance) {
         /*
          * While it's a bit of a hack, the first type which is marked as used is always the type under
          * analysis.
@@ -90,9 +91,6 @@ public class ClassCache {
         if (typeInstance != null) return typeInstance;
 
         typeInstance = JavaRefTypeInstance.create(name, this);
-
-        // Find an appropriate 'displayable' name.
-        markClassNameUsed(typeInstance);
 
         refClassTypeCache.put(name, typeInstance);
         return typeInstance;
