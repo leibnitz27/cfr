@@ -42,7 +42,8 @@ public class AttributeExceptions extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
+    public Dumper dump(Dumper d) {
+        return d;
     }
 
     public List<ConstantPoolEntryClass> getExceptionClassList() {

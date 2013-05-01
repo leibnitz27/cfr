@@ -32,8 +32,8 @@ public class AttributeDeprecated extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
-        d.print("Deprecated");
+    public Dumper dump(Dumper d) {
+        return d.print("Deprecated");
     }
 
     @Override

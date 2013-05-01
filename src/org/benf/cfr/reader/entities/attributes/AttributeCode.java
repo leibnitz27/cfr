@@ -111,14 +111,8 @@ public class AttributeCode extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
-//        d.newln().print("Code Attribute, length " + codeLength);
-//        d.newln().print("MaxStack " + maxStack + ", maxLocals " + maxLocals);
-//        for (Attribute a : attributes) {
-//            d.newln();
-//            a.dump(d, cp);
-//        }
-        codeAnalyser.getAnalysis().dump(d);
+    public Dumper dump(Dumper d) {
+        return codeAnalyser.getAnalysis().dump(d);
     }
 
     @Override

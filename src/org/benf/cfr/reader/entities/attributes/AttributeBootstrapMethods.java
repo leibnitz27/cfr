@@ -68,8 +68,8 @@ public class AttributeBootstrapMethods extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
-        d.print(ATTRIBUTE_NAME);
+    public Dumper dump(Dumper d) {
+        return d.print(ATTRIBUTE_NAME);
     }
 
     @Override

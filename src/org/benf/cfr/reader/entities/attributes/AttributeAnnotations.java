@@ -42,11 +42,12 @@ public abstract class AttributeAnnotations extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
+    public Dumper dump(Dumper d) {
         for (AnnotationTableEntry annotationTableEntry : annotationTableEntryList) {
             annotationTableEntry.dump(d);
             d.newln();
         }
+        return d;
     }
 
 

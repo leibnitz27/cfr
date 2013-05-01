@@ -63,8 +63,8 @@ public class AttributeSignature extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
-        d.print("Signature : " + signature);
+    public Dumper dump(Dumper d) {
+        return d.print("Signature : " + signature);
     }
 
     @Override

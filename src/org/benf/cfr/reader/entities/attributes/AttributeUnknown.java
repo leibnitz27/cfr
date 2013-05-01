@@ -29,8 +29,8 @@ public class AttributeUnknown extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
-        d.print("Unknown Attribute : " + name);
+    public Dumper dump(Dumper d) {
+        return d.print("Unknown Attribute : " + name);
     }
 
     @Override

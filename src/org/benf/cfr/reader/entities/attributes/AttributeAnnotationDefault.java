@@ -35,8 +35,8 @@ public class AttributeAnnotationDefault extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
-        elementValue.dump(d);
+    public Dumper dump(Dumper d) {
+        return elementValue.dump(d);
     }
 
     @Override

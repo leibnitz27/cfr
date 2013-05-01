@@ -32,8 +32,8 @@ public class AttributeConstantValue extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
-        d.print("ConstantValue : " + value);
+    public Dumper dump(Dumper d) {
+        return d.print("ConstantValue : " + value);
     }
 
     @Override

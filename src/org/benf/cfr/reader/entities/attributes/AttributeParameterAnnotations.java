@@ -51,7 +51,8 @@ public abstract class AttributeParameterAnnotations extends Attribute {
     }
 
     @Override
-    public void dump(Dumper d) {
+    public Dumper dump(Dumper d) {
+        return d;
     }
 
     @Override
