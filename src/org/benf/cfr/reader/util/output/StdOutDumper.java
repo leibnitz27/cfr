@@ -50,6 +50,11 @@ public class StdOutDumper implements Dumper {
     }
 
     @Override
+    public Dumper print(char c) {
+        return print("" + c);
+    }
+
+    @Override
     public Dumper newln() {
         System.out.println("");
         atStart = true;

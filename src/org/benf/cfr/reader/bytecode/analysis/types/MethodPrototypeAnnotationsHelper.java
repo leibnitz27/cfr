@@ -2,9 +2,10 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.attributes.AttributeParameterAnnotations;
-import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleParameterAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleParameterAnnotations;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 
@@ -23,19 +24,20 @@ public class MethodPrototypeAnnotationsHelper {
         this.runtimeInvisibleParameterAnnotations = runtimeInvisibleParameterAnnotations;
     }
 
-    private static void addAnnotation(AttributeParameterAnnotations annotations, int idx, StringBuilder sb) {
+    private static void addAnnotation(AttributeParameterAnnotations annotations, int idx, Dumper d) {
         if (annotations == null) return;
         List<AnnotationTableEntry> annotationTableEntries = annotations.getAnnotationsForParamIdx(idx);
         if (annotationTableEntries == null || annotationTableEntries.isEmpty()) return;
         for (AnnotationTableEntry annotationTableEntry : annotationTableEntries) {
-            annotationTableEntry.getTextInto(sb);
-            sb.append(' ');
+            annotationTableEntry.dump(d);
+            d.print(' ');
         }
     }
 
     public void addAnnotationTextForParameterInto(int idx, StringBuilder sb) {
-        addAnnotation(runtimeVisibleParameterAnnotations, idx, sb);
-        addAnnotation(runtimeInvisibleParameterAnnotations, idx, sb);
+        Dumper d = new ToStringDumper(sb);
+        addAnnotation(runtimeVisibleParameterAnnotations, idx, d);
+        addAnnotation(runtimeInvisibleParameterAnnotations, idx, d);
     }
 
 }

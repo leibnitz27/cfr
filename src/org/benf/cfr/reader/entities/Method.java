@@ -4,7 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
-import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
@@ -14,7 +13,6 @@ import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -196,46 +194,44 @@ public class Method implements KnowsRawSize {
         return methodPrototype;
     }
 
-    private void getMethodAnnotationsInto(StringBuilder sb) {
+    private void dumpMethodAnnotations(Dumper d) {
         AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
         AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
-        if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.getTextInto(sb);
-        if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.getTextInto(sb);
+        if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
+        if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
     }
 
-    public String getSignatureText(boolean asClass) {
-        StringBuilder sb = new StringBuilder();
+    public void dumpSignatureText(boolean asClass, Dumper d) {
 
-        getMethodAnnotationsInto(sb);
+        dumpMethodAnnotations(d);
 
         Set<AccessFlagMethod> localAccessFlags = accessFlags;
         if (!asClass) {
-            if (codeAttribute != null) sb.append("default ");
+            if (codeAttribute != null) d.print("default ");
             // Dumping as interface.
             localAccessFlags = SetFactory.newSet(localAccessFlags);
             localAccessFlags.remove(AccessFlagMethod.ACC_ABSTRACT);
         }
         String prefix = CollectionUtils.join(localAccessFlags, " ");
 
-        if (!prefix.isEmpty()) sb.append(prefix).append(' ');
+        if (!prefix.isEmpty()) d.print(prefix).print(' ');
 
         MethodPrototypeAnnotationsHelper paramAnnotationsHelper = new MethodPrototypeAnnotationsHelper(
                 this.<AttributeRuntimeVisibleParameterAnnotations>getAttributeByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME),
                 this.<AttributeRuntimeInvisibleParameterAnnotations>getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME)
         );
-        sb.append(getMethodPrototype().getDeclarationSignature(name, isConstructor, paramAnnotationsHelper));
+        d.print(getMethodPrototype().getDeclarationSignature(name, isConstructor, paramAnnotationsHelper));
         AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
-            sb.append(" throws ");
+            d.print(" throws ");
             boolean first = true;
             List<ConstantPoolEntryClass> exceptionClasses = exceptionsAttribute.getExceptionClassList();
             for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
-                first = CommaHelp.comma(first, sb);
-                sb.append(exceptionClass.getTypeInstance().getRawName());
+                first = CommaHelp.comma(first, d);
+                d.print(exceptionClass.getTypeInstance().getRawName());
             }
-            if (asClass) sb.append(' '); // This is the kind of fiddly display we don't want to be doing here.. :(
+            if (asClass) d.print(' '); // This is the kind of fiddly display we don't want to be doing here.. :(
         }
-        return sb.toString();
     }
 
     public Op04StructuredStatement getAnalysis() {
@@ -258,7 +254,7 @@ public class Method implements KnowsRawSize {
     }
 
     public void dump(Dumper d, boolean asClass, ConstantPool cp) {
-        d.print(getSignatureText(asClass));
+        dumpSignatureText(asClass, d);
         if (codeAttribute == null) {
             d.print(";");
         } else {

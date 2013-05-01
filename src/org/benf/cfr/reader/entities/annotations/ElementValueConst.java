@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.annotations;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.util.output.Dumper;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,7 +17,7 @@ public class ElementValueConst implements ElementValue {
     }
 
     @Override
-    public void getTextInto(StringBuilder sb) {
-        sb.append(value);
+    public void dump(Dumper d) {
+        d.print(value.toString());
     }
 }

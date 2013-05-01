@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.annotations;
 
 import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -18,13 +19,13 @@ public class ElementValueArray implements ElementValue {
     }
 
     @Override
-    public void getTextInto(StringBuilder sb) {
-        sb.append('{');
+    public void dump(Dumper d) {
+        d.print('{');
         boolean first = true;
         for (ElementValue value : content) {
-            first = CommaHelp.comma(first, sb);
-            value.getTextInto(sb);
+            first = CommaHelp.comma(first, d);
+            value.dump(d);
         }
-        sb.append('}');
+        d.print('}');
     }
 }

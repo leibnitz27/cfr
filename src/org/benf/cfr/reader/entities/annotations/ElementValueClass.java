@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.entities.annotations;
 
+import org.benf.cfr.reader.util.output.Dumper;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -14,7 +16,7 @@ public class ElementValueClass implements ElementValue {
     }
 
     @Override
-    public void getTextInto(StringBuilder sb) {
-        sb.append(className);
+    public void dump(Dumper d) {
+        d.print(className);
     }
 }

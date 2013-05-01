@@ -13,7 +13,15 @@ public class ToStringDumper implements Dumper {
     private int indent;
     private boolean atStart = true;
     private boolean pendingCR = false;
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb;
+
+    public ToStringDumper(StringBuilder sb) {
+        this.sb = sb;
+    }
+
+    public ToStringDumper() {
+        this.sb = new StringBuilder();
+    }
 
     @Override
     public void printLabel(String s) {
@@ -48,6 +56,11 @@ public class ToStringDumper implements Dumper {
         atStart = false;
         if (s.endsWith("\n")) atStart = true;
         return this;
+    }
+
+    @Override
+    public Dumper print(char c) {
+        return print("" + c);
     }
 
     @Override

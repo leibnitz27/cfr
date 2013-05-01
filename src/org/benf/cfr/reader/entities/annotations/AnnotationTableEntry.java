@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities.annotations;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
 
@@ -21,17 +22,17 @@ public class AnnotationTableEntry {
         this.elementValueMap = elementValueMap;
     }
 
-    public void getTextInto(StringBuilder sb) {
-        sb.append('@').append(clazz.toString());
+    public void dump(Dumper d) {
+        d.print('@').print(clazz.toString());
         if (elementValueMap != null && !elementValueMap.isEmpty()) {
-            sb.append('(');
+            d.print('(');
             boolean first = true;
             for (Map.Entry<String, ElementValue> elementValueEntry : elementValueMap.entrySet()) {
-                first = CommaHelp.comma(first, sb);
-                sb.append(elementValueEntry.getKey()).append('=');
-                elementValueEntry.getValue().getTextInto(sb);
+                first = CommaHelp.comma(first, d);
+                d.print(elementValueEntry.getKey()).print('=');
+                elementValueEntry.getValue().dump(d);
             }
-            sb.append(')');
+            d.print(')');
         }
     }
 }

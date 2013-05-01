@@ -17,6 +17,8 @@ public interface Dumper {
 
     Dumper print(String s);
 
+    Dumper print(char c);
+
     Dumper newln();
 
     Dumper endCodeln();

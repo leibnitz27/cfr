@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.entities.annotations;
 
+import org.benf.cfr.reader.util.output.Dumper;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -7,5 +9,5 @@ package org.benf.cfr.reader.entities.annotations;
  * Time: 06:44
  */
 public interface ElementValue {
-    void getTextInto(StringBuilder sb);
+    void dump(Dumper d);
 }

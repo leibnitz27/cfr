@@ -1,18 +1,13 @@
 package org.benf.cfr.reader.entities.attributes;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.annotations.*;
-import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,15 +41,16 @@ public abstract class AttributeAnnotations extends Attribute {
         return annotationTableEntryList;
     }
 
-    public void getTextInto(StringBuilder sb) {
+    public void dump(Dumper d) {
         for (AnnotationTableEntry annotationTableEntry : annotationTableEntryList) {
-            annotationTableEntry.getTextInto(sb);
-            sb.append('\n');
+            annotationTableEntry.dump(d);
+            d.newln();
         }
     }
 
     @Override
     public void dump(Dumper d, ConstantPool cp) {
+        dump(d);
     }
 
     @Override
