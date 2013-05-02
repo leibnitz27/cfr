@@ -54,7 +54,9 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
-        condition = expressionRewriter.rewriteExpression(condition, null, this.getContainer(), null);
+        if (condition != null) {
+            condition = expressionRewriter.rewriteExpression(condition, null, this.getContainer(), null);
+        }
     }
 
 }
