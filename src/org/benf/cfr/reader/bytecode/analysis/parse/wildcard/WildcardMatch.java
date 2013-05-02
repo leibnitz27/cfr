@@ -343,7 +343,7 @@ public class WildcardMatch {
             }
             if (matchedValue == null) {
                 AbstractNewArray abstractNewArray = (AbstractNewArray) o;
-                if (numDims != abstractNewArray.getNumDims()) return false;
+                if (numDims != abstractNewArray.getNumSizedDims()) return false;
                 matchedValue = abstractNewArray;
                 return true;
             }

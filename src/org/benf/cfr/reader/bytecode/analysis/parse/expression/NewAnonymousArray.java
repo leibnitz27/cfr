@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -20,25 +21,25 @@ import java.util.List;
  * 1d array only.
  */
 public class NewAnonymousArray extends AbstractExpression {
+    private JavaTypeInstance allocatedType;
+    private int numDims;
     private List<Expression> values;
-    private final JavaTypeInstance resultType;
 
-    public NewAnonymousArray(List<Expression> values, JavaTypeInstance resultInstance) {
-        super(new InferredJavaType(resultInstance, InferredJavaType.Source.EXPRESSION));
+    public NewAnonymousArray(InferredJavaType type, int numDims, List<Expression> values) {
+        super(type);
         this.values = values;
-        this.resultType = resultInstance;
+        this.numDims = numDims;
+        this.allocatedType = type.getJavaTypeInstance().getArrayStrippedType();
     }
 
     @Override
     public Dumper dump(Dumper d) {
-        d.print("new " + resultType.getArrayStrippedType() + "[]{");
+        d.print("new ").print(allocatedType.toString());
+        for (int x = 0; x < numDims; ++x) d.print("[]");
+        d.print("{");
         boolean first = true;
         for (Expression value : values) {
-            if (!first) {
-                d.print(", ");
-            } else {
-                first = false;
-            }
+            first = CommaHelp.comma(first, d);
             d.dump(value);
         }
         d.print("}");

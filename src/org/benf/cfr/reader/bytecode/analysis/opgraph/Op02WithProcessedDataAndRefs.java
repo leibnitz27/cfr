@@ -482,7 +482,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 // Result instance is the same as inner instance with 1 extra dimension.
                 JavaTypeInstance resultInstance = new JavaArrayTypeInstance(1, innerInstance);
 
-                return new AssignmentSimple(getStackLValue(0), new NewObjectArray(tmp, innerInstance, resultInstance));
+                return new AssignmentSimple(getStackLValue(0), new NewObjectArray(tmp, resultInstance));
             }
             case MULTIANEWARRAY: {
                 int numDims = rawData[OperationFactoryMultiANewArray.OFFSET_OF_DIMS];
@@ -493,7 +493,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 // Result instance is the same as innerInstance
                 JavaTypeInstance resultInstance = innerInstance;
 
-                return new AssignmentSimple(getStackLValue(0), new NewObjectArray(getNStackRValuesAsExpressions(numDims), innerInstance, resultInstance));
+                return new AssignmentSimple(getStackLValue(0), new NewObjectArray(getNStackRValuesAsExpressions(numDims), resultInstance));
             }
             case ARRAYLENGTH:
                 return new AssignmentSimple(getStackLValue(0), new ArrayLength(getStackRValue(0)));

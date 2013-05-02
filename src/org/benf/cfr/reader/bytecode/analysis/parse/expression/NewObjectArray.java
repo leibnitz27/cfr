@@ -22,18 +22,19 @@ public class NewObjectArray extends AbstractNewArray {
     private List<Expression> dimSizes;
     private final JavaTypeInstance allocatedType;
     private final JavaTypeInstance resultType;
+    private final int numDims;
 
-    public NewObjectArray(List<Expression> dimSizes, JavaTypeInstance innerInstance, JavaTypeInstance resultInstance) {
+    public NewObjectArray(List<Expression> dimSizes, JavaTypeInstance resultInstance) {
         super(new InferredJavaType(resultInstance, InferredJavaType.Source.EXPRESSION));
         this.dimSizes = dimSizes;
-        this.allocatedType = innerInstance;
+        this.allocatedType = resultInstance.getArrayStrippedType();
         this.resultType = resultInstance;
+        this.numDims = resultInstance.getNumArrayDimensions();
     }
 
     @Override
     public Dumper dump(Dumper d) {
-        d.print("new " + resultType.getArrayStrippedType());
-        int numDims = resultType.getNumArrayDimensions();
+        d.print("new " + allocatedType);
         for (Expression dimSize : dimSizes) {
             d.print("[").dump(dimSize).print("]");
         }
@@ -45,6 +46,11 @@ public class NewObjectArray extends AbstractNewArray {
 
     @Override
     public int getNumDims() {
+        return numDims;
+    }
+
+    @Override
+    public int getNumSizedDims() {
         return dimSizes.size();
     }
 

@@ -7,7 +7,7 @@ package org.benf.cfr.tests;
  * Time: 06:28
  * To change this template use File | Settings | File Templates.
  */
-public class ArrayTest4 {
+public class ArrayTest4a {
     int x;
     int y;
     int z;
@@ -17,14 +17,14 @@ public class ArrayTest4 {
     }
 
     void test2(int a, int b) {
-        int[] tmp = new int[]{a, b, x, y};
+        Integer[] tmp = new Integer[]{a, b, x, y};
     }
 
     void test3(int a, int b) {
-        int[][] tmp = new int[][]{{a, b}, {x, y}, {z}};
+        Integer[][] tmp = new Integer[][]{{a, b}, {x, y}, {z}};
     }
 
     void test4(int a, int b) {
-        int[][] tmp = new int[3][];
+        Integer[][] tmp = new Integer[3][];
     }
 }

@@ -21,15 +21,15 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class NewPrimitiveArray extends AbstractNewArray {
     private Expression size;
-    private final ArrayType type;
+    private final JavaTypeInstance type;
 
     public NewPrimitiveArray(Expression size, byte type) {
-        this(size, ArrayType.getArrayType(type));
+        this(size, ArrayType.getArrayType(type).getJavaTypeInstance());
     }
 
-    public NewPrimitiveArray(Expression size, ArrayType type) {
+    public NewPrimitiveArray(Expression size, JavaTypeInstance type) {
         // We don't really know anything about the array dimensionality, just the underlying type. :P
-        super(new InferredJavaType(new JavaArrayTypeInstance(1, type.getJavaTypeInstance()), InferredJavaType.Source.EXPRESSION));
+        super(new InferredJavaType(new JavaArrayTypeInstance(1, type), InferredJavaType.Source.EXPRESSION));
         this.size = size;
         this.type = type;
     }
@@ -45,6 +45,11 @@ public class NewPrimitiveArray extends AbstractNewArray {
     }
 
     @Override
+    public int getNumSizedDims() {
+        return 1;
+    }
+
+    @Override
     public Expression getDimSize(int dim) {
         if (dim > 0) throw new ConfusedCFRException("Only 1 dimension for primitive arrays!");
         return size;
@@ -52,7 +57,7 @@ public class NewPrimitiveArray extends AbstractNewArray {
 
     @Override
     public JavaTypeInstance getInnerType() {
-        return type.getJavaTypeInstance();
+        return type;
     }
 
     @Override

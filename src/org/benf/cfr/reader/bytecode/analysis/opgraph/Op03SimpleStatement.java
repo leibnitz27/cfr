@@ -2990,7 +2990,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             anon.add(testAnon.getExpressionWildCard("val").getMatch());
             anonAssigns.add(next);
         }
-        AssignmentSimple replacement = new AssignmentSimple(assignmentSimple.getCreatedLValue(), new NewAnonymousArray(anon, arrayDef.getInnerType()));
+        AssignmentSimple replacement = new AssignmentSimple(assignmentSimple.getCreatedLValue(), new NewAnonymousArray(arrayDef.getInferredJavaType(), arrayDef.getNumDims(), anon));
         newArray.replaceStatement(replacement);
         StackEntry arrayStackEntry = array.getStackEntry();
         for (Op03SimpleStatement create : anonAssigns) {

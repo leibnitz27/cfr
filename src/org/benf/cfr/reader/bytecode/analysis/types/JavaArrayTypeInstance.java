@@ -27,7 +27,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     private String toCommonString(int numDims) {
         StringBuilder sb = new StringBuilder();
-        sb.append(underlyingType.toString());
+        sb.append(underlyingType.getArrayStrippedType().toString());
         for (int x = 0; x < numDims; ++x) {
             sb.append("[]");
         }

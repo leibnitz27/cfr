@@ -17,6 +17,8 @@ public abstract class AbstractNewArray extends AbstractExpression {
 
     public abstract int getNumDims();
 
+    public abstract int getNumSizedDims();
+
     public abstract Expression getDimSize(int dim);
 
     public abstract JavaTypeInstance getInnerType();
