@@ -84,4 +84,10 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
         rhs = rhs.optimiseForType();
         return this;
     }
+
+    @Override
+    public ConditionalExpression simplify() {
+        return ConditionalUtils.simplify(this);
+    }
+
 }

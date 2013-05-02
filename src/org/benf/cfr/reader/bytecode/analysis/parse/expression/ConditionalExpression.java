@@ -22,4 +22,6 @@ public interface ConditionalExpression extends Expression {
     Set<LValue> getLoopLValues();
 
     ConditionalExpression optimiseForType();
+
+    ConditionalExpression simplify();
 }

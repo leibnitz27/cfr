@@ -1956,10 +1956,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // We need to be careful we don't replace x ? 1 : 0 with x here unless we're ABSOLUTELY
             // sure that the final expression type is boolean.....
             // this may come back to bite. (at which point we can inject a (? 1 : 0) ternary...
+            ConditionalExpression conditionalExpression = innerIfStatement.getCondition().getNegated().simplify();
             Expression rhs = ternary.isPointlessBoolean() ?
-                    innerIfStatement.getCondition().getNegated() :
+                    conditionalExpression :
                     new TernaryExpression(
-                            innerIfStatement.getCondition().getNegated(),
+                            conditionalExpression,
                             ternary.e1, ternary.e2);
 
             ifStatement.replaceStatement(

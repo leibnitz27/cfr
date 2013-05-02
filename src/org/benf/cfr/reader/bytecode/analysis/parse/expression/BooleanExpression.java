@@ -84,6 +84,11 @@ public class BooleanExpression extends AbstractExpression implements Conditional
     }
 
     @Override
+    public ConditionalExpression simplify() {
+        return ConditionalUtils.simplify(this);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof BooleanExpression)) return false;

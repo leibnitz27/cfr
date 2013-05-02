@@ -208,6 +208,11 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     }
 
     @Override
+    public ConditionalExpression simplify() {
+        return ConditionalUtils.simplify(this);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof ComparisonOperation)) return false;

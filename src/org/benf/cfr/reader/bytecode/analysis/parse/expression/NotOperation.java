@@ -72,6 +72,11 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
     }
 
     @Override
+    public ConditionalExpression simplify() {
+        return ConditionalUtils.simplify(this);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj == this) return true;
