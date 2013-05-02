@@ -2,6 +2,7 @@ package org.benf.cfr.reader.util.getopt;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -11,6 +12,7 @@ import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.configuration.ConfigCallback;
 import org.benf.cfr.reader.util.functors.BinaryFunction;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -34,10 +36,37 @@ public class CFRState {
 
     private final ClassCache classCache = new ClassCache();
 
-    private final String fileName;
-    private final String methodName;
+    private final String fileName;    // Ugly because we confuse parameters and state.
+    private final String methodName;  // Ugly because we confuse parameters and state.
     private final Map<String, String> opts;
     private ClassFileVersion classFileVersion = new ClassFileVersion(46, 0);
+
+
+    /*
+     * Initialisation info
+     */
+    private boolean initiallyConfigured;
+    private String pathPrefix = "";
+
+    private class Configurator implements ConfigCallback {
+        private final String path;
+
+        private Configurator(String path) {
+            this.path = path;
+        }
+
+        @Override
+        public void configureWith(ClassFile partiallyConstructedClassFile) {
+            JavaRefTypeInstance refTypeInstance = (JavaRefTypeInstance) partiallyConstructedClassFile.getClassType();
+            String actualPath = partiallyConstructedClassFile.getFilePath();
+            if (!actualPath.equals(path) && path.endsWith(actualPath)) {
+                pathPrefix = path.substring(0, path.length() - actualPath.length());
+            }
+            classCache.setAnalysisType(refTypeInstance);
+            initiallyConfigured = true;
+        }
+    }
+
 
     private static final PermittedOptionProvider.Argument<Integer, CFRState> SHOWOPS = new PermittedOptionProvider.Argument<Integer, CFRState>(
             "showops",
@@ -193,11 +222,21 @@ public class CFRState {
         Map<String, String> classPathFiles = getClassPathClasses();
         String jarName = classPathFiles.get(path);
         ZipFile zipFile = null;
+
+        ConfigCallback configCallback = null;
+        if (!initiallyConfigured) {
+            configCallback = new Configurator(path);
+        }
+
         try {
             InputStream is = null;
             long length = 0;
             if (jarName == null) {
-                File file = new File(path);
+                /*
+                 * NB : pathPrefix will be empty the when we load the 'main' class,
+                 * and only set if it's not in its 'natural' location.
+                 */
+                File file = new File(pathPrefix + path);
                 is = new FileInputStream(file);
                 length = file.length();
             } else {
@@ -210,7 +249,8 @@ public class CFRState {
             try {
                 byte[] content = getBytesFromFile(is, length);
                 ByteData data = new BaseByteData(content);
-                return new ClassFile(data, CFRState.this, withInnerClasses);
+                ClassFile res = new ClassFile(data, CFRState.this, withInnerClasses, configCallback);
+                return res;
             } finally {
                 if (zipFile != null) zipFile.close();
             }

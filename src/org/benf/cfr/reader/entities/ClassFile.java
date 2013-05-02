@@ -11,6 +11,7 @@ import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.configuration.ConfigCallback;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.CommaHelp;
@@ -59,7 +60,10 @@ public class ClassFile {
 
     private boolean begunAnalysis;
 
-    public ClassFile(final ByteData data, CFRState cfrState, boolean withInnerClasses) {
+    /*
+     * Be sure to call loadInnerClasses directly after.
+     */
+    public ClassFile(final ByteData data, CFRState cfrState, boolean withInnerClasses, ConfigCallback configCallback) {
         int magic = data.getS4At(OFFSET_OF_MAGIC);
         if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe");
 
@@ -83,7 +87,11 @@ public class ClassFile {
                     }
                 }
         );
+        thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_THIS_CLASS));
 
+        if (configCallback != null) {
+            configCallback.configureWith(this);
+        }
         this.rawInterfaces = tmpInterfaces;
 
 
@@ -103,7 +111,6 @@ public class ClassFile {
                     }
                 });
         this.fields = tmpFields;
-        thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_THIS_CLASS));
 
         final long OFFSET_OF_METHODS_COUNT = OFFSET_OF_FIELDS + fieldsLength;
         final long OFFSET_OF_METHODS = OFFSET_OF_METHODS_COUNT + 2;
@@ -143,12 +150,10 @@ public class ClassFile {
         }
         this.classSignature = getSignature(constantPool, rawSuperClass, rawInterfaces);
 
-        // Need to load inner classes now so we can infer staticness before any analysis.
+        // Need to load inner classes asap so we can infer staticness before any analysis
+        this.innerClassesByTypeInfo = new LinkedHashMap<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>>();
         if (withInnerClasses) {
-            this.innerClassesByTypeInfo = new LinkedHashMap<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>>();
             loadInnerClasses(cfrState);
-        } else {
-            this.innerClassesByTypeInfo = null;
         }
     }
 
@@ -273,7 +278,7 @@ public class ClassFile {
 
     }
 
-    // during construction
+    // just after construction
     private void loadInnerClasses(CFRState cfrState) {
         AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
         if (attributeInnerClasses == null) {
@@ -542,6 +547,10 @@ public class ClassFile {
         } else {
             dumpAsClass(d);
         }
+    }
+
+    public String getFilePath() {
+        return thisClass.getFilePath();
     }
 
     @Override

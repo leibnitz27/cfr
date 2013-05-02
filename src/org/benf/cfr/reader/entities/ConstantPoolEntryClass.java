@@ -39,6 +39,10 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
         return ClassNameUtils.convertFromPath(getCp().getUTF8Entry(nameIndex).getValue()) + ".class";
     }
 
+    public String getFilePath() {
+        return getCp().getUTF8Entry(nameIndex).getValue() + ".class";
+    }
+
     @Override
     public void dump(Dumper d) {
         d.print("Class " + getCp().getUTF8Entry(nameIndex).getValue());

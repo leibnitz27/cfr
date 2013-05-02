@@ -22,6 +22,9 @@ public class ClassCache {
     private final Map<String, JavaRefTypeInstance> refClassTypeCache = MapFactory.newMap();
     private final Set<String> importableClasses = SetFactory.newSet();
 
+    /*
+     * Set just after constructing first type.
+     */
     private transient JavaRefTypeInstance analysisType;
 
     public ClassCache() {
@@ -54,12 +57,11 @@ public class ClassCache {
         return longNameToShortName.get(clazzRawName).replace('$', '.');
     }
 
+    public void setAnalysisType(JavaRefTypeInstance analysisType) {
+        this.analysisType = analysisType;
+    }
+
     public void markClassNameUsed(JavaRefTypeInstance typeInstance) {
-        /*
-         * While it's a bit of a hack, the first type which is marked as used is always the type under
-         * analysis.
-         */
-        if (analysisType == null) analysisType = typeInstance;
 
         String className = typeInstance.getRawName();
         int idxlast = className.lastIndexOf('.');
