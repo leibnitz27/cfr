@@ -1,5 +1,8 @@
 package org.benf.cfr.tests;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -11,6 +14,7 @@ public @interface AnnotationTestAnnotation2 {
 
     public final int x = 3; // Seems odd, but need to get it right!
     static final int y = 3; // Seems odd, but need to get it right!
+    public Map<String, Integer> z = new HashMap<String, Integer>();
 
     public class fred {
         // INNER CLASS ON ANNOTATION?  *sigh*

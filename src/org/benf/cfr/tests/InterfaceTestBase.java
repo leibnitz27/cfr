@@ -1,5 +1,8 @@
 package org.benf.cfr.tests;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee

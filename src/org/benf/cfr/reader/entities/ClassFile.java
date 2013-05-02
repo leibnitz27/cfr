@@ -466,6 +466,12 @@ public class ClassFile {
         dumpHeader(d, accessFlags.contains(AccessFlag.ACC_ANNOTATION));
         d.print("{\n");
         d.indent(1);
+        // Horrid, but an interface can have fields....
+        if (!fields.isEmpty()) {
+            for (Field field : fields) {
+                field.dump(d, constantPool);
+            }
+        }
         if (!methods.isEmpty()) {
             for (Method meth : methods) {
                 d.newln();
