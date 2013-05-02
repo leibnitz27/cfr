@@ -32,6 +32,7 @@ public class NewPrimitiveArray extends AbstractNewArray {
         super(new InferredJavaType(new JavaArrayTypeInstance(1, type), InferredJavaType.Source.EXPRESSION));
         this.size = size;
         this.type = type;
+        size.getInferredJavaType().useAsWithoutCasting(RawJavaType.INT);
     }
 
     @Override

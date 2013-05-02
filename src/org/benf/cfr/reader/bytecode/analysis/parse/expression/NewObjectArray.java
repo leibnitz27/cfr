@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -30,6 +31,9 @@ public class NewObjectArray extends AbstractNewArray {
         this.allocatedType = resultInstance.getArrayStrippedType();
         this.resultType = resultInstance;
         this.numDims = resultInstance.getNumArrayDimensions();
+        for (Expression size : dimSizes) {
+            size.getInferredJavaType().useAsWithoutCasting(RawJavaType.INT);
+        }
     }
 
     @Override

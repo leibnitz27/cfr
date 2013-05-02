@@ -15,6 +15,7 @@ public class ArrayTest7 {
     int z;
 
     void test3(int a, int b) {
+        // This information is COMPLETELY lost. :(
         List<Integer>[] x = (List<Integer>[]) new List<?>[10];
     }
 
