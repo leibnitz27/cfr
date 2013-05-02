@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -28,7 +29,7 @@ public class NewPrimitiveArray extends AbstractNewArray {
 
     public NewPrimitiveArray(Expression size, ArrayType type) {
         // We don't really know anything about the array dimensionality, just the underlying type. :P
-        super(new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.EXPRESSION));
+        super(new InferredJavaType(new JavaArrayTypeInstance(1, type.getJavaTypeInstance()), InferredJavaType.Source.EXPRESSION));
         this.size = size;
         this.type = type;
     }

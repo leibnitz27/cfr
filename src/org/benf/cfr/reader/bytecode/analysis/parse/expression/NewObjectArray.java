@@ -35,7 +35,7 @@ public class NewObjectArray extends AbstractNewArray {
         d.print("new " + resultType.getArrayStrippedType());
         int numDims = resultType.getNumArrayDimensions();
         for (Expression dimSize : dimSizes) {
-            d.print("[" + dimSize + "]");
+            d.print("[").dump(dimSize).print("]");
         }
         for (int x = dimSizes.size(); x < numDims; ++x) {
             d.print("[]");
