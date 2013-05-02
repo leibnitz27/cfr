@@ -3,6 +3,7 @@ package org.benf.cfr.reader.util;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -20,6 +21,10 @@ public class MapFactory {
 
     public static <X extends Object, Y extends Object> TreeMap<X, Y> newTreeMap() {
         return new TreeMap<X, Y>();
+    }
+
+    public static <X extends Object, Y extends Object> Map<X, Y> newOrderedMap() {
+        return new LinkedHashMap<X, Y>();
     }
 
     public static <X extends Object, Y extends Object> Map<X, Y> newLazyMap(UnaryFunction<X, Y> factory) {

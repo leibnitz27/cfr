@@ -12,6 +12,7 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,7 +27,7 @@ public class AnnotationHelpers {
         offset += 2;
         int numElementPairs = raw.getS2At(offset);
         offset += 2;
-        Map<String, ElementValue> elementValueMap = MapFactory.newMap();
+        Map<String, ElementValue> elementValueMap = MapFactory.newOrderedMap();
         for (int x = 0; x < numElementPairs; ++x) {
             offset = getElementValuePair(raw, offset, cp, elementValueMap);
         }

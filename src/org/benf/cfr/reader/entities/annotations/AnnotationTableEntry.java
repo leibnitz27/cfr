@@ -6,6 +6,7 @@ import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,6 +16,7 @@ import java.util.Map;
  */
 public class AnnotationTableEntry {
     private final JavaTypeInstance clazz;
+    // Sorted map to make ordering predictable.
     private final Map<String, ElementValue> elementValueMap;
 
     public AnnotationTableEntry(JavaTypeInstance clazz, Map<String, ElementValue> elementValueMap) {
