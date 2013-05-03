@@ -61,6 +61,12 @@ public class ClassFile {
     private boolean begunAnalysis;
 
     /*
+     * If this class represents a generated structure (like a switch lookup table)
+     * we will mark it as hidden, and not normally show it.
+     */
+    private boolean hiddenInnerClass;
+
+    /*
      * Be sure to call loadInnerClasses directly after.
      */
     public ClassFile(final ByteData data, CFRState cfrState, boolean withInnerClasses, ConfigCallback configCallback) {
@@ -155,6 +161,11 @@ public class ClassFile {
         if (withInnerClasses) {
             loadInnerClasses(cfrState);
         }
+    }
+
+    public void markHiddenInnerClass() {
+        hiddenInnerClass = true;
+        hiddenInnerClass = true;
     }
 
     public ClassFileVersion getClassFileVersion() {
@@ -518,6 +529,7 @@ public class ClassFile {
     }
 
     public void dumpAsInnerClass(Dumper d) {
+        if (hiddenInnerClass) return;
         dumpAsClassCommon(d);
     }
 

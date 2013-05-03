@@ -266,6 +266,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                 structuredSwitch.getBlockIdentifier());
 
         structuredSwitch.getContainer().replaceContainedStatement(newSwitch);
+        enumLutClass.markHiddenInnerClass();
     }
 
     private Integer getIntegerFromLiteralExpression(Expression exp) {
