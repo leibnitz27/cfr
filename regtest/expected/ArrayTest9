@@ -21,20 +21,19 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class ArrayTest9
-{
+public class ArrayTest9 {
      int x;
      int y;
      int z;
 
-    public ArrayTest9(){
+    public ArrayTest9() {
     }
 
-    static /* varargs */ void test1(Integer ... a){
+    static /* varargs */ void test1(Integer ... a) {
         System.out.println(a);
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         ArrayTest9.test1(new Integer[]{Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3)});
         ArrayTest9.test1(new Integer[]{Integer.valueOf(1)});
         ArrayTest9.test1(null);

@@ -1,8 +1,10 @@
 #!/usr/bin/perl
 use File::Slurp;
 
+# use -wB to ignore blanks
+
+my $arg = $ARGV[0];
 my $base = "";
-if (scalar(@ARGV) > 2) { $base = $ARGV[1]; }
 my @files = `ls -1 expected`;
 chomp @files;
 
@@ -13,8 +15,22 @@ foreach my $file (@files) {
     my $actualtext = `$cmd`;
     my $expected = read_file("expected/$file");
     if ($actualtext ne $expected) {
-      print "[$cmd]\n";
-      print " ** FAIL **";
+      if ($arg eq "r") {
+        `$cmd > /tmp/cfrtest.tmp`;
+        $res = system("diff expected/$file /tmp/cfrtest.tmp");	      
+        print "($res)\n";
+        print "[$cmd > expected/$file]\n";
+        print " ** FAIL ** Accept new? (y?)";
+        my $key = <STDIN>;
+	chomp $key;        
+        if ($key eq "y") {
+	  `cp /tmp/cfrtest.tmp expected/$file`;
+        }
+        print "\n";
+      } else {
+        print "[$cmd]\n";
+        print " ** FAIL **";
+      }
     } 
     print "\n";
 }	

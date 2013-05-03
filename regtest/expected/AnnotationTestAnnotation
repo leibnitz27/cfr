@@ -7,8 +7,7 @@ import java.lang.Object;
 import java.lang.String;
 import java.lang.annotation.Annotation;
 
-public @interface AnnotationTestAnnotation
-{
+public @interface AnnotationTestAnnotation {
 
     public String[] value();
     public int fred() default 3;

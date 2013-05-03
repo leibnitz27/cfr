@@ -29,23 +29,21 @@ import java.util.Map;
 import java.util.Map$Entry;
 import java.util.Set;
 
-public @interface AnnotationTestAnnotation2
-{
+public @interface AnnotationTestAnnotation2 {
     public static final int x = 3;
     public static final int y = 3;
     public static final Map<String, Integer> z;
 
     public String value() default "wibble";
-    default static void <clinit>(){
+    default static void <clinit>() {
         AnnotationTestAnnotation2.z = new HashMap();
     }
 
-    public static class fred
-    {
+    public static class fred {
         private static final int TEST = 3;
         private int y;
 
-        public fred(int y){
+        public fred(int y) {
             this.y = y;
         }
 

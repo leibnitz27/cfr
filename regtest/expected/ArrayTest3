@@ -17,16 +17,15 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class ArrayTest3
-{
+public class ArrayTest3 {
      int x;
      int y;
      int z;
 
-    public ArrayTest3(){
+    public ArrayTest3() {
     }
 
-    void test1(int a, int b){
+    void test1(int a, int b) {
         String[] tmp = new String[]{"a", "b", "c"};
         for (String s : tmp) {
             System.out.println(s);

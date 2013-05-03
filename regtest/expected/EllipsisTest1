@@ -17,25 +17,24 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class EllipsisTest1
-{
+public class EllipsisTest1 {
 
-    public EllipsisTest1(){
+    public EllipsisTest1() {
     }
 
-    void test1(String a, String b, String c){
+    void test1(String a, String b, String c) {
         this.test2(new String[]{a, b, c});
         this.test2(new String[]{a, b, c});
         this.test3(new String[]{a, b, c});
     }
 
-    /* varargs */ void test2(String ... a){
+    /* varargs */ void test2(String ... a) {
         for (String x : a) {
             System.out.println(x);
         }
     }
 
-    void test3(String[] a){
+    void test3(String[] a) {
         for (String x : a) {
             System.out.println(x);
         }

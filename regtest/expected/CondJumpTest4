@@ -17,13 +17,12 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class CondJumpTest4
-{
+public class CondJumpTest4 {
 
-    public CondJumpTest4(){
+    public CondJumpTest4() {
     }
 
-    public void test(int a){
+    public void test(int a) {
         if (a == 1) {
             System.out.println("One");
         } else if ((a == 2) || (a == 3)) {

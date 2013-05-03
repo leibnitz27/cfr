@@ -17,13 +17,12 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public abstract class AbstractTestBase
-{
+public abstract class AbstractTestBase {
 
-    public AbstractTestBase(){
+    public AbstractTestBase() {
     }
 
-    public void test1(){
+    public void test1() {
         System.out.println("TEST1");
     }
 

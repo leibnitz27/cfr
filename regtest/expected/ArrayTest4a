@@ -11,28 +11,27 @@ import java.lang.Number;
 import java.lang.Object;
 import java.lang.String;
 
-public class ArrayTest4a
-{
+public class ArrayTest4a {
      int x;
      int y;
      int z;
 
-    public ArrayTest4a(){
+    public ArrayTest4a() {
     }
 
-    void test1(int a, int b){
+    void test1(int a, int b) {
         String[] tmp = new String[]{"a", "b", "c"};
     }
 
-    void test2(int a, int b){
+    void test2(int a, int b) {
         Integer[] tmp = new Integer[]{Integer.valueOf(a), Integer.valueOf(b), Integer.valueOf(this.x), Integer.valueOf(this.y)};
     }
 
-    void test3(int a, int b){
+    void test3(int a, int b) {
         Integer[][] tmp = new Integer[][]{new Integer[]{Integer.valueOf(a), Integer.valueOf(b)}, new Integer[]{Integer.valueOf(this.x), Integer.valueOf(this.y)}, new Integer[]{Integer.valueOf(this.z)}};
     }
 
-    void test4(int a, int b){
+    void test4(int a, int b) {
         Integer[][] tmp = new Integer[3][];
     }
 

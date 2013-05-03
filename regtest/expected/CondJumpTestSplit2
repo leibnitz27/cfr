@@ -7,13 +7,12 @@ import java.lang.Class;
 import java.lang.Object;
 import java.lang.String;
 
-public class CondJumpTestSplit2
-{
+public class CondJumpTestSplit2 {
 
-    public CondJumpTestSplit2(){
+    public CondJumpTestSplit2() {
     }
 
-    public boolean test(boolean a, boolean b){
+    public boolean test(boolean a, boolean b) {
         boolean c = a;
         return c;
     }

@@ -29,13 +29,12 @@ import java.util.Set;
 
 public class ExtendTest2
 extends HashMap
-implements Map
-{
+implements Map {
 
-    public ExtendTest2(){
+    public ExtendTest2() {
     }
 
-    void test4(int a){
+    void test4(int a) {
         String[] r = new String[a];
     }
 

@@ -11,26 +11,25 @@ import java.lang.Number;
 import java.lang.Object;
 import java.lang.String;
 
-public class ArrayTest6
-{
+public class ArrayTest6 {
      int x;
      int y;
      int z;
 
-    public ArrayTest6(){
+    public ArrayTest6() {
     }
 
-    void test3(int a, int b){
+    void test3(int a, int b) {
         int[][] tmp = new int[3][3];
         tmp[1][2] = 4;
     }
 
-    void test3a(int a, int b){
+    void test3a(int a, int b) {
         Integer[][] tmp = new Integer[3][3];
         tmp[1][2] = Integer.valueOf(4);
     }
 
-    void test4(){
+    void test4() {
         int[] tmp2 = new int[4];
         tmp2[3] = 4;
     }

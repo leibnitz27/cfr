@@ -36,13 +36,12 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Locale;
 
-public class ExceptionTest2
-{
+public class ExceptionTest2 {
 
-    public ExceptionTest2(){
+    public ExceptionTest2() {
     }
 
-    void test1(String[] path){
+    void test1(String[] path) {
         try {
             File file = new File(path[0]);
             FileInputStream unnamed_local_fileInputStream_3 = new FileInputStream(file);

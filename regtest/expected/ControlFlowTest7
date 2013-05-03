@@ -8,13 +8,12 @@ import java.lang.Object;
 import java.lang.RuntimeException;
 import java.lang.String;
 
-public class ControlFlowTest7
-{
+public class ControlFlowTest7 {
 
-    public ControlFlowTest7(){
+    public ControlFlowTest7() {
     }
 
-    public int foo(int i, int j){
+    public int foo(int i, int j) {
         do {
             try {
                 while (i < j) {

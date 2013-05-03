@@ -66,23 +66,22 @@ import sun.reflect.annotation.AnnotationType;
 import sun.reflect.generics.factory.GenericsFactory;
 import sun.reflect.generics.repository.ClassRepository;
 
-public class AssertTest2
-{
+public class AssertTest2 {
     static final Map<String, String> map;
     static final Map<String, String> map2;
     static final /* synthetic */ boolean $assertionsDisabled;
 
-    public AssertTest2(){
+    public AssertTest2() {
     }
 
-    public void test1(String s){
+    public void test1(String s) {
         if ((!(AssertTest2.$assertionsDisabled)) && (s.equals("Fred"))) {
             throw new AssertionError();
         }
         System.out.println(s);
     }
 
-    static void <clinit>(){
+    static void <clinit>() {
         v14 = !(org.benf.cfr.tests.AssertTest2.class.desiredAssertionStatus());
         AssertTest2.$assertionsDisabled = v14;
         AssertTest2.map = MapFactory.newMap();

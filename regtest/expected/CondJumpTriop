@@ -7,13 +7,12 @@ import java.lang.Class;
 import java.lang.Object;
 import java.lang.String;
 
-public class CondJumpTriop
-{
+public class CondJumpTriop {
 
-    public CondJumpTriop(){
+    public CondJumpTriop() {
     }
 
-    public boolean test(boolean a, boolean b, boolean c){
+    public boolean test(boolean a, boolean b, boolean c) {
         v2 = (a) ? (b) : (c);
         return v2;
     }

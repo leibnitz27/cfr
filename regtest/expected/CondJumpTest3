@@ -7,13 +7,12 @@ import java.lang.Class;
 import java.lang.Object;
 import java.lang.String;
 
-public class CondJumpTest3
-{
+public class CondJumpTest3 {
 
-    public CondJumpTest3(){
+    public CondJumpTest3() {
     }
 
-    public boolean test(boolean a, boolean b){
+    public boolean test(boolean a, boolean b) {
         if (b) {
             boolean c = b;
             v8 = ((a == c) && (b)) && (c);

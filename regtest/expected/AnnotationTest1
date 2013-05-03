@@ -22,25 +22,24 @@ import java.util.Locale;
 import org.benf.cfr.tests.AnnotationTestAnnotation;
 import org.benf.cfr.tests.AnnotationTestAnnotation2;
 
-public class AnnotationTest1
-{
+public class AnnotationTest1 {
 
-    public AnnotationTest1(){
+    public AnnotationTest1() {
     }
 
     @Deprecated
-    void foo(int unnamed_local_x_1){
+    void foo(int unnamed_local_x_1) {
     }
 
     @AnnotationTestAnnotation(value={"fred", "jim"}, fred=1)
     @AnnotationTestAnnotation2(value="fred")
-    void foo(int x, @Nullable Double y){
+    void foo(int x, @Nullable Double y) {
         System.out.println("Foo!");
     }
 
     @AnnotationTestAnnotation(value={"fred", "jim"})
     @AnnotationTestAnnotation2(value="fred")
-    static void foo2(int x, @Deprecated @Nullable @AnnotationTestAnnotation2(value="pants") Double y){
+    static void foo2(int x, @Deprecated @Nullable @AnnotationTestAnnotation2(value="pants") Double y) {
         System.out.println("Foo!");
     }
 

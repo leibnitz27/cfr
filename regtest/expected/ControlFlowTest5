@@ -19,13 +19,12 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class ControlFlowTest5
-{
+public class ControlFlowTest5 {
 
-    public ControlFlowTest5(){
+    public ControlFlowTest5() {
     }
 
-    public int foo(int i, int j){
+    public int foo(int i, int j) {
         do {
             System.out.println("fred");
             try {

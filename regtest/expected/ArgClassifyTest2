@@ -7,13 +7,12 @@ import java.lang.Class;
 import java.lang.Object;
 import java.lang.String;
 
-public class ArgClassifyTest2
-{
+public class ArgClassifyTest2 {
 
-    public ArgClassifyTest2(){
+    public ArgClassifyTest2() {
     }
 
-    void test1(){
+    void test1() {
         String a = "fdfd";
     }
 

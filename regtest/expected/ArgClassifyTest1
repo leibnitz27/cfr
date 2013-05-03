@@ -17,21 +17,20 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class ArgClassifyTest1
-{
+public class ArgClassifyTest1 {
 
-    public ArgClassifyTest1(){
+    public ArgClassifyTest1() {
     }
 
-    void test1(String a){
+    void test1(String a) {
         System.out.println("a");
     }
 
-    void test1(Object a){
+    void test1(Object a) {
         System.out.println("b");
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         String a = "fdfd";
         ArgClassifyTest1 ar = new ArgClassifyTest1();
         ar.test1(a);

@@ -9,10 +9,9 @@ import java.lang.String;
 import java.util.List;
 import java.util.Map;
 
-public abstract class AbstractTest2<T>
-{
+public abstract class AbstractTest2<T> {
 
-    public AbstractTest2(){
+    public AbstractTest2() {
     }
 
     public abstract T create(List<String> v1, Map<String, String> v2);

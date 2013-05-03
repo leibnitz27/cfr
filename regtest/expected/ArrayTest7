@@ -8,16 +8,15 @@ import java.lang.Object;
 import java.lang.String;
 import java.util.List;
 
-public class ArrayTest7
-{
+public class ArrayTest7 {
      int x;
      int y;
      int z;
 
-    public ArrayTest7(){
+    public ArrayTest7() {
     }
 
-    void test3(int a, int b){
+    void test3(int a, int b) {
         List[] x = new List[10];
     }
 

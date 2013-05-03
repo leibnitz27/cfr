@@ -8,8 +8,7 @@ import java.lang.String;
 import java.lang.annotation.Annotation;
 
 public interface AnnotationTestAnnotation1
-extends Annotation
-{
+extends Annotation {
 
     public String[] value();
     public int fred();

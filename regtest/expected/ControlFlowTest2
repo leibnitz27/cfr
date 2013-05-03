@@ -17,13 +17,12 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class ControlFlowTest2
-{
+public class ControlFlowTest2 {
 
-    public ControlFlowTest2(){
+    public ControlFlowTest2() {
     }
 
-    public int foo(int i, int j){
+    public int foo(int i, int j) {
         do {
             if (i++ < 5) {
                 System.out.println("a");

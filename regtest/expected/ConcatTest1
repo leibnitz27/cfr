@@ -23,13 +23,12 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class ConcatTest1
-{
+public class ConcatTest1 {
 
-    public ConcatTest1(){
+    public ConcatTest1() {
     }
 
-    public void test1(String a, String b, int c){
+    public void test1(String a, String b, int c) {
         String res = ("This " + a + " is a " + b + " stringbuilder desugaring test " + c);
         System.out.println(res);
     }
