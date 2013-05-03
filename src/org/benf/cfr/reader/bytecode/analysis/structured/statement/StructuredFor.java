@@ -47,8 +47,11 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
                 dumper.print(initial.getCreatedLValue().getInferredJavaType().getJavaTypeInstance().toString() + " ");
             }
             dumper.dump(initial);
+            dumper.removePendingCarriageReturn();
+        } else {
+            dumper.print(";");
         }
-        dumper.print(";").dump(condition).print("; ").dump(assignment).print(") ");
+        dumper.print(" ").dump(condition).print("; ").dump(assignment).print(") ");
         getBody().dump(dumper);
         return dumper;
     }
