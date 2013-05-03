@@ -262,7 +262,7 @@ public class Method implements KnowsRawSize {
             }
             d.print(";");
         } else {
-            codeAttribute.dump(d);
+            d.print(' ').dump(codeAttribute);
         }
     }
 

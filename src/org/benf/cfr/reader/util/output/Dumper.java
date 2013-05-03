@@ -13,7 +13,7 @@ public interface Dumper {
 
     void enqueuePendingCarriageReturn();
 
-    void removePendingCarriageReturn();
+    Dumper removePendingCarriageReturn();
 
     Dumper print(String s);
 

@@ -27,9 +27,10 @@ public class StdOutDumper implements Dumper {
     }
 
     @Override
-    public void removePendingCarriageReturn() {
+    public Dumper removePendingCarriageReturn() {
         pendingCR = false;
         atStart = false;
+        return this;
     }
 
     private void processPendingCR() {
@@ -44,9 +45,16 @@ public class StdOutDumper implements Dumper {
     public Dumper print(String s) {
         processPendingCR();
         doIndent();
+        boolean doNewLn = false;
+        if (s.endsWith("\n")) {
+            s = s.substring(0, s.length() - 1);
+            doNewLn = true;
+        }
         System.out.print(s);
         atStart = false;
-        if (s.endsWith("\n")) atStart = true;
+        if (doNewLn) {
+            newln();
+        }
         return this;
     }
 

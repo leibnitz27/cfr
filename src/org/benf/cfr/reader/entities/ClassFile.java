@@ -449,7 +449,7 @@ public class ClassFile {
                 }
             }
         }
-        d.removePendingCarriageReturn();
+        d.removePendingCarriageReturn().print(" ");
     }
 
     private void dumpNamedInnerClasses(Dumper d) {

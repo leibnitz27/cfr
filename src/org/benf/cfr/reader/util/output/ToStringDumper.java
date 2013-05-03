@@ -36,8 +36,9 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
-    public void removePendingCarriageReturn() {
+    public Dumper removePendingCarriageReturn() {
         pendingCR = false;
+        return this;
     }
 
     private void processPendingCR() {
