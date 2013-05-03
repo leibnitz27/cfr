@@ -1,0 +1,29 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class AssignTest2
+{
+    private static long sid;
+    private final long id0;
+
+    public AssignTest2(){
+        v2 = AssignTest2.sid;
+        AssignTest2.sid = (v2 + 1);
+        this.id0 = v2;
+    }
+
+    public AssignTest2(boolean b){
+        this.id0 = AssignTest2.sid+=1;
+    }
+
+    static void <clinit>(){
+        AssignTest2.sid = 0;
+    }
+
+}

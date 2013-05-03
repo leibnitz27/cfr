@@ -1,0 +1,35 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class ArrayTest4
+{
+     int x;
+     int y;
+     int z;
+
+    public ArrayTest4(){
+    }
+
+    void test1(int a, int b){
+        String[] tmp = new String[]{"a", "b", "c"};
+    }
+
+    void test2(int a, int b){
+        int[] tmp = new int[]{a, b, this.x, this.y};
+    }
+
+    void test3(int a, int b){
+        int[][] tmp = new int[][]{new int[]{a, b}, new int[]{this.x, this.y}, new int[]{this.z}};
+    }
+
+    void test4(int a, int b){
+        int[][] tmp = new int[3][];
+    }
+
+}

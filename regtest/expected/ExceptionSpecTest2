@@ -1,0 +1,38 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Exception;
+import java.lang.IllegalStateException;
+import java.lang.Object;
+import java.lang.RuntimeException;
+import java.lang.String;
+import java.lang.Throwable;
+import java.util.List;
+
+public class ExceptionSpecTest2
+{
+
+    public ExceptionSpecTest2(){
+    }
+
+    public <X> List<X> func(X x) throws java.lang.IllegalStateException {
+        throw new IllegalStateException();
+    }
+
+    public <X> List<X> func2(X x) throws org.benf.cfr.tests.ExceptionSpecTest2$InnerException {
+        throw new InnerException();
+    }
+
+    public static class InnerException
+    extends RuntimeException
+    {
+
+        public InnerException(){
+        }
+
+    }
+
+}

@@ -1,0 +1,27 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class AssignTest3
+{
+     int x;
+     int y;
+     int z;
+
+    public AssignTest3(){
+    }
+
+    void test3(int a){
+        this.x = ++a;
+    }
+
+    void test3b(int a){
+        this.x = a++;
+    }
+
+}

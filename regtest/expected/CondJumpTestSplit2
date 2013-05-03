@@ -1,0 +1,21 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class CondJumpTestSplit2
+{
+
+    public CondJumpTestSplit2(){
+    }
+
+    public boolean test(boolean a, boolean b){
+        boolean c = a;
+        return c;
+    }
+
+}

@@ -1,0 +1,23 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class ControlFlowTest8
+{
+
+    public ControlFlowTest8(){
+    }
+
+    public int foo(int i, int j){
+lbl1: // 2 sources:
+        ** if (++i < j) goto lbl1
+lbl2: // 1 sources:
+        return j;
+    }
+
+}

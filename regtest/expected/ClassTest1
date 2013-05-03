@@ -1,0 +1,27 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+import java.util.logging.Handler;
+import java.util.logging.Logger;
+import org.benf.cfr.reader.util.output.LoggerFactory;
+
+public class ClassTest1
+{
+    private static final Logger logger;
+
+    public ClassTest1(){
+    }
+
+    public void test1(String unnamed_local_a_1, String unnamed_local_b_2, int unnamed_local_c_3){
+    }
+
+    static void <clinit>(){
+        ClassTest1.logger = LoggerFactory.create(org.benf.cfr.tests.ClassTest1.class);
+    }
+
+}

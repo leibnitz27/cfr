@@ -1,0 +1,34 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.RuntimeException;
+import java.lang.String;
+
+public class ControlFlowTest7
+{
+
+    public ControlFlowTest7(){
+    }
+
+    public int foo(int i, int j){
+        do {
+            try {
+                while (i < j) {
+                    i = (j++ / i);
+                }
+                break;
+            }
+            catch (RuntimeException re) {
+                i = 10;
+                if (i > 5) continue;
+            }
+            break;
+        } while (true);
+        return j;
+    }
+
+}
