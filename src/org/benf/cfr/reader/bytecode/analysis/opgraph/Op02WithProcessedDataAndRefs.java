@@ -425,13 +425,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LCONST_1:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getLong(1)));
             case FCONST_0:
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getFloat(0)));
             case DCONST_0:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getDouble(0)));
             case FCONST_1:
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getFloat(1)));
             case DCONST_1:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getDouble(1)));
             case FCONST_2:
-                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getDouble(2)));
+                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getFloat(2)));
             case BIPUSH: // TODO: Try a boolean if value = 0.
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getInt(rawData[0])));
             case SIPUSH:

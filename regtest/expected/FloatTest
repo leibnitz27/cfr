@@ -17,29 +17,28 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class FloatTest
-{
+public class FloatTest {
 
-    public FloatTest(){
+    public FloatTest() {
     }
 
-    public static float a(){
+    public static float a() {
         float res = 0.0;
-        for (int x = 1;x <= 1000000; ++x) {
+        for (int x = 1; x <= 1000000; ++x) {
             res+=(1.0 / x);
         }
         return res;
     }
 
-    public static float b(){
+    public static float b() {
         float res = 0.0;
-        for (int x = 1000000;x >= true; --x) {
+        for (int x = 1000000; x >= true; --x) {
             res+=(1.0 / x);
         }
         return res;
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         System.out.println(FloatTest.a());
         System.out.println(FloatTest.b());
     }
