@@ -268,11 +268,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             JavaTypeInstance callType = function.getClassEntry().getTypeInstance();
             ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
             String funcName = nameAndType.getName().getValue();
+            boolean typesMatch = callType.equals(objType);
             if (funcName.equals("<init>")) {
-                if (!(callType.equals(objType) ||
-                        (objType.getRawName().equals("java.lang.Object")))) {
+                if (!(typesMatch || objType.getRawName().equals("java.lang.Object"))) {
                     isSuper = true;
                 }
+            } else {
+                // TODO : FIXME - this logic is overcomplicated - probably wrong.
+                if (!typesMatch) isSuper = true;
             }
         }
         MethodPrototype methodPrototype = function.getMethodPrototype();

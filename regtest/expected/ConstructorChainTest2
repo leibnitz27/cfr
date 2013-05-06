@@ -7,31 +7,38 @@ import java.lang.Object;
 import org.benf.cfr.tests.ConstructorChainTest1;
 
 public class ConstructorChainTest2
-extends ConstructorChainTest1
-{
+extends ConstructorChainTest1 {
 
-    public ConstructorChainTest2(int x, int y){
+    public ConstructorChainTest2(int x, int y) {
         super(x, y);
     }
 
-    public ConstructorChainTest2(){
+    public ConstructorChainTest2() {
         super(3, 4);
     }
 
-    public ConstructorChainTest2(int x){
+    public ConstructorChainTest2(int x) {
         this(3, 4);
     }
 
-    public int testFn(){
+    public int testFn() {
         return 12;
     }
 
-    public int test1(){
+    public int test1() {
         return this.testFn();
     }
 
-    public int test2(){
+    public int test2() {
         return super.testFn();
+    }
+
+    private int testx() {
+        return 3;
+    }
+
+    public int test3(ConstructorChainTest2 other) {
+        return other.testx();
     }
 
 }

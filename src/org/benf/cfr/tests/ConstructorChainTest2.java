@@ -35,4 +35,13 @@ public class ConstructorChainTest2 extends ConstructorChainTest1 {
         // generates invokespecial
         return super.testFn();
     }
+
+    private int testx() {
+        return 3;
+    }
+
+    public int test3(ConstructorChainTest2 other) {
+        // generates invokespecial
+        return other.testx();
+    }
 }

@@ -66,7 +66,11 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
 
     @Override
     public Dumper dump(Dumper d) {
-        d.print("super(");
+        if (methodPrototype.getName().equals("<init>")) {
+            d.print("super(");
+        } else {
+            d.print("super.").print(methodPrototype.getName()).print("(");
+        }
         boolean first = true;
 
         int start = isSyntheticThisFirstArg() ? 1 : 0;
