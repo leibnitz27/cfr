@@ -73,7 +73,8 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
             // TODO : Improve the caching?
 
             try {
-                ClassFile classFile = cp.getCFRState().getClassFile(classType.getDeGenerifiedType(), false);
+                JavaTypeInstance loadType = classType.getArrayStrippedType().getDeGenerifiedType();
+                ClassFile classFile = cp.getCFRState().getClassFile(loadType, false);
                 MethodPrototype replacement = classFile.getMethodByPrototype(basePrototype).getMethodPrototype();
                 basePrototype = replacement;
             } catch (NoSuchMethodException ignore) {
