@@ -13,10 +13,9 @@ import java.lang.String;
 import java.lang.Throwable;
 import java.util.List;
 
-public class ExceptionSpecTest1
-{
+public class ExceptionSpecTest1 {
 
-    public ExceptionSpecTest1(){
+    public ExceptionSpecTest1() {
     }
 
     public <X> List<X> func(X x) throws java.lang.IllegalStateException {

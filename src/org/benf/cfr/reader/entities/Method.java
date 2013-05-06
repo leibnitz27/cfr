@@ -230,7 +230,6 @@ public class Method implements KnowsRawSize {
                 first = CommaHelp.comma(first, d);
                 d.print(exceptionClass.getTypeInstance().getRawName());
             }
-            if (asClass) d.print(' '); // This is the kind of fiddly display we don't want to be doing here.. :(
         }
     }
 
