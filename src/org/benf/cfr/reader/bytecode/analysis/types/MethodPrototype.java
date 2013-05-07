@@ -130,7 +130,7 @@ public class MethodPrototype {
         if (result == null) {
             if ("<init>".equals(getName())) {
                 if (classFile != null) {
-                    result = classFile.getClassSignature().getThisGeneralTypeClass(thisTypeInstance, cp);
+                    result = classFile.getClassSignature().getThisGeneralTypeClass(thisTypeInstance);
                 } else {
                     // best we can say is 'this'.
                     result = thisTypeInstance;

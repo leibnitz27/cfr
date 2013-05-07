@@ -34,12 +34,12 @@ public class ClassSignature {
         return interfaces;
     }
 
-    public JavaTypeInstance getThisGeneralTypeClass(JavaTypeInstance nonGenericInstance, ConstantPool cp) {
+    public JavaTypeInstance getThisGeneralTypeClass(JavaTypeInstance nonGenericInstance) {
         if (nonGenericInstance instanceof JavaGenericBaseInstance) return nonGenericInstance;
         if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return nonGenericInstance;
         List<JavaTypeInstance> typeParameterNames = ListFactory.newList();
         for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
-            typeParameterNames.add(new JavaGenericPlaceholderTypeInstance(formalTypeParameter.getName(), cp));
+            typeParameterNames.add(new JavaGenericPlaceholderTypeInstance(formalTypeParameter.getName()));
         }
         JavaTypeInstance res = new JavaGenericRefTypeInstance(nonGenericInstance, typeParameterNames);
         return res;

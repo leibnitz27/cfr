@@ -10,11 +10,9 @@ import org.benf.cfr.reader.entities.ConstantPool;
  */
 public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstance {
     private final String className;
-    private final ConstantPool cp;
 
-    public JavaGenericPlaceholderTypeInstance(String className, ConstantPool cp) {
+    public JavaGenericPlaceholderTypeInstance(String className) {
         this.className = className;
-        this.cp = cp;
     }
 
     @Override
