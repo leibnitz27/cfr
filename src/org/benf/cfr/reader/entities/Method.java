@@ -228,7 +228,8 @@ public class Method implements KnowsRawSize {
             List<ConstantPoolEntryClass> exceptionClasses = exceptionsAttribute.getExceptionClassList();
             for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
                 first = CommaHelp.comma(first, d);
-                d.print(exceptionClass.getTypeInstance().getRawName());
+                JavaTypeInstance typeInstance = exceptionClass.getTypeInstance();
+                d.print(typeInstance.toString());
             }
         }
     }

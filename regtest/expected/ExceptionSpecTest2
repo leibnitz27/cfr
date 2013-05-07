@@ -12,25 +12,23 @@ import java.lang.String;
 import java.lang.Throwable;
 import java.util.List;
 
-public class ExceptionSpecTest2
-{
+public class ExceptionSpecTest2 {
 
-    public ExceptionSpecTest2(){
+    public ExceptionSpecTest2() {
     }
 
-    public <X> List<X> func(X x) throws java.lang.IllegalStateException {
+    public <X> List<X> func(X x) throws IllegalStateException {
         throw new IllegalStateException();
     }
 
-    public <X> List<X> func2(X x) throws org.benf.cfr.tests.ExceptionSpecTest2$InnerException {
+    public <X> List<X> func2(X x) throws InnerException {
         throw new InnerException();
     }
 
     public static class InnerException
-    extends RuntimeException
-    {
+    extends RuntimeException {
 
-        public InnerException(){
+        public InnerException() {
         }
 
     }

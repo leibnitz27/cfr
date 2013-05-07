@@ -18,11 +18,11 @@ public class ExceptionSpecTest1 {
     public ExceptionSpecTest1() {
     }
 
-    public <X> List<X> func(X x) throws java.lang.IllegalStateException {
+    public <X> List<X> func(X x) throws IllegalStateException {
         throw new IllegalStateException();
     }
 
-    public <X> List<X> func2(X x) throws java.io.IOException {
+    public <X> List<X> func2(X x) throws IOException {
         throw new IOException();
     }
 
