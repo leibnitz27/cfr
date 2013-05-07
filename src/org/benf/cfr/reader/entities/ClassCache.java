@@ -20,6 +20,7 @@ public class ClassCache {
     private final Map<String, String> longNameToShortName = MapFactory.newMap();
     private final Map<String, String> shortNameToLongName = MapFactory.newMap();
     private final Map<String, JavaRefTypeInstance> refClassTypeCache = MapFactory.newMap();
+    private final Set<JavaRefTypeInstance> usedClassSet = SetFactory.newSet();
     private final Set<String> importableClasses = SetFactory.newSet();
 
     /*
@@ -64,6 +65,7 @@ public class ClassCache {
     }
 
     public void markClassNameUsed(JavaRefTypeInstance typeInstance) {
+        if (!usedClassSet.add(typeInstance)) return;
 
         String className = typeInstance.getRawName();
         int idxlast = className.lastIndexOf('.');
@@ -92,7 +94,12 @@ public class ClassCache {
     public JavaRefTypeInstance getRefClassFor(String rawClassName) {
         String name = ClassNameUtils.convertFromPath(rawClassName);
         JavaRefTypeInstance typeInstance = refClassTypeCache.get(name);
-        if (typeInstance != null) return typeInstance;
+        if (typeInstance != null) {
+            // This is a bit messy, as we will only hit here on an unused type if it's
+            // a pre-cooked one.
+            markClassNameUsed(typeInstance);
+            return typeInstance;
+        }
 
         typeInstance = JavaRefTypeInstance.create(name, this);
 

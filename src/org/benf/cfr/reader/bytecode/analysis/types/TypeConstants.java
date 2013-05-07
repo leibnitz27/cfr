@@ -7,6 +7,6 @@ package org.benf.cfr.reader.bytecode.analysis.types;
  * Time: 20:44
  */
 public interface TypeConstants {
-    public final static JavaRefTypeInstance STRING = JavaRefTypeInstance.createTypeConstant("java/lang/String", "String");
-    public final static JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstant("java/lang/Enum", "Enum");
+    public final static JavaRefTypeInstance STRING = JavaRefTypeInstance.createTypeConstant("java.lang.String", "String");
+    public final static JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstant("java.lang.Enum", "Enum");
 }
