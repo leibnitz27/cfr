@@ -41,7 +41,7 @@ public class ClassSignature {
         for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
             typeParameterNames.add(new JavaGenericPlaceholderTypeInstance(formalTypeParameter.getName(), cp));
         }
-        JavaTypeInstance res = new JavaGenericRefTypeInstance(nonGenericInstance, typeParameterNames, cp);
+        JavaTypeInstance res = new JavaGenericRefTypeInstance(nonGenericInstance, typeParameterNames);
         return res;
     }
 }

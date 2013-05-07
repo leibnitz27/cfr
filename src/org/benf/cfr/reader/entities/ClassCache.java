@@ -29,6 +29,7 @@ public class ClassCache {
 
     public ClassCache() {
         refClassTypeCache.put(TypeConstants.STRING.getRawName(), TypeConstants.STRING);
+        refClassTypeCache.put(TypeConstants.ENUM.getRawName(), TypeConstants.ENUM);
     }
 
     private boolean importClass(JavaRefTypeInstance clazz) {

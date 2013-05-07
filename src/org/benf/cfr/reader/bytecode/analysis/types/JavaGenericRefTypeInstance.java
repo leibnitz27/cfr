@@ -15,11 +15,9 @@ import java.util.List;
 public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     private final JavaTypeInstance typeInstance;
     private final List<JavaTypeInstance> genericTypes;
-    private final ConstantPool cp;
 
-    public JavaGenericRefTypeInstance(JavaTypeInstance typeInstance, List<JavaTypeInstance> genericTypes, ConstantPool cp) {
+    public JavaGenericRefTypeInstance(JavaTypeInstance typeInstance, List<JavaTypeInstance> genericTypes) {
         this.typeInstance = typeInstance;
-        this.cp = cp;
         this.genericTypes = genericTypes;
     }
 
@@ -29,7 +27,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
         for (JavaTypeInstance genericType : genericTypes) {
             res.add(genericTypeBinder.getBindingFor(genericType));
         }
-        return new JavaGenericRefTypeInstance(typeInstance, res, cp);
+        return new JavaGenericRefTypeInstance(typeInstance, res);
     }
 
     @Override

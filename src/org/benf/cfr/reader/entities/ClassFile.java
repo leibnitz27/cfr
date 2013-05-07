@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.ClassRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.Attribute;
@@ -355,10 +356,19 @@ public class ClassFile {
             }
         }
         if (exceptionRecovered) throw new ConfusedCFRException("Failed to analyse file");
+        /*
+         * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
+         * several methods.
+         */
+        ClassRewriter.rewriteEnumClass(this, state);
     }
 
     public JavaTypeInstance getClassType() {
         return thisClass.getTypeInstance();
+    }
+
+    public JavaTypeInstance getBaseClassType() {
+        return classSignature.getSuperClass();
     }
 
     public ClassSignature getClassSignature() {
