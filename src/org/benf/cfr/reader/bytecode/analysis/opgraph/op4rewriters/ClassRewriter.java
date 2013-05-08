@@ -2,9 +2,12 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractNewArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewAnonymousArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -17,8 +20,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
@@ -55,11 +57,14 @@ public class ClassRewriter {
     private final ClassFile classFile;
     private final JavaTypeInstance classType;
     private final CFRState state;
+    private final InferredJavaType clazzIJT;
+
 
     public ClassRewriter(ClassFile classFile, JavaTypeInstance classType, CFRState state) {
         this.classFile = classFile;
         this.classType = classType;
         this.state = state;
+        this.clazzIJT = new InferredJavaType(classType, InferredJavaType.Source.UNKNOWN, true);
     }
 
     private boolean rewrite() {
@@ -133,13 +138,22 @@ public class ClassRewriter {
             this.container = container;
             this.data = data;
         }
+
+        private Op04StructuredStatement getContainer() {
+            return container;
+        }
+
+        private T getData() {
+            return data;
+        }
     }
 
-    private static class EnumInitMatchCollector implements MatchResultCollector {
+    private class EnumInitMatchCollector implements MatchResultCollector {
 
         private final WildcardMatch wcm;
         private final Map<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entryMap = MapFactory.newMap();
-        private CollectedEnumData<AbstractNewArray> matchedArray;
+        private CollectedEnumData<NewAnonymousArray> matchedArray;
+        private List<Field> matchedHideTheseFields = ListFactory.newList();
 
         private EnumInitMatchCollector(WildcardMatch wcm) {
             this.wcm = wcm;
@@ -161,7 +175,10 @@ public class ClassRewriter {
 
             if (name.equals("values")) {
                 AbstractNewArray abstractNewArray = wcm.getNewArrayWildCard("v").getMatch();
-                matchedArray = new CollectedEnumData<AbstractNewArray>(statement.getContainer(), abstractNewArray);
+                // We need this to have been successfully desugared...
+                if (abstractNewArray instanceof NewAnonymousArray) {
+                    matchedArray = new CollectedEnumData<NewAnonymousArray>(statement.getContainer(), (NewAnonymousArray) abstractNewArray);
+                }
                 return;
             }
         }
@@ -173,8 +190,57 @@ public class ClassRewriter {
         boolean isValid() {
             /*
              * Validate that the entries of the "values" array are those of the enum entries.
+             *
+             * Examine all static members, make sure they're in this set.
              */
-            return false;
+            List<Field> fields = classFile.getFields();
+            ConstantPool cp = classFile.getConstantPool();
+            for (Field field : fields) {
+                JavaTypeInstance fieldType = field.getJavaTypeInstance(cp);
+                boolean isStatic = field.testAccessFlag(AccessFlag.ACC_STATIC);
+                boolean isEnum = field.testAccessFlag(AccessFlag.ACC_ENUM);
+                boolean expected = (isStatic && isEnum && fieldType.equals(classType));
+                StaticVariable tmp = new StaticVariable(clazzIJT, classType, field.getFieldName(cp));
+                if (expected != entryMap.containsKey(tmp)) {
+                    return false;
+                }
+                if (expected) {
+                    matchedHideTheseFields.add(field);
+                }
+            }
+            List<Expression> values = matchedArray.getData().getValues();
+            if (values.size() != entryMap.size()) {
+                return false;
+            }
+            for (Expression value : values) {
+                if (!(value instanceof LValueExpression)) {
+                    return false;
+                }
+                LValueExpression lValueExpression = (LValueExpression) value;
+                LValue lvalue = lValueExpression.getLValue();
+                if (!(lvalue instanceof StaticVariable)) {
+                    return false;
+                }
+                StaticVariable staticVariable = (StaticVariable) lvalue;
+                if (!entryMap.containsKey(staticVariable)) {
+                    return false;
+                }
+            }
+            LValue valuesArray = ((StructuredAssignment) (matchedArray.getContainer().getStatement())).getLvalue();
+            if (!(valuesArray instanceof StaticVariable)) {
+                return false;
+            }
+            StaticVariable valuesArrayStatic = (StaticVariable) valuesArray;
+            try {
+                Field valuesField = classFile.getFieldByName(valuesArrayStatic.getVarName());
+                if (!valuesField.testAccessFlag(AccessFlag.ACC_STATIC)) {
+                    return false;
+                }
+                matchedHideTheseFields.add(valuesField);
+            } catch (NoSuchFieldException e) {
+                return false;
+            }
+            return true;
         }
     }
 }

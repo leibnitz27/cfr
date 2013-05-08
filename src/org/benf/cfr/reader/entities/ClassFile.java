@@ -208,6 +208,10 @@ public class ClassFile {
         return field;
     }
 
+    public List<Field> getFields() {
+        return fields;
+    }
+
     // We need to make sure we get the 'correct' method...
     public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
         List<Method> named = Functional.filter(methods, new Predicate<Method>() {

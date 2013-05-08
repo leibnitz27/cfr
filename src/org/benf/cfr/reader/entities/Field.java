@@ -100,6 +100,10 @@ public class Field implements KnowsRawSize {
         return cp.getUTF8Entry(nameIndex).getValue();
     }
 
+    public boolean testAccessFlag(AccessFlag accessFlag) {
+        return accessFlags.contains(accessFlag);
+    }
+
     public void dump(Dumper d, ConstantPool cp) {
         StringBuilder sb = new StringBuilder();
         String prefix = CollectionUtils.join(accessFlags, " ");

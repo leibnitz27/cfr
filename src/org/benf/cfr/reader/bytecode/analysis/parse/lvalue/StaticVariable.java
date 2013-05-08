@@ -37,7 +37,7 @@ public class StaticVariable extends AbstractLValue {
     /*
      * Used only for matching
      */
-    protected StaticVariable(InferredJavaType type, JavaTypeInstance clazz, String varName) {
+    public StaticVariable(InferredJavaType type, JavaTypeInstance clazz, String varName) {
         super(type);
         this.field = null;
         this.cp = null;

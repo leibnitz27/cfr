@@ -46,6 +46,10 @@ public class NewAnonymousArray extends AbstractNewArray {
         return d;
     }
 
+    public List<Expression> getValues() {
+        return values;
+    }
+
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         for (int x = 0; x < values.size(); ++x) {
