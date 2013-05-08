@@ -50,7 +50,7 @@ public class StaticVariable extends AbstractLValue {
         throw new ConfusedCFRException("NYI");
     }
 
-    public JavaTypeInstance getJavaTypeInstance() {
+    public JavaTypeInstance getOwningClassTypeInstance() {
         return clazz;
     }
 

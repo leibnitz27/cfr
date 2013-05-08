@@ -63,17 +63,32 @@ public class StructuredAssignment extends AbstractStructuredStatement {
         isCreator = true;
     }
 
+    public LValue getLvalue() {
+        return lvalue;
+    }
+
+    public Expression getRvalue() {
+        return rvalue;
+    }
+
     @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         StructuredStatement o = matchIterator.getCurrent();
-        if (!(o instanceof StructuredAssignment)) return false;
-        StructuredAssignment other = (StructuredAssignment) o;
-        if (!lvalue.equals(other.lvalue)) return false;
-        if (!rvalue.equals(other.rvalue)) return false;
+        if (!this.equals(o)) return false;
         matchIterator.advance();
         return true;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null) return false;
+        if (!(o instanceof StructuredAssignment)) return false;
+        StructuredAssignment other = (StructuredAssignment) o;
+        if (!lvalue.equals(other.lvalue)) return false;
+        if (!rvalue.equals(other.rvalue)) return false;
+        return true;
+    }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {

@@ -20,7 +20,7 @@ import java.util.List;
  * <p/>
  * 1d array only.
  */
-public class NewAnonymousArray extends AbstractExpression {
+public class NewAnonymousArray extends AbstractNewArray {
     private JavaTypeInstance allocatedType;
     private int numDims;
     private List<Expression> values;
@@ -66,4 +66,24 @@ public class NewAnonymousArray extends AbstractExpression {
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
     }
 
+
+    @Override
+    public int getNumDims() {
+        return numDims;
+    }
+
+    @Override
+    public int getNumSizedDims() {
+        return 0;
+    }
+
+    @Override
+    public Expression getDimSize(int dim) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public JavaTypeInstance getInnerType() {
+        return allocatedType;
+    }
 }

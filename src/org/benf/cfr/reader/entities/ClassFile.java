@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.entities;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.ClassRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ClassRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.Attribute;

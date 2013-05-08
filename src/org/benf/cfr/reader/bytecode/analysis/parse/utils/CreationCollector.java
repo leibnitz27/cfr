@@ -64,7 +64,6 @@ public class CreationCollector {
                         memberFunctionInvokation.getArgs());
             } else {
                 constructorInvokation = new ConstructorInvokationSimple(
-                        memberFunctionInvokation.getCp(),
                         memberFunctionInvokation.getFunction(),
                         newObject.getType(),
                         memberFunctionInvokation.getArgs());

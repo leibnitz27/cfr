@@ -3,10 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.wildcard;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractNewArray;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -18,10 +15,7 @@ import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.AbstractList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -43,6 +37,7 @@ public class WildcardMatch {
     private Map<String, BlockIdentifierWildcard> blockIdentifierWildcardMap = MapFactory.newMap();
     private Map<String, ListWildcard> listMap = MapFactory.newMap();
     private Map<String, StaticVariableWildcard> staticVariableWildcardMap = MapFactory.newMap();
+    private Map<String, ConstructorInvokationSimpleWildcard> constructorWildcardMap = MapFactory.newMap();
 
     private <T> void reset(Collection<? extends Wildcard<T>> coll) {
         for (Wildcard<T> item : coll) {
@@ -60,6 +55,25 @@ public class WildcardMatch {
         reset(staticFunctionMap.values());
         reset(staticVariableWildcardMap.values());
         reset(superFunctionMap.values());
+        reset(constructorWildcardMap.values());
+    }
+
+    public ConstructorInvokationSimpleWildcard getConstructorSimpleWildcard(String name) {
+        ConstructorInvokationSimpleWildcard res = constructorWildcardMap.get(name);
+        if (res != null) return res;
+
+        res = new ConstructorInvokationSimpleWildcard(null, null);
+        constructorWildcardMap.put(name, res);
+        return res;
+    }
+
+    public ConstructorInvokationSimpleWildcard getConstructorSimpleWildcard(String name, JavaTypeInstance clazz) {
+        ConstructorInvokationSimpleWildcard res = constructorWildcardMap.get(name);
+        if (res != null) return res;
+
+        res = new ConstructorInvokationSimpleWildcard(clazz, null);
+        constructorWildcardMap.put(name, res);
+        return res;
     }
 
     public LValueWildcard getLValueWildCard(String name) {
@@ -82,14 +96,14 @@ public class WildcardMatch {
 
 
     public NewArrayWildcard getNewArrayWildCard(String name) {
-        return getNewArrayWildCard(name, 1);
+        return getNewArrayWildCard(name, 1, null);
     }
 
-    public NewArrayWildcard getNewArrayWildCard(String name, int numDims) {
+    public NewArrayWildcard getNewArrayWildCard(String name, int numSizedDims, Integer numTotalDims) {
         NewArrayWildcard res = newArrayWildcardMap.get(name);
         if (res != null) return res;
 
-        res = new NewArrayWildcard(name, numDims);
+        res = new NewArrayWildcard(name, numSizedDims, numTotalDims);
         newArrayWildcardMap.put(name, res);
         return res;
 
@@ -328,12 +342,14 @@ public class WildcardMatch {
 
     public class NewArrayWildcard extends AbstractBaseExpressionWildcard implements Wildcard<AbstractNewArray> {
         private final String name;
-        private final int numDims;
+        private final int numSizedDims;
+        private final Integer numTotalDims;
         private transient AbstractNewArray matchedValue;
 
-        public NewArrayWildcard(String name, int numDims) {
+        public NewArrayWildcard(String name, int numSizedDims, Integer numTotalDims) {
             this.name = name;
-            this.numDims = numDims;
+            this.numSizedDims = numSizedDims;
+            this.numTotalDims = numTotalDims;
         }
 
         @Override
@@ -343,7 +359,8 @@ public class WildcardMatch {
             }
             if (matchedValue == null) {
                 AbstractNewArray abstractNewArray = (AbstractNewArray) o;
-                if (numDims != abstractNewArray.getNumSizedDims()) return false;
+                if (numSizedDims != abstractNewArray.getNumSizedDims()) return false;
+                if (numTotalDims != null && numTotalDims != abstractNewArray.getNumDims()) return false;
                 matchedValue = abstractNewArray;
                 return true;
             }
@@ -602,7 +619,49 @@ public class WildcardMatch {
             if (!(o instanceof StaticVariable)) return false;
             StaticVariable other = (StaticVariable) o;
 
-            if (!this.getJavaTypeInstance().equals(other.getJavaTypeInstance())) return false;
+            if (!this.getOwningClassTypeInstance().equals(other.getOwningClassTypeInstance())) return false;
+            if (!this.getInferredJavaType().getJavaTypeInstance().equals(other.getInferredJavaType().getJavaTypeInstance()))
+                return false;
+            matchedValue = other;
+            return true;
+        }
+    }
+
+    public class ConstructorInvokationSimpleWildcard extends AbstractBaseExpressionWildcard implements Wildcard<ConstructorInvokationSimple> {
+        private ConstructorInvokationSimple matchedValue;
+
+        private final JavaTypeInstance clazz;
+        private final List<Expression> args;
+
+        public ConstructorInvokationSimpleWildcard(JavaTypeInstance clazz, List<Expression> args) {
+            this.clazz = clazz;
+            this.args = args;
+        }
+
+        @Override
+        public ConstructorInvokationSimple getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null) return false;
+            if (!(o instanceof ConstructorInvokationSimple)) return false;
+
+            if (matchedValue != null) {
+                return matchedValue.equals(o);
+            }
+
+            ConstructorInvokationSimple other = (ConstructorInvokationSimple) o;
+            if (!clazz.equals(other.getClazz())) return false;
+            if (args != null && args.equals(other.getArgs())) return false;
+
             matchedValue = other;
             return true;
         }

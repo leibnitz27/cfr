@@ -3026,7 +3026,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     AssignmentSimple assignmentSimple = (AssignmentSimple) in.containedStatement;
                     WildcardMatch wildcardMatch = new WildcardMatch();
                     return (wildcardMatch.match(
-                            new AssignmentSimple(wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1)),
+                            new AssignmentSimple(wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1, null)),
                             assignmentSimple
                     ));
                 }

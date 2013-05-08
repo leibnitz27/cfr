@@ -8,7 +8,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.ArrayType;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
@@ -114,7 +113,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         }
 
         StaticVariable staticLookupTable = (StaticVariable) lookupTable;
-        JavaTypeInstance classInfo = staticLookupTable.getJavaTypeInstance();  // The inner class
+        JavaTypeInstance classInfo = staticLookupTable.getOwningClassTypeInstance();  // The inner class
         String varName = staticLookupTable.getVarName();
 
         /*

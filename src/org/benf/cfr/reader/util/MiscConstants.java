@@ -8,4 +8,6 @@ package org.benf.cfr.reader.util;
  */
 public interface MiscConstants {
     public static String CFR_HEADER = "/*\n * Decompiled with CFR.\n */\n";
+
+    public static String STATIC_INIT_METHOD = "<clinit>";
 }

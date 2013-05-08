@@ -361,6 +361,16 @@ public class InferredJavaType {
     }
 
     @Override
+    public boolean equals(Object o) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int hashCode() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public String toString() {
         return "";
         // return "[" + value.toString() + "]";
