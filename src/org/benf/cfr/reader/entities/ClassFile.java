@@ -446,10 +446,14 @@ public class ClassFile implements Dumpable {
 
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassEntry : innerClassesByTypeInfo.values()) {
             // catchy!
-            if (innerClassEntry.getFirst().getInnerClassInfo().getInnerClassHereInfo().isAnoynmousInnerClass()) {
+            InnerClassInfo innerClassInfo = innerClassEntry.getFirst().getInnerClassInfo().getInnerClassHereInfo();
+            if (innerClassInfo.isAnoynmousInnerClass()) {
                 continue;
             }
             ClassFile classFile = innerClassEntry.getSecond();
+            if (classFile.hiddenInnerClass) {
+                continue;
+            }
             classFile.dumpHelper.dump(classFile, true, d);
             d.newln();
         }
