@@ -22,8 +22,8 @@ import java.util.Map;
  * This isn't static - we populate it from the decoded enum information.
  */
 public class ClassFileDumperEnum extends AbstractClassFileDumper {
-    private static final AccessFlag[] dumpableAccessFlagsClass = new AccessFlag[]{
-            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
+    private static final AccessFlag[] dumpableAccessFlagsEnum = new AccessFlag[]{
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_ABSTRACT
     };
 
     private final List<Pair<StaticVariable, ConstructorInvokationSimple>> entries;
@@ -34,7 +34,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
 
     private static void dumpHeader(ClassFile c, Dumper d) {
         StringBuilder sb = new StringBuilder();
-        sb.append(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsClass));
+        sb.append(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsEnum));
 
         sb.append("enum ").append(c.getThisClassConstpoolEntry().getTypeInstance());
         sb.append(" {\n");
@@ -54,7 +54,6 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
             }
             d.print(')');
         }
-        ;
         if (last) {
             d.endCodeln();
         } else {

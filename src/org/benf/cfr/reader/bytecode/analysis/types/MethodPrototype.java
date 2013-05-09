@@ -53,7 +53,7 @@ public class MethodPrototype {
         this.explicitThisRemoval = explicitThisRemoval;
     }
 
-    public String getDeclarationSignature(String methName, boolean isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
+    public String getDeclarationSignature(String methName, Method.MethodConstructor isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
         StringBuilder sb = new StringBuilder();
         if (formalTypeParameters != null) {
             sb.append('<');
@@ -68,7 +68,7 @@ public class MethodPrototype {
             }
             sb.append("> ");
         }
-        if (!isConstructor) {
+        if (!isConstructor.isConstructor()) {
             sb.append(result.toString()).append(" ");
         }
         sb.append(methName).append("(");
@@ -76,7 +76,7 @@ public class MethodPrototype {
          *
          */
 
-        List<LocalVariable> parameterLValues = getParameters();
+        List<LocalVariable> parameterLValues = getParameters(isConstructor);
         int argssize = args.size();
         int start = explicitThisRemoval ? 1 : 0;
         boolean first = true;
@@ -99,10 +99,19 @@ public class MethodPrototype {
     }
 
     public List<LocalVariable> getParameters() {
+        return getParameters(Method.MethodConstructor.NOT);
+    }
+
+    public void reset() {
+        parameterLValues = null;
+    }
+
+    public List<LocalVariable> getParameters(Method.MethodConstructor constructorFlag) {
         if (parameterLValues != null) return parameterLValues;
 
         parameterLValues = ListFactory.newList();
         int offset = instanceMethod ? 1 : 0;
+        if (constructorFlag == Method.MethodConstructor.ENUM_CONSTRUCTOR) offset += 2;
         int argssize = args.size();
         for (int i = 0; i < argssize; ++i) {
             JavaTypeInstance arg = args.get(i);

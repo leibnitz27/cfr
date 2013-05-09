@@ -115,6 +115,16 @@ public class EnumClassRewriter {
         }
         matchedArray.getContainer().nopOut();
 
+        /*
+         * And remove all the super calls from the constructors.... AND remove the first 2 arguments from each.
+         */
+        List<Method> constructors = classFile.getConstructors();
+        EnumSuperRewriter enumSuperRewriter = new EnumSuperRewriter();
+        for (Method constructor : constructors) {
+            constructor.setEnumConstructor();
+            enumSuperRewriter.rewrite(constructor.getAnalysis());
+        }
+
         List<Pair<StaticVariable, ConstructorInvokationSimple>> entries = ListFactory.newList();
         for (Map.Entry<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entry : entryMap.entrySet()) {
             entries.add(Pair.make(entry.getKey(), entry.getValue().getData()));

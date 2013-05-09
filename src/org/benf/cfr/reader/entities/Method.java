@@ -31,6 +31,23 @@ import java.util.*;
  */
 
 public class Method implements KnowsRawSize {
+
+    public enum MethodConstructor {
+        NOT(false),
+        CONSTRUCTOR(true),
+        ENUM_CONSTRUCTOR(true);
+
+        private final boolean isConstructor;
+
+        private MethodConstructor(boolean isConstructor) {
+            this.isConstructor = isConstructor;
+        }
+
+        public boolean isConstructor() {
+            return isConstructor;
+        }
+    }
+
     private static final long OFFSET_OF_ACCESS_FLAGS = 0;
     private static final long OFFSET_OF_NAME_INDEX = 2;
     private static final long OFFSET_OF_DESCRIPTOR_INDEX = 4;
@@ -41,7 +58,7 @@ public class Method implements KnowsRawSize {
     private final Set<AccessFlagMethod> accessFlags;
     private final Map<String, Attribute> attributes;
     private final String name;
-    private final boolean isConstructor;
+    private MethodConstructor isConstructor;
     private final short descriptorIndex;
     private final AttributeCode codeAttribute;
     private final ConstantPool cp;
@@ -82,8 +99,8 @@ public class Method implements KnowsRawSize {
         }
 
         String methodName = cp.getUTF8Entry(nameIndex).getValue();
-        this.isConstructor = methodName.equals("<init>");
-        if (isConstructor) methodName = classFile.getClassType().toString();
+        this.isConstructor = methodName.equals("<init>") ? MethodConstructor.CONSTRUCTOR : MethodConstructor.NOT;
+        if (isConstructor.isConstructor()) methodName = classFile.getClassType().toString();
         this.name = methodName;
 
         this.methodPrototype = generateMethodPrototype();
@@ -99,6 +116,11 @@ public class Method implements KnowsRawSize {
 
     public boolean isHiddenFromDisplay() {
         return hidden;
+    }
+
+    public void setEnumConstructor() {
+        isConstructor = MethodConstructor.ENUM_CONSTRUCTOR;
+        getMethodPrototype().reset();
     }
 
     private AttributeSignature getSignatureAttribute() {
@@ -241,7 +263,7 @@ public class Method implements KnowsRawSize {
     }
 
     public boolean isConstructor() {
-        return isConstructor;
+        return isConstructor.isConstructor();
     }
 
     public void analyse() {

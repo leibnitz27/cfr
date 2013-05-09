@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.CollectMa
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.Matcher;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
@@ -28,6 +29,10 @@ public class RedundantSuperRewriter implements Op04Rewriter {
     public RedundantSuperRewriter() {
     }
 
+    protected List<Expression> getSuperArgs(WildcardMatch wcm) {
+        return null;
+    }
+
     @Override
     public void rewrite(Op04StructuredStatement root) {
         List<StructuredStatement> structuredStatements = ListFactory.newList();
@@ -41,7 +46,7 @@ public class RedundantSuperRewriter implements Op04Rewriter {
 
         WildcardMatch wcm1 = new WildcardMatch();
 
-        Matcher<StructuredStatement> m = new CollectMatch("ass1", new StructuredExpressionStatement(wcm1.getSuperFunction("s1"), false));
+        Matcher<StructuredStatement> m = new CollectMatch("ass1", new StructuredExpressionStatement(wcm1.getSuperFunction("s1", getSuperArgs(wcm1)), false));
 
 
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
@@ -54,7 +59,12 @@ public class RedundantSuperRewriter implements Op04Rewriter {
         }
     }
 
-    private static class SuperResultCollector implements MatchResultCollector {
+    protected boolean canBeNopped(SuperFunctionInvokation superInvokation) {
+        // Does the super function have no arguments, after we ignore synthetic parameters?
+        return superInvokation.isEmptyIgnoringSynthetics();
+    }
+
+    private class SuperResultCollector implements MatchResultCollector {
 
         private final WildcardMatch wcm;
 
@@ -71,8 +81,7 @@ public class RedundantSuperRewriter implements Op04Rewriter {
         public void collectStatement(String name, StructuredStatement statement) {
             SuperFunctionInvokation superInvokation = wcm.getSuperFunction("s1").getMatch();
 
-            // Does the super function have no arguments, after we ignore synthetic parameters?
-            if (superInvokation.isEmptyIgnoringSynthetics()) {
+            if (canBeNopped(superInvokation)) {
                 statement.getContainer().nopOut();
             }
 
