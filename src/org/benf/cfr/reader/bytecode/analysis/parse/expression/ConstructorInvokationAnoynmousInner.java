@@ -14,6 +14,8 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnonymousInner;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -41,8 +43,8 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
         ClassFile anonymousClassFile = cp.getCFRState().getClassFile(clazz, true);
 
         d.print("new ");
-        anonymousClassFile.dumpAsAnonymousInnerClass(d);
-        return d;
+        ClassFileDumper cfd = new ClassFileDumperAnonymousInner();
+        return cfd.dump(anonymousClassFile, true, d);
     }
 
 

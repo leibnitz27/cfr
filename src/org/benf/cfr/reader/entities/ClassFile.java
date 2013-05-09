@@ -7,6 +7,10 @@ import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeBootstrapMethods;
 import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnnotation;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperInterface;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperNormal;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
@@ -16,6 +20,7 @@ import org.benf.cfr.reader.util.configuration.ConfigCallback;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.*;
@@ -27,7 +32,7 @@ import java.util.*;
  * Time: 18:25
  * To change this template use File | Settings | File Templates.
  */
-public class ClassFile {
+public class ClassFile implements Dumpable {
     // Constants
     private final long OFFSET_OF_MAGIC = 0;
     private final long OFFSET_OF_MINOR = 4;
@@ -45,7 +50,6 @@ public class ClassFile {
     private final Set<AccessFlag> accessFlags;
     private final List<Field> fields;
     private Map<String, Field> fieldsByName; // Lazily populated if interrogated.
-    private final boolean isInterface;
 
     private final List<Method> methods;
     private Map<String, Method> methodsByName; // Lazily populated if interrogated.
@@ -64,8 +68,12 @@ public class ClassFile {
     /*
      * If this class represents a generated structure (like a switch lookup table)
      * we will mark it as hidden, and not normally show it.
+     *
+     * TODO:  TMI.
      */
     private boolean hiddenInnerClass;
+
+    private ClassFileDumper dumpHelper;
 
     /*
      * Be sure to call loadInnerClasses directly after.
@@ -103,7 +111,6 @@ public class ClassFile {
 
 
         accessFlags = AccessFlag.build(data.getS2At(OFFSET_OF_ACCESS_FLAGS));
-        this.isInterface = accessFlags.contains(AccessFlag.ACC_INTERFACE);
 
         final long OFFSET_OF_FIELDS_COUNT = OFFSET_OF_INTERFACES + 2 * numInterfaces;
         final long OFFSET_OF_FIELDS = OFFSET_OF_FIELDS_COUNT + 2;
@@ -162,10 +169,24 @@ public class ClassFile {
         if (withInnerClasses) {
             loadInnerClasses(cfrState);
         }
+
+        boolean isInterface = accessFlags.contains(AccessFlag.ACC_INTERFACE);
+        boolean isAnnotation = accessFlags.contains(AccessFlag.ACC_ANNOTATION);
+        /*
+         * Choose a default dump helper.  This may be overwritten.
+         */
+        if (isInterface) {
+            if (isAnnotation) {
+                dumpHelper = new ClassFileDumperAnnotation();
+            } else {
+                dumpHelper = new ClassFileDumperInterface();
+            }
+        } else {
+            dumpHelper = new ClassFileDumperNormal();
+        }
     }
 
     public void markHiddenInnerClass() {
-        hiddenInnerClass = true;
         hiddenInnerClass = true;
     }
 
@@ -211,6 +232,11 @@ public class ClassFile {
     public List<Field> getFields() {
         return fields;
     }
+
+    public List<Method> getMethods() {
+        return methods;
+    }
+
 
     // We need to make sure we get the 'correct' method...
     public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
@@ -260,6 +286,10 @@ public class ClassFile {
 
     public AttributeBootstrapMethods getBootstrapMethods() {
         return getAttributeByName(AttributeBootstrapMethods.ATTRIBUTE_NAME);
+    }
+
+    public ConstantPoolEntryClass getThisClassConstpoolEntry() {
+        return thisClass;
     }
 
     //    FIXME - inside constructor for inner class classfile
@@ -382,25 +412,10 @@ public class ClassFile {
     private static final AccessFlag[] dumpableAccessFlagsInterface = new AccessFlag[]{
             AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL
     };
-    private static final AccessFlag[] dumpableAccessFlagsClass = new AccessFlag[]{
-            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
-    };
 
-    /*
-    * We don't want to just dump the access flags.
-    *
-    * They contain 'super', 'interface' etc which we'd never want to dump
-    * and 'abstract', which we'd not dump for an interface.
-    */
-    String dumpAccessFlags(AccessFlag[] dumpableAccessFlags) {
-        StringBuilder sb = new StringBuilder();
-
-        for (AccessFlag accessFlag : dumpableAccessFlags) {
-            if (accessFlags.contains(accessFlag)) sb.append(accessFlag).append(' ');
-        }
-        return sb.toString();
+    public Set<AccessFlag> getAccessFlags() {
+        return accessFlags;
     }
-
 
     private ClassSignature getSignature(ConstantPool cp,
                                         ConstantPoolEntryClass rawSuperClass,
@@ -422,51 +437,8 @@ public class ClassFile {
         return ConstantPoolUtils.parseClassSignature(signatureAttribute.getSignature(), cp);
     }
 
-    private String getFormalParametersText() {
-        List<FormalTypeParameter> formalTypeParameters = classSignature.getFormalTypeParameters();
-        if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return "";
-        StringBuilder sb = new StringBuilder();
-        sb.append('<');
-        boolean first = true;
-        for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
-            first = CommaHelp.comma(first, sb);
-            sb.append(formalTypeParameter.toString());
-        }
-        sb.append('>');
-        return sb.toString();
-    }
 
-    private void dumpHeader(Dumper d, boolean isAnnotation) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(dumpAccessFlags(isInterface ? dumpableAccessFlagsInterface : dumpableAccessFlagsClass));
-
-        sb.append(isInterface ? ((isAnnotation ? "@" : "") + "interface ") : "class ").append(thisClass.getTypeInstance());
-        sb.append(getFormalParametersText());
-        sb.append("\n");
-        d.print(sb.toString());
-        if (!isInterface) {
-            JavaTypeInstance superClass = classSignature.getSuperClass();
-            if (superClass != null) {
-                if (!superClass.getRawName().equals("java.lang.Object")) {
-                    d.print("extends " + superClass + "\n");
-                }
-            }
-        }
-        if (!isAnnotation) {
-            List<JavaTypeInstance> interfaces = classSignature.getInterfaces();
-            if (!interfaces.isEmpty()) {
-                d.print(isInterface ? "extends " : "implements ");
-                int size = interfaces.size();
-                for (int x = 0; x < size; ++x) {
-                    JavaTypeInstance iface = interfaces.get(x);
-                    d.print("" + iface + (x < (size - 1) ? ",\n" : "\n"));
-                }
-            }
-        }
-        d.removePendingCarriageReturn().print(" ");
-    }
-
-    private void dumpNamedInnerClasses(Dumper d) {
+    public void dumpNamedInnerClasses(Dumper d) {
         if (innerClassesByTypeInfo == null) return;
 
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassEntry : innerClassesByTypeInfo.values()) {
@@ -475,110 +447,13 @@ public class ClassFile {
                 continue;
             }
             ClassFile classFile = innerClassEntry.getSecond();
-            classFile.dumpAsInnerClass(d);
+            classFile.dumpHelper.dump(classFile, true, d);
             d.newln();
         }
     }
 
-
-    /*
-     * The whole header dumping is a bit messy, tidy...
-     */
-    public void dumpAsInterface(Dumper d) {
-        d.print(MiscConstants.CFR_HEADER);
-        d.print("package ").print(thisClass.getPackageName()).endCodeln().newln();
-        constantPool.dumpImports(d);
-        dumpHeader(d, accessFlags.contains(AccessFlag.ACC_ANNOTATION));
-        d.print("{\n");
-        d.indent(1);
-        // Horrid, but an interface can have fields....
-        if (!fields.isEmpty()) {
-            for (Field field : fields) {
-                field.dump(d, constantPool);
-            }
-        }
-        if (!methods.isEmpty()) {
-            for (Method meth : methods) {
-                d.newln();
-                // Java 8 supports 'defender' interfaces, i.e. method bodies on interfaces (eww).
-                meth.dump(d, false);
-            }
-        }
-        d.newln();
-        dumpNamedInnerClasses(d);
-        d.indent(-1);
-        d.print("}\n");
-
-    }
-
-    public void dumpAsClass(Dumper d) {
-        d.print(MiscConstants.CFR_HEADER);
-        d.print("package ").print(thisClass.getPackageName()).endCodeln().newln();
-        constantPool.dumpImports(d);
-        dumpAsClassCommon(d);
-    }
-
-    private void dumpAsClassCommon(Dumper d) {
-        dumpHeader(d, false);
-        d.print("{\n");
-        d.indent(1);
-
-        if (!fields.isEmpty()) {
-            for (Field field : fields) {
-                field.dump(d, constantPool);
-            }
-        }
-        if (!methods.isEmpty()) {
-            for (Method meth : methods) {
-                if (meth.isHiddenFromDisplay()) continue;
-                d.newln();
-                meth.dump(d, true);
-            }
-        }
-        d.newln();
-        dumpNamedInnerClasses(d);
-        d.indent(-1);
-        d.print("}\n");
-
-    }
-
-    public void dumpAsInnerClass(Dumper d) {
-        if (hiddenInnerClass) return;
-        dumpAsClassCommon(d);
-    }
-
-    public void dumpAsAnonymousInnerClass(Dumper d) {
-        JavaTypeInstance interfaceType = classSignature.getInterfaces().get(0);
-        d.print(interfaceType.toString());
-        d.print("() {\n");
-        d.indent(1);
-
-        if (!fields.isEmpty()) {
-            for (Field field : fields) {
-                field.dump(d, constantPool);
-            }
-        }
-        if (!methods.isEmpty()) {
-            for (Method meth : methods) {
-//                if (meth.isConstructor()) continue;
-                if (meth.isHiddenFromDisplay()) continue;
-                d.newln();
-                meth.dump(d, true);
-            }
-        }
-        d.newln();
-        // Yes, anonymous inner classes can have inner classes (!)
-        dumpNamedInnerClasses(d);
-        d.indent(-1);
-        d.print("}");
-    }
-
-    public void dump(Dumper d) {
-        if (isInterface) {
-            dumpAsInterface(d);
-        } else {
-            dumpAsClass(d);
-        }
+    public Dumper dump(Dumper d) {
+        return dumpHelper.dump(this, false, d);
     }
 
     public String getFilePath() {
