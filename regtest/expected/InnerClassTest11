@@ -1,0 +1,68 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.FilterOutputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.Appendable;
+import java.lang.CharSequence;
+import java.lang.Class;
+import java.lang.Comparable;
+import java.lang.Integer;
+import java.lang.Integer$IntegerCache;
+import java.lang.Number;
+import java.lang.Object;
+import java.lang.String;
+import java.lang.System;
+import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Locale;
+import java.util.Set;
+import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.tests.InnerClassTest4;
+import org.benf.cfr.tests.InnerClassTest4$InnerBase;
+
+public class InnerClassTest11 {
+    private int a;
+
+    public InnerClassTest11() {
+    }
+
+    public void foo() {
+        Inner1 i = new Inner1(5);
+        System.out.println(Inner1.access$000(i));
+    }
+
+    static /* synthetic */ int access$112(InnerClassTest11 x0, int x1) {
+        v46 = x0;
+        return v46.a+=x1;
+    }
+
+    static /* synthetic */ int access$100(InnerClassTest11 x0) {
+        return x0.a;
+    }
+
+    public class Inner1 {
+        private int x;
+        final /* synthetic */ InnerClassTest11 this$0;
+
+        public Inner1(int x) {
+            InnerClassTest11.access$112(unnamed_local_this_1, x);
+            this.x = (x + 1 + InnerClassTest11.access$100(unnamed_local_this_1));
+        }
+
+        public InnerClassTest4.InnerBase tweak(int y) {
+            return new InnerClassTest4.InnerBase(SetFactory.newSet(new Integer[]{Integer.valueOf(y)}));
+        }
+
+        static /* synthetic */ int access$000(Inner1 x0) {
+            return x0.x;
+        }
+
+    }
+
+}

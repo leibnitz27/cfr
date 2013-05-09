@@ -1,0 +1,39 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class InnerClassTest8 {
+    private int x;
+
+    public InnerClassTest8() {
+        this.x = 3;
+    }
+
+    static /* synthetic */ int access$012(InnerClassTest8 x0, int x1) {
+        v24 = x0;
+        return v24.x+=x1;
+    }
+
+    static /* synthetic */ int access$000(InnerClassTest8 x0) {
+        return x0.x;
+    }
+
+    public class Inner1 {
+        final /* synthetic */ InnerClassTest8 this$0;
+
+        public Inner1() {
+        }
+
+        public int tweakX(int y) {
+            InnerClassTest8.access$012(this.this$0, y);
+            return InnerClassTest8.access$000(this.this$0);
+        }
+
+    }
+
+}

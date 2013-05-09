@@ -1,0 +1,48 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.FilterOutputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.Appendable;
+import java.lang.CharSequence;
+import java.lang.Class;
+import java.lang.Comparable;
+import java.lang.Integer;
+import java.lang.Integer$IntegerCache;
+import java.lang.Number;
+import java.lang.Object;
+import java.lang.String;
+import java.lang.System;
+import java.nio.charset.Charset;
+import java.util.Locale;
+
+public class InnerClassTest0_4 {
+    private Integer x;
+
+    public InnerClassTest0_4() {
+        this.x = Integer.valueOf(3);
+    }
+
+    public void foo() {
+        new Inner1();
+    }
+
+    static /* synthetic */ Integer access$000(InnerClassTest0_4 x0) {
+        return x0.x;
+    }
+
+    public class Inner1 {
+        final /* synthetic */ InnerClassTest0_4 this$0;
+
+        public Inner1() {
+            System.out.println(InnerClassTest0_4.access$000(unnamed_local_this_1));
+        }
+
+    }
+
+}

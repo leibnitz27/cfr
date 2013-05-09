@@ -1,0 +1,20 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Integer;
+import java.lang.Object;
+import java.lang.String;
+import java.util.List;
+import java.util.Map;
+import org.benf.cfr.tests.InterfaceTestBase;
+import org.benf.cfr.tests.InterfaceTestBaseSig;
+
+public interface InterfaceTestDerivedSig<A extends Integer>
+extends InterfaceTestBase,
+InterfaceTestBaseSig<String, A, Map<String, A>> {
+
+    public void test3(A v1);
+    public void doit(A v1, List<? super A> v2);
+}

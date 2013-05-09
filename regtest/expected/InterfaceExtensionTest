@@ -1,0 +1,11 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Object;
+
+public interface InterfaceExtensionTest {
+
+    public void test1();
+}

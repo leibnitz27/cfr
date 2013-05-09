@@ -1,0 +1,15 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Object;
+import org.benf.cfr.tests.InterfaceTestBase;
+import org.benf.cfr.tests.InterfaceTestBase2;
+
+public interface InterfaceTestDerived
+extends InterfaceTestBase,
+InterfaceTestBase2 {
+
+    public void test3();
+}
