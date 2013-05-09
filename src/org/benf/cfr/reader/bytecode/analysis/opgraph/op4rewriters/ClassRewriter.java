@@ -88,6 +88,22 @@ public class ClassRewriter {
         EnumInitMatchCollector initMatchCollector = analyseStaticMethod(staticInitCode);
         if (initMatchCollector == null) return false;
 
+        /*
+         * Need to hide all the fields, the 'static values' and 'static valueOf' method.
+         */
+        Method valueOf = null;
+        Method values = null;
+        try {
+            valueOf = classFile.getMethodByName("valueOf");
+            values = classFile.getMethodByName("values");
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+        valueOf.hideSynthetic();
+        values.hideSynthetic();
+        for (Field field : initMatchCollector.getMatchedHideTheseFields()) {
+        }
+
         return true;
     }
 
@@ -151,7 +167,7 @@ public class ClassRewriter {
     private class EnumInitMatchCollector implements MatchResultCollector {
 
         private final WildcardMatch wcm;
-        private final Map<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entryMap = MapFactory.newMap();
+        private final Map<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entryMap = MapFactory.newOrderedMap();
         private CollectedEnumData<NewAnonymousArray> matchedArray;
         private List<Field> matchedHideTheseFields = ListFactory.newList();
 
@@ -241,6 +257,10 @@ public class ClassRewriter {
                 return false;
             }
             return true;
+        }
+
+        private List<Field> getMatchedHideTheseFields() {
+            return matchedHideTheseFields;
         }
     }
 }
