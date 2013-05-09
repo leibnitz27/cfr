@@ -27,7 +27,7 @@ public class LValueExpression extends AbstractExpression {
     @Override
     public boolean isSimple() {
         // A field expression is 'simple' only if it's final.
-        // return true; // TODO : This should be ok.  Verify.
+        // return true; // TODO : This should be ok.  Verify...
         return false;
     }
 
