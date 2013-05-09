@@ -108,6 +108,8 @@ public class CFRState {
 
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> ENUM_SWITCH = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "decodeenumswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> ENUM_SUGAR = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "sugarenums", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> STRING_SWITCH = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true));
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> ARRAY_ITERATOR = new PermittedOptionProvider.Argument<Boolean, CFRState>(
@@ -328,7 +330,7 @@ public class CFRState {
         @Override
         @SuppressWarnings("unchecked")
         public List<? extends Argument<?, ?>> getArguments() {
-            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, STRING_SWITCH, ARRAY_ITERATOR,
+            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS);
         }

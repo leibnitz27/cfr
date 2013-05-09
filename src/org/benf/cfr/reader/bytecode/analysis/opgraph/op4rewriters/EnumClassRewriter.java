@@ -39,6 +39,8 @@ public class EnumClassRewriter {
 
     public static void rewriteEnumClass(ClassFile classFile, CFRState state) {
 
+        if (!state.getBooleanOpt(CFRState.ENUM_SUGAR)) return;
+
         JavaTypeInstance classType = classFile.getClassType();
         JavaTypeInstance baseType = classFile.getBaseClassType();
 
