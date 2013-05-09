@@ -9,9 +9,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokat
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewAnonymousArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
@@ -21,6 +21,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperEnum;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
@@ -33,7 +35,7 @@ import java.util.Map;
  * Date: 07/05/2013
  * Time: 05:47
  */
-public class ClassRewriter {
+public class EnumClassRewriter {
 
     public static void rewriteEnumClass(ClassFile classFile, CFRState state) {
 
@@ -50,7 +52,7 @@ public class ClassRewriter {
         if (boundTypes == null || boundTypes.size() != 1) return;
         if (!boundTypes.get(0).equals(classType)) return;
 
-        ClassRewriter c = new ClassRewriter(classFile, classType, state);
+        EnumClassRewriter c = new EnumClassRewriter(classFile, classType, state);
         c.rewrite();
     }
 
@@ -60,7 +62,7 @@ public class ClassRewriter {
     private final InferredJavaType clazzIJT;
 
 
-    public ClassRewriter(ClassFile classFile, JavaTypeInstance classType, CFRState state) {
+    public EnumClassRewriter(ClassFile classFile, JavaTypeInstance classType, CFRState state) {
         this.classFile = classFile;
         this.classType = classType;
         this.state = state;
@@ -102,7 +104,22 @@ public class ClassRewriter {
         valueOf.hideSynthetic();
         values.hideSynthetic();
         for (Field field : initMatchCollector.getMatchedHideTheseFields()) {
+            field.markHidden();
         }
+
+        Map<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entryMap = initMatchCollector.getEntryMap();
+        CollectedEnumData<NewAnonymousArray> matchedArray = initMatchCollector.getMatchedArray();
+
+        for (CollectedEnumData<?> entry : entryMap.values()) {
+            entry.getContainer().nopOut();
+        }
+        matchedArray.getContainer().nopOut();
+
+        List<Pair<StaticVariable, ConstructorInvokationSimple>> entries = ListFactory.newList();
+        for (Map.Entry<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entry : entryMap.entrySet()) {
+            entries.add(Pair.make(entry.getKey(), entry.getValue().getData()));
+        }
+        classFile.setDumpHelper(new ClassFileDumperEnum(entries));
 
         return true;
     }
@@ -261,6 +278,14 @@ public class ClassRewriter {
 
         private List<Field> getMatchedHideTheseFields() {
             return matchedHideTheseFields;
+        }
+
+        private Map<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> getEntryMap() {
+            return entryMap;
+        }
+
+        private CollectedEnumData<NewAnonymousArray> getMatchedArray() {
+            return matchedArray;
         }
     }
 }

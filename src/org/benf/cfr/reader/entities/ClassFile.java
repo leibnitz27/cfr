@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.entities;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ClassRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.EnumClassRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.Attribute;
@@ -19,7 +19,6 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.configuration.ConfigCallback;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
-import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -184,6 +183,10 @@ public class ClassFile implements Dumpable {
         } else {
             dumpHelper = new ClassFileDumperNormal();
         }
+    }
+
+    public void setDumpHelper(ClassFileDumper dumpHelper) {
+        this.dumpHelper = dumpHelper;
     }
 
     public void markHiddenInnerClass() {
@@ -394,7 +397,7 @@ public class ClassFile implements Dumpable {
          * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
          * several methods.
          */
-        ClassRewriter.rewriteEnumClass(this, state);
+        EnumClassRewriter.rewriteEnumClass(this, state);
     }
 
     public JavaTypeInstance getClassType() {

@@ -45,6 +45,8 @@ public class Field implements KnowsRawSize {
     private final TypedLiteral constantValue;
     private transient JavaTypeInstance cachedDecodedType;
 
+    private transient boolean isHidden;
+
 
     public Field(ByteData raw, final ConstantPool cp) {
         this.accessFlags = AccessFlag.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
@@ -69,6 +71,14 @@ public class Field implements KnowsRawSize {
     @Override
     public long getRawByteLength() {
         return length;
+    }
+
+    public boolean isHidden() {
+        return isHidden;
+    }
+
+    public void markHidden() {
+        isHidden = true;
     }
 
     private AttributeSignature getSignatureAttribute() {
