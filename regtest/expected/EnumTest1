@@ -11,30 +11,17 @@ import java.lang.Enum;
 import java.lang.Object;
 import java.lang.String;
 
-public final class EnumTest1
-extends Enum<EnumTest1> {
-    public static final /* enum */ EnumTest1 FOO;
-    public static final /* enum */ EnumTest1 BAR;
-    public static final /* enum */ EnumTest1 BAP;
-    private static final /* synthetic */ EnumTest1[] $VALUES;
-
-    public static EnumTest1[] values() {
-        return EnumTest1.$VALUES.clone();
-    }
-
-    public static EnumTest1 valueOf(String name) {
-        return Enum.valueOf(org.benf.cfr.tests.EnumTest1.class, name);
-    }
+public enum EnumTest1 {
+{
+    FOO,
+    BAR,
+    BAP;
+    
 
     private EnumTest1() {
-        super(unnamed_local_this_1, (int)unnamed_local_this_2);
     }
 
     static void <clinit>() {
-        EnumTest1.FOO = new EnumTest1("FOO", 0);
-        EnumTest1.BAR = new EnumTest1("BAR", 1);
-        EnumTest1.BAP = new EnumTest1("BAP", 2);
-        EnumTest1.$VALUES = new EnumTest1[]{EnumTest1.FOO, EnumTest1.BAR, EnumTest1.BAP};
     }
 
 }

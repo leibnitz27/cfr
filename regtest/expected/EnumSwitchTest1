@@ -22,20 +22,12 @@ import java.lang.System;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class EnumSwitchTest1
-{
+public class EnumSwitchTest1 {
 
-    enum enm {
-        ONE,
-        TWO,
-        THREE,
-        FOUR
+    public EnumSwitchTest1() {
     }
 
-    public EnumSwitchTest1(){
-    }
-
-    public int test0(enm e){
+    public int test0(enm e) {
         switch (e) {
             default: {
                 System.out.println("Test");
@@ -50,6 +42,22 @@ public class EnumSwitchTest1
         }
         System.out.println("Here");
         return 1;
+    }
+
+    static enum enm {
+    {
+        ONE,
+        TWO,
+        THREE,
+        FOUR;
+        
+
+        private enm() {
+        }
+
+        static void <clinit>() {
+        }
+
     }
 
 }

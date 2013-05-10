@@ -16,38 +16,30 @@ public class InnerClassTest7 {
     public InnerClassTest7() {
     }
 
-    public static final class bar
-    extends Enum<bar> {
-        public static final /* enum */ bar JENNIFER;
-        public static final /* enum */ bar JAMES;
-        private static final /* synthetic */ bar[] $VALUES;
+    public static enum bar {
+    {
+        JENNIFER,
+        JAMES;
+        
 
         private bar() {
-            super(unnamed_local_this_1, (int)unnamed_local_this_2);
         }
 
         static void <clinit>() {
-            bar.JENNIFER = new bar("JENNIFER", 0);
-            bar.JAMES = new bar("JAMES", 1);
-            bar.$VALUES = new bar[]{bar.JENNIFER, bar.JAMES};
         }
 
     }
 
-    public static final class foo
-    extends Enum<foo> {
-        public static final /* enum */ foo FRED;
-        public static final /* enum */ foo KIM;
-        private static final /* synthetic */ foo[] $VALUES;
+    public static enum foo {
+    {
+        FRED,
+        KIM;
+        
 
         private foo() {
-            super(unnamed_local_this_1, (int)unnamed_local_this_2);
         }
 
         static void <clinit>() {
-            foo.FRED = new foo("FRED", 0);
-            foo.KIM = new foo("KIM", 1);
-            foo.$VALUES = new foo[]{foo.FRED, foo.KIM};
         }
 
     }
