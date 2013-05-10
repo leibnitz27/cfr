@@ -1,0 +1,42 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class TypeTest7 {
+
+    public TypeTest7() {
+    }
+
+    public int test2(int x) {
+        boolean a = false;
+        if (x > 4) {
+            a = true;
+        }
+        v6 = (a) ? (5) : (2);
+        return v6;
+    }
+
+    public int test3(int x) {
+        boolean a = false;
+        if (x > 4) {
+            a = true;
+        }
+        v14 = (a) ? (5) : (2);
+        return v14;
+    }
+
+    public int test4(int x) {
+        int a = 0;
+        if (x > 4) {
+            a = 2;
+        }
+        v22 = (a != false) ? (5) : (2);
+        return v22;
+    }
+
+}

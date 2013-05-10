@@ -1,0 +1,27 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Boolean;
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+import java.util.List;
+
+public class TypeTest10 {
+
+    public TypeTest10() {
+    }
+
+    public void test2(int unnamed_local_a_1) {
+    }
+
+    public void test3(List<Boolean> b) {
+        int x = 1;
+        if (x == false) {
+            this.test2(x);
+        }
+    }
+
+}

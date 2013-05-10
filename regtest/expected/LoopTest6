@@ -1,0 +1,32 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.FilterOutputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.Appendable;
+import java.lang.CharSequence;
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+import java.lang.System;
+import java.nio.charset.Charset;
+import java.util.Locale;
+
+public class LoopTest6 {
+     int y;
+
+    public LoopTest6() {
+    }
+
+    public void test7(int end) {
+        for (int x = 0; x < end; ++x) {
+            System.out.println(x);
+        }
+    }
+
+}

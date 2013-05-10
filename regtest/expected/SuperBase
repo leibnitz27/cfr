@@ -1,0 +1,21 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class SuperBase {
+
+    public SuperBase() {
+    }
+
+    protected void fred() {
+    }
+
+    public void test(SuperBase unnamed_local_arg_1) {
+    }
+
+}

@@ -1,0 +1,36 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.lang.AbstractStringBuilder;
+import java.lang.Appendable;
+import java.lang.CharSequence;
+import java.lang.Class;
+import java.lang.Integer;
+import java.lang.Object;
+import java.lang.String;
+import java.lang.StringBuffer;
+import java.lang.StringBuilder;
+import java.util.HashMap;
+import java.util.Map;
+
+public class TypeTest3<T> {
+
+    public TypeTest3() {
+    }
+
+    public <X extends Map<String, Integer>, Y> void test1(X x, T t) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(x);
+    }
+
+    public <X extends HashMap<String, Integer[][]>, Y> void test1(X x, T t) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(x);
+    }
+
+}

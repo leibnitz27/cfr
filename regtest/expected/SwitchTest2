@@ -1,0 +1,31 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Enum;
+import java.lang.NoSuchFieldError;
+import java.lang.Object;
+import java.lang.String;
+import org.benf.cfr.tests.EnumTest1;
+
+public class SwitchTest2 {
+
+    public SwitchTest2() {
+    }
+
+    public int test0(EnumTest1 e) {
+        switch (e) {
+            case FOO: {
+                return 1;
+            }
+            case BAP: {
+                return 2;
+            }
+            default: 
+        }
+        return 0;
+    }
+
+}

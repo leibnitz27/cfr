@@ -1,0 +1,63 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class SyncTest4 {
+    private int x;
+
+    public SyncTest4() {
+    }
+
+    public void test1() {
+        unnamed_local_this_1 = this;
+        synchronized (unnamed_local_this_1) {
+            try {
+                this.x = 3;
+                unnamed_local_this_2 = this;
+                synchronized (unnamed_local_this_2) {
+                    try {
+                        this.x = 5;
+                        ** GOTO lbl15
+                    }
+                    catch (java.lang.Throwable unnamed_local_this_3) {
+                        throw unnamed_local_this_3;
+                    }
+                }
+lbl15: // 1 sources:
+                ** GOTO lbl19
+            }
+            catch (java.lang.Throwable unnamed_local_this_4) {
+                throw unnamed_local_this_4;
+            }
+        }
+lbl19: // 1 sources:
+        unnamed_local_this_1 = this;
+        synchronized (unnamed_local_this_1) {
+            try {
+                this.x = 3;
+                unnamed_local_this_2 = this;
+                synchronized (unnamed_local_this_2) {
+                    try {
+                        this.x = 5;
+                        ** GOTO lbl33
+                    }
+                    catch (java.lang.Throwable unnamed_local_this_5) {
+                        throw unnamed_local_this_5;
+                    }
+                }
+lbl33: // 1 sources:
+                ** GOTO lbl37
+            }
+            catch (java.lang.Throwable unnamed_local_this_6) {
+                throw unnamed_local_this_6;
+            }
+        }
+lbl37: // 1 sources:
+    }
+
+}

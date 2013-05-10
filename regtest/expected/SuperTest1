@@ -1,0 +1,20 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Object;
+import org.benf.cfr.tests.SuperBase;
+
+public class SuperTest1
+extends SuperBase {
+
+    public SuperTest1() {
+    }
+
+    public void test(SuperBase other) {
+        super.test(other);
+        other.test(this);
+    }
+
+}

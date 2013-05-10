@@ -1,0 +1,29 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Integer;
+import java.lang.Object;
+import java.lang.String;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map$Entry;
+import java.util.Set;
+
+public class IterTest3<T> {
+
+    public IterTest3() {
+    }
+
+    public boolean test1(Map<T, Integer[]> map) {
+        boolean result = false;
+        for (Map.Entry<K, V> o : map.entrySet()) {
+            result|=o.getKey().equals(o.getValue());
+        }
+        return result;
+    }
+
+}

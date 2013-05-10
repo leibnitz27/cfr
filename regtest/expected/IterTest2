@@ -1,0 +1,40 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.io.Serializable;
+import java.lang.AbstractStringBuilder;
+import java.lang.CharSequence;
+import java.lang.Class;
+import java.lang.Comparable;
+import java.lang.Deprecated;
+import java.lang.Integer;
+import java.lang.Object;
+import java.lang.String;
+import java.lang.String$1;
+import java.lang.String$CaseInsensitiveComparator;
+import java.lang.StringBuffer;
+import java.lang.StringBuilder;
+import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map$Entry;
+import java.util.Set;
+
+public class IterTest2 {
+
+    public IterTest2() {
+    }
+
+    public boolean test1(Map<String, Integer[]> map) {
+        boolean result = false;
+        for (Map.Entry<K, V> o : map.entrySet()) {
+            result|=o.getKey().equals(o.getValue());
+        }
+        return result;
+    }
+
+}

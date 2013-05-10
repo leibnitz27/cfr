@@ -1,0 +1,27 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Comparable;
+import java.lang.Integer;
+import java.lang.Integer$IntegerCache;
+import java.lang.Number;
+import java.lang.Object;
+import java.lang.String;
+
+public class TypeTest17 {
+
+    public TypeTest17() {
+    }
+
+    public Integer foo() {
+        return Integer.valueOf(1);
+    }
+
+    public Integer bar() {
+        return new Integer(1);
+    }
+
+}

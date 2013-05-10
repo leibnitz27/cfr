@@ -1,0 +1,27 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class TypeTest6 {
+
+    public TypeTest6() {
+    }
+
+    public boolean test1(int x) {
+        v3 = x == 6;
+        return v3;
+    }
+
+    public boolean test2(int x) {
+        if (x == 6) {
+            return true;
+        }
+        return false;
+    }
+
+}

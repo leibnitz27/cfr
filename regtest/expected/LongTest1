@@ -1,0 +1,27 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Comparable;
+import java.lang.Long;
+import java.lang.Long$LongCache;
+import java.lang.Number;
+import java.lang.Object;
+import java.lang.String;
+import java.math.BigInteger;
+
+public class LongTest1 {
+
+    public LongTest1() {
+    }
+
+    public static int agg1(long a, long b) {
+        return Long.signum((a - b));
+    }
+
+    public static void main(String[] unnamed_local_args_0) {
+    }
+
+}

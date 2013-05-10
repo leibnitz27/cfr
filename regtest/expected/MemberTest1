@@ -1,0 +1,22 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class MemberTest1 {
+    private int x;
+
+    public MemberTest1(int x) {
+        this.x = x;
+    }
+
+    public int inc(int y) {
+        v3 = this;
+        return v3.x+=y;
+    }
+
+}

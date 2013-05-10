@@ -1,0 +1,23 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+
+public class StaticInitTest1 {
+     int x;
+    static int y;
+    static int z;
+
+    public StaticInitTest1() {
+        this.x = 3;
+    }
+
+    static void <clinit>() {
+        StaticInitTest1.y = 5;
+    }
+
+}

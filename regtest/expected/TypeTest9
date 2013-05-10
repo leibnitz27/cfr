@@ -1,0 +1,42 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.FilterOutputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.Appendable;
+import java.lang.Boolean;
+import java.lang.CharSequence;
+import java.lang.Class;
+import java.lang.Object;
+import java.lang.String;
+import java.lang.System;
+import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Locale;
+
+public class TypeTest9 {
+
+    public TypeTest9() {
+    }
+
+    public void test2(boolean[] b) {
+        if (b.length == 0) {
+            System.out.println(b);
+        }
+    }
+
+    public void test3(List<Boolean> b) {
+        if (b.isEmpty()) {
+            System.out.println(b);
+        }
+    }
+
+}
