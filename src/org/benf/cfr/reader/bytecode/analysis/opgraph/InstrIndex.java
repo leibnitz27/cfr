@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import java.util.LinkedList;
+
 /**
  * Created:
  * User: lee
@@ -7,54 +9,71 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
  */
 public class InstrIndex implements Comparable<InstrIndex> {
     private final int index;
-    private final int subindex; // for renumbering, etc.
+    //    private final int subindex; // for renumbering, etc.
+    private TempRelatives tempList;
 
     public InstrIndex(int index) {
         this.index = index;
-        this.subindex = 0;
+//        this.subindex = 0;
+        this.tempList = null;
     }
 
-    private InstrIndex(int index, int subindex) {
+    private InstrIndex(int index, TempRelatives tempList) {
         this.index = index;
-        this.subindex = subindex;
+        this.tempList = tempList;
+    }
+
+    private int idx() {
+        if (tempList == null) return 0;
+        return tempList.indexOf(this);
     }
 
     @Override
     public String toString() {
-        return "lbl" + index + (subindex == 0 ? "" : ("." + subindex));
+        int subidx = idx();
+        return "lbl" + index + (subidx == 0 ? "" : "." + subidx);
     }
 
     @Override
     public int compareTo(InstrIndex other) {
         int a = index - other.index;
         if (a != 0) return a;
-        a = subindex - other.subindex;
+        if (tempList != other.tempList) {
+            throw new IllegalStateException("Bad templists");
+        }
+        a = idx() - other.idx();
         return a;
+    }
+
+    // NOTE DELIBERATE USE OF OBJECT HASH AND EQUALS.
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        return index + (1001 * subindex);
+        return super.hashCode();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof InstrIndex)) return false;
-        InstrIndex other = (InstrIndex) o;
-        return this.index == other.index && this.subindex == other.subindex;
+    private void mkTempList() {
+        if (tempList == null) {
+            tempList = new TempRelatives(this);
+        }
     }
 
     public InstrIndex justBefore() {
-        return new InstrIndex(this.index, this.subindex - 1);
-    }
-
-    public InstrIndex justBefore(int by) {
-        return new InstrIndex(this.index, this.subindex - by);
+        mkTempList();
+        InstrIndex res = new InstrIndex(this.index, tempList);
+        tempList.before(this, res);
+        return res;
     }
 
     public InstrIndex justAfter() {
-        return new InstrIndex(this.index, this.subindex + 1);
+        mkTempList();
+        InstrIndex res = new InstrIndex(this.index, tempList);
+        tempList.after(this, res);
+        return res;
     }
 
     public boolean directlyPreceeds(InstrIndex other) {
@@ -77,4 +96,26 @@ public class InstrIndex implements Comparable<InstrIndex> {
         return !isBackJumpTo(other);
     }
 
+
+    private static class TempRelatives {
+        private final LinkedList<InstrIndex> rels = new LinkedList<InstrIndex>();
+
+        public TempRelatives(InstrIndex start) {
+            rels.add(start);
+        }
+
+        public int indexOf(InstrIndex i) {
+            return rels.indexOf(i);
+        }
+
+        public void before(InstrIndex than, InstrIndex isBefore) {
+            int idx = rels.indexOf(than);
+            rels.add(idx, isBefore);
+        }
+
+        public void after(InstrIndex than, InstrIndex isBefore) {
+            int idx = rels.indexOf(than);
+            rels.add(idx + 1, isBefore);
+        }
+    }
 }

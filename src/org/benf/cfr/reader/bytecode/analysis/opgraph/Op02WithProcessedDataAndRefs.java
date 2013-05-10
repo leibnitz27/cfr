@@ -1027,9 +1027,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             collides.add(insertionPos, exceptionTempStatement);
         }
         /* Relabel the nodes, for subsequent sorting */
-        int offset = collides.size();
         for (ExceptionTempStatement ets : collides) {
-            ets.getOp().setIndex(infrontOf.getIndex().justBefore(offset--));
+            // Note the repeated use of justBefore - the last one called is REALLY just before.
+            ets.getOp().setIndex(infrontOf.getIndex().justBefore());
         }
         return afterThis;
     }
