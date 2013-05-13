@@ -2,5 +2,6 @@ TODO:
 
 Inner / inline objects
 variable declarations
-generic type determinations (for x : )
+reverse generic type determinations (for x : )
 static blocks vs static initialisers
+lift static initialisers into declarations.
