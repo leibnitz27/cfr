@@ -5,3 +5,4 @@ variable declarations
 reverse generic type determinations (for x : )
 static blocks vs static initialisers
 lift static initialisers into declarations.
+inner class imports are wrong.

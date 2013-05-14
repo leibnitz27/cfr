@@ -1,0 +1,38 @@
+/*
+ * Decompiled with CFR.
+ */
+package org.benf.cfr.tests;
+
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.lang.Class;
+import java.lang.Cloneable;
+import java.lang.Object;
+import java.lang.String;
+import java.util.AbstractMap;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashMap$1;
+import java.util.HashMap$Entry;
+import java.util.HashMap$EntryIterator;
+import java.util.HashMap$EntrySet;
+import java.util.HashMap$HashIterator;
+import java.util.HashMap$Holder;
+import java.util.HashMap$KeyIterator;
+import java.util.HashMap$KeySet;
+import java.util.HashMap$ValueIterator;
+import java.util.HashMap$Values;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map$Entry;
+import java.util.Set;
+
+public class TypeTest18 {
+    final Map<String, String> f;
+
+    public TypeTest18() {
+        this.f = new HashMap();
+    }
+
+}
