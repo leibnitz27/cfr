@@ -20,20 +20,19 @@ import java.lang.UnsupportedOperationException;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-public class DynamicCatchTest1
-{
+public class DynamicCatchTest1 {
      int x;
      int y;
      int z;
 
-    public DynamicCatchTest1(){
+    public DynamicCatchTest1() {
     }
 
-    private static void rethrow(Throwable t) throws java.lang.Throwable {
+    private static void rethrow(Throwable t) throws Throwable {
         throw t;
     }
 
-    static void test1(int a, int b){
+    static void test1(int a, int b) {
         try {
             throw new UnsupportedOperationException();
             catch (RuntimeException e) {
@@ -51,7 +50,7 @@ public class DynamicCatchTest1
 lbl11: // 3 sources:
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         DynamicCatchTest1.test1(2, 3);
     }
 

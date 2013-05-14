@@ -30,7 +30,7 @@ public interface InterfaceTestMembers {
     public static final Map<String, Integer> z;
     public static final int x = 4;
 
-    default static void <clinit>() {
+    default static {
         InterfaceTestMembers.z = new HashMap();
     }
 

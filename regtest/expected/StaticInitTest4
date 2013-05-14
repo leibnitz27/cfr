@@ -6,8 +6,10 @@ package org.benf.cfr.tests;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.Class;
 import java.lang.Cloneable;
 import java.lang.Object;
+import java.lang.String;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,12 +28,16 @@ import java.util.Map;
 import java.util.Map$Entry;
 import java.util.Set;
 
-public interface InterfaceTestStatics2 {
-    public static final String STATIC_STRING = "Here be a static";
-    public static final Map<String, String> map;
+public class StaticInitTest4 {
+    static int x;
+    static Map<String, String> map;
 
-    default static {
-        InterfaceTestStatics2.map = new HashMap();
+    public StaticInitTest4() {
+    }
+
+    static {
+        StaticInitTest4.x = 5;
+        StaticInitTest4.map = new HashMap(StaticInitTest4.x);
     }
 
 }

@@ -35,7 +35,7 @@ public class StaticInitTest3 {
     public StaticInitTest3() {
     }
 
-    static void <clinit>() {
+    static {
         StaticInitTest3.x = 5;
         StaticInitTest3.map = new HashMap(StaticInitTest3.x);
     }

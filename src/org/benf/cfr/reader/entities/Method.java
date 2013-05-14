@@ -31,6 +31,7 @@ public class Method implements KnowsRawSize {
 
     public enum MethodConstructor {
         NOT(false),
+        STATIC_CONSTRUCTOR(false),
         CONSTRUCTOR(true),
         ENUM_CONSTRUCTOR(true);
 
@@ -95,10 +96,14 @@ public class Method implements KnowsRawSize {
             this.codeAttribute.setMethod(this);
         }
 
-        String methodName = cp.getUTF8Entry(nameIndex).getValue();
-        this.isConstructor = methodName.equals(MiscConstants.INIT_METHOD) ? MethodConstructor.CONSTRUCTOR : MethodConstructor.NOT;
-        if (isConstructor.isConstructor()) methodName = classFile.getClassType().toString();
-        this.name = methodName;
+        this.name = cp.getUTF8Entry(nameIndex).getValue();
+        MethodConstructor methodConstructor = MethodConstructor.NOT;
+        if (name.equals(MiscConstants.INIT_METHOD)) {
+            methodConstructor = MethodConstructor.CONSTRUCTOR;
+        } else if (name.equals(MiscConstants.STATIC_INIT_METHOD)) {
+            methodConstructor = MethodConstructor.STATIC_CONSTRUCTOR;
+        }
+        this.isConstructor = methodConstructor;
 
         this.methodPrototype = generateMethodPrototype();
         if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
@@ -233,13 +238,24 @@ public class Method implements KnowsRawSize {
         }
         String prefix = CollectionUtils.join(localAccessFlags, " ");
 
-        if (!prefix.isEmpty()) d.print(prefix).print(' ');
+        if (!prefix.isEmpty()) d.print(prefix);
+
+        if (isConstructor == MethodConstructor.STATIC_CONSTRUCTOR) {
+            return;
+        }
+
+        if (!prefix.isEmpty()) d.print(' ');
 
         MethodPrototypeAnnotationsHelper paramAnnotationsHelper = new MethodPrototypeAnnotationsHelper(
                 this.<AttributeRuntimeVisibleParameterAnnotations>getAttributeByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME),
                 this.<AttributeRuntimeInvisibleParameterAnnotations>getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME)
         );
-        d.print(getMethodPrototype().getDeclarationSignature(name, isConstructor, paramAnnotationsHelper));
+
+        String displayName = name;
+        if (isConstructor.isConstructor()) {
+            displayName = classFile.getClassType().toString();
+        }
+        d.print(getMethodPrototype().getDeclarationSignature(displayName, isConstructor, paramAnnotationsHelper));
         AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
             d.print(" throws ");

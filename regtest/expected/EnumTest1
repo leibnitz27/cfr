@@ -21,7 +21,7 @@ public enum EnumTest1 {
     private EnumTest1() {
     }
 
-    static void <clinit>() {
+    static {
     }
 
 }

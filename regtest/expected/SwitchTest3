@@ -63,7 +63,7 @@ public class SwitchTest3 {
         private enm() {
         }
 
-        static void <clinit>() {
+        static {
         }
 
     }

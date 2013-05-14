@@ -35,7 +35,7 @@ public @interface AnnotationTestAnnotation2 {
     public static final Map<String, Integer> z;
 
     public String value() default "wibble";
-    default static void <clinit>() {
+    default static {
         AnnotationTestAnnotation2.z = new HashMap();
     }
 

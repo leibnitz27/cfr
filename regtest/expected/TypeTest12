@@ -40,7 +40,7 @@ public class TypeTest12 {
 
     public void test3(List<Boolean> b) {
         ArrayList bcopy = new ArrayList(b);
-        for (E b2 : bcopy) {
+        for (Boolean b2 : bcopy) {
             System.out.println(b);
         }
     }

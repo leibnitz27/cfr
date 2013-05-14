@@ -16,7 +16,7 @@ public class StaticInitTest1 {
         this.x = 3;
     }
 
-    static void <clinit>() {
+    static {
         StaticInitTest1.y = 5;
     }
 

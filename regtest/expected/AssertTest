@@ -76,7 +76,7 @@ public class AssertTest {
         System.out.println(s);
     }
 
-    static void <clinit>() {
+    static {
         v14 = !(org.benf.cfr.tests.AssertTest.class.desiredAssertionStatus());
         AssertTest.$assertionsDisabled = v14;
     }

@@ -21,7 +21,7 @@ public class AssignTest2 {
         this.id0 = AssignTest2.sid+=1;
     }
 
-    static void <clinit>() {
+    static {
         AssignTest2.sid = 0;
     }
 

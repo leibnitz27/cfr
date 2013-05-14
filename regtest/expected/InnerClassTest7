@@ -25,7 +25,7 @@ public class InnerClassTest7 {
         private bar() {
         }
 
-        static void <clinit>() {
+        static {
         }
 
     }
@@ -39,7 +39,7 @@ public class InnerClassTest7 {
         private foo() {
         }
 
-        static void <clinit>() {
+        static {
         }
 
     }
