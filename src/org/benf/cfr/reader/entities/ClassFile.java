@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.EnumClassRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
@@ -393,11 +394,8 @@ public class ClassFile implements Dumpable {
             }
         }
         if (exceptionRecovered) throw new ConfusedCFRException("Failed to analyse file");
-        /*
-         * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
-         * several methods.
-         */
-        EnumClassRewriter.rewriteEnumClass(this, state);
+
+        CodeAnalyserWholeClass.wholeClassAnalysis(this, state);
     }
 
     public JavaTypeInstance getClassType() {
