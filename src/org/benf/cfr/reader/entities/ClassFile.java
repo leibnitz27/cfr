@@ -48,8 +48,8 @@ public class ClassFile implements Dumpable {
     private final short majorVer;
     private final ConstantPool constantPool;
     private final Set<AccessFlag> accessFlags;
-    private final List<Field> fields;
-    private Map<String, Field> fieldsByName; // Lazily populated if interrogated.
+    private final List<ClassFileField> fields;
+    private Map<String, ClassFileField> fieldsByName; // Lazily populated if interrogated.
 
     private final List<Method> methods;
     private Map<String, Method> methodsByName; // Lazily populated if interrogated.
@@ -115,8 +115,7 @@ public class ClassFile implements Dumpable {
         final long OFFSET_OF_FIELDS_COUNT = OFFSET_OF_INTERFACES + 2 * numInterfaces;
         final long OFFSET_OF_FIELDS = OFFSET_OF_FIELDS_COUNT + 2;
         final short numFields = data.getS2At(OFFSET_OF_FIELDS_COUNT);
-        ArrayList<Field> tmpFields = new ArrayList<Field>();
-        tmpFields.ensureCapacity(numFields);
+        List<Field> tmpFields = ListFactory.newList();
         final long fieldsLength = ContiguousEntityFactory.build(data.getOffsetData(OFFSET_OF_FIELDS), numFields, tmpFields,
                 new UnaryFunction<ByteData, Field>() {
                     @Override
@@ -124,7 +123,10 @@ public class ClassFile implements Dumpable {
                         return new Field(arg, constantPool);
                     }
                 });
-        this.fields = tmpFields;
+        this.fields = ListFactory.newList();
+        for (Field tmpField : tmpFields) {
+            fields.add(new ClassFileField(tmpField));
+        }
 
         final long OFFSET_OF_METHODS_COUNT = OFFSET_OF_FIELDS + fieldsLength;
         final long OFFSET_OF_METHODS = OFFSET_OF_METHODS_COUNT + 2;
@@ -221,19 +223,19 @@ public class ClassFile implements Dumpable {
     }
 
 
-    public Field getFieldByName(String name) throws NoSuchFieldException {
+    public ClassFileField getFieldByName(String name) throws NoSuchFieldException {
         if (fieldsByName == null) {
             fieldsByName = MapFactory.newMap();
-            for (Field field : fields) {
-                fieldsByName.put(field.getFieldName(constantPool), field);
+            for (ClassFileField field : fields) {
+                fieldsByName.put(field.getField().getFieldName(constantPool), field);
             }
         }
-        Field field = fieldsByName.get(name);
+        ClassFileField field = fieldsByName.get(name);
         if (field == null) throw new NoSuchFieldException(name);
         return field;
     }
 
-    public List<Field> getFields() {
+    public List<ClassFileField> getFields() {
         return fields;
     }
 

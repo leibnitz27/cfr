@@ -2,10 +2,7 @@ package org.benf.cfr.reader.entities.classfilehelpers;
 
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.Field;
-import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -30,8 +27,8 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         d.indent(1);
 
 
-        List<Field> fields = classFile.getFields();
-        for (Field field : fields) {
+        List<ClassFileField> fields = classFile.getFields();
+        for (ClassFileField field : fields) {
             field.dump(d, cp);
         }
         List<Method> methods = classFile.getMethods();

@@ -133,7 +133,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         ConstantPool classConstantPool = enumLutClass.getConstantPool();
         Field lut;
         try {
-            lut = enumLutClass.getFieldByName(varName);
+            lut = enumLutClass.getFieldByName(varName).getField();
         } catch (NoSuchFieldException e) {
             return;
         }

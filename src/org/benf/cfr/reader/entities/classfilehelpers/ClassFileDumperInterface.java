@@ -55,8 +55,8 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
         d.print("{\n");
         d.indent(1);
         // Horrid, but an interface can have fields....
-        List<Field> fields = classFile.getFields();
-        for (Field field : fields) {
+        List<ClassFileField> fields = classFile.getFields();
+        for (ClassFileField field : fields) {
             field.dump(d, cp);
         }
         List<Method> methods = classFile.getMethods();

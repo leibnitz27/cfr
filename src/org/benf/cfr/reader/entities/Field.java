@@ -45,9 +45,6 @@ public class Field implements KnowsRawSize {
     private final TypedLiteral constantValue;
     private transient JavaTypeInstance cachedDecodedType;
 
-    private transient boolean isHidden;
-
-
     public Field(ByteData raw, final ConstantPool cp) {
         this.accessFlags = AccessFlag.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
         short attributes_count = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
@@ -71,14 +68,6 @@ public class Field implements KnowsRawSize {
     @Override
     public long getRawByteLength() {
         return length;
-    }
-
-    public boolean isHidden() {
-        return isHidden;
-    }
-
-    public void markHidden() {
-        isHidden = true;
     }
 
     private AttributeSignature getSignatureAttribute() {
@@ -114,16 +103,16 @@ public class Field implements KnowsRawSize {
         return accessFlags.contains(accessFlag);
     }
 
+    public TypedLiteral getConstantValue() {
+        return constantValue;
+    }
+
     public void dump(Dumper d, ConstantPool cp) {
         StringBuilder sb = new StringBuilder();
         String prefix = CollectionUtils.join(accessFlags, " ");
         if (!prefix.isEmpty()) sb.append(prefix);
         JavaTypeInstance type = getJavaTypeInstance(cp);
         sb.append(' ').append(type.toString()).append(' ').append(getFieldName(cp));
-        if (constantValue != null) {
-            sb.append(" = ").append(constantValue);
-        }
-        sb.append(";\n");
         d.print(sb.toString());
     }
 }

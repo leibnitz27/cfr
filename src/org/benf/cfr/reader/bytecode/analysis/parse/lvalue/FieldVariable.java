@@ -27,7 +27,7 @@ public class FieldVariable extends AbstractLValue {
         ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) fieldentry;
         String name = fieldRef.getLocalName();
         try {
-            Field field = classFile.getFieldByName(name);
+            Field field = classFile.getFieldByName(name).getField();
             return new InferredJavaType(field.getJavaTypeInstance(cp), InferredJavaType.Source.FIELD);
         } catch (NoSuchFieldException ignore) {
             return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
@@ -45,7 +45,7 @@ public class FieldVariable extends AbstractLValue {
         throw new ConfusedCFRException("NYI");
     }
 
-    private String getFieldName() {
+    public String getFieldName() {
         return field.getLocalName();
     }
 

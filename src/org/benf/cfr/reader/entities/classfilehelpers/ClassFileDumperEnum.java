@@ -79,8 +79,8 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         }
         d.print("\n");
 
-        List<Field> fields = classFile.getFields();
-        for (Field field : fields) {
+        List<ClassFileField> fields = classFile.getFields();
+        for (ClassFileField field : fields) {
             if (field.isHidden()) continue;
             field.dump(d, cp);
         }

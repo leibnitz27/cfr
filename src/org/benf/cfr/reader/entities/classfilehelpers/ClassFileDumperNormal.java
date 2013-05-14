@@ -63,8 +63,8 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         d.print("{\n");
         d.indent(1);
 
-        List<Field> fields = classFile.getFields();
-        for (Field field : fields) {
+        List<ClassFileField> fields = classFile.getFields();
+        for (ClassFileField field : fields) {
             field.dump(d, cp);
         }
         List<Method> methods = classFile.getMethods();

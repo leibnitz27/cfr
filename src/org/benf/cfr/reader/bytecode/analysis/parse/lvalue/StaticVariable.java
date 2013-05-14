@@ -21,7 +21,6 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class StaticVariable extends AbstractLValue {
 
-    private final ConstantPool cp;
     private final ConstantPoolEntryFieldRef field;
     private final JavaTypeInstance clazz;
     private final String varName;
@@ -29,7 +28,6 @@ public class StaticVariable extends AbstractLValue {
     public StaticVariable(ConstantPool cp, ConstantPoolEntry field) {
         super(new InferredJavaType(((ConstantPoolEntryFieldRef) field).getJavaTypeInstance(), InferredJavaType.Source.FIELD));
         this.field = (ConstantPoolEntryFieldRef) field;
-        this.cp = cp;
         this.clazz = this.field.getClassEntry().getTypeInstance();
         this.varName = this.field.getLocalName();
     }
@@ -40,7 +38,6 @@ public class StaticVariable extends AbstractLValue {
     public StaticVariable(InferredJavaType type, JavaTypeInstance clazz, String varName) {
         super(type);
         this.field = null;
-        this.cp = null;
         this.varName = varName;
         this.clazz = clazz;
     }

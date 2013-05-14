@@ -105,7 +105,7 @@ public class EnumClassRewriter {
         }
         valueOf.hideSynthetic();
         values.hideSynthetic();
-        for (Field field : initMatchCollector.getMatchedHideTheseFields()) {
+        for (ClassFileField field : initMatchCollector.getMatchedHideTheseFields()) {
             field.markHidden();
         }
 
@@ -198,7 +198,7 @@ public class EnumClassRewriter {
         private final WildcardMatch wcm;
         private final Map<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entryMap = MapFactory.newOrderedMap();
         private CollectedEnumData<NewAnonymousArray> matchedArray;
-        private List<Field> matchedHideTheseFields = ListFactory.newList();
+        private List<ClassFileField> matchedHideTheseFields = ListFactory.newList();
 
         private EnumInitMatchCollector(WildcardMatch wcm) {
             this.wcm = wcm;
@@ -238,9 +238,10 @@ public class EnumClassRewriter {
              *
              * Examine all static members, make sure they're in this set.
              */
-            List<Field> fields = classFile.getFields();
+            List<ClassFileField> fields = classFile.getFields();
             ConstantPool cp = classFile.getConstantPool();
-            for (Field field : fields) {
+            for (ClassFileField classFileField : fields) {
+                Field field = classFileField.getField();
                 JavaTypeInstance fieldType = field.getJavaTypeInstance(cp);
                 boolean isStatic = field.testAccessFlag(AccessFlag.ACC_STATIC);
                 boolean isEnum = field.testAccessFlag(AccessFlag.ACC_ENUM);
@@ -250,7 +251,7 @@ public class EnumClassRewriter {
                     return false;
                 }
                 if (expected) {
-                    matchedHideTheseFields.add(field);
+                    matchedHideTheseFields.add(classFileField);
                 }
             }
             List<Expression> values = matchedArray.getData().getValues();
@@ -277,8 +278,8 @@ public class EnumClassRewriter {
             }
             StaticVariable valuesArrayStatic = (StaticVariable) valuesArray;
             try {
-                Field valuesField = classFile.getFieldByName(valuesArrayStatic.getVarName());
-                if (!valuesField.testAccessFlag(AccessFlag.ACC_STATIC)) {
+                ClassFileField valuesField = classFile.getFieldByName(valuesArrayStatic.getVarName());
+                if (!valuesField.getField().testAccessFlag(AccessFlag.ACC_STATIC)) {
                     return false;
                 }
                 matchedHideTheseFields.add(valuesField);
@@ -288,7 +289,7 @@ public class EnumClassRewriter {
             return true;
         }
 
-        private List<Field> getMatchedHideTheseFields() {
+        private List<ClassFileField> getMatchedHideTheseFields() {
             return matchedHideTheseFields;
         }
 
