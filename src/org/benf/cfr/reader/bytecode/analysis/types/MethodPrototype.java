@@ -12,6 +12,7 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -41,7 +42,7 @@ public class MethodPrototype {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         this.args = args;
-        this.result = "<init>".equals(name) ? null : result;
+        this.result = MiscConstants.INIT_METHOD.equals(name) ? null : result;
         this.varargs = varargs;
         this.variableNamer = variableNamer;
         this.name = name;
@@ -137,7 +138,7 @@ public class MethodPrototype {
 
     public JavaTypeInstance getReturnType(JavaTypeInstance thisTypeInstance, List<Expression> invokingArgs) {
         if (result == null) {
-            if ("<init>".equals(getName())) {
+            if (MiscConstants.INIT_METHOD.equals(getName())) {
                 if (classFile != null) {
                     result = classFile.getClassSignature().getThisGeneralTypeClass(thisTypeInstance);
                 } else {

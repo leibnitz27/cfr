@@ -25,10 +25,7 @@ import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
 import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -269,7 +266,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
             String funcName = nameAndType.getName().getValue();
             boolean typesMatch = callType.equals(objType);
-            if (funcName.equals("<init>")) {
+            if (funcName.equals(MiscConstants.INIT_METHOD)) {
                 if (!(typesMatch || objType.getRawName().equals("java.lang.Object"))) {
                     isSuper = true;
                 }

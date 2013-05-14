@@ -7,10 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
-import org.benf.cfr.reader.util.CollectionUtils;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.KnowsRawSize;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.CommaHelp;
@@ -99,7 +96,7 @@ public class Method implements KnowsRawSize {
         }
 
         String methodName = cp.getUTF8Entry(nameIndex).getValue();
-        this.isConstructor = methodName.equals("<init>") ? MethodConstructor.CONSTRUCTOR : MethodConstructor.NOT;
+        this.isConstructor = methodName.equals(MiscConstants.INIT_METHOD) ? MethodConstructor.CONSTRUCTOR : MethodConstructor.NOT;
         if (isConstructor.isConstructor()) methodName = classFile.getClassType().toString();
         this.name = methodName;
 

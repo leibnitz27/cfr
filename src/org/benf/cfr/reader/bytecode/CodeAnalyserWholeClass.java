@@ -31,6 +31,8 @@ public class CodeAnalyserWholeClass {
         if (classFile.isInnerClass()) {
             fixInnerClassConstructors(classFile, state);
         }
+
+        liftStaticInitialisers(classFile, state);
     }
 
     private static void fixInnerClassConstructors(ClassFile classFile, CFRState state) {
@@ -39,5 +41,9 @@ public class CodeAnalyserWholeClass {
         for (Method method : classFile.getConstructors()) {
             Op04StructuredStatement.fixInnerClassConstruction(state, method, method.getAnalysis());
         }
+    }
+
+    private static void liftStaticInitialisers(ClassFile classFile, CFRState state) {
+
     }
 }

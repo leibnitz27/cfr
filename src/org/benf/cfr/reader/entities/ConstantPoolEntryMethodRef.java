@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerDefault;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -92,6 +93,6 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
 
     public boolean isInitMethod() {
         String name = getName();
-        return "<init>".equals(name);
+        return MiscConstants.INIT_METHOD.equals(name);
     }
 }

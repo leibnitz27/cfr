@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.ConstantPoolEntryNameAndType;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -40,7 +41,7 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         String funcName = nameAndType.getName().getValue();
         // Most of the time a member function invokation for a constructor will
         // get pulled up into a constructorInvokation, however, when it's a super call, it won't.
-        this.name = funcName.equals("<init>") ? null : funcName;
+        this.name = function.isInitMethod() ? null : funcName;
         this.special = special;
     }
 

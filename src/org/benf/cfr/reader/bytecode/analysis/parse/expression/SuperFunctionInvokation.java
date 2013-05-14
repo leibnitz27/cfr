@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -66,7 +67,7 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
 
     @Override
     public Dumper dump(Dumper d) {
-        if (methodPrototype.getName().equals("<init>")) {
+        if (methodPrototype.getName().equals(MiscConstants.INIT_METHOD)) {
             d.print("super(");
         } else {
             d.print("super.").print(methodPrototype.getName()).print("(");
