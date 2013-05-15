@@ -52,6 +52,9 @@ public class StaticLifter {
          * (Only exception, we skip over comments).
          *
          * (We also need to make sure that initialisation is performed in declaration order).
+         *
+         * This means we don't need to worry about illegal 'natural' initialisation code, as we can't have any
+         * temporaries, and we can't be out of order.
          */
         StructuredStatement topCode = staticCode.getStatement();
         if (!(topCode instanceof Block)) return;
