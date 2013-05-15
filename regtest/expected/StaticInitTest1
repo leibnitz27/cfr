@@ -9,7 +9,7 @@ import java.lang.String;
 
 public class StaticInitTest1 {
      int x;
-    static int y;
+    static int y = 5;
     static int z;
 
     public StaticInitTest1() {
@@ -17,7 +17,6 @@ public class StaticInitTest1 {
     }
 
     static {
-        StaticInitTest1.y = 5;
     }
 
 }

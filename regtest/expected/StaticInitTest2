@@ -30,13 +30,12 @@ import java.util.Set;
 
 public class StaticInitTest2 {
     static final int x = 5;
-    static final Map<String, String> map;
+    static final Map<String, String> map = new HashMap(5);
 
     public StaticInitTest2() {
     }
 
     static {
-        StaticInitTest2.map = new HashMap(5);
     }
 
 }

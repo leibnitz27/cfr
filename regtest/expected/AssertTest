@@ -77,7 +77,7 @@ public class AssertTest {
     }
 
     static {
-        v14 = !(org.benf.cfr.tests.AssertTest.class.desiredAssertionStatus());
+        v14 = !(AssertTest.class.desiredAssertionStatus());
         AssertTest.$assertionsDisabled = v14;
     }
 

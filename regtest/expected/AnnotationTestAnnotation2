@@ -32,11 +32,10 @@ import java.util.Set;
 public @interface AnnotationTestAnnotation2 {
     public static final int x = 3;
     public static final int y = 3;
-    public static final Map<String, Integer> z;
+    public static final Map<String, Integer> z = new HashMap();
 
     public String value() default "wibble";
     default static {
-        AnnotationTestAnnotation2.z = new HashMap();
     }
 
     public static class fred {

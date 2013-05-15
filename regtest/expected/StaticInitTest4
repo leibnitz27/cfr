@@ -29,15 +29,13 @@ import java.util.Map$Entry;
 import java.util.Set;
 
 public class StaticInitTest4 {
-    static int x;
-    static Map<String, String> map;
+    static int x = 5;
+    static Map<String, String> map = new HashMap(StaticInitTest4.x);
 
     public StaticInitTest4() {
     }
 
     static {
-        StaticInitTest4.x = 5;
-        StaticInitTest4.map = new HashMap(StaticInitTest4.x);
     }
 
 }

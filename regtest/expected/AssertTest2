@@ -82,7 +82,7 @@ public class AssertTest2 {
     }
 
     static {
-        v14 = !(org.benf.cfr.tests.AssertTest2.class.desiredAssertionStatus());
+        v14 = !(AssertTest2.class.desiredAssertionStatus());
         AssertTest2.$assertionsDisabled = v14;
         AssertTest2.map = MapFactory.newMap();
         AssertTest2.map2 = MapFactory.newMap();

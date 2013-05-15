@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
 public class ClassTest1 {
-    private static final Logger logger;
+    private static final Logger logger = LoggerFactory.create(ClassTest1.class);
 
     public ClassTest1() {
     }
@@ -20,7 +20,6 @@ public class ClassTest1 {
     }
 
     static {
-        ClassTest1.logger = LoggerFactory.create(org.benf.cfr.tests.ClassTest1.class);
     }
 
 }
