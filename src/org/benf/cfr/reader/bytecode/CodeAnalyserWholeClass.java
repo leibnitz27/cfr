@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.EnumClassRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.StaticLifter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.DeadMethodRemover;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
@@ -42,6 +43,8 @@ public class CodeAnalyserWholeClass {
         }
 
         liftStaticInitialisers(classFile, state);
+
+        removeDeadMethods(classFile, state);
     }
 
     private static void fixInnerClassConstructors(ClassFile classFile, CFRState state) {
@@ -52,6 +55,16 @@ public class CodeAnalyserWholeClass {
         }
     }
 
+    private static Method getStaticConstructor(ClassFile classFile) {
+        Method staticInit;
+        try {
+            staticInit = classFile.getMethodByName(MiscConstants.STATIC_INIT_METHOD);
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+        return staticInit;
+    }
+
     /* As much as possible, lift code from a <clinit> method into the declarations.
      * Because we can put arbitrary code in a clinit, this isn't always possible, however
      * we want to try because
@@ -60,13 +73,23 @@ public class CodeAnalyserWholeClass {
      *    (in java 1.7)
      */
     private static void liftStaticInitialisers(ClassFile classFile, CFRState state) {
-        Method staticInit;
-        try {
-            staticInit = classFile.getMethodByName(MiscConstants.STATIC_INIT_METHOD);
-        } catch (NoSuchMethodException e) {
-            return;
-        }
-
+        Method staticInit = getStaticConstructor(classFile);
+        if (staticInit == null) return;
         new StaticLifter(classFile).liftStatics(staticInit);
+    }
+
+    /*
+     * Some methods can be completely removed if they're empty other than comments.
+     *
+     * default constructor
+     * static constructor
+     *
+     * Obviously, this step has to come AFTER any constructor rewriting (static lifting)
+     */
+    private static void removeDeadMethods(ClassFile classFile, CFRState state) {
+        Method staticInit = getStaticConstructor(classFile);
+        if (staticInit != null) {
+            DeadMethodRemover.removeDeadMethod(classFile, staticInit);
+        }
     }
 }

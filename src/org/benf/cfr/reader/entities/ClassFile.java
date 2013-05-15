@@ -243,6 +243,11 @@ public class ClassFile implements Dumpable {
         return methods;
     }
 
+    public void removePointlessMethod(Method method) {
+        methodsByName.remove(method.getName());
+        methods.remove(method);
+    }
+
 
     // We need to make sure we get the 'correct' method...
     public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
