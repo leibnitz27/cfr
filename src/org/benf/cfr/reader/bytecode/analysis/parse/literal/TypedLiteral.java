@@ -24,7 +24,7 @@ public class TypedLiteral {
         NullObject,
         Class,
         MethodHandle,  // Only used for invokedynamic arguments
-        MethodType;    // Only used for invokedynamic arguments
+        MethodType     // Only used for invokedynamic arguments
     }
 
     private final InferredJavaType inferredJavaType;
@@ -132,6 +132,7 @@ public class TypedLiteral {
             case MethodHandle:
                 return methodHandleName(value);
             case Class:
+                return value.toString() + ".class";
             default:
                 return value.toString();
         }
@@ -160,7 +161,7 @@ public class TypedLiteral {
         return new TypedLiteral(LiteralType.Double, new InferredJavaType(RawJavaType.FLOAT, InferredJavaType.Source.LITERAL), v);
     }
 
-    public static TypedLiteral getClass(String v) {
+    public static TypedLiteral getClass(JavaTypeInstance v) {
         return new TypedLiteral(LiteralType.Class, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), v);
     }
 
@@ -204,7 +205,7 @@ public class TypedLiteral {
         } else if (cpe instanceof ConstantPoolEntryString) {
             return getString(((ConstantPoolEntryString) cpe).getValue());
         } else if (cpe instanceof ConstantPoolEntryClass) {
-            return getClass(((ConstantPoolEntryClass) cpe).getTextPath());
+            return getClass(((ConstantPoolEntryClass) cpe).getTypeInstance());
         } else if (cpe instanceof ConstantPoolEntryMethodHandle) {
             return getMethodHandle((ConstantPoolEntryMethodHandle) cpe, cp);
         } else if (cpe instanceof ConstantPoolEntryMethodType) {

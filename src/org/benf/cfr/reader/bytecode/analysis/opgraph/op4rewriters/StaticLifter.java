@@ -41,10 +41,12 @@ public class StaticLifter {
             @Override
             public boolean test(ClassFileField in) {
                 if (!in.getField().testAccessFlag(AccessFlag.ACC_STATIC)) return false;
+                if (in.getField().testAccessFlag(AccessFlag.ACC_SYNTHETIC)) return false;
                 if (in.getInitialValue() != null) return false;
                 return true;
             }
         }));
+        if (classFileFields.isEmpty()) return;
 
         Op04StructuredStatement staticCode = staticInit.getAnalysis();
         /* We use a LUDICROUSLY simple plan - while the first line is a valid static initialiser, we move it into
