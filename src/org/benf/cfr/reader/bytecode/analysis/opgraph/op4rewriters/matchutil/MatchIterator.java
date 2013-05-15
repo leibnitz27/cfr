@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util;
+package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil;
 
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
