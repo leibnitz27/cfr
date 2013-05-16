@@ -41,11 +41,15 @@ public class CodeAnalyserWholeClass {
             fixInnerClassConstructors(classFile, state);
         }
 
-        liftStaticInitialisers(classFile, state);
+        if (state.getBooleanOpt(CFRState.LIFT_CONSTRUCTOR_INIT)) {
+            liftStaticInitialisers(classFile, state);
 
-        liftNonStaticInitialisers(classFile, state);
+            liftNonStaticInitialisers(classFile, state);
+        }
 
-        removeDeadMethods(classFile, state);
+        if (state.getBooleanOpt(CFRState.REMOVE_DEAD_METHODS)) {
+            removeDeadMethods(classFile, state);
+        }
     }
 
     private static void fixInnerClassConstructors(ClassFile classFile, CFRState state) {
