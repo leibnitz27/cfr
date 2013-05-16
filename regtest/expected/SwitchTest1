@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class SwitchTest1 {
 
-    public SwitchTest1() {
-    }
-
     public void test1(int x) {
         switch (x) {
             case 1: {

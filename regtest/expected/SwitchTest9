@@ -22,9 +22,6 @@ import org.benf.cfr.reader.util.Troolean;
 
 public class SwitchTest9 {
 
-    public SwitchTest9() {
-    }
-
     public void test1(int a, int b) {
         v22 = a == 3;
         v25 = b == 12;

@@ -12,9 +12,6 @@ public class AssignTest1 {
      int y;
      int z;
 
-    public AssignTest1() {
-    }
-
     void test1(int a, int b) {
         int c = this.x;
         int e = (a + b);

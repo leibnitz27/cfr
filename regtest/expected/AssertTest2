@@ -71,9 +71,6 @@ public class AssertTest2 {
     static final Map<String, String> map2;
     static final /* synthetic */ boolean $assertionsDisabled;
 
-    public AssertTest2() {
-    }
-
     public void test1(String s) {
         if ((!(AssertTest2.$assertionsDisabled)) && (s.equals("Fred"))) {
             throw new AssertionError();

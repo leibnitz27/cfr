@@ -14,9 +14,6 @@ import java.util.List;
 
 public class ExceptionSpecTest2 {
 
-    public ExceptionSpecTest2() {
-    }
-
     public <X> List<X> func(X x) throws IllegalStateException {
         throw new IllegalStateException();
     }
@@ -27,9 +24,6 @@ public class ExceptionSpecTest2 {
 
     public static class InnerException
     extends RuntimeException {
-
-        public InnerException() {
-        }
 
     }
 

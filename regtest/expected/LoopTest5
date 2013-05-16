@@ -20,9 +20,6 @@ import java.util.Locale;
 public class LoopTest5 {
      int y;
 
-    public LoopTest5() {
-    }
-
     public void test5(int end) {
         int x = 0;
         while (x+=2 < end) {

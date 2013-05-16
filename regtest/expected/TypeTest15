@@ -17,9 +17,6 @@ import java.util.ListIterator;
 
 public class TypeTest15 {
 
-    public TypeTest15() {
-    }
-
     private int getBoolFn(boolean b) {
         v2 = (b) ? (1) : (0);
         return v2;

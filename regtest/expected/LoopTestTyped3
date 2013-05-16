@@ -23,9 +23,6 @@ import java.util.Locale;
 
 public class LoopTestTyped3 {
 
-    public LoopTestTyped3() {
-    }
-
     public static <E> List<E> dup(List<E> arg) {
         return arg;
     }

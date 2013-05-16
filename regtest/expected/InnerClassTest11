@@ -29,9 +29,6 @@ import org.benf.cfr.tests.InnerClassTest4$InnerBase;
 public class InnerClassTest11 {
     private int a;
 
-    public InnerClassTest11() {
-    }
-
     public void foo() {
         Inner1 i = new Inner1(5);
         System.out.println(Inner1.access$000(i));

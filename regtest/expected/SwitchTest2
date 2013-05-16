@@ -12,9 +12,6 @@ import org.benf.cfr.tests.EnumTest1;
 
 public class SwitchTest2 {
 
-    public SwitchTest2() {
-    }
-
     public int test0(EnumTest1 e) {
         switch (e) {
             case FOO: {

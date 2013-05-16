@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class TypeTest7a {
 
-    public TypeTest7a() {
-    }
-
     public int test3(int x) {
         int a = 0;
         if (x > 4) {

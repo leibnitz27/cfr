@@ -20,9 +20,6 @@ import java.util.Locale;
 public class InnerClassTest0_2 {
     private int x = 3;
 
-    public InnerClassTest0_2() {
-    }
-
     public void foo() {
         new Inner1();
     }

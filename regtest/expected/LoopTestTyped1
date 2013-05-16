@@ -34,9 +34,6 @@ import java.util.RandomAccess;
 
 public class LoopTestTyped1 {
 
-    public LoopTestTyped1() {
-    }
-
     public void test5(String a, String b) {
         ArrayList lst = new ArrayList();
         lst.add(a);

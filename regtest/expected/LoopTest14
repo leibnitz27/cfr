@@ -28,9 +28,6 @@ import java.util.Locale;
 public class LoopTest14 {
      char[] foo;
 
-    public LoopTest14() {
-    }
-
     public void test(int end) {
         int x = 0;
         do {

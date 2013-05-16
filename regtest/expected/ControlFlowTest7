@@ -10,9 +10,6 @@ import java.lang.String;
 
 public class ControlFlowTest7 {
 
-    public ControlFlowTest7() {
-    }
-
     public int foo(int i, int j) {
         do {
             try {

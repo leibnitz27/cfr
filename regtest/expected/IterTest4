@@ -18,9 +18,6 @@ import java.util.Set;
 
 public class IterTest4 {
 
-    public IterTest4() {
-    }
-
     public boolean test1(List<String> list, Set<Integer> set) {
         boolean result = false;
         for (String o : list) {

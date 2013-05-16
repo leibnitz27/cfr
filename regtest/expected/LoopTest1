@@ -24,9 +24,6 @@ import java.util.Set;
 
 public class LoopTest1 {
 
-    public LoopTest1() {
-    }
-
     public boolean test1(List<Object> list, long test, Set<Object> set) {
         boolean result = false;
         for (Object o : list) {

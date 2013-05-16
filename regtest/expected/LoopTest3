@@ -24,9 +24,6 @@ import java.util.Set;
 
 public class LoopTest3 {
 
-    public LoopTest3() {
-    }
-
     public int testNested(List<Object> list, Set<Object> set) {
         int result = 0;
         boolean x = false;

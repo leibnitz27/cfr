@@ -32,7 +32,4 @@ public class StaticInitTest3 {
     static int x = 5;
     static Map<String, String> map = new HashMap(StaticInitTest3.x);
 
-    public StaticInitTest3() {
-    }
-
 }

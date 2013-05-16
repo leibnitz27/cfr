@@ -17,9 +17,6 @@ import java.lang.StringBuilder;
 
 public class TypeTest1 {
 
-    public TypeTest1() {
-    }
-
     public void test1() {
         StringBuilder sb = new StringBuilder();
         char x = 'a';

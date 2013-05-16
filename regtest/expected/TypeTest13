@@ -27,9 +27,6 @@ import java.util.Locale;
 
 public class TypeTest13 {
 
-    public TypeTest13() {
-    }
-
     public void test1(String fred) {
         char c = fred.charAt(5);
         if (c == 'a') {

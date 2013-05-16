@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class LoopTest4 {
 
-    public LoopTest4() {
-    }
-
     public void test5(int end) {
         int x = 0;
         do {

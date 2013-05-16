@@ -18,9 +18,6 @@ import org.benf.cfr.tests.InnerClassTest4$InnerBase;
 
 public class InnerClassTest10 {
 
-    public InnerClassTest10() {
-    }
-
     public class Inner1 {
         final /* synthetic */ InnerClassTest10 this$0;
 

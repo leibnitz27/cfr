@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public abstract class AbstractTestBase {
 
-    public AbstractTestBase() {
-    }
-
     public void test1() {
         System.out.println("TEST1");
     }

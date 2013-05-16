@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class TypeTest8 {
 
-    public TypeTest8() {
-    }
-
     public void test2(int x) {
         for (boolean b : new boolean[]{true, false}) {
             System.out.println(b);

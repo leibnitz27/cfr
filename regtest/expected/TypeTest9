@@ -24,9 +24,6 @@ import java.util.Locale;
 
 public class TypeTest9 {
 
-    public TypeTest9() {
-    }
-
     public void test2(boolean[] b) {
         if (b.length == 0) {
             System.out.println(b);

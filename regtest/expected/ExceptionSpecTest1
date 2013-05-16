@@ -15,9 +15,6 @@ import java.util.List;
 
 public class ExceptionSpecTest1 {
 
-    public ExceptionSpecTest1() {
-    }
-
     public <X> List<X> func(X x) throws IllegalStateException {
         throw new IllegalStateException();
     }

@@ -11,9 +11,6 @@ import java.util.List;
 
 public class TypeTest10 {
 
-    public TypeTest10() {
-    }
-
     public void test2(int unnamed_local_a_1) {
     }
 

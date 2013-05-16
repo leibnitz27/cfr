@@ -23,9 +23,6 @@ import java.util.Locale;
 
 public class LoopTestTyped2 {
 
-    public LoopTestTyped2() {
-    }
-
     public void test5(List<String> lst) {
         for (String s : lst) {
             System.out.println(s);

@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class ArgTest1 {
 
-    public ArgTest1() {
-    }
-
     private int foo(boolean a, boolean b) {
         v2 = (a) ? (4) : ((b) ? (2) : (1));
         return v2;

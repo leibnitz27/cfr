@@ -11,9 +11,6 @@ import java.lang.String;
 public class SyncTest2 {
     private int x;
 
-    public SyncTest2() {
-    }
-
     public void test1() {
         unnamed_local_this_1 = this;
         synchronized (unnamed_local_this_1) {

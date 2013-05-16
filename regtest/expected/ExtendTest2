@@ -31,9 +31,6 @@ public class ExtendTest2
 extends HashMap
 implements Map {
 
-    public ExtendTest2() {
-    }
-
     void test4(int a) {
         String[] r = new String[a];
     }

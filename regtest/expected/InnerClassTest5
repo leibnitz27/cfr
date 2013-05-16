@@ -24,9 +24,6 @@ import java.util.RandomAccess;
 
 public class InnerClassTest5 {
 
-    public InnerClassTest5() {
-    }
-
     public int getX() {
         return new Inner1(new ArrayList()).getX(4);
     }

@@ -13,9 +13,6 @@ import org.benf.cfr.tests.SuperBase;
 public class SuperTest2
 extends SuperBase {
 
-    public SuperTest2() {
-    }
-
     private void jim() {
     }
 

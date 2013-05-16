@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class ArgClassifyTest1 {
 
-    public ArgClassifyTest1() {
-    }
-
     void test1(String a) {
         System.out.println("a");
     }

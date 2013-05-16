@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class TypeTest6 {
 
-    public TypeTest6() {
-    }
-
     public boolean test1(int x) {
         v3 = x == 6;
         return v3;

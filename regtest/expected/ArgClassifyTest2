@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class ArgClassifyTest2 {
 
-    public ArgClassifyTest2() {
-    }
-
     void test1() {
         String a = "fdfd";
     }

@@ -66,9 +66,6 @@ import sun.reflect.generics.repository.ClassRepository;
 public class AssertTest {
     static final /* synthetic */ boolean $assertionsDisabled;
 
-    public AssertTest() {
-    }
-
     public void test1(String s) {
         if ((!(AssertTest.$assertionsDisabled)) && (s.equals("Fred"))) {
             throw new AssertionError();

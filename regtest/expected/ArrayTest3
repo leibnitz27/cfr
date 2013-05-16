@@ -22,9 +22,6 @@ public class ArrayTest3 {
      int y;
      int z;
 
-    public ArrayTest3() {
-    }
-
     void test1(int a, int b) {
         String[] tmp = new String[]{"a", "b", "c"};
         for (String s : tmp) {

@@ -30,9 +30,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 public class LoopTestTyped5 {
 
-    public LoopTestTyped5() {
-    }
-
     public static List<Boolean> foo(List<Boolean> fooIn) {
         List<Boolean> res = Functional.filter(fooIn, new Predicate<Boolean>() {
 

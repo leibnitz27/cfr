@@ -24,9 +24,6 @@ import java.util.Locale;
 
 public class EnumSwitchTest1 {
 
-    public EnumSwitchTest1() {
-    }
-
     public int test0(enm e) {
         switch (e) {
             default: {

@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class CondJumpTest1d {
 
-    public CondJumpTest1d() {
-    }
-
     public boolean test(int a, int b, int c) {
         v9 = ((c + 2) > a) || ((b - 2) < c);
         return v9;

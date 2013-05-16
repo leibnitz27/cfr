@@ -14,9 +14,6 @@ import java.lang.String;
 
 public class TypeTest16 {
 
-    public TypeTest16() {
-    }
-
     public Double foo(Integer i, Double d) {
         return Double.valueOf((d.doubleValue() + i.intValue()));
     }

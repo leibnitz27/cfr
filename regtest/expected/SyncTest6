@@ -10,9 +10,6 @@ import java.lang.String;
 public class SyncTest6 {
     private int[] x;
 
-    public SyncTest6() {
-    }
-
     public int test1() {
         SyncTest6 unnamed_local_this_1 = this;
         synchronized (unnamed_local_this_1) {

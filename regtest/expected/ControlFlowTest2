@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class ControlFlowTest2 {
 
-    public ControlFlowTest2() {
-    }
-
     public int foo(int i, int j) {
         do {
             if (i++ < 5) {

@@ -31,7 +31,4 @@ import java.util.Set;
 public class TypeTest18 {
     final Map<String, String> f = new HashMap();
 
-    public TypeTest18() {
-    }
-
 }

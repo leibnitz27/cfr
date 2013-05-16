@@ -26,9 +26,6 @@ import java.util.Set;
 
 public class IterTest2 {
 
-    public IterTest2() {
-    }
-
     public boolean test1(Map<String, Integer[]> map) {
         boolean result = false;
         for (Map.Entry<K, V> o : map.entrySet()) {

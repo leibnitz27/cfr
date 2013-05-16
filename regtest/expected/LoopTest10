@@ -26,9 +26,6 @@ import java.util.Locale;
 public class LoopTest10 {
      char[] foo;
 
-    public LoopTest10() {
-    }
-
     public void test(int end) {
         int c = 0;
         while ((++c < end) || (++c < end)) {

@@ -10,9 +10,6 @@ import java.lang.String;
 public class SyncTest5 {
     private int x;
 
-    public SyncTest5() {
-    }
-
     public void test1() {
         ** if (this.x != 4) goto lbl11
 lbl2: // 1 sources:

@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class InnerClassTest6 {
 
-    public InnerClassTest6() {
-    }
-
     public int getX() {
         Inner1 a = new Inner1(3);
         return 2;

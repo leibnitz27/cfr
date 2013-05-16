@@ -16,9 +16,6 @@ public class ArrayTest4a {
      int y;
      int z;
 
-    public ArrayTest4a() {
-    }
-
     void test1(int a, int b) {
         String[] tmp = new String[]{"a", "b", "c"};
     }

@@ -20,9 +20,6 @@ import java.util.Locale;
 
 public class TryTest2 {
 
-    public TryTest2() {
-    }
-
     public void test1(int x) {
         try {
             if (x < 3) {

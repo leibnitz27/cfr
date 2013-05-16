@@ -13,9 +13,6 @@ public class ArrayTest7 {
      int y;
      int z;
 
-    public ArrayTest7() {
-    }
-
     void test3(int a, int b) {
         List[] x = new List[10];
     }

@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class CondJumpTriop {
 
-    public CondJumpTriop() {
-    }
-
     public boolean test(boolean a, boolean b, boolean c) {
         v2 = (a) ? (b) : (c);
         return v2;

@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class ControlFlowTest3 {
 
-    public ControlFlowTest3() {
-    }
-
     public int foo(int i, int j) {
         do {
             System.out.println("b");

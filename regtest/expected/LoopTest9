@@ -26,9 +26,6 @@ import java.util.Locale;
 public class LoopTest9 {
      char[] foo;
 
-    public LoopTest9() {
-    }
-
     public void test(int end) {
         int x = 0;
         while ((ch = this.foo[x++]) != '*') {

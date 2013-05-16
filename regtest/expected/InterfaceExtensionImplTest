@@ -21,9 +21,6 @@ import org.benf.cfr.tests.InterfaceExtensionTest;
 public class InterfaceExtensionImplTest
 implements InterfaceExtensionTest {
 
-    public InterfaceExtensionImplTest() {
-    }
-
     public void test1() {
         System.out.println("Fred");
     }

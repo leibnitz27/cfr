@@ -24,9 +24,6 @@ import org.benf.cfr.tests.AnnotationTestAnnotation2;
 
 public class AnnotationTest1 {
 
-    public AnnotationTest1() {
-    }
-
     @Deprecated
     void foo(int unnamed_local_x_1) {
     }

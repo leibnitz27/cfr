@@ -10,9 +10,6 @@ import java.lang.String;
 public class InnerClassTest9 {
     public int x = 3;
 
-    public InnerClassTest9() {
-    }
-
     public class Inner1 {
         final /* synthetic */ InnerClassTest9 this$0;
 

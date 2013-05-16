@@ -12,9 +12,6 @@ public class ArrayTest5 {
      int y;
      int z;
 
-    public ArrayTest5() {
-    }
-
     void test3(int a, int b) {
         int[][] tmp = new int[][]{new int[]{a}};
     }

@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class IntTest2 {
 
-    public IntTest2() {
-    }
-
     public int plus1(int x) {
         return (1 + x);
     }

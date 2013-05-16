@@ -35,9 +35,6 @@ import java.util.RandomAccess;
 
 public class TypeTest12 {
 
-    public TypeTest12() {
-    }
-
     public void test3(List<Boolean> b) {
         ArrayList bcopy = new ArrayList(b);
         for (Boolean b2 : bcopy) {

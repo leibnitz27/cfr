@@ -12,7 +12,4 @@ public class StaticInitTest1 {
     static int y = 5;
     static int z;
 
-    public StaticInitTest1() {
-    }
-
 }

@@ -26,9 +26,6 @@ public class ArrayTest9 {
      int y;
      int z;
 
-    public ArrayTest9() {
-    }
-
     static /* varargs */ void test1(Integer ... a) {
         System.out.println(a);
     }

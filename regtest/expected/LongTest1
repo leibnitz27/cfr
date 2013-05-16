@@ -14,9 +14,6 @@ import java.math.BigInteger;
 
 public class LongTest1 {
 
-    public LongTest1() {
-    }
-
     public static int agg1(long a, long b) {
         return Long.signum((a - b));
     }

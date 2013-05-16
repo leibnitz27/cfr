@@ -21,9 +21,6 @@ import java.util.Locale;
 
 public class TryTest1 {
 
-    public TryTest1() {
-    }
-
     public void test1() {
         try {
             System.out.print(3);

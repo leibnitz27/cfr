@@ -20,9 +20,6 @@ import java.util.Locale;
 
 public class ControlFlowTest1 {
 
-    public ControlFlowTest1() {
-    }
-
     public int foo(int i, int j) {
         do {
             System.out.println("fred");

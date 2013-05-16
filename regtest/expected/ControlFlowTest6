@@ -20,9 +20,6 @@ import java.util.Locale;
 
 public class ControlFlowTest6 {
 
-    public ControlFlowTest6() {
-    }
-
     public int foo(int i, int j) {
         do lbl-1000: // 3 sources:
         {

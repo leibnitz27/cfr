@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class SwitchTest8 {
 
-    public SwitchTest8() {
-    }
-
     private int foo(boolean a, boolean b) {
         v2 = (a) ? (1) : ((b) ? (2) : (3));
         return v2;

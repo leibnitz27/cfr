@@ -25,9 +25,6 @@ public class DynamicCatchTest1 {
      int y;
      int z;
 
-    public DynamicCatchTest1() {
-    }
-
     private static void rethrow(Throwable t) throws Throwable {
         throw t;
     }

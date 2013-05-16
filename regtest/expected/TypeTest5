@@ -18,9 +18,6 @@ import java.util.Map;
 
 public class TypeTest5<T> {
 
-    public TypeTest5() {
-    }
-
     public <Y extends String> void test1(Map<String, Y> x, T t) {
         StringBuilder sb = new StringBuilder();
         sb.append(x);

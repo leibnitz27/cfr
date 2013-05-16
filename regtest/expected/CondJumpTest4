@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class CondJumpTest4 {
 
-    public CondJumpTest4() {
-    }
-
     public void test(int a) {
         if (a == 1) {
             System.out.println("One");

@@ -17,9 +17,6 @@ import java.lang.StringBuilder;
 
 public class TypeTest2<T> {
 
-    public TypeTest2() {
-    }
-
     public <X, Y> void test1(X x, T t) {
         StringBuilder sb = new StringBuilder();
         sb.append(x);

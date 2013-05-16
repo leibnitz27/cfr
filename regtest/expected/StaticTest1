@@ -9,7 +9,4 @@ import java.lang.String;
 
 public class StaticTest1<C> {
 
-    public StaticTest1() {
-    }
-
 }

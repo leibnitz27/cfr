@@ -20,9 +20,6 @@ import java.util.Map;
 
 public class TypeTest3<T> {
 
-    public TypeTest3() {
-    }
-
     public <X extends Map<String, Integer>, Y> void test1(X x, T t) {
         StringBuilder sb = new StringBuilder();
         sb.append(x);

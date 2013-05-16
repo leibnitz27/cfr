@@ -5,11 +5,15 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.EnumClassRewri
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NonStaticLifter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.StaticLifter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.DeadMethodRemover;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.entities.AccessFlag;
+import org.benf.cfr.reader.entities.AccessFlagMethod;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.CFRState;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -91,5 +95,24 @@ public class CodeAnalyserWholeClass {
         if (staticInit != null) {
             DeadMethodRemover.removeDeadMethod(classFile, staticInit);
         }
+
+        // If there's only one constructor, and it's the default (0 args, public, non final)
+        // with no code, we can remove it.
+        tryRemoveConstructor(classFile);
+    }
+
+    private static void tryRemoveConstructor(ClassFile classFile) {
+        List<Method> constructors = classFile.getConstructors();
+        if (constructors.size() != 1) return;
+        Method constructor = constructors.get(0);
+
+        // 0 args.
+        if (constructor.getMethodPrototype().getArgs().size() != 0) return;
+        // public, non final.
+        if (constructor.testAccessFlag(AccessFlagMethod.ACC_FINAL)) return;
+        if (!constructor.testAccessFlag(AccessFlagMethod.ACC_PUBLIC)) return;
+
+        if (!MiscStatementTools.isDeadCode(constructor.getAnalysis())) return;
+        classFile.removePointlessMethod(constructor);
     }
 }

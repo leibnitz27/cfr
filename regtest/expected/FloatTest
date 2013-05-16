@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class FloatTest {
 
-    public FloatTest() {
-    }
-
     public static float a() {
         float res = 0.0;
         for (int x = 1; x <= 1000000; ++x) {

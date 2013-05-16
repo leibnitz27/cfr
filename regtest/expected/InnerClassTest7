@@ -13,9 +13,6 @@ import java.lang.String;
 
 public class InnerClassTest7 {
 
-    public InnerClassTest7() {
-    }
-
     public static enum bar {
     {
         JENNIFER,

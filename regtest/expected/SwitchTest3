@@ -24,9 +24,6 @@ import java.util.Locale;
 
 public class SwitchTest3 {
 
-    public SwitchTest3() {
-    }
-
     public int test0(enm e) {
         block6 : for (int x = 0; x < 10; ++x) {
             switch (e) {

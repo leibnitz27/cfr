@@ -27,9 +27,6 @@ public class InnerClassTest0_5 {
     private final Integer x = Integer.valueOf(3);
     private int y;
 
-    public InnerClassTest0_5() {
-    }
-
     public void foo() {
         new Inner1();
     }

@@ -36,9 +36,6 @@ import java.util.RandomAccess;
 public class LoopTestTyped6 {
     private final List<Boolean> lst = new ArrayList();
 
-    public LoopTestTyped6() {
-    }
-
     public List<Boolean> foo() {
         for (Boolean b : this.lst) {
             System.out.println(b);

@@ -13,9 +13,6 @@ import org.benf.cfr.reader.util.output.LoggerFactory;
 public class ClassTest1 {
     private static final Logger logger = LoggerFactory.create(ClassTest1.class);
 
-    public ClassTest1() {
-    }
-
     public void test1(String unnamed_local_a_1, String unnamed_local_b_2, int unnamed_local_c_3) {
     }
 

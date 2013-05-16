@@ -13,9 +13,6 @@ import java.lang.String;
 
 public class TypeTest17 {
 
-    public TypeTest17() {
-    }
-
     public Integer foo() {
         return Integer.valueOf(1);
     }

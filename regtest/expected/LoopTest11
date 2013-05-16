@@ -14,9 +14,6 @@ import java.util.Set;
 
 public class LoopTest11 {
 
-    public LoopTest11() {
-    }
-
     public int testNested(List<Object> list, Set<Object> set) {
         Iterator<Object> it1 = list.iterator();
         Iterator<Object> it2 = set.iterator();

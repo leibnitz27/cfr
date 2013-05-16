@@ -25,9 +25,6 @@ import java.util.Set;
 
 public class InnerClassTest4 {
 
-    public InnerClassTest4() {
-    }
-
     public int getX() {
         return new Inner1(new ArrayList()).getX(4);
     }

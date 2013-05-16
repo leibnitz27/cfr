@@ -23,9 +23,6 @@ import java.util.Locale;
 
 public class LoopTestTyped4 {
 
-    public LoopTestTyped4() {
-    }
-
     public void test5(List<String> lst) {
         List<String> lst2 = new Dup(null).dupIt(lst);
         for (String s : lst2) {

@@ -12,9 +12,6 @@ public class AssignTest3 {
      int y;
      int z;
 
-    public AssignTest3() {
-    }
-
     void test3(int a) {
         this.x = ++a;
     }

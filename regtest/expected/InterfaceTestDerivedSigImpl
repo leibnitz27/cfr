@@ -14,9 +14,6 @@ import org.benf.cfr.tests.InterfaceTestDerivedSig;
 public class InterfaceTestDerivedSigImpl
 implements InterfaceTestDerivedSig<Integer> {
 
-    public InterfaceTestDerivedSigImpl() {
-    }
-
     public void test3(Integer unnamed_local_integer_1) {
     }
 

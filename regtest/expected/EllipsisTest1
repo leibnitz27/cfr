@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class EllipsisTest1 {
 
-    public EllipsisTest1() {
-    }
-
     void test1(String a, String b, String c) {
         this.test2(new String[]{a, b, c});
         this.test2(new String[]{a, b, c});

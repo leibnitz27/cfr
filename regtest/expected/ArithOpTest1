@@ -19,9 +19,6 @@ import java.util.Locale;
 
 public class ArithOpTest1 {
 
-    public ArithOpTest1() {
-    }
-
     public void test1(int a, int b, int c) {
         System.out.println((a + b * c));
         System.out.println((a * (b + c)));

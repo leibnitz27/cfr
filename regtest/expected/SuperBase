@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class SuperBase {
 
-    public SuperBase() {
-    }
-
     protected void fred() {
     }
 

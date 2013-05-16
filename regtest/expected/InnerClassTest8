@@ -10,9 +10,6 @@ import java.lang.String;
 public class InnerClassTest8 {
     private int x = 3;
 
-    public InnerClassTest8() {
-    }
-
     static /* synthetic */ int access$012(InnerClassTest8 x0, int x1) {
         v24 = x0;
         return v24.x+=x1;

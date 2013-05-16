@@ -22,9 +22,6 @@ import java.util.Set;
 
 public class IterTest5 {
 
-    public IterTest5() {
-    }
-
     public boolean test1(List<String> list, Set<Integer> set) {
         boolean result = false;
         int x = 3;

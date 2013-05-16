@@ -9,9 +9,6 @@ import java.lang.String;
 
 public class InnerClassTest0 {
 
-    public InnerClassTest0() {
-    }
-
     public void foo() {
         new Inner1();
     }

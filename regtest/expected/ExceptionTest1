@@ -38,9 +38,6 @@ import java.util.Locale;
 
 public class ExceptionTest1 {
 
-    public ExceptionTest1() {
-    }
-
     void test1(String path) {
         try {
             File file = new File(path);

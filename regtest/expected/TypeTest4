@@ -18,9 +18,6 @@ import java.util.Map;
 
 public class TypeTest4<T> {
 
-    public TypeTest4() {
-    }
-
     public void test1(Map<String, ?> x, T t) {
         StringBuilder sb = new StringBuilder();
         sb.append(x);

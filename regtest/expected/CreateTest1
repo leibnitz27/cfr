@@ -24,9 +24,6 @@ import java.util.RandomAccess;
 
 public class CreateTest1 {
 
-    public CreateTest1() {
-    }
-
     public void test1() {
         ArrayList l = new ArrayList();
     }
