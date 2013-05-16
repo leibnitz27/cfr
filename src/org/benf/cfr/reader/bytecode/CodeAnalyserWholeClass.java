@@ -2,20 +2,14 @@ package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.EnumClassRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NonStaticLifter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.StaticLifter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.DeadMethodRemover;
-import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.DeadMethodRemover;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.CFRState;
-
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -43,6 +37,8 @@ public class CodeAnalyserWholeClass {
         }
 
         liftStaticInitialisers(classFile, state);
+
+        liftNonStaticInitialisers(classFile, state);
 
         removeDeadMethods(classFile, state);
     }
@@ -76,6 +72,10 @@ public class CodeAnalyserWholeClass {
         Method staticInit = getStaticConstructor(classFile);
         if (staticInit == null) return;
         new StaticLifter(classFile).liftStatics(staticInit);
+    }
+
+    private static void liftNonStaticInitialisers(ClassFile classFile, CFRState state) {
+        new NonStaticLifter(classFile).liftNonStatics();
     }
 
     /*

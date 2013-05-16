@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -43,6 +44,10 @@ public class FieldVariable extends AbstractLValue {
     @Override
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");
+    }
+
+    public JavaTypeInstance getOwningClassType() {
+        return field.getClassEntry().getTypeInstance();
     }
 
     public String getFieldName() {

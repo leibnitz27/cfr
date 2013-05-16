@@ -16,7 +16,4 @@ public class StaticInitTest1 {
         this.x = 3;
     }
 
-    static {
-    }
-
 }

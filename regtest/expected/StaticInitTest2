@@ -35,7 +35,4 @@ public class StaticInitTest2 {
     public StaticInitTest2() {
     }
 
-    static {
-    }
-
 }

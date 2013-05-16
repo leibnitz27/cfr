@@ -55,9 +55,6 @@ public class EnumSwitchTest1 {
         private enm() {
         }
 
-        static {
-        }
-
     }
 
 }

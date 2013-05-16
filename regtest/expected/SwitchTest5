@@ -60,9 +60,6 @@ public class SwitchTest5 {
         private enm() {
         }
 
-        static {
-        }
-
     }
 
 }

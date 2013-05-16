@@ -1,18 +1,14 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.CollectMatch;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchIterator;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MatchResultCollector;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.Matcher;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.CollectMatch;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.util.ListFactory;
 

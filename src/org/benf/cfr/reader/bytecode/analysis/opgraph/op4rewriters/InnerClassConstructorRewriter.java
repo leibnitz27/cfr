@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;

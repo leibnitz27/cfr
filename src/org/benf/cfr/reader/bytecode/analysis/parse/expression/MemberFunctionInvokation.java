@@ -90,6 +90,10 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         return function;
     }
 
+    public MethodPrototype getMethodPrototype() {
+        return methodPrototype;
+    }
+
     public String getName() {
         return name;
     }

@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractNewArray;
@@ -21,7 +21,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
-import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperEnum;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.CFRState;

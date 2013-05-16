@@ -122,6 +122,10 @@ public class WildcardMatch {
         return res;
     }
 
+    public MemberFunctionInvokationWildcard getMemberFunction(String name) {
+        return memberFunctionMap.get(name);
+    }
+
     public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, Expression object) {
         return getMemberFunction(name, methodname, object, ListFactory.<Expression>newList());
     }
@@ -379,11 +383,11 @@ public class WildcardMatch {
 
     }
 
-    public class MemberFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
+    public class MemberFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<MemberFunctionInvokation> {
         private final String name;
         private final Expression object;
         private final List<Expression> args;
-        private transient Expression matchedValue;
+        private transient MemberFunctionInvokation matchedValue;
 
         public MemberFunctionInvokationWildcard(String name, Expression object, List<Expression> args) {
             this.name = name;
@@ -402,21 +406,27 @@ public class WildcardMatch {
              * TODO : since it might fail, we need to rewind any captures!
              */
             MemberFunctionInvokation other = (MemberFunctionInvokation) o;
-            if (!name.equals(other.getName())) return false;
+            if (name == null) {
+                if (other.getName() != null) return false;
+            } else {
+                if (!name.equals(other.getName())) return false;
+            }
             if (!object.equals(other.getObject())) return false;
             List<Expression> otherArgs = other.getArgs();
-            if (args.size() != otherArgs.size()) return false;
-            for (int x = 0; x < args.size(); ++x) {
-                Expression myArg = args.get(x);
-                Expression hisArg = otherArgs.get(x);
-                if (!myArg.equals(hisArg)) return false;
+            if (args != null) {
+                if (args.size() != otherArgs.size()) return false;
+                for (int x = 0; x < args.size(); ++x) {
+                    Expression myArg = args.get(x);
+                    Expression hisArg = otherArgs.get(x);
+                    if (!myArg.equals(hisArg)) return false;
+                }
             }
-            matchedValue = (Expression) o;
+            matchedValue = (MemberFunctionInvokation) o;
             return true;
         }
 
         @Override
-        public Expression getMatch() {
+        public MemberFunctionInvokation getMatch() {
             return matchedValue;
         }
 
@@ -659,7 +669,7 @@ public class WildcardMatch {
             }
 
             ConstructorInvokationSimple other = (ConstructorInvokationSimple) o;
-            if (!clazz.equals(other.getClazz())) return false;
+            if (!clazz.equals(other.getTypeInstance())) return false;
             if (args != null && args.equals(other.getArgs())) return false;
 
             matchedValue = other;

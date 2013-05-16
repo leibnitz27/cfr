@@ -24,17 +24,14 @@ import java.util.List;
  * Time: 17:26
  */
 public class ConstructorInvokationSimple extends AbstractConstructorInvokation {
-    private final ConstantPoolEntryMethodRef function;
-    private final JavaTypeInstance clazz;
 
     public ConstructorInvokationSimple(ConstantPoolEntryMethodRef function, ConstantPoolEntryClass type, List<Expression> args) {
         super(type, args);
-        this.function = function;
-        this.clazz = type.getTypeInstance();
     }
 
     @Override
     public Dumper dump(Dumper d) {
+        JavaTypeInstance clazz = super.getTypeInstance();
         InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
         List<Expression> args = getArgs();
 
@@ -51,7 +48,12 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation {
         return d;
     }
 
-    public JavaTypeInstance getClazz() {
-        return clazz;
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null) return false;
+        if (!(o instanceof ConstructorInvokationSimple)) return false;
+
+        return super.equals(o);
     }
 }

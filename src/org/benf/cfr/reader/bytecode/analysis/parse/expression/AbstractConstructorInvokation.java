@@ -25,12 +25,12 @@ import java.util.List;
  * Time: 17:26
  */
 public abstract class AbstractConstructorInvokation extends AbstractExpression {
-    private final ConstantPoolEntryClass type;
+    private final JavaTypeInstance type;
     private final List<Expression> args;
 
     public AbstractConstructorInvokation(ConstantPoolEntryClass type, List<Expression> args) {
         super(new InferredJavaType(type.getTypeInstance(), InferredJavaType.Source.EXPRESSION));
-        this.type = type;
+        this.type = type.getTypeInstance();
         this.args = args;
     }
 
@@ -55,7 +55,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression {
     }
 
     public JavaTypeInstance getTypeInstance() {
-        return type.getTypeInstance();
+        return type;
     }
 
     @Override
@@ -65,4 +65,16 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null) return false;
+
+        if (!(o instanceof AbstractConstructorInvokation)) return false;
+        AbstractConstructorInvokation other = (AbstractConstructorInvokation) o;
+
+        if (!type.equals(other.type)) return false;
+        if (!args.equals(other.args)) return false;
+        return true;
+    }
 }

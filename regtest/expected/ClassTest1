@@ -19,7 +19,4 @@ public class ClassTest1 {
     public void test1(String unnamed_local_a_1, String unnamed_local_b_2, int unnamed_local_c_3) {
     }
 
-    static {
-    }
-
 }

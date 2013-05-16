@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import com.sun.tools.hat.internal.util.Misc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
@@ -48,7 +50,6 @@ public class StaticLifter {
         }));
         if (classFileFields.isEmpty()) return;
 
-        Op04StructuredStatement staticCode = staticInit.getAnalysis();
         /* We use a LUDICROUSLY simple plan - while the first line is a valid static initialiser, we move it into
          * static init code.
          * (Only exception, we skip over comments).
@@ -58,11 +59,8 @@ public class StaticLifter {
          * This means we don't need to worry about illegal 'natural' initialisation code, as we can't have any
          * temporaries, and we can't be out of order.
          */
-        StructuredStatement topCode = staticCode.getStatement();
-        if (!(topCode instanceof Block)) return;
-
-        Block block = (Block) topCode;
-        List<Op04StructuredStatement> statements = block.getBlockStatements();
+        List<Op04StructuredStatement> statements = MiscStatementTools.getBlockStatements(staticInit.getAnalysis());
+        if (statements == null) return;
 
         /*
          * Explicit iterator so we can remove.

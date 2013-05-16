@@ -63,9 +63,6 @@ public class SwitchTest3 {
         private enm() {
         }
 
-        static {
-        }
-
     }
 
 }
