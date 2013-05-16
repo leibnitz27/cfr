@@ -24,11 +24,10 @@ import java.util.Locale;
 import java.util.Random;
 
 public class InnerClassTest0_5 {
-    private final Integer x;
+    private final Integer x = Integer.valueOf(3);
     private int y;
 
     public InnerClassTest0_5() {
-        this.x = Integer.valueOf(3);
     }
 
     public void foo() {

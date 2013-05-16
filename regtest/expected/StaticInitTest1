@@ -8,12 +8,11 @@ import java.lang.Object;
 import java.lang.String;
 
 public class StaticInitTest1 {
-     int x;
+     int x = 3;
     static int y = 5;
     static int z;
 
     public StaticInitTest1() {
-        this.x = 3;
     }
 
 }

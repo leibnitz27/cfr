@@ -22,10 +22,9 @@ import java.nio.charset.Charset;
 import java.util.Locale;
 
 public class InnerClassTest0_4 {
-    private Integer x;
+    private Integer x = Integer.valueOf(3);
 
     public InnerClassTest0_4() {
-        this.x = Integer.valueOf(3);
     }
 
     public void foo() {

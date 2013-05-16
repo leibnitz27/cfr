@@ -34,10 +34,9 @@ import java.util.Locale;
 import java.util.RandomAccess;
 
 public class LoopTestTyped6 {
-    private final List<Boolean> lst;
+    private final List<Boolean> lst = new ArrayList();
 
     public LoopTestTyped6() {
-        this.lst = new ArrayList();
     }
 
     public List<Boolean> foo() {

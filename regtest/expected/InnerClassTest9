@@ -8,10 +8,9 @@ import java.lang.Object;
 import java.lang.String;
 
 public class InnerClassTest9 {
-    public int x;
+    public int x = 3;
 
     public InnerClassTest9() {
-        this.x = 3;
     }
 
     public class Inner1 {

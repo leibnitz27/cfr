@@ -29,10 +29,9 @@ import java.util.Map$Entry;
 import java.util.Set;
 
 public class TypeTest18 {
-    final Map<String, String> f;
+    final Map<String, String> f = new HashMap();
 
     public TypeTest18() {
-        this.f = new HashMap();
     }
 
 }
