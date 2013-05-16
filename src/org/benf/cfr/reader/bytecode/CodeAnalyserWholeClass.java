@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NonStaticLifte
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.StaticLifter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.DeadMethodRemover;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.AccessFlagMethod;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -107,7 +108,8 @@ public class CodeAnalyserWholeClass {
         Method constructor = constructors.get(0);
 
         // 0 args.
-        if (constructor.getMethodPrototype().getArgs().size() != 0) return;
+        MethodPrototype methodPrototype = constructor.getMethodPrototype();
+        if ((methodPrototype.getArgs().size() - methodPrototype.getNumHiddenArguments()) > 0) return;
         // public, non final.
         if (constructor.testAccessFlag(AccessFlagMethod.ACC_FINAL)) return;
         if (!constructor.testAccessFlag(AccessFlagMethod.ACC_PUBLIC)) return;

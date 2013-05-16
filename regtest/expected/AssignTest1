@@ -8,9 +8,9 @@ import java.lang.Object;
 import java.lang.String;
 
 public class AssignTest1 {
-     int x;
-     int y;
-     int z;
+    int x;
+    int y;
+    int z;
 
     void test1(int a, int b) {
         int c = this.x;

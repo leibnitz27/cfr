@@ -9,9 +9,9 @@ import java.lang.String;
 import java.util.List;
 
 public class ArrayTest7 {
-     int x;
-     int y;
-     int z;
+    int x;
+    int y;
+    int z;
 
     void test3(int a, int b) {
         List[] x = new List[10];

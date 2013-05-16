@@ -22,9 +22,9 @@ import java.nio.charset.Charset;
 import java.util.Locale;
 
 public class ArrayTest9 {
-     int x;
-     int y;
-     int z;
+    int x;
+    int y;
+    int z;
 
     static /* varargs */ void test1(Integer ... a) {
         System.out.println(a);

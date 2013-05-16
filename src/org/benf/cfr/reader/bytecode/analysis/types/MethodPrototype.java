@@ -107,6 +107,10 @@ public class MethodPrototype {
         parameterLValues = null;
     }
 
+    public int getNumHiddenArguments() {
+        return explicitThisRemoval ? 1 : 0;
+    }
+
     public List<LocalVariable> getParameters(Method.MethodConstructor constructorFlag) {
         if (parameterLValues != null) return parameterLValues;
 

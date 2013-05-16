@@ -16,9 +16,6 @@ public class InnerClassTest0 {
     public class Inner1 {
         final /* synthetic */ InnerClassTest0 this$0;
 
-        public Inner1() {
-        }
-
     }
 
 }

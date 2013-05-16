@@ -18,9 +18,9 @@ import java.nio.charset.Charset;
 import java.util.Locale;
 
 public class ArrayTest3 {
-     int x;
-     int y;
-     int z;
+    int x;
+    int y;
+    int z;
 
     void test1(int a, int b) {
         String[] tmp = new String[]{"a", "b", "c"};

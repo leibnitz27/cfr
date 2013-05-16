@@ -8,7 +8,7 @@ import java.lang.Object;
 import java.lang.String;
 
 public class StaticInitTest1 {
-     int x = 3;
+    int x = 3;
     static int y = 5;
     static int z;
 

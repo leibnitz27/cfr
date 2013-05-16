@@ -21,9 +21,9 @@ import java.nio.charset.Charset;
 import java.util.Locale;
 
 public class DynamicCatchTest1 {
-     int x;
-     int y;
-     int z;
+    int x;
+    int y;
+    int z;
 
     private static void rethrow(Throwable t) throws Throwable {
         throw t;

@@ -18,7 +18,7 @@ import java.nio.charset.Charset;
 import java.util.Locale;
 
 public class LoopTest6 {
-     int y;
+    int y;
 
     public void test7(int end) {
         for (int x = 0; x < end; ++x) {

@@ -24,7 +24,7 @@ import java.nio.charset.Charset;
 import java.util.Locale;
 
 public class LoopTest15 {
-     char[] foo;
+    char[] foo;
 
     public void test(int end) {
         int x = 0;

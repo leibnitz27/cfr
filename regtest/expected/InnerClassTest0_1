@@ -18,7 +18,7 @@ import java.nio.charset.Charset;
 import java.util.Locale;
 
 public class InnerClassTest0_1 {
-     int x = 3;
+    int x = 3;
 
     public void foo() {
         new Inner1();

@@ -8,9 +8,9 @@ import java.lang.Object;
 import java.lang.String;
 
 public class ArrayTest8 {
-     int x;
-     int y;
-     int z;
+    int x;
+    int y;
+    int z;
 
     void test1(int a, int b) {
         String[][] tmp = new String[][]{new String[]{"a", "B", "c", "8"}, new String[]{"b"}, new String[]{"a", "b", "c", "d", "e", "f"}};

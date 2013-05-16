@@ -54,7 +54,7 @@ public class InnerClassTest3 {
         }
 
         public class Inner2 {
-             int z;
+            int z;
             final /* synthetic */ Inner1 this$1;
 
             private Inner2(int z) {
