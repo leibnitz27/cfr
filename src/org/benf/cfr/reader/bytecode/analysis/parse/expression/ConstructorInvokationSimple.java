@@ -25,8 +25,8 @@ import java.util.List;
  */
 public class ConstructorInvokationSimple extends AbstractConstructorInvokation {
 
-    public ConstructorInvokationSimple(ConstantPoolEntryMethodRef function, ConstantPoolEntryClass type, List<Expression> args) {
-        super(type, args);
+    public ConstructorInvokationSimple(InferredJavaType inferredJavaType, List<Expression> args) {
+        super(inferredJavaType, args);
     }
 
     @Override

@@ -28,9 +28,9 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression {
     private final JavaTypeInstance type;
     private final List<Expression> args;
 
-    public AbstractConstructorInvokation(ConstantPoolEntryClass type, List<Expression> args) {
-        super(new InferredJavaType(type.getTypeInstance(), InferredJavaType.Source.EXPRESSION));
-        this.type = type.getTypeInstance();
+    public AbstractConstructorInvokation(InferredJavaType inferredJavaType, List<Expression> args) {
+        super(inferredJavaType);
+        this.type = inferredJavaType.getJavaTypeInstance();
         this.args = args;
     }
 

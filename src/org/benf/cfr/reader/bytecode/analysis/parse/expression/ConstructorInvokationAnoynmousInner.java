@@ -27,20 +27,18 @@ import java.util.List;
  * Time: 17:26
  */
 public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvokation {
-    private final JavaTypeInstance clazz;
     private final ConstantPool cp;
 
     public ConstructorInvokationAnoynmousInner(ConstantPool cp,
-                                               ConstantPoolEntryClass type, List<Expression> args) {
-        super(type, args);
+                                               InferredJavaType inferredJavaType, List<Expression> args) {
+        super(inferredJavaType, args);
         this.cp = cp;
-        this.clazz = type.getTypeInstance();
     }
 
     @Override
     public Dumper dump(Dumper d) {
         // We need the inner classes on the anonymous class (!)
-        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(clazz, true);
+        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(getTypeInstance(), true);
 
         d.print("new ");
         ClassFileDumper cfd = new ClassFileDumperAnonymousInner();

@@ -60,12 +60,11 @@ public class CreationCollector {
             if (newObject.getType().getTypeInstance().getInnerClassHereInfo().isAnoynmousInnerClass()) {
                 constructorInvokation = new ConstructorInvokationAnoynmousInner(
                         memberFunctionInvokation.getCp(),
-                        newObject.getType(),
+                        newObject.getInferredJavaType(),
                         memberFunctionInvokation.getArgs());
             } else {
                 constructorInvokation = new ConstructorInvokationSimple(
-                        memberFunctionInvokation.getFunction(),
-                        newObject.getType(),
+                        newObject.getInferredJavaType(),
                         memberFunctionInvokation.getArgs());
             }
 
