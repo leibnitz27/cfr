@@ -21,18 +21,16 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class NewObject extends AbstractExpression {
     private final ConstantPoolEntryClass type;
-    private final JavaTypeInstance typeInstance;
 
     public NewObject(ConstantPoolEntry type) {
         // TODO : we have more information than this...
         super(new InferredJavaType(((ConstantPoolEntryClass) type).getTypeInstance(), InferredJavaType.Source.EXPRESSION));
         this.type = (ConstantPoolEntryClass) type;
-        this.typeInstance = ((ConstantPoolEntryClass) type).getTypeInstance();
     }
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print("new " + typeInstance);
+        return d.print("new " + getTypeInstance());
     }
 
     @Override
@@ -50,7 +48,7 @@ public class NewObject extends AbstractExpression {
     }
 
     public JavaTypeInstance getTypeInstance() {
-        return typeInstance;
+        return getInferredJavaType().getJavaTypeInstance();
     }
 
     @Override
