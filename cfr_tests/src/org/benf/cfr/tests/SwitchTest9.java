@@ -1,6 +1,6 @@
 package org.benf.cfr.tests;
 
-import org.benf.cfr.reader.util.Troolean;
+import org.benf.cfr.tests.support.Troolean;
 
 /**
  * Created with IntelliJ IDEA.

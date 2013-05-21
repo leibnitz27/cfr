@@ -1,6 +1,5 @@
 package org.benf.cfr.tests;
 
-import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.HashMap;
 import java.util.Map;
