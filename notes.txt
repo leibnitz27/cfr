@@ -1,8 +1,5 @@
 TODO:
 
 Inner / inline objects
-variable declarations
 reverse generic type determinations (for x : )
-static blocks vs static initialisers
-lift static initialisers into declarations.
-inner class imports are wrong.
+inner class imports are wrong - imports in general - should only show imports from top.
