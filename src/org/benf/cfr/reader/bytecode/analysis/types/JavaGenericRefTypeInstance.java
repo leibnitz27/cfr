@@ -13,16 +13,35 @@ import java.util.List;
  * Time: 08:01
  */
 public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
-    private final JavaTypeInstance typeInstance;
+    private final JavaRefTypeInstance typeInstance;
     private final List<JavaTypeInstance> genericTypes;
+    private final boolean hasUnbound;
 
     public JavaGenericRefTypeInstance(JavaTypeInstance typeInstance, List<JavaTypeInstance> genericTypes) {
-        this.typeInstance = typeInstance;
+        if (!(typeInstance instanceof JavaRefTypeInstance)) {
+            throw new IllegalStateException("Generic sitting on top of non reftype");
+        }
+        this.typeInstance = (JavaRefTypeInstance) typeInstance;
         this.genericTypes = genericTypes;
+        boolean unbound = false;
+        for (JavaTypeInstance type : genericTypes) {
+            if (type instanceof JavaGenericBaseInstance) {
+                if (((JavaGenericBaseInstance) type).hasUnbound()) {
+                    unbound = true;
+                    break;
+                }
+            }
+        }
+        hasUnbound = unbound;
     }
 
     @Override
-    public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
+    public boolean hasUnbound() {
+        return hasUnbound;
+    }
+
+    @Override
+    public JavaGenericRefTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
         List<JavaTypeInstance> res = ListFactory.newList();
         for (JavaTypeInstance genericType : genericTypes) {
             res.add(genericTypeBinder.getBindingFor(genericType));
@@ -77,7 +96,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public JavaTypeInstance getDeGenerifiedType() {
+    public JavaRefTypeInstance getDeGenerifiedType() {
         return typeInstance;
     }
 
@@ -88,7 +107,8 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
 
     @Override
     public int hashCode() {
-        return 31 + typeInstance.hashCode();
+        int hash = 31 + typeInstance.hashCode();
+        return hash;
     }
 
     @Override
@@ -105,16 +125,17 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
         return typeInstance;
     }
 
-    public String getClassName() {
-        return typeInstance.getRawName();
-    }
-
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof JavaGenericRefTypeInstance)) return false;
         JavaGenericRefTypeInstance other = (JavaGenericRefTypeInstance) o;
-        return typeInstance.equals(other.typeInstance);
+        if (!typeInstance.equals(other.typeInstance)) return false;
+        if (genericTypes.size() != other.genericTypes.size()) return false;
+        for (int x = 0, len = genericTypes.size(); x < len; ++x) {
+            if (!genericTypes.get(x).equals(other.genericTypes.get(x))) return false;
+        }
+        return true;
     }
 
     @Override

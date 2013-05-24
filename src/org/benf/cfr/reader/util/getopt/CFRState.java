@@ -34,7 +34,7 @@ import java.util.zip.ZipFile;
  */
 public class CFRState {
 
-    private final ClassCache classCache = new ClassCache();
+    private final ClassCache classCache = new ClassCache(this);
 
     private final String fileName;    // Ugly because we confuse parameters and state.
     private final String methodName;  // Ugly because we confuse parameters and state.

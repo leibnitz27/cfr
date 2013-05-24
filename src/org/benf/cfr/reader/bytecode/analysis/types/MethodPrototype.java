@@ -259,7 +259,8 @@ public class MethodPrototype {
         // TODO : This needs a bit of work ... (!)
         // TODO : Will return false positives at the moment.
 
-        GenericTypeBinder genericTypeBinder = new GenericTypeBinder();
+        // TODO : Actually, really dislike tryFindBinding, replace.
+        GenericTypeBinder genericTypeBinder = GenericTypeBinder.createEmpty();
         for (int x = 0; x < args.size(); ++x) {
             JavaTypeInstance lhs = args.get(x);
             JavaTypeInstance rhs = otherArgs.get(x);
@@ -291,7 +292,7 @@ public class MethodPrototype {
          * For each of the formal type parameters of the class signature, what has it been bound to in the
          * instance?
          */
-        GenericTypeBinder genericTypeBinder = new GenericTypeBinder().bind(formalTypeParameters, classSignature, args, boundInstance, invokingTypes);
+        GenericTypeBinder genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classSignature, args, boundInstance, invokingTypes);
 
         JavaGenericBaseInstance genericResult = (JavaGenericBaseInstance) result;
         return genericResult.getBoundInstance(genericTypeBinder);

@@ -20,6 +20,11 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
         return genericTypeBinder.getBindingFor(this);
     }
 
+    @Override
+    public boolean hasUnbound() {
+        return true;
+    }
+
     /*
      * TODO : Strictly speaking we should only be adding the binding here if className is in formal parameters.
      */

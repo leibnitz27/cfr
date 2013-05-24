@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
 import java.util.Map;
@@ -23,14 +24,20 @@ public class ClassCache {
     private final Set<JavaRefTypeInstance> usedClassSet = SetFactory.newSet();
     private final Set<String> importableClasses = SetFactory.newSet();
 
+    private final CFRState cfrState;
     /*
      * Set just after constructing first type.
      */
     private transient JavaRefTypeInstance analysisType;
 
-    public ClassCache() {
+    public ClassCache(CFRState cfrState) {
+        this.cfrState = cfrState;
         refClassTypeCache.put(TypeConstants.STRING.getRawName(), TypeConstants.STRING);
         refClassTypeCache.put(TypeConstants.ENUM.getRawName(), TypeConstants.ENUM);
+    }
+
+    public CFRState getCfrState() {
+        return cfrState;
     }
 
     private boolean importClass(JavaRefTypeInstance clazz) {

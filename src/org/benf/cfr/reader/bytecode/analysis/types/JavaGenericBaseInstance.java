@@ -12,4 +12,6 @@ public interface JavaGenericBaseInstance extends JavaTypeInstance {
     public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder);
 
     public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target);
+
+    public boolean hasUnbound();
 }

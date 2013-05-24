@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.List;
@@ -12,14 +13,21 @@ import java.util.Map;
  * Time: 10:09
  */
 public class GenericTypeBinder {
-    private final Map<String, JavaTypeInstance> nameToBoundType = MapFactory.newMap();
+    private final Map<String, JavaTypeInstance> nameToBoundType;
 
-    public GenericTypeBinder() {
+    private GenericTypeBinder(Map<String, JavaTypeInstance> nameToBoundType) {
+        this.nameToBoundType = nameToBoundType;
     }
 
-    public GenericTypeBinder bind(List<FormalTypeParameter> methodFormalTypeParameters,
-                                  ClassSignature classSignature, List<JavaTypeInstance> args,
-                                  JavaGenericRefTypeInstance boundInstance, List<JavaTypeInstance> boundArgs) {
+    // TODO : This seems wrong.
+    public static GenericTypeBinder createEmpty() {
+        return new GenericTypeBinder(MapFactory.<String, JavaTypeInstance>newMap());
+    }
+
+    public static GenericTypeBinder bind(List<FormalTypeParameter> methodFormalTypeParameters,
+                                         ClassSignature classSignature, List<JavaTypeInstance> args,
+                                         JavaGenericRefTypeInstance boundInstance, List<JavaTypeInstance> boundArgs) {
+        Map<String, JavaTypeInstance> nameToBoundType = MapFactory.newMap();
 
         if (boundInstance != null) {    // null for static.
             List<FormalTypeParameter> unboundParameters = classSignature.getFormalTypeParameters();
@@ -38,6 +46,9 @@ public class GenericTypeBinder {
 
         List<FormalTypeParameter> classFormalTypeParamters = classSignature.getFormalTypeParameters();
         // TODO: Pretty sure this is a tautology given the calling pattern.
+
+        GenericTypeBinder res = new GenericTypeBinder(nameToBoundType);
+
         if ((methodFormalTypeParameters != null && !methodFormalTypeParameters.isEmpty()) ||
                 (classFormalTypeParamters != null && !classFormalTypeParamters.isEmpty())) {
             if (args.size() != boundArgs.size())
@@ -49,11 +60,45 @@ public class GenericTypeBinder {
                 JavaTypeInstance bound = boundArgs.get(x);
                 if (unbound instanceof JavaGenericBaseInstance) {
                     JavaGenericBaseInstance unboundGeneric = (JavaGenericBaseInstance) unbound;
-                    unboundGeneric.tryFindBinding(bound, this);
+                    unboundGeneric.tryFindBinding(bound, res);
                 }
             }
         }
-        return this;
+
+        return res;
+    }
+
+    public static GenericTypeBinder buildIdentityBindings(JavaGenericRefTypeInstance unbound) {
+        List<JavaTypeInstance> typeParameters = unbound.getGenericTypes();
+
+        Map<String, JavaTypeInstance> unboundNames = MapFactory.newMap();
+        for (int x = 0, len = typeParameters.size(); x < len; ++x) {
+            JavaTypeInstance unboundParam = typeParameters.get(x);
+            if (!(unboundParam instanceof JavaGenericPlaceholderTypeInstance)) {
+                throw new ConfusedCFRException("Unbound parameter expected to be placeholder!");
+            }
+            unboundNames.put(unboundParam.getRawName(), unboundParam);
+        }
+        return new GenericTypeBinder(unboundNames);
+    }
+
+    public static GenericTypeBinder extractBindings(JavaGenericRefTypeInstance unbound, JavaGenericRefTypeInstance bound) {
+        List<JavaTypeInstance> typeParameters = unbound.getGenericTypes();
+        List<JavaTypeInstance> boundTypeParameters = bound.getGenericTypes();
+        if (typeParameters.size() != boundTypeParameters.size())
+            throw new IllegalStateException("Generic info mismatch");
+
+        Map<String, JavaTypeInstance> boundNames = MapFactory.newMap();
+        for (int x = 0, len = typeParameters.size(); x < len; ++x) {
+            JavaTypeInstance unboundParam = typeParameters.get(x);
+            JavaTypeInstance boundParam = boundTypeParameters.get(x);
+            if (!(unboundParam instanceof JavaGenericPlaceholderTypeInstance)) {
+                continue;
+            }
+            JavaGenericPlaceholderTypeInstance placeholder = (JavaGenericPlaceholderTypeInstance) unboundParam;
+            boundNames.put(placeholder.getRawName(), boundParam);
+        }
+        return new GenericTypeBinder(boundNames);
     }
 
     public JavaTypeInstance getBindingFor(JavaTypeInstance maybeUnbound) {

@@ -53,6 +53,7 @@ public class ConstantPoolEntryFieldRef extends AbstractConstantPoolEntry {
 
     public JavaTypeInstance getJavaTypeInstance() {
         if (cachedDecodedType == null) {
+            // TODO : ACTUAL FIELD HAS CORRECT DATA.
             ConstantPool cp = getCp();
             cachedDecodedType = ConstantPoolUtils.decodeTypeTok(cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor().getValue(), cp);
         }

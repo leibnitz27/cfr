@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types.discovery;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
@@ -162,8 +163,27 @@ public class InferredJavaType {
         return value.getSource();
     }
 
+    private void mergeGenericInfo(JavaGenericRefTypeInstance otherTypeInstance) {
+        if (this.value.isLocked()) return;
+        JavaGenericRefTypeInstance thisType = (JavaGenericRefTypeInstance) this.value.getJavaTypeInstance();
+        if (!thisType.hasUnbound()) return;
+        JavaGenericRefTypeInstance boundThisType = thisType.getDeGenerifiedType().getClassFile().getBoundAssignable(thisType, otherTypeInstance);
+        if (!boundThisType.equals(thisType)) {
+            mkDelegate(this.value, new IJTInternal(boundThisType, Source.GENERICCALL, true));
+        }
+    }
+
     private void chainFrom(InferredJavaType other) {
         if (this == other) return;
+
+        JavaTypeInstance thisTypeInstance = this.value.getJavaTypeInstance();
+        JavaTypeInstance otherTypeInstance = other.value.getJavaTypeInstance();
+
+        if (thisTypeInstance instanceof JavaGenericRefTypeInstance &&
+                otherTypeInstance instanceof JavaGenericRefTypeInstance) {
+            other.mergeGenericInfo((JavaGenericRefTypeInstance) thisTypeInstance);
+        }
+
         mkDelegate(this.value, other.value);
         this.value = other.value; // new IJTDelegate(other);
     }

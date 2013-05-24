@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.ClassCache;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.util.getopt.CFRState;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,6 +15,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
     private final String displayableName;
     private final InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
+    private final CFRState cfrState;
 
     private JavaRefTypeInstance(String className, ClassCache classCache) {
         InnerClassInfo innerClassInfo = InnerClassInfo.NOT;
@@ -26,12 +29,14 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         this.innerClassInfo = innerClassInfo;
         classCache.markClassNameUsed(this);
         this.displayableName = classCache.getDisplayableClassName(className);
+        this.cfrState = classCache.getCfrState();
     }
 
     private JavaRefTypeInstance(String className, String displayableName) {
         this.innerClassInfo = InnerClassInfo.NOT;
         this.className = className;
         this.displayableName = displayableName;
+        this.cfrState = null;
     }
 
     /*
@@ -118,6 +123,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     @Override
     public RawJavaType getRawTypeOfSimpleType() {
         return RawJavaType.REF;
+    }
+
+    public ClassFile getClassFile() {
+        ClassFile classFile = cfrState.getClassFile(this, false);
+        return classFile;
     }
 
     private static class RefTypeInnerClassInfo implements InnerClassInfo {

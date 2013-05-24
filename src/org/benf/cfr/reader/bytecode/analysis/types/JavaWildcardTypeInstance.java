@@ -39,6 +39,14 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
+    public boolean hasUnbound() {
+        if (underlyingType instanceof JavaGenericBaseInstance) {
+            return ((JavaGenericBaseInstance) underlyingType).hasUnbound();
+        }
+        return false;
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("? ").append(wildcardType).append(' ');
