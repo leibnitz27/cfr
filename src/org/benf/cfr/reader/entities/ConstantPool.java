@@ -49,17 +49,6 @@ public class ConstantPool {
         return cfrState;
     }
 
-
-    public void dumpImports(Dumper d) {
-        List<String> names = classCache.getImports();
-        if (names.isEmpty()) return;
-        Collections.sort(names);
-        for (String name : names) {
-            d.print("import " + name + ";\n");
-        }
-        d.print("\n");
-    }
-
     public boolean isLoaded() {
         return isLoaded;
     }

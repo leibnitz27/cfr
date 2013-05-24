@@ -17,17 +17,17 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     private final InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
     private final CFRState cfrState;
 
-    private JavaRefTypeInstance(String className, ClassCache classCache) {
+    private JavaRefTypeInstance(ConstantPool cp, String className, ClassCache classCache) {
         InnerClassInfo innerClassInfo = InnerClassInfo.NOT;
         // We should be careful to ONLY check for "$" here, as we'll eliminate it elsewhere.
         if (className.contains("$")) {
             String outer = className.substring(0, className.lastIndexOf('$'));
-            JavaRefTypeInstance outerClassTmp = classCache.getRefClassFor(outer);
+            JavaRefTypeInstance outerClassTmp = classCache.getRefClassFor(cp, outer);
             innerClassInfo = new RefTypeInnerClassInfo(outerClassTmp);
         }
         this.className = className;
         this.innerClassInfo = innerClassInfo;
-        classCache.markClassNameUsed(this);
+        classCache.markClassNameUsed(cp, this);
         this.displayableName = classCache.getDisplayableClassName(className);
         this.cfrState = classCache.getCfrState();
     }
@@ -42,8 +42,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     /*
      * Only call from constPool cache.
      */
-    public static JavaRefTypeInstance create(String rawClassName, ClassCache classCache) {
-        return new JavaRefTypeInstance(rawClassName, classCache);
+    public static JavaRefTypeInstance create(ConstantPool cp, String rawClassName, ClassCache classCache) {
+        return new JavaRefTypeInstance(cp, rawClassName, classCache);
     }
 
     /*

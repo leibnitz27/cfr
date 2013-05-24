@@ -59,7 +59,7 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
         if (rawType.startsWith("[")) {
             return ConstantPoolUtils.decodeTypeTok(rawType, getCp());
         } else {
-            return getCp().getClassCache().getRefClassFor(ClassNameUtils.convertFromPath(rawType));
+            return getCp().getClassCache().getRefClassFor(getCp(), ClassNameUtils.convertFromPath(rawType));
         }
     }
 

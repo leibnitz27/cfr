@@ -187,6 +187,33 @@ public class ClassFile implements Dumpable {
         }
     }
 
+    /* Get the list of constantPools, and that of inner classes */
+    public List<ConstantPool> getAllCps() {
+        Set<ConstantPool> res = SetFactory.newSet();
+        getAllCps(res);
+        return ListFactory.newList(res);
+    }
+
+    private void getAllCps(Set<ConstantPool> tgt) {
+        tgt.add(constantPool);
+        for (Pair<InnerClassAttributeInfo, ClassFile> pair : innerClassesByTypeInfo.values()) {
+            pair.getSecond().getAllCps(tgt);
+        }
+    }
+
+    public List<JavaTypeInstance> getAllClassTypes() {
+        List<JavaTypeInstance> res = ListFactory.newList();
+        getAllClassTypes(res);
+        return res;
+    }
+
+    private void getAllClassTypes(List<JavaTypeInstance> tgt) {
+        tgt.add(getClassType());
+        for (Pair<InnerClassAttributeInfo, ClassFile> pair : innerClassesByTypeInfo.values()) {
+            pair.getSecond().getAllClassTypes(tgt);
+        }
+    }
+
     public void setDumpHelper(ClassFileDumper dumpHelper) {
         this.dumpHelper = dumpHelper;
     }

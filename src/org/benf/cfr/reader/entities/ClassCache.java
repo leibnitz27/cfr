@@ -1,9 +1,11 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
@@ -22,7 +24,12 @@ public class ClassCache {
     private final Map<String, String> shortNameToLongName = MapFactory.newMap();
     private final Map<String, JavaRefTypeInstance> refClassTypeCache = MapFactory.newMap();
     private final Set<JavaRefTypeInstance> usedClassSet = SetFactory.newSet();
-    private final Set<String> importableClasses = SetFactory.newSet();
+    private final Map<ConstantPool, Set<JavaTypeInstance>> importableClasses = MapFactory.newLazyMap(new UnaryFunction<ConstantPool, Set<JavaTypeInstance>>() {
+        @Override
+        public Set<JavaTypeInstance> invoke(ConstantPool arg) {
+            return SetFactory.newSet();
+        }
+    });
 
     private final CFRState cfrState;
     /*
@@ -38,15 +45,6 @@ public class ClassCache {
 
     public CFRState getCfrState() {
         return cfrState;
-    }
-
-    private boolean importClass(JavaRefTypeInstance clazz) {
-        InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
-        if (clazz == analysisType) return false; // yes, reference equality.
-        // TODO : We should only be importing public inner classes which are referenced directly.
-        if (!innerClassInfo.isInnerClass()) return true;
-        if (clazz.getRawName().startsWith(analysisType.getRawName())) return false;
-        return true;
     }
 
     private String generateInnerClassShortName(JavaRefTypeInstance clazz) {
@@ -71,7 +69,7 @@ public class ClassCache {
         importableClasses.remove(analysisType.getRawName());
     }
 
-    public void markClassNameUsed(JavaRefTypeInstance typeInstance) {
+    public void markClassNameUsed(ConstantPool cp, JavaRefTypeInstance typeInstance) {
         if (!usedClassSet.add(typeInstance)) return;
 
         String className = typeInstance.getRawName();
@@ -80,9 +78,7 @@ public class ClassCache {
         if (!shortNameToLongName.containsKey(partname)) {
             shortNameToLongName.put(partname, className);
             longNameToShortName.put(className, partname);
-            if (importClass(typeInstance)) {
-                importableClasses.add(className);
-            }
+            importableClasses.get(cp).add(typeInstance);
         }
         /*
          * Override longname to short name for inner classes.
@@ -98,23 +94,27 @@ public class ClassCache {
         return res;
     }
 
-    public JavaRefTypeInstance getRefClassFor(String rawClassName) {
+    public JavaRefTypeInstance getRefClassFor(ConstantPool cp, String rawClassName) {
         String name = ClassNameUtils.convertFromPath(rawClassName);
         JavaRefTypeInstance typeInstance = refClassTypeCache.get(name);
         if (typeInstance != null) {
             // This is a bit messy, as we will only hit here on an unused type if it's
             // a pre-cooked one.
-            markClassNameUsed(typeInstance);
+            markClassNameUsed(cp, typeInstance);
             return typeInstance;
         }
 
-        typeInstance = JavaRefTypeInstance.create(name, this);
+        typeInstance = JavaRefTypeInstance.create(cp, name, this);
 
         refClassTypeCache.put(name, typeInstance);
         return typeInstance;
     }
 
-    public List<String> getImports() {
-        return ListFactory.newList(importableClasses);
+    public Set<JavaTypeInstance> getImports(List<ConstantPool> constantPoolList) {
+        Set<JavaTypeInstance> imports = SetFactory.newSet();
+        for (ConstantPool cp : constantPoolList) {
+            imports.addAll(importableClasses.get(cp));
+        }
+        return imports;
     }
 }

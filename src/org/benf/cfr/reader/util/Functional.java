@@ -33,7 +33,7 @@ public class Functional {
     }
 
 
-    public static <X, Y> List<Y> map(List<X> input, UnaryFunction<X, Y> function) {
+    public static <X, Y> List<Y> map(Collection<X> input, UnaryFunction<X, Y> function) {
         List<Y> result = ListFactory.newList();
         for (X item : input) {
             result.add(function.invoke(item));

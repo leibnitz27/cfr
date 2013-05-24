@@ -174,13 +174,13 @@ public class TypedLiteral {
     }
 
     public static TypedLiteral getMethodHandle(ConstantPoolEntryMethodHandle methodHandle, ConstantPool cp) {
-        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodHandle");
+        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor(cp, "java.lang.invoke.MethodHandle");
         return new TypedLiteral(LiteralType.MethodHandle, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodHandle);
     }
 
     public static TypedLiteral getMethodType(ConstantPoolEntryMethodType methodType, ConstantPool cp) {
         ConstantPoolEntryUTF8 descriptor = methodType.getDescriptor();
-        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodType");
+        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor(cp, "java.lang.invoke.MethodType");
         return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), descriptor);
     }
 

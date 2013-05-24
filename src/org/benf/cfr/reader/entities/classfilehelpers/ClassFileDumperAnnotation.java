@@ -41,7 +41,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
         if (!innerClass) {
             d.print(MiscConstants.CFR_HEADER);
             d.print("package ").print(classFile.getThisClassConstpoolEntry().getPackageName()).endCodeln().newln();
-            cp.dumpImports(d);
+            dumpImports(d, cp.getClassCache(), classFile);
         }
 
         dumpHeader(classFile, d);
