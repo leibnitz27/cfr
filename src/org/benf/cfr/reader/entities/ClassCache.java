@@ -66,7 +66,6 @@ public class ClassCache {
 
     public void setAnalysisType(JavaRefTypeInstance analysisType) {
         this.analysisType = analysisType;
-        importableClasses.remove(analysisType.getRawName());
     }
 
     public void markClassNameUsed(ConstantPool cp, JavaRefTypeInstance typeInstance) {

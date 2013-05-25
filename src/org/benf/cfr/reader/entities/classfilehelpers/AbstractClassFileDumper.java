@@ -57,13 +57,15 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         List<String> names = Functional.map(types, new UnaryFunction<JavaTypeInstance, String>() {
             @Override
             public String invoke(JavaTypeInstance arg) {
-                return arg.getRawName();
+                String name = arg.getRawName();
+                return name.replace('$', '.');
             }
         });
 
         if (names.isEmpty()) return;
         Collections.sort(names);
         for (String name : names) {
+
             d.print("import " + name + ";\n");
         }
         d.print("\n");
