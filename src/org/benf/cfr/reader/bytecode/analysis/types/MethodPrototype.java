@@ -144,7 +144,7 @@ public class MethodPrototype {
         if (result == null) {
             if (MiscConstants.INIT_METHOD.equals(getName())) {
                 if (classFile != null) {
-                    result = classFile.getClassSignature().getThisGeneralTypeClass(thisTypeInstance);
+                    result = classFile.getClassSignature().getThisGeneralTypeClass(thisTypeInstance, classFile.getConstantPool());
                 } else {
                     // best we can say is 'this'.
                     result = thisTypeInstance;

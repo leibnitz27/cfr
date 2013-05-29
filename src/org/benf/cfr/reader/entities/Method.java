@@ -292,6 +292,10 @@ public class Method implements KnowsRawSize {
         }
     }
 
+    public boolean hasCodeAttribute() {
+        return codeAttribute != null;
+    }
+
     public void dump(Dumper d, boolean asClass) {
         dumpSignatureText(asClass, d);
         if (codeAttribute == null) {

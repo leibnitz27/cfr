@@ -130,6 +130,8 @@ public class CFRState {
             "liftconstructorinit", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> REMOVE_DEAD_METHODS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "removedeadmethods", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> REMOVE_BAD_GENERICS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "removebadgenerics", defaultTrueBooleanDecoder);
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -337,7 +339,7 @@ public class CFRState {
             return ListFactory.newList(SHOWOPS, ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
-                    REMOVE_DEAD_METHODS);
+                    REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS);
         }
 
         @Override

@@ -109,6 +109,8 @@ public class GenericTypeBinder {
             if (bound != null) {
                 return bound;
             }
+        } else if (maybeUnbound instanceof JavaGenericRefTypeInstance) {
+            return ((JavaGenericRefTypeInstance) maybeUnbound).getBoundInstance(this);
         }
         return maybeUnbound;
     }

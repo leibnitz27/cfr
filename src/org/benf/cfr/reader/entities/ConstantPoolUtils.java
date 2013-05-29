@@ -31,7 +31,7 @@ public class ConstantPoolUtils {
             List<JavaTypeInstance> genericTypes = parseTypeList(gen, cp);
             return new JavaGenericRefTypeInstance(clazzType, genericTypes);
         } else if (isTemplate) {
-            return new JavaGenericPlaceholderTypeInstance(tok);
+            return new JavaGenericPlaceholderTypeInstance(tok, cp);
         } else {
             return cp.getClassCache().getRefClassFor(cp, tok);
         }
@@ -53,7 +53,7 @@ public class ConstantPoolUtils {
         JavaTypeInstance javaTypeInstance = null;
         switch (c) {
             case '*': // wildcard
-                javaTypeInstance = new JavaGenericPlaceholderTypeInstance("?");
+                javaTypeInstance = new JavaGenericPlaceholderTypeInstance("?", cp);
                 break;
             case 'L':   // object
                 javaTypeInstance = parseRefType(tok.substring(idx + 1, tok.length() - 1), cp, false);

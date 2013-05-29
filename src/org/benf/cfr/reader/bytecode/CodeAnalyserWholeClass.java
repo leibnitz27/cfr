@@ -2,15 +2,16 @@ package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.EnumClassRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.IllegalGenericRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NonStaticLifter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.StaticLifter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.DeadMethodRemover;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.entities.AccessFlag;
-import org.benf.cfr.reader.entities.AccessFlagMethod;
-import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
@@ -41,9 +42,17 @@ public class CodeAnalyserWholeClass {
             fixInnerClassConstructors(classFile, state);
         }
 
+        /* Remove generics which 'don't belong here' - i.e. ones which we brought in for analysis, but have
+         * ended up in the body of the code.
+         *
+         * (sign of this would be Map<K,V> etc hanging around).
+         */
+        if (state.getBooleanOpt(CFRState.REMOVE_BAD_GENERICS)) {
+            removeIllegalGenerics(classFile, state);
+        }
+
         if (state.getBooleanOpt(CFRState.LIFT_CONSTRUCTOR_INIT)) {
             liftStaticInitialisers(classFile, state);
-
             liftNonStaticInitialisers(classFile, state);
         }
 
@@ -121,4 +130,27 @@ public class CodeAnalyserWholeClass {
         if (!MiscStatementTools.isDeadCode(constructor.getAnalysis())) return;
         classFile.removePointlessMethod(constructor);
     }
+
+    /* Performed prior to lifting code into fields, just check code */
+    private static void removeIllegalGenerics(ClassFile classFile, CFRState state) {
+        ConstantPool cp = classFile.getConstantPool();
+        ExpressionRewriter r = new IllegalGenericRewriter(cp);
+
+        for (Method m : classFile.getMethods()) {
+            if (!m.hasCodeAttribute()) return;
+            Op04StructuredStatement code = m.getAnalysis();
+            if (!code.isFullyStructured()) continue;
+
+            List<StructuredStatement> statements = ListFactory.newList();
+            try {
+                code.linearizeStatementsInto(statements);
+            } catch (Exception e) {
+                return;
+            }
+            for (StructuredStatement statement : statements) {
+                statement.rewriteExpressions(r);
+            }
+        }
+    }
+
 }

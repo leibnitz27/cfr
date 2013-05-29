@@ -41,6 +41,18 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
+    public boolean hasForeignUnbound(ConstantPool cp) {
+        if (!hasUnbound) return false;
+        for (JavaTypeInstance type : genericTypes) {
+            if (type instanceof JavaGenericBaseInstance) {
+                if (((JavaGenericBaseInstance) type).hasForeignUnbound(cp)) return true;
+            }
+        }
+        return false;
+    }
+
+
+    @Override
     public JavaGenericRefTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
         List<JavaTypeInstance> res = ListFactory.newList();
         for (JavaTypeInstance genericType : genericTypes) {

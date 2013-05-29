@@ -1,0 +1,69 @@
+package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
+
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.ConstantPool;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: lee
+ * Date: 28/05/2013
+ * Time: 08:57
+ */
+public class IllegalGenericRewriter implements ExpressionRewriter {
+    private final ConstantPool cp;
+
+    public IllegalGenericRewriter(ConstantPool cp) {
+        this.cp = cp;
+    }
+
+    private boolean hasIllegalGenerics(JavaTypeInstance javaTypeInstance) {
+        if (!(javaTypeInstance instanceof JavaGenericBaseInstance)) return false;
+        JavaGenericBaseInstance genericBaseInstance = (JavaGenericBaseInstance) javaTypeInstance;
+        return genericBaseInstance.hasForeignUnbound(cp);
+    }
+
+    private void maybeRewriteExpressionType(InferredJavaType inferredJavaType) {
+        JavaTypeInstance javaTypeInstance = inferredJavaType.getJavaTypeInstance();
+        if (hasIllegalGenerics(javaTypeInstance)) {
+            inferredJavaType.deGenerify(javaTypeInstance.getDeGenerifiedType());
+        }
+    }
+
+    @Override
+    public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        maybeRewriteExpressionType(expression.getInferredJavaType());
+        return expression;
+    }
+
+    @Override
+    public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return expression;
+    }
+
+    @Override
+    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return expression;
+    }
+
+    @Override
+    public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        maybeRewriteExpressionType(lValue.getInferredJavaType());
+        return lValue;
+    }
+
+    @Override
+    public StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return lValue;
+    }
+}

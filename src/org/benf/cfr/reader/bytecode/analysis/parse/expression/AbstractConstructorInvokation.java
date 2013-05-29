@@ -25,12 +25,10 @@ import java.util.List;
  * Time: 17:26
  */
 public abstract class AbstractConstructorInvokation extends AbstractExpression {
-    private final JavaTypeInstance type;
     private final List<Expression> args;
 
     public AbstractConstructorInvokation(InferredJavaType inferredJavaType, List<Expression> args) {
         super(inferredJavaType);
-        this.type = inferredJavaType.getJavaTypeInstance();
         this.args = args;
     }
 
@@ -55,7 +53,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression {
     }
 
     public JavaTypeInstance getTypeInstance() {
-        return type;
+        return getInferredJavaType().getJavaTypeInstance();
     }
 
     @Override
@@ -73,7 +71,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression {
         if (!(o instanceof AbstractConstructorInvokation)) return false;
         AbstractConstructorInvokation other = (AbstractConstructorInvokation) o;
 
-        if (!type.equals(other.type)) return false;
+        if (!getTypeInstance().equals(other.getTypeInstance())) return false;
         if (!args.equals(other.args)) return false;
         return true;
     }

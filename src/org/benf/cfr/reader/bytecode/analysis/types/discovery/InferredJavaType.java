@@ -114,9 +114,9 @@ public class InferredJavaType {
             }
         }
 
-        public void force(RawJavaType rawJavaType) {
+        public void forceRawType(RawJavaType rawJavaType) {
             if (isDelegate) {
-                delegate.force(rawJavaType);
+                delegate.forceRawType(rawJavaType);
             } else {
                 this.type = rawJavaType;
             }
@@ -179,9 +179,10 @@ public class InferredJavaType {
         JavaTypeInstance thisTypeInstance = this.value.getJavaTypeInstance();
         JavaTypeInstance otherTypeInstance = other.value.getJavaTypeInstance();
 
-        if (thisTypeInstance instanceof JavaGenericRefTypeInstance &&
-                otherTypeInstance instanceof JavaGenericRefTypeInstance) {
-            other.mergeGenericInfo((JavaGenericRefTypeInstance) thisTypeInstance);
+        if (otherTypeInstance instanceof JavaGenericRefTypeInstance) {
+            if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
+                other.mergeGenericInfo((JavaGenericRefTypeInstance) thisTypeInstance);
+            }
         }
 
         mkDelegate(this.value, other.value);
@@ -274,10 +275,10 @@ public class InferredJavaType {
             // (We've probably got an arithop between an inferred boolean and a real int... )
             int cmp = thisRaw.compareTypePriorityTo(otherRaw);
             if (cmp < 0) {
-                this.value.force(otherRaw);
+                this.value.forceRawType(otherRaw);
             } else if (cmp == 0) {
                 if (thisRaw == RawJavaType.BOOLEAN && forbidBool) {
-                    this.value.force(RawJavaType.INT);
+                    this.value.forceRawType(RawJavaType.INT);
                 }
             }
         }
@@ -307,13 +308,13 @@ public class InferredJavaType {
             // Find the 'least' specific, tie to that.
             int cmp = thisRaw.compareTypePriorityTo(otherRaw);
             if (cmp > 0) {
-                this.value.force(otherRaw);
+                this.value.forceRawType(otherRaw);
             } else if (cmp < 0) {
                 // This special case is because we aggressively try to treat 0/1 as boolean,
                 // which comes back to bite us if they're used as arguments to a wider typed function
                 // we can't see foo((int)false))!
                 if (thisRaw == RawJavaType.BOOLEAN) {
-                    this.value.force(otherRaw);
+                    this.value.forceRawType(otherRaw);
                 }
             }
         }
@@ -322,6 +323,17 @@ public class InferredJavaType {
     public void generify(JavaTypeInstance other) {
         JavaTypeInstance typeInstanceThis = getJavaTypeInstance();
         JavaTypeInstance typeInstanceOther = other.getDeGenerifiedType();
+        if (!typeInstanceOther.equals(typeInstanceThis)) {
+            if (!("java/lang/Object".equals(typeInstanceThis.getRawName()))) {
+                throw new ConfusedCFRException("Incompatible types : " + typeInstanceThis.getClass() + "[" + typeInstanceThis + "] / " + typeInstanceOther.getClass() + "[" + typeInstanceOther + "]");
+            }
+        }
+        value.forceGeneric(other);
+    }
+
+    public void deGenerify(JavaTypeInstance other) {
+        JavaTypeInstance typeInstanceThis = getJavaTypeInstance().getDeGenerifiedType();
+        JavaTypeInstance typeInstanceOther = other;
         if (!typeInstanceOther.equals(typeInstanceThis)) {
             if (!("java/lang/Object".equals(typeInstanceThis.getRawName()))) {
                 throw new ConfusedCFRException("Incompatible types : " + typeInstanceThis.getClass() + "[" + typeInstanceThis + "] / " + typeInstanceOther.getClass() + "[" + typeInstanceOther + "]");

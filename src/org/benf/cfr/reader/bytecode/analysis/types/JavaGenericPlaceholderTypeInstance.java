@@ -10,9 +10,11 @@ import org.benf.cfr.reader.entities.ConstantPool;
  */
 public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstance {
     private final String className;
+    private final ConstantPool cp;
 
-    public JavaGenericPlaceholderTypeInstance(String className) {
+    public JavaGenericPlaceholderTypeInstance(String className, ConstantPool cp) {
         this.className = className;
+        this.cp = cp;
     }
 
     @Override
@@ -25,9 +27,14 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
         return true;
     }
 
+    @Override
+    public boolean hasForeignUnbound(ConstantPool cp) {
+        return cp != this.cp; // reference equality on cp.
+    }
+
     /*
-     * TODO : Strictly speaking we should only be adding the binding here if className is in formal parameters.
-     */
+         * TODO : Strictly speaking we should only be adding the binding here if className is in formal parameters.
+         */
     @Override
     public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target) {
         target.suggestBindingFor(className, other);
@@ -94,7 +101,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
 
     @Override
     public JavaTypeInstance getDeGenerifiedType() {
-        return this;
+        return TypeConstants.OBJECT;
     }
 
     @Override

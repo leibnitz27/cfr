@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.entities.ConstantPool;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -42,6 +44,14 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     public boolean hasUnbound() {
         if (underlyingType instanceof JavaGenericBaseInstance) {
             return ((JavaGenericBaseInstance) underlyingType).hasUnbound();
+        }
+        return false;
+    }
+
+    @Override
+    public boolean hasForeignUnbound(ConstantPool cp) {
+        if (underlyingType instanceof JavaGenericBaseInstance) {
+            return ((JavaGenericBaseInstance) underlyingType).hasForeignUnbound(cp);
         }
         return false;
     }

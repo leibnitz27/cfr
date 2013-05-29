@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.entities.ConstantPool;
+
 import java.util.List;
 
 /**
@@ -14,4 +16,6 @@ public interface JavaGenericBaseInstance extends JavaTypeInstance {
     public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target);
 
     public boolean hasUnbound();
+
+    public boolean hasForeignUnbound(ConstantPool cp);
 }

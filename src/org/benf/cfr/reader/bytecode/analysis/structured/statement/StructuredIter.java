@@ -21,9 +21,8 @@ import java.util.List;
  */
 public class StructuredIter extends AbstractStructuredBlockStatement {
     private final BlockIdentifier block;
-    private final LValue iterator;
+    private LValue iterator;
     private Expression list;
-    private final JavaTypeInstance itertype;
 
     public StructuredIter(BlockIdentifier block, LValue iterator, Expression list, Op04StructuredStatement body) {
         super(body);
@@ -33,7 +32,7 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
         /*
          * We need to be able to type the iterator.
          */
-        this.itertype = iterator.getInferredJavaType().getJavaTypeInstance();
+        JavaTypeInstance itertype = iterator.getInferredJavaType().getJavaTypeInstance();
         if (!itertype.isUsableType()) {
             //      throw new ConfusedCFRException("Not a usable type for an iter");
         }
@@ -42,6 +41,7 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
+        JavaTypeInstance itertype = iterator.getInferredJavaType().getJavaTypeInstance();
         dumper.print("for (" + itertype + " ").dump(iterator).print(" : ").dump(list).print(") ");
         getBody().dump(dumper);
         return dumper;
@@ -76,6 +76,7 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
+        iterator = expressionRewriter.rewriteExpression(iterator, null, this.getContainer(), null);
         list = expressionRewriter.rewriteExpression(list, null, this.getContainer(), null);
     }
 

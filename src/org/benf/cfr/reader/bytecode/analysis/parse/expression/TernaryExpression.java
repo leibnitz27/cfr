@@ -32,7 +32,7 @@ public class TernaryExpression extends AbstractExpression {
         // We know these types are the same (any cast will cause a break in the inferred type
         // chain).
         b.chain(a);
-        return new InferredJavaType(a.getRawType(), InferredJavaType.Source.OPERATION);
+        return a;
     }
 
     @Override

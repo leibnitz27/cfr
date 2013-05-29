@@ -532,7 +532,7 @@ public class ClassFile implements Dumpable {
     private Map<JavaTypeInstance, JavaGenericRefTypeInstance> generateBoundSuperClasses() {
         BoundSuperCollector boundSuperCollector = new BoundSuperCollector(this);
 
-        JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType());
+        JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType(), getConstantPool());
         if (!(thisType instanceof JavaGenericRefTypeInstance)) return boundSuperCollector.getBoundSupers();
         JavaGenericRefTypeInstance genericThisType = (JavaGenericRefTypeInstance) thisType;
 
@@ -550,7 +550,7 @@ public class ClassFile implements Dumpable {
     public void getBoundSuperClasses(JavaGenericRefTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector) {
         // TODO: This seems deeply over complicated ;)
         // Perhaps rather than matching in terms of types, we could match in terms of the signature?
-        JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType());
+        JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType(), getConstantPool());
         if (!(thisType instanceof JavaGenericRefTypeInstance)) {
             throw new IllegalStateException("GenericThisType isn't.");
         }
