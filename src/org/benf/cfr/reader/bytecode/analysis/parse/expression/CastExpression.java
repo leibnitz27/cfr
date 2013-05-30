@@ -45,6 +45,10 @@ public class CastExpression extends AbstractExpression {
         child.collectUsedLValues(lValueUsageCollector);
     }
 
+    public Expression getChild() {
+        return child;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;

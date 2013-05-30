@@ -578,9 +578,19 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
             case INSTANCEOF:
                 return new AssignmentSimple(getStackLValue(0), new InstanceOfExpression(getStackRValue(0), cpEntries[0]));
-            case CHECKCAST:
-                // Not strictly true, but matches our intermediate form.
-                return new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+            case CHECKCAST: {
+                ConstantPoolEntryClass castTarget = (ConstantPoolEntryClass) cpEntries[0];
+                JavaTypeInstance tgtJavaType = castTarget.getTypeInstance();
+                JavaTypeInstance alreadyJavaType = getStackRValue(0).getInferredJavaType().getJavaTypeInstance();
+                // Have to check against the degenerified type, as checkcast is performed at runtime,
+                // i.e. without generic information.
+                if (tgtJavaType.equals(alreadyJavaType.getDeGenerifiedType())) {
+                    return new AssignmentSimple(getStackLValue(0), getStackRValue(0));
+                } else {
+                    InferredJavaType castType = new InferredJavaType(tgtJavaType, InferredJavaType.Source.EXPRESSION, true);
+                    return new AssignmentSimple(getStackLValue(0), new CastExpression(castType, getStackRValue(0)));
+                }
+            }
             case INVOKESTATIC: {
                 ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
                 MethodPrototype methodPrototype = function.getMethodPrototype();

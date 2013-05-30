@@ -38,6 +38,7 @@ public class WildcardMatch {
     private Map<String, ListWildcard> listMap = MapFactory.newMap();
     private Map<String, StaticVariableWildcard> staticVariableWildcardMap = MapFactory.newMap();
     private Map<String, ConstructorInvokationSimpleWildcard> constructorWildcardMap = MapFactory.newMap();
+    private Map<String, CastExpressionWildcard> castWildcardMap = MapFactory.newMap();
 
     private <T> void reset(Collection<? extends Wildcard<T>> coll) {
         for (Wildcard<T> item : coll) {
@@ -56,6 +57,7 @@ public class WildcardMatch {
         reset(staticVariableWildcardMap.values());
         reset(superFunctionMap.values());
         reset(constructorWildcardMap.values());
+        reset(castWildcardMap.values());
     }
 
     public ConstructorInvokationSimpleWildcard getConstructorSimpleWildcard(String name) {
@@ -94,6 +96,18 @@ public class WildcardMatch {
         return res;
     }
 
+    public CastExpressionWildcard getCastExpressionWildcard(String name, Expression expression) {
+        CastExpressionWildcard res = castWildcardMap.get(name);
+        if (res != null) return res;
+
+        res = new CastExpressionWildcard(null, expression);
+        castWildcardMap.put(name, res);
+        return res;
+    }
+
+    public CastExpressionWildcard getCastExpressionWildcard(String name) {
+        return castWildcardMap.get(name);
+    }
 
     public NewArrayWildcard getNewArrayWildCard(String name) {
         return getNewArrayWildCard(name, 1, null);
@@ -676,5 +690,48 @@ public class WildcardMatch {
             return true;
         }
     }
+
+
+    public class CastExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<CastExpression> {
+        private final JavaTypeInstance clazz;
+        private CastExpression matchedValue;
+
+        private Expression expression;
+
+        public CastExpressionWildcard(JavaTypeInstance clazz, Expression expression) {
+            this.clazz = clazz;
+            this.expression = expression;
+        }
+
+        @Override
+        public CastExpression getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null) return false;
+            if (!(o instanceof CastExpression)) return false;
+
+            if (matchedValue != null) {
+                return matchedValue.equals(o);
+            }
+
+            CastExpression other = (CastExpression) o;
+            if (clazz != null && !clazz.equals(other.getInferredJavaType().getJavaTypeInstance())) return false;
+            if (!expression.equals(other.getChild())) return false;
+
+
+            matchedValue = other;
+            return true;
+        }
+    }
+
 }
 

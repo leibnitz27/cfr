@@ -49,7 +49,7 @@ public enum JVMInstr {
     BIPUSH(0x10, 1, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.VOID),
     CALOAD(0x34, 0, new StackTypes(StackType.REF, StackType.INT), StackType.INT.asList(), RawJavaType.CHAR),
     CASTORE(0x55, 0, new StackTypes(StackType.REF, StackType.INT, StackType.INT), StackTypes.EMPTY, RawJavaType.VOID),
-    CHECKCAST(0xc0, 2, StackType.REF.asList(), StackType.REF.asList(), RawJavaType.BOOLEAN),
+    CHECKCAST(0xc0, 2, StackType.REF.asList(), StackType.REF.asList(), RawJavaType.REF, new OperationFactoryCPEntryW()),
     D2F(0x90, 0, StackType.DOUBLE.asList(), StackType.FLOAT.asList(), RawJavaType.FLOAT),
     D2I(0x8e, 0, StackType.DOUBLE.asList(), StackType.INT.asList(), RawJavaType.INT),
     D2L(0x8f, 0, StackType.DOUBLE.asList(), StackType.LONG.asList(), RawJavaType.LONG),

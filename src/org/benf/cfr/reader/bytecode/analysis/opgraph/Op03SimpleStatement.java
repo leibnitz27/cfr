@@ -2760,10 +2760,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement loopStart = loop.getTargets().get(0);
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
-        if (!wildcardMatch.match(
+        boolean isCastExpression = false;
+        if (wildcardMatch.match(
                 new AssignmentSimple(wildcardMatch.getLValueWildCard("sugariter"),
                         wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")))),
-                loopStart.containedStatement)) return;
+                loopStart.containedStatement)) {
+        } else if (wildcardMatch.match(
+                new AssignmentSimple(wildcardMatch.getLValueWildCard("sugariter"),
+                        wildcardMatch.getCastExpressionWildcard("cast", wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable"))))),
+                loopStart.containedStatement)) {
+            // It's a cast expression - so we know that there's a type we might be able to push back up.
+            isCastExpression = true;
+        } else {
+            return;
+        }
 
         LValue sugarIter = wildcardMatch.getLValueWildCard("sugariter").getMatch();
 
@@ -2793,6 +2803,29 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return;
             }
         }
+
+        /*
+         * If it's a cast expression, we can try to push typing information back up.
+         *
+         * (This doesn't work.)
+         */
+//        if (isCastExpression) {
+//            CastExpression castExpression = wildcardMatch.getCastExpressionWildcard("cast").getMatch();
+//            MemberFunctionInvokation iteratorCall = wildcardMatch.getMemberFunction("iterator").getMatch();
+//            // if this is an iterator< placeholder > , we can try to push the type back up.
+//            JavaTypeInstance iteratorType = iteratorCall.getInferredJavaType().getJavaTypeInstance();
+//            if (iteratorType instanceof JavaGenericRefTypeInstance) {
+//                JavaGenericRefTypeInstance genericIteratorType = (JavaGenericRefTypeInstance)iteratorType;
+//                List<JavaTypeInstance> bindings = genericIteratorType.getGenericTypes();
+//                JavaTypeInstance binding = null;
+//                if (bindings.size() == 1 && ((binding = bindings.get(0)) instanceof JavaGenericPlaceholderTypeInstance)) {
+//                    JavaGenericPlaceholderTypeInstance placeholderTypeInstance = (JavaGenericPlaceholderTypeInstance)binding;
+//                    GenericTypeBinder binder = GenericTypeBinder.createEmpty();
+//                    binder.suggestBindingFor(placeholderTypeInstance.getRawName(), castExpression.getInferredJavaType().getJavaTypeInstance());
+//                    iteratorCall.getInferredJavaType().replaceGeneric(genericIteratorType.getBoundInstance(binder));
+//                }
+//            }
+//        }
 
         loop.replaceStatement(new ForIterStatement(blockIdentifier, sugarIter, iterSource));
         loopStart.nopOut();
