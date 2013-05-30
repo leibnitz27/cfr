@@ -261,6 +261,8 @@ public class CodeAnalyser {
         // Identify simple (nested) conditionals - note that this also generates ternary expressions,
         // if the conditional is simple enough.
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+        // Condense again, now we've simplified conditionals, ternaries, etc.
+        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
 
         logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);

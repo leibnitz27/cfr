@@ -36,7 +36,7 @@ public class ForIterStatement extends AbstractStatement {
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        throw new UnsupportedOperationException("Shouldn't be called here.");
+        iterator.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override

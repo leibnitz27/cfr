@@ -1969,6 +1969,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                             rhs
                     )
             );
+            // Reduce the ternary lValue's created location count, if we can.
+            if (ternary.lValue instanceof StackSSALabel) {
+                StackSSALabel stackSSALabel = (StackSSALabel) ternary.lValue;
+                StackEntry stackEntry = stackSSALabel.getStackEntry();
+                List<Long> sources = stackEntry.getSources();
+                stackEntry.removeSource(sources.get(sources.size() - 1));
+            }
 
             // If statement now should have only one target.
             List<Op03SimpleStatement> tmp = ListFactory.uniqueList(ifStatement.targets);

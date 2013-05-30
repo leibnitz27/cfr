@@ -65,5 +65,8 @@ public class TernaryExpression extends AbstractExpression {
         rhs.collectUsedLValues(lValueUsageCollector);
     }
 
-
+    @Override
+    public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
+        return d.print("(").dump(this).print(")");
+    }
 }

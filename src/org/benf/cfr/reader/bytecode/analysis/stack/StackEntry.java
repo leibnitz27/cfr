@@ -4,8 +4,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -60,6 +62,16 @@ public class StackEntry {
 
     public int getSourceCount() {
         return ids.size();
+    }
+
+    public List<Long> getSources() {
+        return ListFactory.newList(ids);
+    }
+
+    public void removeSource(long x) {
+        if (!ids.remove(x)) {
+            throw new ConfusedCFRException("Attempt to remove non existent id");
+        }
     }
 
     @Override
