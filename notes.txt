@@ -2,4 +2,3 @@ TODO:
 
 Inner / inline objects
 reverse generic type determinations (for x : )
-inner class imports are wrong - imports in general - should only show imports from top.
