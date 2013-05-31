@@ -197,7 +197,6 @@ public class AssertRewriter {
             ConditionalExpression condition = wcm.getConditionalExpressionWildcard("condition").getMatch();
             condition = new NotOperation(condition).simplify();
             StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(condition));
-            if (structuredAssert == null) return;
             ifStatement.getContainer().replaceContainedStatement(structuredAssert);
 
         }
