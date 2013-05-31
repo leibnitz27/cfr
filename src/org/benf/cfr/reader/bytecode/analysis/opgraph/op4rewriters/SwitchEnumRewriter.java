@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -45,13 +46,8 @@ public class SwitchEnumRewriter implements Op04Rewriter {
     public void rewrite(Op04StructuredStatement root) {
         if (!state.getBooleanOpt(CFRState.ENUM_SWITCH)) return;
 
-        List<StructuredStatement> structuredStatements = ListFactory.newList();
-        try {
-            root.linearizeStatementsInto(structuredStatements);
-        } catch (UnsupportedOperationException e) {
-            // Todo : Should output something at the end about this failure?
-            return;
-        }
+        List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
+        if (structuredStatements == null) return;
 
         List<StructuredStatement> switchStatements = Functional.filter(structuredStatements, new Predicate<StructuredStatement>() {
             @Override
@@ -148,12 +144,8 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         }
         Op04StructuredStatement lutStaticInitCode = lutStaticInit.getAnalysis();
 
-        List<StructuredStatement> structuredStatements = ListFactory.newList();
-        try {
-            lutStaticInitCode.linearizeStatementsInto(structuredStatements);
-        } catch (UnsupportedOperationException e) {
-            return;
-        }
+        List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(lutStaticInitCode);
+        if (structuredStatements == null) return;
 
         // Filter out the comments.
         structuredStatements = Functional.filter(structuredStatements, new Predicate<StructuredStatement>() {

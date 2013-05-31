@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Coll
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
@@ -31,14 +32,8 @@ public class RedundantSuperRewriter implements Op04Rewriter {
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        List<StructuredStatement> structuredStatements = ListFactory.newList();
-        try {
-            // This is being done multiple times, it's very inefficient!
-            root.linearizeStatementsInto(structuredStatements);
-        } catch (UnsupportedOperationException e) {
-            // Todo : Should output something at the end about this failure.
-            return;
-        }
+        List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
+        if (structuredStatements == null) return;
 
         WildcardMatch wcm1 = new WildcardMatch();
 

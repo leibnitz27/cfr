@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -44,14 +45,8 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        List<StructuredStatement> structuredStatements = ListFactory.newList();
-        try {
-            // This is being done multiple times, it's very inefficient!
-            root.linearizeStatementsInto(structuredStatements);
-        } catch (UnsupportedOperationException e) {
-            // Todo : Should output something at the end about this failure.
-            return;
-        }
+        List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
+        if (structuredStatements == null) return;
 
         /*
          * Lambdas come in two forms - the lambda which has been produced by the java compiler,
@@ -205,11 +200,8 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                 rewrites.put(originalParameters.get(x), replacementParameters.get(x));
             }
 
-            List<StructuredStatement> structuredLambdaStatements = ListFactory.newList();
-            try {
-                // This is being done multiple times, it's very inefficient!
-                lambdaCode.linearizeStatementsInto(structuredLambdaStatements);
-            } catch (UnsupportedOperationException e) {
+            List<StructuredStatement> structuredLambdaStatements = MiscStatementTools.linearise(lambdaCode);
+            if (structuredLambdaStatements == null) {
                 throw new CannotDelambaException();
             }
 

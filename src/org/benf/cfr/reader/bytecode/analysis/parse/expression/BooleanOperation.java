@@ -90,4 +90,25 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
         return ConditionalUtils.simplify(this);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BooleanOperation)) return false;
+
+        BooleanOperation that = (BooleanOperation) o;
+
+        if (!lhs.equals(that.lhs)) return false;
+        if (op != that.op) return false;
+        if (!rhs.equals(that.rhs)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = lhs.hashCode();
+        result = 31 * result + rhs.hashCode();
+        result = 31 * result + op.hashCode();
+        return result;
+    }
 }

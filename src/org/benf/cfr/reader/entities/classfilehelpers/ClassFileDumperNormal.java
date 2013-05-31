@@ -65,7 +65,9 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
 
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
-            field.dump(d, cp);
+            if (!field.isHidden()) {
+                field.dump(d, cp);
+            }
         }
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {

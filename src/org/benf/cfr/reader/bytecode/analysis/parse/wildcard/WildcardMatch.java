@@ -39,6 +39,7 @@ public class WildcardMatch {
     private Map<String, StaticVariableWildcard> staticVariableWildcardMap = MapFactory.newMap();
     private Map<String, ConstructorInvokationSimpleWildcard> constructorWildcardMap = MapFactory.newMap();
     private Map<String, CastExpressionWildcard> castWildcardMap = MapFactory.newMap();
+    private Map<String, ConditionalExpressionWildcard> conditionalWildcardMap = MapFactory.newMap();
 
     private <T> void reset(Collection<? extends Wildcard<T>> coll) {
         for (Wildcard<T> item : coll) {
@@ -58,6 +59,16 @@ public class WildcardMatch {
         reset(superFunctionMap.values());
         reset(constructorWildcardMap.values());
         reset(castWildcardMap.values());
+        reset(conditionalWildcardMap.values());
+    }
+
+    public ConditionalExpressionWildcard getConditionalExpressionWildcard(String name) {
+        ConditionalExpressionWildcard res = conditionalWildcardMap.get(name);
+        if (res != null) return res;
+
+        res = new ConditionalExpressionWildcard();
+        conditionalWildcardMap.put(name, res);
+        return res;
     }
 
     public ConstructorInvokationSimpleWildcard getConstructorSimpleWildcard(String name) {
@@ -731,6 +742,72 @@ public class WildcardMatch {
             matchedValue = other;
             return true;
         }
+    }
+
+
+    public class ConditionalExpressionWildcard extends AbstractBaseExpressionWildcard implements ConditionalExpression, Wildcard<ConditionalExpression> {
+        private ConditionalExpression matchedValue;
+
+        public ConditionalExpressionWildcard() {
+        }
+
+        @Override
+        public ConditionalExpression getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null) return false;
+            if (!(o instanceof ConditionalExpression)) return false;
+
+            if (matchedValue != null) {
+                return matchedValue.equals(o);
+            }
+
+            ConditionalExpression other = (ConditionalExpression) o;
+
+            matchedValue = other;
+            return true;
+        }
+
+        @Override
+        public ConditionalExpression simplify() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ConditionalExpression optimiseForType() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Set<LValue> getLoopLValues() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ConditionalExpression getDemorganApplied(boolean amNegating) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int getSize() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ConditionalExpression getNegated() {
+            throw new UnsupportedOperationException();
+        }
+
+
     }
 
 }

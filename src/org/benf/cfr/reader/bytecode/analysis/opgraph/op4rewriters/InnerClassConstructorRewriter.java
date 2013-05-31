@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import com.sun.tools.hat.internal.util.Misc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -27,13 +29,8 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        List<StructuredStatement> structuredStatements = ListFactory.newList();
-        try {
-            root.linearizeStatementsInto(structuredStatements);
-        } catch (UnsupportedOperationException e) {
-            // Todo : Should output something at the end about this failure.
-            return;
-        }
+        List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
+        if (root == null) return;
 
         WildcardMatch wcm1 = new WildcardMatch();
 

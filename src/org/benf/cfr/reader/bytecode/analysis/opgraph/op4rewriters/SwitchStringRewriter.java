@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
@@ -84,13 +85,8 @@ public class SwitchStringRewriter implements Op04Rewriter {
     public void rewrite(Op04StructuredStatement root) {
         if (!state.getBooleanOpt(CFRState.STRING_SWITCH)) return;
 
-        List<StructuredStatement> structuredStatements = ListFactory.newList();
-        try {
-            root.linearizeStatementsInto(structuredStatements);
-        } catch (UnsupportedOperationException e) {
-            // Todo : Should output something at the end about this failure.
-            return;
-        }
+        List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
+        if (structuredStatements == null) return;
 
         // Rather than have a non-greedy kleene star at the start, we cheat and scan for valid start points.
         // switch OB (case OB (if-testalternativevalid OB assign break CB)* if-notvalid break assign break CB)+ CB

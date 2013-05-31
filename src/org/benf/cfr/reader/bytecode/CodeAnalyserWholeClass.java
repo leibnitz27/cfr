@@ -1,10 +1,7 @@
 package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.EnumClassRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.IllegalGenericRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NonStaticLifter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.StaticLifter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.DeadMethodRemover;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -49,6 +46,10 @@ public class CodeAnalyserWholeClass {
          */
         if (state.getBooleanOpt(CFRState.REMOVE_BAD_GENERICS)) {
             removeIllegalGenerics(classFile, state);
+        }
+
+        if (state.getBooleanOpt(CFRState.SUGAR_ASSERTS)) {
+            resugarAsserts(classFile, state);
         }
 
         if (state.getBooleanOpt(CFRState.LIFT_CONSTRUCTOR_INIT)) {
@@ -141,15 +142,20 @@ public class CodeAnalyserWholeClass {
             Op04StructuredStatement code = m.getAnalysis();
             if (!code.isFullyStructured()) continue;
 
-            List<StructuredStatement> statements = ListFactory.newList();
-            try {
-                code.linearizeStatementsInto(statements);
-            } catch (Exception e) {
-                return;
-            }
+            List<StructuredStatement> statements = MiscStatementTools.linearise(code);
+            if (statements == null) return;
+
             for (StructuredStatement statement : statements) {
                 statement.rewriteExpressions(r);
             }
+        }
+    }
+
+
+    private static void resugarAsserts(ClassFile classFile, CFRState state) {
+        Method staticInit = getStaticConstructor(classFile);
+        if (staticInit != null) {
+            new AssertRewriter(classFile).sugarAsserts(staticInit);
         }
     }
 

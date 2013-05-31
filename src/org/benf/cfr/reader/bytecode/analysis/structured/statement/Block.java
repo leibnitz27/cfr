@@ -183,15 +183,19 @@ public class Block extends AbstractStructuredStatement {
             return d;
         }
         try {
-            d.print("{\n");
-            d.indent(1);
+            if (indenting) {
+                d.print("{\n");
+                d.indent(1);
+            }
             for (Op04StructuredStatement structuredBlock : containedStatements) {
                 structuredBlock.dump(d);
             }
         } finally {
-            d.indent(-1);
-            d.print("}");
-            d.enqueuePendingCarriageReturn();
+            if (indenting) {
+                d.indent(-1);
+                d.print("}");
+                d.enqueuePendingCarriageReturn();
+            }
         }
         return d;
     }

@@ -39,6 +39,8 @@ public class ClassCache {
 
     public ClassCache(CFRState cfrState) {
         this.cfrState = cfrState;
+        refClassTypeCache.put(TypeConstants.ASSERTION_ERROR.getRawName(), TypeConstants.ASSERTION_ERROR);
+        refClassTypeCache.put(TypeConstants.CLASS.getRawName(), TypeConstants.CLASS);
         refClassTypeCache.put(TypeConstants.OBJECT.getRawName(), TypeConstants.OBJECT);
         refClassTypeCache.put(TypeConstants.STRING.getRawName(), TypeConstants.STRING);
         refClassTypeCache.put(TypeConstants.ENUM.getRawName(), TypeConstants.ENUM);
