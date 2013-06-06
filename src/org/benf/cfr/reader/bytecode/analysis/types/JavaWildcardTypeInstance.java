@@ -75,6 +75,11 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
+    public BindingSuperContainer getBindingSupers() {
+        return underlyingType.getBindingSupers();
+    }
+
+    @Override
     public JavaTypeInstance getArrayStrippedType() {
         return underlyingType.getArrayStrippedType();
     }

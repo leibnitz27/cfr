@@ -49,6 +49,11 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public BindingSuperContainer getBindingSupers() {
+        throw new UnsupportedOperationException("Binding supers on array");
+    }
+
+    @Override
     public JavaTypeInstance getArrayStrippedType() {
         return underlyingType.getArrayStrippedType();
     }

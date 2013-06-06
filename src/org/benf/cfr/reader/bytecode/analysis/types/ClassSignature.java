@@ -34,6 +34,7 @@ public class ClassSignature {
         return interfaces;
     }
 
+    // TODO : This is pointless.
     public JavaTypeInstance getThisGeneralTypeClass(JavaTypeInstance nonGenericInstance, ConstantPool cp) {
         if (nonGenericInstance instanceof JavaGenericBaseInstance) return nonGenericInstance;
         if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return nonGenericInstance;

@@ -2,6 +2,7 @@ package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerDefault;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.util.CannotLoadClassException;
@@ -69,7 +70,7 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
             // Figure out the non generic version of this
             ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(nameAndTypeIndex);
             ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
-            MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, getName(), interfaceMethod, descriptor, cp, false /* we can't tell */, fakeNamer);
+            MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, classType, getName(), interfaceMethod, descriptor, cp, false /* we can't tell */, fakeNamer);
             // See if we can load the class to get a signature version of this prototype.
             // TODO : Improve the caching?
 

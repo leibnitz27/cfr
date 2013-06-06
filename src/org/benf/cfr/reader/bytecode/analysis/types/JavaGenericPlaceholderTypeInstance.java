@@ -72,6 +72,11 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     @Override
+    public BindingSuperContainer getBindingSupers() {
+        throw new UnsupportedOperationException("Binding supers on placeholder");
+    }
+
+    @Override
     public int hashCode() {
         return 31 + className.hashCode();
     }

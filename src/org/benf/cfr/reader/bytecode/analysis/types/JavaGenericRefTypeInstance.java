@@ -138,6 +138,11 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
+    public BindingSuperContainer getBindingSupers() {
+        return typeInstance.getBindingSupers();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof JavaGenericRefTypeInstance)) return false;

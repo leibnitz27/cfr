@@ -179,7 +179,7 @@ public class Method implements KnowsRawSize {
         }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
-        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(classFile, getName(), isInstance, prototype, cp, isVarargs, variableNamer);
+        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), getName(), isInstance, prototype, cp, isVarargs, variableNamer);
         /*
          * Work around bug in inner class signatures.
          *
@@ -187,7 +187,7 @@ public class Method implements KnowsRawSize {
          */
         if (classFile.isInnerClass()) {
             if (signature != null) {
-                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(classFile, getName(), isInstance, descriptor, cp, isVarargs, variableNamer);
+                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), getName(), isInstance, descriptor, cp, isVarargs, variableNamer);
                 if (descriptorProto.getArgs().size() != res.getArgs().size()) {
                     // error due to inner class sig bug.
                     res = fixupInnerClassSignature(descriptorProto, res);

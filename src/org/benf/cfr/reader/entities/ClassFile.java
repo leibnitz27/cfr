@@ -503,41 +503,32 @@ public class ClassFile implements Dumpable {
         return thisClass.getTextPath();
     }
 
-    private Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses = null;
+    private BindingSuperContainer boundSuperClasses;
 
-    public JavaGenericRefTypeInstance getBoundAssignable(JavaGenericRefTypeInstance assignable, JavaGenericRefTypeInstance superType) {
+    /*
+     * Go from a bound instance of this class to a bound instance of the super class.  superType is currently partially unbound.
+     */
+    public BindingSuperContainer getBindingSupers() {
         // Start with the generic version of this type, i.e. if this is Fred<X>
 
         if (boundSuperClasses == null) {
             boundSuperClasses = generateBoundSuperClasses();
         }
-
-        JavaRefTypeInstance baseKey = superType.getDeGenerifiedType();
-        JavaRefTypeInstance assignableKey = assignable.getDeGenerifiedType();
-        if (assignableKey.equals(baseKey)) {
-            // Nothing we can do!
-            return assignable;
-        }
-
-        JavaGenericRefTypeInstance reboundBase = boundSuperClasses.get(baseKey);
-        if (reboundBase == null) {
-            // This shouldn't happen.
-            return assignable;
-        }
-        GenericTypeBinder genericTypeBinder = GenericTypeBinder.extractBindings(reboundBase, superType);
-        JavaGenericRefTypeInstance boundAssignable = assignable.getBoundInstance(genericTypeBinder);
-        return boundAssignable;
+        return boundSuperClasses;
     }
 
-    private Map<JavaTypeInstance, JavaGenericRefTypeInstance> generateBoundSuperClasses() {
+    private BindingSuperContainer generateBoundSuperClasses() {
         BoundSuperCollector boundSuperCollector = new BoundSuperCollector(this);
 
         JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType(), getConstantPool());
-        if (!(thisType instanceof JavaGenericRefTypeInstance)) return boundSuperCollector.getBoundSupers();
-        JavaGenericRefTypeInstance genericThisType = (JavaGenericRefTypeInstance) thisType;
 
-        GenericTypeBinder genericTypeBinder = GenericTypeBinder.buildIdentityBindings(genericThisType);
-
+        GenericTypeBinder genericTypeBinder;
+        if (thisType instanceof JavaGenericRefTypeInstance) {
+            JavaGenericRefTypeInstance genericThisType = (JavaGenericRefTypeInstance) thisType;
+            genericTypeBinder = GenericTypeBinder.buildIdentityBindings(genericThisType);
+        } else {
+            genericTypeBinder = null;
+        }
 
         getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector);
         for (JavaTypeInstance interfaceBase : classSignature.getInterfaces()) {
@@ -545,16 +536,13 @@ public class ClassFile implements Dumpable {
         }
 
         return boundSuperCollector.getBoundSupers();
+
     }
 
-    public void getBoundSuperClasses(JavaGenericRefTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector) {
+    public void getBoundSuperClasses(JavaTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector) {
         // TODO: This seems deeply over complicated ;)
         // Perhaps rather than matching in terms of types, we could match in terms of the signature?
         JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType(), getConstantPool());
-        if (!(thisType instanceof JavaGenericRefTypeInstance)) {
-            throw new IllegalStateException("GenericThisType isn't.");
-        }
-        JavaGenericRefTypeInstance genericThisType = (JavaGenericRefTypeInstance) thisType;
         /*
          * Work out the mapping between the unbound version and boundGeneric, then apply those mappings to
          * the superclass / interfaces.
@@ -570,7 +558,19 @@ public class ClassFile implements Dumpable {
          *
          * we can create boundGeneric instances for HashMap and Joe, and repeat the process.
          */
-        GenericTypeBinder genericTypeBinder = GenericTypeBinder.extractBindings(genericThisType, boundGeneric);
+
+        GenericTypeBinder genericTypeBinder;
+        if (!(thisType instanceof JavaGenericRefTypeInstance)) {
+            genericTypeBinder = null;
+        } else {
+            JavaGenericRefTypeInstance genericThisType = (JavaGenericRefTypeInstance) thisType;
+
+            if (boundGeneric instanceof JavaGenericRefTypeInstance) {
+                genericTypeBinder = GenericTypeBinder.extractBindings(genericThisType, (JavaGenericRefTypeInstance) boundGeneric);
+            } else {
+                genericTypeBinder = null;
+            }
+        }
         /*
          * Now, apply this to each of our superclass/interfaces.
          */
@@ -583,13 +583,17 @@ public class ClassFile implements Dumpable {
     private void getBoundSuperClasses2(JavaTypeInstance base, GenericTypeBinder genericTypeBinder, BoundSuperCollector boundSuperCollector) {
         if (base instanceof JavaRefTypeInstance) {
             // No bindings to do, can't go any further, mark relationship and move on.
+            boundSuperCollector.collect((JavaRefTypeInstance) base);
+            ClassFile classFile = ((JavaRefTypeInstance) base).getClassFile();
+            if (classFile != null) classFile.getBoundSuperClasses(base, boundSuperCollector);
             return;
         }
+
+
         if (!(base instanceof JavaGenericRefTypeInstance)) {
             throw new IllegalStateException("Base class is not generic");
         }
         JavaGenericRefTypeInstance genericBase = (JavaGenericRefTypeInstance) base;
-        JavaRefTypeInstance deGenerifiedBase = genericBase.getDeGenerifiedType();
         /*
          * Create a bound version of this, based on the bindings we have earlier.
          */

@@ -89,6 +89,12 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public BindingSuperContainer getBindingSupers() {
+        ClassFile classFile = getClassFile();
+        return classFile == null ? null : classFile.getBindingSupers();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof JavaRefTypeInstance)) return false;
@@ -126,6 +132,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     public ClassFile getClassFile() {
+        if (cfrState == null) return null;
         ClassFile classFile = cfrState.getClassFile(this, false);
         return classFile;
     }

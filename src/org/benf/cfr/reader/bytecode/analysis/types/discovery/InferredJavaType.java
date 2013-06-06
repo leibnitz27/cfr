@@ -2,10 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types.discovery;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
-import org.benf.cfr.reader.bytecode.analysis.types.StackType;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.Troolean;
 
@@ -56,19 +53,34 @@ public class InferredJavaType {
 
         private boolean isDelegate = false;
         private final boolean locked;
+        private Boolean markedBad;
         // When not delegating
         private JavaTypeInstance type;
-        private JavaTypeInstance narrowestType;
+
         private final Source source;
         private final int id;
         // When delegating
         private IJTInternal delegate;
 
         private IJTInternal(JavaTypeInstance type, Source source, boolean locked) {
+            if (type == null) {
+                int x = 3;
+            }
             this.type = type;
             this.source = source;
             this.id = global_id++;
             this.locked = locked;
+            this.markedBad = null;
+        }
+
+        private IJTInternal(IJTInternal delegate, boolean locked, boolean markedBad) {
+            this.isDelegate = true;
+            this.locked = locked;
+            this.type = null;
+            this.source = null;
+            this.id = global_id++;
+            this.delegate = delegate;
+            this.markedBad = markedBad;
         }
 
         public RawJavaType getRawType() {
@@ -104,6 +116,12 @@ public class InferredJavaType {
             }
         }
 
+        public boolean isMarkedBad() {
+            if (markedBad != null) return markedBad;
+            if (isDelegate) return delegate.isMarkedBad();
+            return false;
+        }
+
         public void mkDelegate(IJTInternal newDelegate) {
             if (isDelegate) {
                 delegate.mkDelegate(newDelegate);
@@ -127,6 +145,16 @@ public class InferredJavaType {
                 delegate.forceGeneric(rawJavaType);
             } else {
                 this.type = rawJavaType;
+            }
+        }
+
+        public void unmarkBad() {
+            if (markedBad != null) {
+                markedBad = null;
+                return;
+            }
+            if (isDelegate) {
+                delegate.unmarkBad();
             }
         }
 
@@ -167,10 +195,29 @@ public class InferredJavaType {
         if (this.value.isLocked()) return;
         JavaGenericRefTypeInstance thisType = (JavaGenericRefTypeInstance) this.value.getJavaTypeInstance();
         if (!thisType.hasUnbound()) return;
-        JavaGenericRefTypeInstance boundThisType = thisType.getDeGenerifiedType().getClassFile().getBoundAssignable(thisType, otherTypeInstance);
+        JavaTypeInstance boundThisType = thisType.getDeGenerifiedType().getClassFile().getBindingSupers().getBoundAssignable(thisType, otherTypeInstance);
         if (!boundThisType.equals(thisType)) {
             mkDelegate(this.value, new IJTInternal(boundThisType, Source.GENERICCALL, true));
         }
+    }
+
+    public void noteUseAs(JavaTypeInstance type) {
+        if (value.isMarkedBad()) {
+            BindingSuperContainer bindingSuperContainer = getJavaTypeInstance().getBindingSupers();
+            if (bindingSuperContainer.containsBase(type.getDeGenerifiedType())) {
+                value.forceGeneric(type);
+                value.unmarkBad();
+            }
+        }
+    }
+
+    private boolean checkBaseCompatibility(JavaTypeInstance otherType) {
+        JavaTypeInstance thisStripped = getJavaTypeInstance().getDeGenerifiedType();
+        JavaTypeInstance otherStripped = otherType.getDeGenerifiedType();
+        if (thisStripped.equals(otherStripped)) return true;
+
+        BindingSuperContainer otherSupers = otherType.getBindingSupers();
+        return otherSupers.containsBase(thisStripped);
     }
 
     private void chainFrom(InferredJavaType other) {
@@ -178,6 +225,19 @@ public class InferredJavaType {
 
         JavaTypeInstance thisTypeInstance = this.value.getJavaTypeInstance();
         JavaTypeInstance otherTypeInstance = other.value.getJavaTypeInstance();
+
+        /*
+         * Can't chain if this isn't a simple, or a supertype of other.
+         */
+        if (thisTypeInstance.isComplexType() && otherTypeInstance.isComplexType()) {
+            if (!checkBaseCompatibility(other.getJavaTypeInstance())) {
+                // Break the chain here, mark this delegate as bad.
+                this.value = new IJTInternal(new IJTInternal(other.getJavaTypeInstance(), other.getSource(), true), false, true);
+                // this.value.markTypeClash();
+                return;
+            }
+        }
+
 
         if (otherTypeInstance instanceof JavaGenericRefTypeInstance) {
             if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
@@ -404,7 +464,7 @@ public class InferredJavaType {
 
     @Override
     public String toString() {
-        return "";
-        // return "[" + value.toString() + "]";
+        return value.isMarkedBad() ? " /* !! */ " : "";
+        //return "[" + (value.isMarkedBad() ? "!!" : "") + value.toString() + "]";
     }
 }

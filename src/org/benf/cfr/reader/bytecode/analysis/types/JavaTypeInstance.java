@@ -36,4 +36,5 @@ public interface JavaTypeInstance {
     // Get info about this class as an inner class, not inner classes of this.....
     public InnerClassInfo getInnerClassHereInfo();
 
+    public BindingSuperContainer getBindingSupers();
 }

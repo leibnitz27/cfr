@@ -38,11 +38,21 @@ public class MethodPrototype {
     private transient List<LocalVariable> parameterLValues = null;
     private transient boolean explicitThisRemoval = false;
 
-    public MethodPrototype(ClassFile classFile, String name, boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
+    public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         this.args = args;
-        this.result = MiscConstants.INIT_METHOD.equals(name) ? null : result;
+        JavaTypeInstance resultType;
+        if (MiscConstants.INIT_METHOD.equals(name)) {
+            if (classFile == null) {
+                resultType = classType;
+            } else {
+                resultType = null;
+            }
+        } else {
+            resultType = result;
+        }
+        this.result = resultType;
         this.varargs = varargs;
         this.variableNamer = variableNamer;
         this.name = name;
@@ -141,19 +151,17 @@ public class MethodPrototype {
     }
 
     public JavaTypeInstance getReturnType(JavaTypeInstance thisTypeInstance, List<Expression> invokingArgs) {
+        if (classFile == null) {
+            return result;
+        }
+
         if (result == null) {
             if (MiscConstants.INIT_METHOD.equals(getName())) {
-                if (classFile != null) {
-                    result = classFile.getClassSignature().getThisGeneralTypeClass(thisTypeInstance, classFile.getConstantPool());
-                } else {
-                    // best we can say is 'this'.
-                    result = thisTypeInstance;
-                }
+                result = classFile.getClassSignature().getThisGeneralTypeClass(classFile.getClassType(), classFile.getConstantPool());
             } else {
                 throw new IllegalStateException();
             }
         }
-        if (classFile == null) return result;
         if (hasFormalTypeParameters() || classFile.hasFormalTypeParameters()) {
             // We're calling a method against a generic object.
             // we should be able to figure out more information
@@ -180,7 +188,7 @@ public class MethodPrototype {
              *
              * i.e. given that genericRefTypeInstance has the correct bindings, apply those to method.
              */
-            JavaTypeInstance boundResult = getResultBoundAccordingly(classFile.getClassSignature(), genericRefTypeInstance, invokingArgs);
+            JavaTypeInstance boundResult = getResultBoundAccordingly(result, classFile.getClassSignature(), genericRefTypeInstance, invokingArgs);
             return boundResult;
         } else {
             return result;
@@ -226,9 +234,12 @@ public class MethodPrototype {
     }
 
 
-    public void tightenArgs(List<Expression> expressions) {
+    public void tightenArgs(Expression object, List<Expression> expressions) {
         if (expressions.size() != args.size()) {
             throw new ConfusedCFRException("expr arg size mismatch");
+        }
+        if (object != null && classFile != null) {
+            object.getInferredJavaType().noteUseAs(classFile.getClassType());
         }
         int length = args.size();
         for (int x = 0; x < length; ++x) {
@@ -277,7 +288,7 @@ public class MethodPrototype {
         return true;
     }
 
-    public JavaTypeInstance getResultBoundAccordingly(ClassSignature classSignature, JavaGenericRefTypeInstance boundInstance, List<Expression> invokingArgs) {
+    private JavaTypeInstance getResultBoundAccordingly(JavaTypeInstance result, ClassSignature classSignature, JavaGenericRefTypeInstance boundInstance, List<Expression> invokingArgs) {
         if (!(result instanceof JavaGenericBaseInstance)) {
             // Don't care - (i.e. iterator<E> hasNext)
             return result;

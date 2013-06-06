@@ -32,6 +32,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
+import org.benf.cfr.reader.util.graph.GraphVisitorFIFO;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
@@ -277,7 +278,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
         MethodPrototype methodPrototype = function.getMethodPrototype();
         List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size() - 1);
-        methodPrototype.tightenArgs(args);
+        methodPrototype.tightenArgs(object, args);
         AbstractFunctionInvokation funcCall = isSuper ?
                 new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
                 new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
@@ -301,7 +302,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
         // Todo : Not happy about hardcoding if this is an instance function.
         // also - we have a descriptor, but NOT a signature here.  Is that right?
-        MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, "", false, descriptor, cp, false, new VariableNamerDefault());
+        MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, null, "", false, descriptor, cp, false, new VariableNamerDefault());
 
         int idx = invokeDynamic.getBootstrapMethodAttrIndex();
 
@@ -351,7 +352,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          */
         dynamicPrototype.getArgs();
         List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
-        dynamicPrototype.tightenArgs(dynamicArgs);
+        dynamicPrototype.tightenArgs(null, dynamicArgs);
 
         Expression funcCall = null;
         switch (bootstrapBehaviour) {
@@ -595,7 +596,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
                 MethodPrototype methodPrototype = function.getMethodPrototype();
                 List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size());
-                methodPrototype.tightenArgs(args);
+                methodPrototype.tightenArgs(null, args);
                 StaticFunctionInvokation funcCall = new StaticFunctionInvokation(function, args);
                 if (stackProduced.size() == 0) {
                     return new ExpressionStatement(funcCall);
@@ -934,7 +935,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         // By only processing reachable bytecode, we ignore deliberate corruption.   However, we could
         // Nop out unreachable code, so as to not have this ugliness.
         // We start at 0 as that's not controversial ;)
-        GraphVisitor<Op02WithProcessedDataAndRefs> o2Converter = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(op2list.get(0),
+        GraphVisitor<Op02WithProcessedDataAndRefs> o2Converter = new GraphVisitorFIFO<Op02WithProcessedDataAndRefs>(op2list.get(0),
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override
                     public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {

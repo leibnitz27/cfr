@@ -20,11 +20,15 @@ public class BoundSuperCollector {
         this.boundSupers = MapFactory.newMap();
     }
 
-    public Map<JavaTypeInstance, JavaGenericRefTypeInstance> getBoundSupers() {
-        return boundSupers;
+    public BindingSuperContainer getBoundSupers() {
+        return new BindingSuperContainer(classFile, boundSupers);
     }
 
     public void collect(JavaGenericRefTypeInstance boundBase) {
         JavaGenericRefTypeInstance prev = boundSupers.put(boundBase.getDeGenerifiedType(), boundBase);
+    }
+
+    public void collect(JavaRefTypeInstance boundBase) {
+        JavaGenericRefTypeInstance prev = boundSupers.put(boundBase, null);
     }
 }
