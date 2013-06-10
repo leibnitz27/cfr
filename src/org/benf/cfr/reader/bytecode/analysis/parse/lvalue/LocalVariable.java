@@ -18,15 +18,19 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class LocalVariable extends AbstractLValue {
     private final String name;
+    // We keep this so we don't confuse two variables with the same name, tricksy.
+    private final long idx;
 
     public LocalVariable(long index, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType) {
         super(inferredJavaType);
         this.name = variableNamer.getName(originalRawOffset, index);
+        this.idx = index;
     }
 
     public LocalVariable(String name, InferredJavaType inferredJavaType) {
         super(inferredJavaType);
         this.name = name;
+        this.idx = -1;
     }
 
     @Override
@@ -64,14 +68,24 @@ public class LocalVariable extends AbstractLValue {
     }
 
     @Override
-    public int hashCode() {
-        return name.hashCode();
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LocalVariable)) return false;
+
+        LocalVariable that = (LocalVariable) o;
+
+        if (!name.equals(that.name)) return false;
+        if (idx != that.idx) {
+            return false;
+        }
+
+        return true;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof LocalVariable)) return false;
-        LocalVariable other = (LocalVariable) o;
-        return name.equals(other.name);
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + (int) idx;
+        return result;
     }
 }

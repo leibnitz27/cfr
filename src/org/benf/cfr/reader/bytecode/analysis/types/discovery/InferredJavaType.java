@@ -217,7 +217,12 @@ public class InferredJavaType {
         if (thisStripped.equals(otherStripped)) return true;
 
         BindingSuperContainer otherSupers = otherType.getBindingSupers();
-        return otherSupers.containsBase(thisStripped);
+        if (otherSupers == null) {
+            // We're stuck.  Can't do this, best effort!
+            return true;
+        } else {
+            return otherSupers.containsBase(thisStripped);
+        }
     }
 
     private void chainFrom(InferredJavaType other) {

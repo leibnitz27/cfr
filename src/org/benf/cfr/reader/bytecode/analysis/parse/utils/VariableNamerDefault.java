@@ -11,6 +11,6 @@ public class VariableNamerDefault implements VariableNamer {
 
     @Override
     public String getName(int originalRawOffset, long stackPosition) {
-        return "v" + stackPosition;
+        return "var" + stackPosition;
     }
 }

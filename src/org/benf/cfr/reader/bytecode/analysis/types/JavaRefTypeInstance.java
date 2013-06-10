@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
 /**
@@ -90,8 +91,12 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public BindingSuperContainer getBindingSupers() {
-        ClassFile classFile = getClassFile();
-        return classFile == null ? null : classFile.getBindingSupers();
+        try {
+            ClassFile classFile = getClassFile();
+            return classFile == null ? null : classFile.getBindingSupers();
+        } catch (CannotLoadClassException e) {
+            return null;
+        }
     }
 
     @Override
