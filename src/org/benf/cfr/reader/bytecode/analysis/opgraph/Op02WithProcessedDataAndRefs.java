@@ -251,7 +251,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return d;
     }
 
-    private Statement buildInvoke() {
+    private Statement buildInvoke(Method thisCallerMethod) {
         ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
         StackValue object = getStackRValue(stackConsumed.size() - 1);
                 /*
@@ -262,18 +262,20 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         if (instr == JVMInstr.INVOKESPECIAL) {
             // todo: Verify that the class being called is the super of the object.
             special = true;
-            JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
-            JavaTypeInstance callType = function.getClassEntry().getTypeInstance();
-            ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
-            String funcName = nameAndType.getName().getValue();
-            boolean typesMatch = callType.equals(objType);
-            if (funcName.equals(MiscConstants.INIT_METHOD)) {
-                if (!(typesMatch || objType.getRawName().equals("java.lang.Object"))) {
-                    isSuper = true;
+            if (!thisCallerMethod.testAccessFlag(AccessFlagMethod.ACC_STATIC)) {
+                JavaTypeInstance objType = object.getInferredJavaType().getJavaTypeInstance();
+                JavaTypeInstance callType = function.getClassEntry().getTypeInstance();
+                ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
+                String funcName = nameAndType.getName().getValue();
+                boolean typesMatch = callType.equals(objType);
+                if (funcName.equals(MiscConstants.INIT_METHOD)) {
+                    if (!(typesMatch || objType.getRawName().equals("java.lang.Object"))) {
+                        isSuper = true;
+                    }
+                } else {
+                    // TODO : FIXME - this logic is overcomplicated - probably wrong.
+                    if (!typesMatch) isSuper = true;
                 }
-            } else {
-                // TODO : FIXME - this logic is overcomplicated - probably wrong.
-                if (!typesMatch) isSuper = true;
             }
         }
         MethodPrototype methodPrototype = function.getMethodPrototype();
@@ -616,7 +618,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 // (inner class methods do not use this.)
             case INVOKEVIRTUAL:
             case INVOKEINTERFACE: {
-                return buildInvoke();
+                return buildInvoke(method);
             }
             case RETURN:
                 return new ReturnNothingStatement();
