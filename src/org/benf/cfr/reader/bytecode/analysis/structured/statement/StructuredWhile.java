@@ -4,7 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -45,6 +45,11 @@ public class StructuredWhile extends AbstractStructuredBlockStatement {
         getBody().linearizeStatementsInto(out);
     }
 
+    @Override
+    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+        condition.collectUsedLValues(scopeDiscoverer);
+        getBody().traceLocalVariableScope(scopeDiscoverer);
+    }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {

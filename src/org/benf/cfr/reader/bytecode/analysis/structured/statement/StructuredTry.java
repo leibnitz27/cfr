@@ -4,7 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -67,7 +67,7 @@ public class StructuredTry extends AbstractStructuredStatement {
     }
 
     @Override
-    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         tryBlock.traceLocalVariableScope(scopeDiscoverer);
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             catchBlock.traceLocalVariableScope(scopeDiscoverer);

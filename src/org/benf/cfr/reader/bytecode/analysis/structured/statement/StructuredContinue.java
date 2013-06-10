@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -47,6 +48,9 @@ public class StructuredContinue extends AbstractStructuredContinue {
         out.add(this);
     }
 
+    @Override
+    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+    }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {

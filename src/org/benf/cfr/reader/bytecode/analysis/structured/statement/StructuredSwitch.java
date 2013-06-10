@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -60,6 +61,12 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement {
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
         getBody().linearizeStatementsInto(out);
+    }
+
+    @Override
+    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+        switchOn.collectUsedLValues(scopeDiscoverer);
+        getBody().traceLocalVariableScope(scopeDiscoverer);
     }
 
     @Override

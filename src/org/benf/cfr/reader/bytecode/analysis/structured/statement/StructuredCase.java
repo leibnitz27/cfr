@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -93,6 +94,15 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
         getBody().linearizeStatementsInto(out);
+    }
+
+    @Override
+    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+        for (Expression expression : values) {
+            expression.collectUsedLValues(scopeDiscoverer);
+        }
+
+        getBody().traceLocalVariableScope(scopeDiscoverer);
     }
 
     @Override

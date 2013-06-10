@@ -6,7 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -59,13 +59,14 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         // While it's not strictly speaking 2 blocks, we can model it as the statement / definition
         // section of the for as being an enclosing block.  (otherwise we add the variable in the wrong scope).
-        scopeDiscoverer.enterBlock();
+        scopeDiscoverer.enterBlock(this);
+        list.collectUsedLValues(scopeDiscoverer);
         iterator.collectLValueAssignments(null, this.getContainer(), scopeDiscoverer);
-        super.traceLocalVariableScope(scopeDiscoverer);
-        scopeDiscoverer.leaveBlock();
+        getBody().traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.leaveBlock(this);
     }
 
     @Override

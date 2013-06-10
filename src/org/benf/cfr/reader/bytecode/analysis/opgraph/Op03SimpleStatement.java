@@ -853,7 +853,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             LValue lValue = source.getCreatedLValue();
             // We don't have to worry about RHS having undesired side effects if we roll it into the
             // conditional - that has already happened.
-            LValueUsageCollector lvc = new LValueUsageCollector();
+            LValueUsageCollectorSimple lvc = new LValueUsageCollectorSimple();
             conditionalExpression.collectUsedLValues(lvc);
             if (!lvc.isUsed(lValue)) return;
             AbstractAssignment assignment = (AbstractAssignment) (source.containedStatement);
@@ -1129,7 +1129,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 if (assignmentSimple.getCreatedLValue().equals(lValue)) {
                     /* Verify that everything on the RHS is at the correct version */
                     Expression rhs = assignmentSimple.getRValue();
-                    LValueUsageCollector lValueUsageCollector = new LValueUsageCollector();
+                    LValueUsageCollectorSimple lValueUsageCollector = new LValueUsageCollectorSimple();
                     rhs.collectUsedLValues(lValueUsageCollector);
                     if (SSAIdentifierUtils.isMovableUnder(lValueUsageCollector.getUsedLValues(), start.ssaIdentifiers, current.ssaIdentifiers)) {
                         return current;

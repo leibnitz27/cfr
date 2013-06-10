@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,10 +24,5 @@ public abstract class AbstractStructuredBlockStatement extends AbstractStructure
     @Override
     public boolean isRecursivelyStructured() {
         return body.isFullyStructured();
-    }
-
-    @Override
-    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
-        body.traceLocalVariableScope(scopeDiscoverer);
     }
 }

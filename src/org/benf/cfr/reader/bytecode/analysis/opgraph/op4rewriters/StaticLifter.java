@@ -87,6 +87,7 @@ public class StaticLifter {
         } catch (NoSuchFieldException e) {
             return false;
         }
+        if (classFileFields.isEmpty()) return false;
         if (field != classFileFields.getFirst()) return false;
         classFileFields.removeFirst();
 

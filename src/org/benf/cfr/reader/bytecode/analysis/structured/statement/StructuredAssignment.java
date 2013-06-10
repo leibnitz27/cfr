@@ -6,7 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -51,7 +51,9 @@ public class StructuredAssignment extends AbstractStructuredStatement {
     }
 
     @Override
-    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
+    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+        rvalue.collectUsedLValues(scopeDiscoverer);
+        // todo - what if rvalue is an assignment?
         lvalue.collectLValueAssignments(rvalue, getContainer(), scopeDiscoverer);
     }
 

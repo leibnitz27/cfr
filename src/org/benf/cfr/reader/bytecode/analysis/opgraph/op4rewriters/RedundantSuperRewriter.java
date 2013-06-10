@@ -7,13 +7,18 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDefinition;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Predicate;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,6 +35,10 @@ public class RedundantSuperRewriter implements Op04Rewriter {
         return null;
     }
 
+    protected Set<LValue> getDeclarationsToNop(WildcardMatch wcm) {
+        return null;
+    }
+
     @Override
     public void rewrite(Op04StructuredStatement root) {
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
@@ -41,7 +50,7 @@ public class RedundantSuperRewriter implements Op04Rewriter {
 
 
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
-        MatchResultCollector collector = new SuperResultCollector(wcm1);
+        MatchResultCollector collector = new SuperResultCollector(wcm1, structuredStatements);
         while (mi.hasNext()) {
             mi.advance();
             if (m.match(mi, collector)) {
@@ -58,9 +67,11 @@ public class RedundantSuperRewriter implements Op04Rewriter {
     private class SuperResultCollector implements MatchResultCollector {
 
         private final WildcardMatch wcm;
+        private final List<StructuredStatement> structuredStatements;
 
-        private SuperResultCollector(WildcardMatch wcm) {
+        private SuperResultCollector(WildcardMatch wcm, List<StructuredStatement> structuredStatements) {
             this.wcm = wcm;
+            this.structuredStatements = structuredStatements;
         }
 
         @Override
@@ -74,6 +85,21 @@ public class RedundantSuperRewriter implements Op04Rewriter {
 
             if (canBeNopped(superInvokation)) {
                 statement.getContainer().nopOut();
+                Set<LValue> declarationsToNop = getDeclarationsToNop(wcm);
+                if (declarationsToNop != null) {
+                    List<StructuredStatement> decls = Functional.filter(structuredStatements, new Predicate<StructuredStatement>() {
+                        @Override
+                        public boolean test(StructuredStatement in) {
+                            return (in instanceof StructuredDefinition);
+                        }
+                    });
+                    for (StructuredStatement decl : decls) {
+                        StructuredDefinition defn = (StructuredDefinition) decl;
+                        if (declarationsToNop.contains(defn.getLvalue())) {
+                            defn.getContainer().nopOut();
+                        }
+                    }
+                }
             }
 
         }

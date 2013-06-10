@@ -2,8 +2,10 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
@@ -11,29 +13,24 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
+
 /**
  * Created:
  * User: lee
- * Date: 15/05/2012
+ * Date: 14/05/2012
  */
-public class StructuredBreak extends AbstractStructuredStatement {
+public class StructuredDefinition extends AbstractStructuredStatement {
 
-    private final BlockIdentifier breakBlock;
-    private final boolean localBreak;
+    private LValue lvalue;
 
-    public StructuredBreak(BlockIdentifier breakBlock, boolean localBreak) {
-        this.breakBlock = breakBlock;
-        this.localBreak = localBreak;
+    public StructuredDefinition(LValue lvalue) {
+        this.lvalue = lvalue;
     }
+
 
     @Override
     public Dumper dump(Dumper dumper) {
-        if (localBreak) {
-            dumper.print("break;\n");
-        } else {
-            dumper.print("break " + breakBlock.getName() + ";\n");
-        }
-        return dumper;
+        return dumper.print(lvalue.getInferredJavaType().getJavaTypeInstance().toString()).print(" ").dump(lvalue).endCodeln();
     }
 
     @Override
@@ -46,18 +43,30 @@ public class StructuredBreak extends AbstractStructuredStatement {
     }
 
     @Override
+    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+        throw new IllegalStateException();
+    }
+
+    public LValue getLvalue() {
+        return lvalue;
+    }
+
+    @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         StructuredStatement o = matchIterator.getCurrent();
-        if (!(o instanceof StructuredBreak)) return false;
-        StructuredBreak other = (StructuredBreak) o;
-        if (!breakBlock.equals(other.breakBlock)) return false;
-        // Don't check locality.
+        if (!this.equals(o)) return false;
         matchIterator.advance();
         return true;
     }
 
     @Override
-    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null) return false;
+        if (!(o instanceof StructuredDefinition)) return false;
+        StructuredDefinition other = (StructuredDefinition) o;
+        if (!lvalue.equals(other.lvalue)) return false;
+        return true;
     }
 
     @Override
@@ -65,3 +74,4 @@ public class StructuredBreak extends AbstractStructuredStatement {
     }
 
 }
+

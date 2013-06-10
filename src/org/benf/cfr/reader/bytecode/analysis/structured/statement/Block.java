@@ -3,9 +3,11 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
@@ -168,12 +170,21 @@ public class Block extends AbstractStructuredStatement {
     }
 
     @Override
-    public void traceLocalVariableScope(LValueAssignmentScopeDiscoverer scopeDiscoverer) {
-        scopeDiscoverer.enterBlock();
+    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+        scopeDiscoverer.enterBlock(this);
+
         for (Op04StructuredStatement item : containedStatements) {
             item.traceLocalVariableScope(scopeDiscoverer);
         }
-        scopeDiscoverer.leaveBlock();
+        scopeDiscoverer.leaveBlock(this);
+    }
+
+    /*
+     * This variable has been defined in an ENCLOSED scope, but used at this level.
+     */
+    @Override
+    public void markCreator(LocalVariable localVariable) {
+        containedStatements.addFirst(new Op04StructuredStatement(new StructuredDefinition(localVariable)));
     }
 
     @Override
