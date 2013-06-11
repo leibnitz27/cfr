@@ -32,6 +32,7 @@ public class ClassCache {
     });
 
     private final CFRState cfrState;
+
     /*
      * Set just after constructing first type.
      */
