@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.types.discovery;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.Troolean;
 
@@ -198,7 +199,11 @@ public class InferredJavaType {
         if (this.value.isLocked()) return;
         JavaGenericRefTypeInstance thisType = (JavaGenericRefTypeInstance) this.value.getJavaTypeInstance();
         if (!thisType.hasUnbound()) return;
-        JavaTypeInstance boundThisType = thisType.getDeGenerifiedType().getClassFile().getBindingSupers().getBoundAssignable(thisType, otherTypeInstance);
+        ClassFile degenerifiedThisClassFile = thisType.getDeGenerifiedType().getClassFile();
+        if (degenerifiedThisClassFile == null) {
+            return;
+        }
+        JavaTypeInstance boundThisType = degenerifiedThisClassFile.getBindingSupers().getBoundAssignable(thisType, otherTypeInstance);
         if (!boundThisType.equals(thisType)) {
             mkDelegate(this.value, new IJTInternal(boundThisType, Source.GENERICCALL, true));
         }
@@ -275,10 +280,14 @@ public class InferredJavaType {
         if (this == other) return;
         int pri = getRawType().compareTypePriorityTo(other.getRawType());
         if (pri >= 0) {
-            if (other.value.isLocked()) return;
+            if (other.value.isLocked()) {
+                return; // Todo : Should force a cast here??
+            }
             mkDelegate(other.value, this.value);
         } else {
-            if (this.value.isLocked()) return;
+            if (this.value.isLocked()) {
+                return;  // Todo : Should force a cast here??
+            }
             mkDelegate(this.value, other.value);
             this.value = other.value;
         }
