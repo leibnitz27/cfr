@@ -58,6 +58,11 @@ public class GotoStatement extends JumpingStatement {
         return false;
     }
 
+    @Override
+    public void collectObjectCreation(CreationCollector creationCollector) {
+        creationCollector.markJump();
+    }
+
     protected BlockIdentifier getTargetStartBlock() {
         Statement statement = getJumpTarget();
         if (statement instanceof WhileStatement) {

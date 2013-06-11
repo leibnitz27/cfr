@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -36,4 +37,10 @@ public class JSRCallStatement extends AbstractStatement {
     public StructuredStatement getStructuredStatement() {
         return new StructuredComment("JSR Call");
     }
+
+    @Override
+    public void collectObjectCreation(CreationCollector creationCollector) {
+        creationCollector.markJump();
+    }
+
 }

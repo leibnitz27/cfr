@@ -132,6 +132,11 @@ public class IfStatement extends GotoStatement {
     }
 
     @Override
+    public void collectObjectCreation(CreationCollector creationCollector) {
+        creationCollector.markJump();
+    }
+
+    @Override
     public StructuredStatement getStructuredStatement() {
         switch (getJumpType()) {
             case GOTO:

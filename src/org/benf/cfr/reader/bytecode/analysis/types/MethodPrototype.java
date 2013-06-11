@@ -238,7 +238,7 @@ public class MethodPrototype {
         if (expressions.size() != args.size()) {
             throw new ConfusedCFRException("expr arg size mismatch");
         }
-        if (object != null && classFile != null) {
+        if (object != null && classFile != null && !MiscConstants.INIT_METHOD.equals(name)) {
             object.getInferredJavaType().noteUseAs(classFile.getClassType());
         }
         int length = args.size();

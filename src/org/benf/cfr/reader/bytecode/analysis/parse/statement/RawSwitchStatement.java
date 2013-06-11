@@ -68,5 +68,9 @@ public class RawSwitchStatement extends AbstractStatement {
         return new SwitchStatement(switchOn, switchData, blockIdentifier);
     }
 
+    @Override
+    public void collectObjectCreation(CreationCollector creationCollector) {
+        creationCollector.markJump();
+    }
 
 }

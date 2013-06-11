@@ -49,11 +49,17 @@ public class InferredJavaType {
 
     private static int global_id = 0;
 
+    private enum ClashState {
+        None,
+        Clash,
+        Resolved
+    }
+
     private static class IJTInternal {
 
         private boolean isDelegate = false;
         private final boolean locked;
-        private Boolean markedBad;
+        private ClashState clashState;
         // When not delegating
         private JavaTypeInstance type;
 
@@ -63,24 +69,21 @@ public class InferredJavaType {
         private IJTInternal delegate;
 
         private IJTInternal(JavaTypeInstance type, Source source, boolean locked) {
-            if (type == null) {
-                int x = 3;
-            }
             this.type = type;
             this.source = source;
             this.id = global_id++;
             this.locked = locked;
-            this.markedBad = null;
+            this.clashState = ClashState.None;
         }
 
-        private IJTInternal(IJTInternal delegate, boolean locked, boolean markedBad) {
+        private IJTInternal(IJTInternal delegate, boolean locked, ClashState markedBad) {
             this.isDelegate = true;
             this.locked = locked;
             this.type = null;
             this.source = null;
             this.id = global_id++;
             this.delegate = delegate;
-            this.markedBad = markedBad;
+            this.clashState = markedBad;
         }
 
         public RawJavaType getRawType() {
@@ -116,10 +119,10 @@ public class InferredJavaType {
             }
         }
 
-        public boolean isMarkedBad() {
-            if (markedBad != null) return markedBad;
-            if (isDelegate) return delegate.isMarkedBad();
-            return false;
+        public ClashState getClashState() {
+            if (clashState != null) return clashState;
+            if (isDelegate) return delegate.getClashState();
+            return ClashState.None;
         }
 
         public void mkDelegate(IJTInternal newDelegate) {
@@ -148,13 +151,13 @@ public class InferredJavaType {
             }
         }
 
-        public void unmarkBad() {
-            if (markedBad != null) {
-                markedBad = null;
+        public void markClashState(ClashState newClashState) {
+            if (this.clashState != null) {
+                this.clashState = newClashState;
                 return;
             }
             if (isDelegate) {
-                delegate.unmarkBad();
+                delegate.markClashState(newClashState);
             }
         }
 
@@ -202,11 +205,11 @@ public class InferredJavaType {
     }
 
     public void noteUseAs(JavaTypeInstance type) {
-        if (value.isMarkedBad()) {
+        if (value.getClashState() == ClashState.Clash) {
             BindingSuperContainer bindingSuperContainer = getJavaTypeInstance().getBindingSupers();
             if (bindingSuperContainer.containsBase(type.getDeGenerifiedType())) {
                 value.forceGeneric(type);
-                value.unmarkBad();
+                value.markClashState(ClashState.Resolved);
             }
         }
     }
@@ -237,8 +240,10 @@ public class InferredJavaType {
         if (thisTypeInstance.isComplexType() && otherTypeInstance.isComplexType()) {
             if (!checkBaseCompatibility(other.getJavaTypeInstance())) {
                 // Break the chain here, mark this delegate as bad.
-                this.value = new IJTInternal(new IJTInternal(other.getJavaTypeInstance(), other.getSource(), true), false, true);
+                this.value = new IJTInternal(new IJTInternal(other.getJavaTypeInstance(), other.getSource(), true), false, ClashState.Clash);
                 // this.value.markTypeClash();
+                return;
+            } else if (this.value.getClashState() == ClashState.Resolved) {
                 return;
             }
         }
@@ -469,7 +474,7 @@ public class InferredJavaType {
 
     @Override
     public String toString() {
-        return value.isMarkedBad() ? " /* !! */ " : "";
+        return (value.getClashState() == ClashState.Clash) ? " /* !! */ " : "";
         //return "[" + (value.isMarkedBad() ? "!!" : "") + value.toString() + "]";
     }
 }
