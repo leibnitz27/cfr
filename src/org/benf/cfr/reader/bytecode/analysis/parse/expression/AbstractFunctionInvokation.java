@@ -30,7 +30,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression {
         super(new InferredJavaType(
                 methodPrototype.getReturnType(
                         object.getInferredJavaType().getJavaTypeInstance(), args
-                ), InferredJavaType.Source.FIELD
+                ), InferredJavaType.Source.FIELD, true
         ));
         this.function = function;
         this.methodPrototype = methodPrototype;

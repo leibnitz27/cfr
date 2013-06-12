@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -25,7 +26,13 @@ public class CastExpression extends AbstractExpression {
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print("(" + getInferredJavaType().getCastString() + ")").dump(child);
+        if (child.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN) {
+            // This is ugly.  Unfortunately, it's necessary (currently!) as we don't have an extra pass to
+            // transform invalid casts like this.
+            return d.print("(" + getInferredJavaType().getCastString() + ")(").dump(child).print(" ? 1 : 0)");
+        } else {
+            return d.print("(" + getInferredJavaType().getCastString() + ")").dump(child);
+        }
     }
 
     @Override

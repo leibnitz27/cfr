@@ -165,12 +165,14 @@ public class CodeAnalyser {
             for (Op03SimpleStatement node : op03SimpleParseNodes) {
                 node.dumpInner(debugDumper);
             }
+            debugDumper.print("\n\n");
         }
 
         if (cfrState.getShowOps() == SHOW_L3_ORDERED) {
             debugDumper.newln().newln();
             debugDumper.print("Linked Op3 statements:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
+            debugDumper.print("\n\n");
         }
 
         // Expand any 'multiple' statements (eg from dups)
@@ -311,7 +313,7 @@ public class CodeAnalyser {
 
         if (cfrState.getShowOps() == SHOW_L4_FINAL_OP3) {
             debugDumper.newln().newln();
-            debugDumper.print("Linked Op3 statements:\n");
+            debugDumper.print("Final Op3 statements:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
 

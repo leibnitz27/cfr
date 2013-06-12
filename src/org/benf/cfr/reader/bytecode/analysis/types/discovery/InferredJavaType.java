@@ -233,8 +233,8 @@ public class InferredJavaType {
         }
     }
 
-    private void chainFrom(InferredJavaType other) {
-        if (this == other) return;
+    private CastAction chainFrom(InferredJavaType other) {
+        if (this == other) return CastAction.None;
 
         JavaTypeInstance thisTypeInstance = this.value.getJavaTypeInstance();
         JavaTypeInstance otherTypeInstance = other.value.getJavaTypeInstance();
@@ -247,9 +247,9 @@ public class InferredJavaType {
                 // Break the chain here, mark this delegate as bad.
                 this.value = new IJTInternal(new IJTInternal(other.getJavaTypeInstance(), other.getSource(), true), false, ClashState.Clash);
                 // this.value.markTypeClash();
-                return;
+                return CastAction.None;
             } else if (this.value.getClashState() == ClashState.Resolved) {
-                return;
+                return CastAction.None;
             }
         }
 
@@ -262,6 +262,7 @@ public class InferredJavaType {
 
         mkDelegate(this.value, other.value);
         this.value = other.value; // new IJTDelegate(other);
+        return CastAction.None;
     }
 
     private static void mkDelegate(IJTInternal a, IJTInternal b) {
@@ -276,21 +277,26 @@ public class InferredJavaType {
     * v3 [t2<-] = v1;
     * v3 = v0;
     */
-    private void chainIntegralTypes(InferredJavaType other) {
-        if (this == other) return;
+    private CastAction chainIntegralTypes(InferredJavaType other) {
+        if (this == other) return CastAction.None;
         int pri = getRawType().compareTypePriorityTo(other.getRawType());
         if (pri >= 0) {
             if (other.value.isLocked()) {
-                return; // Todo : Should force a cast here??
+                if (pri > 0) {
+                    return CastAction.InsertExplicit;
+                } else {
+                    return CastAction.None;
+                }
             }
             mkDelegate(other.value, this.value);
         } else {
             if (this.value.isLocked()) {
-                return;  // Todo : Should force a cast here??
+                return CastAction.InsertExplicit;
             }
             mkDelegate(this.value, other.value);
             this.value = other.value;
         }
+        return CastAction.None;
     }
 
     public static void compareAsWithoutCasting(InferredJavaType a, InferredJavaType b) {
@@ -399,17 +405,6 @@ public class InferredJavaType {
         }
     }
 
-    public void generify(JavaTypeInstance other) {
-        JavaTypeInstance typeInstanceThis = getJavaTypeInstance();
-        JavaTypeInstance typeInstanceOther = other.getDeGenerifiedType();
-        if (!typeInstanceOther.equals(typeInstanceThis)) {
-            if (!("java/lang/Object".equals(typeInstanceThis.getRawName()))) {
-                throw new ConfusedCFRException("Incompatible types : " + typeInstanceThis.getClass() + "[" + typeInstanceThis + "] / " + typeInstanceOther.getClass() + "[" + typeInstanceOther + "]");
-            }
-        }
-        value.forceGeneric(other);
-    }
-
     public void deGenerify(JavaTypeInstance other) {
         JavaTypeInstance typeInstanceThis = getJavaTypeInstance().getDeGenerifiedType();
         JavaTypeInstance typeInstanceOther = other;
@@ -424,36 +419,33 @@ public class InferredJavaType {
     /* We've got some type info about this type already, but we're assigning from other.
      * so, if we can, let's narrow this type, or chain it from
      */
-    public void chain(InferredJavaType other) {
-        if (this == IGNORE) return;
-        if (other == IGNORE) return;
+    public CastAction chain(InferredJavaType other) {
+        if (this == IGNORE) return CastAction.None;
+        if (other == IGNORE) return CastAction.None;
 
         if (other.getRawType() == RawJavaType.VOID) {
-            return;
+            return CastAction.None;
         }
 
         RawJavaType thisRaw = value.getRawType();
         RawJavaType otherRaw = other.getRawType();
 
         if (thisRaw == RawJavaType.VOID) {
-            chainFrom(other);
-            return;
+            return chainFrom(other);
         }
 
         if (thisRaw.getStackType() != otherRaw.getStackType()) {
             // throw new ConfusedCFRException("Can't tighten from " + thisRaw + " to " + otherRaw);
-            return;
+            return CastAction.None;
         }
         if (thisRaw == otherRaw && thisRaw.getStackType() != StackType.INT) {
-            chainFrom(other);
-            return;
+            return chainFrom(other);
         }
         if (thisRaw.getStackType() == StackType.INT) {
             if (otherRaw.getStackType() != StackType.INT) {
                 throw new IllegalStateException();
             }
-            chainIntegralTypes(other);
-            return;
+            return chainIntegralTypes(other);
         }
         throw new ConfusedCFRException("Don't know how to tighten from " + thisRaw + " to " + otherRaw);
     }

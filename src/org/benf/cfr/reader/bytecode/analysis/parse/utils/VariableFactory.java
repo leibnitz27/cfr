@@ -37,10 +37,10 @@ public class VariableFactory {
         this.typedArgs = ListFactory.newList();
         if (methodPrototype.isInstanceMethod()) {
             JavaTypeInstance thisType = method.getClassFile().getClassType();
-            typedArgs.add(new InferredJavaType(thisType, InferredJavaType.Source.UNKNOWN));
+            typedArgs.add(new InferredJavaType(thisType, InferredJavaType.Source.UNKNOWN, true));
         }
         for (JavaTypeInstance arg : args) {
-            typedArgs.add(new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN));
+            typedArgs.add(new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN, true));
         }
         this.method = method;
     }
