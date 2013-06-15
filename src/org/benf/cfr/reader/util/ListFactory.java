@@ -22,6 +22,10 @@ public class ListFactory {
         return new ArrayList<X>(original);
     }
 
+    public static <X extends Object> List<X> newList(int size) {
+        return new ArrayList<X>(size);
+    }
+
     public static <X extends Object> LinkedList<X> newLinkedList() {
         return new LinkedList<X>();
     }

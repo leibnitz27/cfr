@@ -986,7 +986,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             if (other == this) return 0;
             int startCompare = triggeringGroup.getBytecodeIndexFrom() - other.triggeringGroup.getBytecodeIndexFrom();
             if (startCompare != 0) return startCompare;
-            throw new ConfusedCFRException("Can't compare these exception groups.");
+            int endCompare = triggeringGroup.getByteCodeIndexTo() - triggeringGroup.getByteCodeIndexTo();
+            return 0 - endCompare;
+//            throw new ConfusedCFRException("Can't compare these exception groups.");
         }
 
         @Override
@@ -1018,8 +1020,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         // If there's already something, we need to figure out which belongs in what order.
         int insertionPos = Collections.binarySearch(collides, exceptionTempStatement);
-        if (insertionPos >= 0) throw new ConfusedCFRException("Already exists?");
-        insertionPos = -(insertionPos + 1);
+        if (insertionPos >= 0) {
+            // throw new ConfusedCFRException("Already exists?");
+            insertionPos++;
+        } else {
+            insertionPos = -(insertionPos + 1);
+        }
         if (insertionPos == 0) { // start
             collides.add(0, exceptionTempStatement);
             /* Anything which was */

@@ -23,19 +23,23 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
     private final short bytecode_index_handler;
     private final short catch_type;
 
-    public ExceptionTableEntry(ByteData raw) {
+    private final int priority;
+
+    public ExceptionTableEntry(ByteData raw, int priority) {
         this(
                 raw.getS2At(OFFSET_INDEX_FROM),
                 raw.getS2At(OFFSET_INDEX_TO),
                 raw.getS2At(OFFSET_INDEX_HANDLER),
-                raw.getS2At(OFFSET_CATCH_TYPE));
+                raw.getS2At(OFFSET_CATCH_TYPE),
+                priority);
     }
 
-    private ExceptionTableEntry(short from, short to, short handler, short catchType) {
+    public ExceptionTableEntry(short from, short to, short handler, short catchType, int priority) {
         this.bytecode_index_from = from;
         this.bytecode_index_to = to;
         this.bytecode_index_handler = handler;
         this.catch_type = catchType;
+        this.priority = priority;
         if (to < from) {
             throw new IllegalStateException("Malformed exception block, to < from");
         }
@@ -57,12 +61,17 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         return catch_type;
     }
 
+    public int getPriority() {
+        return priority;
+    }
+
     public ExceptionTableEntry aggregateWith(ExceptionTableEntry later) {
         if ((this.bytecode_index_from >= later.bytecode_index_from) ||
                 (this.bytecode_index_to != later.bytecode_index_from - 1)) {
             throw new ConfusedCFRException("Can't aggregate exceptionTableEntries");
         }
-        return new ExceptionTableEntry(this.bytecode_index_from, later.bytecode_index_to, this.bytecode_index_handler, this.catch_type);
+        // TODO : Priority is not quite right here.
+        return new ExceptionTableEntry(this.bytecode_index_from, later.bytecode_index_to, this.bytecode_index_handler, this.catch_type, this.priority);
     }
 
     public static UnaryFunction<ByteData, ExceptionTableEntry> getBuilder(ConstantPool cp) {
@@ -70,12 +79,14 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
     }
 
     private static class ExceptionTableEntryBuilder implements UnaryFunction<ByteData, ExceptionTableEntry> {
+        int idx = 0;
+
         public ExceptionTableEntryBuilder(ConstantPool cp) {
         }
 
         @Override
         public ExceptionTableEntry invoke(ByteData arg) {
-            return new ExceptionTableEntry(arg);
+            return new ExceptionTableEntry(arg, idx++);
         }
     }
 
@@ -84,7 +95,7 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         int res = bytecode_index_from - other.bytecode_index_from;
         if (res != 0) return res;
         res = bytecode_index_to - other.bytecode_index_to;
-        if (res != 0) return res;
+        if (res != 0) return 0 - res;
         res = bytecode_index_handler - other.bytecode_index_handler;
         return res;
     }

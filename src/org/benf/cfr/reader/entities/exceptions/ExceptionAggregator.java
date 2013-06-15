@@ -2,16 +2,14 @@ package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,6 +26,8 @@ public class ExceptionAggregator {
         @Override
         public int compare(ExceptionTableEntry exceptionTableEntry, ExceptionTableEntry exceptionTableEntry1) {
             int res = exceptionTableEntry.getBytecodeIndexFrom() - exceptionTableEntry1.getBytecodeIndexFrom();
+            if (res != 0) return res;
+            res = exceptionTableEntry.getBytecodeIndexTo() - exceptionTableEntry1.getBytecodeIndexTo();
             return res;
         }
     }
@@ -87,6 +87,32 @@ public class ExceptionAggregator {
     */
     public ExceptionAggregator(List<ExceptionTableEntry> rawExceptions, BlockIdentifierFactory blockIdentifierFactory, ConstantPool cp) {
         rawExceptions = Functional.filter(rawExceptions, new ValidException());
+        if (rawExceptions.isEmpty()) return;
+
+        /*
+         * If an exception table entry for a type X OVERLAPS an entry for a type X, but has a lower priority, then
+         * it is truncated.  This probably indicates obfuscation.
+         */
+
+        // Need to build up an interval tree for EACH exception handler type
+        Map<Short, List<ExceptionTableEntry>> grouped = Functional.groupToMapBy(rawExceptions, new UnaryFunction<ExceptionTableEntry, Short>() {
+            @Override
+            public Short invoke(ExceptionTableEntry arg) {
+                return arg.getCatchType();
+            }
+        });
+
+        List<ExceptionTableEntry> processedExceptions = ListFactory.newList(rawExceptions.size());
+        for (List<ExceptionTableEntry> list : grouped.values()) {
+            IntervalCount intervalCount = new IntervalCount();
+            for (ExceptionTableEntry e : list) {
+                Pair<Short, Short> res = intervalCount.generateNonIntersection(e.getBytecodeIndexFrom(), e.getBytecodeIndexTo());
+                if (res == null) continue;
+                processedExceptions.add(new ExceptionTableEntry(res.getFirst(), res.getSecond(), e.getBytecodeIndexHandler(), e.getCatchType(), e.getPriority()));
+            }
+        }
+        rawExceptions = processedExceptions;
+
         /* 
          * Try and aggregate exceptions for the same object which jump to the same target.
          */
@@ -98,11 +124,11 @@ public class ExceptionAggregator {
                         return exceptionTableEntry.getCatchType() - exceptionTableEntry1.getCatchType();
                     }
                 }, new UnaryFunction<List<ExceptionTableEntry>, ByTarget>() {
-            @Override
-            public ByTarget invoke(List<ExceptionTableEntry> arg) {
-                return new ByTarget(arg);
-            }
-        }
+                    @Override
+                    public ByTarget invoke(List<ExceptionTableEntry> arg) {
+                        return new ByTarget(arg);
+                    }
+                }
         );
 
         rawExceptions.clear();

@@ -2250,7 +2250,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (targets.size() != 1) throw new ConfusedCFRException("Synthetic catch block has multiple targets");
             knownMembers.add(insertBlockPadding("empty catch block", start, targets.get(0), blockIdentifier, statements));
         }
-        for (Op03SimpleStatement inBlock : knownMembers) {
+        /*
+         * But now we have to remove (boo) non contiguous ones.
+         * ORDERCHEAT.
+         *
+         * This is because otherwise we'll jump out, and back in to a block.
+         *
+         * Sort knownMembers
+         */
+        List<Op03SimpleStatement> knownMemberList = ListFactory.newList(knownMembers);
+        Collections.sort(knownMemberList, new CompareByIndex());
+
+        List<Op03SimpleStatement> truncatedKnownMembers = ListFactory.newList();
+        int x = statements.indexOf(knownMemberList.get(0));
+        for (int l = statements.size(); x < l; ++x) {
+            Op03SimpleStatement statement = statements.get(x);
+            if (!knownMembers.contains(statement)) break;
+            truncatedKnownMembers.add(statement);
+        }
+
+        for (Op03SimpleStatement inBlock : truncatedKnownMembers) {
             inBlock.containedInBlocks.add(blockIdentifier);
         }
         /*
