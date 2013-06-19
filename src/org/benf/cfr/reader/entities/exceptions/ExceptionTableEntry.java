@@ -45,6 +45,10 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         }
     }
 
+    public ExceptionTableEntry copyWithRange(short from, short to) {
+        return new ExceptionTableEntry(from, to, this.bytecode_index_handler, this.catch_type, this.priority);
+    }
+
     public short getBytecodeIndexFrom() {
         return bytecode_index_from;
     }

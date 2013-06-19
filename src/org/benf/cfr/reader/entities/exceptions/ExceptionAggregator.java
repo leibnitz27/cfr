@@ -139,6 +139,13 @@ public class ExceptionAggregator {
             rawExceptions.addAll(byTarget.getAggregated());
         }
 
+        /*
+         * But if two different exceptions actually overlap, then we've either got obfuscation or hand coded?
+         * (or some interesting transformation).
+         */
+        IntervalOverlapper intervalOverlapper = new IntervalOverlapper(rawExceptions);
+        rawExceptions = intervalOverlapper.getExceptions();
+
         Collections.sort(rawExceptions);
         CompareExceptionTablesByStart compareExceptionTablesByStart = new CompareExceptionTablesByStart();
         ExceptionTableEntry prev = null;
