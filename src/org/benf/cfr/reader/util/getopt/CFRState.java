@@ -315,6 +315,20 @@ public class CFRState {
         return classToPathMap;
     }
 
+    public ClassFile getClassFileMaybePath(String pathOrName, boolean needInnerClasses) throws CannotLoadClassException {
+        if (pathOrName.endsWith(".class")) {
+            // Fine - we're sure it's a class file.
+            return getClassFile(pathOrName, needInnerClasses);
+        }
+        // See if this file exists - in which case it's odd.
+        File f = new File(pathOrName);
+        if (f.exists()) {
+            f = null;
+            return getClassFile(pathOrName, needInnerClasses);
+        }
+        return getClassFile(ClassNameUtils.convertToPath(pathOrName) + ".class", needInnerClasses);
+    }
+
     public ClassFile getClassFile(String path, boolean needInnerClasses) throws CannotLoadClassException {
         return classFileCache.get(new Pair<String, Boolean>(path, needInnerClasses));
     }
