@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -24,18 +25,22 @@ import java.util.List;
  */
 public class LambdaExpressionFallback extends AbstractExpression {
 
+    private JavaTypeInstance callClassType;
     private String lambdaFnName;
     private List<JavaTypeInstance> targetFnArgTypes;
     private List<Expression> curriedArgs;
     private boolean instance;
+    private final boolean colon;
 
 
-    public LambdaExpressionFallback(InferredJavaType castJavaType, String lambdaFnName, List<JavaTypeInstance> targetFnArgTypes, List<Expression> curriedArgs, boolean instance) {
+    public LambdaExpressionFallback(JavaTypeInstance callClassType, InferredJavaType castJavaType, String lambdaFnName, List<JavaTypeInstance> targetFnArgTypes, List<Expression> curriedArgs, boolean instance) {
         super(castJavaType);
-        this.lambdaFnName = lambdaFnName;
+        this.callClassType = callClassType;
+        this.lambdaFnName = lambdaFnName.equals(MiscConstants.INIT_METHOD) ? "new" : lambdaFnName;
         this.targetFnArgTypes = targetFnArgTypes;
         this.curriedArgs = curriedArgs;
         this.instance = instance;
+        this.colon = (targetFnArgTypes.size() == 1) && curriedArgs.isEmpty();
     }
 
     @Override
@@ -60,26 +65,30 @@ public class LambdaExpressionFallback extends AbstractExpression {
 
     @Override
     public Dumper dump(Dumper d) {
-        int n = targetFnArgTypes.size();
-        if (n > 1) d.print("(");
-        for (int x = 0; x < n; ++x) {
-            if (x > 0) d.print(", ");
-            d.print("arg_" + x);
+        if (colon) {
+            d.print(callClassType.toString()).print("::").print(lambdaFnName);
+        } else {
+            int n = targetFnArgTypes.size();
+            if (n > 1) d.print("(");
+            for (int x = 0; x < n; ++x) {
+                if (x > 0) d.print(", ");
+                d.print("arg_" + x);
+            }
+            if (n > 1) d.print(")");
+            d.print(" -> ").print(callClassType.toString()).print('.').print(lambdaFnName);
+            d.print("(");
+            boolean first = true;
+            for (int x = instance ? 1 : 0, cnt = curriedArgs.size(); x < cnt; ++x) {
+                Expression c = curriedArgs.get(x);
+                first = comma(first, d);
+                d.dump(c);
+            }
+            for (int x = 0; x < n; ++x) {
+                first = comma(first, d);
+                d.print("arg_" + x);
+            }
+            d.print(")");
         }
-        if (n > 1) d.print(")");
-        d.print(" -> ").print(lambdaFnName);
-        d.print("(");
-        boolean first = true;
-        for (int x = instance ? 1 : 0, cnt = curriedArgs.size(); x < cnt; ++x) {
-            Expression c = curriedArgs.get(x);
-            first = comma(first, d);
-            d.dump(c);
-        }
-        for (int x = 0; x < n; ++x) {
-            first = comma(first, d);
-            d.print("arg_" + x);
-        }
-        d.print(")");
         return d;
     }
 
