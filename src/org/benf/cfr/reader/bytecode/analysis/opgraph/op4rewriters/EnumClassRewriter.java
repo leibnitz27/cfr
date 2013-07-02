@@ -130,7 +130,7 @@ public class EnumClassRewriter {
         for (Map.Entry<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entry : entryMap.entrySet()) {
             entries.add(Pair.make(entry.getKey(), entry.getValue().getData()));
         }
-        classFile.setDumpHelper(new ClassFileDumperEnum(entries));
+        classFile.setDumpHelper(new ClassFileDumperEnum(state, entries));
 
         return true;
     }
@@ -245,7 +245,7 @@ public class EnumClassRewriter {
                 boolean isStatic = field.testAccessFlag(AccessFlag.ACC_STATIC);
                 boolean isEnum = field.testAccessFlag(AccessFlag.ACC_ENUM);
                 boolean expected = (isStatic && isEnum && fieldType.equals(classType));
-                StaticVariable tmp = new StaticVariable(clazzIJT, classType, field.getFieldName(cp));
+                StaticVariable tmp = new StaticVariable(clazzIJT, classType, field.getFieldName());
                 if (expected != entryMap.containsKey(tmp)) {
                     return false;
                 }

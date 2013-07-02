@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util;
 
 import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
@@ -45,5 +46,13 @@ public class MiscStatementTools {
             return null;
         }
         return structuredStatements;
+    }
+
+    public static void applyExpressionRewriter(Op04StructuredStatement root, ExpressionRewriter expressionRewriter) {
+        List<StructuredStatement> statements = linearise(root);
+        if (statements == null) return;
+        for (StructuredStatement statement : statements) {
+            statement.rewriteExpressions(expressionRewriter);
+        }
     }
 }

@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -26,9 +27,11 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
             AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_ABSTRACT
     };
 
+    private final CFRState cfrState;
     private final List<Pair<StaticVariable, ConstructorInvokationSimple>> entries;
 
-    public ClassFileDumperEnum(List<Pair<StaticVariable, ConstructorInvokationSimple>> entries) {
+    public ClassFileDumperEnum(CFRState cfrState, List<Pair<StaticVariable, ConstructorInvokationSimple>> entries) {
+        this.cfrState = cfrState;
         this.entries = entries;
     }
 
@@ -65,7 +68,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
         ConstantPool cp = classFile.getConstantPool();
         if (!innerClass) {
-            d.print(MiscConstants.CFR_HEADER);
+            d.print(getCFRHeader(cfrState));
             d.print("package ").print(classFile.getThisClassConstpoolEntry().getPackageName()).endCodeln().newln();
             dumpImports(d, cp.getClassCache(), classFile);
         }

@@ -38,11 +38,11 @@ public class Field implements KnowsRawSize {
     private static final long OFFSET_OF_ATTRIBUTES = 8;
 
     private final long length;
-    private final short nameIndex;
     private final short descriptorIndex;
     private final Set<AccessFlag> accessFlags;
     private final Map<String, Attribute> attributes;
     private final TypedLiteral constantValue;
+    private final String fieldName;
     private transient JavaTypeInstance cachedDecodedType;
 
     public Field(ByteData raw, final ConstantPool cp) {
@@ -59,10 +59,11 @@ public class Field implements KnowsRawSize {
                 });
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
-        this.nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
+        short nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
         Attribute cvAttribute = attributes.get(AttributeConstantValue.ATTRIBUTE_NAME);
         this.constantValue = cvAttribute == null ? null : TypedLiteral.getConstantPoolEntry(cp, ((AttributeConstantValue) cvAttribute).getValue());
+        this.fieldName = cp.getUTF8Entry(nameIndex).getValue();
     }
 
     @Override
@@ -95,8 +96,8 @@ public class Field implements KnowsRawSize {
         return cachedDecodedType;
     }
 
-    public String getFieldName(ConstantPool cp) {
-        return cp.getUTF8Entry(nameIndex).getValue();
+    public String getFieldName() {
+        return fieldName;
     }
 
     public boolean testAccessFlag(AccessFlag accessFlag) {
@@ -107,7 +108,7 @@ public class Field implements KnowsRawSize {
         return constantValue;
     }
 
-    public void dump(Dumper d, ConstantPool cp) {
+    public void dump(Dumper d, String name, ConstantPool cp) {
         StringBuilder sb = new StringBuilder();
         String prefix = CollectionUtils.join(accessFlags, " ");
         if (!prefix.isEmpty()) {
@@ -115,7 +116,7 @@ public class Field implements KnowsRawSize {
             sb.append(' ');
         }
         JavaTypeInstance type = getJavaTypeInstance(cp);
-        sb.append(type.toString()).append(' ').append(getFieldName(cp));
+        sb.append(type.toString()).append(' ').append(name);
         d.print(sb.toString());
     }
 }

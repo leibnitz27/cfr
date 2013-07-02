@@ -10,7 +10,9 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.util.Functional;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -33,6 +35,13 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
             if (accessFlags.contains(accessFlag)) sb.append(accessFlag).append(' ');
         }
         return sb.toString();
+    }
+
+    protected String getCFRHeader(CFRState cfrState) {
+        String header = MiscConstants.CFR_HEADER_BRA +
+                (cfrState.getBooleanOpt(CFRState.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") +
+                MiscConstants.CFR_HEADER_KET;
+        return header;
     }
 
     protected static String getFormalParametersText(ClassSignature signature) {

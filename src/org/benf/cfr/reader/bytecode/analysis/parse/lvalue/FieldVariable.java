@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
@@ -18,26 +19,57 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Date: 22/03/2012
  * Time: 18:32
  * To change this template use File | Settings | File Templates.
+ * <p/>
+ * Note - a field variable LValue means an lValue of ANY object.
  */
 public class FieldVariable extends AbstractLValue {
 
     private Expression object;
-    private final ConstantPoolEntryFieldRef field;
+
+    private final ClassFile classFile;
+    private final ClassFileField classFileField;
+    private final String failureName; // if we can't get the classfileField.
 
     public FieldVariable(Expression object, ClassFile classFile, ConstantPool cp, ConstantPoolEntry field) {
-        super(getFieldType((ConstantPoolEntryFieldRef) field, classFile, cp));
+        super(getFieldType((ConstantPoolEntryFieldRef) field));
+        this.classFile = classFile;
         this.object = object;
-        this.field = (ConstantPoolEntryFieldRef) field;
+        ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) field;
+        this.classFileField = getField(fieldRef);
+        this.failureName = fieldRef.getLocalName();
     }
 
-    static InferredJavaType getFieldType(ConstantPoolEntryFieldRef fieldRef, ClassFile classFile, ConstantPool cp) {
+    static ClassFileField getField(ConstantPoolEntryFieldRef fieldRef) {
         String name = fieldRef.getLocalName();
+        JavaRefTypeInstance ref = (JavaRefTypeInstance) fieldRef.getClassEntry().getTypeInstance();
+        ClassFile classFile = ref.getClassFile();
+        if (classFile == null) return null;
+
         try {
-            Field field = classFile.getFieldByName(name).getField();
-            return new InferredJavaType(field.getJavaTypeInstance(cp), InferredJavaType.Source.FIELD);
+            ClassFileField field = classFile.getFieldByName(name);
+            return field;
         } catch (NoSuchFieldException ignore) {
-            return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
+            return null;
         }
+    }
+
+    static InferredJavaType getFieldType(ConstantPoolEntryFieldRef fieldRef) {
+        String name = fieldRef.getLocalName();
+        JavaRefTypeInstance ref = (JavaRefTypeInstance) fieldRef.getClassEntry().getTypeInstance();
+        ClassFile classFile = ref.getClassFile();
+        if (classFile != null) {
+            try {
+                Field field = classFile.getFieldByName(name).getField();
+                return new InferredJavaType(field.getJavaTypeInstance(classFile.getConstantPool()), InferredJavaType.Source.FIELD);
+            } catch (NoSuchFieldException ignore) {
+            }
+        }
+        return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
+
+    }
+
+    public ClassFileField getClassFileField() {
+        return classFileField;
     }
 
     @Override
@@ -46,11 +78,18 @@ public class FieldVariable extends AbstractLValue {
     }
 
     public JavaTypeInstance getOwningClassType() {
-        return field.getClassEntry().getTypeInstance();
+        return classFile.getClassType();
     }
 
     public String getFieldName() {
-        return field.getLocalName();
+        if (classFileField == null) {
+            return failureName;
+        }
+        return classFileField.getFieldName();
+    }
+
+    public Expression getObject() {
+        return object;
     }
 
     @Override
@@ -75,6 +114,7 @@ public class FieldVariable extends AbstractLValue {
 
     @Override
     public LValue applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        object = expressionRewriter.rewriteExpression(object, ssaIdentifiers, statementContainer, flags);
         return this;
     }
 

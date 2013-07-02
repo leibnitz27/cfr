@@ -4,15 +4,22 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.DeadMethodRemover;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -63,11 +70,37 @@ public class CodeAnalyserWholeClass {
     }
 
     private static void fixInnerClassConstructors(ClassFile classFile, CFRState state) {
+        if (!state.removeInnerClassSynthetics()) return;
+
         if (classFile.testAccessFlag(AccessFlag.ACC_STATIC)) return;
 
+        Set<LValue> removedLValues = SetFactory.newSet();
+        boolean invalid = false;
         for (Method method : classFile.getConstructors()) {
-            Op04StructuredStatement.fixInnerClassConstruction(state, method, method.getAnalysis());
+            LValue removed = Op04StructuredStatement.fixInnerClassConstruction(state, method, method.getAnalysis());
+            if (removed == null) {
+                invalid = true;
+            } else {
+                removedLValues.add(removed);
+            }
         }
+        if (invalid || removedLValues.size() != 1) return;
+
+        LValue outerThis = removedLValues.iterator().next();
+        if (!(outerThis instanceof FieldVariable)) return;
+
+        FieldVariable fieldVariable = (FieldVariable) outerThis;
+        /*
+         * FieldVariable here is a 'local' one - it has an expression object of 'this'.
+         *
+         * Find all instances of 'this'.fieldVariable in the class, and replace with
+         * OuterClassName.this
+         */
+        JavaTypeInstance fieldType = outerThis.getInferredJavaType().getJavaTypeInstance();
+        String name = fieldType.toString();
+        ClassFileField classFileField = fieldVariable.getClassFileField();
+        classFileField.overrideName(name + ".this");
+//        classFileField.markHidden();
     }
 
     private static Method getStaticConstructor(ClassFile classFile) {

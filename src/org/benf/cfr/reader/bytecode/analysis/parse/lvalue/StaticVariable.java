@@ -26,7 +26,7 @@ public class StaticVariable extends AbstractLValue {
     private final String varName;
 
     public StaticVariable(ClassFile classFile, ConstantPool cp, ConstantPoolEntry field) {
-        super(FieldVariable.getFieldType((ConstantPoolEntryFieldRef) field, classFile, cp));
+        super(FieldVariable.getFieldType((ConstantPoolEntryFieldRef) field));
         this.field = (ConstantPoolEntryFieldRef) field;
         this.clazz = this.field.getClassEntry().getTypeInstance();
         this.varName = this.field.getLocalName();

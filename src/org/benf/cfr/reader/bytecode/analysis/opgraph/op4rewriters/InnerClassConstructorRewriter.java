@@ -22,6 +22,7 @@ import java.util.List;
  */
 public class InnerClassConstructorRewriter implements Op04Rewriter {
     private final LocalVariable outerThisArgument;
+    private LValue matchedLValue;
 
     public InnerClassConstructorRewriter(LocalVariable outerThisArgument) {
         this.outerThisArgument = outerThisArgument;
@@ -42,9 +43,15 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
         while (mi.hasNext()) {
             mi.advance();
             if (m.match(mi, collector)) {
+                LValue lValue = wcm1.getLValueWildCard("outerthis").getMatch();
+                matchedLValue = lValue;
                 return;
             }
         }
+    }
+
+    public LValue getMatchedLValue() {
+        return matchedLValue;
     }
 
     private static class ConstructResultCollector implements MatchResultCollector {
@@ -62,9 +69,10 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
 
         @Override
         public void collectStatement(String name, StructuredStatement statement) {
-            LValue lValue = wcm.getLValueWildCard("outerthis").getMatch();
             statement.getContainer().nopOut();
-
+            /* We also have to rename lValue as 'this.ClassName', or simply '' in the case where there is
+             * No ambiguity.
+             */
         }
 
 

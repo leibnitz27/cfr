@@ -18,6 +18,7 @@ public class ClassFileField {
      */
     private Expression initialValue;
     private boolean isHidden;
+    private String overriddenName;
 
     public ClassFileField(Field field) {
         this.field = field;
@@ -46,8 +47,17 @@ public class ClassFileField {
         isHidden = true;
     }
 
+    public void overrideName(String override) {
+        overriddenName = override;
+    }
+
+    public String getFieldName() {
+        if (overriddenName != null) return overriddenName;
+        return field.getFieldName();
+    }
+
     public void dump(Dumper d, ConstantPool cp) {
-        field.dump(d, cp);
+        field.dump(d, getFieldName(), cp);
         if (initialValue != null) {
             d.print(" = ").dump(initialValue);
         }

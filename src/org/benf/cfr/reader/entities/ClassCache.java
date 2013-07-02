@@ -72,6 +72,7 @@ public class ClassCache {
     }
 
     public void markClassNameUsed(ConstantPool cp, JavaRefTypeInstance typeInstance) {
+        importableClasses.get(cp).add(typeInstance);
         if (!usedClassSet.add(typeInstance)) return;
 
         String className = typeInstance.getRawName();
@@ -80,7 +81,6 @@ public class ClassCache {
         if (!shortNameToLongName.containsKey(partname)) {
             shortNameToLongName.put(partname, className);
             longNameToShortName.put(className, partname);
-            importableClasses.get(cp).add(typeInstance);
         }
         /*
          * Override longname to short name for inner classes.

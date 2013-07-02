@@ -84,7 +84,7 @@ public class ClassFile implements Dumpable {
         minorVer = data.getS2At(OFFSET_OF_MINOR);
         majorVer = data.getS2At(OFFSET_OF_MAJOR);
         short constantPoolCount = data.getS2At(OFFSET_OF_CONSTANT_POOL_COUNT);
-        this.constantPool = new ConstantPool(cfrState, data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
+        this.constantPool = new ConstantPool(this, cfrState, data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
         final long OFFSET_OF_ACCESS_FLAGS = OFFSET_OF_CONSTANT_POOL + constantPool.getRawByteLength();
         final long OFFSET_OF_THIS_CLASS = OFFSET_OF_ACCESS_FLAGS + 2;
         final long OFFSET_OF_SUPER_CLASS = OFFSET_OF_THIS_CLASS + 2;
@@ -178,12 +178,12 @@ public class ClassFile implements Dumpable {
          */
         if (isInterface) {
             if (isAnnotation) {
-                dumpHelper = new ClassFileDumperAnnotation();
+                dumpHelper = new ClassFileDumperAnnotation(cfrState);
             } else {
-                dumpHelper = new ClassFileDumperInterface();
+                dumpHelper = new ClassFileDumperInterface(cfrState);
             }
         } else {
-            dumpHelper = new ClassFileDumperNormal();
+            dumpHelper = new ClassFileDumperNormal(cfrState);
         }
     }
 
@@ -253,7 +253,7 @@ public class ClassFile implements Dumpable {
         if (fieldsByName == null) {
             fieldsByName = MapFactory.newMap();
             for (ClassFileField field : fields) {
-                fieldsByName.put(field.getField().getFieldName(constantPool), field);
+                fieldsByName.put(field.getField().getFieldName(), field);
             }
         }
         ClassFileField field = fieldsByName.get(name);

@@ -31,9 +31,12 @@ public class ConstantPool {
     private final List<ConstantPoolEntry> entries;
     private final CFRState cfrState;
     private final ClassCache classCache;
+    private final ClassFile classFile;
+    private String comparisonKey;
     private boolean isLoaded = false;
 
-    public ConstantPool(CFRState cfrState, ByteData raw, short count) {
+    public ConstantPool(ClassFile classFile, CFRState cfrState, ByteData raw, short count) {
+        this.classFile = classFile;
         this.cfrState = cfrState;
         ArrayList<ConstantPoolEntry> res = new ArrayList<ConstantPoolEntry>();
         count--;
@@ -159,5 +162,28 @@ public class ConstantPool {
 
     public ClassCache getClassCache() {
         return classCache;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        getComparisonKey();
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ConstantPool that = (ConstantPool) o;
+
+        if (!comparisonKey.equals(that.comparisonKey)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        getComparisonKey();
+        return comparisonKey.hashCode();
+    }
+
+    private void getComparisonKey() {
+        if (comparisonKey == null) comparisonKey = classFile.getFilePath();
     }
 }

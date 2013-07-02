@@ -1,10 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.InnerClassConstructorRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.LambdaRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.RedundantSuperRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SyntheticAccessorRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -14,9 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComm
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.entities.AccessFlag;
-import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.CFRState;
@@ -513,7 +511,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         scopeDiscoverer.markDiscoveredCreations();
     }
 
-    private static void removeSyntheticConstructorParam(Method method, Op04StructuredStatement root) {
+    private static LValue removeSyntheticConstructorParam(Method method, Op04StructuredStatement root) {
         MethodPrototype prototype = method.getMethodPrototype();
         List<LocalVariable> vars = prototype.getParameters();
         LocalVariable outerThis = vars.get(0);
@@ -521,7 +519,20 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         prototype.setExplicitThisRemoval(true);
 
         /* Now we need to remove the usage of outerThis */
-        new InnerClassConstructorRewriter(outerThis).rewrite(root);
+        InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(outerThis);
+        innerClassConstructorRewriter.rewrite(root);
+        LValue matchedLValue = innerClassConstructorRewriter.getMatchedLValue();
+        if (matchedLValue == null) return null;
+        /* If there was a value to match, we now have to replace the parameter with the member anywhere it was used
+         * in the constructor.
+         */
+        Map<LValue, LValue> replacements = MapFactory.newMap();
+        replacements.put(outerThis, matchedLValue);
+        LValueReplacingRewriter lValueReplacingRewriter = new LValueReplacingRewriter(replacements);
+
+        MiscStatementTools.applyExpressionRewriter(root, lValueReplacingRewriter);
+
+        return matchedLValue;
     }
 
     /*
@@ -535,18 +546,19 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * Also, if we are ourselves an inner class constructor, remove the first argument, and remove usages of it
      * downstream, plus mark the synthetic outer this as invisible.
      */
-    public static void fixInnerClassConstruction(CFRState cfrState, Method method, Op04StructuredStatement root) {
-        if (!cfrState.removeInnerClassSynthetics()) return;
+    public static LValue fixInnerClassConstruction(CFRState cfrState, Method method, Op04StructuredStatement root) {
 
         /*
          * b)
          */
+        LValue res = null;
         if (method.isConstructor()) {
             ClassFile classFile = method.getClassFile();
             if (classFile.isInnerClass() && !classFile.testAccessFlag(AccessFlag.ACC_STATIC)) {
-                removeSyntheticConstructorParam(method, root);
+                res = removeSyntheticConstructorParam(method, root);
             }
         }
+        return res;
     }
 
     public static void inlineSyntheticAccessors(CFRState cfrState, Method method, Op04StructuredStatement root) {

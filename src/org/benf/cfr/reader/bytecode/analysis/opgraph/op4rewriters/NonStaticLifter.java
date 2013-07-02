@@ -81,7 +81,7 @@ public class NonStaticLifter {
         Map<String, Pair<Integer, ClassFileField>> fieldMap = MapFactory.newMap();
         for (int x = 0, len = classFileFields.size(); x < len; ++x) {
             ClassFileField classFileField = classFileFields.get(x);
-            fieldMap.put(classFileField.getField().getFieldName(cp), Pair.make(x, classFileField));
+            fieldMap.put(classFileField.getField().getFieldName(), Pair.make(x, classFileField));
         }
 
         List<Method> constructors = Functional.filter(classFile.getConstructors(), new Predicate<Method>() {
