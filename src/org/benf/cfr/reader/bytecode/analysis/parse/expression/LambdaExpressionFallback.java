@@ -40,7 +40,16 @@ public class LambdaExpressionFallback extends AbstractExpression {
         this.targetFnArgTypes = targetFnArgTypes;
         this.curriedArgs = curriedArgs;
         this.instance = instance;
-        this.colon = (targetFnArgTypes.size() == 1) && curriedArgs.isEmpty();
+        boolean isColon = false;
+        switch (curriedArgs.size()) {
+            case 0:
+                isColon = targetFnArgTypes.size() == 1 && !instance;
+                break;
+            case 1:
+                isColon = targetFnArgTypes.size() == 1 && instance;
+                break;
+        }
+        this.colon = isColon;
     }
 
     @Override
@@ -66,7 +75,11 @@ public class LambdaExpressionFallback extends AbstractExpression {
     @Override
     public Dumper dump(Dumper d) {
         if (colon) {
-            d.print(callClassType.toString()).print("::").print(lambdaFnName);
+            if (instance) {
+                d.dump(curriedArgs.get(0)).print("::").print(lambdaFnName);
+            } else {
+                d.print(callClassType.toString()).print("::").print(lambdaFnName);
+            }
         } else {
             int n = targetFnArgTypes.size();
             if (n > 1) d.print("(");
@@ -75,7 +88,11 @@ public class LambdaExpressionFallback extends AbstractExpression {
                 d.print("arg_" + x);
             }
             if (n > 1) d.print(")");
-            d.print(" -> ").print(callClassType.toString()).print('.').print(lambdaFnName);
+            if (instance) {
+                d.print(" -> ").dump(curriedArgs.get(0)).print('.').print(lambdaFnName);
+            } else {
+                d.print(" -> ").print(callClassType.toString()).print('.').print(lambdaFnName);
+            }
             d.print("(");
             boolean first = true;
             for (int x = instance ? 1 : 0, cnt = curriedArgs.size(); x < cnt; ++x) {
