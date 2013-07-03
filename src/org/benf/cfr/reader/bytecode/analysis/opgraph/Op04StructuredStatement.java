@@ -576,6 +576,12 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new LambdaRewriter(method.getClassFile()).rewrite(root);
     }
 
+    public static void removePrimitiveDeconversion(CFRState cfrState, Method method, Op04StructuredStatement root) {
+        if (!cfrState.getBooleanOpt(CFRState.SUGAR_PRIMITIVES)) return;
+
+        new PrimitiveConversionRewriter().rewrite(root);
+    }
+
     public static void replaceNestedSyntheticOuterRefs(Op04StructuredStatement root) {
         List<StructuredStatement> statements = MiscStatementTools.linearise(root);
         //

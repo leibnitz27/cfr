@@ -350,6 +350,9 @@ public class CodeAnalyser {
 
         Op04StructuredStatement.rewriteLambdas(cfrState, method, block);
 
+        // Some misc translations.
+        Op04StructuredStatement.removePrimitiveDeconversion(cfrState, method, block);
+
         this.analysed = block;
         return analysed;
     }

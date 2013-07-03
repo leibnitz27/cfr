@@ -35,7 +35,7 @@ public class StructuredStatementExpression extends AbstractExpression {
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        throw new UnsupportedOperationException();
+        return this;
     }
 
     @Override

@@ -7,9 +7,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -164,6 +168,30 @@ public class ArithmeticOperation extends AbstractExpression {
                     throw new IllegalStateException("Unknown enum");
             }
         }
+    }
+
+    private static Set<Pair<String, String>> sugarable = SetFactory.newSet(
+            Pair.make("java.lang.Integer", "intValue"),
+            Pair.make("java.lang.Long", "longValue"),
+            Pair.make("java.lang.Double", "doubleValue")
+    );
+
+    private Expression sugarPrimitiveConversion(Expression in) {
+        if (!(in instanceof MemberFunctionInvokation)) return in;
+        MemberFunctionInvokation memberFunctionInvokation = (MemberFunctionInvokation) in;
+        String name = memberFunctionInvokation.getName();
+        JavaTypeInstance type = memberFunctionInvokation.getObject().getInferredJavaType().getJavaTypeInstance();
+        String rawTypeName = type.getRawName();
+        Pair<String, String> testPair = Pair.make(rawTypeName, name);
+        if (sugarable.contains(testPair)) {
+            return memberFunctionInvokation.getObject();
+        }
+        return in;
+    }
+
+    public void sugarPrimitiveConversions() {
+        lhs = sugarPrimitiveConversion(lhs);
+        rhs = sugarPrimitiveConversion(rhs);
     }
 
     /*
