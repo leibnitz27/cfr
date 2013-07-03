@@ -53,6 +53,8 @@ public class AttributeFactory {
             return new AttributeBootstrapMethods(raw, cp);
         } else if (AttributeAnnotationDefault.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeAnnotationDefault(raw, cp);
+        } else if (AttributeLocalVariableTypeTable.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeLocalVariableTypeTable(raw, cp);
         } else {
             return new AttributeUnknown(raw, attributeName);
         }

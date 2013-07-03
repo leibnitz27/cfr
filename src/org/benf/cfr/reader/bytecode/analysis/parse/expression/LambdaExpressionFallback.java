@@ -20,8 +20,8 @@ import java.util.List;
  * Date: 14/04/2013
  * Time: 23:47
  * <p/>
- * This shouldn't really exist - we should be able to construct this in terms of function invokations.
- * However, that requires some tidying, so we'll iterate via this.
+ * <p/>
+ * Needs some work here to unify LambdaExpression and LambdaExpressionFallback.
  */
 public class LambdaExpressionFallback extends AbstractExpression {
 
