@@ -188,6 +188,9 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         }
         if (this.typeInstance.equals(lambdaTypeRefLocation) && lambdaMethod.testAccessFlag(AccessFlagMethod.ACC_SYNTHETIC)) {
             try {
+                /*
+                 * This is a local synthetic lambda - we'll try to inline it.
+                 */
                 Op04StructuredStatement lambdaCode = lambdaMethod.getAnalysis();
                 int nLambdaArgs = targetFnArgTypes.size();
                 /* We will be
