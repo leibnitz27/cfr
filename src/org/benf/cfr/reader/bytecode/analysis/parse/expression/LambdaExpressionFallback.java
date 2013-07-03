@@ -43,7 +43,7 @@ public class LambdaExpressionFallback extends AbstractExpression {
         boolean isColon = false;
         switch (curriedArgs.size()) {
             case 0:
-                isColon = targetFnArgTypes.size() == 1 && !instance;
+                isColon = targetFnArgTypes.size() <= 1 && !instance;
                 break;
             case 1:
                 isColon = targetFnArgTypes.size() == 1 && instance;
@@ -82,12 +82,13 @@ public class LambdaExpressionFallback extends AbstractExpression {
             }
         } else {
             int n = targetFnArgTypes.size();
-            if (n > 1) d.print("(");
+            boolean multi = n != 1;
+            if (multi) d.print("(");
             for (int x = 0; x < n; ++x) {
                 if (x > 0) d.print(", ");
                 d.print("arg_" + x);
             }
-            if (n > 1) d.print(")");
+            if (multi) d.print(")");
             if (instance) {
                 d.print(" -> ").dump(curriedArgs.get(0)).print('.').print(lambdaFnName);
             } else {

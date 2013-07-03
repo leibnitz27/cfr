@@ -54,7 +54,7 @@ public class LambdaExpression extends AbstractExpression {
 
     @Override
     public Dumper dump(Dumper d) {
-        boolean multi = args.size() > 1;
+        boolean multi = args.size() != 1;
         boolean first = true;
         if (multi) d.print("(");
         for (LValue lValue : args) {
