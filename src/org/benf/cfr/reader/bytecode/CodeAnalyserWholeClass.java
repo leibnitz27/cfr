@@ -29,9 +29,11 @@ import java.util.Set;
  * <p/>
  * Analysis which needs to be performed on the whole classfile in one go, once we've
  * performed other basic code analysis.
+ * <p/>
+ * This pass is performed INNER CLASS FIRST.
  */
 public class CodeAnalyserWholeClass {
-    public static void wholeClassAnalysis(ClassFile classFile, CFRState state) {
+    public static void wholeClassAnalysisPass1(ClassFile classFile, CFRState state) {
         /*
          * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
          * several methods.
@@ -42,8 +44,9 @@ public class CodeAnalyserWholeClass {
          * All constructors of inner classes should have their first argument removed,
          * and it should be marked as hidden.
          */
-        if (classFile.isInnerClass()) {
-            fixInnerClassConstructors(classFile, state);
+        if (classFile.isInnerClass() && state.removeInnerClassSynthetics()) {
+            fixInnerClassConstructors(classFile);
+            // We need to fix up nested synthetic outer accessors OUTERCLASS first.
         }
 
         /* Remove generics which 'don't belong here' - i.e. ones which we brought in for analysis, but have
@@ -69,15 +72,23 @@ public class CodeAnalyserWholeClass {
         }
     }
 
-    private static void fixInnerClassConstructors(ClassFile classFile, CFRState state) {
-        if (!state.removeInnerClassSynthetics()) return;
+    private static void replaceNestedSyntheticOuterRefs(ClassFile classFile) {
+        for (Method method : classFile.getMethods()) {
+            if (method.hasCodeAttribute()) {
+                Op04StructuredStatement code = method.getAnalysis();
+                Op04StructuredStatement.replaceNestedSyntheticOuterRefs(code);
+            }
+        }
+    }
+
+    private static void fixInnerClassConstructors(ClassFile classFile) {
 
         if (classFile.testAccessFlag(AccessFlag.ACC_STATIC)) return;
 
         Set<LValue> removedLValues = SetFactory.newSet();
         boolean invalid = false;
         for (Method method : classFile.getConstructors()) {
-            LValue removed = Op04StructuredStatement.fixInnerClassConstruction(state, method, method.getAnalysis());
+            LValue removed = Op04StructuredStatement.fixInnerClassConstruction(method, method.getAnalysis());
             if (removed == null) {
                 invalid = true;
             } else {
@@ -90,6 +101,7 @@ public class CodeAnalyserWholeClass {
         if (!(outerThis instanceof FieldVariable)) return;
 
         FieldVariable fieldVariable = (FieldVariable) outerThis;
+        String originalName = fieldVariable.getFieldName();
         /*
          * FieldVariable here is a 'local' one - it has an expression object of 'this'.
          *
@@ -100,7 +112,18 @@ public class CodeAnalyserWholeClass {
         String name = fieldType.toString();
         ClassFileField classFileField = fieldVariable.getClassFileField();
         classFileField.overrideName(name + ".this");
-//        classFileField.markHidden();
+        classFileField.markSyntheticOuterRef();
+        /*
+         * TODO :
+         * This is a bit of a hack - we may be referring to a classfile field from a partially analysed
+         * class.  So replace the local one with the field variable one.
+         */
+        try {
+            ClassFileField localClassFileField = classFile.getFieldByName(originalName);
+            localClassFileField.overrideName(name + ".this");
+            localClassFileField.markSyntheticOuterRef();
+        } catch (NoSuchFieldException e) {
+        }
     }
 
     private static Method getStaticConstructor(ClassFile classFile) {
@@ -192,4 +215,9 @@ public class CodeAnalyserWholeClass {
         }
     }
 
+    public static void wholeClassAnalysisPass2(ClassFile classFile, CFRState state) {
+        if (classFile.isInnerClass() && state.removeInnerClassSynthetics()) {
+            replaceNestedSyntheticOuterRefs(classFile);
+        }
+    }
 }

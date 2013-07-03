@@ -171,6 +171,9 @@ public class CFRState {
         return getBooleanOpt(HIDE_BRIDGE_METHODS);
     }
 
+    /*
+     * TODO : Gross.
+     */
     public boolean analyseMethod(String thisMethodName) {
         if (methodName == null) return true;
         return methodName.equals(thisMethodName);

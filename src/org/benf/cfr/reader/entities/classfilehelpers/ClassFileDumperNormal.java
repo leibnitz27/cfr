@@ -3,7 +3,6 @@ package org.benf.cfr.reader.entities.classfilehelpers;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
-import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -71,7 +70,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
 
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
-            if (!field.isHidden()) {
+            if (!field.shouldNotDisplay()) {
                 field.dump(d, cp);
             }
         }

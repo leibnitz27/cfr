@@ -4,15 +4,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
-import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -84,7 +80,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
 
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
-            if (field.isHidden()) continue;
+            if (field.shouldNotDisplay()) continue;
             field.dump(d, cp);
         }
         List<Method> methods = classFile.getMethods();

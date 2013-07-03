@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -65,7 +66,6 @@ public class FieldVariable extends AbstractLValue {
             }
         }
         return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
-
     }
 
     public ClassFileField getClassFileField() {
@@ -79,6 +79,13 @@ public class FieldVariable extends AbstractLValue {
 
     public JavaTypeInstance getOwningClassType() {
         return classFile.getClassType();
+    }
+
+    /*
+     * This will only be meaningful after the inner class constructor transformation.
+     */
+    public boolean isOuterRef() {
+        return classFileField != null && classFileField.isSyntheticOuterRef();
     }
 
     public String getFieldName() {
@@ -116,6 +123,22 @@ public class FieldVariable extends AbstractLValue {
     public LValue applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         object = expressionRewriter.rewriteExpression(object, ssaIdentifiers, statementContainer, flags);
         return this;
+    }
+
+    public void rewriteLeftNestedSyntheticOuterRefs() {
+        if (isOuterRef()) {
+            while (object instanceof LValueExpression) {
+                LValue lValueLhs = ((LValueExpression) object).getLValue();
+                if (lValueLhs instanceof FieldVariable) {
+                    FieldVariable lhs = (FieldVariable) lValueLhs;
+                    if (lhs.isOuterRef()) {
+                        object = lhs.object;
+                        continue;
+                    }
+                }
+                break;
+            }
+        }
     }
 
     @Override

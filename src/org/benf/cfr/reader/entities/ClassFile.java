@@ -155,13 +155,11 @@ public class ClassFile implements Dumpable {
                 });
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
 
-//        constantPool.markClassNameUsed(constantPool.getUTF8Entry(thisClass.getNameIndex()).getValue());
         short superClassIndex = data.getS2At(OFFSET_OF_SUPER_CLASS);
         if (superClassIndex == 0) {
             rawSuperClass = null;
         } else {
-            rawSuperClass = superClassIndex == 0 ? null : (ConstantPoolEntryClass) constantPool.getEntry(superClassIndex);
-//            constantPool.markClassNameUsed(constantPool.getUTF8Entry(superClass.getNameIndex()).getValue());
+            rawSuperClass = (ConstantPoolEntryClass) constantPool.getEntry(superClassIndex);
         }
         this.classSignature = getSignature(constantPool, rawSuperClass, rawInterfaces);
 
@@ -391,11 +389,19 @@ public class ClassFile implements Dumpable {
         }
     }
 
-    private void analyseInnerClasses(CFRState state) {
+    private void analyseInnerClassesPass1(CFRState state) {
         if (innerClassesByTypeInfo == null) return;
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
             ClassFile classFile = innerClassInfoClassFilePair.getSecond();
             classFile.analyseTop(state);
+        }
+    }
+
+    private void analyseInnerClassesPass2(CFRState state) {
+        if (innerClassesByTypeInfo == null) return;
+        for (Pair<InnerClassAttributeInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
+            ClassFile classFile = innerClassInfoClassFilePair.getSecond();
+            CodeAnalyserWholeClass.wholeClassAnalysisPass2(classFile, state);
         }
     }
 
@@ -409,7 +415,7 @@ public class ClassFile implements Dumpable {
          * from the outer class.
          */
         if (state.analyseInnerClasses()) {
-            analyseInnerClasses(state);
+            analyseInnerClassesPass1(state);
         }
         boolean exceptionRecovered = false;
         for (Method method : methods) {
@@ -428,7 +434,12 @@ public class ClassFile implements Dumpable {
         }
         if (exceptionRecovered) throw new ConfusedCFRException("Failed to analyse file");
 
-        CodeAnalyserWholeClass.wholeClassAnalysis(this, state);
+        CodeAnalyserWholeClass.wholeClassAnalysisPass1(this, state);
+
+        if (state.analyseInnerClasses()) {
+            analyseInnerClassesPass2(state);
+        }
+
     }
 
     public JavaTypeInstance getClassType() {

@@ -546,7 +546,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * Also, if we are ourselves an inner class constructor, remove the first argument, and remove usages of it
      * downstream, plus mark the synthetic outer this as invisible.
      */
-    public static LValue fixInnerClassConstruction(CFRState cfrState, Method method, Op04StructuredStatement root) {
+    public static LValue fixInnerClassConstruction(Method method, Op04StructuredStatement root) {
 
         /*
          * b)
@@ -574,5 +574,18 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         if (!cfrState.rewriteLambdas()) return;
 
         new LambdaRewriter(method.getClassFile()).rewrite(root);
+    }
+
+    public static void replaceNestedSyntheticOuterRefs(Op04StructuredStatement root) {
+        List<StructuredStatement> statements = MiscStatementTools.linearise(root);
+        //
+        // It strikes me I could do this as a map replace, if I generate the set of possible rewrites.
+        // probably a bit gross though ;)
+        //
+        SyntheticOuterRefRewriter syntheticOuterRefRewriter = new SyntheticOuterRefRewriter();
+        for (StructuredStatement statement : statements) {
+            statement.rewriteExpressions(syntheticOuterRefRewriter);
+        }
+
     }
 }

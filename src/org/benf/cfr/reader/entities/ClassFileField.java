@@ -18,6 +18,7 @@ public class ClassFileField {
      */
     private Expression initialValue;
     private boolean isHidden;
+    private boolean isSyntheticOuterRef;
     private String overriddenName;
 
     public ClassFileField(Field field) {
@@ -25,6 +26,7 @@ public class ClassFileField {
         TypedLiteral constantValue = field.getConstantValue();
         initialValue = constantValue == null ? null : new Literal(constantValue);
         isHidden = false;
+        isSyntheticOuterRef = false;
     }
 
     public Field getField() {
@@ -39,12 +41,20 @@ public class ClassFileField {
         this.initialValue = rValue;
     }
 
-    public boolean isHidden() {
-        return isHidden;
+    public boolean shouldNotDisplay() {
+        return isHidden || isSyntheticOuterRef;
+    }
+
+    public boolean isSyntheticOuterRef() {
+        return isSyntheticOuterRef;
     }
 
     public void markHidden() {
         isHidden = true;
+    }
+
+    public void markSyntheticOuterRef() {
+        isSyntheticOuterRef = true;
     }
 
     public void overrideName(String override) {
