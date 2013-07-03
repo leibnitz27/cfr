@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -99,9 +100,23 @@ public class FieldVariable extends AbstractLValue {
         return object;
     }
 
+    private boolean objectIsThis() {
+        if (object instanceof LValueExpression) {
+            LValue lValue = ((LValueExpression) object).getLValue();
+            if (lValue instanceof LocalVariable) {
+                return ((LocalVariable) lValue).getName().equals(MiscConstants.THIS);
+            }
+        }
+        return false;
+    }
+
     @Override
     public Dumper dump(Dumper d) {
-        return object.dump(d).print(".").print(getFieldName());
+        if (isOuterRef() && objectIsThis()) {
+            return d.print(getFieldName());
+        } else {
+            return object.dump(d).print(".").print(getFieldName());
+        }
     }
 
     @Override
