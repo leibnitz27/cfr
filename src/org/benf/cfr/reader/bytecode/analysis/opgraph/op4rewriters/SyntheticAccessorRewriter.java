@@ -207,7 +207,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         Map<Expression, Expression> expressonReplacements = MapFactory.newMap();
         expressonReplacements.put(arg1, appliedArgs.get(1));
 
-        AssignmentExpression assignmentExpression = new AssignmentExpression(sa1.getLvalue(), sa1.getRvalue());
+        AssignmentExpression assignmentExpression = new AssignmentExpression(sa1.getLvalue(), sa1.getRvalue(), false);
         Expression resultExpression = assignmentExpression;
 
         CloneHelper cloneHelper = new CloneHelper(expressonReplacements, lValueReplacements);

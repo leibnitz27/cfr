@@ -95,7 +95,7 @@ public class AssignmentSimple extends AbstractAssignment {
 
     @Override
     public AbstractAssignmentExpression getInliningExpression() {
-        return new AssignmentExpression(getCreatedLValue(), getRValue());
+        return new AssignmentExpression(getCreatedLValue(), getRValue(), true);
     }
 
     @Override

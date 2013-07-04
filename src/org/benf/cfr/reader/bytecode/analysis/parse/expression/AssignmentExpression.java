@@ -19,21 +19,30 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class AssignmentExpression extends AbstractAssignmentExpression {
     private final LValue lValue;
     private Expression rValue;
+    private boolean inlined;
 
-    public AssignmentExpression(LValue lValue, Expression rValue) {
+    public AssignmentExpression(LValue lValue, Expression rValue, boolean inlined) {
         super(lValue.getInferredJavaType());
         this.lValue = lValue;
         this.rValue = rValue;
+        this.inlined = inlined;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new AssignmentExpression(cloneHelper.replaceOrClone(lValue), cloneHelper.replaceOrClone(rValue));
+        return new AssignmentExpression(cloneHelper.replaceOrClone(lValue), cloneHelper.replaceOrClone(rValue), inlined);
+    }
+
+    public void setInlined(boolean inlined) {
+        this.inlined = inlined;
     }
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print("(").dump(lValue).print(" = ").dump(rValue).print(")");
+        if (inlined) d.print("(");
+        d.dump(lValue).print(" = ").dump(rValue);
+        if (inlined) d.print(")");
+        return d;
     }
 
     @Override
