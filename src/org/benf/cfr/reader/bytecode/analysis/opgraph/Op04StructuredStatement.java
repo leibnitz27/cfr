@@ -4,7 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -577,7 +576,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     public static void removePrimitiveDeconversion(CFRState cfrState, Method method, Op04StructuredStatement root) {
-        if (!cfrState.getBooleanOpt(CFRState.SUGAR_PRIMITIVES)) return;
+        if (!cfrState.getBooleanOpt(CFRState.SUGAR_BOXING)) return;
 
         new PrimitiveConversionRewriter().rewrite(root);
     }
