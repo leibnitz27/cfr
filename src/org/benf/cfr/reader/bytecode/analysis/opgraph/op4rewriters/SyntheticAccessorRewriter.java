@@ -14,13 +14,17 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.AccessFlagMethod;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
@@ -155,8 +159,61 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         // Ok, just a getter.  Simpler.
         if (!mutatingAccessor) return rewriteGetterAccessor(functionInvokation, otherMethod, otherBlock);
 
-        // Mutating - so we need to
-        return functionInvokation;
+        // Mutating - so we need to inline the mutation.
+        return rewriteMutatingAccessor(functionInvokation, otherMethod, otherBlock);
+    }
+
+    private Expression rewriteMutatingAccessor(final StaticFunctionInvokation functionInvokation, Method targetMethod, Block block) {
+        List<Op04StructuredStatement> containedStatements = block.getBlockStatements();
+        containedStatements = Functional.filter(containedStatements, new Predicate<Op04StructuredStatement>() {
+            @Override
+            public boolean test(Op04StructuredStatement in) {
+                return !(in.getStatement() instanceof StructuredComment);
+            }
+        });
+
+        if (containedStatements.size() != 2) return functionInvokation;
+
+        /*
+         * Should probably use a code matcher here, but I can't be bothered right now.
+         */
+
+        // We need statement 1 to be [a] = [b], 2 to be return [a]
+        StructuredStatement s1 = containedStatements.get(0).getStatement();
+        StructuredStatement s2 = containedStatements.get(1).getStatement();
+
+        if (!(s1 instanceof StructuredAssignment)) return functionInvokation;
+        StructuredAssignment sa1 = (StructuredAssignment) s1;
+        if (!(s2 instanceof StructuredReturn)) return functionInvokation;
+        StructuredReturn sr2 = (StructuredReturn) s2;
+
+        Expression e2 = sr2.getValue();
+        if (!(e2 instanceof LValueExpression)) return functionInvokation;
+        LValue lr = ((LValueExpression) e2).getLValue();
+
+        if (!(((StructuredAssignment) s1).getLvalue().equals(lr))) return functionInvokation;
+
+        List<Expression> appliedArgs = functionInvokation.getArgs();
+        List<LocalVariable> fnArgs = targetMethod.getMethodPrototype().getParameters();
+
+        Expression applied0 = appliedArgs.get(0);
+        if (!(applied0 instanceof LValueExpression)) return functionInvokation;
+        LValue appliedLValue = ((LValueExpression) applied0).getLValue();
+
+        Map<LValue, LValue> lValueReplacements = MapFactory.newMap();
+        lValueReplacements.put(fnArgs.get(0), appliedLValue);
+
+        LValueExpression arg1 = new LValueExpression(fnArgs.get(1));
+        Map<Expression, Expression> expressonReplacements = MapFactory.newMap();
+        expressonReplacements.put(arg1, appliedArgs.get(1));
+
+        AssignmentExpression assignmentExpression = new AssignmentExpression(sa1.getLvalue(), sa1.getRvalue());
+        Expression resultExpression = assignmentExpression;
+
+        CloneHelper cloneHelper = new CloneHelper(expressonReplacements, lValueReplacements);
+        resultExpression = cloneHelper.replaceOrClone(resultExpression);
+        targetMethod.hideSynthetic();
+        return resultExpression;
     }
 
     private Expression rewriteGetterAccessor(final StaticFunctionInvokation functionInvokation, Method targetMethod, Block block) {

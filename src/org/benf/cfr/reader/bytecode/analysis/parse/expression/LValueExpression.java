@@ -75,4 +75,9 @@ public class LValueExpression extends AbstractExpression {
         if (!(o instanceof LValueExpression)) return false;
         return lValue.equals(((LValueExpression) o).getLValue());
     }
+
+    @Override
+    public int hashCode() {
+        return lValue.hashCode();
+    }
 }
