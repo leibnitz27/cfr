@@ -183,7 +183,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         lValueReplacements.put(fnArgs.get(0), appliedLValue);
         CloneHelper cloneHelper = new CloneHelper(expressonReplacements, lValueReplacements);
         resultExpression = cloneHelper.replaceOrClone(resultExpression);
-
+        targetMethod.hideSynthetic();
         return resultExpression;
     }
 }
