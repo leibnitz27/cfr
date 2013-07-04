@@ -29,6 +29,9 @@ public class Main {
             // We set the class file version for the analysis, so any unspecified parameters
             // can default to a class file appropriate version.
             params.setClassFileVersion(c.getClassFileVersion());
+            // This may seem odd, but we want to make sure we're analysing the version
+            // from the cache.
+            c = params.getClassFile(c.getClassType(), true);
             // THEN analyse.
             c.analyseTop(params);
             Dumper d = new StdOutDumper();
