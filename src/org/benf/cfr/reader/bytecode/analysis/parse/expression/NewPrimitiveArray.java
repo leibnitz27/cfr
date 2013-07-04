@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -33,6 +34,17 @@ public class NewPrimitiveArray extends AbstractNewArray {
         this.size = size;
         this.type = type;
         size.getInferredJavaType().useAsWithoutCasting(RawJavaType.INT);
+    }
+
+    private NewPrimitiveArray(InferredJavaType inferredJavaType, JavaTypeInstance type, Expression size) {
+        super(inferredJavaType);
+        this.type = type;
+        this.size = size;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new NewPrimitiveArray(getInferredJavaType(), type, cloneHelper.replaceOrClone(size));
     }
 
     @Override

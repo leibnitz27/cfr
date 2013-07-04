@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -30,6 +31,15 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
         this.lhs = lhs;
         this.rhs = rhs;
         this.op = op;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new BooleanOperation(
+                (ConditionalExpression) cloneHelper.replaceOrClone(lhs),
+                (ConditionalExpression) cloneHelper.replaceOrClone(rhs),
+                op);
+
     }
 
     @Override

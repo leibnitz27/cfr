@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -37,10 +38,15 @@ public class StackSSALabel extends AbstractLValue {
         return stackEntry.getSourceCount();
     }
 
+    @Override
+    public LValue deepClone(CloneHelper cloneHelper) {
+        return this;
+    }
+
     /*
-     * Can any use of this be replaced with the RHS instead?
-     * (Assuming that values in the RHS are not mutated)
-     */
+         * Can any use of this be replaced with the RHS instead?
+         * (Assuming that values in the RHS are not mutated)
+         */
     @Override
     public <Statement> void collectLValueAssignments(Expression rhsAssigned, StatementContainer<Statement> statementContainer, LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
         if (getNumberOfCreators() == 1) {

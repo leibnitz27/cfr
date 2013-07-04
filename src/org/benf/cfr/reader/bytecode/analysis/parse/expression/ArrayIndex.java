@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -25,6 +26,17 @@ public class ArrayIndex extends AbstractExpression {
         this.array = array;
         this.index = index;
         index.getInferredJavaType().useAsWithoutCasting(RawJavaType.INT);
+    }
+
+    private ArrayIndex(InferredJavaType inferredJavaType, Expression array, Expression index) {
+        super(inferredJavaType);
+        this.array = array;
+        this.index = index;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new ArrayIndex(getInferredJavaType(), cloneHelper.replaceOrClone(array), cloneHelper.replaceOrClone(index));
     }
 
     @Override

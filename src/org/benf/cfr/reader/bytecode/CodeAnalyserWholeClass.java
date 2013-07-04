@@ -30,9 +30,11 @@ import java.util.Set;
  * Analysis which needs to be performed on the whole classfile in one go, once we've
  * performed other basic code analysis.
  * <p/>
- * This pass is performed INNER CLASS FIRST.
  */
 public class CodeAnalyserWholeClass {
+    /*
+     * This pass is performed INNER CLASS FIRST.
+     */
     public static void wholeClassAnalysisPass1(ClassFile classFile, CFRState state) {
         /*
          * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
@@ -77,6 +79,15 @@ public class CodeAnalyserWholeClass {
             if (method.hasCodeAttribute()) {
                 Op04StructuredStatement code = method.getAnalysis();
                 Op04StructuredStatement.replaceNestedSyntheticOuterRefs(code);
+            }
+        }
+    }
+
+    private static void inlineAccessors(CFRState cfrState, ClassFile classFile) {
+        for (Method method : classFile.getMethods()) {
+            if (method.hasCodeAttribute()) {
+                Op04StructuredStatement code = method.getAnalysis();
+                Op04StructuredStatement.inlineSyntheticAccessors(cfrState, method, code);
             }
         }
     }
@@ -215,9 +226,21 @@ public class CodeAnalyserWholeClass {
         }
     }
 
+    /*
+     * This pass is performed INNER CLASS LAST.
+     *
+     * This is the point at which we can perform analysis like rewriting references like accessors inner -> outer.
+     */
     public static void wholeClassAnalysisPass2(ClassFile classFile, CFRState state) {
+        /*
+         * Rewrite 'outer.this' references.
+         */
         if (classFile.isInnerClass() && state.removeInnerClassSynthetics()) {
             replaceNestedSyntheticOuterRefs(classFile);
+
+            inlineAccessors(state, classFile);
         }
+
+
     }
 }

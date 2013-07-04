@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -31,6 +32,11 @@ public class StaticFunctionInvokation extends AbstractExpression {
                 function.getMethodPrototype().getReturnType(function.getClassEntry().getTypeInstance(), args),
                 InferredJavaType.Source.EXPRESSION);
         return res;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new StaticFunctionInvokation(function, cloneHelper.replaceOrClone(args));
     }
 
     public StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args) {

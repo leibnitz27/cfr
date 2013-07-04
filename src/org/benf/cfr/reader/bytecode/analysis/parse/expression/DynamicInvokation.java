@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -24,6 +25,11 @@ public class DynamicInvokation extends AbstractExpression {
         super(castJavaType);
         this.innerInvokation = innerInvokation;
         this.dynamicArgs = dynamicArgs;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new DynamicInvokation(getInferredJavaType(), cloneHelper.replaceOrClone(innerInvokation), cloneHelper.replaceOrClone(dynamicArgs));
     }
 
     @Override

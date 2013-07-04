@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -13,7 +15,7 @@ import org.benf.cfr.reader.util.output.Dumpable;
  * Time: 18:04
  * To change this template use File | Settings | File Templates.
  */
-public interface LValue extends Dumpable {
+public interface LValue extends Dumpable, DeepCloneable<LValue> {
     int getNumberOfCreators();
 
     <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector<T> lValueAssigmentCollector);

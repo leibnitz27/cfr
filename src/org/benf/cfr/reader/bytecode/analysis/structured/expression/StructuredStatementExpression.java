@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
@@ -26,6 +27,15 @@ public class StructuredStatementExpression extends AbstractExpression {
     public StructuredStatementExpression(InferredJavaType inferredJavaType, StructuredStatement content) {
         super(inferredJavaType);
         this.content = content;
+    }
+
+    /*
+     * This is sub optimal - we shouldn't be shallow copying here, but I don't
+     * want to add deepClone to the structuredStatement.
+     */
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return this;
     }
 
     @Override

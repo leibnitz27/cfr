@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -22,6 +23,11 @@ public class CastExpression extends AbstractExpression {
     public CastExpression(InferredJavaType knownType, Expression child) {
         super(knownType);
         this.child = child;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new CastExpression(getInferredJavaType(), cloneHelper.replaceOrClone(child));
     }
 
     @Override

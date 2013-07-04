@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -26,6 +27,11 @@ public class TernaryExpression extends AbstractExpression {
         this.condition = condition;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new TernaryExpression((ConditionalExpression) cloneHelper.replaceOrClone(condition), cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs));
     }
 
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b) {

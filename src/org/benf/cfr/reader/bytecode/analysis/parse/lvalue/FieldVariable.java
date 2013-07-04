@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -32,13 +33,26 @@ public class FieldVariable extends AbstractLValue {
     private final ClassFileField classFileField;
     private final String failureName; // if we can't get the classfileField.
 
-    public FieldVariable(Expression object, ClassFile classFile, ConstantPool cp, ConstantPoolEntry field) {
+    public FieldVariable(Expression object, ClassFile classFile, ConstantPoolEntry field) {
         super(getFieldType((ConstantPoolEntryFieldRef) field));
         this.classFile = classFile;
         this.object = object;
         ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) field;
         this.classFileField = getField(fieldRef);
         this.failureName = fieldRef.getLocalName();
+    }
+
+    private FieldVariable(InferredJavaType type, Expression object, ClassFile classFile, ClassFileField classFileField, String failureName) {
+        super(type);
+        this.object = object;
+        this.classFile = classFile;
+        this.classFileField = classFileField;
+        this.failureName = failureName;
+    }
+
+    @Override
+    public LValue deepClone(CloneHelper cloneHelper) {
+        return new FieldVariable(getInferredJavaType(), cloneHelper.replaceOrClone(object), classFile, classFileField, failureName);
     }
 
     static ClassFileField getField(ConstantPoolEntryFieldRef fieldRef) {

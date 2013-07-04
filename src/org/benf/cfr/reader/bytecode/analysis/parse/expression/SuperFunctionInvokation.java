@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -35,6 +36,11 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
         this.object = object;
         this.args = args;
         this.cp = cp;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new SuperFunctionInvokation(cp, function, methodPrototype, cloneHelper.replaceOrClone(object), cloneHelper.replaceOrClone(args));
     }
 
     @Override

@@ -105,14 +105,24 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public boolean isJustOneStatement() {
-        return containedStatements.size() == 1;
+        int count = 0;
+        for (Op04StructuredStatement statement : containedStatements) {
+            // TODO:  This is awful.
+            if (!(statement.getStatement() instanceof StructuredComment)) {
+                count++;
+            }
+        }
+        return count == 1;
     }
 
     public Op04StructuredStatement getSingleStatement() {
-        if (containedStatements.size() != 1) {
-            throw new IllegalStateException();
+        for (Op04StructuredStatement statement : containedStatements) {
+            // TODO:  This is awful.
+            if (!(statement.getStatement() instanceof StructuredComment)) {
+                return statement;
+            }
         }
-        return containedStatements.get(0);
+        throw new IllegalStateException();
     }
 
     public void combineTryCatch() {

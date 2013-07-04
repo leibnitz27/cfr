@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -48,6 +49,11 @@ public abstract class AbstractExpression implements Expression {
     @Override
     public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
         return dump(d);
+    }
+
+    @Override
+    public Expression outerDeepClone(CloneHelper cloneHelper) {
+        return cloneHelper.replaceOrClone(this);
     }
 
     @Override

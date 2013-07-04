@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -23,6 +24,11 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
         super(mutated.getInferredJavaType());
         this.mutated = mutated;
         this.op = op;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new ArithmeticPreMutationOperation(cloneHelper.replaceOrClone(mutated), op);
     }
 
     @Override

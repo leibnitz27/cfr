@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
@@ -50,6 +51,21 @@ public class LambdaExpressionFallback extends AbstractExpression {
                 break;
         }
         this.colon = isColon;
+    }
+
+    private LambdaExpressionFallback(InferredJavaType inferredJavaType, boolean colon, boolean instance, List<Expression> curriedArgs, List<JavaTypeInstance> targetFnArgTypes, String lambdaFnName, JavaTypeInstance callClassType) {
+        super(inferredJavaType);
+        this.colon = colon;
+        this.instance = instance;
+        this.curriedArgs = curriedArgs;
+        this.targetFnArgTypes = targetFnArgTypes;
+        this.lambdaFnName = lambdaFnName;
+        this.callClassType = callClassType;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new LambdaExpressionFallback(getInferredJavaType(), colon, instance, cloneHelper.replaceOrClone(curriedArgs), targetFnArgTypes, lambdaFnName, callClassType);
     }
 
     @Override

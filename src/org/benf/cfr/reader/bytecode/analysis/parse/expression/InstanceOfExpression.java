@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -29,6 +30,17 @@ public class InstanceOfExpression extends AbstractExpression {
         this.lhs = lhs;
         ConstantPoolEntryClass cpec = (ConstantPoolEntryClass) cpe;
         this.typeInstance = cpec.getTypeInstance();
+    }
+
+    private InstanceOfExpression(InferredJavaType inferredJavaType, Expression lhs, JavaTypeInstance typeInstance) {
+        super(inferredJavaType);
+        this.lhs = lhs;
+        this.typeInstance = typeInstance;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new InstanceOfExpression(getInferredJavaType(), cloneHelper.replaceOrClone(lhs), typeInstance);
     }
 
     @Override

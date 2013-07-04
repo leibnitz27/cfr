@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -34,6 +35,19 @@ public class NewObjectArray extends AbstractNewArray {
         for (Expression size : dimSizes) {
             size.getInferredJavaType().useAsWithoutCasting(RawJavaType.INT);
         }
+    }
+
+    private NewObjectArray(InferredJavaType inferredJavaType, JavaTypeInstance resultType, int numDims, JavaTypeInstance allocatedType, List<Expression> dimSizes) {
+        super(inferredJavaType);
+        this.resultType = resultType;
+        this.numDims = numDims;
+        this.allocatedType = allocatedType;
+        this.dimSizes = dimSizes;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new NewObjectArray(getInferredJavaType(), resultType, numDims, allocatedType, cloneHelper.replaceOrClone(dimSizes));
     }
 
     @Override

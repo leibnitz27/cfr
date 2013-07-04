@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -12,7 +14,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * User: lee
  * Date: 15/03/2012
  */
-public interface Expression extends Dumpable {
+public interface Expression extends Dumpable, DeepCloneable<Expression> {
     // Can /PROBABLY/ replace LValueRewriter with expression rewriter.
     Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
 

@@ -683,7 +683,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new ReturnValueStatement(retVal);
             }
             case GETFIELD: {
-                Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), method.getClassFile(), cp, cpEntries[0]));
+                Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), method.getClassFile(), cpEntries[0]));
                 return new AssignmentSimple(getStackLValue(0), fieldExpression);
             }
             case GETSTATIC:
@@ -691,7 +691,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case PUTSTATIC:
                 return new AssignmentSimple(new StaticVariable(method.getClassFile(), cp, cpEntries[0]), getStackRValue(0));
             case PUTFIELD:
-                return new AssignmentSimple(new FieldVariable(getStackRValue(1), method.getClassFile(), cp, cpEntries[0]), getStackRValue(0));
+                return new AssignmentSimple(new FieldVariable(getStackRValue(1), method.getClassFile(), cpEntries[0]), getStackRValue(0));
             case SWAP: {
                 Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
                 Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));

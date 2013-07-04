@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -23,6 +24,11 @@ public class ArrayVariable extends AbstractLValue {
     public ArrayVariable(Expression arrayIndex) {
         super(arrayIndex.getInferredJavaType());
         this.arrayIndex = arrayIndex;
+    }
+
+    @Override
+    public LValue deepClone(CloneHelper cloneHelper) {
+        return new ArrayVariable(cloneHelper.replaceOrClone(arrayIndex));
     }
 
     @Override

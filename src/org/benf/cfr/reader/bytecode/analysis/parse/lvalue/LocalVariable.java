@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -36,6 +37,14 @@ public class LocalVariable extends AbstractLValue {
     @Override
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");
+    }
+
+    /*
+     * Can't modify, so deep clone is this.
+     */
+    @Override
+    public LValue deepClone(CloneHelper cloneHelper) {
+        return this;
     }
 
     @Override

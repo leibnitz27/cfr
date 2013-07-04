@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
@@ -29,6 +30,11 @@ public class LambdaExpression extends AbstractExpression {
         super(castJavaType);
         this.args = args;
         this.result = result;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new LambdaExpression(getInferredJavaType(), cloneHelper.replaceOrClone(args), cloneHelper.replaceOrClone(result));
     }
 
     @Override

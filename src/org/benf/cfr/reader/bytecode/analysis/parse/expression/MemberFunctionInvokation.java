@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -43,6 +44,11 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         // get pulled up into a constructorInvokation, however, when it's a super call, it won't.
         this.name = function.isInitMethod() ? null : funcName;
         this.special = special;
+    }
+
+    @Override
+    public Expression deepClone(CloneHelper cloneHelper) {
+        return new MemberFunctionInvokation(cp, function, methodPrototype, cloneHelper.replaceOrClone(object), special, cloneHelper.replaceOrClone(args));
     }
 
     @Override
