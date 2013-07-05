@@ -21,8 +21,11 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         ConstantPool cp = classFile.getConstantPool();
 
         ClassSignature signature = classFile.getClassSignature();
-        JavaTypeInstance interfaceType = signature.getInterfaces().get(0);
-        d.print(interfaceType.toString());
+        if (signature.getInterfaces().isEmpty()) {
+        } else {
+            JavaTypeInstance interfaceType = signature.getInterfaces().get(0);
+            d.print(interfaceType.toString());
+        }
         d.print("() {\n");
         d.indent(1);
 

@@ -55,7 +55,7 @@ public class ClassCache {
         String clazzRawName = clazz.getRawName();
         /* Local inner class.  We want the smallest postfix
          */
-        if (clazz.getRawName().startsWith(analysisType.getRawName())) {
+        if (analysisType != null && clazz.getRawName().startsWith(analysisType.getRawName())) {
             JavaRefTypeInstance parent = innerClassInfo.getOuterClass();
             if (parent == null) return clazzRawName;
             return clazzRawName.substring(parent.getRawName().length() + 1);

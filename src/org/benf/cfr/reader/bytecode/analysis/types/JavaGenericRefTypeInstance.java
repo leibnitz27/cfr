@@ -54,6 +54,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
 
     @Override
     public JavaGenericRefTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
+        if (genericTypeBinder == null) return this;
         List<JavaTypeInstance> res = ListFactory.newList();
         for (JavaTypeInstance genericType : genericTypes) {
             res.add(genericTypeBinder.getBindingFor(genericType));
