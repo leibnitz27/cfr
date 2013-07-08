@@ -39,6 +39,7 @@ public class WildcardMatch {
     private Map<String, ListWildcard> listMap = MapFactory.newMap();
     private Map<String, StaticVariableWildcard> staticVariableWildcardMap = MapFactory.newMap();
     private Map<String, ConstructorInvokationSimpleWildcard> constructorWildcardMap = MapFactory.newMap();
+    private Map<String, ConstructorInvokationAnonymousInnerWildcard> constructorAnonymousWildcardMap = MapFactory.newMap();
     private Map<String, CastExpressionWildcard> castWildcardMap = MapFactory.newMap();
     private Map<String, ConditionalExpressionWildcard> conditionalWildcardMap = MapFactory.newMap();
 
@@ -59,6 +60,7 @@ public class WildcardMatch {
         reset(staticVariableWildcardMap.values());
         reset(superFunctionMap.values());
         reset(constructorWildcardMap.values());
+        reset(constructorAnonymousWildcardMap.values());
         reset(castWildcardMap.values());
         reset(conditionalWildcardMap.values());
     }
@@ -89,6 +91,25 @@ public class WildcardMatch {
         constructorWildcardMap.put(name, res);
         return res;
     }
+
+    public ConstructorInvokationAnonymousInnerWildcard getConstructorAnonymousWildcard(String name) {
+        ConstructorInvokationAnonymousInnerWildcard res = constructorAnonymousWildcardMap.get(name);
+        if (res != null) return res;
+
+        res = new ConstructorInvokationAnonymousInnerWildcard(null, null);
+        constructorAnonymousWildcardMap.put(name, res);
+        return res;
+    }
+
+    public ConstructorInvokationAnonymousInnerWildcard getConstructorAnonymousWildcard(String name, JavaTypeInstance clazz) {
+        ConstructorInvokationAnonymousInnerWildcard res = constructorAnonymousWildcardMap.get(name);
+        if (res != null) return res;
+
+        res = new ConstructorInvokationAnonymousInnerWildcard(clazz, null);
+        constructorAnonymousWildcardMap.put(name, res);
+        return res;
+    }
+
 
     public LValueWildcard getLValueWildCard(String name) {
         LValueWildcard res = lValueMap.get(name);
@@ -197,10 +218,14 @@ public class WildcardMatch {
     }
 
     public StaticVariableWildcard getStaticVariable(String name, JavaTypeInstance clazz, InferredJavaType varType) {
+        return getStaticVariable(name, clazz, varType, true);
+    }
+
+    public StaticVariableWildcard getStaticVariable(String name, JavaTypeInstance clazz, InferredJavaType varType, boolean requireTypeMatch) {
         StaticVariableWildcard res = staticVariableWildcardMap.get(name);
         if (res != null) return res;
 
-        res = new StaticVariableWildcard(varType, clazz);
+        res = new StaticVariableWildcard(varType, clazz, requireTypeMatch);
         staticVariableWildcardMap.put(name, res);
         return res;
     }
@@ -650,9 +675,11 @@ public class WildcardMatch {
 
     public class StaticVariableWildcard extends StaticVariable implements Wildcard<StaticVariable> {
         private StaticVariable matchedValue;
+        private final boolean requireTypeMatch;
 
-        public StaticVariableWildcard(InferredJavaType type, JavaTypeInstance clazz) {
+        public StaticVariableWildcard(InferredJavaType type, JavaTypeInstance clazz, boolean requireTypeMatch) {
             super(type, clazz, null);
+            this.requireTypeMatch = requireTypeMatch;
         }
 
         @Override
@@ -676,8 +703,11 @@ public class WildcardMatch {
             StaticVariable other = (StaticVariable) o;
 
             if (!this.getOwningClassTypeInstance().equals(other.getOwningClassTypeInstance())) return false;
-            if (!this.getInferredJavaType().getJavaTypeInstance().equals(other.getInferredJavaType().getJavaTypeInstance()))
+            JavaTypeInstance thisType = this.getInferredJavaType().getJavaTypeInstance();
+            JavaTypeInstance otherType = other.getInferredJavaType().getJavaTypeInstance();
+            if (requireTypeMatch && !thisType.equals(otherType)) {
                 return false;
+            }
             matchedValue = other;
             return true;
         }
@@ -716,6 +746,47 @@ public class WildcardMatch {
 
             ConstructorInvokationSimple other = (ConstructorInvokationSimple) o;
             if (!clazz.equals(other.getTypeInstance())) return false;
+            if (args != null && args.equals(other.getArgs())) return false;
+
+            matchedValue = other;
+            return true;
+        }
+    }
+
+    public class ConstructorInvokationAnonymousInnerWildcard extends AbstractBaseExpressionWildcard implements Wildcard<ConstructorInvokationAnoynmousInner> {
+        private ConstructorInvokationAnoynmousInner matchedValue;
+
+        private final JavaTypeInstance clazz;
+        private final List<Expression> args;
+
+        public ConstructorInvokationAnonymousInnerWildcard(JavaTypeInstance clazz, List<Expression> args) {
+            this.clazz = clazz;
+            this.args = args;
+        }
+
+        @Override
+        public ConstructorInvokationAnoynmousInner getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null) return false;
+            if (!(o instanceof ConstructorInvokationAnoynmousInner)) return false;
+
+            if (matchedValue != null) {
+                return matchedValue.equals(o);
+            }
+
+            ConstructorInvokationAnoynmousInner other = (ConstructorInvokationAnoynmousInner) o;
+            JavaTypeInstance otherType = other.getTypeInstance();
+            if (clazz != null && !clazz.equals(otherType)) return false;
             if (args != null && args.equals(other.getArgs())) return false;
 
             matchedValue = other;

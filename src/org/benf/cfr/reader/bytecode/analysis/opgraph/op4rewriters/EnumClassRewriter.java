@@ -4,10 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractNewArray;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewAnonymousArray;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
@@ -108,7 +105,7 @@ public class EnumClassRewriter {
             field.markHidden();
         }
 
-        Map<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entryMap = initMatchCollector.getEntryMap();
+        Map<StaticVariable, CollectedEnumData<? extends AbstractConstructorInvokation>> entryMap = initMatchCollector.getEntryMap();
         CollectedEnumData<NewAnonymousArray> matchedArray = initMatchCollector.getMatchedArray();
 
         for (CollectedEnumData<?> entry : entryMap.values()) {
@@ -126,8 +123,8 @@ public class EnumClassRewriter {
             enumSuperRewriter.rewrite(constructor.getAnalysis());
         }
 
-        List<Pair<StaticVariable, ConstructorInvokationSimple>> entries = ListFactory.newList();
-        for (Map.Entry<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entry : entryMap.entrySet()) {
+        List<Pair<StaticVariable, AbstractConstructorInvokation>> entries = ListFactory.newList();
+        for (Map.Entry<StaticVariable, CollectedEnumData<? extends AbstractConstructorInvokation>> entry : entryMap.entrySet()) {
             entries.add(Pair.make(entry.getKey(), entry.getValue().getData()));
         }
         classFile.setDumpHelper(new ClassFileDumperEnum(state, entries));
@@ -158,7 +155,12 @@ public class EnumClassRewriter {
         InferredJavaType clazzAIJT = new InferredJavaType(arrayType, InferredJavaType.Source.UNKNOWN, true);
         Matcher<StructuredStatement> matcher = new MatchSequence(
                 new BeginBlock(),
-                new KleenePlus(new ResetAfterTest(wcm, new CollectMatch("entry", new StructuredAssignment(wcm.getStaticVariable("e", classType, clazzIJT), wcm.getConstructorSimpleWildcard("c", classType))))),
+                new KleenePlus(
+                        new MatchOneOf(
+                                new ResetAfterTest(wcm, new CollectMatch("entry", new StructuredAssignment(wcm.getStaticVariable("e", classType, clazzIJT), wcm.getConstructorSimpleWildcard("c", classType)))),
+                                new ResetAfterTest(wcm, new CollectMatch("entryderived", new StructuredAssignment(wcm.getStaticVariable("e2", classType, clazzIJT, false), wcm.getConstructorAnonymousWildcard("c2", null))))
+                        )
+                ),
                 new ResetAfterTest(wcm, new CollectMatch("values", new StructuredAssignment(wcm.getStaticVariable("v", classType, clazzAIJT), wcm.getNewArrayWildCard("v", 0, 1))))
         );
 
@@ -195,7 +197,7 @@ public class EnumClassRewriter {
     private class EnumInitMatchCollector implements MatchResultCollector {
 
         private final WildcardMatch wcm;
-        private final Map<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> entryMap = MapFactory.newOrderedMap();
+        private final Map<StaticVariable, CollectedEnumData<? extends AbstractConstructorInvokation>> entryMap = MapFactory.newOrderedMap();
         private CollectedEnumData<NewAnonymousArray> matchedArray;
         private List<ClassFileField> matchedHideTheseFields = ListFactory.newList();
 
@@ -214,6 +216,13 @@ public class EnumClassRewriter {
                 StaticVariable staticVariable = wcm.getStaticVariable("e").getMatch();
                 ConstructorInvokationSimple constructorInvokation = wcm.getConstructorSimpleWildcard("c").getMatch();
                 entryMap.put(staticVariable, new CollectedEnumData<ConstructorInvokationSimple>(statement.getContainer(), constructorInvokation));
+                return;
+            }
+
+            if (name.equals("entryderived")) {
+                StaticVariable staticVariable = wcm.getStaticVariable("e2").getMatch();
+                ConstructorInvokationAnoynmousInner constructorInvokation = wcm.getConstructorAnonymousWildcard("c2").getMatch();
+                entryMap.put(staticVariable, new CollectedEnumData<AbstractConstructorInvokation>(statement.getContainer(), constructorInvokation));
                 return;
             }
 
@@ -292,7 +301,7 @@ public class EnumClassRewriter {
             return matchedHideTheseFields;
         }
 
-        private Map<StaticVariable, CollectedEnumData<ConstructorInvokationSimple>> getEntryMap() {
+        private Map<StaticVariable, CollectedEnumData<? extends AbstractConstructorInvokation>> getEntryMap() {
             return entryMap;
         }
 

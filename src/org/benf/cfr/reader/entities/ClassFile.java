@@ -615,7 +615,9 @@ public class ClassFile implements Dumpable {
          * And recurse.
          */
         ClassFile classFile = genericBase.getDeGenerifiedType().getClassFile();
-        if (classFile == null) return;
+        if (classFile == null) {
+            return;
+        }
         classFile.getBoundSuperClasses(boundBase, boundSuperCollector);
     }
 }

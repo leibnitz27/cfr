@@ -106,6 +106,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         MethodPrototype otherPrototype = functionInvokation.getFunction().getMethodPrototype();
         List<Expression> appliedArgs = functionInvokation.getArgs();
         /*
+         * For an INSTANCE accessor,
          * We require that the first argument to this method is an instance of the other class.
          *
          * (and that we're passing it something which is marked as the synthetic outer member

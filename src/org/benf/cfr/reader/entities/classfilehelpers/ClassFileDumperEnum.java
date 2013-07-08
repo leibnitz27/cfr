@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.entities.classfilehelpers;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractConstructorInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnoynmousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -24,9 +26,9 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
     };
 
     private final CFRState cfrState;
-    private final List<Pair<StaticVariable, ConstructorInvokationSimple>> entries;
+    private final List<Pair<StaticVariable, AbstractConstructorInvokation>> entries;
 
-    public ClassFileDumperEnum(CFRState cfrState, List<Pair<StaticVariable, ConstructorInvokationSimple>> entries) {
+    public ClassFileDumperEnum(CFRState cfrState, List<Pair<StaticVariable, AbstractConstructorInvokation>> entries) {
         this.cfrState = cfrState;
         this.entries = entries;
     }
@@ -40,18 +42,25 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         d.print(sb.toString());
     }
 
-    private static void dumpEntry(Dumper d, Pair<StaticVariable, ConstructorInvokationSimple> entry, boolean last) {
+    private static void dumpEntry(Dumper d, Pair<StaticVariable, AbstractConstructorInvokation> entry, boolean last) {
         StaticVariable staticVariable = entry.getFirst();
-        ConstructorInvokationSimple constructorInvokationSimple = entry.getSecond();
+        AbstractConstructorInvokation constructorInvokation = entry.getSecond();
         d.print(staticVariable.getVarName());
-        List<Expression> args = constructorInvokationSimple.getArgs();
-        if (args.size() > 2) {
-            d.print('(');
-            for (int x = 2, len = args.size(); x < len; ++x) {
-                if (x > 2) d.print(", ");
-                d.dump(args.get(x));
+
+        if (constructorInvokation instanceof ConstructorInvokationSimple) {
+            List<Expression> args = constructorInvokation.getArgs();
+            if (args.size() > 2) {
+                d.print('(');
+                for (int x = 2, len = args.size(); x < len; ++x) {
+                    if (x > 2) d.print(", ");
+                    d.dump(args.get(x));
+                }
+                d.print(')');
             }
-            d.print(')');
+        } else if (constructorInvokation instanceof ConstructorInvokationAnoynmousInner) {
+            ((ConstructorInvokationAnoynmousInner) constructorInvokation).dumpForEnum(d);
+        } else {
+            // ???
         }
         if (last) {
             d.endCodeln();

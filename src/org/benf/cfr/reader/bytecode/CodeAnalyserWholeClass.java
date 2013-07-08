@@ -36,11 +36,6 @@ public class CodeAnalyserWholeClass {
      * This pass is performed INNER CLASS FIRST.
      */
     public static void wholeClassAnalysisPass1(ClassFile classFile, CFRState state) {
-        /*
-         * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
-         * several methods.
-         */
-        EnumClassRewriter.rewriteEnumClass(classFile, state);
 
         /*
          * All constructors of inner classes should have their first argument removed,
@@ -50,6 +45,12 @@ public class CodeAnalyserWholeClass {
             fixInnerClassConstructors(classFile);
             // We need to fix up nested synthetic outer accessors OUTERCLASS first.
         }
+
+        /*
+         * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
+         * several methods.
+         */
+        EnumClassRewriter.rewriteEnumClass(classFile, state);
 
         /* Remove generics which 'don't belong here' - i.e. ones which we brought in for analysis, but have
          * ended up in the body of the code.

@@ -123,8 +123,12 @@ public class CreationCollector {
 
             AbstractConstructorInvokation constructorInvokation = null;
             if (newObject.getType().getTypeInstance().getInnerClassHereInfo().isAnoynmousInnerClass()) {
+                /* anonymous inner class - so we need to match the arguments we're deliberately passing
+                 * (i.e. the ones which are being passed into the constructor for the base of the anonymous
+                 * class), vs ones which are being bound without being passed in.
+                 */
                 constructorInvokation = new ConstructorInvokationAnoynmousInner(
-                        memberFunctionInvokation.getCp(),
+                        memberFunctionInvokation,
                         newObject.getInferredJavaType(),
                         memberFunctionInvokation.getArgs());
             } else {
