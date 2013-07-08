@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
@@ -68,6 +69,8 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                 ConstructorInvokationSimple newObject = (ConstructorInvokationSimple) lhs;
                 String rawName = newObject.getTypeInstance().getRawName();
                 if (rawName.equals("java.lang.StringBuilder")) {
+                    if (!(reverseAppendChain.get(reverseAppendChain.size() - 1).getInferredJavaType().getJavaTypeInstance().equals(TypeConstants.STRING)))
+                        return null;
                     return genStringConcat(reverseAppendChain);
                 } else {
                     return null;

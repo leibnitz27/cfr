@@ -1440,7 +1440,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
         * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
         */
-        validateAndAssignLoopIdentifier(statements, startIdx, endIdx + 1, blockIdentifier);
+        try {
+            validateAndAssignLoopIdentifier(statements, startIdx, endIdx + 1, blockIdentifier);
+        } catch (CannotPerformDecode e) {
+            // Can't perform this optimisation.
+            return false;
+        }
 
         // Add a 'do' statement infront of the block (which does not belong to the block)
         // transform the test to a 'POST_WHILE' statement.
@@ -1619,7 +1624,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (int x = first; x < afterEnd; ++x) {
             if (reachableNodes.contains(x) || statements.get(x).isNop()) {
                 if (foundLast) {
-                    throw new ConfusedCFRException("reachable test BLOCK was exited and re-entered.");
+                    throw new CannotPerformDecode("reachable test BLOCK was exited and re-entered.");
                 }
             } else {
                 if (!foundLast) {

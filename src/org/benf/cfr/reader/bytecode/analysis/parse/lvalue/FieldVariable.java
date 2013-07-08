@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -58,27 +59,29 @@ public class FieldVariable extends AbstractLValue {
     static ClassFileField getField(ConstantPoolEntryFieldRef fieldRef) {
         String name = fieldRef.getLocalName();
         JavaRefTypeInstance ref = (JavaRefTypeInstance) fieldRef.getClassEntry().getTypeInstance();
-        ClassFile classFile = ref.getClassFile();
-        if (classFile == null) return null;
-
         try {
+            ClassFile classFile = ref.getClassFile();
+            if (classFile == null) return null;
+
             ClassFileField field = classFile.getFieldByName(name);
             return field;
         } catch (NoSuchFieldException ignore) {
-            return null;
+        } catch (CannotLoadClassException ignore) {
         }
+        return null;
     }
 
     static InferredJavaType getFieldType(ConstantPoolEntryFieldRef fieldRef) {
         String name = fieldRef.getLocalName();
         JavaRefTypeInstance ref = (JavaRefTypeInstance) fieldRef.getClassEntry().getTypeInstance();
-        ClassFile classFile = ref.getClassFile();
-        if (classFile != null) {
-            try {
+        try {
+            ClassFile classFile = ref.getClassFile();
+            if (classFile != null) {
                 Field field = classFile.getFieldByName(name).getField();
                 return new InferredJavaType(field.getJavaTypeInstance(classFile.getConstantPool()), InferredJavaType.Source.FIELD);
-            } catch (NoSuchFieldException ignore) {
             }
+        } catch (CannotLoadClassException e) {
+        } catch (NoSuchFieldException ignore) {
         }
         return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
     }
