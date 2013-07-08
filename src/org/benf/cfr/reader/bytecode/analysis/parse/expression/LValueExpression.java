@@ -32,9 +32,19 @@ public class LValueExpression extends AbstractExpression {
 
     @Override
     public boolean isSimple() {
+
+        //
+        // TODO : THIS IS A HACK.
+        //
         // A field expression is 'simple' only if it's final.
-        // return true;
-        return false;
+        // The type check here is a complete hack - we allow
+        // a = (b=c) to transform to
+        // b = c;
+        // a = c; (though we should chain)
+        // But we can't do the same for objects as it messes up syncbloks.
+        return !(getInferredJavaType().getJavaTypeInstance().isComplexType());
+        //return true;
+//        return false;
     }
 
     @Override
