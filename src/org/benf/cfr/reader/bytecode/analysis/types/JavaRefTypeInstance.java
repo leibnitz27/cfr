@@ -173,6 +173,15 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         }
 
         @Override
+        public boolean isTransitiveInnerClassOf(JavaTypeInstance possibleParent) {
+            if (outerClass == null) return false;
+            if (possibleParent.equals(outerClass)) return true;
+            InnerClassInfo upper = outerClass.getInnerClassHereInfo();
+            if (!upper.isInnerClass()) return false;
+            return upper.isInnerClassOf(possibleParent);
+        }
+
+        @Override
         public void setHideSyntheticThis() {
             hideSyntheticThis = true;
         }

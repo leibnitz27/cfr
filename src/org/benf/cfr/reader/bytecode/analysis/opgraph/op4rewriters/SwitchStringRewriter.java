@@ -236,7 +236,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
         }
 
         @Override
-        public void collectMatches(WildcardMatch wcm) {
+        public void collectMatches(String name, WildcardMatch wcm) {
             if (wcm == wholeBlock) {
                 Expression stringObject = wcm.getExpressionWildCard("originalstring").getMatch();
                 stringExpression = stringObject;

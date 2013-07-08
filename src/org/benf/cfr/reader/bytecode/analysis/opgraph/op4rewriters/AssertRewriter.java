@@ -126,7 +126,7 @@ public class AssertRewriter {
         }
 
         @Override
-        public void collectMatches(WildcardMatch wcm) {
+        public void collectMatches(String name, WildcardMatch wcm) {
 
         }
 
@@ -193,7 +193,7 @@ public class AssertRewriter {
         }
 
         @Override
-        public void collectMatches(WildcardMatch wcm) {
+        public void collectMatches(String name, WildcardMatch wcm) {
             ConditionalExpression condition = wcm.getConditionalExpressionWildcard("condition").getMatch();
             condition = new NotOperation(condition).simplify();
             StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(condition));

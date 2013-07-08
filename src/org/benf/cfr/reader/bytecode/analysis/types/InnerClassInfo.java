@@ -11,6 +11,8 @@ public interface InnerClassInfo {
 
     boolean isInnerClassOf(JavaTypeInstance possibleParent);
 
+    boolean isTransitiveInnerClassOf(JavaTypeInstance possibleParent);
+
     void setHideSyntheticThis();
 
     boolean isHideSyntheticThis();
@@ -43,6 +45,11 @@ public interface InnerClassInfo {
 
         @Override
         public boolean isInnerClassOf(JavaTypeInstance possibleParent) {
+            return false;
+        }
+
+        @Override
+        public boolean isTransitiveInnerClassOf(JavaTypeInstance possibleParent) {
             return false;
         }
 

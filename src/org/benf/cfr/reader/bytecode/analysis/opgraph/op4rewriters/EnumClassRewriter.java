@@ -237,7 +237,7 @@ public class EnumClassRewriter {
         }
 
         @Override
-        public void collectMatches(WildcardMatch wcm) {
+        public void collectMatches(String name, WildcardMatch wcm) {
         }
 
         boolean isValid() {

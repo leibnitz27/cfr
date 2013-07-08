@@ -42,9 +42,9 @@ public class LValueExpression extends AbstractExpression {
         // b = c;
         // a = c; (though we should chain)
         // But we can't do the same for objects as it messes up syncbloks.
-        return !(getInferredJavaType().getJavaTypeInstance().isComplexType());
+        //return !(getInferredJavaType().getJavaTypeInstance().isComplexType());
         //return true;
-//        return false;
+        return false;
     }
 
     @Override
