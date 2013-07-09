@@ -236,7 +236,7 @@ public class CodeAnalyserWholeClass {
         /*
          * Rewrite 'outer.this' references.
          */
-        if (classFile.isInnerClass() && state.removeInnerClassSynthetics()) {
+        if (state.removeInnerClassSynthetics()) {
             replaceNestedSyntheticOuterRefs(classFile);
 
             inlineAccessors(state, classFile);

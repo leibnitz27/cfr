@@ -587,6 +587,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         // It strikes me I could do this as a map replace, if I generate the set of possible rewrites.
         // probably a bit gross though ;)
         //
+        if (statements == null) return;
+
         SyntheticOuterRefRewriter syntheticOuterRefRewriter = new SyntheticOuterRefRewriter();
         for (StructuredStatement statement : statements) {
             statement.rewriteExpressions(syntheticOuterRefRewriter);

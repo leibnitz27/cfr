@@ -47,9 +47,16 @@ public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter
      */
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        /*
+         * Note that this is a daft way of doing it - we should have a classifier so that the expression
+         * dictates this.
+         */
         if (expression instanceof ArithmeticOperation) {
             ArithmeticOperation arithmeticOperation = (ArithmeticOperation) expression;
             arithmeticOperation.sugarPrimitiveBoxing();
+        } else if (expression instanceof NewAnonymousArray) {
+            NewAnonymousArray newAnonymousArray = (NewAnonymousArray) expression;
+            newAnonymousArray.sugarPrimitiveBoxing();
         }
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }

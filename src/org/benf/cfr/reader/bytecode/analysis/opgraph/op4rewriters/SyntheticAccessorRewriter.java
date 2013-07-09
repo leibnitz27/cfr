@@ -117,7 +117,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         JavaTypeInstance tgtType = functionInvokation.getClazz();
         // Does tgtType have an inner relationship with this?
         boolean child = thisClassType.getInnerClassHereInfo().isTransitiveInnerClassOf(tgtType);
-        boolean parent = tgtType.getInnerClassHereInfo().isInnerClassOf(thisClassType);
+        boolean parent = tgtType.getInnerClassHereInfo().isTransitiveInnerClassOf(thisClassType);
         if (!(child || parent)) return null;
 
         ClassFile otherClass = cfrState.getClassFile(tgtType, true);

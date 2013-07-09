@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -38,6 +39,13 @@ public class NewAnonymousArray extends AbstractNewArray {
             }
         }
     }
+
+    public void sugarPrimitiveBoxing() {
+        for (int i = 0; i < values.size(); ++i) {
+            values.set(i, BoxingHelper.sugarAnyBoxing(values.get(i)));
+        }
+    }
+
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {

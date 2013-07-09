@@ -173,10 +173,9 @@ public class ArithmeticOperation extends AbstractExpression {
         }
     }
 
-
     public void sugarPrimitiveBoxing() {
-        lhs = BoxingHelper.sugarPrimitiveBoxing(lhs);
-        rhs = BoxingHelper.sugarPrimitiveBoxing(rhs);
+        lhs = BoxingHelper.sugarPrimitiveUnboxing(lhs);
+        rhs = BoxingHelper.sugarPrimitiveUnboxing(rhs);
     }
 
     /*

@@ -393,19 +393,25 @@ public class ClassFile implements Dumpable {
         if (innerClassesByTypeInfo == null) return;
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
             ClassFile classFile = innerClassInfoClassFilePair.getSecond();
-            classFile.analyseTop(state);
+            classFile.analyseMid(state);
         }
     }
 
-    private void analyseInnerClassesPass2(CFRState state) {
+    private void analysePassOuterFirst(CFRState state) {
+        CodeAnalyserWholeClass.wholeClassAnalysisPass2(this, state);
         if (innerClassesByTypeInfo == null) return;
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
             ClassFile classFile = innerClassInfoClassFilePair.getSecond();
-            CodeAnalyserWholeClass.wholeClassAnalysisPass2(classFile, state);
+            classFile.analysePassOuterFirst(state);
         }
     }
 
     public void analyseTop(CFRState state) {
+        analyseMid(state);
+        analysePassOuterFirst(state);
+    }
+
+    public void analyseMid(CFRState state) {
         if (this.begunAnalysis) {
             return;
         }
@@ -435,10 +441,6 @@ public class ClassFile implements Dumpable {
         if (exceptionRecovered) throw new ConfusedCFRException("Failed to analyse file");
 
         CodeAnalyserWholeClass.wholeClassAnalysisPass1(this, state);
-
-        if (state.analyseInnerClasses()) {
-            analyseInnerClassesPass2(state);
-        }
 
     }
 
