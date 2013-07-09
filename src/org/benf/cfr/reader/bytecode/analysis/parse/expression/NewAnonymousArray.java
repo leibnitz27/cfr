@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -31,6 +32,11 @@ public class NewAnonymousArray extends AbstractNewArray {
         this.values = values;
         this.numDims = numDims;
         this.allocatedType = type.getJavaTypeInstance().getArrayStrippedType();
+        if (allocatedType instanceof RawJavaType) {
+            for (Expression value : values) {
+                value.getInferredJavaType().useAsWithoutCasting((RawJavaType) allocatedType);
+            }
+        }
     }
 
     @Override
