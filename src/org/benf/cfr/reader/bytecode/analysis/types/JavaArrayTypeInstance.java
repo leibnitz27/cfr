@@ -50,7 +50,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public BindingSuperContainer getBindingSupers() {
-        throw new UnsupportedOperationException("Binding supers on array");
+        return null;
     }
 
     @Override
