@@ -1472,7 +1472,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
              */
             int newIdx = statements.indexOf(lastJump) + 1;
             if (newIdx >= statements.size()) {
-                throw new ConfusedCFRException("Unconditional while with break but no following statement.");
+                postBlock = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new ReturnNothingStatement(), lastJump.getIndex().justAfter());
+                statements.add(postBlock);
+
+//                return false;
+//                throw new ConfusedCFRException("Unconditional while with break but no following statement.");
             } else {
                 postBlock = statements.get(newIdx);
             }

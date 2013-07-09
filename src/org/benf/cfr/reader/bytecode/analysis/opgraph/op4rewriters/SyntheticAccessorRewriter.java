@@ -24,9 +24,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.AccessFlagMethod;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
@@ -107,7 +105,13 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
     private static final String RETURN_LVALUE = "returnlvalue";
     private static final String MUTATION1 = "mutation1";
     private static final String MUTATION2 = "mutation2";
-    private static final String P_MUTATION = "pmutation";
+    private static final String PRE_INC = "preinc";
+    private static final String POST_INC = "postinc";
+    private static final String PRE_DEC = "preinc";
+    private static final String POST_DEC = "postinc";
+
+    private static final String FUNCCALL1 = "funccall1";
+    private static final String FUNCCALL2 = "funccall2";
 
     private Expression rewriteFunctionExpression2(final StaticFunctionInvokation functionInvokation) {
         JavaTypeInstance tgtType = functionInvokation.getClazz();
@@ -151,9 +155,26 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(otherCode);
 
+        Expression res = tryRewriteAccessor(structuredStatements, otherType, appliedArgs, methodArgs);
+        if (res != null) {
+            otherMethod.hideSynthetic();
+            return res;
+        }
+
+        res = tryRewriteFunctionCall(structuredStatements, otherType, appliedArgs, methodArgs);
+        if (res != null) {
+            otherMethod.hideSynthetic();
+            return res;
+        }
+
+        return null;
+    }
+
+    private Expression tryRewriteAccessor(List<StructuredStatement> structuredStatements, JavaTypeInstance otherType,
+                                          List<Expression> appliedArgs, List<LocalVariable> methodArgs) {
         WildcardMatch wcm = new WildcardMatch();
 
-
+        // Try dealing with the class of access$000 etc which are simple accessors / mutators.
         Matcher<StructuredStatement> matcher = new MatchSequence(
                 new BeginBlock(),
                 new MatchOneOf(
@@ -168,15 +189,30 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                 new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
                                 new StructuredReturn(wcm.getExpressionWildCard("rvalue"))
                         )),
-                        new ResetAfterTest(wcm, P_MUTATION, new MatchSequence(
-                                new MatchOneOf(
+                        new ResetAfterTest(wcm, PRE_INC,
+                                new MatchSequence(
                                         new StructuredExpressionStatement(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), false),
+                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
+                                )
+                        ),
+                        new ResetAfterTest(wcm, PRE_DEC,
+                                new MatchSequence(
                                         new StructuredExpressionStatement(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), false),
+                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
+                                )
+                        ),
+                        new ResetAfterTest(wcm, POST_INC,
+                                new MatchSequence(
                                         new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), false),
-                                        new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), false)
-                                ),
-                                new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
-                        ))
+                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
+                                )
+                        ),
+                        new ResetAfterTest(wcm, POST_DEC,
+                                new MatchSequence(
+                                        new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), false),
+                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
+                                )
+                        )
                 ),
                 new EndBlock()
         );
@@ -204,6 +240,10 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         Map<LValue, LValue> lValueReplacements = MapFactory.newMap();
         Map<Expression, Expression> expressionReplacements = MapFactory.newMap();
 
+        /*
+         * TODO : I think I'm over thinking this.  I can just replace args with supplied values!!!
+         */
+
         if (!isStatic) {
             /*
              * Verify that arg0 is the foreign type
@@ -225,12 +265,16 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
             expressionReplacements.put(new LValueExpression(methodArgs.get(rValue)), appliedArgs.get(rValue));
 
             AssignmentExpression assignmentExpression = new AssignmentExpression(accessorMatchCollector.lValue, accessorMatchCollector.rValue, true);
-            otherMethod.hideSynthetic();
             return cloneHelper.replaceOrClone(assignmentExpression);
         } else if (matchType.equals(RETURN_LVALUE)) {
-            otherMethod.hideSynthetic();
             return cloneHelper.replaceOrClone(new LValueExpression(accessorMatchCollector.lValue));
-        } else if (matchType.equals(P_MUTATION)) {
+        } else if (matchType.equals(PRE_DEC)) {
+            return null;
+        } else if (matchType.equals(PRE_INC)) {
+            return null;
+        } else if (matchType.equals(POST_DEC)) {
+            return null;
+        } else if (matchType.equals(POST_INC)) {
             return null;
         } else {
             throw new IllegalStateException();
@@ -262,4 +306,92 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
             }
         }
     }
+
+    private final String MEM_SUB1 = "msub1";
+    private final String STA_SUB1 = "ssub1";
+    private final String MEM_FUN1 = "mfun1";
+    private final String STA_FUN1 = "sfun1";
+
+    private Expression tryRewriteFunctionCall(List<StructuredStatement> structuredStatements, JavaTypeInstance otherType,
+                                              List<Expression> appliedArgs, List<LocalVariable> methodArgs) {
+        WildcardMatch wcm = new WildcardMatch();
+
+        Matcher<StructuredStatement> matcher = new MatchSequence(
+                new BeginBlock(),
+                new MatchOneOf(
+                        new ResetAfterTest(wcm, MEM_SUB1,
+                                new StructuredExpressionStatement(wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null), false)
+                        ),
+                        new ResetAfterTest(wcm, STA_SUB1,
+                                new StructuredExpressionStatement(wcm.getStaticFunction("func", otherType, null, (List<Expression>) null), false)
+                        ),
+                        new ResetAfterTest(wcm, MEM_FUN1,
+                                new StructuredReturn(wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null))
+                        ),
+                        new ResetAfterTest(wcm, STA_FUN1,
+                                new StructuredReturn(wcm.getStaticFunction("func", otherType, null, (List<Expression>) null))
+                        )
+                ),
+                new EndBlock()
+        );
+
+        MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
+
+        FuncMatchCollector funcMatchCollector = new FuncMatchCollector();
+
+        mi.advance();
+        if (!matcher.match(mi, funcMatchCollector)) return null;
+        if (funcMatchCollector.matchType == null) return null;
+
+        Map<LValue, LValue> lValueReplacements = MapFactory.newMap();
+        Map<Expression, Expression> expressionReplacements = MapFactory.newMap();
+        for (int x = 0; x < methodArgs.size(); ++x) {
+            LocalVariable methodArg = methodArgs.get(x);
+            Expression appliedArg = appliedArgs.get(x);
+            if (appliedArg instanceof LValueExpression) {
+                LValue appliedLvalue = ((LValueExpression) appliedArg).getLValue();
+                lValueReplacements.put(methodArg, appliedLvalue);
+            }
+            expressionReplacements.put(new LValueExpression(methodArg), appliedArg);
+        }
+        CloneHelper cloneHelper = new CloneHelper(expressionReplacements, lValueReplacements);
+        return cloneHelper.replaceOrClone(funcMatchCollector.functionInvokation);
+    }
+
+    private class FuncMatchCollector implements MatchResultCollector {
+
+        String matchType;
+        LValue lValue;
+        StaticFunctionInvokation staticFunctionInvokation;
+        MemberFunctionInvokation memberFunctionInvokation;
+        Expression functionInvokation;
+
+        private boolean isStatic;
+
+        @Override
+        public void clear() {
+
+        }
+
+        @Override
+        public void collectStatement(String name, StructuredStatement statement) {
+
+        }
+
+        @Override
+        public void collectMatches(String name, WildcardMatch wcm) {
+            this.matchType = name;
+            if (matchType.equals(STA_FUN1) || matchType.endsWith(STA_SUB1)) {
+                staticFunctionInvokation = wcm.getStaticFunction("func").getMatch();
+                functionInvokation = staticFunctionInvokation;
+                isStatic = true;
+            } else {
+                memberFunctionInvokation = wcm.getMemberFunction("func").getMatch();
+                functionInvokation = memberFunctionInvokation;
+                lValue = wcm.getLValueWildCard("lvalue").getMatch();
+                isStatic = false;
+            }
+        }
+    }
+
 }

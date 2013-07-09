@@ -578,7 +578,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public static void removePrimitiveDeconversion(CFRState cfrState, Method method, Op04StructuredStatement root) {
         if (!cfrState.getBooleanOpt(CFRState.SUGAR_BOXING)) return;
 
-        new PrimitiveConversionRewriter().rewrite(root);
+        new PrimitiveBoxingRewriter().rewrite(root);
     }
 
     public static void replaceNestedSyntheticOuterRefs(Op04StructuredStatement root) {

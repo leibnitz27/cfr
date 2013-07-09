@@ -23,6 +23,8 @@ import java.util.*;
  * User: lee
  * Date: 25/07/2012
  * Time: 17:22
+ * <p/>
+ * This is all horribly messy and needs refactoring.
  */
 public class WildcardMatch {
 
@@ -173,22 +175,26 @@ public class WildcardMatch {
         return memberFunctionMap.get(name);
     }
 
+    public MemberFunctionInvokationWildcard getMemberFunction(String name, boolean isInitMethod, Expression object) {
+        return getMemberFunction(name, null, isInitMethod, object, ListFactory.<Expression>newList());
+    }
+
     public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, Expression object) {
-        return getMemberFunction(name, methodname, object, ListFactory.<Expression>newList());
+        return getMemberFunction(name, methodname, false, object, ListFactory.<Expression>newList());
     }
 
     public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, Expression object, Expression... args) {
-        return getMemberFunction(name, methodname, object, ListFactory.<Expression>newList(args));
+        return getMemberFunction(name, methodname, false, object, ListFactory.<Expression>newList(args));
     }
 
     /* When matching a function invokation, we don't really have all the details to construct a plausible
      * MemberFunctionInvokation expression, so just construct something which will match it!
      */
-    public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, Expression object, List<Expression> args) {
+    public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, boolean isInitMethod, Expression object, List<Expression> args) {
         MemberFunctionInvokationWildcard res = memberFunctionMap.get(name);
         if (res != null) return res;
 
-        res = new MemberFunctionInvokationWildcard(methodname, object, args);
+        res = new MemberFunctionInvokationWildcard(methodname, isInitMethod, object, args);
         memberFunctionMap.put(name, res);
         return res;
     }
@@ -211,6 +217,10 @@ public class WildcardMatch {
         res = new StaticFunctionInvokationWildcard(methodname, clazz, args);
         staticFunctionMap.put(name, res);
         return res;
+    }
+
+    public StaticFunctionInvokationWildcard getStaticFunction(String name) {
+        return staticFunctionMap.get(name);
     }
 
     public StaticVariableWildcard getStaticVariable(String name) {
@@ -456,12 +466,14 @@ public class WildcardMatch {
 
     public class MemberFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<MemberFunctionInvokation> {
         private final String name;
+        private final boolean isInitMethod;
         private final Expression object;
         private final List<Expression> args;
         private transient MemberFunctionInvokation matchedValue;
 
-        public MemberFunctionInvokationWildcard(String name, Expression object, List<Expression> args) {
+        public MemberFunctionInvokationWildcard(String name, boolean isInitMethod, Expression object, List<Expression> args) {
             this.name = name;
+            this.isInitMethod = isInitMethod;
             this.object = object;
             this.args = args;
         }
@@ -477,8 +489,9 @@ public class WildcardMatch {
              * TODO : since it might fail, we need to rewind any captures!
              */
             MemberFunctionInvokation other = (MemberFunctionInvokation) o;
+            if (isInitMethod != other.isInitMethod()) return false;
             if (name == null) {
-                if (other.getName() != null) return false;
+                // always match.
             } else {
                 if (!name.equals(other.getName())) return false;
             }
@@ -553,11 +566,11 @@ public class WildcardMatch {
     }
 
 
-    public class StaticFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
+    public class StaticFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<StaticFunctionInvokation> {
         private final String name;
         private final JavaTypeInstance clazz;
         private final List<Expression> args;
-        private transient Expression matchedValue;
+        private transient StaticFunctionInvokation matchedValue;
 
         public StaticFunctionInvokationWildcard(String name, JavaTypeInstance clazz, List<Expression> args) {
             this.name = name;
@@ -570,27 +583,26 @@ public class WildcardMatch {
             if (!(o instanceof StaticFunctionInvokation)) return false;
             if (matchedValue != null) return matchedValue.equals(o);
 
-            /*
-             * See if this is a compatible member function.
-             *
-             * TODO : since it might fail, we need to rewind any captures!
-             */
             StaticFunctionInvokation other = (StaticFunctionInvokation) o;
-            if (!name.equals(other.getName())) return false;
+            if (name != null) {
+                if (!name.equals(other.getName())) return false;
+            }
             if (!clazz.equals(other.getClazz())) return false;
             List<Expression> otherArgs = other.getArgs();
-            if (args.size() != otherArgs.size()) return false;
-            for (int x = 0; x < args.size(); ++x) {
-                Expression myArg = args.get(x);
-                Expression hisArg = otherArgs.get(x);
-                if (!myArg.equals(hisArg)) return false;
+            if (args != null) {
+                if (args.size() != otherArgs.size()) return false;
+                for (int x = 0; x < args.size(); ++x) {
+                    Expression myArg = args.get(x);
+                    Expression hisArg = otherArgs.get(x);
+                    if (!myArg.equals(hisArg)) return false;
+                }
             }
-            matchedValue = (Expression) o;
+            matchedValue = other;
             return true;
         }
 
         @Override
-        public Expression getMatch() {
+        public StaticFunctionInvokation getMatch() {
             return matchedValue;
         }
 

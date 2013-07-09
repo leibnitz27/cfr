@@ -30,6 +30,7 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
     private final MethodPrototype methodPrototype;
     private final String name;
     private final boolean special;
+    private final boolean isInitMethod;
 
     public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, boolean special, List<Expression> args) {
         super(cp, function, methodPrototype, object, args);
@@ -42,7 +43,9 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         String funcName = nameAndType.getName().getValue();
         // Most of the time a member function invokation for a constructor will
         // get pulled up into a constructorInvokation, however, when it's a super call, it won't.
-        this.name = function.isInitMethod() ? null : funcName;
+
+        this.isInitMethod = function.isInitMethod();
+        this.name = funcName;
         this.special = special;
     }
 
@@ -74,7 +77,7 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         String comment = null;
         d.dump(object);
 
-        if (name != null) d.print("." + name);
+        if (!isInitMethod) d.print("." + name);
         d.print("(");
         boolean first = true;
         for (int x = 0; x < args.size(); ++x) {
@@ -90,6 +93,10 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
 
     public Expression getObject() {
         return object;
+    }
+
+    public boolean isInitMethod() {
+        return isInitMethod;
     }
 
     public ConstantPoolEntryMethodRef getFunction() {

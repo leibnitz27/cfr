@@ -6,26 +6,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredStatementExpression;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.*;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,9 +20,9 @@ import java.util.Map;
  * Date: 15/04/2013
  * Time: 06:26
  */
-public class PrimitiveConversionRewriter implements Op04Rewriter, ExpressionRewriter {
+public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter {
 
-    public PrimitiveConversionRewriter() {
+    public PrimitiveBoxingRewriter() {
     }
 
     @Override
@@ -62,7 +49,7 @@ public class PrimitiveConversionRewriter implements Op04Rewriter, ExpressionRewr
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (expression instanceof ArithmeticOperation) {
             ArithmeticOperation arithmeticOperation = (ArithmeticOperation) expression;
-            arithmeticOperation.sugarPrimitiveConversions();
+            arithmeticOperation.sugarPrimitiveBoxing();
         }
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }

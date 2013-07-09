@@ -53,7 +53,7 @@ public class NonStaticLifter {
             StructuredExpressionStatement structuredExpressionStatement = (StructuredExpressionStatement) structuredStatement;
 
             WildcardMatch wcm1 = new WildcardMatch();
-            StructuredStatement test = new StructuredExpressionStatement(wcm1.getMemberFunction("m", null /* this method */, new LValueExpression(wcm1.getLValueWildCard("o")), (List<Expression>) null), false);
+            StructuredStatement test = new StructuredExpressionStatement(wcm1.getMemberFunction("m", null, true /* this method */, new LValueExpression(wcm1.getLValueWildCard("o")), (List<Expression>) null), false);
             if (test.equals(structuredExpressionStatement)) {
                 MemberFunctionInvokation m = wcm1.getMemberFunction("m").getMatch();
                 MethodPrototype prototype = m.getMethodPrototype();
