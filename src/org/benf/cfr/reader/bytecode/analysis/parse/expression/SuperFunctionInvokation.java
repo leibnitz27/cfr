@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -70,6 +71,10 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
         return (args.size() == (isSyntheticThisFirstArg() ? 1 : 0));
     }
 
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        return false;
+    }
 
     @Override
     public Dumper dump(Dumper d) {

@@ -58,9 +58,14 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         }
     }
 
+
+    @Override
+    public void handleStatement(StatementContainer statementContainer) {
+    }
+
     /*
-     * Expression rewriter boilerplate - note that we can't expect ssaIdentifiers to be non-null.
-     */
+         * Expression rewriter boilerplate - note that we can't expect ssaIdentifiers to be non-null.
+         */
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         // TODO : In practice, the rewrites are ALWAYS done in terms of static functions.

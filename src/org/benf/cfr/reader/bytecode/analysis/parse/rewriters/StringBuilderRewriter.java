@@ -33,6 +33,11 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
 
+
+    @Override
+    public void handleStatement(StatementContainer statementContainer) {
+    }
+
     @Override
     public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);

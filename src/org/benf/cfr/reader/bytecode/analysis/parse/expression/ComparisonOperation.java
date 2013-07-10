@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -22,7 +24,7 @@ import java.util.Set;
  * User: lee
  * Date: 16/03/2012
  */
-public class ComparisonOperation extends AbstractExpression implements ConditionalExpression {
+public class ComparisonOperation extends AbstractExpression implements ConditionalExpression, BoxingProcessor {
     private Expression lhs;
     private Expression rhs;
     private final CompOp op;
@@ -215,6 +217,19 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     @Override
     public ConditionalExpression simplify() {
         return ConditionalUtils.simplify(this);
+    }
+
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        if (boxingRewriter.isUnboxedType(lhs)) {
+            rhs = boxingRewriter.sugarUnboxing(rhs);
+            return false;
+        }
+        if (boxingRewriter.isUnboxedType(rhs)) {
+            lhs = boxingRewriter.sugarAnyBoxing(lhs);
+            return false;
+        }
+        return false;
     }
 
     @Override

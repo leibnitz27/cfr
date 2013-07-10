@@ -62,6 +62,10 @@ public enum RawJavaType implements JavaTypeInstance {
         return this.ordinal() - other.ordinal();
     }
 
+    public int compareAllPriorityTo(RawJavaType other) {
+        return this.ordinal() - other.ordinal();
+    }
+
     @Override
     public boolean isUsableType() {
         return usableType;

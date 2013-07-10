@@ -210,7 +210,8 @@ public class MethodPrototype {
         } else {
             RawJavaType expectedRawJavaType = type.getRawTypeOfSimpleType();
             RawJavaType providedRawJavaType = expression.getInferredJavaType().getRawType();
-            if (expectedRawJavaType == providedRawJavaType) {
+            // Ideally, this would be >= 0, but if we remove an explicit cast, then we might call the wrong method.
+            if (expectedRawJavaType.compareAllPriorityTo(providedRawJavaType) == 0) {
                 return expression;
             }
             return new CastExpression(new InferredJavaType(expectedRawJavaType, InferredJavaType.Source.EXPRESSION, true), expression);
@@ -226,7 +227,8 @@ public class MethodPrototype {
         } else {
             RawJavaType expectedRawJavaType = type.getRawTypeOfSimpleType();
             RawJavaType providedRawJavaType = expression.getInferredJavaType().getRawType();
-            if (expectedRawJavaType == providedRawJavaType) {
+            // Ideally, this would be >= 0, but if we remove an explicit cast, then we might call the wrong method.
+            if (expectedRawJavaType.compareAllPriorityTo(providedRawJavaType) == 0) {
                 return expression.dump(d);
             }
             return d.print("(" + expectedRawJavaType.getCastString() + ")").dump(expression);

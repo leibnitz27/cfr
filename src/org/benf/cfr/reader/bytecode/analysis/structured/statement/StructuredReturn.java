@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -16,7 +18,7 @@ import java.util.List;
  * User: lee
  * Date: 15/05/2012
  */
-public class StructuredReturn extends AbstractStructuredStatement {
+public class StructuredReturn extends AbstractStructuredStatement implements BoxingProcessor {
 
     /*
      * Note that this will be null if we're returning void.
@@ -60,9 +62,16 @@ public class StructuredReturn extends AbstractStructuredStatement {
         if (value != null) value.collectUsedLValues(scopeDiscoverer);
     }
 
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        if (value == null) return false;
+        value = boxingRewriter.sugarAnyBoxing(value);
+        return false;
+    }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
+        expressionRewriter.handleStatement(this.getContainer());
         if (value != null) {
             value = expressionRewriter.rewriteExpression(value, null, this.getContainer(), null);
         }

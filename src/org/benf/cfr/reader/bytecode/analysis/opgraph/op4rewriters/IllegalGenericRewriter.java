@@ -41,6 +41,11 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
     }
 
     @Override
+    public void handleStatement(StatementContainer statementContainer) {
+
+    }
+
+    @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         maybeRewriteExpressionType(expression.getInferredJavaType());
         return expression;

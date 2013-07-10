@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -23,7 +25,7 @@ import java.util.List;
  * <p/>
  * 1d array only.
  */
-public class NewAnonymousArray extends AbstractNewArray {
+public class NewAnonymousArray extends AbstractNewArray implements BoxingProcessor {
     private JavaTypeInstance allocatedType;
     private int numDims;
     private List<Expression> values;
@@ -40,10 +42,12 @@ public class NewAnonymousArray extends AbstractNewArray {
         }
     }
 
-    public void sugarPrimitiveBoxing() {
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
         for (int i = 0; i < values.size(); ++i) {
-            values.set(i, BoxingHelper.sugarAnyBoxing(values.get(i)));
+            values.set(i, boxingRewriter.sugarAnyBoxing(values.get(i)));
         }
+        return false;
     }
 
 

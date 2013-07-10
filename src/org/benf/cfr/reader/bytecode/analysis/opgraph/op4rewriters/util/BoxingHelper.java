@@ -28,46 +28,27 @@ public class BoxingHelper {
             Pair.make("java.lang.Double", "valueOf")
     );
 
-    public static Expression sugarPrimitiveBoxing(Expression in) {
-        return sugarPrimitiveStatic(in, boxing);
-    }
-
-    public static Expression sugarPrimitiveUnboxing(Expression in) {
-        return sugarPrimitiveMember(in, unboxing);
-    }
-
-    public static Expression sugarAnyBoxing(Expression in) {
-        Expression res = sugarPrimitiveBoxing(in);
-        if (res != in) return res;
-        res = sugarPrimitiveUnboxing(in);
-        return res;
-    }
-
-    private static Expression sugarPrimitiveMember(Expression in, Set<Pair<String, String>> set) {
-        if (!(in instanceof MemberFunctionInvokation)) return in;
-        MemberFunctionInvokation memberFunctionInvokation = (MemberFunctionInvokation) in;
+    public static Expression sugarUnboxing(MemberFunctionInvokation memberFunctionInvokation) {
         String name = memberFunctionInvokation.getName();
         JavaTypeInstance type = memberFunctionInvokation.getObject().getInferredJavaType().getJavaTypeInstance();
         String rawTypeName = type.getRawName();
         Pair<String, String> testPair = Pair.make(rawTypeName, name);
-        if (set.contains(testPair)) {
+        if (unboxing.contains(testPair)) {
             return memberFunctionInvokation.getObject();
         }
-        return in;
+        return memberFunctionInvokation;
     }
 
 
-    private static Expression sugarPrimitiveStatic(Expression in, Set<Pair<String, String>> set) {
-        if (!(in instanceof StaticFunctionInvokation)) return in;
-        StaticFunctionInvokation staticFunctionInvokation = (StaticFunctionInvokation) in;
+    public static Expression sugarBoxing(StaticFunctionInvokation staticFunctionInvokation) {
         String name = staticFunctionInvokation.getName();
         JavaTypeInstance type = staticFunctionInvokation.getClazz();
-        if (staticFunctionInvokation.getArgs().size() != 1) return in;
+        if (staticFunctionInvokation.getArgs().size() != 1) return staticFunctionInvokation;
         String rawTypeName = type.getRawName();
         Pair<String, String> testPair = Pair.make(rawTypeName, name);
-        if (set.contains(testPair)) {
+        if (boxing.contains(testPair)) {
             return staticFunctionInvokation.getArgs().get(0);
         }
-        return in;
+        return staticFunctionInvokation;
     }
 }

@@ -1,16 +1,21 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import sun.jvm.hotspot.oops.ObjectHeap;
 
 import java.util.List;
 
@@ -19,8 +24,12 @@ import java.util.List;
  * User: lee
  * Date: 15/04/2013
  * Time: 06:26
+ * <p/>
+ * This seems daft - why do I need to have all this boilerplate?
+ * Why not just replace with a cast, and a function pointer.
  */
 public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter {
+
 
     public PrimitiveBoxingRewriter() {
     }
@@ -30,45 +39,44 @@ public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;
 
-        /*
-         * Lambdas come in two forms - the lambda which has been produced by the java compiler,
-         * which will involve an invokedynamic call, and the lambda which has been produced by
-         * an anonymous inner class - this wasn't a lambda in the original code, but we should
-         * consider transforming back into lambdas because we can ;)
-         */
-
         for (StructuredStatement statement : structuredStatements) {
             statement.rewriteExpressions(this);
         }
     }
 
+    @Override
+    public void handleStatement(StatementContainer statementContainer) {
+        Object statement = statementContainer.getStatement();
+        if (statement instanceof BoxingProcessor) {
+            ((BoxingProcessor) statement).rewriteBoxing(this);
+        }
+    }
+
     /*
-     * Expression rewriter boilerplate - note that we can't expect ssaIdentifiers to be non-null.
-     */
+         * Expression rewriter boilerplate - note that we can't expect ssaIdentifiers to be non-null.
+         */
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        /*
-         * Note that this is a daft way of doing it - we should have a classifier so that the expression
-         * dictates this.
-         */
-        if (expression instanceof ArithmeticOperation) {
-            ArithmeticOperation arithmeticOperation = (ArithmeticOperation) expression;
-            arithmeticOperation.sugarPrimitiveBoxing();
-        } else if (expression instanceof NewAnonymousArray) {
-            NewAnonymousArray newAnonymousArray = (NewAnonymousArray) expression;
-            newAnonymousArray.sugarPrimitiveBoxing();
+        if (expression instanceof BoxingProcessor) {
+            ((BoxingProcessor) expression).rewriteBoxing(this);
         }
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
 
     @Override
     public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        if (expression instanceof BoxingProcessor) {
+            ((BoxingProcessor) expression).rewriteBoxing(this);
+        }
         Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         return (ConditionalExpression) res;
     }
 
     @Override
     public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        if (expression instanceof BoxingProcessor) {
+            ((BoxingProcessor) expression).rewriteBoxing(this);
+        }
         Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         return (AbstractAssignmentExpression) res;
     }
@@ -81,5 +89,31 @@ public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter
     @Override
     public StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         return lValue;
+    }
+
+    public Expression sugarAnyBoxing(Expression in) {
+        if (in instanceof MemberFunctionInvokation) {
+            return BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);
+        }
+        if (in instanceof StaticFunctionInvokation) {
+            return BoxingHelper.sugarBoxing((StaticFunctionInvokation) in);
+        }
+        return in;
+    }
+
+    public Expression sugarUnboxing(Expression in) {
+        if (in instanceof MemberFunctionInvokation) {
+            return BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);
+        }
+        return in;
+    }
+
+    // Cheat, but...
+    public boolean isUnboxedType(Expression in) {
+        JavaTypeInstance type = in.getInferredJavaType().getJavaTypeInstance();
+        if (!(type instanceof RawJavaType)) return false;
+        if (in instanceof AbstractFunctionInvokation) return false;
+        RawJavaType rawJavaType = (RawJavaType) type;
+        return rawJavaType.isUsableType();
     }
 }

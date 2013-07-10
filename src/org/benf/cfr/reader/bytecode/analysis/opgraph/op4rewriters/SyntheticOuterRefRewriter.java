@@ -36,6 +36,10 @@ public class SyntheticOuterRefRewriter implements ExpressionRewriter {
     }
 
     @Override
+    public void handleStatement(StatementContainer statementContainer) {
+    }
+
+    @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }

@@ -60,6 +60,10 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         }
     }
 
+    @Override
+    public void handleStatement(StatementContainer statementContainer) {
+    }
+
     /*
      * Expression rewriter boilerplate - note that we can't expect ssaIdentifiers to be non-null.
      */
@@ -254,6 +258,11 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
 
         public LambdaInternalRewriter(Map<LValue, LValue> rewrites) {
             this.rewrites = rewrites;
+        }
+
+        @Override
+        public void handleStatement(StatementContainer statementContainer) {
+
         }
 
         @Override

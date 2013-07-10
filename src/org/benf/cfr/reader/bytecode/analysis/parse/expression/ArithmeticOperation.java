@@ -1,9 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -20,7 +22,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 17:51
  * To change this template use File | Settings | File Templates.
  */
-public class ArithmeticOperation extends AbstractExpression {
+public class ArithmeticOperation extends AbstractExpression implements BoxingProcessor {
     private Expression lhs;
     private Expression rhs;
     private final ArithOp op;
@@ -174,9 +176,19 @@ public class ArithmeticOperation extends AbstractExpression {
         }
     }
 
-    public void sugarPrimitiveBoxing() {
-        lhs = BoxingHelper.sugarPrimitiveUnboxing(lhs);
-        rhs = BoxingHelper.sugarPrimitiveUnboxing(rhs);
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        lhs = boxingRewriter.sugarUnboxing(lhs);
+        rhs = boxingRewriter.sugarUnboxing(rhs);
+//        if (boxingRewriter.isUnboxedType(lhs)) {
+//            rhs = boxingRewriter.sugarUnboxing(rhs);
+//            return false;
+//        }
+//        if (boxingRewriter.isUnboxedType(rhs)) {
+//            lhs = boxingRewriter.sugarUnboxing(lhs);
+//            return false;
+//        }
+        return false;
     }
 
     /*

@@ -1,9 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
@@ -18,7 +20,7 @@ import java.util.List;
  * User: lee
  * Date: 15/05/2012
  */
-public class StructuredSwitch extends AbstractStructuredBlockStatement {
+public class StructuredSwitch extends AbstractStructuredBlockStatement implements BoxingProcessor {
     private Expression switchOn;
     private final BlockIdentifier blockIdentifier;
 
@@ -43,6 +45,11 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement {
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer) {
         getBody().transform(transformer);
+    }
+
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        switchOn = boxingRewriter.sugarUnboxing(switchOn);
+        return true;
     }
 
     public Expression getSwitchOn() {
@@ -82,6 +89,7 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
+        expressionRewriter.handleStatement(this.getContainer());
         switchOn = expressionRewriter.rewriteExpression(switchOn, null, this.getContainer(), null);
     }
 

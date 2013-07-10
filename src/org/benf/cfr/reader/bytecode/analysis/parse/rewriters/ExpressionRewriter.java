@@ -25,4 +25,8 @@ public interface ExpressionRewriter {
 
     StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags);
 
+    /*
+     * Does statement have specific handling?
+     */
+    void handleStatement(StatementContainer statementContainer);
 }

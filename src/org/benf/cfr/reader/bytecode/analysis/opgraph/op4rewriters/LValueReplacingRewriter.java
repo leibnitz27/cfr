@@ -31,6 +31,10 @@ public class LValueReplacingRewriter implements ExpressionRewriter {
     }
 
     @Override
+    public void handleStatement(StatementContainer statementContainer) {
+    }
+
+    @Override
     public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         return (ConditionalExpression) res;
