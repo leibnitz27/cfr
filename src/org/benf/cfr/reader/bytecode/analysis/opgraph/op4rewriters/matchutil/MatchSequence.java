@@ -11,9 +11,16 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 public class MatchSequence implements Matcher<StructuredStatement> {
 
     private final Matcher<StructuredStatement>[] inner;
+    private final String name;  // useful for breakpointing.
 
     public MatchSequence(Matcher<StructuredStatement>... inner) {
         this.inner = inner;
+        this.name = "";
+    }
+
+    public MatchSequence(String name, Matcher<StructuredStatement>... inner) {
+        this.inner = inner;
+        this.name = name;
     }
 
     @Override

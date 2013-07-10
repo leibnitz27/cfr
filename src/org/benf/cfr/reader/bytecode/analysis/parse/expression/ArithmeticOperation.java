@@ -129,9 +129,10 @@ public class ArithmeticOperation extends AbstractExpression {
         if (o == this) return true;
         if (!(o instanceof ArithmeticOperation)) return false;
         ArithmeticOperation other = (ArithmeticOperation) o;
-        return op == other.op &&
-                lhs.equals(other.lhs) &&
-                rhs.equals(other.rhs);
+        if (op != other.op) return false;
+        if (!lhs.equals(other.lhs)) return false;
+        if (!rhs.equals(other.rhs)) return false;
+        return true;
     }
 
     private static CompOp rewriteXCMPCompOp(CompOp from, int on) {

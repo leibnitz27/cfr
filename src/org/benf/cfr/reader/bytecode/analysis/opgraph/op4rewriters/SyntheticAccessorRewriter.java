@@ -7,12 +7,14 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -107,8 +109,8 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
     private static final String MUTATION2 = "mutation2";
     private static final String PRE_INC = "preinc";
     private static final String POST_INC = "postinc";
-    private static final String PRE_DEC = "preinc";
-    private static final String POST_DEC = "postinc";
+    private static final String PRE_DEC = "predec";
+    private static final String POST_DEC = "postdec";
 
     private static final String FUNCCALL1 = "funccall1";
     private static final String FUNCCALL2 = "funccall2";
@@ -190,21 +192,25 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                 new StructuredReturn(wcm.getExpressionWildCard("rvalue"))
                         )),
                         new ResetAfterTest(wcm, PRE_INC,
-                                new MatchSequence(
-                                        new StructuredExpressionStatement(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), false),
-                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
-                                )
+                                new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS))
                         ),
                         new ResetAfterTest(wcm, PRE_DEC,
-                                new MatchSequence(
-                                        new StructuredExpressionStatement(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), false),
-                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
-                                )
+                                new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS))
                         ),
                         new ResetAfterTest(wcm, POST_INC,
                                 new MatchSequence(
                                         new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), false),
                                         new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
+                                )
+                        ),
+                        new ResetAfterTest(wcm, POST_INC,
+                                new MatchSequence(
+                                        new StructuredAssignment(wcm.getStackLabelWildcard("tmp"), new LValueExpression(wcm.getLValueWildCard("lvalue"))),
+                                        new StructuredAssignment(
+                                                wcm.getLValueWildCard("lvalue"),
+                                                new ArithmeticOperation(new StackValue(wcm.getStackLabelWildcard("tmp")), new Literal(TypedLiteral.getInt(1)), ArithOp.PLUS)
+                                        ),
+                                        new StructuredReturn(new StackValue(wcm.getStackLabelWildcard("tmp")))
                                 )
                         ),
                         new ResetAfterTest(wcm, POST_DEC,
@@ -237,48 +243,85 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
          * But I'm a coward. ;)
          */
         String matchType = accessorMatchCollector.matchType;
+
         Map<LValue, LValue> lValueReplacements = MapFactory.newMap();
         Map<Expression, Expression> expressionReplacements = MapFactory.newMap();
-
-        /*
-         * TODO : I think I'm over thinking this.  I can just replace args with supplied values!!!
-         */
-
-        if (!isStatic) {
-            /*
-             * Verify that arg0 is the foreign type
-             */
-            if (appliedArgs.isEmpty()) return null;
-            if (!appliedArgs.get(0).getInferredJavaType().getJavaTypeInstance().equals(otherType)) return null;
-            /*
-             * replace arg(0) with appliedargs(0).
-             */
-            Expression arg0 = appliedArgs.get(0);
-            if (!(arg0 instanceof LValueExpression)) return null;
-            lValueReplacements.put(methodArgs.get(0), ((LValueExpression) arg0).getLValue());
+        for (int x = 0; x < methodArgs.size(); ++x) {
+            LocalVariable methodArg = methodArgs.get(x);
+            Expression appliedArg = appliedArgs.get(x);
+            if (appliedArg instanceof LValueExpression) {
+                LValue appliedLvalue = ((LValueExpression) appliedArg).getLValue();
+                lValueReplacements.put(methodArg, appliedLvalue);
+            }
+            expressionReplacements.put(new LValueExpression(methodArg), appliedArg);
         }
-
         CloneHelper cloneHelper = new CloneHelper(expressionReplacements, lValueReplacements);
-        if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
-            int rValue = isStatic ? 0 : 1;
-            if (appliedArgs.size() != (rValue + 1)) return null;
-            expressionReplacements.put(new LValueExpression(methodArgs.get(rValue)), appliedArgs.get(rValue));
 
+        if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
             AssignmentExpression assignmentExpression = new AssignmentExpression(accessorMatchCollector.lValue, accessorMatchCollector.rValue, true);
             return cloneHelper.replaceOrClone(assignmentExpression);
         } else if (matchType.equals(RETURN_LVALUE)) {
             return cloneHelper.replaceOrClone(new LValueExpression(accessorMatchCollector.lValue));
         } else if (matchType.equals(PRE_DEC)) {
-            return null;
+            Expression res = new ArithmeticPreMutationOperation(accessorMatchCollector.lValue, ArithOp.MINUS);
+            return cloneHelper.replaceOrClone(res);
         } else if (matchType.equals(PRE_INC)) {
-            return null;
+            Expression res = new ArithmeticPreMutationOperation(accessorMatchCollector.lValue, ArithOp.PLUS);
+            return cloneHelper.replaceOrClone(res);
         } else if (matchType.equals(POST_DEC)) {
-            return null;
+            Expression res = new ArithmeticPostMutationOperation(accessorMatchCollector.lValue, ArithOp.MINUS);
+            return cloneHelper.replaceOrClone(res);
         } else if (matchType.equals(POST_INC)) {
-            return null;
+            Expression res = new ArithmeticPostMutationOperation(accessorMatchCollector.lValue, ArithOp.PLUS);
+            return cloneHelper.replaceOrClone(res);
         } else {
             throw new IllegalStateException();
         }
+
+//        Map<LValue, LValue> lValueReplacements = MapFactory.newMap();
+//        Map<Expression, Expression> expressionReplacements = MapFactory.newMap();
+//
+//        /*
+//         * TODO : I think I'm over thinking this.  I can just replace args with supplied values!!!
+//         */
+//
+//
+//
+//        if (!isStatic) {
+//            /*
+//             * Verify that arg0 is the foreign type
+//             */
+//            if (appliedArgs.isEmpty()) return null;
+//            if (!appliedArgs.get(0).getInferredJavaType().getJavaTypeInstance().equals(otherType)) return null;
+//            /*
+//             * replace arg(0) with appliedargs(0).
+//             */
+//            Expression arg0 = appliedArgs.get(0);
+//            if (!(arg0 instanceof LValueExpression)) return null;
+//            lValueReplacements.put(methodArgs.get(0), ((LValueExpression) arg0).getLValue());
+//        }
+//
+//        CloneHelper cloneHelper = new CloneHelper(expressionReplacements, lValueReplacements);
+//        if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
+//            int rValue = isStatic ? 0 : 1;
+//            if (appliedArgs.size() != (rValue + 1)) return null;
+//            expressionReplacements.put(new LValueExpression(methodArgs.get(rValue)), appliedArgs.get(rValue));
+//
+//            AssignmentExpression assignmentExpression = new AssignmentExpression(accessorMatchCollector.lValue, accessorMatchCollector.rValue, true);
+//            return cloneHelper.replaceOrClone(assignmentExpression);
+//        } else if (matchType.equals(RETURN_LVALUE)) {
+//            return cloneHelper.replaceOrClone(new LValueExpression(accessorMatchCollector.lValue));
+//        } else if (matchType.equals(PRE_DEC)) {
+//            return null;
+//        } else if (matchType.equals(PRE_INC)) {
+//            return null;
+//        } else if (matchType.equals(POST_DEC)) {
+//            return null;
+//        } else if (matchType.equals(POST_INC)) {
+//            return null;
+//        } else {
+//            throw new IllegalStateException();
+//        }
     }
 
     private class AccessorMatchCollector implements MatchResultCollector {

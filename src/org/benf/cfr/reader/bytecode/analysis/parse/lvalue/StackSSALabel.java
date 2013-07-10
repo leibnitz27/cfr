@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -26,6 +27,15 @@ public class StackSSALabel extends AbstractLValue {
         super(stackEntry.getInferredJavaType());
         this.id = id;
         this.stackEntry = stackEntry;
+    }
+
+    /*
+     * Only used for pattern matching.
+     */
+    protected StackSSALabel(InferredJavaType inferredJavaType) {
+        super(inferredJavaType);
+        this.id = 0;
+        this.stackEntry = null;
     }
 
     @Override

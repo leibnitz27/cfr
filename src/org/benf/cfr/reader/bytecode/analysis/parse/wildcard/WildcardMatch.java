@@ -4,12 +4,14 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -32,6 +34,7 @@ public class WildcardMatch {
      * This could probably be done with one map....
      */
     private Map<String, LValueWildcard> lValueMap = MapFactory.newMap();
+    private Map<String, StackLabelWildCard> lStackValueMap = MapFactory.newMap();
     private Map<String, ExpressionWildcard> expressionMap = MapFactory.newMap();
     private Map<String, NewArrayWildcard> newArrayWildcardMap = MapFactory.newMap();
     private Map<String, MemberFunctionInvokationWildcard> memberFunctionMap = MapFactory.newMap();
@@ -53,6 +56,7 @@ public class WildcardMatch {
 
     public void reset() {
         reset(lValueMap.values());
+        reset(lStackValueMap.values());
         reset(expressionMap.values());
         reset(newArrayWildcardMap.values());
         reset(memberFunctionMap.values());
@@ -65,6 +69,15 @@ public class WildcardMatch {
         reset(constructorAnonymousWildcardMap.values());
         reset(castWildcardMap.values());
         reset(conditionalWildcardMap.values());
+    }
+
+    public StackLabelWildCard getStackLabelWildcard(String name) {
+        StackLabelWildCard res = lStackValueMap.get(name);
+        if (res != null) return res;
+
+        res = new StackLabelWildCard();
+        lStackValueMap.put(name, res);
+        return res;
     }
 
     public ConditionalExpressionWildcard getConditionalExpressionWildcard(String name) {
@@ -331,6 +344,36 @@ public class WildcardMatch {
 
         @Override
         public LValue getMatch() {
+            return matchedValue;
+        }
+
+        @Override
+        public void resetMatch() {
+            matchedValue = null;
+        }
+    }
+
+    public class StackLabelWildCard extends StackSSALabel implements Wildcard<StackSSALabel> {
+        private transient StackSSALabel matchedValue;
+
+        public StackLabelWildCard() {
+            super(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.TEST));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof StackSSALabel)) {
+                return false;
+            }
+            if (matchedValue == null) {
+                matchedValue = (StackSSALabel) o;
+                return true;
+            }
+            return matchedValue.equals(o);
+        }
+
+        @Override
+        public StackSSALabel getMatch() {
             return matchedValue;
         }
 
