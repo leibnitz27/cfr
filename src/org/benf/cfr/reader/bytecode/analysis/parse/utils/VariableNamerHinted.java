@@ -28,6 +28,10 @@ public class VariableNamerHinted implements VariableNamer {
         LocalVariableEntry tmp = new LocalVariableEntry((short) (originalRawOffset), (short) 1, (short) -1, (short) -1, (short) stackPosition);
         LocalVariableEntry lve = localVariableEntryTreeSet.floor(tmp);
 
+        if (lve == null) {
+            return "var" + stackPosition;
+        }
+
         if (lve.getIndex() == stackPosition &&
                 lve.getStartPc() <= (originalRawOffset) &&
                 (lve.getStartPc() + lve.getLength()) >= originalRawOffset) {
@@ -36,6 +40,7 @@ public class VariableNamerHinted implements VariableNamer {
             String lveName = cp.getUTF8Entry(lve.getNameIndex()).getValue();
             return "unnamed_local_" + lveName + "_" + stackPosition;
         }
+
     }
 
     private static class OrderLocalVariables implements Comparator<LocalVariableEntry> {
