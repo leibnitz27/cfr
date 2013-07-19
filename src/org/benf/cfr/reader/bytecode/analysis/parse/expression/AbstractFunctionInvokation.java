@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
@@ -83,6 +84,23 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         for (Expression expression : args) {
             expression.collectUsedLValues(lValueUsageCollector);
         }
+    }
+
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        for (int x = 0; x < args.size(); ++x) {
+            /*
+             * We can only remove explicit boxing if the target type is correct -
+             * i.e. calling an object function with an explicit box can't have the box removed.
+             *
+             * This is fixed by a later pass which makes sure that the argument
+             * can be passed to the target.
+             */
+            Expression arg = args.get(x);
+            arg = boxingRewriter.rewriteExpression(arg, null, null, null);
+            args.set(x, boxingRewriter.sugarAnyBoxing(arg));
+        }
+        return false;
     }
 
 }

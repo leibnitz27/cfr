@@ -17,7 +17,7 @@ import java.util.List;
 public class ClassFileDumperNormal extends AbstractClassFileDumper {
 
     private static final AccessFlag[] dumpableAccessFlagsClass = new AccessFlag[]{
-            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
     };
     private final CFRState cfrState;
 

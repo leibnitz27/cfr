@@ -104,12 +104,20 @@ public class Method implements KnowsRawSize {
             methodConstructor = MethodConstructor.STATIC_CONSTRUCTOR;
         }
         this.isConstructor = methodConstructor;
+        if (isConstructor() && accessFlags.contains(AccessFlagMethod.ACC_STRICT)) {
+            accessFlags.remove(AccessFlagMethod.ACC_STRICT);
+            classFile.getAccessFlags().add(AccessFlag.ACC_STRICT);
+        }
 
         this.methodPrototype = generateMethodPrototype();
         if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
                 cp.getCFRState().hideBridgeMethods()) {
             this.hidden = true;
         }
+    }
+
+    public Set<AccessFlagMethod> getAccessFlags() {
+        return accessFlags;
     }
 
     public void hideSynthetic() {

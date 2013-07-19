@@ -116,11 +116,6 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         return args;
     }
 
-    @Override
-    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
-        return false;
-    }
-
     public Expression getAppropriatelyCastArgument(int idx) {
         return methodPrototype.getAppropriatelyCastedArgument(args.get(idx), idx);
     }

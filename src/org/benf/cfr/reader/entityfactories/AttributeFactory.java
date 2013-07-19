@@ -55,8 +55,11 @@ public class AttributeFactory {
             return new AttributeAnnotationDefault(raw, cp);
         } else if (AttributeLocalVariableTypeTable.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeLocalVariableTypeTable(raw, cp);
+        } else if (AttributeStackMapTable.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeStackMapTable(raw, cp);
         } else {
             return new AttributeUnknown(raw, attributeName);
+            //throw new IllegalStateException(attributeName);
         }
 
     }

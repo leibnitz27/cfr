@@ -72,11 +72,6 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
     }
 
     @Override
-    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
-        return false;
-    }
-
-    @Override
     public Dumper dump(Dumper d) {
         if (methodPrototype.getName().equals(MiscConstants.INIT_METHOD)) {
             d.print("super(");

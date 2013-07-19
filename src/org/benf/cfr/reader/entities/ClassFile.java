@@ -140,6 +140,11 @@ public class ClassFile implements Dumpable {
                     }
                 });
         this.methods = tmpMethods;
+        if (accessFlags.contains(AccessFlag.ACC_STRICT)) {
+            for (Method method : tmpMethods) {
+                method.getAccessFlags().remove(AccessFlagMethod.ACC_STRICT);
+            }
+        }
 
         final long OFFSET_OF_ATTRIBUTES_COUNT = OFFSET_OF_METHODS + methodsLength;
         final long OFFSET_OF_ATTRIBUTES = OFFSET_OF_ATTRIBUTES_COUNT + 2;
@@ -455,10 +460,6 @@ public class ClassFile implements Dumpable {
     public ClassSignature getClassSignature() {
         return classSignature;
     }
-
-    private static final AccessFlag[] dumpableAccessFlagsInterface = new AccessFlag[]{
-            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL
-    };
 
     public Set<AccessFlag> getAccessFlags() {
         return accessFlags;

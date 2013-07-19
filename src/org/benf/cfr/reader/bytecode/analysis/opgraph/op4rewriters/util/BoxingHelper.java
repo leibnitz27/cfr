@@ -19,14 +19,19 @@ public class BoxingHelper {
     private static Set<Pair<String, String>> unboxing = SetFactory.newSet(
             Pair.make("java.lang.Integer", "intValue"),
             Pair.make("java.lang.Long", "longValue"),
-            Pair.make("java.lang.Double", "doubleValue")
+            Pair.make("java.lang.Double", "doubleValue"),
+            Pair.make("java.lang.Short", "shortValue"),
+            Pair.make("java.lang.Boolean", "booleanValue")
     );
 
     private static Set<Pair<String, String>> boxing = SetFactory.newSet(
             Pair.make("java.lang.Integer", "valueOf"),
             Pair.make("java.lang.Long", "valueOf"),
-            Pair.make("java.lang.Double", "valueOf")
+            Pair.make("java.lang.Double", "valueOf"),
+            Pair.make("java.lang.Short", "valueOf"),
+            Pair.make("java.lang.Boolean", "valueOf")
     );
+
 
     public static Expression sugarUnboxing(MemberFunctionInvokation memberFunctionInvokation) {
         String name = memberFunctionInvokation.getName();

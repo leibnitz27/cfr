@@ -20,7 +20,7 @@ public enum AccessFlagMethod {
     ACC_VARARGS("/* varargs */"),
     ACC_NATIVE("/* native */"),
     ACC_ABSTRACT("abstract"),
-    ACC_STRICT("/* strict */"),
+    ACC_STRICT("strictfp"),
     ACC_SYNTHETIC("/* synthetic */");
 
     private final String name;

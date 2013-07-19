@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -29,10 +30,11 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     private JavaTypeInstance allocatedType;
     private int numDims;
     private List<Expression> values;
+    private boolean isCompletelyAnonymous = false;
 
-    public NewAnonymousArray(InferredJavaType type, int numDims, List<Expression> values) {
+    public NewAnonymousArray(InferredJavaType type, int numDims, List<Expression> values, boolean isCompletelyAnonymous) {
         super(type);
-        this.values = values;
+        this.values = ListFactory.newList();
         this.numDims = numDims;
         this.allocatedType = type.getJavaTypeInstance().getArrayStrippedType();
         if (allocatedType instanceof RawJavaType) {
@@ -40,6 +42,14 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
                 value.getInferredJavaType().useAsWithoutCasting((RawJavaType) allocatedType);
             }
         }
+        for (Expression value : values) {
+            if (value instanceof NewAnonymousArray) {
+                NewAnonymousArray newAnonymousArrayInner = (NewAnonymousArray) value;
+                newAnonymousArrayInner.isCompletelyAnonymous = true;
+            }
+            this.values.add(value);
+        }
+        this.isCompletelyAnonymous = isCompletelyAnonymous;
     }
 
     @Override
@@ -53,13 +63,15 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new NewAnonymousArray(getInferredJavaType(), numDims, cloneHelper.replaceOrClone(values));
+        return new NewAnonymousArray(getInferredJavaType(), numDims, cloneHelper.replaceOrClone(values), isCompletelyAnonymous);
     }
 
     @Override
     public Dumper dump(Dumper d) {
-        d.print("new ").print(allocatedType.toString());
-        for (int x = 0; x < numDims; ++x) d.print("[]");
+        if (!isCompletelyAnonymous) {
+            d.print("new ").print(allocatedType.toString());
+            for (int x = 0; x < numDims; ++x) d.print("[]");
+        }
         d.print("{");
         boolean first = true;
         for (Expression value : values) {

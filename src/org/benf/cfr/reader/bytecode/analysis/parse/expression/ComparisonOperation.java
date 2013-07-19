@@ -221,13 +221,22 @@ public class ComparisonOperation extends AbstractExpression implements Condition
 
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
-        if (boxingRewriter.isUnboxedType(lhs)) {
-            rhs = boxingRewriter.sugarUnboxing(rhs);
-            return false;
-        }
-        if (boxingRewriter.isUnboxedType(rhs)) {
-            lhs = boxingRewriter.sugarAnyBoxing(lhs);
-            return false;
+        switch (op) {
+            case EQ:
+            case NE:
+                if (boxingRewriter.isUnboxedType(lhs)) {
+                    rhs = boxingRewriter.sugarUnboxing(rhs);
+                    return false;
+                }
+                if (boxingRewriter.isUnboxedType(rhs)) {
+                    lhs = boxingRewriter.sugarAnyBoxing(lhs);
+                    return false;
+                }
+                break;
+            default:
+                lhs = boxingRewriter.sugarAnyBoxing(lhs);
+                rhs = boxingRewriter.sugarAnyBoxing(rhs);
+                break;
         }
         return false;
     }
