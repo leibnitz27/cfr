@@ -66,6 +66,11 @@ public class WhileStatement extends AbstractStatement {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        if (condition != null) condition.collectUsedLValues(lValueUsageCollector);
+    }
+
+    @Override
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredWhile(condition, blockIdentifier, getTargetStatement(getBackJumpIndex()).getContainer().getBlocksEnded());
     }

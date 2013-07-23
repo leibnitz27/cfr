@@ -109,10 +109,6 @@ public class MethodPrototype {
         return sb.toString();
     }
 
-    public List<LocalVariable> getParameters() {
-        return getParameters(Method.MethodConstructor.NOT);
-    }
-
     public void reset() {
         parameterLValues = null;
     }
@@ -247,7 +243,7 @@ public class MethodPrototype {
         for (int x = 0; x < length; ++x) {
             Expression expression = expressions.get(x);
             JavaTypeInstance type = args.get(x);
-            expression.getInferredJavaType().useAsWithoutCasting(type.getRawTypeOfSimpleType());
+            expression.getInferredJavaType().useAsWithoutCasting(type);
         }
     }
 

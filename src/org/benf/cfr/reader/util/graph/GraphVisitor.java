@@ -8,7 +8,9 @@ package org.benf.cfr.reader.util.graph;
  * To change this template use File | Settings | File Templates.
  */
 public interface GraphVisitor<T> {
+    // TODO : Bulk enqueue.
     void enqueue(T next);
+
     void process();
 }
 

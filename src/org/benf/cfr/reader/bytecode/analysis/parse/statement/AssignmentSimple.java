@@ -30,6 +30,11 @@ public class AssignmentSimple extends AbstractAssignment {
         this.rvalue = lvalue.getInferredJavaType().chain(rvalue.getInferredJavaType()).performCastAction(rvalue, lvalue.getInferredJavaType());
     }
 
+    public AssignmentSimple(InferredJavaType type, LValue lvalue, Expression rvalue) {
+        this.lvalue = lvalue;
+        this.rvalue = rvalue;
+    }
+
     @Override
     public Dumper dump(Dumper d) {
         return d.dump(lvalue).print(" = ").dump(rvalue).endCodeln();
@@ -38,6 +43,11 @@ public class AssignmentSimple extends AbstractAssignment {
     @Override
     public void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
         lvalue.collectLValueAssignments(rvalue, this.getContainer(), lValueAssigmentCollector);
+    }
+
+    @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        rvalue.collectUsedLValues(lValueUsageCollector);
     }
 
     @Override

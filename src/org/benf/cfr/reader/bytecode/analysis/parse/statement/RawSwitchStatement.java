@@ -55,6 +55,11 @@ public class RawSwitchStatement extends AbstractStatement {
         switchOn = expressionRewriter.rewriteExpression(switchOn, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
     }
 
+    @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        switchOn.collectUsedLValues(lValueUsageCollector);
+    }
+
     public DecodedSwitch getSwitchData() {
         return switchData;
     }

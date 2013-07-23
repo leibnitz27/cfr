@@ -153,7 +153,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         }
         if (!otherMethod.testAccessFlag(AccessFlagMethod.ACC_STATIC)) return null;
         if (!otherMethod.testAccessFlag(AccessFlagMethod.ACC_SYNTHETIC)) return null;
-        List<LocalVariable> methodArgs = otherMethod.getMethodPrototype().getParameters();
+        List<LocalVariable> methodArgs = otherMethod.getMethodPrototype().getParameters(otherMethod.getConstructorFlag());
 
         /* Get the linearized, comment stripped code for the block. */
         if (!otherMethod.hasCodeAttribute()) return null;

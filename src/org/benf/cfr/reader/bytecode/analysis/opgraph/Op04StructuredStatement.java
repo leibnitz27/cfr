@@ -503,8 +503,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * We can also discover if stack locations have been re-used with a type change - this would have resulted
      * in what looks like invalid variable re-use, which we can now convert.
      */
-    public static void discoverVariableScopes(MethodPrototype methodPrototype, Op04StructuredStatement root) {
-        LValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverer(methodPrototype);
+    public static void discoverVariableScopes(Method method, Op04StructuredStatement root) {
+        LValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverer(method.getMethodPrototype(), method.getConstructorFlag());
         root.traceLocalVariableScope(scopeDiscoverer);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
@@ -512,7 +512,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     private static LValue removeSyntheticConstructorParam(Method method, Op04StructuredStatement root) {
         MethodPrototype prototype = method.getMethodPrototype();
-        List<LocalVariable> vars = prototype.getParameters();
+        List<LocalVariable> vars = prototype.getParameters(method.getConstructorFlag());
         LocalVariable outerThis = vars.get(0);
         // Todo : Should we test that it's the right type?  Already been done, really....
         prototype.setExplicitThisRemoval(true);

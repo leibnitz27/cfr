@@ -39,6 +39,10 @@ public class GotoStatement extends JumpingStatement {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+    }
+
+    @Override
     public JumpType getJumpType() {
         return jumpType;
     }

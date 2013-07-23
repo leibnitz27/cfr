@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -17,7 +19,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 17:51
  * To change this template use File | Settings | File Templates.
  */
-public class TernaryExpression extends AbstractExpression {
+public class TernaryExpression extends AbstractExpression implements BoxingProcessor {
     private ConditionalExpression condition;
     private Expression lhs;
     private Expression rhs;
@@ -74,5 +76,19 @@ public class TernaryExpression extends AbstractExpression {
     @Override
     public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
         return d.print("(").dump(this).print(")");
+    }
+
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        if (boxingRewriter.isUnboxedType(lhs)) {
+            rhs = boxingRewriter.sugarUnboxing(rhs);
+            return false;
+        }
+        if (boxingRewriter.isUnboxedType(rhs)) {
+            lhs = boxingRewriter.sugarUnboxing(lhs);
+            return false;
+        }
+
+        return false;
     }
 }

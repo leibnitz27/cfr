@@ -99,7 +99,8 @@ public class Method implements KnowsRawSize {
         this.name = cp.getUTF8Entry(nameIndex).getValue();
         MethodConstructor methodConstructor = MethodConstructor.NOT;
         if (name.equals(MiscConstants.INIT_METHOD)) {
-            methodConstructor = MethodConstructor.CONSTRUCTOR;
+            boolean isEnum = classFile.getAccessFlags().contains(AccessFlag.ACC_ENUM);
+            methodConstructor = isEnum ? MethodConstructor.ENUM_CONSTRUCTOR : MethodConstructor.CONSTRUCTOR;
         } else if (name.equals(MiscConstants.STATIC_INIT_METHOD)) {
             methodConstructor = MethodConstructor.STATIC_CONSTRUCTOR;
         }
@@ -135,6 +136,10 @@ public class Method implements KnowsRawSize {
     public void setEnumConstructor() {
         isConstructor = MethodConstructor.ENUM_CONSTRUCTOR;
         getMethodPrototype().reset();
+    }
+
+    public MethodConstructor getConstructorFlag() {
+        return isConstructor;
     }
 
     private AttributeSignature getSignatureAttribute() {

@@ -136,17 +136,13 @@ public class InferredJavaType {
             }
         }
 
-        public void forceRawType(RawJavaType rawJavaType) {
-            if (isDelegate) {
-                delegate.forceRawType(rawJavaType);
-            } else {
-                this.type = rawJavaType;
+        public void forceType(JavaTypeInstance rawJavaType, boolean ignoreLock) {
+            if (!ignoreLock && isLocked()) return;
+            if (isDelegate && delegate.isLocked() && !ignoreLock) {
+                isDelegate = false;
             }
-        }
-
-        public void forceGeneric(JavaTypeInstance rawJavaType) {
             if (isDelegate) {
-                delegate.forceGeneric(rawJavaType);
+                delegate.forceType(rawJavaType, ignoreLock);
             } else {
                 this.type = rawJavaType;
             }
@@ -213,7 +209,7 @@ public class InferredJavaType {
         if (value.getClashState() == ClashState.Clash) {
             BindingSuperContainer bindingSuperContainer = getJavaTypeInstance().getBindingSupers();
             if (bindingSuperContainer.containsBase(type.getDeGenerifiedType())) {
-                value.forceGeneric(type);
+                value.forceType(type, false);
                 value.markClashState(ClashState.Resolved);
             }
         }
@@ -261,7 +257,9 @@ public class InferredJavaType {
         }
 
         mkDelegate(this.value, other.value);
-        this.value = other.value; // new IJTDelegate(other);
+        if (!other.value.isLocked()) {
+            this.value = other.value; // new IJTDelegate(other);
+        }
         return CastAction.None;
     }
 
@@ -360,10 +358,10 @@ public class InferredJavaType {
             // (We've probably got an arithop between an inferred boolean and a real int... )
             int cmp = thisRaw.compareTypePriorityTo(otherRaw);
             if (cmp < 0) {
-                this.value.forceRawType(otherRaw);
+                this.value.forceType(otherRaw, false);
             } else if (cmp == 0) {
                 if (thisRaw == RawJavaType.BOOLEAN && forbidBool) {
-                    this.value.forceRawType(RawJavaType.INT);
+                    this.value.forceType(RawJavaType.INT, false);
                 }
             }
         }
@@ -378,8 +376,10 @@ public class InferredJavaType {
 
     /*
      * This is being used as an argument to a known typed function.  Maybe we can infer some type information.
+     *
+     * Todo : this needs much more structure.
      */
-    public void useAsWithoutCasting(RawJavaType otherRaw) {
+    public void useAsWithoutCasting(JavaTypeInstance otherTypeInstance) {
         if (this == IGNORE) return;
 
         /* If value is something that can legitimately be forced /DOWN/
@@ -387,19 +387,49 @@ public class InferredJavaType {
          *
          * If it's being upscaled, we don't affect it.
          */
-        RawJavaType thisRaw = getRawType();
-        if (thisRaw.getStackType() != otherRaw.getStackType()) return;
-        if (thisRaw.getStackType() == StackType.INT) {
-            // Find the 'least' specific, tie to that.
-            int cmp = thisRaw.compareTypePriorityTo(otherRaw);
-            if (cmp > 0) {
-                this.value.forceRawType(otherRaw);
-            } else if (cmp < 0) {
-                // This special case is because we aggressively try to treat 0/1 as boolean,
-                // which comes back to bite us if they're used as arguments to a wider typed function
-                // we can't see foo((int)false))!
-                if (thisRaw == RawJavaType.BOOLEAN) {
-                    this.value.forceRawType(otherRaw);
+        JavaTypeInstance thisTypeInstance = getJavaTypeInstance();
+        if (thisTypeInstance instanceof RawJavaType &&
+                otherTypeInstance instanceof RawJavaType) {
+            RawJavaType otherRaw = otherTypeInstance.getRawTypeOfSimpleType();
+            RawJavaType thisRaw = getRawType();
+            if (thisRaw.getStackType() != otherRaw.getStackType()) return;
+            if (thisRaw.getStackType() == StackType.INT) {
+                // Find the 'least' specific, tie to that.
+                int cmp = thisRaw.compareTypePriorityTo(otherRaw);
+                if (cmp > 0) {
+                    this.value.forceType(otherRaw, false);
+                } else if (cmp < 0) {
+                    // This special case is because we aggressively try to treat 0/1 as boolean,
+                    // which comes back to bite us if they're used as arguments to a wider typed function
+                    // we can't see foo((int)false))!
+                    if (thisRaw == RawJavaType.BOOLEAN) {
+                        this.value.forceType(otherRaw, false);
+                    }
+                }
+            }
+            return;
+        } else if (thisTypeInstance instanceof JavaArrayTypeInstance &&
+                otherTypeInstance instanceof JavaArrayTypeInstance) {
+            JavaArrayTypeInstance thisArrayTypeInstance = (JavaArrayTypeInstance) thisTypeInstance;
+            JavaArrayTypeInstance otherArrayTypeInstance = (JavaArrayTypeInstance) otherTypeInstance;
+            if (thisArrayTypeInstance.getNumArrayDimensions() != otherArrayTypeInstance.getNumArrayDimensions()) return;
+
+            JavaTypeInstance thisStripped = thisArrayTypeInstance.getArrayStrippedType().getDeGenerifiedType();
+            JavaTypeInstance otherStripped = otherArrayTypeInstance.getArrayStrippedType().getDeGenerifiedType();
+
+            if (thisStripped instanceof JavaRefTypeInstance &&
+                    otherStripped instanceof JavaRefTypeInstance) {
+                JavaRefTypeInstance thisRef = (JavaRefTypeInstance) thisStripped;
+                JavaRefTypeInstance otherRef = (JavaRefTypeInstance) otherStripped;
+                BindingSuperContainer bindingSuperContainer = thisRef.getBindingSupers();
+                if (bindingSuperContainer == null) { // HACK.  It's a hardcoded type.
+                    if (otherRef == TypeConstants.OBJECT) {
+                        this.value.forceType(otherTypeInstance, false);
+                    }
+                } else {
+                    if (bindingSuperContainer.containsBase(otherRef)) {
+                        this.value.forceType(otherTypeInstance, false);
+                    }
                 }
             }
         }
@@ -413,7 +443,7 @@ public class InferredJavaType {
                 throw new ConfusedCFRException("Incompatible types : " + typeInstanceThis.getClass() + "[" + typeInstanceThis + "] / " + typeInstanceOther.getClass() + "[" + typeInstanceOther + "]");
             }
         }
-        value.forceGeneric(other);
+        value.forceType(other, true);
     }
 
     /* We've got some type info about this type already, but we're assigning from other.

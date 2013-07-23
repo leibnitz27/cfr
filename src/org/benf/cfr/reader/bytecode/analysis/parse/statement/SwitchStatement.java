@@ -45,6 +45,11 @@ public class SwitchStatement extends AbstractStatement {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        switchOn.collectUsedLValues(lValueUsageCollector);
+    }
+
+    @Override
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredSwitch(switchOn, switchBlock);
     }

@@ -48,6 +48,11 @@ public class CompoundStatement extends AbstractStatement {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        throw new ConfusedCFRException("Should not be using compound statements here");
+    }
+
+    @Override
     public Expression getRValue() {
         throw new ConfusedCFRException("Should not be using compound statements here");
     }

@@ -39,6 +39,11 @@ public class MonitorEnterStatement extends AbstractStatement {
         monitor = expressionRewriter.rewriteExpression(monitor, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
     }
 
+    @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        monitor.collectUsedLValues(lValueUsageCollector);
+    }
+
     public Expression getMonitor() {
         return monitor;
     }

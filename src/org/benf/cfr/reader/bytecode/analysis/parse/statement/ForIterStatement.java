@@ -46,6 +46,11 @@ public class ForIterStatement extends AbstractStatement {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        list.collectUsedLValues(lValueUsageCollector);
+    }
+
+    @Override
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredIter(blockIdentifier, iterator, list);
     }

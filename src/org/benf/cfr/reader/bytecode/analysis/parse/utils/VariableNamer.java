@@ -9,4 +9,6 @@ import org.benf.cfr.reader.entities.attributes.AttributeLocalVariableTable;
  */
 public interface VariableNamer {
     String getName(int originalRawOffset, long stackPosition);
+
+    void forceName(long stackPosition, String name);
 }

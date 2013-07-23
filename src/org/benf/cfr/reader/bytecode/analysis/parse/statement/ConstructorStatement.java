@@ -46,6 +46,11 @@ public class ConstructorStatement extends AbstractStatement {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        invokation.collectUsedLValues(lValueUsageCollector);
+    }
+
+    @Override
     public void collectObjectCreation(CreationCollector creationCollector) {
         Expression object = invokation.getObject();
         creationCollector.collectConstruction(object, invokation, this.getContainer());

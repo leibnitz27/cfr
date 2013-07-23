@@ -337,7 +337,7 @@ public class CodeAnalyser {
         }
 
         // Now we've got everything nicely block structured, we can have an easier time
-        Op04StructuredStatement.discoverVariableScopes(method.getMethodPrototype(), block);
+        Op04StructuredStatement.discoverVariableScopes(method, block);
 
         // Done by wholeClass analyser.
 //        Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);

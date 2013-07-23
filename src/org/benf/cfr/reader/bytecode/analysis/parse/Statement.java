@@ -31,6 +31,8 @@ public interface Statement extends Dumpable {
 
     void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector);
 
+    void collectLValueUsage(LValueUsageCollector lValueUsageCollector);
+
     void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers);
 
     void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers);

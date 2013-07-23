@@ -211,7 +211,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                     anonymousLambdaArgs.add(tmp);
                     replacementParameters.add(tmp);
                 }
-                List<LocalVariable> originalParameters = lambdaMethod.getMethodPrototype().getParameters();
+                List<LocalVariable> originalParameters = lambdaMethod.getMethodPrototype().getParameters(lambdaMethod.getConstructorFlag());
 
                 /*
                  * Now we need to take the arguments for the lambda function, and replace them with names

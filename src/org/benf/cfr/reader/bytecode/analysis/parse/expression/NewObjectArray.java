@@ -27,7 +27,7 @@ public class NewObjectArray extends AbstractNewArray {
     private final int numDims;
 
     public NewObjectArray(List<Expression> dimSizes, JavaTypeInstance resultInstance) {
-        super(new InferredJavaType(resultInstance, InferredJavaType.Source.EXPRESSION));
+        super(new InferredJavaType(resultInstance, InferredJavaType.Source.EXPRESSION, true));
         this.dimSizes = dimSizes;
         this.allocatedType = resultInstance.getArrayStrippedType();
         this.resultType = resultInstance;

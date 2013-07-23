@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -17,7 +19,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class ArrayIndex extends AbstractExpression {
+public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
     private Expression array;
     private Expression index;
 
@@ -79,5 +81,11 @@ public class ArrayIndex extends AbstractExpression {
         ArrayIndex other = (ArrayIndex) o;
         return array.equals(other.array) &&
                 index.equals(other.index);
+    }
+
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        index = boxingRewriter.sugarUnboxing(index);
+        return false;
     }
 }

@@ -52,7 +52,11 @@ public class CaseStatement extends AbstractStatement {
         for (int x = 0; x < values.size(); ++x) {
             values.set(x, expressionRewriter.rewriteExpression(values.get(x), ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE));
         }
+    }
 
+    @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        /* Have to be a constant, so can't be values */
     }
 
     public BlockIdentifier getSwitchBlock() {

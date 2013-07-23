@@ -10,10 +10,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
@@ -42,8 +40,8 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
 
     private final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
 
-    public LValueScopeDiscoverer(MethodPrototype prototype) {
-        final List<LocalVariable> parameters = prototype.getParameters();
+    public LValueScopeDiscoverer(MethodPrototype prototype, Method.MethodConstructor constructorFlag) {
+        final List<LocalVariable> parameters = prototype.getParameters(constructorFlag);
         for (LocalVariable parameter : parameters) {
             final ScopeDefinition prototypeScope = new ScopeDefinition(0, null, null, parameter, parameter.getName());
             earliestDefinition.put(parameter.getName(), prototypeScope);
@@ -229,7 +227,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
         if (!(lValue instanceof LocalVariable)) return;
         LocalVariable localVariable = (LocalVariable) lValue;
         String name = localVariable.getName();
-        if (name.equals("this")) return;
+        if (name.equals(MiscConstants.THIS)) return;
 
         ScopeDefinition previousDef = earliestDefinition.get(name);
         // If it's in scope, no problem.

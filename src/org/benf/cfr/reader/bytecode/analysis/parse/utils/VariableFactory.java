@@ -10,6 +10,7 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,10 @@ public class VariableFactory {
         if (methodPrototype.isInstanceMethod()) {
             JavaTypeInstance thisType = method.getClassFile().getClassType();
             typedArgs.add(new InferredJavaType(thisType, InferredJavaType.Source.UNKNOWN, true));
+            /*
+             * And hey, let's hardcode that the name is 'this' too.
+             */
+            variableNamer.forceName(0, MiscConstants.THIS);
         }
         for (JavaTypeInstance arg : args) {
             typedArgs.add(new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN, true));

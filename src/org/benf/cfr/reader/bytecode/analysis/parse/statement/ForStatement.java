@@ -49,6 +49,13 @@ public class ForStatement extends AbstractStatement {
         assignment = expressionRewriter.rewriteExpression(assignment, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
     }
 
+
+    @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        condition.collectUsedLValues(lValueUsageCollector);
+        assignment.collectUsedLValues(lValueUsageCollector);
+    }
+
     @Override
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredFor(condition, blockIdentifier, initial, assignment);

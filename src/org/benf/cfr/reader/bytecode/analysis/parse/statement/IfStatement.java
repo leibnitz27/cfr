@@ -58,6 +58,11 @@ public class IfStatement extends GotoStatement {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        condition.collectUsedLValues(lValueUsageCollector);
+    }
+
+    @Override
     public boolean condenseWithNextConditional() {
         // Get the next (fall through) statement.  If that's not a conditional, ignore.
         // Since the next statement is ALWAYS fall through, we don't need to test that.

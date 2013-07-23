@@ -51,4 +51,9 @@ public class VariableNamerHinted implements VariableNamer {
             return a.getStartPc() - b.getStartPc();
         }
     }
+
+    @Override
+    public void forceName(long stackPosition, String name) {
+
+    }
 }

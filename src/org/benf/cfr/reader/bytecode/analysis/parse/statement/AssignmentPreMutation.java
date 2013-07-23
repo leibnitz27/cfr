@@ -65,6 +65,11 @@ public class AssignmentPreMutation extends AbstractAssignment {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        rvalue.collectUsedLValues(lValueUsageCollector);
+    }
+
+    @Override
     public void collectObjectCreation(CreationCollector creationCollector) {
         creationCollector.collectCreation(lvalue, rvalue, this.getContainer());
     }

@@ -126,6 +126,7 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        object.collectUsedLValues(lValueUsageCollector);
         for (Expression expression : args) {
             expression.collectUsedLValues(lValueUsageCollector);
         }

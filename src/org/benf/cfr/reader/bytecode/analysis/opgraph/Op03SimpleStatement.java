@@ -28,6 +28,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
@@ -2666,7 +2667,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *
      * TODO : The tests in here are very rigid (and gross!), and need loosening up when it's working.
      */
-    private static void rewriteArrayForLoop(Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
+    private static void rewriteArrayForLoop(final Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
 
         /*
          * loop should have one back-parent.
@@ -2739,16 +2740,79 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return in.containedInBlocks.contains(forBlock);
             }
         });
+//
+//        for (Op03SimpleStatement inBlock : statementsInBlock) {
+//            if (inBlock == loopStart) continue;
+//            Statement inStatement = inBlock.containedStatement;
+//            LValue updated = inStatement.getCreatedLValue();
+//            if (updated == null) continue;
+//            if (updated.equals(sugarIter) || updated.equals(originalArray)) {
+//                return;
+//            }
+//        }
+
+        /*
+         * It's not simple enough to check if they're assigned to - we also have to verify that i$ (for example ;) isn't
+         * even USED anywhere else.
+         */
+        LValueUsageCollectorSimple usageCollector = new LValueUsageCollectorSimple();
+        final Set<LValue> cantUpdate = SetFactory.newSet(originalArray, originalLoopBound, originalLoopVariable);
 
         for (Op03SimpleStatement inBlock : statementsInBlock) {
             if (inBlock == loopStart) continue;
             Statement inStatement = inBlock.containedStatement;
+            inStatement.collectLValueUsage(usageCollector);
+            for (LValue cantUse : cantUpdate) {
+                if (usageCollector.isUsed(cantUse)) {
+                    return;
+                }
+            }
             LValue updated = inStatement.getCreatedLValue();
             if (updated == null) continue;
-            if (updated.equals(sugarIter) || updated.equals(originalArray)) {
+            if (cantUpdate.contains(updated)) {
                 return;
             }
         }
+
+        /*
+         * We shouldn't have to do this, because we should be doing this at a point where we've discovered
+         * scope better (op04?), but now, verify that no reachable statements (do a dfs from the end point of
+         * the loop with no retry) use either the iterator or the temp value without assigning them first.
+         * (or are marked as being part of the block, as we've already verified them)
+         * (or are the initial assignment statements).
+         */
+        final AtomicBoolean res = new AtomicBoolean();
+        GraphVisitor<Op03SimpleStatement> graphVisitor = new GraphVisitorDFS<Op03SimpleStatement>(loop,
+                new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
+                    @Override
+                    public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+                        if (!(loop == arg1 || arg1.getBlockIdentifiers().contains(forBlock))) {
+                            // need to check it.
+                            Statement inStatement = arg1.getStatement();
+
+                            if (inStatement instanceof AssignmentSimple) {
+                                AssignmentSimple assignmentSimple = (AssignmentSimple) inStatement;
+                                if (cantUpdate.contains(assignmentSimple.getCreatedLValue())) return;
+                            }
+                            LValueUsageCollectorSimple usageCollector = new LValueUsageCollectorSimple();
+                            inStatement.collectLValueUsage(usageCollector);
+                            for (LValue cantUse : cantUpdate) {
+                                if (usageCollector.isUsed(cantUse)) {
+                                    res.set(true);
+                                    return;
+                                }
+                            }
+                        }
+                        for (Op03SimpleStatement target : arg1.getTargets()) {
+                            arg2.enqueue(target);
+                        }
+                    }
+                });
+        graphVisitor.process();
+        if (res.get()) {
+            return;
+        }
+
 
         loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, arrayStatement));
         loopStart.nopOut();
@@ -2773,7 +2837,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *   [a] = [x].next();
      * }
      */
-    private static void rewriteIteratorWhileLoop(Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
+    private static void rewriteIteratorWhileLoop(final Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
         WhileStatement whileStatement = (WhileStatement) loop.containedStatement;
 
         /*
@@ -2790,7 +2854,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 ),
                 whileStatement.getCondition())) return;
 
-        LValue iterable = wildcardMatch.getLValueWildCard("iterable").getMatch();
+        final LValue iterable = wildcardMatch.getLValueWildCard("iterable").getMatch();
 
         Op03SimpleStatement loopStart = loop.getTargets().get(0);
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
@@ -2829,14 +2893,60 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         });
 
+        /*
+         * It's not simple enough to check if they're assigned to - we also have to verify that i$ (for example ;) isn't
+         * even USED anywhere else.
+         */
+        LValueUsageCollectorSimple usageCollector = new LValueUsageCollectorSimple();
         for (Op03SimpleStatement inBlock : statementsInBlock) {
             if (inBlock == loopStart) continue;
             Statement inStatement = inBlock.containedStatement;
-            LValue updated = inStatement.getCreatedLValue();
-            if (updated == null) continue;
-            if (updated.equals(sugarIter)) {
+            inStatement.collectLValueUsage(usageCollector);
+            if (usageCollector.isUsed(iterable)) {
                 return;
             }
+            LValue updated = inStatement.getCreatedLValue();
+            if (updated == null) continue;
+            if (updated.equals(sugarIter) || updated.equals(iterable)) {
+                return;
+            }
+        }
+
+        /*
+         * We shouldn't have to do this, because we should be doing this at a point where we've discovered
+         * scope better (op04?), but now, verify that no reachable statements (do a dfs from the end point of
+         * the loop with no retry) use either the iterator or the temp value without assigning them first.
+         * (or are marked as being part of the block, as we've already verified them)
+         * (or are the initial assignment statements).
+         */
+        final AtomicBoolean res = new AtomicBoolean();
+        GraphVisitor<Op03SimpleStatement> graphVisitor = new GraphVisitorDFS<Op03SimpleStatement>(loop,
+                new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
+                    @Override
+                    public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+                        if (!(loop == arg1 || arg1.getBlockIdentifiers().contains(blockIdentifier))) {
+                            // need to check it.
+                            Statement inStatement = arg1.getStatement();
+
+                            if (inStatement instanceof AssignmentSimple) {
+                                AssignmentSimple assignmentSimple = (AssignmentSimple) inStatement;
+                                if (iterable.equals(assignmentSimple.getCreatedLValue())) return;
+                            }
+                            LValueUsageCollectorSimple usageCollector = new LValueUsageCollectorSimple();
+                            inStatement.collectLValueUsage(usageCollector);
+                            if (usageCollector.isUsed(iterable)) {
+                                res.set(true);
+                                return;
+                            }
+                        }
+                        for (Op03SimpleStatement target : arg1.getTargets()) {
+                            arg2.enqueue(target);
+                        }
+                    }
+                });
+        graphVisitor.process();
+        if (res.get()) {
+            return;
         }
 
         /*
@@ -3059,7 +3169,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             anon.add(testAnon.getExpressionWildCard("val").getMatch());
             anonAssigns.add(next);
         }
-        AssignmentSimple replacement = new AssignmentSimple(assignmentSimple.getCreatedLValue(), new NewAnonymousArray(arrayDef.getInferredJavaType(), arrayDef.getNumDims(), anon, false));
+        AssignmentSimple replacement = new AssignmentSimple(arrayLValue.getInferredJavaType(), assignmentSimple.getCreatedLValue(), new NewAnonymousArray(arrayDef.getInferredJavaType(), arrayDef.getNumDims(), anon, false));
         newArray.replaceStatement(replacement);
         StackEntry arrayStackEntry = array.getStackEntry();
         for (Op03SimpleStatement create : anonAssigns) {
