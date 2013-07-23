@@ -37,7 +37,7 @@ public class CastExpression extends AbstractExpression {
             // transform invalid casts like this.
             return d.print("(" + getInferredJavaType().getCastString() + ")(").dump(child).print(" ? 1 : 0)");
         } else {
-            return d.print("(" + getInferredJavaType().getCastString() + ")").dump(child);
+            return d.print("(" + getInferredJavaType().getCastString() + ")(").dump(child).print(")");
         }
     }
 

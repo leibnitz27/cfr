@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.B
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
@@ -71,6 +72,10 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         return args;
     }
 
+    public MethodPrototype getMethodPrototype() {
+        return methodPrototype;
+    }
+
     public Expression getAppropriatelyCastArgument(int idx) {
         return methodPrototype.getAppropriatelyCastedArgument(args.get(idx), idx);
     }
@@ -81,6 +86,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        object.collectUsedLValues(lValueUsageCollector);
         for (Expression expression : args) {
             expression.collectUsedLValues(lValueUsageCollector);
         }
@@ -88,6 +94,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
 
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        List<JavaTypeInstance> argTypes = methodPrototype.getArgs();
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -

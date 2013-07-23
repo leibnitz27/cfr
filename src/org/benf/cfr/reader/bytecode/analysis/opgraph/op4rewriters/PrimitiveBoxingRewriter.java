@@ -53,8 +53,8 @@ public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter
     }
 
     /*
-         * Expression rewriter boilerplate - note that we can't expect ssaIdentifiers to be non-null.
-         */
+     * Expression rewriter boilerplate - note that we can't expect ssaIdentifiers to be non-null.
+     */
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (expression instanceof BoxingProcessor) {

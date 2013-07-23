@@ -466,7 +466,7 @@ public class InferredJavaType {
 
         if (thisRaw.getStackType() != otherRaw.getStackType()) {
             // throw new ConfusedCFRException("Can't tighten from " + thisRaw + " to " + otherRaw);
-            return CastAction.None;
+            return CastAction.InsertExplicit;
         }
         if (thisRaw == otherRaw && thisRaw.getStackType() != StackType.INT) {
             return chainFrom(other);

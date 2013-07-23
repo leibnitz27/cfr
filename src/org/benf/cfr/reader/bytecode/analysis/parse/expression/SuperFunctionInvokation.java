@@ -24,55 +24,29 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class SuperFunctionInvokation extends AbstractFunctionInvokation {
-    private final ConstantPoolEntryMethodRef function;
-    private Expression object;
-    private final List<Expression> args;
-    private final ConstantPool cp;
-    private final MethodPrototype methodPrototype;
 
     public SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args) {
         super(cp, function, methodPrototype, object, args);
-        this.function = function;
-        this.methodPrototype = methodPrototype;
-        this.object = object;
-        this.args = args;
-        this.cp = cp;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new SuperFunctionInvokation(cp, function, methodPrototype, cloneHelper.replaceOrClone(object), cloneHelper.replaceOrClone(args));
-    }
-
-    @Override
-    public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        object = object.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
-        for (int x = 0; x < args.size(); ++x) {
-            args.set(x, args.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));
-        }
-        return this;
-    }
-
-    @Override
-    public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        object = expressionRewriter.rewriteExpression(object, ssaIdentifiers, statementContainer, flags);
-        for (int x = 0; x < args.size(); ++x) {
-            args.set(x, expressionRewriter.rewriteExpression(args.get(x), ssaIdentifiers, statementContainer, flags));
-        }
-        return this;
+        return new SuperFunctionInvokation(getCp(), getFunction(), getMethodPrototype(), cloneHelper.replaceOrClone(getObject()), cloneHelper.replaceOrClone(getArgs()));
     }
 
     private boolean isSyntheticThisFirstArg() {
-        JavaTypeInstance superType = function.getClassEntry().getTypeInstance();
+        JavaTypeInstance superType = getFunction().getClassEntry().getTypeInstance();
         return superType.getInnerClassHereInfo().isHideSyntheticThis();
     }
 
     public boolean isEmptyIgnoringSynthetics() {
-        return (args.size() == (isSyntheticThisFirstArg() ? 1 : 0));
+        return (getArgs().size() == (isSyntheticThisFirstArg() ? 1 : 0));
     }
 
     @Override
     public Dumper dump(Dumper d) {
+        MethodPrototype methodPrototype = getMethodPrototype();
+        List<Expression> args = getArgs();
         if (methodPrototype.getName().equals(MiscConstants.INIT_METHOD)) {
             d.print("super(");
         } else {
@@ -90,32 +64,4 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
         d.print(")");
         return d;
     }
-
-    public Expression getObject() {
-        return object;
-    }
-
-    public ConstantPoolEntryMethodRef getFunction() {
-        return function;
-    }
-
-    public List<Expression> getArgs() {
-        return args;
-    }
-
-    public Expression getAppropriatelyCastArgument(int idx) {
-        return methodPrototype.getAppropriatelyCastedArgument(args.get(idx), idx);
-    }
-
-    public ConstantPool getCp() {
-        return cp;
-    }
-
-    @Override
-    public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        for (Expression expression : args) {
-            expression.collectUsedLValues(lValueUsageCollector);
-        }
-    }
-
 }

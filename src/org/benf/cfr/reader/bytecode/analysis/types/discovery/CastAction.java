@@ -11,17 +11,17 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
  * Time: 06:16
  */
 public enum CastAction {
-    None,
-    InsertExplicit;
-
-    public Expression performCastAction(Expression orig, InferredJavaType tgtType) {
-        switch (this) {
-            case None:
-                return orig;
-            case InsertExplicit:
-                if (tgtType.getJavaTypeInstance() == RawJavaType.BOOLEAN) return orig;
-                return new CastExpression(tgtType, orig);
+    None {
+        public Expression performCastAction(Expression orig, InferredJavaType tgtType) {
+            return orig;
         }
-        throw new IllegalStateException();
-    }
+    },
+    InsertExplicit {
+        public Expression performCastAction(Expression orig, InferredJavaType tgtType) {
+            if (tgtType.getJavaTypeInstance() == RawJavaType.BOOLEAN) return orig;
+            return new CastExpression(tgtType, orig);
+        }
+    };
+
+    public abstract Expression performCastAction(Expression orig, InferredJavaType tgtType);
 }
