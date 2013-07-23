@@ -133,11 +133,6 @@ public class Method implements KnowsRawSize {
         return accessFlags.contains(flag);
     }
 
-    public void setEnumConstructor() {
-        isConstructor = MethodConstructor.ENUM_CONSTRUCTOR;
-        getMethodPrototype().reset();
-    }
-
     public MethodConstructor getConstructorFlag() {
         return isConstructor;
     }

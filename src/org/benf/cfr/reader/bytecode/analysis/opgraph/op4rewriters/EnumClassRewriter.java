@@ -119,7 +119,6 @@ public class EnumClassRewriter {
         List<Method> constructors = classFile.getConstructors();
         EnumSuperRewriter enumSuperRewriter = new EnumSuperRewriter();
         for (Method constructor : constructors) {
-            constructor.setEnumConstructor();
             enumSuperRewriter.rewrite(constructor.getAnalysis());
         }
 
