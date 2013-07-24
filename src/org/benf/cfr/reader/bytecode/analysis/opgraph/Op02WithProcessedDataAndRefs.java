@@ -716,8 +716,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     return new CompoundStatement(s1, s2, s3);
                 } else {
                     Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
-                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
-                    Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(2));
+                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(2));
+                    Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(1));
                     Statement s4 = new AssignmentSimple(getStackLValue(3), getStackRValue(0));
                     return new CompoundStatement(s1, s2, s3, s4);
                 }
@@ -742,11 +742,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(0));
                     return new CompoundStatement(s1, s2, s3);
                 } else {
-                    Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(0));
-                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(1));
+                    Statement s1 = new AssignmentSimple(getStackLValue(0), getStackRValue(1));
+                    Statement s2 = new AssignmentSimple(getStackLValue(1), getStackRValue(0));
                     Statement s3 = new AssignmentSimple(getStackLValue(2), getStackRValue(2));
-                    Statement s4 = new AssignmentSimple(getStackLValue(3), getStackRValue(0));
-                    Statement s5 = new AssignmentSimple(getStackLValue(4), getStackRValue(1));
+                    Statement s4 = new AssignmentSimple(getStackLValue(3), getStackRValue(1));
+                    Statement s5 = new AssignmentSimple(getStackLValue(4), getStackRValue(0));
                     return new CompoundStatement(s1, s2, s3, s4, s5);
                 }
             }
@@ -802,10 +802,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case NOP:
                 return new Nop();
             case POP:
+//                return new Nop();
                 return new ExpressionStatement(getStackRValue(0));
             case POP2:
                 if (stackConsumed.get(0).getStackEntry().getType().getComputationCategory() == 2) {
                     return new ExpressionStatement(getStackRValue(0));
+//                    return new Nop();
                 } else {
                     Statement s1 = new ExpressionStatement(getStackRValue(0));
                     Statement s2 = new ExpressionStatement(getStackRValue(1));

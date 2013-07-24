@@ -203,6 +203,9 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
+        // Remove LValues which are on their own as expressionstatements.
+        Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
+
         // Now we've done our first stage condensation, we want to transform assignments which are
         // self updates into preChanges, if we can.  I.e. x = x | 3  ->  x |= 3,  x = x + 1 -> x+=1 (===++x).
         // (we do this here rather than taking advantage of INC opcodes as this allows us to catch the former)

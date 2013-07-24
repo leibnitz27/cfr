@@ -532,7 +532,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (stm instanceof AssignmentSimple) {
                 if (statement.getTargets().size() == 1) {
                     Op03SimpleStatement statement2 = statement.getTargets().get(0);
-                    if (statement2.getSources().size() != 1) return;
+                    if (statement2.getSources().size() != 1) {
+                        continue;
+                    }
                     Statement stm2 = statement2.getStatement();
                     if (stm2 instanceof AssignmentSimple) {
                         applyLValueSwap((AssignmentSimple) stm, (AssignmentSimple) stm2, statement, statement2);
@@ -563,7 +565,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (stm instanceof AssignmentSimple) {
                 if (statement.getTargets().size() == 1) {
                     Op03SimpleStatement statement2 = statement.getTargets().get(0);
-                    if (statement2.getSources().size() != 1) return;
+                    if (statement2.getSources().size() != 1) {
+                        continue;
+                    }
                     Statement stm2 = statement2.getStatement();
                     if (stm2 instanceof AssignmentSimple) {
                         applyLValueCondense((AssignmentSimple) stm, (AssignmentSimple) stm2, statement, statement2);
@@ -701,6 +705,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement catchh : catches) {
             eliminateCatchTemporary(catchh);
         }
+    }
+
+    // Expression statements which can't have any effect can be removed.
+    public static void removePointlessExpressionStatements(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> exrps = Functional.filter(statements, new TypeFilter<ExpressionStatement>(ExpressionStatement.class));
+        for (Op03SimpleStatement esc : exrps) {
+            ExpressionStatement es = (ExpressionStatement) esc.getStatement();
+            Expression expression = es.getExpression();
+            if (expression instanceof LValueExpression ||
+                    expression instanceof StackValue ||
+                    expression instanceof Literal) {
+                esc.nopOut();
+            }
+        }
+
     }
 
     private static class UsageWatcher implements LValueRewriter<Statement> {
@@ -1819,20 +1838,28 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             case 1:
                 break;
             case 2:
-                if (ifBranch.get(1) != leaveIfBranch) return null;
+                if (ifBranch.get(1) != leaveIfBranch) {
+                    return null;
+                }
                 break;
             default:
                 return null;
         }
         elseBranch = Functional.filter(elseBranch, notNops);
-        if (elseBranch.size() != 1) return null;
+        if (elseBranch.size() != 1) {
+            return null;
+        }
 
         Op03SimpleStatement s1 = ifBranch.get(0);
         Op03SimpleStatement s2 = elseBranch.get(0);
         LValue l1 = s1.containedStatement.getCreatedLValue();
         LValue l2 = s2.containedStatement.getCreatedLValue();
-        if (l1 == null || l2 == null) return null;
-        if (!l2.equals(l1)) return null;
+        if (l1 == null || l2 == null) {
+            return null;
+        }
+        if (!l2.equals(l1)) {
+            return null;
+        }
         return new DiscoveredTernary(l1, s1.containedStatement.getRValue(), s2.containedStatement.getRValue());
     }
 
@@ -2080,6 +2107,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             joinStatement.sources.addAll(tmp);
 
             logger.info("IfStatement targets : " + ifStatement.targets);
+
+            /*
+             * And now we need to reapply LValue condensing in the region! :(
+             */
+            condenseLValues(statements);
+
             return true;
         }
 

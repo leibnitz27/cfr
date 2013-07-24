@@ -44,6 +44,10 @@ public class ExpressionStatement extends AbstractStatement {
         expression.collectUsedLValues(lValueUsageCollector);
     }
 
+    public Expression getExpression() {
+        return expression;
+    }
+
     @Override
     public StructuredStatement getStructuredStatement() {
         return new StructuredExpressionStatement(expression, false);

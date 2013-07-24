@@ -118,7 +118,7 @@ public enum JVMInstr {
     GETSTATIC(0xb2, 2, null, null, null, new OperationFactoryGetStatic()),
     GOTO(0xa7, 2, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryGoto()),
     GOTO_W(0xc8, 4, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryGotoW()),
-    I2B(0x91, 0, StackType.INT.asList(), StackType.INT.asList(), RawJavaType.BOOLEAN),
+    I2B(0x91, 0, StackType.INT.asList(), StackType.INT.asList(), RawJavaType.BYTE),
     I2C(0x92, 0, StackType.INT.asList(), StackType.INT.asList(), RawJavaType.CHAR),
     I2D(0x87, 0, StackType.INT.asList(), StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
     I2F(0x86, 0, StackType.INT.asList(), StackType.FLOAT.asList(), RawJavaType.FLOAT),
