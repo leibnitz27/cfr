@@ -10,7 +10,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewrit
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
-import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
@@ -200,6 +199,8 @@ public class CodeAnalyser {
         // Rewrite new / constructor pairs.
         Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
+        Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
+        Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         // Now we've done our first stage condensation, we want to transform assignments which are
