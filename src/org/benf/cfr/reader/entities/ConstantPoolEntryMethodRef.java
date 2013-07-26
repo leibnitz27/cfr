@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerDefault;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -23,6 +24,7 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     private final boolean interfaceMethod;
     private static final VariableNamer fakeNamer = new VariableNamerDefault();
     private MethodPrototype methodPrototype = null;
+    private OverloadMethodSet overloadMethodSet = null;
 
     private final short classIndex;
     private final short nameAndTypeIndex;
@@ -79,6 +81,7 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
                 ClassFile classFile = cp.getCFRState().getClassFile(loadType, false);
                 MethodPrototype replacement = classFile.getMethodByPrototype(basePrototype).getMethodPrototype();
                 basePrototype = replacement;
+                overloadMethodSet = classFile.getOverloadMethodSet(replacement);
             } catch (NoSuchMethodException ignore) {
             } catch (CannotLoadClassException ignore) {
             }
@@ -86,6 +89,11 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
             methodPrototype = basePrototype;
         }
         return methodPrototype;
+    }
+
+
+    public OverloadMethodSet getOverloadMethodSet() {
+        return overloadMethodSet;
     }
 
     public String getName() {

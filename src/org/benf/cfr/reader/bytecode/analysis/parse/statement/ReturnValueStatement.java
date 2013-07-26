@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -20,9 +21,11 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class ReturnValueStatement extends ReturnStatement {
     private Expression rvalue;
+    private final JavaTypeInstance fnReturnType;
 
-    public ReturnValueStatement(Expression rvalue) {
+    public ReturnValueStatement(Expression rvalue, JavaTypeInstance fnReturnType) {
         this.rvalue = rvalue;
+        this.fnReturnType = fnReturnType;
     }
 
     @Override
@@ -47,7 +50,7 @@ public class ReturnValueStatement extends ReturnStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredReturn(rvalue);
+        return new StructuredReturn(rvalue, fnReturnType);
     }
 
     @Override

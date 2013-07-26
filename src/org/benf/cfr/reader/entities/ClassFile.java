@@ -7,10 +7,7 @@ import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeBootstrapMethods;
 import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
-import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
-import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnnotation;
-import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperInterface;
-import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperNormal;
+import org.benf.cfr.reader.entities.classfilehelpers.*;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
@@ -277,15 +274,42 @@ public class ClassFile implements Dumpable {
         methods.remove(method);
     }
 
-
-    // We need to make sure we get the 'correct' method...
-    public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
+    private List<Method> getMethodsWithMatchingName(final MethodPrototype prototype) {
         List<Method> named = Functional.filter(methods, new Predicate<Method>() {
             @Override
             public boolean test(Method in) {
                 return in.getName().equals(prototype.getName());
             }
         });
+        return named;
+    }
+
+    public OverloadMethodSet getOverloadMethodSet(final MethodPrototype prototype) {
+        List<Method> named = getMethodsWithMatchingName(prototype);
+        /*
+         * Filter this list to final all methods with the name number of args.
+         */
+        final boolean isInstance = prototype.isInstanceMethod();
+        final int numArgs = prototype.getArgs().size();
+        named = Functional.filter(named, new Predicate<Method>() {
+            @Override
+            public boolean test(Method in) {
+                MethodPrototype other = in.getMethodPrototype();
+                return other.isInstanceMethod() == isInstance && other.getArgs().size() == numArgs;
+            }
+        });
+        List<MethodPrototype> prototypes = Functional.map(named, new UnaryFunction<Method, MethodPrototype>() {
+            @Override
+            public MethodPrototype invoke(Method arg) {
+                return arg.getMethodPrototype();
+            }
+        });
+        return new OverloadMethodSet(prototype, prototypes);
+    }
+
+    // We need to make sure we get the 'correct' method...
+    public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
+        List<Method> named = getMethodsWithMatchingName(prototype);
         for (Method method : named) {
             MethodPrototype tgt = method.getMethodPrototype();
             if (tgt.equalsGeneric(prototype)) {

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -25,13 +26,16 @@ public class StructuredReturn extends AbstractStructuredStatement implements Box
      * If we're ACTUALLY returning null, this will be a null-expr.
      */
     private Expression value;
+    private final JavaTypeInstance fnReturnType;
 
     public StructuredReturn() {
         this.value = null;
+        this.fnReturnType = null;
     }
 
-    public StructuredReturn(Expression value) {
+    public StructuredReturn(Expression value, JavaTypeInstance fnReturnType) {
         this.value = value;
+        this.fnReturnType = fnReturnType;
     }
 
     @Override
@@ -65,7 +69,7 @@ public class StructuredReturn extends AbstractStructuredStatement implements Box
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
         if (value == null) return false;
-        value = boxingRewriter.sugarAnyBoxing(value);
+        value = boxingRewriter.sugarNonParameterBoxing(value, fnReturnType);
         return false;
     }
 

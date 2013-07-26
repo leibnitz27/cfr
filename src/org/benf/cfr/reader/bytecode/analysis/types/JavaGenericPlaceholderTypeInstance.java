@@ -113,4 +113,9 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     public RawJavaType getRawTypeOfSimpleType() {
         return RawJavaType.REF;
     }
+
+    @Override
+    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+        return false;
+    }
 }

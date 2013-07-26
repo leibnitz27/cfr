@@ -229,13 +229,13 @@ public class ComparisonOperation extends AbstractExpression implements Condition
                     return false;
                 }
                 if (boxingRewriter.isUnboxedType(rhs)) {
-                    lhs = boxingRewriter.sugarAnyBoxing(lhs);
+                    lhs = boxingRewriter.sugarUnboxing(lhs);
                     return false;
                 }
                 break;
             default:
-                lhs = boxingRewriter.sugarAnyBoxing(lhs);
-                rhs = boxingRewriter.sugarAnyBoxing(rhs);
+                lhs = boxingRewriter.sugarUnboxing(lhs);
+                rhs = boxingRewriter.sugarUnboxing(rhs);
                 break;
         }
         return false;

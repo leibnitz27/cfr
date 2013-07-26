@@ -102,7 +102,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
 
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
-        rvalue = boxingRewriter.sugarAnyBoxing(rvalue);
+        rvalue = boxingRewriter.sugarNonParameterBoxing(rvalue, lvalue.getInferredJavaType().getJavaTypeInstance());
         return true;
     }
 }

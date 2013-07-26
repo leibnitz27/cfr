@@ -186,26 +186,26 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                 new BeginBlock(),
                 new MatchOneOf(
                         new ResetAfterTest(wcm, RETURN_LVALUE,
-                                new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
+                                new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                         ),
                         new ResetAfterTest(wcm, MUTATION1, new MatchSequence(
                                 new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
-                                new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
+                                new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                         )),
                         new ResetAfterTest(wcm, MUTATION2, new MatchSequence(
                                 new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
-                                new StructuredReturn(wcm.getExpressionWildCard("rvalue"))
+                                new StructuredReturn(wcm.getExpressionWildCard("rvalue"), null)
                         )),
                         new ResetAfterTest(wcm, PRE_INC,
-                                new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS))
+                                new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), null)
                         ),
                         new ResetAfterTest(wcm, PRE_DEC,
-                                new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS))
+                                new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
                         ),
                         new ResetAfterTest(wcm, POST_INC,
                                 new MatchSequence(
                                         new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), false),
-                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
+                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                                 )
                         ),
                         new ResetAfterTest(wcm, POST_INC,
@@ -215,13 +215,13 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                                 wcm.getLValueWildCard("lvalue"),
                                                 new ArithmeticOperation(new StackValue(wcm.getStackLabelWildcard("tmp")), new Literal(TypedLiteral.getInt(1)), ArithOp.PLUS)
                                         ),
-                                        new StructuredReturn(new StackValue(wcm.getStackLabelWildcard("tmp")))
+                                        new StructuredReturn(new StackValue(wcm.getStackLabelWildcard("tmp")), null)
                                 )
                         ),
                         new ResetAfterTest(wcm, POST_DEC,
                                 new MatchSequence(
                                         new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), false),
-                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")))
+                                        new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                                 )
                         )
                 ),
@@ -374,10 +374,10 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                 new StructuredExpressionStatement(wcm.getStaticFunction("func", otherType, null, (List<Expression>) null), false)
                         ),
                         new ResetAfterTest(wcm, MEM_FUN1,
-                                new StructuredReturn(wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null))
+                                new StructuredReturn(wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null), null)
                         ),
                         new ResetAfterTest(wcm, STA_FUN1,
-                                new StructuredReturn(wcm.getStaticFunction("func", otherType, null, (List<Expression>) null))
+                                new StructuredReturn(wcm.getStaticFunction("func", otherType, null, (List<Expression>) null), null)
                         )
                 ),
                 new EndBlock()

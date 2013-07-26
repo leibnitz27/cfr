@@ -10,9 +10,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.ConstantPoolEntryNameAndType;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -106,6 +106,7 @@ public class StaticFunctionInvokation extends AbstractExpression implements Boxi
 
 
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -
@@ -116,7 +117,7 @@ public class StaticFunctionInvokation extends AbstractExpression implements Boxi
              */
             Expression arg = args.get(x);
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            args.set(x, boxingRewriter.sugarAnyBoxing(arg));
+            args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet));
         }
         return false;
     }

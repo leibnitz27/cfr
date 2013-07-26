@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 
 import java.util.List;
 
@@ -94,7 +95,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
 
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
-        List<JavaTypeInstance> argTypes = methodPrototype.getArgs();
+        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -
@@ -105,7 +106,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
              */
             Expression arg = args.get(x);
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            args.set(x, boxingRewriter.sugarAnyBoxing(arg));
+            args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet));
         }
         return false;
     }

@@ -136,6 +136,20 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         return RawJavaType.REF;
     }
 
+    @Override
+    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+        if (other instanceof RawJavaType) {
+            /*
+             * If this is boxed, we can unbox, and cast up.
+             */
+            RawJavaType thisAsRaw = RawJavaType.getUnboxedTypeFor(this);
+            if (thisAsRaw != null) {
+                return thisAsRaw.implicitlyCastsTo(other);
+            }
+        }
+        return false;
+    }
+
     public ClassFile getClassFile() {
         if (cfrState == null) return null;
         ClassFile classFile = cfrState.getClassFile(this, false);

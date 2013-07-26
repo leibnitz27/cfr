@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
@@ -55,7 +54,7 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
         for (int i = 0; i < values.size(); ++i) {
-            values.set(i, boxingRewriter.sugarAnyBoxing(values.get(i)));
+            values.set(i, boxingRewriter.sugarNonParameterBoxing(values.get(i), allocatedType));
         }
         return false;
     }

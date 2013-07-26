@@ -2,8 +2,10 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,28 +14,58 @@ import java.util.Map;
  * Time: 06:57
  */
 public enum RawJavaType implements JavaTypeInstance {
-    BOOLEAN("boolean", StackType.INT, true),
-    BYTE("byte", StackType.INT, true),
-    CHAR("char", StackType.INT, true),
-    SHORT("short", StackType.INT, true),
-    INT("int", StackType.INT, true),
-    FLOAT("float", StackType.FLOAT, true),
+    BOOLEAN("boolean", StackType.INT, true, TypeConstants.boxingNameBoolean),
+    BYTE("byte", StackType.INT, true, TypeConstants.boxingNameByte),
+    CHAR("char", StackType.INT, true, TypeConstants.boxingNameChar),
+    SHORT("short", StackType.INT, true, TypeConstants.boxingNameShort),
+    INT("int", StackType.INT, true, TypeConstants.boxingNameInt),
+    LONG("long", StackType.LONG, true, TypeConstants.boxingNameLong),
+    FLOAT("float", StackType.FLOAT, true, TypeConstants.boxingNameFloat),
+    DOUBLE("double", StackType.DOUBLE, true, TypeConstants.boxingNameDouble),
+    VOID("void", StackType.VOID, false),
     REF("reference", StackType.REF, false),  // Don't use for fixedtypeinstance.
     RETURNADDRESS("returnaddress", StackType.RETURNADDRESS, false),
     RETURNADDRESSORREF("returnaddress or ref", StackType.RETURNADDRESSORREF, false),
-    LONG("long", StackType.LONG, true),
-    DOUBLE("double", StackType.DOUBLE, true),
-    VOID("void", StackType.VOID, false),
     NULL("null", StackType.REF, false);  // Null is a special type, sort of.
 
     private final String name;
     private final StackType stackType;
     private final boolean usableType;
+    private final String boxedName;
 
-    private RawJavaType(String name, StackType stackType, boolean usableType) {
+    private static final Map<RawJavaType, Set<RawJavaType>> implicitCasts = MapFactory.newMap();
+    private static final Map<String, RawJavaType> boxingTypes = MapFactory.newMap();
+
+    static {
+        implicitCasts.put(FLOAT, SetFactory.newSet(DOUBLE));
+        implicitCasts.put(LONG, SetFactory.newSet(FLOAT, DOUBLE));
+        implicitCasts.put(INT, SetFactory.newSet(LONG, FLOAT, DOUBLE));
+        implicitCasts.put(CHAR, SetFactory.newSet(INT, LONG, FLOAT, DOUBLE));
+        implicitCasts.put(SHORT, SetFactory.newSet(INT, LONG, FLOAT, DOUBLE));
+        implicitCasts.put(BYTE, SetFactory.newSet(SHORT, INT, LONG, FLOAT, DOUBLE));
+        for (RawJavaType type : values()) {
+            if (type.boxedName != null) {
+                boxingTypes.put(type.boxedName, type);
+            }
+        }
+    }
+
+    public static RawJavaType getUnboxedTypeFor(JavaRefTypeInstance type) {
+        String rawName = type.getRawName();
+        RawJavaType tgt = boxingTypes.get(rawName);
+        return tgt;
+    }
+
+
+    private RawJavaType(String name, StackType stackType, boolean usableType, String boxedName) {
         this.name = name;
         this.stackType = stackType;
         this.usableType = usableType;
+        this.boxedName = boxedName;
+    }
+
+    private RawJavaType(String name, StackType stackType, boolean usableType) {
+        this(name, stackType, usableType, null);
     }
 
     public String getName() {
@@ -112,6 +144,30 @@ public enum RawJavaType implements JavaTypeInstance {
         return null;
     }
 
+    private boolean implicitlyCastsTo(RawJavaType other) {
+        if (other == this) return true;
+        Set<RawJavaType> tgt = implicitCasts.get(this);
+        if (tgt == null) return false;
+        return tgt.contains(other);
+    }
+
+    /* Obey the exact specficiation from 5.1.2 JLS */
+    @Override
+    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+        if (other instanceof RawJavaType) {
+            return implicitlyCastsTo((RawJavaType) other);
+        }
+        /*
+         * handle boxing.
+         */
+        if (other instanceof JavaRefTypeInstance) {
+            RawJavaType tgt = getUnboxedTypeFor((JavaRefTypeInstance) other);
+            if (tgt == null) return false;
+            return implicitlyCastsTo(tgt);
+        }
+        return false;
+    }
+
 
     public String getCastString() {
         return name;
@@ -159,4 +215,6 @@ public enum RawJavaType implements JavaTypeInstance {
         }
         return res;
     }
+
+
 }

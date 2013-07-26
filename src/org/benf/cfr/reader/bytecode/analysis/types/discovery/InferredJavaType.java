@@ -274,6 +274,7 @@ public class InferredJavaType {
     * v1 [t2<-] = true [t2]
     * v3 [t2<-] = v1;
     * v3 = v0;
+    *
     */
     private CastAction chainIntegralTypes(InferredJavaType other) {
         if (this == other) return CastAction.None;

@@ -37,4 +37,6 @@ public interface JavaTypeInstance {
     public InnerClassInfo getInnerClassHereInfo();
 
     public BindingSuperContainer getBindingSupers();
+
+    public boolean implicitlyCastsTo(JavaTypeInstance other);
 }

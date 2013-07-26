@@ -128,4 +128,9 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     public RawJavaType getRawTypeOfSimpleType() {
         return underlyingType.getRawTypeOfSimpleType();
     }
+
+    @Override
+    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+        return false;
+    }
 }

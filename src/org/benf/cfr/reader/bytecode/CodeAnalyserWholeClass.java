@@ -242,6 +242,5 @@ public class CodeAnalyserWholeClass {
             inlineAccessors(state, classFile);
         }
 
-
     }
 }

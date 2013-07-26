@@ -215,21 +215,24 @@ public class MethodPrototype {
 
     }
 
-    // Saves us using the above if we don't need to create the cast expression.
     public Dumper dumpAppropriatelyCastedArgumentString(Expression expression, int argidx, Dumper d) {
-        JavaTypeInstance type = args.get(argidx);
-        if (type.isComplexType()) {
-            return expression.dump(d);
-        } else {
-            RawJavaType expectedRawJavaType = type.getRawTypeOfSimpleType();
-            RawJavaType providedRawJavaType = expression.getInferredJavaType().getRawType();
-            // Ideally, this would be >= 0, but if we remove an explicit cast, then we might call the wrong method.
-            if (expectedRawJavaType.compareAllPriorityTo(providedRawJavaType) == 0) {
-                return expression.dump(d);
-            }
-            return d.print("(" + expectedRawJavaType.getCastString() + ")").dump(expression);
-        }
+        return expression.dump(d);
     }
+//    // Saves us using the above if we don't need to create the cast expression.
+//    public Dumper dumpAppropriatelyCastedArgumentString(Expression expression, int argidx, Dumper d) {
+//        JavaTypeInstance type = args.get(argidx);
+//        if (type.isComplexType()) {
+//            return expression.dump(d);
+//        } else {
+//            RawJavaType expectedRawJavaType = type.getRawTypeOfSimpleType();
+//            RawJavaType providedRawJavaType = expression.getInferredJavaType().getRawType();
+//            // Ideally, this would be >= 0, but if we remove an explicit cast, then we might call the wrong method.
+//            if (expectedRawJavaType.compareAllPriorityTo(providedRawJavaType) == 0) {
+//                return expression.dump(d);
+//            }
+//            return d.print("(" + expectedRawJavaType.getCastString() + ")").dump(expression);
+//        }
+//    }
 
 
     public void tightenArgs(Expression object, List<Expression> expressions) {

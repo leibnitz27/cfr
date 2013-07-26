@@ -177,4 +177,9 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     public RawJavaType getRawTypeOfSimpleType() {
         return RawJavaType.REF;
     }
+
+    @Override
+    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+        return false;
+    }
 }

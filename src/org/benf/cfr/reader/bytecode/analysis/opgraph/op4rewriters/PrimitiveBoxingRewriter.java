@@ -15,6 +15,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import sun.jvm.hotspot.oops.ObjectHeap;
 
 import java.util.List;
@@ -91,7 +94,26 @@ public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter
         return lValue;
     }
 
-    public Expression sugarAnyBoxing(Expression in) {
+    // Strip out boxing and casting - but if it changes the function being called, or no longer matches, then
+    // ignore the change.
+    public Expression sugarParameterBoxing(Expression in, int argIdx, OverloadMethodSet possibleMethods) {
+        Expression res = in;
+        if (in instanceof CastExpression) {
+            res = ((CastExpression) in).getChild();
+        } else if (in instanceof MemberFunctionInvokation) {
+            res = BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);
+        } else if (in instanceof StaticFunctionInvokation) {
+            res = BoxingHelper.sugarBoxing((StaticFunctionInvokation) in);
+        }
+        if (res == in) return in;
+        if (!possibleMethods.callsCorrectMethod(res, argIdx)) {
+            return in;
+        }
+        return sugarParameterBoxing(res, argIdx, possibleMethods);
+    }
+
+    public Expression sugarNonParameterBoxing(Expression in, JavaTypeInstance tgtType) {
+        boolean expectingPrim = tgtType instanceof RawJavaType;
         if (in instanceof MemberFunctionInvokation) {
             return BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);
         }

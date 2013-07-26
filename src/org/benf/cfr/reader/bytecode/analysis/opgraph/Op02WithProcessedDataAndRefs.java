@@ -680,7 +680,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 if (tgtType instanceof RawJavaType) {
                     retVal.getInferredJavaType().useAsWithoutCasting((RawJavaType) tgtType);
                 }
-                return new ReturnValueStatement(retVal);
+                return new ReturnValueStatement(retVal, tgtType);
             }
             case GETFIELD: {
                 Expression fieldExpression = new LValueExpression(new FieldVariable(getStackRValue(0), method.getClassFile(), cpEntries[0]));
