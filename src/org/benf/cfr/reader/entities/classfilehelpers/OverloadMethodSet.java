@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities.classfilehelpers;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
@@ -209,6 +210,19 @@ public class OverloadMethodSet {
                 return (in.getArgs().get(idx) instanceof RawJavaType);
             }
         });
+        if (!isPOD) {
+            // Put object matches to the front.
+            Pair<List<MethodPrototype>, List<MethodPrototype>> partition = Functional.partition(matches, new Predicate<MethodPrototype>() {
+                @Override
+                public boolean test(MethodPrototype in) {
+                    return !(in.getArgs().get(idx) instanceof RawJavaType);
+                }
+            });
+            matches.clear();
+            matches.addAll(partition.getFirst());
+            matches.addAll(partition.getSecond());
+        }
+
         if (matches.isEmpty()) return false;
         MethodPrototype lowest = matches.get(0);
         JavaTypeInstance lowestType = lowest.getArgs().get(idx);
