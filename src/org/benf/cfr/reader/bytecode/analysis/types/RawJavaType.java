@@ -172,6 +172,10 @@ public enum RawJavaType implements JavaTypeInstance {
 
     @Override
     public boolean canCastTo(JavaTypeInstance other) {
+        if (this.boxedName != null && other instanceof JavaRefTypeInstance) {
+            // Can only cast directly to the 'correct' type.
+            return other.canCastTo(this);
+        }
         return true;
     }
 

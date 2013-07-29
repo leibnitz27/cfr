@@ -101,7 +101,7 @@ public class OverloadMethodSet {
         for (MethodPrototype prototype : allPrototypes) {
             JavaTypeInstance arg = prototype.getArgs().get(idx);
             // If it was equal, it would have been satisfied previously.
-            if (actual.implicitlyCastsTo(arg)) {
+            if (actual.implicitlyCastsTo(arg) && actual.canCastTo(arg)) {
                 matches.add(prototype);
             }
         }
@@ -148,7 +148,7 @@ public class OverloadMethodSet {
         for (MethodPrototype prototype : allPrototypes) {
             JavaTypeInstance arg = prototype.getArgs().get(idx);
             // If it was equal, it would have been satisfied previously.
-            if (actual.implicitlyCastsTo(arg)) {
+            if (actual.implicitlyCastsTo(arg) && actual.canCastTo(arg)) {
                 if (arg instanceof RawJavaType) podMatchExists = true;
                 matches.add(prototype);
             }
