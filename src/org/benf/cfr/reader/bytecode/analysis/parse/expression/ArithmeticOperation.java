@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -41,6 +42,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
 
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b, ArithOp op) {
         InferredJavaType.useInArithOp(a, b, op);
+        if (op == ArithOp.PLUS && TypeConstants.STRING == a.getJavaTypeInstance()) return a;
         return new InferredJavaType(a.getRawType(), InferredJavaType.Source.OPERATION);
     }
 

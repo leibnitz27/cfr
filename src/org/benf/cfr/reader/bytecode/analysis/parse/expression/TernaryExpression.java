@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -39,7 +40,11 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b) {
         // We know these types are the same (any cast will cause a break in the inferred type
         // chain).
+//        if (RawJavaType.NULL.equals(a)) {
+//            return b;
+//        } else {
         b.chain(a);
+//        }
         return a;
     }
 

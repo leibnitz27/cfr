@@ -473,6 +473,9 @@ public class InferredJavaType {
         if (thisRaw == otherRaw && thisRaw.getStackType() != StackType.INT) {
             return chainFrom(other);
         }
+        if (thisRaw == RawJavaType.NULL && (otherRaw == RawJavaType.NULL || otherRaw == RawJavaType.REF)) {
+            return chainFrom(other);
+        }
         if (thisRaw.getStackType() == StackType.INT) {
             if (otherRaw.getStackType() != StackType.INT) {
                 throw new IllegalStateException();
