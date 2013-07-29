@@ -146,11 +146,16 @@ public class OverloadMethodSet {
     public boolean callsCorrectApproxObjMethod(Expression newArg, JavaTypeInstance expected, JavaTypeInstance actual, final int idx) {
         List<MethodPrototype> matches = ListFactory.newList();
         boolean podMatchExists = false;
+        boolean nonPodMatchExists = false;
         for (MethodPrototype prototype : allPrototypes) {
             JavaTypeInstance arg = prototype.getArgs().get(idx);
             // If it was equal, it would have been satisfied previously.
             if (actual.implicitlyCastsTo(arg) && actual.canCastTo(arg)) {
-                if (arg instanceof RawJavaType) podMatchExists = true;
+                if (arg instanceof RawJavaType) {
+                    podMatchExists = true;
+                } else {
+                    nonPodMatchExists = true;
+                }
                 matches.add(prototype);
             }
         }
@@ -220,7 +225,7 @@ public class OverloadMethodSet {
             });
             matches.clear();
             matches.addAll(partition.getFirst());
-            matches.addAll(partition.getSecond());
+            if (!nonPodMatchExists) matches.addAll(partition.getSecond());
         }
 
         if (matches.isEmpty()) return false;

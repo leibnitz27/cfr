@@ -163,6 +163,9 @@ public enum RawJavaType implements JavaTypeInstance {
          * handle boxing.
          */
         if (other instanceof JavaRefTypeInstance) {
+            if (other == TypeConstants.OBJECT) {
+                return true;
+            }
             RawJavaType tgt = getUnboxedTypeFor((JavaRefTypeInstance) other);
             if (tgt == null) return false;
             return implicitlyCastsTo(tgt);
