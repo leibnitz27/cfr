@@ -107,4 +107,9 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     public boolean implicitlyCastsTo(JavaTypeInstance other) {
         return false;
     }
+
+    @Override
+    public boolean canCastTo(JavaTypeInstance other) {
+        return true;
+    }
 }

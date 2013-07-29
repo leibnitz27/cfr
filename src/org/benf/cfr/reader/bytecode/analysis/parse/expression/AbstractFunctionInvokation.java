@@ -34,7 +34,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         super(new InferredJavaType(
                 methodPrototype.getReturnType(
                         object.getInferredJavaType().getJavaTypeInstance(), args
-                ), InferredJavaType.Source.FIELD, true
+                ), InferredJavaType.Source.FUNCTION, true
         ));
         this.function = function;
         this.methodPrototype = methodPrototype;
@@ -105,8 +105,22 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
              * can be passed to the target.
              */
             Expression arg = args.get(x);
+            /*
+             * we only need to shove a cast to the exact type on it if our current argument
+             * doesn't call the 'correct' method.
+             */
+            if (!overloadMethodSet.callsCorrectMethod(arg, x)) {
+            /*
+             * If arg isn't the right type, shove an extra cast on the front now.
+             * Then we will forcibly remove it if we don't need it.
+             */
+                JavaTypeInstance argType = overloadMethodSet.getArgType(x);
+                arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
+            }
+
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet));
+            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet);
+            args.set(x, arg);
         }
         return false;
     }

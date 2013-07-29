@@ -39,4 +39,6 @@ public interface JavaTypeInstance {
     public BindingSuperContainer getBindingSupers();
 
     public boolean implicitlyCastsTo(JavaTypeInstance other);
+
+    public boolean canCastTo(JavaTypeInstance other);
 }

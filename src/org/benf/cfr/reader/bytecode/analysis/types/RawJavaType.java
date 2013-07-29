@@ -157,6 +157,8 @@ public enum RawJavaType implements JavaTypeInstance {
         if (other instanceof RawJavaType) {
             return implicitlyCastsTo((RawJavaType) other);
         }
+        if (this == RawJavaType.NULL) return true;
+        if (this == RawJavaType.REF) return true;
         /*
          * handle boxing.
          */
@@ -166,6 +168,11 @@ public enum RawJavaType implements JavaTypeInstance {
             return implicitlyCastsTo(tgt);
         }
         return false;
+    }
+
+    @Override
+    public boolean canCastTo(JavaTypeInstance other) {
+        return true;
     }
 
 

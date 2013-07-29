@@ -11,6 +11,9 @@ import java.util.Map;
  * Time: 06:46
  */
 public class BindingSuperContainer {
+
+    public static BindingSuperContainer POISON = new BindingSuperContainer(null, null);
+
     private final ClassFile thisClass;
     private final Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses;
 

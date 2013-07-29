@@ -32,7 +32,7 @@ public class StaticFunctionInvokation extends AbstractExpression implements Boxi
     private static InferredJavaType getTypeForFunction(ConstantPoolEntryMethodRef function, List<Expression> args) {
         InferredJavaType res = new InferredJavaType(
                 function.getMethodPrototype().getReturnType(function.getClassEntry().getTypeInstance(), args),
-                InferredJavaType.Source.EXPRESSION);
+                InferredJavaType.Source.FUNCTION, true);
         return res;
     }
 

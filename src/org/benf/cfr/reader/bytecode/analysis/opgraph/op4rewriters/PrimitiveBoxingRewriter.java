@@ -98,7 +98,8 @@ public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter
     // ignore the change.
     public Expression sugarParameterBoxing(Expression in, int argIdx, OverloadMethodSet possibleMethods) {
         Expression res = in;
-        if (in instanceof CastExpression) {
+        if (in instanceof CastExpression && ((CastExpression) in).couldBeImplicit()) {
+            // We can strip this IF it is a cast that could be implicit.
             res = ((CastExpression) in).getChild();
         } else if (in instanceof MemberFunctionInvokation) {
             res = BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);
@@ -114,13 +115,31 @@ public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter
 
     public Expression sugarNonParameterBoxing(Expression in, JavaTypeInstance tgtType) {
         boolean expectingPrim = tgtType instanceof RawJavaType;
-        if (in instanceof MemberFunctionInvokation) {
-            return BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);
+        Expression res = in;
+        if (in instanceof CastExpression && ((CastExpression) in).couldBeImplicit()) {
+            // We can strip this IF it is a cast that could be implicit.
+            res = ((CastExpression) in).getChild();
+        } else if (in instanceof MemberFunctionInvokation) {
+            res = BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);
+        } else if (in instanceof StaticFunctionInvokation) {
+            res = BoxingHelper.sugarBoxing((StaticFunctionInvokation) in);
         }
-        if (in instanceof StaticFunctionInvokation) {
-            return BoxingHelper.sugarBoxing((StaticFunctionInvokation) in);
-        }
-        return in;
+        if (res == in) return in;
+        if (!res.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(in.getInferredJavaType().getJavaTypeInstance()))
+            return in;
+        /*
+         * However, there's a possibility that the original, unboxed type, could be cast to tgtType, (even if it required
+         * an explicit cast), but that the boxed version cannot.
+         *
+         * i.e. Double d
+         * (Integer)(int)(double)d is valid
+         * but
+         * (Integer)(int)d is not.
+         * nor is
+         * (Integer)(double)d .
+         */
+        if (!res.getInferredJavaType().getJavaTypeInstance().canCastTo(tgtType)) return in;
+        return sugarNonParameterBoxing(res, tgtType);
     }
 
     public Expression sugarUnboxing(Expression in) {

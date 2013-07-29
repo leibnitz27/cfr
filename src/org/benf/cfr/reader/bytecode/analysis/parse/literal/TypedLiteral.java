@@ -170,7 +170,7 @@ public class TypedLiteral {
     }
 
     public static TypedLiteral getNull() {
-        return new TypedLiteral(LiteralType.NullObject, new InferredJavaType(RawJavaType.REF, InferredJavaType.Source.LITERAL), null);
+        return new TypedLiteral(LiteralType.NullObject, new InferredJavaType(RawJavaType.NULL, InferredJavaType.Source.LITERAL), null);
     }
 
     public static TypedLiteral getMethodHandle(ConstantPoolEntryMethodHandle methodHandle, ConstantPool cp) {
@@ -231,6 +231,6 @@ public class TypedLiteral {
         if (o == this) return true;
         if (!(o instanceof TypedLiteral)) return false;
         TypedLiteral other = (TypedLiteral) o;
-        return type == other.type && value.equals(other.value);
+        return type == other.type && (value == null ? other.value == null : value.equals(other.value));
     }
 }

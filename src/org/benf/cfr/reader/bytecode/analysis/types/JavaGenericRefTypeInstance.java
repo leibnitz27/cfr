@@ -182,4 +182,9 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     public boolean implicitlyCastsTo(JavaTypeInstance other) {
         return false;
     }
+
+    @Override
+    public boolean canCastTo(JavaTypeInstance other) {
+        return true;
+    }
 }

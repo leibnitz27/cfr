@@ -1,10 +1,15 @@
 package org.benf.cfr.reader.entities.classfilehelpers;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.List;
@@ -36,6 +41,10 @@ public class OverloadMethodSet {
     public OverloadMethodSet(MethodPrototype actualPrototype, List<MethodPrototype> allPrototypes) {
         this.actualPrototype = actualPrototype;
         this.allPrototypes = allPrototypes;
+    }
+
+    public JavaTypeInstance getArgType(int idx) {
+        return actualPrototype.getArgs().get(idx);
     }
 
     /*
@@ -133,7 +142,86 @@ public class OverloadMethodSet {
         return false;
     }
 
-    public boolean callsCorrectApproxObjMethod(Expression newArg, JavaTypeInstance expected, JavaTypeInstance actual, int idx) {
+    public boolean callsCorrectApproxObjMethod(Expression newArg, JavaTypeInstance expected, JavaTypeInstance actual, final int idx) {
+        List<MethodPrototype> matches = ListFactory.newList();
+        boolean podMatchExists = false;
+        for (MethodPrototype prototype : allPrototypes) {
+            JavaTypeInstance arg = prototype.getArgs().get(idx);
+            // If it was equal, it would have been satisfied previously.
+            if (actual.implicitlyCastsTo(arg)) {
+                if (arg instanceof RawJavaType) podMatchExists = true;
+                matches.add(prototype);
+            }
+        }
+        if (matches.isEmpty()) {
+            // WTF?
+            return false;
+        }
+        if (matches.size() == 1 && matches.get(0) == actualPrototype) {
+            return true;
+        }
+        /* Special case - a literal null will cast to any ONE thing in preference to 'Object', but will
+         * clash if there is more than one possibility.
+         */
+        Literal nullLit = new Literal(TypedLiteral.getNull());
+        if (newArg.equals(nullLit) && actual == RawJavaType.NULL) {
+            MethodPrototype best = null;
+            JavaTypeInstance bestType = null;
+            for (MethodPrototype match : matches) {
+                JavaTypeInstance arg = match.getArgs().get(idx);
+                if (!arg.equals(TypeConstants.OBJECT)) {
+                    if (best == null) {
+                        best = match;
+                        bestType = arg;
+                    } else {
+                        if (arg.implicitlyCastsTo(bestType)) {
+                            best = match;
+                            bestType = arg;
+                        } else if (bestType.implicitlyCastsTo(arg)) {
+                            // We already had the better match.
+                        } else {
+                            // Type collision, needs cast.
+                            return false;
+                        }
+                    }
+                }
+            }
+            return (best == actualPrototype);
+        }
+
+        /*
+         * If the argument is pod, then any valid pod path beats non pod
+         * i.e
+         *
+         * x(short(y))
+         *
+         * will call x(int) rather than x(Short)
+         */
+        boolean isPOD = actual instanceof RawJavaType;
+        boolean onlyMatchPod = isPOD && podMatchExists;
+
+        /*
+         * Ok, but if the argument isn't null......
+         */
+        if (onlyMatchPod) matches = Functional.filter(matches, new Predicate<MethodPrototype>() {
+            @Override
+            public boolean test(MethodPrototype in) {
+                return (in.getArgs().get(idx) instanceof RawJavaType);
+            }
+        });
+        if (matches.isEmpty()) return false;
+        MethodPrototype lowest = matches.get(0);
+        JavaTypeInstance lowestType = lowest.getArgs().get(idx);
+        for (int x = 0; x < matches.size(); ++x) {
+            MethodPrototype next = matches.get(x);
+            JavaTypeInstance nextType = next.getArgs().get(idx);
+            if (nextType.implicitlyCastsTo(lowestType)) {
+                lowest = next;
+                lowestType = nextType;
+            }
+        }
+
+        if (lowest == actualPrototype) return true;
         return false;
     }
 }

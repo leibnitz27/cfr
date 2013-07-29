@@ -4,7 +4,10 @@ import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.getopt.CFRState;
+
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,6 +20,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String displayableName;
     private final InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
     private final CFRState cfrState;
+    private BindingSuperContainer cachedBindingSupers = BindingSuperContainer.POISON;
 
     private JavaRefTypeInstance(ConstantPool cp, String className, ClassCache classCache) {
         InnerClassInfo innerClassInfo = InnerClassInfo.NOT;
@@ -33,11 +37,17 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         this.cfrState = classCache.getCfrState();
     }
 
-    private JavaRefTypeInstance(String className, String displayableName) {
+    private JavaRefTypeInstance(String className, String displayableName, JavaRefTypeInstance[] supers) {
         this.innerClassInfo = InnerClassInfo.NOT;
         this.className = className;
         this.displayableName = displayableName;
         this.cfrState = null;
+        Map<JavaTypeInstance, JavaGenericRefTypeInstance> tmp = MapFactory.newMap();
+        for (JavaRefTypeInstance supr : supers) {
+            tmp.put(supr, null);
+        }
+
+        this.cachedBindingSupers = new BindingSuperContainer(null, tmp);
     }
 
     /*
@@ -50,8 +60,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     /*
      * ONLY call from TypeConstants.
      */
-    public static JavaRefTypeInstance createTypeConstant(String rawClassName, String displayableName) {
-        return new JavaRefTypeInstance(rawClassName, displayableName);
+    public static JavaRefTypeInstance createTypeConstant(String rawClassName, String displayableName, JavaRefTypeInstance... supers) {
+        return new JavaRefTypeInstance(rawClassName, displayableName, supers);
     }
 
     @Override
@@ -91,12 +101,14 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public BindingSuperContainer getBindingSupers() {
+        if (cachedBindingSupers != BindingSuperContainer.POISON) return cachedBindingSupers;
         try {
             ClassFile classFile = getClassFile();
-            return classFile == null ? null : classFile.getBindingSupers();
+            cachedBindingSupers = classFile == null ? null : classFile.getBindingSupers();
         } catch (CannotLoadClassException e) {
-            return null;
+            cachedBindingSupers = null;
         }
+        return cachedBindingSupers;
     }
 
     @Override
@@ -138,6 +150,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public boolean implicitlyCastsTo(JavaTypeInstance other) {
+        if (this.equals(other)) return true;
         if (other instanceof RawJavaType) {
             /*
              * If this is boxed, we can unbox, and cast up.
@@ -147,7 +160,28 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
                 return thisAsRaw.implicitlyCastsTo(other);
             }
         }
-        return false;
+        JavaTypeInstance otherRaw = other.getDeGenerifiedType();
+        BindingSuperContainer thisBindingSuper = this.getBindingSupers();
+        if (thisBindingSuper == null) {
+            return false;
+        }
+        return thisBindingSuper.containsBase(otherRaw);
+    }
+
+    @Override
+    public boolean canCastTo(JavaTypeInstance other) {
+        if (other instanceof RawJavaType) {
+            /*
+             * If this is boxed, we can unbox, and cast up.
+             */
+            RawJavaType thisAsRaw = RawJavaType.getUnboxedTypeFor(this);
+            if (thisAsRaw != null) {
+                return thisAsRaw.equals(other);
+            }
+            return true;
+        }
+
+        return true;
     }
 
     public ClassFile getClassFile() {

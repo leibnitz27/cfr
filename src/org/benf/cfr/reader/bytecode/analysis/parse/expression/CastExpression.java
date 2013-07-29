@@ -1,11 +1,14 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -17,7 +20,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 17:44
  * To change this template use File | Settings | File Templates.
  */
-public class CastExpression extends AbstractExpression {
+public class CastExpression extends AbstractExpression implements BoxingProcessor {
     private Expression child;
 
     public CastExpression(InferredJavaType knownType, Expression child) {
@@ -30,6 +33,12 @@ public class CastExpression extends AbstractExpression {
         return new CastExpression(getInferredJavaType(), cloneHelper.replaceOrClone(child));
     }
 
+    public boolean couldBeImplicit() {
+        JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
+        JavaTypeInstance tgtType = getInferredJavaType().getJavaTypeInstance();
+        return childType.implicitlyCastsTo(tgtType);
+    }
+
     @Override
     public Dumper dump(Dumper d) {
         if (child.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN) {
@@ -40,6 +49,7 @@ public class CastExpression extends AbstractExpression {
             return d.print("(" + getInferredJavaType().getCastString() + ")(").dump(child).print(")");
         }
     }
+
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
@@ -67,5 +77,20 @@ public class CastExpression extends AbstractExpression {
         if (o == this) return true;
         if (!(o instanceof CastExpression)) return false;
         return child.equals(((CastExpression) o).child);
+    }
+
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        // Horrible edge case.  If we're forcibly downcasting a cast, then skip the middle one.
+        while (child instanceof CastExpression) {
+            CastExpression childCast = (CastExpression) child;
+            if (getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(childCast.getInferredJavaType().getJavaTypeInstance())) {
+                child = childCast.child;
+            } else {
+                break;
+            }
+        }
+        child = boxingRewriter.sugarNonParameterBoxing(child, getInferredJavaType().getJavaTypeInstance());
+        return false;
     }
 }

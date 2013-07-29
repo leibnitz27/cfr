@@ -280,6 +280,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
         MethodPrototype methodPrototype = function.getMethodPrototype();
         List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size() - 1);
+        /*
+         * Use information about arguments to help us deduce lValue types.
+         */
         methodPrototype.tightenArgs(object, args);
         AbstractFunctionInvokation funcCall = isSuper ?
                 new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
