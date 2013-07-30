@@ -304,7 +304,23 @@ public class ClassFile implements Dumpable {
                 return arg.getMethodPrototype();
             }
         });
-        return new OverloadMethodSet(this, prototype, prototypes);
+        /*
+         * Remove TOTAL duplicates - those with identical toStrings.
+         * TODO : Better way?
+         *
+         * Why does stringBuilder appear to have duplicate methods?
+         */
+        List<MethodPrototype> out = ListFactory.newList();
+        Set<String> matched = SetFactory.newSet();
+        out.add(prototype);
+        matched.add(prototype.toString());
+        for (MethodPrototype other : prototypes) {
+            if (matched.add(other.toString())) {
+                out.add(other);
+            }
+        }
+
+        return new OverloadMethodSet(this, prototype, out);
     }
 
     // We need to make sure we get the 'correct' method...

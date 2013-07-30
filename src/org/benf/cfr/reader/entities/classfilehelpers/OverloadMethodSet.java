@@ -54,6 +54,12 @@ public class OverloadMethodSet {
             return methodPrototype == other.methodPrototype;
         }
 
+
+        @Override
+        public String toString() {
+            return methodPrototype.toString();
+        }
+
         private MethodData getBoundVersion(final GenericTypeBinder genericTypeBinder) {
             List<JavaTypeInstance> rebound = Functional.map(methodArgs, new UnaryFunction<JavaTypeInstance, JavaTypeInstance>() {
                 @Override

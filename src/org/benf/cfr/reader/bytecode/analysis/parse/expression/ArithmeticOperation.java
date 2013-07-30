@@ -35,6 +35,13 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         this.op = op;
     }
 
+    public ArithmeticOperation(InferredJavaType knownType, Expression lhs, Expression rhs, ArithOp op) {
+        super(knownType);
+        this.lhs = lhs;
+        this.rhs = rhs;
+        this.op = op;
+    }
+
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return new ArithmeticOperation(cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op);
@@ -42,7 +49,6 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
 
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b, ArithOp op) {
         InferredJavaType.useInArithOp(a, b, op);
-        if (op == ArithOp.PLUS && TypeConstants.STRING == a.getJavaTypeInstance()) return a;
         return new InferredJavaType(a.getRawType(), InferredJavaType.Source.OPERATION);
     }
 

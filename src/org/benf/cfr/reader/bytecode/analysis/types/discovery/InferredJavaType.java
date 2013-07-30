@@ -45,7 +45,8 @@ public class InferredJavaType {
         OPERATION,
         EXPRESSION,
         INSTRUCTION, // Instr returns type which guarantees this (eg arraylength returns int).
-        GENERICCALL
+        GENERICCALL,
+        STRING_TRANSFORM
     }
 
 

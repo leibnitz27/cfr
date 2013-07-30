@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
@@ -95,8 +96,9 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         int x = revList.size() - 1;
         if (x < 0) return null;
         Expression head = revList.get(x);
+        InferredJavaType inferredJavaType = new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.STRING_TRANSFORM, true);
         for (--x; x >= 0; --x) {
-            head = new ArithmeticOperation(head, revList.get(x), ArithOp.PLUS);
+            head = new ArithmeticOperation(inferredJavaType, head, revList.get(x), ArithOp.PLUS);
         }
         return head;
     }

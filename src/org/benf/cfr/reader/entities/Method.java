@@ -318,5 +318,8 @@ public class Method implements KnowsRawSize {
         }
     }
 
-
+    @Override
+    public String toString() {
+        return name + ": " + methodPrototype;
+    }
 }
