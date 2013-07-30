@@ -105,6 +105,12 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public boolean implicitlyCastsTo(JavaTypeInstance other) {
+        if (other == TypeConstants.OBJECT) return true;
+        if (other instanceof JavaArrayTypeInstance) {
+            JavaArrayTypeInstance arrayOther = (JavaArrayTypeInstance) other;
+            if (getNumArrayDimensions() != arrayOther.getNumArrayDimensions()) return false;
+            return getArrayStrippedType().implicitlyCastsTo(arrayOther.getArrayStrippedType());
+        }
         return false;
     }
 

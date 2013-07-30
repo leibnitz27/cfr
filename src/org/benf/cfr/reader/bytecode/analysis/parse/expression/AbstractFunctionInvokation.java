@@ -7,10 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.B
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
-import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
@@ -97,6 +94,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
 
     private OverloadMethodSet getOverloadMethodSet() {
         OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        if (overloadMethodSet == null) return null;
         JavaTypeInstance objectType = object.getInferredJavaType().getJavaTypeInstance();
         if (objectType instanceof JavaGenericRefTypeInstance) {
             JavaGenericRefTypeInstance genericType = (JavaGenericRefTypeInstance) objectType;
@@ -105,9 +103,17 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         return overloadMethodSet;
     }
 
+    public abstract String getName();
+
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+        if (args.isEmpty()) return false;
+        /*
+         * Ignore completely for lambda, etc.
+         */
+
         OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
+
 
         for (int x = 0; x < args.size(); ++x) {
             /*
@@ -128,7 +134,21 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
                  * Then we will forcibly remove it if we don't need it.
                  */
                 JavaTypeInstance argType = overloadMethodSet.getArgType(x);
-                arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
+                boolean ignore = false;
+                if (argType instanceof JavaGenericBaseInstance) {
+                    // TODO : Should check flag for ignore bad generics?
+                    ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp);
+                }
+                /*
+                 * Lambda types will always look wrong.
+                 */
+                if (!ignore) {
+                    ignore |= arg instanceof LambdaExpression;
+                    ignore |= arg instanceof LambdaExpressionFallback;
+                }
+                if (!ignore) {
+                    arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
+                }
             }
 
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);

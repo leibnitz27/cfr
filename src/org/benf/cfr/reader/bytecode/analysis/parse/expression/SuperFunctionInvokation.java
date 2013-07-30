@@ -64,4 +64,8 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
         d.print(")");
         return d;
     }
+
+    public String getName() {
+        return "super";
+    }
 }
