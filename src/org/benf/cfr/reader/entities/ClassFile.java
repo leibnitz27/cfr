@@ -304,18 +304,21 @@ public class ClassFile implements Dumpable {
                 return arg.getMethodPrototype();
             }
         });
-        return new OverloadMethodSet(prototype, prototypes);
+        return new OverloadMethodSet(this, prototype, prototypes);
     }
 
     // We need to make sure we get the 'correct' method...
     public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
         List<Method> named = getMethodsWithMatchingName(prototype);
+        Method methodMatch = null;
         for (Method method : named) {
             MethodPrototype tgt = method.getMethodPrototype();
+            if (tgt.equalsMatch(prototype)) return method;
             if (tgt.equalsGeneric(prototype)) {
-                return method;
+                methodMatch = method;
             }
         }
+        if (methodMatch != null) return methodMatch;
         throw new NoSuchMethodException();
     }
 
@@ -615,6 +618,16 @@ public class ClassFile implements Dumpable {
         getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector);
         for (JavaTypeInstance interfaceBase : classSignature.getInterfaces()) {
             getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector);
+        }
+    }
+
+    public GenericTypeBinder getGenericTypeBinder(JavaGenericRefTypeInstance boundGeneric) {
+        JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType(), getConstantPool());
+        if (!(thisType instanceof JavaGenericRefTypeInstance)) {
+            return null;
+        } else {
+            JavaGenericRefTypeInstance genericThisType = (JavaGenericRefTypeInstance) thisType;
+            return GenericTypeBinder.extractBindings(genericThisType, (JavaGenericRefTypeInstance) boundGeneric);
         }
     }
 

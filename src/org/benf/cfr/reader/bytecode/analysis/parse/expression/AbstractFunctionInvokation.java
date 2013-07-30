@@ -7,6 +7,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.B
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -93,9 +95,20 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         }
     }
 
+    private OverloadMethodSet getOverloadMethodSet() {
+        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        JavaTypeInstance objectType = object.getInferredJavaType().getJavaTypeInstance();
+        if (objectType instanceof JavaGenericRefTypeInstance) {
+            JavaGenericRefTypeInstance genericType = (JavaGenericRefTypeInstance) objectType;
+            return overloadMethodSet.specialiseTo(genericType);
+        }
+        return overloadMethodSet;
+    }
+
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
-        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
+
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -
@@ -110,10 +123,10 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
              * doesn't call the 'correct' method.
              */
             if (!overloadMethodSet.callsCorrectMethod(arg, x)) {
-            /*
-             * If arg isn't the right type, shove an extra cast on the front now.
-             * Then we will forcibly remove it if we don't need it.
-             */
+                /*
+                 * If arg isn't the right type, shove an extra cast on the front now.
+                 * Then we will forcibly remove it if we don't need it.
+                 */
                 JavaTypeInstance argType = overloadMethodSet.getArgType(x);
                 arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
             }

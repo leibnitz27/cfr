@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerDefault;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
@@ -80,8 +81,9 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
                 JavaTypeInstance loadType = classType.getArrayStrippedType().getDeGenerifiedType();
                 ClassFile classFile = cp.getCFRState().getClassFile(loadType, false);
                 MethodPrototype replacement = classFile.getMethodByPrototype(basePrototype).getMethodPrototype();
-                basePrototype = replacement;
+
                 overloadMethodSet = classFile.getOverloadMethodSet(replacement);
+                basePrototype = replacement;
             } catch (NoSuchMethodException ignore) {
             } catch (CannotLoadClassException ignore) {
             }

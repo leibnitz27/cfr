@@ -310,4 +310,16 @@ public class MethodPrototype {
         return genericResult.getBoundInstance(genericTypeBinder);
     }
 
+    /*
+     * I don't want this to be complete equality, so let's not call it that.
+     */
+    public boolean equalsMatch(MethodPrototype other) {
+        if (other == this) return true;
+        if (other == null) return false;
+        if (!name.equals(other.name)) return false;
+        List<JavaTypeInstance> otherArgs = other.getArgs();
+        if (!args.equals(otherArgs)) return false;
+        return true;
+    }
+
 }
