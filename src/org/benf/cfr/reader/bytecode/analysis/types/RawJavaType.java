@@ -159,6 +159,11 @@ public enum RawJavaType implements JavaTypeInstance {
         }
         if (this == RawJavaType.NULL) return true;
         if (this == RawJavaType.REF) return true;
+
+        if (other instanceof JavaGenericPlaceholderTypeInstance) {
+            // We've got dangling generics, probably from using a generic without types.
+            return true;
+        }
         /*
          * handle boxing.
          */
