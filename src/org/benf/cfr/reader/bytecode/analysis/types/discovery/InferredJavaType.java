@@ -442,7 +442,7 @@ public class InferredJavaType {
         JavaTypeInstance typeInstanceThis = getJavaTypeInstance().getDeGenerifiedType();
         JavaTypeInstance typeInstanceOther = other;
         if (!typeInstanceOther.equals(typeInstanceThis)) {
-            if (!("java/lang/Object".equals(typeInstanceThis.getRawName()))) {
+            if (TypeConstants.OBJECT != typeInstanceThis) {
                 throw new ConfusedCFRException("Incompatible types : " + typeInstanceThis.getClass() + "[" + typeInstanceThis + "] / " + typeInstanceOther.getClass() + "[" + typeInstanceOther + "]");
             }
         }
