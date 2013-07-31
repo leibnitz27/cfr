@@ -14,7 +14,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -2584,6 +2585,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         // What happens if there's no default statement?  Not sure java permits?
         List<DecodedSwitchEntry> entries = switchData.getJumpTargets();
+        InferredJavaType caseType = switchStatement.getSwitchOn().getInferredJavaType();
         Map<InstrIndex, Op03SimpleStatement> firstPrev = MapFactory.newMap();
         for (int x = 0; x < targets.size(); ++x) {
             Op03SimpleStatement target = targets.get(x);
@@ -2598,7 +2600,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     expression.add(new Literal(TypedLiteral.getInt(val)));
                 }
             }
-            Op03SimpleStatement caseStatement = new Op03SimpleStatement(target.getBlockIdentifiers(), new CaseStatement(expression, blockIdentifier, blockIdentifierFactory.getNextBlockIdentifier(BlockType.CASE)), target.getIndex().justBefore());
+            Op03SimpleStatement caseStatement = new Op03SimpleStatement(target.getBlockIdentifiers(), new CaseStatement(expression, caseType, blockIdentifier, blockIdentifierFactory.getNextBlockIdentifier(BlockType.CASE)), target.getIndex().justBefore());
             // Link casestatement in infront of target - all sources of target should point to casestatement instead, and
             // there should be one link going from caseStatement to target. (it's unambiguous).
             for (Op03SimpleStatement source : target.sources) {
@@ -3065,7 +3067,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         /*
          * If it's a cast expression, we can try to push typing information back up.
          *
-         * (This doesn't work.)
+         * Doesn't work right now, as JavaPlaceholder is not referenced via an indirection.
          */
 //        if (isCastExpression) {
 //            CastExpression castExpression = wildcardMatch.getCastExpressionWildcard("cast").getMatch();
@@ -3080,7 +3082,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 //                    JavaGenericPlaceholderTypeInstance placeholderTypeInstance = (JavaGenericPlaceholderTypeInstance)binding;
 //                    GenericTypeBinder binder = GenericTypeBinder.createEmpty();
 //                    binder.suggestBindingFor(placeholderTypeInstance.getRawName(), castExpression.getInferredJavaType().getJavaTypeInstance());
-//                    iteratorCall.getInferredJavaType().replaceGeneric(genericIteratorType.getBoundInstance(binder));
+//                    iteratorCall.getInferredJavaType().improveGeneric(genericIteratorType.getBoundInstance(binder));
 //                }
 //            }
 //        }

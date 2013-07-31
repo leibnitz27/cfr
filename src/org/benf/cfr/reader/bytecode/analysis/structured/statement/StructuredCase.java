@@ -1,17 +1,23 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -24,19 +30,30 @@ import java.util.List;
 public class StructuredCase extends AbstractStructuredBlockStatement {
     private List<Expression> values;
     private final BlockIdentifier blockIdentifier;
+    @Nullable
+    private final InferredJavaType inferredJavaTypeOfSwitch;
     // Because enum values inside a switch are written without the class name, (but ONLY in a switch
     // on that enum!) we have to know about the context of usage.
     private final boolean enumSwitch;
 
-    public StructuredCase(List<Expression> values, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
-        this(values, body, blockIdentifier, false);
+    public StructuredCase(List<Expression> values, InferredJavaType inferredJavaTypeOfSwitch, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
+        this(values, inferredJavaTypeOfSwitch, body, blockIdentifier, false);
     }
 
-    public StructuredCase(List<Expression> values, Op04StructuredStatement body, BlockIdentifier blockIdentifier, boolean enumSwitch) {
+    public StructuredCase(List<Expression> values, InferredJavaType inferredJavaTypeOfSwitch, Op04StructuredStatement body, BlockIdentifier blockIdentifier, boolean enumSwitch) {
         super(body);
-        this.values = values;
         this.blockIdentifier = blockIdentifier;
         this.enumSwitch = enumSwitch;
+        this.inferredJavaTypeOfSwitch = inferredJavaTypeOfSwitch;
+        if (inferredJavaTypeOfSwitch != null && inferredJavaTypeOfSwitch.getJavaTypeInstance() == RawJavaType.CHAR) {
+            for (Expression value : values) {
+                if (value instanceof Literal) {
+                    TypedLiteral typedLiteral = ((Literal) value).getValue();
+                    typedLiteral.getInferredJavaType().useAsWithoutCasting(inferredJavaTypeOfSwitch.getJavaTypeInstance());
+                }
+            }
+        }
+        this.values = values;
     }
 
     private static StaticVariable getEnumStatic(Expression expression) {

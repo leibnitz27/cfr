@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -18,9 +19,11 @@ import java.util.Vector;
 public class UnstructuredCase extends AbstractUnStructuredStatement {
     private final List<Expression> values;
     private final BlockIdentifier blockIdentifier;
+    private final InferredJavaType caseType;
 
-    public UnstructuredCase(List<Expression> values, BlockIdentifier blockIdentifier) {
+    public UnstructuredCase(List<Expression> values, InferredJavaType caseType, BlockIdentifier blockIdentifier) {
         this.values = values;
+        this.caseType = caseType;
         this.blockIdentifier = blockIdentifier;
     }
 
@@ -38,7 +41,7 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
 
     public StructuredStatement getEmptyStructuredCase() {
         Op04StructuredStatement container = getContainer();
-        return new StructuredCase(values,
+        return new StructuredCase(values, caseType,
                 new Op04StructuredStatement(
                         container.getIndex().justAfter(),
                         container.getBlockMembership(),
@@ -51,6 +54,6 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
         if (blockIdentifier != this.blockIdentifier) {
             throw new ConfusedCFRException("Unstructured case being asked to claim wrong block. [" + blockIdentifier + " != " + this.blockIdentifier + "]");
         }
-        return new StructuredCase(values, innerBlock, blockIdentifier);
+        return new StructuredCase(values, caseType, innerBlock, blockIdentifier);
     }
 }

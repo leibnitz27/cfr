@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -107,7 +108,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 new KleenePlus(
                         new ResetAfterTest(wcm2,
                                 new MatchSequence(
-                                        new StructuredCase(wcm2.<Expression>getList("hashvals"), null, wcm2.getBlockIdentifier("case")),
+                                        new StructuredCase(wcm2.<Expression>getList("hashvals"), null, null, wcm2.getBlockIdentifier("case")),
                                         new BeginBlock(),
                                         new KleeneStar(
                                                 new ResetAfterTest(wcm3,
@@ -167,6 +168,8 @@ public class SwitchStringRewriter implements Op04Rewriter {
         Map<Integer, List<String>> replacements = matchResultCollector.getValidatedHashes();
         List<Op04StructuredStatement> caseStatements = block.getBlockStatements();
         LinkedList<Op04StructuredStatement> tgt = ListFactory.newLinkedList();
+
+        InferredJavaType typeOfSwitch = matchResultCollector.getStringExpression().getInferredJavaType();
         for (Op04StructuredStatement op04StructuredStatement : caseStatements) {
             inner = op04StructuredStatement.getStatement();
             if (!(inner instanceof StructuredCase)) {
@@ -187,7 +190,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 }
             }
 
-            StructuredCase replacementStructuredCase = new StructuredCase(transformedValues, structuredCase.getBody(), structuredCase.getBlockIdentifier());
+            StructuredCase replacementStructuredCase = new StructuredCase(transformedValues, typeOfSwitch, structuredCase.getBody(), structuredCase.getBlockIdentifier());
             tgt.add(new Op04StructuredStatement(replacementStructuredCase));
         }
         Block newBlock = new Block(tgt, true);

@@ -17,6 +17,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.En
 import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Field;
@@ -227,6 +228,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
          * If we can match every one of the ordinals, we replace the statement.
          */
         LinkedList<Op04StructuredStatement> newBlockContent = ListFactory.newLinkedList();
+        InferredJavaType inferredJavaType = enumObject.getInferredJavaType();
         for (Op04StructuredStatement caseOuter : caseStatements) {
             StructuredStatement caseInner = caseOuter.getStatement();
             if (!(caseInner instanceof StructuredCase)) {
@@ -246,7 +248,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                 }
                 newValues.add(new LValueExpression(enumVal));
             }
-            StructuredCase replacement = new StructuredCase(newValues, caseStmt.getBody(), caseStmt.getBlockIdentifier(), true);
+            StructuredCase replacement = new StructuredCase(newValues, inferredJavaType, caseStmt.getBody(), caseStmt.getBlockIdentifier(), true);
             newBlockContent.add(new Op04StructuredStatement(replacement));
         }
         Block replacementBlock = new Block(newBlockContent, block.isIndenting());

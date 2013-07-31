@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCase;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -21,9 +22,11 @@ public class CaseStatement extends AbstractStatement {
     private List<Expression> values; // null for default.
     private final BlockIdentifier switchBlock;
     private final BlockIdentifier caseBlock;
+    private final InferredJavaType caseType;
 
-    public CaseStatement(List<Expression> values, BlockIdentifier switchBlock, BlockIdentifier caseBlock) {
+    public CaseStatement(List<Expression> values, InferredJavaType caseType, BlockIdentifier switchBlock, BlockIdentifier caseBlock) {
         this.values = values;
+        this.caseType = caseType;
         this.switchBlock = switchBlock;
         this.caseBlock = caseBlock;
     }
@@ -69,7 +72,7 @@ public class CaseStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredCase(values, caseBlock);
+        return new UnstructuredCase(values, caseType, caseBlock);
     }
 
     public BlockIdentifier getCaseBlock() {

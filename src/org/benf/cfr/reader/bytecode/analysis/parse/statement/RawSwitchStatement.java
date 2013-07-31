@@ -64,6 +64,10 @@ public class RawSwitchStatement extends AbstractStatement {
         return switchData;
     }
 
+    public Expression getSwitchOn() {
+        return switchOn;
+    }
+
     @Override
     public StructuredStatement getStructuredStatement() {
         throw new RuntimeException("Can't convert a raw switch statement to a structured statement");
