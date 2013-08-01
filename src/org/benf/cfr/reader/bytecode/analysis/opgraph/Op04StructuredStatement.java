@@ -513,6 +513,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     private static LValue removeSyntheticConstructorParam(Method method, Op04StructuredStatement root) {
         MethodPrototype prototype = method.getMethodPrototype();
         List<LocalVariable> vars = prototype.getParameters(method.getConstructorFlag());
+        if (vars.isEmpty()) return null;
         LocalVariable outerThis = vars.get(0);
         // Todo : Should we test that it's the right type?  Already been done, really....
         prototype.setExplicitThisRemoval(true);
