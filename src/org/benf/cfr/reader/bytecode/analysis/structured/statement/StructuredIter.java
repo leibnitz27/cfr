@@ -48,8 +48,8 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
-        getBody().transform(transformer);
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
+        getBody().transform(transformer, after);
     }
 
     @Override

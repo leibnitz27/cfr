@@ -125,24 +125,27 @@ public class Block extends AbstractStructuredStatement {
         throw new IllegalStateException();
     }
 
-    public void combineTryCatch() {
+    public void combineTryCatch(Op04StructuredStatement after) {
         int size = containedStatements.size();
-        for (int x = 0; x < size; ++x) {
+        boolean finished = false;
+        for (int x = 0; x < size && !finished; ++x) {
             Op04StructuredStatement statement = containedStatements.get(x);
             if (statement.getStatement() instanceof StructuredTry) {
                 StructuredTry structuredTry = (StructuredTry) statement.getStatement();
                 ++x;
-                Op04StructuredStatement next = containedStatements.get(x);
-                while (x < size && next.getStatement() instanceof StructuredCatch) {
+                Op04StructuredStatement next = x < size - 1 ? containedStatements.get(x) : null;
+                while (x < size && next != null && next.getStatement() instanceof StructuredCatch) {
                     structuredTry.addCatch(next.nopThisAndReplace());
                     ++x;
                     if (x < size) {
                         next = containedStatements.get(x);
                     } else {
                         // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                        next = null;
+                        next = after;
+                        finished = true;
                     }
                 }
+                if (next == null) next = after;
                 if (next != null) {
                     structuredTry.removeFinalJumpsTo(next);
                     --x;
@@ -152,9 +155,11 @@ public class Block extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
-        for (Op04StructuredStatement structuredBlock : containedStatements) {
-            structuredBlock.transform(transformer);
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
+        for (int x = 0, len = containedStatements.size(); x < len; ++x) {
+            Op04StructuredStatement structuredBlock = containedStatements.get(x);
+            Op04StructuredStatement next = x < len - 1 ? containedStatements.get(x + 1) : after;
+            structuredBlock.transform(transformer, next);
         }
     }
 

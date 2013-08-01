@@ -42,8 +42,8 @@ public class StructuredCatch extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
-        catchBlock.transform(transformer);
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
+        catchBlock.transform(transformer, after);
     }
 
     @Override

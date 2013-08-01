@@ -26,7 +26,7 @@ public interface StructuredStatement extends Dumpable, Matcher<StructuredStateme
 
     StructuredStatement informBlockHeirachy(Vector<BlockIdentifier> blockIdentifiers);
 
-    void transformStructuredChildren(StructuredStatementTransformer transformer);
+    void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement next);
 
     // This isn't recursive - maybe it should be.
     void rewriteExpressions(ExpressionRewriter expressionRewriter);

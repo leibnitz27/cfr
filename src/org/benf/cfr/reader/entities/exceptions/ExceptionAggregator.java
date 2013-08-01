@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.entities.exceptions;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
@@ -21,16 +23,6 @@ import java.util.*;
 public class ExceptionAggregator {
 
     private final List<ExceptionGroup> exceptionsByRange = ListFactory.newList();
-
-    private static class CompareExceptionTablesByStart implements Comparator<ExceptionTableEntry> {
-        @Override
-        public int compare(ExceptionTableEntry exceptionTableEntry, ExceptionTableEntry exceptionTableEntry1) {
-            int res = exceptionTableEntry.getBytecodeIndexFrom() - exceptionTableEntry1.getBytecodeIndexFrom();
-            if (res != 0) return res;
-            res = exceptionTableEntry.getBytecodeIndexTo() - exceptionTableEntry1.getBytecodeIndexTo();
-            return res;
-        }
-    }
 
     private static class CompareExceptionTablesByRange implements Comparator<ExceptionTableEntry> {
         @Override
@@ -61,8 +53,11 @@ public class ExceptionAggregator {
                 } else {
                     // TODO - shouldn't be using bytecode indices unless we can account for instruction length?
                     // TODO - depends if the end is the start of the last opcode, or the end.
-                    if (held.getBytecodeIndexTo() == entry.getBytecodeIndexFrom() - 1) {
+                    if (held.getBytecodeIndexTo() == entry.getBytecodeIndexFrom()) {
                         held = held.aggregateWith(entry);
+                    } else if (held.getBytecodeIndexFrom() == entry.getBytecodeIndexFrom() &&
+                            held.getBytecodeIndexTo() <= entry.getBytecodeIndexTo()) {
+                        held = entry;
                     } else {
                         res.add(held);
                         held = entry;
@@ -85,9 +80,40 @@ public class ExceptionAggregator {
     * I guess a compiler could have a,b a2, b2 where a < a2, b > a2 < b2... (eww).
     * In that case, we should split the exception regime into non-overlapping sections.
     */
-    public ExceptionAggregator(List<ExceptionTableEntry> rawExceptions, BlockIdentifierFactory blockIdentifierFactory, ConstantPool cp) {
+    public ExceptionAggregator(List<ExceptionTableEntry> rawExceptions, BlockIdentifierFactory blockIdentifierFactory,
+                               Map<Integer, Integer> lutByOffset,
+                               List<Op01WithProcessedDataAndByteJumps> instrs,
+                               ConstantPool cp) {
+
         rawExceptions = Functional.filter(rawExceptions, new ValidException());
         if (rawExceptions.isEmpty()) return;
+
+        /*
+         * Extend an exception which terminates at a return.
+         * Remember exception tables are half closed [0,1) == just covers 0.
+         */
+        List<ExceptionTableEntry> extended = ListFactory.newList();
+        for (ExceptionTableEntry exceptionTableEntry : rawExceptions) {
+
+            Integer tgtIdx = lutByOffset.get((int) exceptionTableEntry.getBytecodeIndexTo());
+            if (tgtIdx != null) {
+                Op01WithProcessedDataAndByteJumps op01 = instrs.get(tgtIdx);
+                JVMInstr instr = op01.getJVMInstr();
+                switch (instr) {
+                    case RETURN:
+                    case ARETURN:
+                    case DRETURN:
+                    case IRETURN:
+                    case LRETURN:
+                    case FRETURN:
+                        exceptionTableEntry = exceptionTableEntry.copyWithRange(exceptionTableEntry.getBytecodeIndexFrom(),
+                                (short) (exceptionTableEntry.getBytecodeIndexTo() + op01.getInstructionLength()));
+                        break;
+                }
+            }
+            extended.add(exceptionTableEntry);
+        }
+        rawExceptions = extended;
 
         /*
          * If an exception table entry for a type X OVERLAPS an entry for a type X, but has a lower priority, then
@@ -147,7 +173,8 @@ public class ExceptionAggregator {
         rawExceptions = intervalOverlapper.getExceptions();
 
         Collections.sort(rawExceptions);
-        CompareExceptionTablesByStart compareExceptionTablesByStart = new CompareExceptionTablesByStart();
+
+        CompareExceptionTablesByRange compareExceptionTablesByStart = new CompareExceptionTablesByRange();
         ExceptionTableEntry prev = null;
         ExceptionGroup currentGroup = null;
         for (ExceptionTableEntry e : rawExceptions) {

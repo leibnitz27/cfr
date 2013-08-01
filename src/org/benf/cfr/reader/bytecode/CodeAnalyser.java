@@ -40,7 +40,9 @@ public class CodeAnalyser {
     private static final int SHOW_L2_OPS = 1;
     private static final int SHOW_L3_RAW = 2;
     private static final int SHOW_L3_ORDERED = 3;
-    private static final int SHOW_L4_FINAL_OP3 = 4;
+    private static final int SHOW_L4_LOOPS1 = 4;
+    private static final int SHOW_L4_EXCEPTION_BLOCKS = 5;
+    private static final int SHOW_L4_FINAL_OP3 = 9;
 
     private final static Logger logger = LoggerFactory.create(CodeAnalyser.class);
 
@@ -126,7 +128,7 @@ public class CodeAnalyser {
         Op02WithProcessedDataAndRefs.linkRetsToJSR(op2list);
 
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
-        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, cp);
+        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, instrs, cp);
         //
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
@@ -242,10 +244,23 @@ public class CodeAnalyser {
         logger.info("identifyLoops1");
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
 
+
+        if (cfrState.getShowOps() == SHOW_L4_LOOPS1) {
+            debugDumper.newln().newln();
+            debugDumper.print("After loops.:\n");
+            op03SimpleParseNodes.get(0).dump(debugDumper);
+        }
+
         logger.info("identifyCatchBlocks");
         Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+
+        if (cfrState.getShowOps() == SHOW_L4_EXCEPTION_BLOCKS) {
+            debugDumper.newln().newln();
+            debugDumper.print("After exception.:\n");
+            op03SimpleParseNodes.get(0).dump(debugDumper);
+        }
 
         // Perform this before simple forward if detection, as it allows us to not have to consider
         // gotos which have been relabelled as continue/break.

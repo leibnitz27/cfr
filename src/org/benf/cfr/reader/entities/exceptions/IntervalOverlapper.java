@@ -42,6 +42,8 @@ public class IntervalOverlapper {
         final short from = e.getBytecodeIndexFrom();
         final short to = e.getBytecodeIndexTo();
 
+        // TODO : This won't ignore 0-2 if we already have 0-7
+
         // Get the set that started before the start and end before the end.
         NavigableMap<Short, Set<ExceptionTableEntry>> startedBeforeStart = starts.headMap(from, false);
         NavigableMap<Short, Set<ExceptionTableEntry>> endsBeforeEnd = ends.headMap(to, false);

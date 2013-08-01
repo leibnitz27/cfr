@@ -464,19 +464,19 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     private static class TryCatchTidier implements StructuredStatementTransformer {
         @Override
-        public StructuredStatement transform(StructuredStatement in) {
+        public StructuredStatement transform(StructuredStatement in, Op04StructuredStatement next) {
             if (in instanceof Block) {
                 // Search for try statements, see if we can combine following catch statements with them.
                 Block block = (Block) in;
-                block.combineTryCatch();
+                block.combineTryCatch(next);
             }
-            in.transformStructuredChildren(this);
+            in.transformStructuredChildren(this, next);
             return in;
         }
     }
 
-    public void transform(StructuredStatementTransformer transformer) {
-        structuredStatement = transformer.transform(structuredStatement);
+    public void transform(StructuredStatementTransformer transformer, Op04StructuredStatement next) {
+        structuredStatement = transformer.transform(structuredStatement, next);
     }
 
     /*
@@ -485,7 +485,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      */
 
     public static void tidyTryCatch(Op04StructuredStatement root) {
-        root.transform(new TryCatchTidier());
+        root.transform(new TryCatchTidier(), null);
     }
 
     public static void removePointlessReturn(Op04StructuredStatement root) {

@@ -2243,6 +2243,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * (This is obviously an unreal artifact)
          */
         Set<BlockIdentifier> tryBlocks = tryStatement.containedInBlocks;
+        if (tryBlocks.isEmpty()) return;
         for (Op03SimpleStatement statement : allStatements) {
             statement.containedInBlocks.addAll(tryBlocks);
         }
@@ -3114,6 +3115,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          *     throw  <--- not reachable backwards from monitorexit,
          *   }
          *   monitorexit.
+         *
+         *   However, there must necessarily be a monitorexit before this throw.
          * }
          */
         GraphVisitor<Op03SimpleStatement> marker = new GraphVisitorDFS<Op03SimpleStatement>(start,
@@ -3199,6 +3202,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> exits = Functional.filter(statements, new TypeFilter<MonitorEnterStatement>(MonitorEnterStatement.class));
         // Each exit can be tied to one enter, which is the first one found by
         // walking code backwards and not passing any other exit/enter for this var.
+        // (Every exit from a synchronised block has to exit, so if there's any possibiliy of an exception... )
 
         for (Op03SimpleStatement exit : exits) {
             MonitorEnterStatement monitorExitStatement = (MonitorEnterStatement) exit.containedStatement;

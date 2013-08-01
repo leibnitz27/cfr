@@ -52,8 +52,8 @@ public class StructuredTry extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
-        tryBlock.transform(transformer);
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
+        tryBlock.transform(transformer, after);
     }
 
     @Override

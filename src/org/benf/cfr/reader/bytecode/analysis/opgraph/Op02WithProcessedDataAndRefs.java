@@ -1100,6 +1100,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         CFRState cfrState = cp.getCFRState();
         int originalInstrCount = op2list.size();
 
+        if (exceptions.getExceptionsGroups().isEmpty()) return op2list;
 
         Map<InstrIndex, List<ExceptionTempStatement>> insertions = MapFactory.newLazyMap(
                 new UnaryFunction<InstrIndex, List<ExceptionTempStatement>>() {

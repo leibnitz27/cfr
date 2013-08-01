@@ -59,9 +59,9 @@ public class StructuredIf extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
-        ifTaken.transform(transformer);
-        if (elseBlock != null) elseBlock.transform(transformer);
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
+        ifTaken.transform(transformer, after);
+        if (elseBlock != null) elseBlock.transform(transformer, after);
     }
 
     @Override

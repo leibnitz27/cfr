@@ -35,7 +35,7 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer) {
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
         throw new UnsupportedOperationException();
     }
 

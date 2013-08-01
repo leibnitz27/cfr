@@ -71,7 +71,7 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
 
     public ExceptionTableEntry aggregateWith(ExceptionTableEntry later) {
         if ((this.bytecode_index_from >= later.bytecode_index_from) ||
-                (this.bytecode_index_to != later.bytecode_index_from - 1)) {
+                (this.bytecode_index_to != later.bytecode_index_from)) {
             throw new ConfusedCFRException("Can't aggregate exceptionTableEntries");
         }
         // TODO : Priority is not quite right here.
@@ -99,6 +99,7 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         int res = bytecode_index_from - other.bytecode_index_from;
         if (res != 0) return res;
         res = bytecode_index_to - other.bytecode_index_to;
+//        res = other.bytecode_index_to - bytecode_index_to;
         if (res != 0) return 0 - res;
         res = bytecode_index_handler - other.bytecode_index_handler;
         return res;
