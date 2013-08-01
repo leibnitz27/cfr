@@ -113,7 +113,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
          */
 
         OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
-
+        if (overloadMethodSet == null) return false;
 
         for (int x = 0; x < args.size(); ++x) {
             /*

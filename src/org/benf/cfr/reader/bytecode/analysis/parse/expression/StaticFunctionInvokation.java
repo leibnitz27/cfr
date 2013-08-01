@@ -107,6 +107,7 @@ public class StaticFunctionInvokation extends AbstractExpression implements Boxi
 
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
         OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        if (overloadMethodSet == null) return false;
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -
