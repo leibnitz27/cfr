@@ -690,6 +690,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         StackSSALabel catchingSSA = (StackSSALabel) catching;
         if (catchingSSA.getStackEntry().getUsageCount() != 1) return;
 
+        while (maybeAssign.getStatement() instanceof TryStatement) {
+            // Note that the 'tried' path is always path 0 of a try statement.
+            maybeAssign = maybeAssign.targets.get(0);
+        }
         WildcardMatch match = new WildcardMatch();
         if (!match.match(new AssignmentSimple(match.getLValueWildCard("caught"), new StackValue(catchingSSA)),
                 maybeAssign.getStatement())) {
@@ -2442,6 +2446,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 identifyCatchBlock(catchStart, blockIdentifier, in);
             }
         }
+    }
+
+    public static void identifyFinally(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
     }
 
     private static boolean verifyLinearBlock(Op03SimpleStatement current, BlockIdentifier block, int num) {

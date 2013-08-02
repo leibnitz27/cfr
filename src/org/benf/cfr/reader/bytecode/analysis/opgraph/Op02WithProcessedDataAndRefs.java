@@ -1246,7 +1246,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 tryOp.addTarget(preCatchOp);
                 preCatchOp.catchExceptionGroups.add(catchTargets.getSecond());
             }
-            tryOp.addTarget(startInstruction);
+            tryOp.targets.add(0, startInstruction);
             startInstruction.addSource(tryOp);
             op2list.add(tryOp);
         }

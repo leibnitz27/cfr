@@ -200,6 +200,9 @@ public class CodeAnalyser {
 
         logger.info("identifyCatchBlocks");
         Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+
+        Op03SimpleStatement.identifyFinally(op03SimpleParseNodes, blockIdentifierFactory);
+
         Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
 
         // Rewrite new / constructor pairs.
