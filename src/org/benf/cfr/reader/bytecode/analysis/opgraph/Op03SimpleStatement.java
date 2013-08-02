@@ -1879,12 +1879,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     *
     * We trim that GOTO when we move from an UnstructuredIf to a StructuredIf.
     */
-    private static boolean considerAsSimpleIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+    private static boolean considerAsSimpleIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps) {
         Op03SimpleStatement takenTarget = ifStatement.targets.get(1);
         Op03SimpleStatement notTakenTarget = ifStatement.targets.get(0);
         int idxTaken = statements.indexOf(takenTarget);
         int idxNotTaken = statements.indexOf(notTakenTarget);
         IfStatement innerIfStatement = (IfStatement) ifStatement.containedStatement;
+
+        Set<Op03SimpleStatement> ignoreLocally = SetFactory.newSet();
 
         boolean takenAction = false;
 
@@ -1971,7 +1973,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
             ifBranch.add(statementCurrent);
             JumpType jumpType = statementCurrent.getJumpType();
-            if (jumpType.isUnknown()) {
+            if (jumpType.isUnknown() && !ignoreTheseJumps.contains(statementCurrent)) {
                 // Todo : Currently we can only cope with hitting
                 // the last jump as an unknown jump.  We ought to be able to rewrite
                 // i.e. if we have
@@ -1994,12 +1996,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     // It's unconditional, and it's a forward jump.
                     maybeElseEnd = statementCurrent.getTargets().get(0);
                     maybeElseEndIdx = statements.indexOf(maybeElseEnd);
-                    if (maybeElseEnd.getIndex().compareTo(takenTarget.getIndex()) <= 0) return false;
+                    if (maybeElseEnd.getIndex().compareTo(takenTarget.getIndex()) <= 0) {
+                        return false;
+                    }
                     leaveIfBranchHolder = statementCurrent;
                     leaveIfBranchGoto = gotoStatement;
                     maybeSimpleIfElse = true;
                 } else {
-                    if (stmtLastBlockRewrite == null) return false;
+                    if (stmtLastBlockRewrite == null) {
+                        Op03SimpleStatement tgtContainer = statementCurrent.getTargets().get(0);
+                        if (tgtContainer == takenTarget) {
+                            // We can ignore this statement in future passes.
+                            idxCurrent++;
+                            continue;
+                        }
+
+                        return false;
+                    }
                     // We can try to rewrite this block to have an indirect jump via the end of the block,
                     // if that's appropriate.
                     List<Op03SimpleStatement> targets = statementCurrent.getTargets();
@@ -2132,16 +2145,18 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (leaveIfBranchGoto != null) leaveIfBranchGoto.setJumpType(JumpType.GOTO_OUT_OF_IF);
         innerIfStatement.setJumpType(JumpType.GOTO_OUT_OF_IF);
         innerIfStatement.setKnownBlocks(ifBlockLabel, elseBlockLabel);
+        ignoreTheseJumps.addAll(ignoreLocally);
         return true;
     }
 
     public static void identifyNonjumpingConditionals(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
         boolean success = false;
+        Set<Op03SimpleStatement> ignoreTheseJumps = SetFactory.newSet();
         do {
             success = false;
             List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
             for (Op03SimpleStatement forwardIf : forwardIfs) {
-                success |= considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory);
+                success |= considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps);
             }
         } while (success);
     }
