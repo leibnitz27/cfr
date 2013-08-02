@@ -198,6 +198,10 @@ public class CodeAnalyser {
         // Try to eliminate catch temporaries.
         Op03SimpleStatement.eliminateCatchTemporaries(op03SimpleParseNodes);
 
+        logger.info("identifyCatchBlocks");
+        Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+        Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+
         // Rewrite new / constructor pairs.
         Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
@@ -251,9 +255,6 @@ public class CodeAnalyser {
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
 
-        logger.info("identifyCatchBlocks");
-        Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
-        Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         if (cfrState.getShowOps() == SHOW_L4_EXCEPTION_BLOCKS) {
