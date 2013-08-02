@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities.exceptions;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.output.CommaHelp;
 
 import java.util.List;
 
@@ -53,7 +54,15 @@ public class ExceptionGroup {
 
     @Override
     public String toString() {
-        return "[egrp : " + tryBlockIdentifier + " [" + bytecodeIndexFrom + "->" + byteCodeIndexTo + ")]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("[egrp ").append(tryBlockIdentifier).append(" [");
+        boolean bfirst = true;
+        for (Entry e : entries) {
+            bfirst = CommaHelp.comma(bfirst, sb);
+            sb.append(e.getPriority());
+        }
+        sb.append(" : ").append(bytecodeIndexFrom).append("->").append(byteCodeIndexTo).append(")]");
+        return sb.toString();
     }
 
     public class Entry {
@@ -74,6 +83,10 @@ public class ExceptionGroup {
         public boolean isJustThrowable() {
             short type = entry.getCatchType();
             return type == 0;
+        }
+
+        public int getPriority() {
+            return entry.getPriority();
         }
 
         public String getTypeName() {

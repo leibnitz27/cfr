@@ -175,7 +175,9 @@ public class ExceptionAggregator {
         for (List<ExceptionTableEntry> list : grouped.values()) {
             IntervalCount intervalCount = new IntervalCount();
             for (ExceptionTableEntry e : list) {
-                Pair<Short, Short> res = intervalCount.generateNonIntersection(e.getBytecodeIndexFrom(), e.getBytecodeIndexTo());
+                short from = e.getBytecodeIndexFrom();
+                short to = e.getBytecodeIndexTo();
+                Pair<Short, Short> res = intervalCount.generateNonIntersection(from, to);
                 if (res == null) continue;
                 processedExceptions.add(new ExceptionTableEntry(res.getFirst(), res.getSecond(), e.getBytecodeIndexHandler(), e.getCatchType(), e.getPriority()));
             }

@@ -38,7 +38,7 @@ public class IntervalCount {
         while (afterIter.hasNext()) {
             Map.Entry<Short, Boolean> next = afterIter.next();
             Short end = next.getKey();
-            boolean isKet = next.getValue();
+            boolean isKet = Boolean.FALSE == next.getValue();
             if (end > to) {
                 if (isKet) {
                     // Fine.  We'll just extend the range of the newer one.
@@ -46,7 +46,7 @@ public class IntervalCount {
                 }
                 // Then we'll add another ket, and place it before end.
                 op.put(to, false);
-                return Pair.make(from, end);
+                return Pair.make(from, to);
             } else if (end.equals(to)) {
                 if (isKet) {
                     // Fine, nothing to do.
