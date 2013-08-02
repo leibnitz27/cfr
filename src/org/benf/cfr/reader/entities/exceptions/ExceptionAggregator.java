@@ -76,6 +76,34 @@ public class ExceptionAggregator {
         }
     }
 
+
+    private static int canExpandTryBy(int idx, List<Op01WithProcessedDataAndByteJumps> statements) {
+        Op01WithProcessedDataAndByteJumps op = statements.get(idx);
+        JVMInstr instr = op.getJVMInstr();
+        switch (instr) {
+            case GOTO:
+            case GOTO_W:
+            case RETURN:
+            case ARETURN:
+            case IRETURN:
+            case LRETURN:
+            case DRETURN:
+            case FRETURN: {
+                return op.getInstructionLength();
+            }
+            case ALOAD_0:
+            case ALOAD_1:
+            case ALOAD_2:
+            case ALOAD_3: {
+                Op01WithProcessedDataAndByteJumps op2 = statements.get(idx + 1);
+                if (op2.getJVMInstr() == JVMInstr.MONITOREXIT)
+                    return op.getInstructionLength() + op2.getInstructionLength();
+                break;
+            }
+        }
+        return 0;
+    }
+
     /* Raw exceptions are just start -> last+1 lists.  There's no (REF?) requirement that they be non overlapping, so
     * I guess a compiler could have a,b a2, b2 where a < a2, b > a2 < b2... (eww).
     * In that case, we should split the exception regime into non-overlapping sections.
@@ -95,21 +123,36 @@ public class ExceptionAggregator {
         List<ExceptionTableEntry> extended = ListFactory.newList();
         for (ExceptionTableEntry exceptionTableEntry : rawExceptions) {
 
-            Integer tgtIdx = lutByOffset.get((int) exceptionTableEntry.getBytecodeIndexTo());
-            if (tgtIdx != null) {
-                Op01WithProcessedDataAndByteJumps op01 = instrs.get(tgtIdx);
-                JVMInstr instr = op01.getJVMInstr();
-                switch (instr) {
-                    case RETURN:
-                    case ARETURN:
-                    case DRETURN:
-                    case IRETURN:
-                    case LRETURN:
-                    case FRETURN:
+            ExceptionTableEntry exceptionTableEntryOrig = exceptionTableEntry;
+
+            int indexTo = (int) exceptionTableEntry.getBytecodeIndexTo();
+
+            do {
+                exceptionTableEntryOrig = exceptionTableEntry;
+                Integer tgtIdx = lutByOffset.get(indexTo);
+                if (tgtIdx != null) {
+
+                    // See if the last statement is a direct return, which could be pushed in.  If so, expand try block.
+                    int offset = canExpandTryBy(tgtIdx, instrs);
+                    if (offset != 0) {
                         exceptionTableEntry = exceptionTableEntry.copyWithRange(exceptionTableEntry.getBytecodeIndexFrom(),
-                                (short) (exceptionTableEntry.getBytecodeIndexTo() + op01.getInstructionLength()));
-                        break;
+                                (short) (exceptionTableEntry.getBytecodeIndexTo() + offset));
+                    }
+                    indexTo += offset;
                 }
+
+            } while (exceptionTableEntry != exceptionTableEntryOrig);
+
+            /*
+             * But now, we shrink it to make sure that it doesn't overlap the catch block.
+             * This will break some of the nastier exception obfuscations I can think of :(
+             */
+            int handlerIndex = exceptionTableEntry.getBytecodeIndexHandler();
+            indexTo = exceptionTableEntry.getBytecodeIndexTo();
+            int indexFrom = exceptionTableEntry.getBytecodeIndexFrom();
+            if (indexFrom < handlerIndex &&
+                    indexTo >= handlerIndex) {
+                exceptionTableEntry = exceptionTableEntry.copyWithRange((short) indexFrom, (short) handlerIndex);
             }
             extended.add(exceptionTableEntry);
         }
