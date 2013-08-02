@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -18,11 +19,11 @@ import java.util.List;
  * Date: 15/05/2012
  */
 public class StructuredCatch extends AbstractStructuredStatement {
-    private final String typeName;
+    private final JavaRefTypeInstance typeName;
     private final Op04StructuredStatement catchBlock;
     private final LValue catching;
 
-    public StructuredCatch(String typeName, Op04StructuredStatement catchBlock, LValue catching) {
+    public StructuredCatch(JavaRefTypeInstance typeName, Op04StructuredStatement catchBlock, LValue catching) {
         this.typeName = typeName;
         this.catchBlock = catchBlock;
         this.catching = catching;

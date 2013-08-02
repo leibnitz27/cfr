@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -38,8 +39,8 @@ public class UnstructuredCatch extends AbstractUnStructuredStatement {
             /*
              * Convert to types (should verify elsewhere that there's only 1.
              */
-            String name = exceptions.get(0).getTypeName();
-            return new StructuredCatch(name, innerBlock, catching);
+            JavaRefTypeInstance eType = exceptions.get(0).getTypeName();
+            return new StructuredCatch(eType, innerBlock, catching);
         } else {
             return null;
         }

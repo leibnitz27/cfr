@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.CommaHelp;
@@ -67,9 +68,17 @@ public class ExceptionGroup {
 
     public class Entry {
         private final ExceptionTableEntry entry;
+        private final JavaRefTypeInstance refType;
 
         public Entry(ExceptionTableEntry entry) {
             this.entry = entry;
+            short type = entry.getCatchType();
+            if (type == 0) {
+                // Cache locally?
+                refType = cp.getClassCache().getRefClassFor(cp, "java.lang.Throwable");
+            } else {
+                refType = (JavaRefTypeInstance) cp.getClassEntry(type).getTypeInstance();
+            }
         }
 
         public short getBytecodeIndexTo() {
@@ -89,22 +98,15 @@ public class ExceptionGroup {
             return entry.getPriority();
         }
 
-        public String getTypeName() {
-            short type = entry.getCatchType();
-            String name;
-            if (type == 0) {
-                name = "java.lang.Throwable";
-            } else {
-                name = cp.getClassEntry(type).getTypeInstance().toString();
-            }
-            return name;
+        public JavaRefTypeInstance getTypeName() {
+            return refType;
         }
 
         @Override
         public String toString() {
             short type = entry.getCatchType();
-            String name = getTypeName();
-            return ExceptionGroup.this.toString() + " " + name;
+            JavaRefTypeInstance name = getTypeName();
+            return ExceptionGroup.this.toString() + " " + name.getRawName();
         }
     }
 }
