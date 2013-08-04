@@ -4,10 +4,12 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByt
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -109,13 +111,58 @@ public class ExceptionAggregator {
     * In that case, we should split the exception regime into non-overlapping sections.
     */
     public ExceptionAggregator(List<ExceptionTableEntry> rawExceptions, BlockIdentifierFactory blockIdentifierFactory,
-                               Map<Integer, Integer> lutByOffset,
+                               final Map<Integer, Integer> lutByOffset,
+                               final Map<Integer, Integer> lutByIdx,
                                List<Op01WithProcessedDataAndByteJumps> instrs,
-                               ConstantPool cp) {
+                               final ConstantPool cp) {
 
         rawExceptions = Functional.filter(rawExceptions, new ValidException());
         if (rawExceptions.isEmpty()) return;
 
+//        List<ClosedIdxExceptionEntry> convExceptions = Functional.map(rawExceptions, new UnaryFunction<ExceptionTableEntry, ClosedIdxExceptionEntry>() {
+//            @Override
+//            public ClosedIdxExceptionEntry invoke(ExceptionTableEntry arg) {
+//                return new ClosedIdxExceptionEntry(
+//                    lutByOffset.get((int)arg.getBytecodeIndexFrom()),
+//                    lutByOffset.get((int)arg.getBytecodeIndexTo()),
+//                    lutByOffset.get((int)arg.getBytecodeIndexHandler()),
+//                    arg.getCatchType(),
+//                    arg.getPriority(),
+//                    arg.getCatchType(cp)
+//                );
+//            }
+//        });
+//
+//        /*
+//         * Before we start, go through and weed out totally invalid exceptions - ones that could never get
+//         * caught, because they're masked by earlier exceptions.  This would be an easy way to confuse naive
+//         * decompilation....
+//         */
+//        Map < JavaRefTypeInstance, IntervalCollisionRemover > collisionRemoverMap = MapFactory.newLazyMap(new UnaryFunction<JavaRefTypeInstance, IntervalCollisionRemover>() {
+//            @Override
+//            public IntervalCollisionRemover invoke(JavaRefTypeInstance arg) {
+//                return new IntervalCollisionRemover();
+//            }
+//        });
+//        List<ClosedIdxExceptionEntry> collisionRemoved = ListFactory.newList();
+//        for (ClosedIdxExceptionEntry e : convExceptions) {
+//            collisionRemoved.addAll(collisionRemoverMap.get(e.getCatchRefType()).removeIllegals(e));
+//        }
+//        convExceptions = collisionRemoved;
+//
+//
+//        /*
+//         * Now, convert back to raw exceptions.  I'd rather be doing this later..... (or not at all...)
+//         */
+//        rawExceptions = Functional.map(convExceptions, new UnaryFunction<ClosedIdxExceptionEntry, ExceptionTableEntry>() {
+//            @Override
+//            public ExceptionTableEntry invoke(ClosedIdxExceptionEntry arg) {
+//                return arg.convertToRaw(lutByIdx);
+//            }
+//        });
+//
+
+        // Todo : Use ConvExceptions, not RawExceptions.
         /*
          * Extend an exception which terminates at a return.
          * Remember exception tables are half closed [0,1) == just covers 0.

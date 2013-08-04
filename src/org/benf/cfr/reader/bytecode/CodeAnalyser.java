@@ -128,7 +128,7 @@ public class CodeAnalyser {
         Op02WithProcessedDataAndRefs.linkRetsToJSR(op2list);
 
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
-        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, instrs, cp);
+        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
         //
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.

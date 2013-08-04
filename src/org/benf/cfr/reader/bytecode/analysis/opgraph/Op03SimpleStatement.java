@@ -2407,10 +2407,19 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         List<Op03SimpleStatement> truncatedKnownMembers = ListFactory.newList();
         int x = statements.indexOf(knownMemberList.get(0));
+        List<Op03SimpleStatement> flushNops = ListFactory.newList();
         for (int l = statements.size(); x < l; ++x) {
             Op03SimpleStatement statement = statements.get(x);
+            if (statement.isNop()) {
+                flushNops.add(statement);
+                continue;
+            }
             if (!knownMembers.contains(statement)) break;
             truncatedKnownMembers.add(statement);
+            if (!flushNops.isEmpty()) {
+                truncatedKnownMembers.addAll(flushNops);
+                flushNops.clear();
+            }
         }
 
         for (Op03SimpleStatement inBlock : truncatedKnownMembers) {

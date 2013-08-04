@@ -72,13 +72,7 @@ public class ExceptionGroup {
 
         public Entry(ExceptionTableEntry entry) {
             this.entry = entry;
-            short type = entry.getCatchType();
-            if (type == 0) {
-                // Cache locally?
-                refType = cp.getClassCache().getRefClassFor(cp, "java.lang.Throwable");
-            } else {
-                refType = (JavaRefTypeInstance) cp.getClassEntry(type).getTypeInstance();
-            }
+            this.refType = entry.getCatchType(cp);
         }
 
         public short getBytecodeIndexTo() {
