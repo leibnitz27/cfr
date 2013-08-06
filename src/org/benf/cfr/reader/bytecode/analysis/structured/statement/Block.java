@@ -134,15 +134,32 @@ public class Block extends AbstractStructuredStatement {
                 StructuredTry structuredTry = (StructuredTry) statement.getStatement();
                 ++x;
                 Op04StructuredStatement next = x < size - 1 ? containedStatements.get(x) : null;
-                while (x < size && next != null && next.getStatement() instanceof StructuredCatch) {
-                    structuredTry.addCatch(next.nopThisAndReplace());
+                while (x < size && next != null &&
+                        (next.getStatement() instanceof StructuredCatch ||
+                                next.getStatement() instanceof StructuredComment ||
+                                next.getStatement() instanceof StructuredFinally)) {
                     ++x;
-                    if (x < size) {
-                        next = containedStatements.get(x);
-                    } else {
-                        // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                        next = after;
-                        finished = true;
+                    if (next.getStatement() instanceof StructuredComment) {
+                        next.nopThisAndReplace(); // pointless.
+                        // Nothing.
+                    } else if (next.getStatement() instanceof StructuredCatch) {
+                        structuredTry.addCatch(next.nopThisAndReplace());
+                        if (x < size) {
+                            next = containedStatements.get(x);
+                        } else {
+                            // We'll have to find some other way of getting the next statement, probably need a DFS :(
+                            next = after;
+                            finished = true;
+                        }
+                    } else if (next.getStatement() instanceof StructuredFinally) {
+                        structuredTry.addFinally(next.nopThisAndReplace());
+                        if (x < size) {
+                            next = containedStatements.get(x);
+                        } else {
+                            // We'll have to find some other way of getting the next statement, probably need a DFS :(
+                            next = after;
+                            finished = true;
+                        }
                     }
                 }
                 if (next == null) next = after;

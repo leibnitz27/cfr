@@ -22,10 +22,12 @@ public class StructuredTry extends AbstractStructuredStatement {
     private final ExceptionGroup exceptionGroup;
     private Op04StructuredStatement tryBlock;
     private List<Op04StructuredStatement> catchBlocks = ListFactory.newList();
+    private Op04StructuredStatement finallyBlock;
 
     public StructuredTry(ExceptionGroup exceptionGroup, Op04StructuredStatement tryBlock) {
         this.exceptionGroup = exceptionGroup;
         this.tryBlock = tryBlock;
+        this.finallyBlock = null;
     }
 
     @Override
@@ -34,6 +36,9 @@ public class StructuredTry extends AbstractStructuredStatement {
         tryBlock.dump(dumper);
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             catchBlock.dump(dumper);
+        }
+        if (finallyBlock != null) {
+            finallyBlock.dump(dumper);
         }
         return dumper;
     }
@@ -45,6 +50,10 @@ public class StructuredTry extends AbstractStructuredStatement {
 
     public void addCatch(Op04StructuredStatement catchStatement) {
         catchBlocks.add(catchStatement);
+    }
+
+    public void addFinally(Op04StructuredStatement finallyBlock) {
+        this.finallyBlock = finallyBlock;
     }
 
     public void removeFinalJumpsTo(Op04StructuredStatement after) {
@@ -63,6 +72,9 @@ public class StructuredTry extends AbstractStructuredStatement {
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             catchBlock.linearizeStatementsInto(out);
         }
+        if (finallyBlock != null) {
+            finallyBlock.linearizeStatementsInto(out);
+        }
 
     }
 
@@ -72,6 +84,9 @@ public class StructuredTry extends AbstractStructuredStatement {
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             catchBlock.traceLocalVariableScope(scopeDiscoverer);
         }
+        if (finallyBlock != null) {
+            finallyBlock.traceLocalVariableScope(scopeDiscoverer);
+        }
     }
 
     @Override
@@ -79,6 +94,9 @@ public class StructuredTry extends AbstractStructuredStatement {
         if (!tryBlock.isFullyStructured()) return false;
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             if (!catchBlock.isFullyStructured()) return false;
+        }
+        if (finallyBlock != null) {
+            if (!finallyBlock.isFullyStructured()) return false;
         }
         return true;
     }
