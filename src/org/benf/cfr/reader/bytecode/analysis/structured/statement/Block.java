@@ -125,6 +125,48 @@ public class Block extends AbstractStructuredStatement {
         throw new IllegalStateException();
     }
 
+    @Override
+    public boolean inlineable() {
+        for (Op04StructuredStatement in : containedStatements) {
+            StructuredStatement s = in.getStatement();
+            Class<?> c = s.getClass();
+            if (!(c == StructuredReturn.class || c == UnstructuredGoto.class)) return false;
+        }
+        return true;
+    }
+
+    @Override
+    public Op04StructuredStatement getInline() {
+        return getContainer();
+    }
+
+    public void combineInlineable(Op04StructuredStatement after) {
+        boolean inline = false;
+        for (Op04StructuredStatement in : containedStatements) {
+            if (in.getStatement().inlineable()) {
+                inline = true;
+                break;
+            }
+        }
+        if (!inline) return;
+        LinkedList<Op04StructuredStatement> newContained = ListFactory.newLinkedList();
+        for (Op04StructuredStatement in : containedStatements) {
+            StructuredStatement s = in.getStatement();
+            if (s.inlineable()) {
+                Op04StructuredStatement inlinedOp = s.getInline();
+                StructuredStatement inlined = inlinedOp.getStatement();
+                if (inlined instanceof Block) {
+                    newContained.addAll(((Block) inlined).getBlockStatements());
+                } else {
+                    newContained.add(inlinedOp);
+                }
+            } else {
+                newContained.add(in);
+            }
+        }
+        containedStatements = newContained;
+    }
+
     public void combineTryCatch(Op04StructuredStatement after) {
         int size = containedStatements.size();
         boolean finished = false;
@@ -162,11 +204,11 @@ public class Block extends AbstractStructuredStatement {
                         }
                     }
                 }
-                if (next == null) next = after;
-                if (next != null) {
-                    structuredTry.removeFinalJumpsTo(next);
-                    --x;
-                }
+//                if (next == null) next = after;
+//                if (next != null) {
+//                    structuredTry.removeFinalJumpsTo(next);
+//                    --x;
+//                }
             }
         }
     }

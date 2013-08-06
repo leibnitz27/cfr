@@ -351,6 +351,7 @@ public class CodeAnalyser {
 
         logger.info("tidyTryCatch");
         Op04StructuredStatement.tidyTryCatch(block);
+        Op04StructuredStatement.inlinePossibles(block);
         Op04StructuredStatement.removePointlessReturn(block);
 
         // Replace with a more generic interface, etc.

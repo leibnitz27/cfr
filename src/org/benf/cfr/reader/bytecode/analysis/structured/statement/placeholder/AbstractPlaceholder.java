@@ -78,4 +78,14 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     public Dumper dump(Dumper dumper) {
         return dumper;
     }
+
+    @Override
+    public boolean inlineable() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Op04StructuredStatement getInline() {
+        throw new UnsupportedOperationException();
+    }
 }

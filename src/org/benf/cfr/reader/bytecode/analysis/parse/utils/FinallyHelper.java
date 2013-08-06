@@ -242,7 +242,7 @@ public class FinallyHelper {
 
     public void unlinkTries(Set<Op03SimpleStatement> wasTries) {
         for (Op03SimpleStatement wasTry : wasTries) {
-            Statement statement = (Statement) wasTry.getStatement();
+            Statement statement = wasTry.getStatement();
             if (statement instanceof TryStatement) {
                 wasTry.removeTarget(guessedFinalCatchBlock);
                 guessedFinalCatchBlock.removeSource(wasTry);

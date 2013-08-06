@@ -66,4 +66,14 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
         d.print(getClass().toString()).dump(this);
         return d.toString();
     }
+
+    @Override
+    public boolean inlineable() {
+        return false;
+    }
+
+    @Override
+    public Op04StructuredStatement getInline() {
+        throw new UnsupportedOperationException();
+    }
 }

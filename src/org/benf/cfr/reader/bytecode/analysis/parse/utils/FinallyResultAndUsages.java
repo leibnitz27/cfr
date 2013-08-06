@@ -34,7 +34,7 @@ public class FinallyResultAndUsages {
         }
     }
 
-    public void clearCopies() {
+    public void clearCopies(List<Op03SimpleStatement> allStatements) {
         for (ResultWithCallers result : resultWithCallers) {
             Op03SimpleStatement startOfCopy = result.result.getStartOfFinallyCopy();
             // May be null if we have a non standard throw!

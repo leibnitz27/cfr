@@ -2597,7 +2597,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * When we remove the block, if we end up with a return / goto sitting directly outside a try block, pull it
          * in before we collapse tries.
          */
-        finallyResultAndUsages.clearCopies();
+        finallyResultAndUsages.clearCopies(allStatements);
 
         /*
          * Now, for each peer set, if the only source for the try is another peer, link the two, and replace the second
@@ -2669,18 +2669,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         // If there IS a rethrow, remove it.
         if (orderLast != null) {
-//            for (Op03SimpleStatement source : orderLast.sources) {
-//                /*
-//                 * TODO : FIX.
-//                 */
-//                Statement sourceStatement = source.getStatement();
-//                if (sourceStatement instanceof GotoStatement) {
-//                    Op03SimpleStatement newStm =
-//                } else {
-//                    int idx = source.targets.indexOf(orderLast);
-//                    source.removeTarget(orderLast);
-//                }
-//            }
             orderLast.replaceStatement(new Nop());
         }
 

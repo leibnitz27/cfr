@@ -46,4 +46,8 @@ public interface StructuredStatement extends Dumpable, Matcher<StructuredStateme
     void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer);
 
     void markCreator(LocalVariable localVariable);
+
+    boolean inlineable();
+
+    Op04StructuredStatement getInline();
 }

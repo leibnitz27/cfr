@@ -63,6 +63,12 @@ public class StructuredTry extends AbstractStructuredStatement {
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
         tryBlock.transform(transformer, after);
+        for (Op04StructuredStatement catchBlock : catchBlocks) {
+            catchBlock.transform(transformer, after);
+        }
+        if (finallyBlock != null) {
+            finallyBlock.transform(transformer, after);
+        }
     }
 
     @Override
@@ -115,4 +121,14 @@ public class StructuredTry extends AbstractStructuredStatement {
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
     }
 
+
+    @Override
+    public boolean inlineable() {
+        return catchBlocks.isEmpty() && finallyBlock == null;
+    }
+
+    @Override
+    public Op04StructuredStatement getInline() {
+        return tryBlock;
+    }
 }

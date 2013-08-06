@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredTry;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -475,6 +476,18 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    private static class Inliner implements StructuredStatementTransformer {
+        @Override
+        public StructuredStatement transform(StructuredStatement in, Op04StructuredStatement next) {
+            in.transformStructuredChildren(this, next);
+            if (in instanceof Block) {
+                Block block = (Block) in;
+                block.combineInlineable(next);
+            }
+            return in;
+        }
+    }
+
     public void transform(StructuredStatementTransformer transformer, Op04StructuredStatement next) {
         structuredStatement = transformer.transform(structuredStatement, next);
     }
@@ -486,6 +499,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void tidyTryCatch(Op04StructuredStatement root) {
         root.transform(new TryCatchTidier(), null);
+    }
+
+    public static void inlinePossibles(Op04StructuredStatement root) {
+        root.transform(new Inliner(), null);
     }
 
     public static void removePointlessReturn(Op04StructuredStatement root) {
