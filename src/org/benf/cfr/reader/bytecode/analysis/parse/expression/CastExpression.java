@@ -93,4 +93,16 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         child = boxingRewriter.sugarNonParameterBoxing(child, getInferredJavaType().getJavaTypeInstance());
         return false;
     }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        CastExpression other = (CastExpression) o;
+        if (!constraint.equivalent(getInferredJavaType().getJavaTypeInstance(), other.getInferredJavaType().getJavaTypeInstance()))
+            return false;
+        if (!constraint.equivalent(child, other.child)) return false;
+        return true;
+    }
 }

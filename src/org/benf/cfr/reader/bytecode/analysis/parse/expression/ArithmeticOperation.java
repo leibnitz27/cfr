@@ -145,6 +145,19 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         return true;
     }
 
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        ArithmeticOperation other = (ArithmeticOperation) o;
+        if (op != other.op) return false;
+        if (!constraint.equivalent(lhs, other.lhs)) return false;
+        if (!constraint.equivalent(rhs, other.rhs)) return false;
+        return true;
+    }
+
+
     private static CompOp rewriteXCMPCompOp(CompOp from, int on) {
         if (on == 0) return from;
         if (on < 0) {

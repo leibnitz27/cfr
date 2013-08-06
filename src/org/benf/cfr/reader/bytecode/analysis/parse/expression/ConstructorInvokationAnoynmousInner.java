@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -67,5 +68,13 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
         return cfd.dumpWithArgs(anonymousClassFile, true, args.subList(2, args.size()), true, d);
     }
 
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (!(o instanceof ConstructorInvokationAnoynmousInner)) return false;
+        if (!super.equivalentUnder(o, constraint)) return false;
+        ConstructorInvokationAnoynmousInner other = (ConstructorInvokationAnoynmousInner) o;
+        if (!constraint.equivalent(constructorInvokation, other.constructorInvokation)) return false;
+        return true;
+    }
 
 }

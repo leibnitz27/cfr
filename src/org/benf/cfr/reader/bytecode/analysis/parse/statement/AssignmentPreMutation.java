@@ -135,4 +135,15 @@ public class AssignmentPreMutation extends AbstractAssignment {
         AssignmentPreMutation other = (AssignmentPreMutation) o;
         return lvalue.equals(other.lvalue) && rvalue.equals(other.rvalue);
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        AssignmentPreMutation other = (AssignmentPreMutation) o;
+        if (!constraint.equivalent(lvalue, other.lvalue)) return false;
+        if (!constraint.equivalent(rvalue, other.rvalue)) return false;
+        return true;
+    }
 }

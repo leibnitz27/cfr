@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -49,7 +50,7 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
     public JavaRefTypeInstance getCatchType(ConstantPool cp) {
         if (catch_type == 0) {
             // Cache locally?
-            return cp.getClassCache().getRefClassFor(cp, "java.lang.Throwable");
+            return cp.getClassCache().getRefClassFor(cp, TypeConstants.throwableName);
         } else {
             return (JavaRefTypeInstance) cp.getClassEntry(catch_type).getTypeInstance();
         }

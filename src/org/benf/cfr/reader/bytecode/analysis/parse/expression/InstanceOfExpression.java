@@ -65,4 +65,26 @@ public class InstanceOfExpression extends AbstractExpression {
         lhs.collectUsedLValues(lValueUsageCollector);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof InstanceOfExpression)) return false;
+        InstanceOfExpression other = (InstanceOfExpression) o;
+        if (!lhs.equals(other.lhs)) return false;
+        if (!typeInstance.equals(other.typeInstance)) return false;
+        return true;
+    }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        InstanceOfExpression other = (InstanceOfExpression) o;
+        if (!constraint.equivalent(lhs, other.lhs)) return false;
+        if (!constraint.equivalent(typeInstance, other.typeInstance)) return false;
+        return true;
+    }
+
 }

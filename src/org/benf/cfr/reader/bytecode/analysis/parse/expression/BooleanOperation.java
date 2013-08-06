@@ -115,10 +115,15 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     }
 
     @Override
-    public int hashCode() {
-        int result = lhs.hashCode();
-        result = 31 * result + rhs.hashCode();
-        result = 31 * result + op.hashCode();
-        return result;
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        BooleanOperation other = (BooleanOperation) o;
+        if (op != other.op)
+            if (!constraint.equivalent(lhs, other.lhs)) return false;
+        if (!constraint.equivalent(rhs, other.rhs)) return false;
+        return true;
     }
+
 }

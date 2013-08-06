@@ -82,4 +82,15 @@ public class WhileStatement extends AbstractStatement {
     public ConditionalExpression getCondition() {
         return condition;
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        WhileStatement other = (WhileStatement) o;
+        if (!constraint.equivalent(condition, other.condition)) return false;
+        return true;
+    }
+
 }

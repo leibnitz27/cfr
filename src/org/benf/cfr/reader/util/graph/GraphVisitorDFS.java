@@ -4,6 +4,7 @@ import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +33,12 @@ public class GraphVisitorDFS<T> implements GraphVisitor<T> {
         // These will be enqueued in the order they should be visited...
         enqueued.add(next);
     }
+
+    @Override
+    public void enqueue(Collection<? extends T> next) {
+        for (T t : next) enqueue(t);
+    }
+
 
     @Override
     public void process() {

@@ -52,4 +52,28 @@ public class ArithmeticMonOperation extends AbstractExpression {
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         lhs.collectUsedLValues(lValueUsageCollector);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ArithmeticMonOperation that = (ArithmeticMonOperation) o;
+
+        if (lhs != null ? !lhs.equals(that.lhs) : that.lhs != null) return false;
+        if (op != that.op) return false;
+
+        return true;
+    }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ArithmeticMonOperation other = (ArithmeticMonOperation) o;
+        if (!constraint.equivalent(lhs, other.lhs)) return false;
+        if (!constraint.equivalent(op, other.op)) return false;
+        return true;
+    }
 }

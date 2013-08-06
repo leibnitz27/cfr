@@ -40,8 +40,9 @@ public class CodeAnalyser {
     private static final int SHOW_L2_OPS = 1;
     private static final int SHOW_L3_RAW = 2;
     private static final int SHOW_L3_ORDERED = 3;
-    private static final int SHOW_L4_LOOPS1 = 4;
-    private static final int SHOW_L4_EXCEPTION_BLOCKS = 5;
+    private static final int SHOW_L3_CAUGHT = 4;
+    private static final int SHOW_L4_LOOPS1 = 5;
+    private static final int SHOW_L4_EXCEPTION_BLOCKS = 6;
     private static final int SHOW_L4_FINAL_OP3 = 9;
 
     private final static Logger logger = LoggerFactory.create(CodeAnalyser.class);
@@ -201,9 +202,15 @@ public class CodeAnalyser {
         logger.info("identifyCatchBlocks");
         Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
 
-        Op03SimpleStatement.identifyFinally(op03SimpleParseNodes, blockIdentifierFactory);
-
         Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+
+        if (cfrState.getShowOps() == SHOW_L3_CAUGHT) {
+            debugDumper.newln().newln();
+            debugDumper.print("After catchblocks.:\n");
+            op03SimpleParseNodes.get(0).dump(debugDumper);
+        }
+
+        Op03SimpleStatement.identifyFinally(op03SimpleParseNodes, blockIdentifierFactory);
 
         // Rewrite new / constructor pairs.
         Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes);

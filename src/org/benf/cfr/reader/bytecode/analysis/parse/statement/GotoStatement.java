@@ -101,4 +101,26 @@ public class GotoStatement extends JumpingStatement {
         }
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        GotoStatement that = (GotoStatement) o;
+
+        if (jumpType != that.jumpType) return false;
+
+        return true;
+    }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        GotoStatement that = (GotoStatement) o;
+        return constraint.equivalent(jumpType, that.jumpType);
+    }
+
 }

@@ -81,4 +81,14 @@ public class CompoundStatement extends AbstractStatement {
     public StructuredStatement getStructuredStatement() {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        CompoundStatement other = (CompoundStatement) o;
+        if (!constraint.equivalent(statements, other.statements)) return false;
+        return true;
+    }
 }

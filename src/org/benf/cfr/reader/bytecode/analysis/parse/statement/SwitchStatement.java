@@ -57,4 +57,15 @@ public class SwitchStatement extends AbstractStatement {
     public BlockIdentifier getSwitchBlock() {
         return switchBlock;
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        SwitchStatement other = (SwitchStatement) o;
+        if (!constraint.equivalent(switchOn, other.switchOn)) return false;
+        return true;
+    }
+
 }

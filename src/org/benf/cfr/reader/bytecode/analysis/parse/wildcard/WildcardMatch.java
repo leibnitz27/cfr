@@ -434,6 +434,12 @@ public class WildcardMatch {
         public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
             return dump(d);
         }
+
+        @Override
+        public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+            throw new UnsupportedOperationException();
+        }
+
     }
 
     public class ExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {

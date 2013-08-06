@@ -250,4 +250,17 @@ public class ComparisonOperation extends AbstractExpression implements Condition
                 lhs.equals(other.lhs) &&
                 rhs.equals(other.rhs);
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        ComparisonOperation other = (ComparisonOperation) o;
+        if (!constraint.equivalent(op, other.op)) return false;
+        if (!constraint.equivalent(lhs, other.lhs)) return false;
+        if (!constraint.equivalent(rhs, other.rhs)) return false;
+        return true;
+    }
+
 }

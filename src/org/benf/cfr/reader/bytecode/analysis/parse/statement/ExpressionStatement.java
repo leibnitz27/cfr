@@ -3,9 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -51,5 +49,24 @@ public class ExpressionStatement extends AbstractStatement {
     @Override
     public StructuredStatement getStructuredStatement() {
         return new StructuredExpressionStatement(expression, false);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof ExpressionStatement)) return false;
+        ExpressionStatement other = (ExpressionStatement) o;
+        return expression.equals(other.expression);
+    }
+
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof ExpressionStatement)) return false;
+        ExpressionStatement other = (ExpressionStatement) o;
+        return constraint.equivalent(expression, other.expression);
     }
 }

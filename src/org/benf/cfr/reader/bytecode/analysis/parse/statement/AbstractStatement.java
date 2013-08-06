@@ -87,4 +87,5 @@ public abstract class AbstractStatement implements Statement {
         d.print(getClass().getSimpleName()).print(": ").dump(this);
         return d.toString();
     }
+
 }

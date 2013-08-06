@@ -158,4 +158,25 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         return false;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof AbstractFunctionInvokation)) return false;
+        AbstractFunctionInvokation other = (AbstractFunctionInvokation) o;
+        if (!object.equals(other.object)) return false;
+        if (!args.equals(other.args)) return false;
+        return true;
+    }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof AbstractFunctionInvokation)) return false;
+        AbstractFunctionInvokation other = (AbstractFunctionInvokation) o;
+        if (!constraint.equivalent(object, other.object)) return false;
+        if (!constraint.equivalent(args, other.args)) return false;
+        return true;
+    }
 }

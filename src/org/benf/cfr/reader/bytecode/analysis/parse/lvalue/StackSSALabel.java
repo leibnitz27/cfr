@@ -99,4 +99,5 @@ public class StackSSALabel extends AbstractLValue {
         if (!(o instanceof StackSSALabel)) return false;
         return id == ((StackSSALabel) o).id;
     }
+
 }

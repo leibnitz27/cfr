@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.util.graph;
 
+import java.util.Collection;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -10,6 +12,8 @@ package org.benf.cfr.reader.util.graph;
 public interface GraphVisitor<T> {
     // TODO : Bulk enqueue.
     void enqueue(T next);
+
+    void enqueue(Collection<? extends T> next);
 
     void process();
 }

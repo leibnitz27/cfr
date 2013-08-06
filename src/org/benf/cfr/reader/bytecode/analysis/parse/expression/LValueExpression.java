@@ -90,4 +90,15 @@ public class LValueExpression extends AbstractExpression {
     public int hashCode() {
         return lValue.hashCode();
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        LValueExpression other = (LValueExpression) o;
+        if (!constraint.equivalent(lValue, other.lValue)) return false;
+        return true;
+    }
+
 }

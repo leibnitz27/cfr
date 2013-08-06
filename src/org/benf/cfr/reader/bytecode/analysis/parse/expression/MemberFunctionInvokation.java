@@ -73,5 +73,20 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         return name;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (!super.equals(o)) return false;
+        if (o == this) return true;
+        if (!(o instanceof MemberFunctionInvokation)) return false;
+        return name.equals(((MemberFunctionInvokation) o).name);
+    }
 
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (!super.equivalentUnder(o, constraint)) return false;
+        if (o == this) return true;
+        if (!(o instanceof MemberFunctionInvokation)) return false;
+        MemberFunctionInvokation other = (MemberFunctionInvokation) o;
+        return constraint.equivalent(name, other.name);
+    }
 }

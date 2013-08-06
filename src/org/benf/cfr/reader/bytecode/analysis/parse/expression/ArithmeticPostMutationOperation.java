@@ -71,4 +71,15 @@ public class ArithmeticPostMutationOperation extends AbstractAssignmentExpressio
         return mutated.equals(other.mutated) &&
                 op.equals(other.op);
     }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == this) return true;
+        if (!(o instanceof ArithmeticPostMutationOperation)) return false;
+
+        ArithmeticPostMutationOperation other = (ArithmeticPostMutationOperation) o;
+        if (!constraint.equivalent(mutated, other.mutated)) return false;
+        if (!constraint.equivalent(op, other.op)) return false;
+        return true;
+    }
 }

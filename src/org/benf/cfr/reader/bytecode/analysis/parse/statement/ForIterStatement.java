@@ -59,4 +59,16 @@ public class ForIterStatement extends AbstractStatement {
         return blockIdentifier;
     }
 
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        ForIterStatement other = (ForIterStatement) o;
+        if (!constraint.equivalent(iterator, other.iterator)) return false;
+        if (!constraint.equivalent(list, other.list)) return false;
+        return true;
+    }
+
+
 }

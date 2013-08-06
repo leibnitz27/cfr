@@ -125,4 +125,34 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     public JavaTypeInstance getInnerType() {
         return allocatedType;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NewAnonymousArray that = (NewAnonymousArray) o;
+
+        if (isCompletelyAnonymous != that.isCompletelyAnonymous) return false;
+        if (numDims != that.numDims) return false;
+        if (allocatedType != null ? !allocatedType.equals(that.allocatedType) : that.allocatedType != null)
+            return false;
+        if (values != null ? !values.equals(that.values) : that.values != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        NewAnonymousArray other = (NewAnonymousArray) o;
+
+        if (isCompletelyAnonymous != other.isCompletelyAnonymous) return false;
+        if (numDims != other.numDims) return false;
+        if (!constraint.equivalent(allocatedType, other.allocatedType)) return false;
+        if (!constraint.equivalent(values, other.values)) return false;
+        return true;
+    }
 }

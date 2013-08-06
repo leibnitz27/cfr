@@ -5,6 +5,7 @@ import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryProcedure;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -19,12 +20,12 @@ public abstract class AbstractGraphVisitorFI<T> implements GraphVisitor<T> {
     protected final LinkedList<T> toVisit = ListFactory.newLinkedList();
     private final Set<T> visited = SetFactory.newSet();
     private final BinaryProcedure<T, GraphVisitor<T>> callee;
-    
+
     public AbstractGraphVisitorFI(T first, BinaryProcedure<T, GraphVisitor<T>> callee) {
         add(first);
         this.callee = callee;
     }
-    
+
     protected abstract void internalAdd(T next);
 
     private void add(T next) {
@@ -33,12 +34,17 @@ public abstract class AbstractGraphVisitorFI<T> implements GraphVisitor<T> {
             visited.add(next);
         }
     }
-    
+
     @Override
     public void enqueue(T next) {
         add(next);
     }
-    
+
+    @Override
+    public void enqueue(Collection<? extends T> next) {
+        for (T t : next) enqueue(t);
+    }
+
     @Override
     public void process() {
         do {

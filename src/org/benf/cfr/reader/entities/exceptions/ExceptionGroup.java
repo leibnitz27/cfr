@@ -92,14 +92,21 @@ public class ExceptionGroup {
             return entry.getPriority();
         }
 
-        public JavaRefTypeInstance getTypeName() {
+        public JavaRefTypeInstance getCatchType() {
             return refType;
+        }
+
+        public ExceptionGroup getExceptionGroup() {
+            return ExceptionGroup.this;
+        }
+
+        public BlockIdentifier getTryBlockIdentifier() {
+            return ExceptionGroup.this.getTryBlockIdentifier();
         }
 
         @Override
         public String toString() {
-            short type = entry.getCatchType();
-            JavaRefTypeInstance name = getTypeName();
+            JavaRefTypeInstance name = getCatchType();
             return ExceptionGroup.this.toString() + " " + name.getRawName();
         }
     }

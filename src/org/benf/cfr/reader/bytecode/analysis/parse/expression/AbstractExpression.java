@@ -63,4 +63,5 @@ public abstract class AbstractExpression implements Expression {
         return d.toString();
     }
 
+    public abstract boolean equals(Object o);
 }

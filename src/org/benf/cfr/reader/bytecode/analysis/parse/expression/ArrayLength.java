@@ -62,4 +62,15 @@ public class ArrayLength extends AbstractExpression {
         if (!(o instanceof ArrayLength)) return false;
         return array.equals(((ArrayLength) o).getArray());
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        ArrayLength other = (ArrayLength) o;
+        if (!constraint.equivalent(array, other.array)) return false;
+        return true;
+    }
+
 }

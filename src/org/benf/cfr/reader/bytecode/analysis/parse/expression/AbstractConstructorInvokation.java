@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -74,5 +75,19 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression {
         if (!getTypeInstance().equals(other.getTypeInstance())) return false;
         if (!args.equals(other.args)) return false;
         return true;
+    }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == this) return true;
+        if (o == null) return false;
+
+        if (!(o instanceof AbstractConstructorInvokation)) return false;
+        AbstractConstructorInvokation other = (AbstractConstructorInvokation) o;
+
+        if (!constraint.equivalent(getTypeInstance(), other.getTypeInstance())) return false;
+        if (!constraint.equivalent(args, other.args)) return false;
+        return true;
+
     }
 }

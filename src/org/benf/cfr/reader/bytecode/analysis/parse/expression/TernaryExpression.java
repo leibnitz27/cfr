@@ -96,4 +96,30 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
 
         return false;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TernaryExpression that = (TernaryExpression) o;
+
+        if (condition != null ? !condition.equals(that.condition) : that.condition != null) return false;
+        if (lhs != null ? !lhs.equals(that.lhs) : that.lhs != null) return false;
+        if (rhs != null ? !rhs.equals(that.rhs) : that.rhs != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (o.getClass() != getClass()) return false;
+        TernaryExpression other = (TernaryExpression) o;
+        if (!constraint.equivalent(condition, other.condition)) return false;
+        if (!constraint.equivalent(lhs, other.lhs)) return false;
+        if (!constraint.equivalent(rhs, other.rhs)) return false;
+        return true;
+    }
 }

@@ -60,4 +60,24 @@ public class NewObject extends AbstractExpression {
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof NewObject)) return false;
+        NewObject other = (NewObject) o;
+        if (!getTypeInstance().equals(other.getTypeInstance())) return false;
+        return true;
+    }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (o.getClass() != getClass()) return false;
+        NewObject other = (NewObject) o;
+        if (!constraint.equivalent(getTypeInstance(), other.getTypeInstance())) return false;
+        return true;
+    }
 }

@@ -62,4 +62,11 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation {
 
         return super.equals(o);
     }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (!(o instanceof ConstructorInvokationSimple)) return false;
+        if (!super.equivalentUnder(o, constraint)) return false;
+        return true;
+    }
 }

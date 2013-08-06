@@ -16,31 +16,23 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class UnstructuredCatch extends AbstractUnStructuredStatement {
-    private final List<ExceptionGroup.Entry> exceptions;
+public class UnstructuredFinally extends AbstractUnStructuredStatement {
     private final BlockIdentifier blockIdentifier;
-    private final LValue catching;
 
-    public UnstructuredCatch(List<ExceptionGroup.Entry> exceptions, BlockIdentifier blockIdentifier, LValue catching) {
-        this.exceptions = exceptions;
+    public UnstructuredFinally(BlockIdentifier blockIdentifier) {
         this.blockIdentifier = blockIdentifier;
-        this.catching = catching;
     }
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("** catch " + exceptions + " { \n");
+        dumper.print("** finally { \n");
         return dumper;
     }
 
     @Override
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == this.blockIdentifier) {
-            /*
-             * Convert to types (should verify elsewhere that there's only 1.
-             */
-            JavaRefTypeInstance eType = exceptions.get(0).getCatchType();
-            return new StructuredCatch(eType, innerBlock, catching);
+            return new StructuredFinally(innerBlock);
         } else {
             return null;
         }

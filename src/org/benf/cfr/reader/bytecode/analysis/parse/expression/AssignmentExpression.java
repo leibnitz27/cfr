@@ -73,4 +73,31 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
         rValue.collectUsedLValues(lValueUsageCollector);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AssignmentExpression that = (AssignmentExpression) o;
+
+        if (inlined != that.inlined) return false;
+        if (lValue != null ? !lValue.equals(that.lValue) : that.lValue != null) return false;
+        if (rValue != null ? !rValue.equals(that.rValue) : that.rValue != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        AssignmentExpression other = (AssignmentExpression) o;
+        if (inlined != other.inlined) return false;
+        if (!constraint.equivalent(lValue, other.lValue)) return false;
+        if (!constraint.equivalent(rValue, other.rValue)) return false;
+        return true;
+    }
+
+
 }

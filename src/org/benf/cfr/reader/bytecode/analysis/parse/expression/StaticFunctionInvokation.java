@@ -122,4 +122,27 @@ public class StaticFunctionInvokation extends AbstractExpression implements Boxi
         }
         return false;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof StaticFunctionInvokation)) return false;
+        StaticFunctionInvokation other = (StaticFunctionInvokation) o;
+        if (!clazz.equals(other.clazz)) return false;
+        if (!args.equals(other.args)) return false;
+        return true;
+    }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (!(o instanceof StaticFunctionInvokation)) return false;
+        StaticFunctionInvokation other = (StaticFunctionInvokation) o;
+        if (!constraint.equivalent(clazz, other.clazz)) return false;
+        if (!constraint.equivalent(args, other.args)) return false;
+        return true;
+    }
+
 }

@@ -1,14 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCatch;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.util.Functional;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -28,6 +27,16 @@ public class CatchStatement extends AbstractStatement {
     public CatchStatement(List<ExceptionGroup.Entry> exceptions, LValue catching) {
         this.exceptions = exceptions;
         this.catching = catching;
+    }
+
+    public void removeCatchBlockFor(final BlockIdentifier tryBlockIdent) {
+        List<ExceptionGroup.Entry> toRemove = Functional.filter(exceptions, new Predicate<ExceptionGroup.Entry>() {
+            @Override
+            public boolean test(ExceptionGroup.Entry in) {
+                return in.getTryBlockIdentifier().equals(tryBlockIdent);
+            }
+        });
+        exceptions.removeAll(toRemove);
     }
 
     @Override
@@ -68,4 +77,16 @@ public class CatchStatement extends AbstractStatement {
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredCatch(exceptions, catchBlockIdent, catching);
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        CatchStatement other = (CatchStatement) o;
+        if (!constraint.equivalent(exceptions, other.exceptions)) return false;
+        if (!constraint.equivalent(catching, other.catching)) return false;
+        return true;
+    }
+
 }

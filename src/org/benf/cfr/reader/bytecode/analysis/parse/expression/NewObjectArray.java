@@ -103,4 +103,34 @@ public class NewObjectArray extends AbstractNewArray {
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NewObjectArray that = (NewObjectArray) o;
+
+        if (numDims != that.numDims) return false;
+        if (allocatedType != null ? !allocatedType.equals(that.allocatedType) : that.allocatedType != null)
+            return false;
+        if (dimSizes != null ? !dimSizes.equals(that.dimSizes) : that.dimSizes != null) return false;
+        if (resultType != null ? !resultType.equals(that.resultType) : that.resultType != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        NewObjectArray other = (NewObjectArray) o;
+        if (numDims != other.numDims) return false;
+        if (!constraint.equivalent(dimSizes, other.dimSizes)) return false;
+        if (!constraint.equivalent(allocatedType, other.allocatedType)) return false;
+        if (!constraint.equivalent(resultType, other.resultType)) return false;
+        return true;
+    }
+
+
 }

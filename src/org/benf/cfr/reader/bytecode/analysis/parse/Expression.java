@@ -14,7 +14,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * User: lee
  * Date: 15/03/2012
  */
-public interface Expression extends Dumpable, DeepCloneable<Expression> {
+public interface Expression extends Dumpable, DeepCloneable<Expression>, ComparableUnderEC {
     // Can /PROBABLY/ replace LValueRewriter with expression rewriter.
     Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
 
@@ -31,4 +31,6 @@ public interface Expression extends Dumpable, DeepCloneable<Expression> {
     Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence);
 
     InferredJavaType getInferredJavaType();
+
+    boolean equivalentUnder(Object o, EquivalenceConstraint constraint);
 }

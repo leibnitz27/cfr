@@ -37,6 +37,10 @@ public class BlockIdentifier implements Comparable<BlockIdentifier> {
         return "block" + index;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
     public void addForeignRef() {
         knownForeignReferences++;
     }

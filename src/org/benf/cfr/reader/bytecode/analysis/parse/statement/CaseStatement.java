@@ -78,4 +78,14 @@ public class CaseStatement extends AbstractStatement {
     public BlockIdentifier getCaseBlock() {
         return caseBlock;
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        CaseStatement other = (CaseStatement) o;
+        if (!constraint.equivalent(values, other.values)) return false;
+        return true;
+    }
 }

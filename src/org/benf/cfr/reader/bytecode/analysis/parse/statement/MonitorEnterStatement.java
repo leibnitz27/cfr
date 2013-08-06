@@ -56,4 +56,15 @@ public class MonitorEnterStatement extends AbstractStatement {
     public StructuredStatement getStructuredStatement() {
         return new UnstructuredSynchronized(monitor, blockIdentifier);
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        MonitorEnterStatement other = (MonitorEnterStatement) o;
+        if (!constraint.equivalent(monitor, other.monitor)) return false;
+        return true;
+    }
+
 }

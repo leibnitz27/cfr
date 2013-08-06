@@ -1,12 +1,17 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCatch;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredFinally;
+import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.util.Functional;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,41 +20,38 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 18:08
  * To change this template use File | Settings | File Templates.
  */
-public class JSRRetStatement extends AbstractStatement {
-    private Expression ret;
+public class FinallyStatement extends AbstractStatement {
+    private BlockIdentifier finallyBlockIdent;
 
-    public JSRRetStatement(Expression ret) {
-        this.ret = ret;
+    public FinallyStatement(BlockIdentifier finallyBlockIdent) {
+        this.finallyBlockIdent = finallyBlockIdent;
     }
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("Ret");
+        return dumper.print("finally {\n");
     }
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        ret = ret.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
-        ret = expressionRewriter.rewriteExpression(ret, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
     }
 
     @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
-        ret.collectUsedLValues(lValueUsageCollector);
+    }
+
+    @Override
+    public LValue getCreatedLValue() {
+        return null;
     }
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredComment("JSR Ret");
-    }
-
-    @Override
-    public void collectObjectCreation(CreationCollector creationCollector) {
-        creationCollector.markJump();
+        return new UnstructuredFinally(finallyBlockIdent);
     }
 
     @Override
@@ -57,10 +59,9 @@ public class JSRRetStatement extends AbstractStatement {
         if (o == null) return false;
         if (o == this) return true;
         if (getClass() != o.getClass()) return false;
-        JSRRetStatement other = (JSRRetStatement) o;
-        if (!constraint.equivalent(ret, other.ret)) return false;
+        FinallyStatement other = (FinallyStatement) o;
+//        if (!constraint.equivalent(finallyBlockIdent, other.finallyBlockIdent)) return false;
         return true;
     }
-
 
 }

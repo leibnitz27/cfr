@@ -80,4 +80,30 @@ public class DynamicInvokation extends AbstractExpression {
     public List<Expression> getDynamicArgs() {
         return dynamicArgs;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DynamicInvokation that = (DynamicInvokation) o;
+
+        if (dynamicArgs != null ? !dynamicArgs.equals(that.dynamicArgs) : that.dynamicArgs != null) return false;
+        if (innerInvokation != null ? !innerInvokation.equals(that.innerInvokation) : that.innerInvokation != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        DynamicInvokation other = (DynamicInvokation) o;
+        if (!constraint.equivalent(innerInvokation, other.innerInvokation)) return false;
+        if (!constraint.equivalent(dynamicArgs, other.dynamicArgs)) return false;
+        return true;
+    }
+
 }

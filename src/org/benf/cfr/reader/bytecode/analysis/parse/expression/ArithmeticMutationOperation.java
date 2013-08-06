@@ -80,4 +80,17 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
                 op.equals(other.op) &&
                 mutation.equals(other.mutation);
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        ArithmeticMutationOperation other = (ArithmeticMutationOperation) o;
+        if (!constraint.equivalent(op, other.op)) return false;
+        if (!constraint.equivalent(mutated, other.mutated)) return false;
+        if (!constraint.equivalent(mutation, other.mutation)) return false;
+        return true;
+    }
+
 }

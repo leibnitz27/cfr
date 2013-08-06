@@ -100,4 +100,16 @@ public class NewPrimitiveArray extends AbstractNewArray {
         if (!type.equals(other.type)) return false;
         return true;
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        NewPrimitiveArray other = (NewPrimitiveArray) o;
+        if (!constraint.equivalent(size, other.size)) return false;
+        if (!constraint.equivalent(type, other.type)) return false;
+        return true;
+    }
+
 }

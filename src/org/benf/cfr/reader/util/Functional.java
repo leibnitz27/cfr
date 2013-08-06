@@ -11,7 +11,7 @@ import java.util.*;
  * Date: 27/04/2012
  */
 public class Functional {
-    public static <X> List<X> filter(List<X> input, Predicate<X> predicate) {
+    public static <X> List<X> filter(Collection<X> input, Predicate<X> predicate) {
         List<X> result = ListFactory.newList();
         for (X item : input) {
             if (predicate.test(item)) result.add(item);

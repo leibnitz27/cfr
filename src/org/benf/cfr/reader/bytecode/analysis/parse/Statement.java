@@ -26,7 +26,7 @@ import java.util.List;
  *   label
  *   goto label
  */
-public interface Statement extends Dumpable {
+public interface Statement extends Dumpable, ComparableUnderEC {
     void setContainer(StatementContainer<Statement> container);
 
     void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector);
@@ -58,4 +58,6 @@ public interface Statement extends Dumpable {
     List<Statement> getCompoundParts();
 
     StructuredStatement getStructuredStatement();
+
+    boolean equivalentUnder(Object o, EquivalenceConstraint constraint);
 }

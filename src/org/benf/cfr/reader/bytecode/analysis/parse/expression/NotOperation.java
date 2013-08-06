@@ -92,4 +92,15 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
         NotOperation other = (NotOperation) obj;
         return inner.equals(other.inner);
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        NotOperation other = (NotOperation) o;
+        if (!constraint.equivalent(inner, other.inner)) return false;
+        return true;
+    }
+
 }

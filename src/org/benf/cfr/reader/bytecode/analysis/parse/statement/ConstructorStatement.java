@@ -60,4 +60,15 @@ public class ConstructorStatement extends AbstractStatement {
     public StructuredStatement getStructuredStatement() {
         return new StructuredExpressionStatement(invokation, false);
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        ConstructorStatement other = (ConstructorStatement) o;
+        if (!constraint.equivalent(invokation, other.invokation)) return false;
+        return true;
+    }
+
 }

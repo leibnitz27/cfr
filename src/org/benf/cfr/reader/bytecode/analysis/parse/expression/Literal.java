@@ -63,4 +63,15 @@ public class Literal extends AbstractExpression {
         Literal other = (Literal) o;
         return value.equals(other.value);
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        Literal other = (Literal) o;
+        if (!constraint.equivalent(value, other.value)) return false;
+        return true;
+    }
+
 }

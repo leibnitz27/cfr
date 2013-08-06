@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -130,4 +131,38 @@ public class LambdaExpressionFallback extends AbstractExpression {
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LambdaExpressionFallback that = (LambdaExpressionFallback) o;
+
+        if (colon != that.colon) return false;
+        if (instance != that.instance) return false;
+        if (callClassType != null ? !callClassType.equals(that.callClassType) : that.callClassType != null)
+            return false;
+        if (curriedArgs != null ? !curriedArgs.equals(that.curriedArgs) : that.curriedArgs != null) return false;
+        if (lambdaFnName != null ? !lambdaFnName.equals(that.lambdaFnName) : that.lambdaFnName != null) return false;
+        if (targetFnArgTypes != null ? !targetFnArgTypes.equals(that.targetFnArgTypes) : that.targetFnArgTypes != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        LambdaExpressionFallback other = (LambdaExpressionFallback) o;
+        if (instance != other.instance) return false;
+        if (colon != other.colon) return false;
+        if (!constraint.equivalent(lambdaFnName, other.lambdaFnName)) return false;
+        if (!constraint.equivalent(curriedArgs, other.curriedArgs)) return false;
+        return true;
+    }
+
+
 }

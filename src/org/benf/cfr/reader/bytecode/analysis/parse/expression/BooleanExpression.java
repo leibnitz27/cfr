@@ -101,4 +101,14 @@ public class BooleanExpression extends AbstractExpression implements Conditional
         BooleanExpression other = (BooleanExpression) o;
         return inner.equals(other.inner);
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        BooleanExpression other = (BooleanExpression) o;
+        if (!constraint.equivalent(inner, other.inner)) return false;
+        return true;
+    }
 }

@@ -1,10 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredTry;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -48,5 +45,10 @@ public class TryStatement extends AbstractStatement {
 
     public BlockIdentifier getBlockIdentifier() {
         return exceptionGroup.getTryBlockIdentifier();
+    }
+
+    @Override
+    public boolean equivalentUnder(Object other, EquivalenceConstraint constraint) {
+        return this.getClass() == other.getClass();
     }
 }

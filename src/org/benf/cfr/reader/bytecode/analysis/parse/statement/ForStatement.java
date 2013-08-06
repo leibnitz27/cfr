@@ -76,4 +76,17 @@ public class ForStatement extends AbstractStatement {
     public AbstractAssignmentExpression getAssignment() {
         return assignment;
     }
+
+    @Override
+    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (getClass() != o.getClass()) return false;
+        ForStatement other = (ForStatement) o;
+        if (!constraint.equivalent(condition, other.condition)) return false;
+        if (!constraint.equivalent(initial, other.initial)) return false;
+        if (!constraint.equivalent(assignment, other.assignment)) return false;
+        return true;
+    }
+
 }
