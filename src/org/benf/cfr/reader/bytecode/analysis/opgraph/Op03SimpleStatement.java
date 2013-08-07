@@ -1932,7 +1932,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Op03SimpleStatement taken = new Op03SimpleStatement(blocksAtStart, new CommentStatement("empty if block"), notTakenTarget.index.justBefore());
             taken.addSource(ifStatement);
             taken.addTarget(notTakenTarget);
-            notTakenTarget.addSource(taken);
+            Op03SimpleStatement emptyTarget = ifStatement.targets.get(0);
+            if (notTakenTarget != emptyTarget) {
+                notTakenTarget.addSource(taken);
+            }
+            emptyTarget.replaceSource(ifStatement, taken);
             ifStatement.targets.set(0, taken);
             statements.add(idxTaken, taken);
 
