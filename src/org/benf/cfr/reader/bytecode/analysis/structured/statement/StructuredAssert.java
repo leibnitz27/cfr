@@ -1,12 +1,12 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -39,7 +39,7 @@ public class StructuredAssert extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
     }
 
     @Override

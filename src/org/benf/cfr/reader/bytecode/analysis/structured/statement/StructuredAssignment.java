@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -10,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.B
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -45,7 +45,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
     }
 
     @Override

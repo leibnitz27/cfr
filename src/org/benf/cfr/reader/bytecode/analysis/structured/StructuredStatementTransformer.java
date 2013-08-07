@@ -2,6 +2,8 @@ package org.benf.cfr.reader.bytecode.analysis.structured;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 
+import java.util.LinkedList;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -9,5 +11,5 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
  * Time: 17:32
  */
 public interface StructuredStatementTransformer {
-    StructuredStatement transform(StructuredStatement in, Op04StructuredStatement next);
+    StructuredStatement transform(StructuredStatement in, StructuredScope scope);
 }

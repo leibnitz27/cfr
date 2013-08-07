@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
@@ -43,8 +44,8 @@ public class StructuredCatch extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
-        catchBlock.transform(transformer, after);
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
+        catchBlock.transform(transformer, scope);
     }
 
     @Override

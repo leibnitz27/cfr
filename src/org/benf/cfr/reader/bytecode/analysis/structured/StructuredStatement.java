@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
@@ -26,7 +27,7 @@ public interface StructuredStatement extends Dumpable, Matcher<StructuredStateme
 
     StructuredStatement informBlockHeirachy(Vector<BlockIdentifier> blockIdentifiers);
 
-    void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement next);
+    void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope);
 
     // This isn't recursive - maybe it should be.
     void rewriteExpressions(ExpressionRewriter expressionRewriter);

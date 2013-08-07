@@ -6,11 +6,12 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredTry;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredGoto;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
@@ -465,31 +466,42 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     private static class TryCatchTidier implements StructuredStatementTransformer {
         @Override
-        public StructuredStatement transform(StructuredStatement in, Op04StructuredStatement next) {
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
             if (in instanceof Block) {
                 // Search for try statements, see if we can combine following catch statements with them.
                 Block block = (Block) in;
-                block.combineTryCatch(next);
+                block.combineTryCatch();
             }
-            in.transformStructuredChildren(this, next);
+            in.transformStructuredChildren(this, scope);
             return in;
         }
     }
 
     private static class Inliner implements StructuredStatementTransformer {
         @Override
-        public StructuredStatement transform(StructuredStatement in, Op04StructuredStatement next) {
-            in.transformStructuredChildren(this, next);
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            in.transformStructuredChildren(this, scope);
             if (in instanceof Block) {
                 Block block = (Block) in;
-                block.combineInlineable(next);
+                block.combineInlineable();
             }
             return in;
         }
     }
 
-    public void transform(StructuredStatementTransformer transformer, Op04StructuredStatement next) {
-        structuredStatement = transformer.transform(structuredStatement, next);
+    private static class StructuredGotoRemover implements StructuredStatementTransformer {
+        @Override
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            in.transformStructuredChildren(this, scope);
+            if (in instanceof UnstructuredGoto) {
+                in = ((UnstructuredGoto) in).transformWithScope(scope);
+            }
+            return in;
+        }
+    }
+
+    public void transform(StructuredStatementTransformer transformer, StructuredScope scope) {
+        structuredStatement = transformer.transform(structuredStatement, scope);
     }
 
     /*
@@ -498,11 +510,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      */
 
     public static void tidyTryCatch(Op04StructuredStatement root) {
-        root.transform(new TryCatchTidier(), null);
+        root.transform(new TryCatchTidier(), new StructuredScope());
     }
 
     public static void inlinePossibles(Op04StructuredStatement root) {
-        root.transform(new Inliner(), null);
+        root.transform(new Inliner(), new StructuredScope());
     }
 
     public static void removePointlessReturn(Op04StructuredStatement root) {
@@ -511,6 +523,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             Block block = (Block) statement;
             block.removeLastNVReturn();
         }
+    }
+
+    public static void removeStructuredGotos(Op04StructuredStatement root) {
+        root.transform(new StructuredGotoRemover(), new StructuredScope());
     }
 
     /*

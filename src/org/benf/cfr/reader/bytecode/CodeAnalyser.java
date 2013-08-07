@@ -352,12 +352,9 @@ public class CodeAnalyser {
         logger.info("tidyTryCatch");
         Op04StructuredStatement.tidyTryCatch(block);
         Op04StructuredStatement.inlinePossibles(block);
+        Op04StructuredStatement.removeStructuredGotos(block);
         Op04StructuredStatement.removePointlessReturn(block);
 
-        // Replace with a more generic interface, etc.
-
-        new SwitchStringRewriter(cfrState).rewrite(block);
-        new SwitchEnumRewriter(cfrState).rewrite(block);
 
         /*
          * If we can't fully structure the code, we bow out here.
@@ -366,6 +363,12 @@ public class CodeAnalyser {
             this.analysed = block;
             return analysed;
         }
+
+        // Replace with a more generic interface, etc.
+
+        new SwitchStringRewriter(cfrState).rewrite(block);
+        new SwitchEnumRewriter(cfrState).rewrite(block);
+
 
         // Now we've got everything nicely block structured, we can have an easier time
         Op04StructuredStatement.discoverVariableScopes(method, block);

@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -35,7 +36,7 @@ public class StructuredDefinition extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
     }
 
     @Override

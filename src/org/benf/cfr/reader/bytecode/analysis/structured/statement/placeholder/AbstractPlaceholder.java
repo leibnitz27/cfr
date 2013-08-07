@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -35,7 +36,7 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
         throw new UnsupportedOperationException();
     }
 

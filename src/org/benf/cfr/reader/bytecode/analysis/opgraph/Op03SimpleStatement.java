@@ -182,8 +182,18 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public void clear() {
-        this.targets.clear();
+        for (Op03SimpleStatement source : sources) {
+            if (source.getTargets().contains(this)) {
+                source.removeTarget(this);
+            }
+        }
         this.sources.clear();
+        for (Op03SimpleStatement target : targets) {
+            if (target.getSources().contains(this)) {
+                target.removeSource(this);
+            }
+        }
+        this.targets.clear();
         this.nopOut();
     }
 
@@ -430,7 +440,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(this, graphVisitorCallee);
         visitor.process();
 
-        Collections.sort(reachableNodes, new CompareByIndex());
+        try {
+            Collections.sort(reachableNodes, new CompareByIndex());
+        } catch (ConfusedCFRException e) {
+            dumper.print("CONFUSED!" + e);
+        }
         for (Op03SimpleStatement op : reachableNodes) {
             op.dumpInner(dumper);
         }

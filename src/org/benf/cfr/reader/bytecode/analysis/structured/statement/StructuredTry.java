@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -61,13 +62,18 @@ public class StructuredTry extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
-        tryBlock.transform(transformer, after);
-        for (Op04StructuredStatement catchBlock : catchBlocks) {
-            catchBlock.transform(transformer, after);
-        }
-        if (finallyBlock != null) {
-            finallyBlock.transform(transformer, after);
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
+        scope.add(this);
+        try {
+            tryBlock.transform(transformer, scope);
+            for (Op04StructuredStatement catchBlock : catchBlocks) {
+                catchBlock.transform(transformer, scope);
+            }
+            if (finallyBlock != null) {
+                finallyBlock.transform(transformer, scope);
+            }
+        } finally {
+            scope.remove(this);
         }
     }
 
@@ -124,7 +130,10 @@ public class StructuredTry extends AbstractStructuredStatement {
 
     @Override
     public boolean inlineable() {
-        return catchBlocks.isEmpty() && finallyBlock == null;
+        if (catchBlocks.isEmpty() && finallyBlock == null) {
+            return true;
+        }
+        return false;
     }
 
     @Override

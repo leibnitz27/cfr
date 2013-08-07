@@ -3,20 +3,22 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created:
@@ -140,7 +142,7 @@ public class Block extends AbstractStructuredStatement {
         return getContainer();
     }
 
-    public void combineInlineable(Op04StructuredStatement after) {
+    public void combineInlineable() {
         boolean inline = false;
         for (Op04StructuredStatement in : containedStatements) {
             if (in.getStatement().inlineable()) {
@@ -167,7 +169,7 @@ public class Block extends AbstractStructuredStatement {
         containedStatements = newContained;
     }
 
-    public void combineTryCatch(Op04StructuredStatement after) {
+    public void combineTryCatch() {
         int size = containedStatements.size();
         boolean finished = false;
         for (int x = 0; x < size && !finished; ++x) {
@@ -175,7 +177,7 @@ public class Block extends AbstractStructuredStatement {
             if (statement.getStatement() instanceof StructuredTry) {
                 StructuredTry structuredTry = (StructuredTry) statement.getStatement();
                 ++x;
-                Op04StructuredStatement next = x < size - 1 ? containedStatements.get(x) : null;
+                Op04StructuredStatement next = x < size ? containedStatements.get(x) : null;
                 while (x < size && next != null &&
                         (next.getStatement() instanceof StructuredCatch ||
                                 next.getStatement() instanceof StructuredComment ||
@@ -190,7 +192,7 @@ public class Block extends AbstractStructuredStatement {
                             next = containedStatements.get(x);
                         } else {
                             // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                            next = after;
+                            next = null;
                             finished = true;
                         }
                     } else if (next.getStatement() instanceof StructuredFinally) {
@@ -199,11 +201,12 @@ public class Block extends AbstractStructuredStatement {
                             next = containedStatements.get(x);
                         } else {
                             // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                            next = after;
+                            next = null;
                             finished = true;
                         }
                     }
                 }
+                --x;
 //                if (next == null) next = after;
 //                if (next != null) {
 //                    structuredTry.removeFinalJumpsTo(next);
@@ -214,12 +217,44 @@ public class Block extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
-        for (int x = 0, len = containedStatements.size(); x < len; ++x) {
-            Op04StructuredStatement structuredBlock = containedStatements.get(x);
-            Op04StructuredStatement next = x < len - 1 ? containedStatements.get(x + 1) : after;
-            structuredBlock.transform(transformer, next);
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
+
+        scope.add(this);
+        try {
+            for (int x = 0, len = containedStatements.size(); x < len; ++x) {
+                Op04StructuredStatement structuredBlock = containedStatements.get(x);
+                scope.setNextAtThisLevel(this, x < len - 1 ? x + 1 : -1);
+                structuredBlock.transform(transformer, scope);
+            }
+        } finally {
+            scope.remove(this);
         }
+    }
+
+    public Set<Op04StructuredStatement> getNextAfter(int x) {
+        Set<Op04StructuredStatement> res = SetFactory.newSet();
+        if (x == -1 || x > containedStatements.size()) return res;
+        while (x != -1 && x < containedStatements.size()) {
+            Op04StructuredStatement next = containedStatements.get(x);
+            res.add(containedStatements.get(x));
+            if (next.getStatement() instanceof StructuredComment) {
+                ++x;
+            } else {
+                break;
+            }
+        }
+        return res;
+    }
+
+    // Is it the last one, ignoring comments?
+    public boolean statementIsLast(Op04StructuredStatement needle) {
+        for (int x = containedStatements.size() - 1; x >= 0; --x) {
+            Op04StructuredStatement statement = containedStatements.get(x);
+            if (statement == needle) return true;
+            if (statement.getStatement() instanceof StructuredComment) continue;
+            break;
+        }
+        return false;
     }
 
     @Override

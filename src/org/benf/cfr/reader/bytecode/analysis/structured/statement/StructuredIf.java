@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpress
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.ElseBlock;
@@ -59,9 +60,9 @@ public class StructuredIf extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, Op04StructuredStatement after) {
-        ifTaken.transform(transformer, after);
-        if (elseBlock != null) elseBlock.transform(transformer, after);
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
+        ifTaken.transform(transformer, scope);
+        if (elseBlock != null) elseBlock.transform(transformer, scope);
     }
 
     @Override

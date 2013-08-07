@@ -51,7 +51,7 @@ public class AssertRewriter {
          */
         if (!staticInit.hasCodeAttribute()) return;
         List<StructuredStatement> statements = MiscStatementTools.linearise(staticInit.getAnalysis());
-
+        if (statements == null) return;
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(statements);
         WildcardMatch wcm1 = new WildcardMatch();
 

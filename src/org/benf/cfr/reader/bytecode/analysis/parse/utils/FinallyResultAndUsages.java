@@ -2,9 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
@@ -58,23 +56,27 @@ public class FinallyResultAndUsages {
              * Now, while the final throw redirect is a goto or a return, pull it inside
              * the try block.
              */
-            Op03SimpleStatement current = finalThrowRedirect;
-            BlockIdentifier tryBlock = tryStatement.getBlockIdentifier();
-            do {
-                Statement currentStatement = current.getStatement();
-                if (currentStatement.getClass() == GotoStatement.class ||
-                        currentStatement instanceof ReturnStatement) {
-                    current.getBlockIdentifiers().add(tryBlock);
-                    if (current.getTargets().size() == 1) {
-                        current = current.getTargets().get(0);
-                        break;
+            if (finalThrowRedirect != null) {
+                Op03SimpleStatement current = finalThrowRedirect;
+                BlockIdentifier tryBlock = tryStatement.getBlockIdentifier();
+                do {
+                    Statement currentStatement = current.getStatement();
+                    if (currentStatement.getClass() == GotoStatement.class ||
+                            currentStatement instanceof ReturnStatement ||
+                            currentStatement.getClass() == Nop.class) {
+                        current.getBlockIdentifiers().add(tryBlock);
+                        if (current.getTargets().size() == 1) {
+                            current = current.getTargets().get(0);
+                            if (currentStatement.getClass() == Nop.class) continue;
+                            break;
+                        } else {
+                            break;
+                        }
                     } else {
                         break;
                     }
-                } else {
-                    break;
-                }
-            } while (true);
+                } while (true);
+            }
         }
     }
 }
