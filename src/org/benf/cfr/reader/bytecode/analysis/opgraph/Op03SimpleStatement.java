@@ -1040,11 +1040,38 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     * Normalise code by removing jumps which have been introduced to confuse.
     */
     public static void removePointlessJumps(List<Op03SimpleStatement> statements) {
-        // Do this pass first, as it needs spatial locality.
+
+        /*
+         * Odd first pass, but we want to translate
+         *
+         * a : goto x
+         * b : goto x
+         *
+         * into
+         *
+         * a : comment falls through to b
+         * b : goto x
+         */
         int size = statements.size() - 1;
+        for (int x = 0; x < size - 1; ++x) {
+            Op03SimpleStatement a = statements.get(x);
+            Op03SimpleStatement b = statements.get(x + 1);
+            if (a.containedStatement.getClass() == GotoStatement.class &&
+                    b.containedStatement.getClass() == GotoStatement.class &&
+                    a.targets.get(0) == b.targets.get(0)) {
+                Op03SimpleStatement realTgt = a.targets.get(0);
+                realTgt.removeSource(a);
+                a.replaceTarget(realTgt, b);
+                b.addSource(a);
+                a.nopOut();
+            }
+        }
+
+
+        // Do this pass first, as it needs spatial locality.
         for (int x = 0; x < size; ++x) {
             Op03SimpleStatement maybeJump = statements.get(x);
-            if (maybeJump.containedStatement instanceof GotoStatement &&
+            if (maybeJump.containedStatement.getClass() == GotoStatement.class &&
                     maybeJump.targets.size() == 1 &&
                     maybeJump.targets.get(0) == statements.get(x + 1)) {
                 maybeJump.nopOut();
@@ -1885,6 +1912,24 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return new DiscoveredTernary(l1, s1.containedStatement.getRValue(), s2.containedStatement.getRValue());
     }
 
+
+    private static boolean considerAsTrivialIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps) {
+        Op03SimpleStatement takenTarget = ifStatement.targets.get(1);
+        Op03SimpleStatement notTakenTarget = ifStatement.targets.get(0);
+        int idxTaken = statements.indexOf(takenTarget);
+        int idxNotTaken = statements.indexOf(notTakenTarget);
+        if (idxTaken != idxNotTaken + 1) return false;
+        if (!(takenTarget.getStatement().getClass() == GotoStatement.class &&
+                notTakenTarget.getStatement().getClass() == GotoStatement.class &&
+                takenTarget.targets.get(0) == notTakenTarget.targets.get(0))) {
+            return false;
+        }
+        notTakenTarget.replaceStatement(new CommentStatement("empty if block"));
+        // Replace the not taken target with an 'empty if statement'.
+        return false;
+    }
+
+
     /*
     * This is an if statement where both targets are forward.
     *
@@ -2082,6 +2127,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     if (statementCurrent.targets.get(0) == maybeElseEnd) {
                         idxEnd = idxCurrent;
                         idxCurrent--;
+
+
                         // We can do this aggressively, as it doesn't break the graph.
                         leaveIfBranchHolder.replaceTarget(maybeElseEnd, statementCurrent);
                         statementCurrent.addSource(leaveIfBranchHolder);
@@ -2161,8 +2208,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (maybeSimpleIfElse) {
             elseBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_ELSE);
             if (elseBranch.isEmpty()) {
-//                maybeSimpleIfElse = false;
-                throw new IllegalStateException();
+                elseBlockLabel = null;
+                maybeSimpleIfElse = false;
+                //throw new IllegalStateException();
             } else {
                 markWholeBlock(elseBranch, elseBlockLabel);
             }
@@ -2182,7 +2230,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             success = false;
             List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
             for (Op03SimpleStatement forwardIf : forwardIfs) {
-                success |= considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps);
+                if (considerAsTrivialIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
+                        considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps)) {
+                    success = true;
+                }
             }
         } while (success);
     }

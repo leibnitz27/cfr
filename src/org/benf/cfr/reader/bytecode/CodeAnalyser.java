@@ -41,8 +41,8 @@ public class CodeAnalyser {
     private static final int SHOW_L3_RAW = 2;
     private static final int SHOW_L3_ORDERED = 3;
     private static final int SHOW_L3_CAUGHT = 4;
-    private static final int SHOW_L4_LOOPS1 = 5;
-    private static final int SHOW_L4_EXCEPTION_BLOCKS = 6;
+    private static final int SHOW_L3_LOOPS1 = 5;
+    private static final int SHOW_L3_EXCEPTION_BLOCKS = 6;
     private static final int SHOW_L4_FINAL_OP3 = 9;
 
     private final static Logger logger = LoggerFactory.create(CodeAnalyser.class);
@@ -259,7 +259,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
 
 
-        if (cfrState.getShowOps() == SHOW_L4_LOOPS1) {
+        if (cfrState.getShowOps() == SHOW_L3_LOOPS1) {
             debugDumper.newln().newln();
             debugDumper.print("After loops.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -267,7 +267,7 @@ public class CodeAnalyser {
 
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        if (cfrState.getShowOps() == SHOW_L4_EXCEPTION_BLOCKS) {
+        if (cfrState.getShowOps() == SHOW_L3_EXCEPTION_BLOCKS) {
             debugDumper.newln().newln();
             debugDumper.print("After exception.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
