@@ -2157,6 +2157,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (maybeSimpleIfElse) {
             elseBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_ELSE);
             if (elseBranch.isEmpty()) {
+//                maybeSimpleIfElse = false;
                 throw new IllegalStateException();
             } else {
                 markWholeBlock(elseBranch, elseBlockLabel);
