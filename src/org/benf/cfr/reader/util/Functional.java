@@ -19,6 +19,22 @@ public class Functional {
         return result;
     }
 
+    public static <X> boolean any(Collection<X> input, Predicate<X> predicate) {
+        List<X> result = ListFactory.newList();
+        for (X item : input) {
+            if (predicate.test(item)) return true;
+        }
+        return false;
+    }
+
+    public static <X> boolean all(Collection<X> input, Predicate<X> predicate) {
+        List<X> result = ListFactory.newList();
+        for (X item : input) {
+            if (!predicate.test(item)) return false;
+        }
+        return true;
+    }
+
     public static <X> Pair<List<X>, List<X>> partition(List<X> input, Predicate<X> predicate) {
         List<X> lTrue = ListFactory.newList();
         List<X> lFalse = ListFactory.newList();

@@ -1590,11 +1590,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
         */
         try {
-            validateAndAssignLoopIdentifier(statements, startIdx, endIdx + 1, blockIdentifier);
+            validateAndAssignLoopIdentifier(statements, startIdx, endIdx + 1, blockIdentifier, start);
         } catch (CannotPerformDecode e) {
             // Can't perform this optimisation.
             return false;
         }
+
 
         // Add a 'do' statement infront of the block (which does not belong to the block)
         // transform the test to a 'POST_WHILE' statement.
@@ -1747,7 +1748,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
         * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
         */
-        int lastIdx = validateAndAssignLoopIdentifier(statements, idxConditional + 1, idxAfterEnd, blockIdentifier);
+        int lastIdx;
+        try {
+            lastIdx = validateAndAssignLoopIdentifier(statements, idxConditional + 1, idxAfterEnd, blockIdentifier, start);
+        } catch (CannotPerformDecode e) {
+            return false;
+        }
 
         Op03SimpleStatement lastInBlock = statements.get(lastIdx);
         Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
@@ -1791,8 +1797,41 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     }
 
-    private static int validateAndAssignLoopIdentifier(List<Op03SimpleStatement> statements, int idxTestStart, int idxAfterEnd, BlockIdentifier blockIdentifier) {
+    private static int validateAndAssignLoopIdentifier(List<Op03SimpleStatement> statements, int idxTestStart, int idxAfterEnd, BlockIdentifier blockIdentifier, Op03SimpleStatement start) {
         int last = getFarthestReachableInRange(statements, idxTestStart, idxAfterEnd);
+
+        /*
+         * What if the last back jump was inside a catch statement?  Find catch statements which exist at
+         * last, but not in start - we have to extend the loop to the end of the catch statements....
+         * and change it to a while (false).
+         */
+        Op03SimpleStatement discoveredLast = statements.get(last);
+        Set<BlockIdentifier> lastBlocks = SetFactory.newSet(discoveredLast.containedInBlocks);
+        lastBlocks.removeAll(start.getBlockIdentifiers());
+        Set<BlockIdentifier> catches = SetFactory.newSet(Functional.filter(lastBlocks, new Predicate<BlockIdentifier>() {
+            @Override
+            public boolean test(BlockIdentifier in) {
+                return (in.getBlockType() == BlockType.CATCHBLOCK);
+            }
+        }));
+        int newlast = last;
+        while (!catches.isEmpty()) {
+            /*
+             * Need to find the rest of these catch blocks, and add them to the range.
+             */
+            Op03SimpleStatement stm = statements.get(newlast);
+            catches.retainAll(stm.getBlockIdentifiers());
+            if (catches.isEmpty()) {
+                break;
+            }
+            last = newlast;
+            if (newlast < statements.size() - 1) {
+                newlast++;
+            } else {
+                break;
+            }
+        }
+
 
         for (int x = idxTestStart; x <= last; ++x) {
             statements.get(x).markBlock(blockIdentifier);

@@ -41,8 +41,9 @@ public class CodeAnalyser {
     private static final int SHOW_L3_RAW = 2;
     private static final int SHOW_L3_ORDERED = 3;
     private static final int SHOW_L3_CAUGHT = 4;
-    private static final int SHOW_L3_LOOPS1 = 5;
-    private static final int SHOW_L3_EXCEPTION_BLOCKS = 6;
+    private static final int SHOW_L3_JUMPS = 5;
+    private static final int SHOW_L3_LOOPS1 = 6;
+    private static final int SHOW_L3_EXCEPTION_BLOCKS = 7;
     private static final int SHOW_L4_FINAL_OP3 = 9;
 
     private final static Logger logger = LoggerFactory.create(CodeAnalyser.class);
@@ -253,6 +254,12 @@ public class CodeAnalyser {
         Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes);
 
         Op03SimpleStatement.optimiseForTypes(op03SimpleParseNodes);
+
+        if (cfrState.getShowOps() == SHOW_L3_JUMPS) {
+            debugDumper.newln().newln();
+            debugDumper.print("After jumps.:\n");
+            op03SimpleParseNodes.get(0).dump(debugDumper);
+        }
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
