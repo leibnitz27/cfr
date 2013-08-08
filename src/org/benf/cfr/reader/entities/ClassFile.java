@@ -430,10 +430,13 @@ public class ClassFile implements Dumpable {
 
             /* If we're loading inner classes, then we definitely want to recursively apply that
              */
-            ClassFile innerClass = cfrState.getClassFile(innerType, true);
-            markInnerClassAsStatic(cfrState, innerClass, thisType);
+            try {
+                ClassFile innerClass = cfrState.getClassFile(innerType, true);
+                markInnerClassAsStatic(cfrState, innerClass, thisType);
 
-            innerClassesByTypeInfo.put(innerType, new Pair<InnerClassAttributeInfo, ClassFile>(innerClassAttributeInfo, innerClass));
+                innerClassesByTypeInfo.put(innerType, new Pair<InnerClassAttributeInfo, ClassFile>(innerClassAttributeInfo, innerClass));
+            } catch (CannotLoadClassException e) {
+            }
         }
     }
 

@@ -31,7 +31,10 @@ public class Main {
             params.setClassFileVersion(c.getClassFileVersion());
             // This may seem odd, but we want to make sure we're analysing the version
             // from the cache.
-            c = params.getClassFile(c.getClassType(), true);
+            try {
+                c = params.getClassFile(c.getClassType(), true);
+            } catch (CannotLoadClassException e) {
+            }
             // THEN analyse.
             c.analyseTop(params);
             Dumper d = new StdOutDumper();

@@ -59,8 +59,14 @@ public class CFRState {
         public void configureWith(ClassFile partiallyConstructedClassFile) {
             JavaRefTypeInstance refTypeInstance = (JavaRefTypeInstance) partiallyConstructedClassFile.getClassType();
             String actualPath = partiallyConstructedClassFile.getFilePath();
-            if (!actualPath.equals(path) && path.endsWith(actualPath)) {
-                pathPrefix = path.substring(0, path.length() - actualPath.length());
+            if (!actualPath.equals(path)) {
+                if (path.endsWith(actualPath)) {
+                    pathPrefix = path.substring(0, path.length() - actualPath.length());
+                } else {
+                    // We're loading from the wrong directory.  We need to rebase so that dependencies are sought
+                    // in similar locations.
+                    int x = 1;
+                }
             }
             classCache.setAnalysisType(refTypeInstance);
             initiallyConfigured = true;
