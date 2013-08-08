@@ -130,7 +130,7 @@ public class FinallyHelper {
             @Override
             public boolean equivalent(Object o1, Object o2) {
                 if (o1 == null) return o2 == null;
-                if (o1 instanceof StackSSALabel) {
+                if (o1 instanceof StackSSALabel && o2 instanceof StackSSALabel) {
                     o2 = mapSSALabel((StackSSALabel) o1, (StackSSALabel) o2);
                 }
                 return super.equivalent(o1, o2);
