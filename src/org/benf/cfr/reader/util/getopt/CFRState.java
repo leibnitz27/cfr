@@ -93,8 +93,8 @@ public class CFRState {
             classParts = Arrays.copyOfRange(classParts, diffpt, classParts.length);
             reverse(fileParts);
             reverse(classParts);
-            pathPrefix = join(fileParts, "/") + "/";
-            classRemovePrefix = join(classParts, "/") + "/";
+            pathPrefix = fileParts.length == 0 ? "" : (join(fileParts, "/") + "/");
+            classRemovePrefix = classParts.length == 0 ? "" : (join(classParts, "/") + "/");
         }
 
         @Override
