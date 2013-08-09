@@ -334,7 +334,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private void markFirstStatementInBlock(BlockIdentifier blockIdentifier) {
-        if (this.firstStatementInThisBlock != null) {
+        if (this.firstStatementInThisBlock != null && this.firstStatementInThisBlock != blockIdentifier) {
             throw new ConfusedCFRException("Statement already marked as first in another block");
         }
         this.firstStatementInThisBlock = blockIdentifier;
@@ -1632,6 +1632,22 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
+        if (start.firstStatementInThisBlock != null) {
+            /* We need to figure out if this new loop is inside or outside block started at start.
+             *
+             */
+            BlockIdentifier outer = findOuterBlock(start.firstStatementInThisBlock, blockIdentifier, statements);
+            if (blockIdentifier == outer) {
+                // Ok, we're the new outer
+                throw new UnsupportedOperationException();
+            } else {
+                // we're the new inner.  We need to change start to be first in US, and make US first of what start was
+                // in.
+                doStatement.firstStatementInThisBlock = start.firstStatementInThisBlock;
+                start.firstStatementInThisBlock = blockIdentifier;
+            }
+        }
+
         statements.add(statements.indexOf(start), doStatement);
         lastJump.markBlockStatement(blockIdentifier, null, lastJump, statements);
         start.markFirstStatementInBlock(blockIdentifier);
@@ -1640,6 +1656,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         return true;
 
+    }
+
+    private static BlockIdentifier findOuterBlock(BlockIdentifier b1, BlockIdentifier b2, List<Op03SimpleStatement> statements) {
+        for (Op03SimpleStatement s : statements) {
+            Set<BlockIdentifier> contained = s.getBlockIdentifiers();
+            if (contained.contains(b1)) {
+                if (!contained.contains(b2)) {
+                    return b1;
+                }
+            } else if (contained.contains(b2)) {
+                return b2;
+            }
+        }
+        /*
+         * Can't decide!  Have to choose outer.  ??
+         */
+        return b1;
     }
 
     /* Is the first conditional jump NOT one of the sources of start?
