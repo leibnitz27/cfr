@@ -20,9 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -46,7 +44,9 @@ public class CFRState {
      * Initialisation info
      */
     private boolean initiallyConfigured;
+    private boolean unexpectedDirectory = false;
     private String pathPrefix = "";
+    private String classRemovePrefix = "";
 
     private class Configurator implements ConfigCallback {
         private final String path;
@@ -55,17 +55,61 @@ public class CFRState {
             this.path = path;
         }
 
+        /*
+         * This is hideously inefficient. ;)
+         */
+        private void reverse(String[] in) {
+            List<String> l = Arrays.asList(in);
+            Collections.reverse(l);
+            l.toArray(in);
+        }
+
+        private String join(String[] in, String sep) {
+            StringBuilder sb = new StringBuilder();
+            boolean first = true;
+            for (String s : in) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(sep);
+                }
+                sb.append(s);
+            }
+            return sb.toString();
+        }
+
+        private void getCommonRoot(String filePath, String classPath) {
+            String npath = filePath.replace('\\', '/');
+            String[] fileParts = npath.split("/");
+            String[] classParts = classPath.split("/");
+            reverse(fileParts);
+            reverse(classParts);
+            int min = Math.min(fileParts.length, classParts.length);
+            int diffpt = 0;
+            while (diffpt < min && fileParts[diffpt].equals(classParts[diffpt])) {
+                diffpt++;
+            }
+            fileParts = Arrays.copyOfRange(fileParts, diffpt, fileParts.length);
+            classParts = Arrays.copyOfRange(classParts, diffpt, classParts.length);
+            reverse(fileParts);
+            reverse(classParts);
+            pathPrefix = join(fileParts, "/") + "/";
+            classRemovePrefix = join(classParts, "/") + "/";
+        }
+
         @Override
         public void configureWith(ClassFile partiallyConstructedClassFile) {
             JavaRefTypeInstance refTypeInstance = (JavaRefTypeInstance) partiallyConstructedClassFile.getClassType();
             String actualPath = partiallyConstructedClassFile.getFilePath();
             if (!actualPath.equals(path)) {
+                unexpectedDirectory = true;
                 if (path.endsWith(actualPath)) {
                     pathPrefix = path.substring(0, path.length() - actualPath.length());
                 } else {
                     // We're loading from the wrong directory.  We need to rebase so that dependencies are sought
                     // in similar locations.
-                    int x = 1;
+                    // TODO : File.seperator, rather than hardcoded!
+                    getCommonRoot(path, actualPath);
                 }
             }
             classCache.setAnalysisType(refTypeInstance);
@@ -261,7 +305,14 @@ public class CFRState {
                  * NB : pathPrefix will be empty the when we load the 'main' class,
                  * and only set if it's not in its 'natural' location.
                  */
-                File file = new File(pathPrefix + path);
+                String usePath = path;
+                if (unexpectedDirectory) {
+                    if (usePath.startsWith(classRemovePrefix)) {
+                        usePath = usePath.substring(classRemovePrefix.length());
+                    }
+                    usePath = pathPrefix + usePath;
+                }
+                File file = new File(usePath);
                 is = new FileInputStream(file);
                 length = file.length();
             } else {
@@ -280,7 +331,7 @@ public class CFRState {
                 if (zipFile != null) zipFile.close();
             }
         } catch (IOException e) {
-            System.err.println("** Unable to load " + path);
+            System.err.println("** Unable to find " + path);
             throw new CannotLoadClassException(path, e);
         }
     }
