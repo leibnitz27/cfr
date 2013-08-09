@@ -171,6 +171,12 @@ public class InferredJavaType {
         public boolean isLocked() {
             return locked;
         }
+
+        public IJTInternal getFirstLocked() {
+            if (locked) return this;
+            if (delegate != null) return delegate.getFirstLocked();
+            return null;
+        }
     }
 
     private IJTInternal value;
@@ -287,6 +293,14 @@ public class InferredJavaType {
                     return CastAction.InsertExplicit;
                 } else {
                     return CastAction.None;
+                }
+            } else {
+                if (pri > 0) {
+                    // If other is EVENTUALLY locked to the same type as other, then stick a cast in.
+                    IJTInternal otherLocked = other.value.getFirstLocked();
+                    if (otherLocked != null && otherLocked.getJavaTypeInstance() == other.getJavaTypeInstance()) {
+                        return CastAction.InsertExplicit;
+                    }
                 }
             }
             mkDelegate(other.value, this.value);
