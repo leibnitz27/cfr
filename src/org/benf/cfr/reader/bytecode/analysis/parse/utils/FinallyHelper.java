@@ -19,19 +19,35 @@ import java.util.*;
  */
 public class FinallyHelper {
     private final Op03SimpleStatement finallyStart;
+    private final List<Op03SimpleStatement> inFinallyBlock;
     private final BlockIdentifier finallyIdent;
     private final Op03SimpleStatement finalThrow;
+    private final Op03SimpleStatement lastInFinally; // Which is probably finalThrow
     private final Map<Op03SimpleStatement, Result> cachedResults = MapFactory.newMap();
     private final Op03SimpleStatement guessedFinalCatchBlock;
 
-    public FinallyHelper(Op03SimpleStatement finallyStart, BlockIdentifier finallyIdent, Op03SimpleStatement finalThrow, Op03SimpleStatement guessedFinallyCatchBlock) {
+    public FinallyHelper(Op03SimpleStatement finallyStart, List<Op03SimpleStatement> inFinallyBlock, BlockIdentifier finallyIdent, Op03SimpleStatement finalThrow, Op03SimpleStatement lastInfinally, Op03SimpleStatement guessedFinallyCatchBlock) {
         this.finallyStart = finallyStart;
+        this.inFinallyBlock = inFinallyBlock;
         this.finallyIdent = finallyIdent;
         this.finalThrow = finalThrow;
+        this.lastInFinally = lastInfinally;
         this.guessedFinalCatchBlock = guessedFinallyCatchBlock;
     }
 
     public void markAsTestedFrom(Op03SimpleStatement possibleFinallyBlock, Op03SimpleStatement source) {
+    }
+
+    public Op03SimpleStatement getLastInFinally() {
+        return lastInFinally;
+    }
+
+    public List<Op03SimpleStatement> getInFinallyBlock() {
+        return inFinallyBlock;
+    }
+
+    public boolean hasFinalThrow() {
+        return finalThrow != null;
     }
 
     public Result testEquivalent(Op03SimpleStatement possibleFinallyBlock, TryStatement tryStatement) {
@@ -192,6 +208,7 @@ public class FinallyHelper {
         public TryStatement getTryStatement() {
             return tryStatement;
         }
+
     }
 
 

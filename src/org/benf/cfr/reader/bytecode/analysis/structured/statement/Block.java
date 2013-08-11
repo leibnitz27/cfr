@@ -9,7 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.util.ListFactory;
@@ -24,6 +24,8 @@ import java.util.Set;
  * Created:
  * User: lee
  * Date: 14/05/2012
+ * <p/>
+ * TODO : Block implements way more functionality than it should - move into callers.
  */
 public class Block extends AbstractStructuredStatement {
     private LinkedList<Op04StructuredStatement> containedStatements;
@@ -155,18 +157,30 @@ public class Block extends AbstractStructuredStatement {
         for (Op04StructuredStatement in : containedStatements) {
             StructuredStatement s = in.getStatement();
             if (s.inlineable()) {
+                s.getContainer().getSources();
                 Op04StructuredStatement inlinedOp = s.getInline();
                 StructuredStatement inlined = inlinedOp.getStatement();
                 if (inlined instanceof Block) {
+                    List<Op04StructuredStatement> inlinedBlocks = ((Block) inlined).getBlockStatements();
                     newContained.addAll(((Block) inlined).getBlockStatements());
+                    replaceInlineSource(in, inlinedBlocks.get(0));
                 } else {
                     newContained.add(inlinedOp);
+                    replaceInlineSource(in, inlinedOp);
                 }
             } else {
                 newContained.add(in);
             }
         }
         containedStatements = newContained;
+    }
+
+    private void replaceInlineSource(Op04StructuredStatement oldS, Op04StructuredStatement newS) {
+        for (Op04StructuredStatement src : oldS.getSources()) {
+            src.replaceTarget(oldS, newS);
+            newS.addSource(src);
+        }
+        newS.getSources().remove(oldS);
     }
 
     public void combineTryCatch() {
@@ -334,4 +348,11 @@ public class Block extends AbstractStructuredStatement {
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
     }
 
+    @Override
+    public boolean isEffectivelyNOP() {
+        for (Op04StructuredStatement statement : containedStatements) {
+            if (!statement.getStatement().isEffectivelyNOP()) return false;
+        }
+        return true;
+    }
 }

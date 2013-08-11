@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -8,7 +9,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
@@ -51,4 +51,7 @@ public interface StructuredStatement extends Dumpable, Matcher<StructuredStateme
     boolean inlineable();
 
     Op04StructuredStatement getInline();
+
+    // Is it a comment, or a block containing nothign but comments?
+    boolean isEffectivelyNOP();
 }

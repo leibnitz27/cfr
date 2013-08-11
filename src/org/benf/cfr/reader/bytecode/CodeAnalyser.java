@@ -360,8 +360,15 @@ public class CodeAnalyser {
         Op04StructuredStatement.tidyTryCatch(block);
         Op04StructuredStatement.inlinePossibles(block);
         Op04StructuredStatement.removeStructuredGotos(block);
+        Op04StructuredStatement.removePointlessBlocks(block);
         Op04StructuredStatement.removePointlessReturn(block);
 
+
+
+        /*
+         * The /absolute LAST/ thing we do before requiring fully structured code, is to
+         * transform impossible forward gotos in to break statements.
+         */
 
         /*
          * If we can't fully structure the code, we bow out here.

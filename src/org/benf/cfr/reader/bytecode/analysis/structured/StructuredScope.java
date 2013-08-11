@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredSynchronized;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredTry;
 import org.benf.cfr.reader.util.ListFactory;
@@ -44,7 +45,9 @@ public class StructuredScope {
         Set<Op04StructuredStatement> res = SetFactory.newSet();
         for (AtLevel atLevel : scope) {
             if (atLevel.statement instanceof Block) {
-                if (atLevel.next != -1) res.addAll(((Block) atLevel.statement).getNextAfter(atLevel.next));
+                if (atLevel.next != -1) {
+                    res.addAll(((Block) atLevel.statement).getNextAfter(atLevel.next));
+                }
                 if (((Block) atLevel.statement).statementIsLast(current)) {
                     current = atLevel.statement.getContainer();
                     continue;
@@ -54,6 +57,9 @@ public class StructuredScope {
                 current = atLevel.statement.getContainer();
                 continue;
             } else if (atLevel.statement instanceof StructuredSynchronized) {
+                current = atLevel.statement.getContainer();
+                continue;
+            } else if (atLevel.statement instanceof StructuredIf) {
                 current = atLevel.statement.getContainer();
                 continue;
             }

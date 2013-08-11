@@ -3,13 +3,14 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.CanRemovePointlessBlock;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.ElseBlock;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -23,7 +24,7 @@ import java.util.Vector;
  * User: lee
  * Date: 15/05/2012
  */
-public class StructuredIf extends AbstractStructuredStatement {
+public class StructuredIf extends AbstractStructuredStatement implements CanRemovePointlessBlock {
 
     ConditionalExpression conditionalExpression;
     Op04StructuredStatement ifTaken;
@@ -61,8 +62,13 @@ public class StructuredIf extends AbstractStructuredStatement {
 
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
-        ifTaken.transform(transformer, scope);
-        if (elseBlock != null) elseBlock.transform(transformer, scope);
+        scope.add(this);
+        try {
+            ifTaken.transform(transformer, scope);
+            if (elseBlock != null) elseBlock.transform(transformer, scope);
+        } finally {
+            scope.remove(this);
+        }
     }
 
     @Override
@@ -120,4 +126,10 @@ public class StructuredIf extends AbstractStructuredStatement {
         return new Block(list, false);
     }
 
+    @Override
+    public void removePointlessBlocks(StructuredScope scope) {
+        if (elseBlock != null && elseBlock.getStatement().isEffectivelyNOP()) {
+            elseBlock = null;
+        }
+    }
 }

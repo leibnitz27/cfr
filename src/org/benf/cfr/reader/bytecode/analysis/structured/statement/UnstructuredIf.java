@@ -7,8 +7,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.ConditionalUtils;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.LinkedList;
 import java.util.Vector;
 
 /**
@@ -37,7 +39,14 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == knownIfBlock) {
             if (knownElseBlock == null) {
-                return new StructuredIf(ConditionalUtils.simplify(conditionalExpression.getNegated()), innerBlock);
+                Op04StructuredStatement fakeElse = new Op04StructuredStatement(new UnstructuredGoto());
+                Op04StructuredStatement fakeElseTarget = getContainer().getTargets().get(1);
+                fakeElse.addTarget(fakeElseTarget);
+                fakeElseTarget.addSource(fakeElse);
+                LinkedList<Op04StructuredStatement> fakeBlockContent = ListFactory.newLinkedList();
+                fakeBlockContent.add(fakeElse);
+                Op04StructuredStatement fakeElseBlock = new Op04StructuredStatement(new Block(fakeBlockContent, true));
+                return new StructuredIf(ConditionalUtils.simplify(conditionalExpression.getNegated()), innerBlock, fakeElseBlock);
             } else {
                 setIfBlock = innerBlock;
                 return this;

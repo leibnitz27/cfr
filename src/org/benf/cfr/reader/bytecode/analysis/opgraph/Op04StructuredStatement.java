@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.CanRemovePointlessBlock;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -8,7 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredGoto;
@@ -500,6 +501,17 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    private static class PointlessBlockRemover implements StructuredStatementTransformer {
+        @Override
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            in.transformStructuredChildren(this, scope);
+            if (in instanceof CanRemovePointlessBlock) {
+                ((CanRemovePointlessBlock) in).removePointlessBlocks(scope);
+            }
+            return in;
+        }
+    }
+
     public void transform(StructuredStatementTransformer transformer, StructuredScope scope) {
         structuredStatement = transformer.transform(structuredStatement, scope);
     }
@@ -527,6 +539,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void removeStructuredGotos(Op04StructuredStatement root) {
         root.transform(new StructuredGotoRemover(), new StructuredScope());
+    }
+
+    public static void removePointlessBlocks(Op04StructuredStatement root) {
+        root.transform(new PointlessBlockRemover(), new StructuredScope());
     }
 
     /*

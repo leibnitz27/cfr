@@ -71,7 +71,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statement.setContainer(this);
     }
 
-    private Op03SimpleStatement(Set<BlockIdentifier> containedIn, Statement statement, InstrIndex index) {
+    public Op03SimpleStatement(Set<BlockIdentifier> containedIn, Statement statement, InstrIndex index) {
         this.containedStatement = statement;
         this.isNop = false;
         this.index = index;
@@ -2104,6 +2104,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         Op03SimpleStatement newJump = new Op03SimpleStatement(ifStatement.containedInBlocks, new GotoStatement(), statementCurrent.getIndex().justBefore());
                         Op03SimpleStatement oldTarget = ifStatement.targets.get(1);
                         newJump.addTarget(oldTarget);
+                        newJump.addSource(ifStatement);
                         ifStatement.replaceTarget(oldTarget, newJump);
                         oldTarget.replaceSource(ifStatement, newJump);
                         statements.add(idxCurrent, newJump);
@@ -2273,6 +2274,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
             return true;
         }
+
 
         BlockIdentifier ifBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_TAKEN);
         markWholeBlock(ifBranch, ifBlockLabel);
@@ -2671,6 +2673,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
+        if (peerTries.isEmpty()) return false;
         /* At worst, peerTries should contain 'in' */
 
         /*
@@ -2710,6 +2713,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         });
         Op03SimpleStatement orderLast = inBlock.get(inBlock.size() - 1);
+        Op03SimpleStatement lastFinally = orderLast;
 
         Statement testThrow = new ThrowStatement(new LValueExpression(finallyCatch.getCreatedLValue()));
         if (!testThrow.equals(orderLast.getStatement())) {
@@ -2720,7 +2724,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * We also need to find (so we can ignore from comparison) the throw at the end of the finally.
          * (it HAS to throw the caught var, unless we have a finally with a throw).
          */
-        FinallyHelper finallyHelper = new FinallyHelper(finallyStart, finallyIdent, orderLast, best);
+        FinallyHelper finallyHelper = new FinallyHelper(finallyStart, inBlock, finallyIdent, orderLast, lastFinally, best);
 
         /*
          * Now, consider all of the entries in allTries - we need to make sure that every exit point for them has
@@ -2732,6 +2736,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return false;
             }
         }
+
+        /*
+         * If there ARE no finally result and usages, then we've got no repeated copies of the finally.
+         * Even if it was a finally (!) then it's pointless to treat is as such.
+         */
+        if (finallyResultAndUsages.isEmpty()) return false;
+
         /*
          * Ok.  Now, remove all but the original 'finally' catch block, and, for each peerset, try to collapse
          * the tries into one.
@@ -2739,7 +2750,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * When we remove the block, if we end up with a return / goto sitting directly outside a try block, pull it
          * in before we collapse tries.
          */
-        finallyResultAndUsages.clearCopies(allStatements);
+        finallyResultAndUsages.clearCopies(finallyHelper, allStatements);
 
         /*
          * Now, for each peer set, if the only source for the try is another peer, link the two, and replace the second
@@ -2848,16 +2859,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return SetFactory.newSet();
             }
         });
+        final List<Op03SimpleStatement> inTry = ListFactory.newList();
         GraphVisitor<Op03SimpleStatement> graphVisitor = new GraphVisitorDFS<Op03SimpleStatement>(tryStart.targets.get(0),
                 new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
                     @Override
                     public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
                         if (arg1.getBlockIdentifiers().contains(tryBlock)) {
+                            inTry.add(arg1);
                             for (Op03SimpleStatement target : arg1.targets) {
                                 arg2.enqueue(target);
-
-                                // We have to check this here, while we still have arg1.
+                                /*
+                                 * Assumption is that if something leaves the try block, then it's going to have to behave
+                                 * like the finally block
+                                 */
                                 if (!target.getBlockIdentifiers().contains(tryBlock)) {
+                                    /*
+                                     * Unless it jumps back into another of the peer tries.
+                                     */
                                     if (!allTries.contains(target)) {
                                         exitTargets.add(target);
                                         targetCallers.get(target).add(arg1);
@@ -2868,6 +2886,41 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     }
                 });
         graphVisitor.process();
+
+        /*
+         * TODO : I'm DEEPLY ashamed of this particular hack.
+         *
+         * There's one more possibility - if we've over-claimed an inner block which is the end of the
+         * try statement.  Attempt that.
+         *
+         * TODO : This is a hack.  TBH, it works in some cases, but I'm sure there are those it won't work in.
+         */
+        Collections.sort(inTry, new CompareByIndex());
+        int finallySize = finallyHelper.getInFinallyBlock().size() - (finallyHelper.hasFinalThrow() ? 1 : 0);
+        int idx = inTry.size() - finallySize;
+        if (idx >= 0) {
+            Op03SimpleStatement lastFinallyGuess = inTry.get(inTry.size() - finallySize);
+            if (lastFinallyGuess.getSources().size() == 1 && !exitTargets.contains(lastFinallyGuess)) {
+                FinallyHelper.Result result = finallyHelper.testEquivalent(lastFinallyGuess, tryStatement);
+                if (result.isMatched()) {
+                    targetCallers.get(lastFinallyGuess).add(lastFinallyGuess.getSources().get(0));
+                    resultAndUsages.add(result, targetCallers.get(lastFinallyGuess));
+                    /*
+                     * Now, if one of the instructions in the block that just matched caused a 'false'
+                     * exit target then we need to remove that.
+                     */
+                    for (int x = inTry.size() - finallySize, len = inTry.size(); x < len; ++x) {
+                        Op03SimpleStatement stmt = inTry.get(x);
+                        for (Op03SimpleStatement tgt : stmt.targets) {
+                            if (exitTargets.contains(tgt)) {
+                                exitTargets.remove(tgt);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         /* Exit targets are the set of ways off this try block.
          * We now need to verify that each of these exit targets is the same as finallyStart pp.
          *
@@ -2875,7 +2928,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          */
         for (Op03SimpleStatement exitTarget : exitTargets) {
             FinallyHelper.Result result = finallyHelper.testEquivalent(exitTarget, tryStatement);
-            if (!result.isMatched()) return false;
+            if (!result.isMatched()) {
+                return false;
+            }
             resultAndUsages.add(result, targetCallers.get(exitTarget));
         }
         return true;

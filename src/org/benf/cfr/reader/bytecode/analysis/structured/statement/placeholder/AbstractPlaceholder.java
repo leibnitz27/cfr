@@ -7,7 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -87,6 +87,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
 
     @Override
     public Op04StructuredStatement getInline() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isEffectivelyNOP() {
         throw new UnsupportedOperationException();
     }
 }

@@ -76,4 +76,9 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     public Op04StructuredStatement getInline() {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean isEffectivelyNOP() {
+        return false;
+    }
 }
