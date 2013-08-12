@@ -127,13 +127,32 @@ public class StructuredTry extends AbstractStructuredStatement {
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
     }
 
+    private boolean isPointlessTry() {
+        if (!catchBlocks.isEmpty()) return false;
+        if (finallyBlock == null) return true;
+        // If finally block is empty, we can remove.
+        if (!(finallyBlock.getStatement() instanceof StructuredFinally)) return false;
+        StructuredFinally structuredFinally = (StructuredFinally) finallyBlock.getStatement();
+        Op04StructuredStatement finallyCode = structuredFinally.getCatchBlock();
+        if (!(finallyCode.getStatement() instanceof Block)) return false;
+        Block block = (Block) finallyCode.getStatement();
+        if (block.isEffectivelyNOP()) return true;
+        return false;
+    }
+
+    private boolean isJustTryCatchThrow() {
+        if (finallyBlock != null) return false;
+        if (catchBlocks.size() != 1) return false;
+        Op04StructuredStatement catchBlock = catchBlocks.get(0);
+        StructuredStatement catchS = catchBlock.getStatement();
+        if (!(catchS instanceof StructuredCatch)) return false;
+        StructuredCatch structuredCatch = (StructuredCatch) catchS;
+        return structuredCatch.isRethrow();
+    }
 
     @Override
     public boolean inlineable() {
-        if (catchBlocks.isEmpty() && finallyBlock == null) {
-            return true;
-        }
-        return false;
+        return isPointlessTry() || isJustTryCatchThrow();
     }
 
     @Override

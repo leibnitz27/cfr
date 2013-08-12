@@ -48,6 +48,10 @@ public class StructuredFinally extends AbstractStructuredStatement {
         catchBlock.linearizeStatementsInto(out);
     }
 
+    public Op04StructuredStatement getCatchBlock() {
+        return catchBlock;
+    }
+
     @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         StructuredStatement o = matchIterator.getCurrent();

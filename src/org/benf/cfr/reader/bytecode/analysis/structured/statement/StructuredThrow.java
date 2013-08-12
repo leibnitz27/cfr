@@ -59,4 +59,16 @@ public class StructuredThrow extends AbstractStructuredStatement {
         return true;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        StructuredThrow that = (StructuredThrow) o;
+
+        if (value != null ? !value.equals(that.value) : that.value != null) return false;
+
+        return true;
+    }
+
 }
