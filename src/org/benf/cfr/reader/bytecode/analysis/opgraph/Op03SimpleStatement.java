@@ -2898,7 +2898,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Collections.sort(inTry, new CompareByIndex());
         int finallySize = finallyHelper.getInFinallyBlock().size() - (finallyHelper.hasFinalThrow() ? 1 : 0);
         int idx = inTry.size() - finallySize;
-        if (idx >= 0) {
+        if (idx >= 0 && finallySize > 0) {
             Op03SimpleStatement lastFinallyGuess = inTry.get(inTry.size() - finallySize);
             if (lastFinallyGuess.getSources().size() == 1 && !exitTargets.contains(lastFinallyGuess)) {
                 FinallyHelper.Result result = finallyHelper.testEquivalent(lastFinallyGuess, tryStatement);
@@ -3655,7 +3655,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                                     Statement targetStatement = target.containedStatement;
                                     if (targetStatement instanceof ReturnStatement ||
                                             targetStatement instanceof ThrowStatement ||
+                                            targetStatement instanceof Nop ||
                                             targetStatement instanceof GotoStatement) {
+                                        // TODO : Should perform a block check on targetStatement.
                                         extraNodes.add(target);
                                     }
                                 }

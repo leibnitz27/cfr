@@ -94,7 +94,9 @@ public class FinallyResultAndUsages {
                     caller.replaceTarget(startOfCopy, finalThrowRedirect);
                     Set<Op03SimpleStatement> proxySources = result.result.getFinalThrowProxySources();
                     for (Op03SimpleStatement proxySource : proxySources) {
-                        finalThrowRedirect.removeSource(proxySource);
+                        if (finalThrowRedirect.getSources().contains(proxySource)) {
+                            finalThrowRedirect.removeSource(proxySource);
+                        }
                     }
                     if (finalThrowRedirect.getIndex().isBackJumpFrom(caller) && !(caller.getStatement() instanceof JumpingStatement)) {
                         Op03SimpleStatement redirectGoto = new Op03SimpleStatement(caller.getBlockIdentifiers(), new GotoStatement(), caller.getIndex().justAfter());
