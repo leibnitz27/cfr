@@ -11,8 +11,7 @@ import java.util.Collection;
 public interface EquivalenceConstraint {
     boolean equivalent(Object o1, Object o2);
 
+    boolean equivalent(Collection o1, Collection o2);
+
     boolean equivalent(ComparableUnderEC o1, ComparableUnderEC o2);
-
-    boolean equivalent(Collection<? extends ComparableUnderEC> o1, Collection<? extends ComparableUnderEC> o2);
-
 }

@@ -1,5 +1,6 @@
-package org.benf.cfr.reader.bytecode.analysis.parse;
+package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.ListFactory;
 
@@ -15,6 +16,10 @@ import java.util.Set;
  */
 public class CompositeBlockIdentifierKey implements Comparable<CompositeBlockIdentifierKey> {
     private final String key;
+
+    public CompositeBlockIdentifierKey(Op03SimpleStatement statement) {
+        this(statement.getBlockIdentifiers());
+    }
 
     public CompositeBlockIdentifierKey(Set<BlockIdentifier> blockIdentifiers) {
         List<BlockIdentifier> b = ListFactory.newList(blockIdentifiers);
@@ -48,5 +53,12 @@ public class CompositeBlockIdentifierKey implements Comparable<CompositeBlockIde
         if (compositeBlockIdentifierKey == this) return 0;
         if (this.key.length() < compositeBlockIdentifierKey.key.length()) return -1;
         return this.key.compareTo(compositeBlockIdentifierKey.key);
+    }
+
+    @Override
+    public String toString() {
+        return "CompositeBlockIdentifierKey{" +
+                "key='" + key + '\'' +
+                '}';
     }
 }

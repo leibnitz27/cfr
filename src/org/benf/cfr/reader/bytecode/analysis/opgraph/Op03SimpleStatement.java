@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AccountingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
@@ -108,7 +109,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public Statement getTargetStatement(int idx) {
-        if (targets.size() <= idx) throw new ConfusedCFRException("Trying to get invalid target " + idx);
+        if (targets.size() <= idx) {
+            throw new ConfusedCFRException("Trying to get invalid target " + idx);
+        }
         Op03SimpleStatement target = targets.get(idx);
         Statement statement = target.getStatement();
         if (statement == null) throw new ConfusedCFRException("Invalid target statement");
@@ -399,7 +402,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         public int compare(Op03SimpleStatement a, Op03SimpleStatement b) {
             int res = a.getIndex().compareTo(b.getIndex());
             if (res == 0) {
-                throw new ConfusedCFRException("Can't sort instructions");
+                throw new ConfusedCFRException("Can't sort instructions:\n" + a + "\n" + b);
             }
             return res;
         }
@@ -1011,6 +1014,37 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement statement : ifStatements) {
             collapseAssignmentsIntoConditional(statement);
         }
+    }
+
+    public static List<Op03SimpleStatement> removeUnreachableCode(List<Op03SimpleStatement> statements) {
+        final Set<Op03SimpleStatement> reachable = SetFactory.newSet();
+        reachable.add(statements.get(0));
+        GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(0), new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
+            @Override
+            public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+                reachable.add(arg1);
+                arg2.enqueue(arg1.getTargets());
+                for (Op03SimpleStatement source : arg1.getSources()) {
+                    if (!source.getTargets().contains(arg1)) {
+                        throw new IllegalStateException("Inconsistent graph");
+                    }
+                }
+                for (Op03SimpleStatement test : arg1.getTargets()) {
+                    if (!test.getSources().contains(arg1)) {
+                        throw new IllegalStateException("Inconsistent graph");
+                    }
+                }
+            }
+        });
+        gv.process();
+
+        List<Op03SimpleStatement> result = ListFactory.newList();
+        for (Op03SimpleStatement statement : statements) {
+            if (reachable.contains(statement)) {
+                result.add(statement);
+            }
+        }
+        return result;
     }
 
     /*
@@ -1930,7 +1964,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    private static class TypeFilter<T> implements Predicate<Op03SimpleStatement> {
+    public static class TypeFilter<T> implements Predicate<Op03SimpleStatement> {
         private final Class<T> clazz;
         private final boolean positive;
 
@@ -2313,37 +2347,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
 
-    private static Op03SimpleStatement setFinalBlockEnd(Op03SimpleStatement previous, Op03SimpleStatement thisGuess) {
-        if (previous == null) return thisGuess;
-        if (previous != thisGuess) return null;
-        return previous;
-    }
-
-    private static class IfAndStatements {
-        private final Op03SimpleStatement ifStatement;
-        private final List<Op03SimpleStatement> statements;
-        private final Op03SimpleStatement leaveBranch;
-
-        IfAndStatements(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, Op03SimpleStatement leaveBranch) {
-            this.ifStatement = ifStatement;
-            this.statements = statements;
-            this.leaveBranch = leaveBranch;
-        }
-
-        public Op03SimpleStatement getIfStatement() {
-            return ifStatement;
-        }
-
-        public List<Op03SimpleStatement> getStatements() {
-            return statements;
-        }
-
-        public Op03SimpleStatement getLeaveBranch() {
-            return leaveBranch;
-        }
-    }
-
-
     public static List<Op03SimpleStatement> removeUselessNops(List<Op03SimpleStatement> in) {
         return Functional.filter(in, new Predicate<Op03SimpleStatement>() {
             @Override
@@ -2604,348 +2607,135 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static boolean identifyFinally(Op03SimpleStatement in, List<Op03SimpleStatement> allStatements) {
 
-        if (!(in.getStatement() instanceof TryStatement)) return false;
-        TryStatement tryStatement = (TryStatement) in.getStatement();
-        final BlockIdentifier tryBlockIdentifier = tryStatement.getBlockIdentifier();
-
-        /*
-         * We only need worry about try statements which have a 'Throwable' handler.
-         */
-        List<Op03SimpleStatement> targets = in.getTargets();
-        List<Op03SimpleStatement> catchStarts = Functional.filter(targets, new TypeFilter<CatchStatement>(CatchStatement.class));
-        Set<Op03SimpleStatement> possibleCatches = SetFactory.newSet();
-        for (Op03SimpleStatement catchS : catchStarts) {
-            CatchStatement catchStatement = (CatchStatement) catchS.getStatement();
-            List<ExceptionGroup.Entry> exceptions = catchStatement.getExceptions();
-            for (ExceptionGroup.Entry exception : exceptions) {
-                if (exception.getExceptionGroup().getTryBlockIdentifier() == tryBlockIdentifier) {
-                    JavaRefTypeInstance catchType = exception.getCatchType();
-                    if (TypeConstants.throwableName.equals(catchType.getRawName())) {
-                        possibleCatches.add(catchS);
-                    }
-                }
-            }
-        }
-        if (possibleCatches.isEmpty()) return false;
-        /* A catch block is a better candidate than another one, if it is contained inside the other catch blocks.
-         * A lame heuristic here is simply to count the block identifiers.
-         */
-        int maxIdents = -1;
-        Op03SimpleStatement best = null;
-        for (Op03SimpleStatement test : possibleCatches) {
-            int testIdents = test.getBlockIdentifiers().size();
-            if (testIdents > maxIdents) {
-                best = test;
-                maxIdents = testIdents;
-            }
-        }
-        if (best == null) return false;
-
-        Set<BlockIdentifier> peerTest = SetFactory.newSet();
-        for (Op03SimpleStatement catchStart : catchStarts) {
-            peerTest.add(((CatchStatement) catchStart.getStatement()).getCatchBlockIdent());
-        }
-        peerTest.add(tryStatement.getBlockIdentifier());
-
-        /*
-         * Now.... find all the other try blocks that this catch block is called from.  If they are not nested in
-         * the original try block, or one of the catches of the original try block,
-         * then they're peers, which means that they've been split out from the original
-         * try block in order to inline finally statements between them!
-         *
-         * Once we've removed the finally statements, we'll need to join up these blocks.
-         */
-        Map<CompositeBlockIdentifierKey, Set<Op03SimpleStatement>> peerTries = MapFactory.newLazyMap(new UnaryFunction<CompositeBlockIdentifierKey, Set<Op03SimpleStatement>>() {
-            @Override
-            public Set<Op03SimpleStatement> invoke(CompositeBlockIdentifierKey arg) {
-                return SetFactory.newSet();
-            }
-        });
-
-        List<Op03SimpleStatement> catchSources = best.getSources();
-        Set<Op03SimpleStatement> allTries = SetFactory.newSet();
-        for (Op03SimpleStatement catchSource : catchSources) {
-            if (catchSource.getStatement() instanceof TryStatement) {
-                peerTries.get(new CompositeBlockIdentifierKey(catchSource.getBlockIdentifiers())).add(catchSource);
-                allTries.add(catchSource);
-            }
-        }
-
-        if (peerTries.isEmpty()) return false;
-        /* At worst, peerTries should contain 'in' */
-
-        /*
-         * Ok.  Now, we have code which will either end in a throw (of the caught variable) (normal finally)
-         * (in which case we discount that throw)
-         * or something else.
-         */
-        CatchStatement finallyCatch = (CatchStatement) best.getStatement();
-        final BlockIdentifier finallyIdent = finallyCatch.getCatchBlockIdent();
-
-        /*
-         * We expect the finallyCatch to be of the form
-         *
-         * catch (Throwable t) {
-         *   // BLOCK
-         *   throw t.
-         * }
-         */
-        if (best.getTargets().size() != 1) {
-            return false;
-        }
-        Op03SimpleStatement finallyStart = best.getTargets().get(0);
-        if (!finallyStart.getBlockIdentifiers().contains(finallyIdent)) {
-            return false;
-        }
-        /*
-         * If the last statement in the catch block is a throw OF THE caught throwable,
-         * then we'll assume that's generated.  Anything else, it's (maybe) a finally
-         * with a non-standard escape.
-         *
-         * Find the statement(s) which exit this block.
-         */
-        List<Op03SimpleStatement> inBlock = Functional.filter(allStatements, new Predicate<Op03SimpleStatement>() {
-            @Override
-            public boolean test(Op03SimpleStatement in) {
-                return in.getBlockIdentifiers().contains(finallyIdent);
-            }
-        });
-        Op03SimpleStatement orderLast = inBlock.get(inBlock.size() - 1);
-        Op03SimpleStatement lastFinally = orderLast;
-
-        Statement testThrow = new ThrowStatement(new LValueExpression(finallyCatch.getCreatedLValue()));
-        if (!testThrow.equals(orderLast.getStatement())) {
-            orderLast = null;
-        }
-
-        /*
-         * We also need to find (so we can ignore from comparison) the throw at the end of the finally.
-         * (it HAS to throw the caught var, unless we have a finally with a throw).
-         */
-        FinallyHelper finallyHelper = new FinallyHelper(finallyStart, inBlock, finallyIdent, orderLast, lastFinally, best);
-
-        /*
-         * Now, consider all of the entries in allTries - we need to make sure that every exit point for them has
-         * an identical block to the one begun at finallyStart.
-         */
-        FinallyResultAndUsages finallyResultAndUsages = new FinallyResultAndUsages();
-        for (Set<Op03SimpleStatement> peerSet : peerTries.values()) {
-            if (!verifyPeerSet(peerSet, finallyHelper, allTries, finallyResultAndUsages)) {
-                return false;
-            }
-        }
-
-        /*
-         * If there ARE no finally result and usages, then we've got no repeated copies of the finally.
-         * Even if it was a finally (!) then it's pointless to treat is as such.
-         */
-        if (finallyResultAndUsages.isEmpty()) return false;
-
-        /*
-         * Ok.  Now, remove all but the original 'finally' catch block, and, for each peerset, try to collapse
-         * the tries into one.
-         *
-         * When we remove the block, if we end up with a return / goto sitting directly outside a try block, pull it
-         * in before we collapse tries.
-         */
-        finallyResultAndUsages.clearCopies(finallyHelper, allStatements);
-
-        /*
-         * Now, for each peer set, if the only source for the try is another peer, link the two, and replace the second
-         * with the first.
-         *
-         * This will remove the subsequent try blocks.
-         */
-        for (Set<Op03SimpleStatement> peerSet : peerTries.values()) {
-            finallyHelper.linkPeerTries(peerSet, allStatements);
-            /*
-             * Now, unlink (!) the finally block from the remaining try statements in this peer group, as it
-             * needs to be lifted to the outer group (we'll add it back in to that).
-             */
-            finallyHelper.unlinkTries(peerSet);
-        }
-
-        /*
-         * Find the shortest block set, which is the outer scope, where the finally block needs to go
-         */
-        List<CompositeBlockIdentifierKey> keys = ListFactory.newList(peerTries.keySet());
-        Collections.sort(keys);
-
-        Set<Op03SimpleStatement> tops = peerTries.get(keys.get(0));
-        List<Op03SimpleStatement> topTries = Functional.filter(tops, new Predicate<Op03SimpleStatement>() {
-            @Override
-            public boolean test(Op03SimpleStatement in) {
-                return in.getStatement() instanceof TryStatement;
-            }
-        });
-
-        /*
-         * If topTries > 1, then we have multiple top tries left over.  It's wierd - abort here.
-         */
-        if (topTries.size() > 1) return true;
-
-        Op03SimpleStatement topTry = topTries.get(0);
-        /*
-         * Take the finally catch block, lift it to the level of topTry.  It shouldn't be linked to anything else.
-         *
-         * We can hack the blocks by removing it from any catch block which isn't in progress already at topTry.
-         */
-        final Set<BlockIdentifier> retainCatchBlocks = SetFactory.newSet(Functional.filter(topTry.getBlockIdentifiers(), new Predicate<BlockIdentifier>() {
-            @Override
-            public boolean test(BlockIdentifier in) {
-                return in.getBlockType() == BlockType.CATCHBLOCK;
-            }
-        }));
-
-        List<Op03SimpleStatement> processThese = Functional.filter(allStatements, new Predicate<Op03SimpleStatement>() {
-            @Override
-            public boolean test(Op03SimpleStatement in) {
-                return in.getBlockIdentifiers().contains(finallyIdent);
-            }
-        });
-        processThese.add(best);
-        for (Op03SimpleStatement finallyMember : processThese) {
-            List<BlockIdentifier> retainThese = Functional.filter(best.getBlockIdentifiers(), new Predicate<BlockIdentifier>() {
-                @Override
-                public boolean test(BlockIdentifier in) {
-                    if (in.getBlockType() != BlockType.CATCHBLOCK) return true;
-                    return retainCatchBlocks.contains(in);
-                }
-            });
-            retainThese.add(finallyIdent);
-            finallyMember.getBlockIdentifiers().retainAll(retainThese);
-        }
-        best.sources.add(topTry);
-        topTry.targets.add(best);
-
-        // If there IS a rethrow, remove it.
-        if (orderLast != null) {
-            orderLast.replaceStatement(new Nop());
-        }
-
-        /*
-         * Now... replace the catch expression with a "Finally".
-         */
-        best.replaceStatement(new FinallyStatement(finallyIdent));
-
-        return true;
-    }
-
-    public static boolean verifyPeerSet(Set<Op03SimpleStatement> peers, final FinallyHelper finallyHelper, Set<Op03SimpleStatement> allTries,
-                                        FinallyResultAndUsages finallyResultAndUsages) {
-        for (Op03SimpleStatement peer : peers) {
-            if (!verifyOneTry(peer, finallyHelper, allTries, finallyResultAndUsages)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /*
-     * We need to search this try statement for every exit.  Any non-throwing exit (return / goto / if)
-     * which leaves the block has to vector into a block of code which is identical (Barring minor
-     * conversions) to finallyStart.
-     */
-    public static boolean verifyOneTry(Op03SimpleStatement tryStart, final FinallyHelper finallyHelper, final Set<Op03SimpleStatement> allTries,
-                                       FinallyResultAndUsages resultAndUsages) {
-        TryStatement tryStatement = (TryStatement) (tryStart.getStatement());
-        final BlockIdentifier tryBlock = tryStatement.getBlockIdentifier();
-        final Set<Op03SimpleStatement> exitTargets = SetFactory.newSet();
-        final Map<Op03SimpleStatement, Set<Op03SimpleStatement>> targetCallers = MapFactory.newLazyMap(new UnaryFunction<Op03SimpleStatement, Set<Op03SimpleStatement>>() {
-            @Override
-            public Set<Op03SimpleStatement> invoke(Op03SimpleStatement arg) {
-                return SetFactory.newSet();
-            }
-        });
-        final List<Op03SimpleStatement> inTry = ListFactory.newList();
-        GraphVisitor<Op03SimpleStatement> graphVisitor = new GraphVisitorDFS<Op03SimpleStatement>(tryStart.targets.get(0),
-                new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
-                    @Override
-                    public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                        if (arg1.getBlockIdentifiers().contains(tryBlock)) {
-                            inTry.add(arg1);
-                            for (Op03SimpleStatement target : arg1.targets) {
-                                arg2.enqueue(target);
-                                /*
-                                 * Assumption is that if something leaves the try block, then it's going to have to behave
-                                 * like the finally block
-                                 */
-                                if (!target.getBlockIdentifiers().contains(tryBlock)) {
-                                    /*
-                                     * Unless it jumps back into another of the peer tries.
-                                     */
-                                    if (!allTries.contains(target)) {
-                                        exitTargets.add(target);
-                                        targetCallers.get(target).add(arg1);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-        graphVisitor.process();
-
-        /*
-         * TODO : I'm DEEPLY ashamed of this particular hack.
-         *
-         * There's one more possibility - if we've over-claimed an inner block which is the end of the
-         * try statement.  Attempt that.
-         *
-         * TODO : This is a hack.  TBH, it works in some cases, but I'm sure there are those it won't work in.
-         */
-        Collections.sort(inTry, new CompareByIndex());
-        int finallySize = finallyHelper.getInFinallyBlock().size() - (finallyHelper.hasFinalThrow() ? 1 : 0);
-        int idx = inTry.size() - finallySize;
-        if (idx >= 0 && finallySize > 0) {
-            Op03SimpleStatement lastFinallyGuess = inTry.get(inTry.size() - finallySize);
-            if (lastFinallyGuess.getSources().size() == 1 && !exitTargets.contains(lastFinallyGuess)) {
-                FinallyHelper.Result result = finallyHelper.testEquivalent(lastFinallyGuess, tryStatement);
-                if (result.isMatched()) {
-                    targetCallers.get(lastFinallyGuess).add(lastFinallyGuess.getSources().get(0));
-                    resultAndUsages.add(result, targetCallers.get(lastFinallyGuess));
-                    /*
-                     * Now, if one of the instructions in the block that just matched caused a 'false'
-                     * exit target then we need to remove that.
-                     */
-                    for (int x = inTry.size() - finallySize, len = inTry.size(); x < len; ++x) {
-                        Op03SimpleStatement stmt = inTry.get(x);
-                        for (Op03SimpleStatement tgt : stmt.targets) {
-                            if (exitTargets.contains(tgt)) {
-                                exitTargets.remove(tgt);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /* Exit targets are the set of ways off this try block.
-         * We now need to verify that each of these exit targets is the same as finallyStart pp.
-         *
-         * BUT - we also need to verify that we have encountered ALL OF the sources of the exit targets.
-         */
-        for (Op03SimpleStatement exitTarget : exitTargets) {
-            FinallyHelper.Result result = finallyHelper.testEquivalent(exitTarget, tryStatement);
-            if (!result.isMatched()) {
-                return false;
-            }
-            resultAndUsages.add(result, targetCallers.get(exitTarget));
-        }
-        return true;
-    }
+//
+//    public static boolean verifyPeerSet(Set<Op03SimpleStatement> peers, final FinallyHelper finallyHelper, Set<Op03SimpleStatement> allTries,
+//                                        FinallyResultAndUsages finallyResultAndUsages) {
+//        for (Op03SimpleStatement peer : peers) {
+//            if (!verifyOneTry(peer, finallyHelper, allTries, finallyResultAndUsages)) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
+//
+//    /*
+//     * We need to search this try statement for every exit.  Any non-throwing exit (return / goto / if)
+//     * which leaves the block has to vector into a block of code which is identical (Barring minor
+//     * conversions) to finallyStart.
+//     */
+//    public static boolean verifyOneTry(Op03SimpleStatement tryStart, final FinallyHelper finallyHelper, final Set<Op03SimpleStatement> allTries,
+//                                       FinallyResultAndUsages resultAndUsages) {
+//        TryStatement tryStatement = (TryStatement) (tryStart.getStatement());
+//        final BlockIdentifier tryBlock = tryStatement.getBlockIdentifier();
+//        final Set<Op03SimpleStatement> exitTargets = SetFactory.newSet();
+//        final Map<Op03SimpleStatement, Set<Op03SimpleStatement>> targetCallers = MapFactory.newLazyMap(new UnaryFunction<Op03SimpleStatement, Set<Op03SimpleStatement>>() {
+//            @Override
+//            public Set<Op03SimpleStatement> invoke(Op03SimpleStatement arg) {
+//                return SetFactory.newSet();
+//            }
+//        });
+//        final List<Op03SimpleStatement> inTry = ListFactory.newList();
+//        GraphVisitor<Op03SimpleStatement> graphVisitor = new GraphVisitorDFS<Op03SimpleStatement>(tryStart.targets.get(0),
+//                new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
+//                    @Override
+//                    public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+//                        if (arg1.getBlockIdentifiers().contains(tryBlock)) {
+//                            inTry.add(arg1);
+//                            for (Op03SimpleStatement target : arg1.targets) {
+//                                arg2.enqueue(target);
+//                                /*
+//                                 * Assumption is that if something leaves the try block, then it's going to have to behave
+//                                 * like the finally block
+//                                 */
+//                                if (!target.getBlockIdentifiers().contains(tryBlock)) {
+//                                    /*
+//                                     * Unless it jumps back into another of the peer tries.
+//                                     */
+//                                    if (!allTries.contains(target)) {
+//                                        exitTargets.add(target);
+//                                        targetCallers.get(target).add(arg1);
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                });
+//        graphVisitor.process();
+//
+////        /*
+////         * TODO : I'm DEEPLY ashamed of this particular hack.
+////         *
+////         * There's one more possibility - if we've over-claimed an inner block which is the end of the
+////         * try statement.  Attempt that.
+////         *
+////         * TODO : This is a hack.  TBH, it works in some cases, but I'm sure there are those it won't work in.
+////         */
+////        Collections.sort(inTry, new CompareByIndex());
+////        int finallySize = finallyHelper.getInFinallyBlock().size() - (finallyHelper.hasFinalThrow() ? 1 : 0);
+////        int idx = inTry.size() - finallySize;
+////        if (idx >= 0 && finallySize > 0) {
+////            Op03SimpleStatement lastFinallyGuess = inTry.get(inTry.size() - finallySize);
+////            if (lastFinallyGuess.getSources().size() == 1 && !exitTargets.contains(lastFinallyGuess)) {
+////                FinallyHelper.Result result = finallyHelper.testEquivalent(lastFinallyGuess, tryStatement);
+////                if (result.isMatched()) {
+////                    targetCallers.get(lastFinallyGuess).add(lastFinallyGuess.getSources().get(0));
+////                    resultAndUsages.add(result, targetCallers.get(lastFinallyGuess));
+////                    /*
+////                     * Now, if one of the instructions in the block that just matched caused a 'false'
+////                     * exit target then we need to remove that.
+////                     */
+////                    for (int x = inTry.size() - finallySize, len = inTry.size(); x < len; ++x) {
+////                        Op03SimpleStatement stmt = inTry.get(x);
+////                        for (Op03SimpleStatement tgt : stmt.targets) {
+////                            if (exitTargets.contains(tgt)) {
+////                                exitTargets.remove(tgt);
+////                            }
+////                        }
+////                    }
+////                }
+////            }
+////        }
+//
+//        /* Exit targets are the set of ways off this try block.
+//         * We now need to verify that each of these exit targets is the same as finallyStart pp.
+//         *
+//         * BUT - we also need to verify that we have encountered ALL OF the sources of the exit targets.
+//         */
+//        for (Op03SimpleStatement exitTarget : exitTargets) {
+//            FinallyHelper.Result result = finallyHelper.testEquivalent(exitTarget, tryStatement);
+//            if (!result.isMatched()) {
+//                return false;
+//            }
+//            resultAndUsages.add(result, targetCallers.get(exitTarget));
+//        }
+//        return true;
+//    }
 
     public static void identifyFinally(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
         /* Get all the try statements, get their catches.  For all the EXIT points to the catches, try to identify
          * a common block of code (either before a throw, return or goto.)
          * Be careful, if a finally block contains a throw, this will mess up...
          */
-        List<Op03SimpleStatement> tryStarts = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
-        for (Op03SimpleStatement tryS : tryStarts) {
-            identifyFinally(tryS, in);
-        }
-
+        final Set<Op03SimpleStatement> analysedTries = SetFactory.newSet();
+        boolean continueLoop;
+        do {
+            List<Op03SimpleStatement> tryStarts = Functional.filter(in, new Predicate<Op03SimpleStatement>() {
+                @Override
+                public boolean test(Op03SimpleStatement in) {
+                    if (in.getStatement() instanceof TryStatement &&
+                            !analysedTries.contains(in)) return true;
+                    return false;
+                }
+            });
+            for (Op03SimpleStatement tryS : tryStarts) {
+                FinalAnalyzer.identifyFinally(tryS, in, blockIdentifierFactory, analysedTries);
+            }
+            /*
+             * We may need to reloop, if analysis has created new tries inside finally handlers. (!).
+             */
+            continueLoop = (!tryStarts.isEmpty());
+        } while (continueLoop);
     }
 
     private static boolean verifyLinearBlock(Op03SimpleStatement current, BlockIdentifier block, int num) {

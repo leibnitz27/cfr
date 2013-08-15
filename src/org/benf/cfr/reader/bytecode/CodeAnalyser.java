@@ -37,13 +37,14 @@ import java.util.logging.Logger;
  */
 public class CodeAnalyser {
 
-    private static final int SHOW_L2_OPS = 1;
-    private static final int SHOW_L3_RAW = 2;
-    private static final int SHOW_L3_ORDERED = 3;
-    private static final int SHOW_L3_CAUGHT = 4;
-    private static final int SHOW_L3_JUMPS = 5;
-    private static final int SHOW_L3_LOOPS1 = 6;
-    private static final int SHOW_L3_EXCEPTION_BLOCKS = 7;
+    private static final int SHOW_L2_RAW = 1;
+    private static final int SHOW_L2_OPS = 2;
+    private static final int SHOW_L3_RAW = 3;
+    private static final int SHOW_L3_ORDERED = 4;
+    private static final int SHOW_L3_CAUGHT = 5;
+    private static final int SHOW_L3_JUMPS = 6;
+    private static final int SHOW_L3_LOOPS1 = 7;
+    private static final int SHOW_L3_EXCEPTION_BLOCKS = 8;
     private static final int SHOW_L4_FINAL_OP3 = 9;
 
     private final static Logger logger = LoggerFactory.create(CodeAnalyser.class);
@@ -130,7 +131,17 @@ public class CodeAnalyser {
         Op02WithProcessedDataAndRefs.linkRetsToJSR(op2list);
 
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
+
+        // These are 'processed' exceptions, which we can use to lay out code.
         ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
+
+//        RawCombinedExceptions rawCombinedExceptions = new RawCombinedExceptions(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
+
+        if (cfrState.getShowOps() == SHOW_L2_RAW) {
+            debugDumper.print("Op2 statements:\n");
+            debugDumper.dump(op2list);
+            debugDumper.newln().newln();
+        }
         //
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
@@ -211,13 +222,16 @@ public class CodeAnalyser {
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
 
-        Op03SimpleStatement.identifyFinally(op03SimpleParseNodes, blockIdentifierFactory);
 
         // Rewrite new / constructor pairs.
         Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
+
+        Op03SimpleStatement.identifyFinally(op03SimpleParseNodes, blockIdentifierFactory);
+        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
+
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         // Remove LValues which are on their own as expressionstatements.

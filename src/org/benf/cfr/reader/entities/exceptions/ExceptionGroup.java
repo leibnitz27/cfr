@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ComparableUnderEC;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
@@ -66,7 +68,7 @@ public class ExceptionGroup {
         return sb.toString();
     }
 
-    public class Entry {
+    public class Entry implements ComparableUnderEC {
         private final ExceptionTableEntry entry;
         private final JavaRefTypeInstance refType;
 
@@ -108,6 +110,17 @@ public class ExceptionGroup {
         public String toString() {
             JavaRefTypeInstance name = getCatchType();
             return ExceptionGroup.this.toString() + " " + name.getRawName();
+        }
+
+        @Override
+        public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+            if (o == null) return false;
+            if (o == this) return true;
+            if (getClass() != o.getClass()) return false;
+            Entry other = (Entry) o;
+            if (!constraint.equivalent(entry, other.entry)) return false;
+            if (!constraint.equivalent(refType, other.refType)) return false;
+            return true;
         }
     }
 }

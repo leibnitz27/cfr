@@ -2,6 +2,7 @@ package org.benf.cfr.reader.util;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -22,6 +23,22 @@ public class SetFactory {
 
     public static <X extends Object> Set<X> newSet(X... content) {
         Set<X> res = new HashSet<X>();
+        for (X x : content) {
+            res.add(x);
+        }
+        return res;
+    }
+
+    public static <X extends Object> Set<X> newOrderedSet() {
+        return new LinkedHashSet<X>();
+    }
+
+    public static <X extends Object> Set<X> newOrderedSet(Collection<X> content) {
+        return new LinkedHashSet<X>(content);
+    }
+
+    public static <X extends Object> Set<X> newOrderedSet(X... content) {
+        Set<X> res = new LinkedHashSet<X>();
         for (X x : content) {
             res.add(x);
         }
