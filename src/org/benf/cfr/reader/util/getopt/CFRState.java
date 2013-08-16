@@ -300,22 +300,23 @@ public class CFRState {
         try {
             InputStream is = null;
             long length = 0;
-            if (jarName == null) {
-                /*
-                 * NB : pathPrefix will be empty the when we load the 'main' class,
-                 * and only set if it's not in its 'natural' location.
-                 */
-                String usePath = path;
-                if (unexpectedDirectory) {
-                    if (usePath.startsWith(classRemovePrefix)) {
-                        usePath = usePath.substring(classRemovePrefix.length());
-                    }
-                    usePath = pathPrefix + usePath;
+
+            /*
+             * NB : pathPrefix will be empty the when we load the 'main' class,
+             * and only set if it's not in its 'natural' location.
+             */
+            String usePath = path;
+            if (unexpectedDirectory) {
+                if (usePath.startsWith(classRemovePrefix)) {
+                    usePath = usePath.substring(classRemovePrefix.length());
                 }
-                File file = new File(usePath);
+                usePath = pathPrefix + usePath;
+            }
+            File file = new File(usePath);
+            if (file.exists()) {
                 is = new FileInputStream(file);
                 length = file.length();
-            } else {
+            } else if (jarName != null) {
                 zipFile = new ZipFile(new File(jarName), ZipFile.OPEN_READ);
                 ZipEntry zipEntry = zipFile.getEntry(path);
                 length = zipEntry.getSize();
