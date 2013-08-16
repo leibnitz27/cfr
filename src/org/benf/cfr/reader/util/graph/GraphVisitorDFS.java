@@ -17,14 +17,19 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class GraphVisitorDFS<T> implements GraphVisitor<T> {
-    private final T start;
+    private final Collection<? extends T> start;
     private final Set<T> visited = SetFactory.newSet();
     private final BinaryProcedure<T, GraphVisitor<T>> callee;
     private final LinkedList<T> pending = ListFactory.newLinkedList();
     private final LinkedList<T> enqueued = ListFactory.newLinkedList();
 
     public GraphVisitorDFS(T first, BinaryProcedure<T, GraphVisitor<T>> callee) {
-        this.start = first;
+        this.start = ListFactory.newList(first);
+        this.callee = callee;
+    }
+
+    public GraphVisitorDFS(Collection<? extends T> first, BinaryProcedure<T, GraphVisitor<T>> callee) {
+        this.start = ListFactory.newList(first);
         this.callee = callee;
     }
 
@@ -44,7 +49,7 @@ public class GraphVisitorDFS<T> implements GraphVisitor<T> {
     public void process() {
         pending.clear();
         enqueued.clear();
-        pending.add(start);
+        pending.addAll(start);
         while (!pending.isEmpty()) {
             T current = pending.removeFirst();
             if (!visited.contains(current)) {

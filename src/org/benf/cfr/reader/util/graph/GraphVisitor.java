@@ -10,7 +10,7 @@ import java.util.Collection;
  * To change this template use File | Settings | File Templates.
  */
 public interface GraphVisitor<T> {
-    // TODO : Bulk enqueue.
+
     void enqueue(T next);
 
     void enqueue(Collection<? extends T> next);
