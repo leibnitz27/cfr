@@ -1162,9 +1162,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
             // All forward jumping operations which pointed to start should now point to our TRY.
             // (we leave back jumps where they are, or they might interfere with loop analysis).
-            if (startInstruction.getSources().isEmpty()) {
-                throw new ConfusedCFRException("Can't install exception handler infront of nothing");
-            }
+//            if (startInstruction.getSources().isEmpty()) {
+//                throw new ConfusedCFRException("Can't install exception handler infront of nothing");
+//            }
             List<Op02WithProcessedDataAndRefs> removeThese = ListFactory.newList();
             for (Op02WithProcessedDataAndRefs source : startInstruction.getSources()) {
                 // If it's a back jump from WITHIN the try block, we don't want to repoint at 'try'.
