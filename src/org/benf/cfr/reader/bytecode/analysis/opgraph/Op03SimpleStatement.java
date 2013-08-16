@@ -258,6 +258,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public void removeTarget(Op03SimpleStatement oldTarget) {
+        if (containedStatement instanceof GotoStatement) {
+            throw new ConfusedCFRException("Removing goto target");
+        }
         if (!targets.remove(oldTarget)) {
             throw new ConfusedCFRException("Invalid target, tried to remove " + oldTarget + "\nfrom " + this + "\nbut was not a target.");
         }
