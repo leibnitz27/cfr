@@ -287,7 +287,7 @@ public class CFRState {
         }
     });
 
-    private ClassFile loadClassFileAtPath(String path, boolean withInnerClasses) {
+    private ClassFile loadClassFileAtPath(final String path, boolean withInnerClasses) {
         Map<String, String> classPathFiles = getClassPathClasses();
         String jarName = classPathFiles.get(path);
         ZipFile zipFile = null;
