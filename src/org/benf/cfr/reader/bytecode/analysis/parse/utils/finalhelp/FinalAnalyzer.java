@@ -464,7 +464,9 @@ public class FinalAnalyzer {
                 for (Op03SimpleStatement source : peerTryExit.getSources()) {
                     if (!source.getBlockIdentifiers().contains(topTryIdent)) continue peerloop;
                 }
-                peerTryExit.getBlockIdentifiers().add(topTryIdent);
+                if (peerTryExit.getIndex().isBackJumpFrom(finallyOp)) {
+                    peerTryExit.getBlockIdentifiers().add(topTryIdent);
+                }
             }
         }
 
