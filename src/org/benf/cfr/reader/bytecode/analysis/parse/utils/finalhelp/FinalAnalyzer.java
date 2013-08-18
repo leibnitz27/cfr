@@ -309,10 +309,29 @@ public class FinalAnalyzer {
         if (newFinallyBody.size() > 1) {
             newFinallyBody.get(1).markFirstStatementInBlock(finallyBlock);
         }
+
+
         /*
          * And add a nop after the end to redirect jumps to.
          */
-        Op03SimpleStatement endRewrite = new Op03SimpleStatement(extraBlocks, new Nop(), newIdx);
+
+        /*
+         * If afterEnd is a backjump from cloneThis, we've lifted a finally out of a loop (probably!!)
+         *
+         */
+        Op03SimpleStatement endRewrite = null;
+        for (Result r : results) {
+            Op03SimpleStatement rAfterEnd = r.getAfterEnd();
+            if (rAfterEnd != null && rAfterEnd.getIndex().isBackJumpFrom(r.getStart())) {
+                endRewrite = new Op03SimpleStatement(extraBlocks, new GotoStatement(), newIdx);
+                endRewrite.addTarget(rAfterEnd);
+                rAfterEnd.addSource(endRewrite);
+                break;
+            }
+        }
+        if (endRewrite == null) {
+            endRewrite = new Op03SimpleStatement(extraBlocks, new Nop(), newIdx);
+        }
         endRewrite.getBlockIdentifiers().remove(finallyBlock);
         newFinallyBody.add(endRewrite);
 
