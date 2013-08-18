@@ -464,6 +464,8 @@ public class FinalAnalyzer {
                 for (Op03SimpleStatement source : peerTryExit.getSources()) {
                     if (!source.getBlockIdentifiers().contains(topTryIdent)) continue peerloop;
                 }
+                // Because I have a nasty finally hack whereby the finally end isn't in the sources here,
+                // we have to make sure that the finally block is AFTER this statement we're going to claim.
                 if (peerTryExit.getIndex().isBackJumpFrom(finallyOp)) {
                     peerTryExit.getBlockIdentifiers().add(topTryIdent);
                 }
