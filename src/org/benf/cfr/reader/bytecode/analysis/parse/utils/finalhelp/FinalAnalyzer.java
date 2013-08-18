@@ -370,8 +370,17 @@ public class FinalAnalyzer {
             for (Op03SimpleStatement source : startSources) {
                 if (!toRemove.contains(source)) {
                     if (afterEnd != null) {
-                        source.replaceTarget(start, afterEnd);
-                        afterEnd.addSource(source);
+                        if (source.getStatement() instanceof JumpingStatement || source.getIndex().isBackJumpFrom(afterEnd)) {
+                            source.replaceTarget(start, afterEnd);
+                            afterEnd.addSource(source);
+                        } else {
+                            Op03SimpleStatement afterSource = new Op03SimpleStatement(source.getBlockIdentifiers(), new GotoStatement(), source.getIndex().justAfter());
+                            afterEnd.addSource(afterSource);
+                            afterSource.addTarget(afterEnd);
+                            afterSource.addSource(source);
+                            source.replaceTarget(start, afterSource);
+                            allStatements.add(afterSource);
+                        }
                     } else {
                         if (source.getStatement().getClass() == GotoStatement.class) {
                             source.replaceStatement(new Nop());
