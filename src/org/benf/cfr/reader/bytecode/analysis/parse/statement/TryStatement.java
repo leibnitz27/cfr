@@ -1,11 +1,15 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredTry;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,9 +20,20 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class TryStatement extends AbstractStatement {
     private final ExceptionGroup exceptionGroup;
+    // This is a hack. :(
+    // We keep track of what mutexes this finally leaves.
+    private final Set<Expression> monitors = SetFactory.newSet();
 
     public TryStatement(ExceptionGroup exceptionGroup) {
         this.exceptionGroup = exceptionGroup;
+    }
+
+    public void addExitMutex(Expression e) {
+        monitors.add(e);
+    }
+
+    public Set<Expression> getMonitors() {
+        return monitors;
     }
 
     @Override

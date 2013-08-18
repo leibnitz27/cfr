@@ -190,6 +190,11 @@ public class CFRState {
             "showversion", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> HIDE_CASTS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "hidecasts", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> DECODE_FINALLY = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "decodefinally", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> TIDY_MONITORS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "tidymonitors", defaultTrueBooleanDecoder);
+
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -321,7 +326,10 @@ public class CFRState {
                 ZipEntry zipEntry = zipFile.getEntry(path);
                 length = zipEntry.getSize();
                 is = zipFile.getInputStream(zipEntry);
+            } else {
+                throw new IOException("No such file");
             }
+
 
             try {
                 byte[] content = getBytesFromFile(is, length);
@@ -422,7 +430,8 @@ public class CFRState {
             return ListFactory.newList(SHOWOPS, ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
-                    REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION);
+                    REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
+                    DECODE_FINALLY, TIDY_MONITORS);
         }
 
         @Override

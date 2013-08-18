@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.DefaultEquivalenceConstraint;
@@ -33,6 +34,26 @@ public class FinallyGraphHelper {
         return finallyCatchBody;
     }
 
+    private List<Op03SimpleStatement> filterFalseNegatives(List<Op03SimpleStatement> in) {
+        List<Op03SimpleStatement> res = ListFactory.newList();
+        for (Op03SimpleStatement i : in) {
+            while (i != null && i.getStatement() instanceof Nop) {
+                switch (i.getTargets().size()) {
+                    case 0:
+                        i = null;
+                        break;
+                    case 1:
+                        i = i.getTargets().get(0);
+                        break;
+                    default:
+                        throw new IllegalStateException();
+                }
+            }
+            if (i != null) res.add(i);
+        }
+        return res;
+    }
+
     public Result match(Op03SimpleStatement test) {
         Set<BlockIdentifier> minBlockSet = SetFactory.newOrderedSet(test.getBlockIdentifiers());
         Op03SimpleStatement finalThrowProxy = null;
@@ -60,10 +81,21 @@ public class FinallyGraphHelper {
                 return Result.FAIL;
             }
 
-            List<Op03SimpleStatement> tgta = a.getTargets();
-            List<Op03SimpleStatement> tgtb = b.getTargets();
+            List<Op03SimpleStatement> tgta = ListFactory.newList(a.getTargets());
+            List<Op03SimpleStatement> tgtb = ListFactory.newList(b.getTargets());
+            // This fixes 22a, but breaks 1!!
+//            tgta.remove(finalThrowProxy);
+//            tgtb.remove(finallyCatchBody.throwOp);
+            /* Process both, walk no-ops ... walk goto as well? */
+            tgta = filterFalseNegatives(tgta);
+            tgtb = filterFalseNegatives(tgtb);
+
             if (tgta.size() != tgtb.size()) {
-                return Result.FAIL;
+//                tgta.remove(finalThrowProxy);
+//                tgtb.remove(finallyCatchBody.throwOp);
+                if (tgta.size() != tgtb.size()) {
+                    return Result.FAIL;
+                }
             }
             toRemove.add(a);
 

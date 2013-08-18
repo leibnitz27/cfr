@@ -7,10 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
@@ -229,12 +226,11 @@ public class ExceptionAggregator {
                 processedExceptions.add(new ExceptionTableEntry(res.getFirst(), res.getSecond(), e.getBytecodeIndexHandler(), e.getCatchType(), e.getPriority()));
             }
         }
-        rawExceptions = processedExceptions;
 
         /* 
          * Try and aggregate exceptions for the same object which jump to the same target.
          */
-        Collection<ByTarget> byTargetList = Functional.groupBy(rawExceptions, new Comparator<ExceptionTableEntry>() {
+        Collection<ByTarget> byTargetList = Functional.groupBy(processedExceptions, new Comparator<ExceptionTableEntry>() {
                     @Override
                     public int compare(ExceptionTableEntry exceptionTableEntry, ExceptionTableEntry exceptionTableEntry1) {
                         int hd = exceptionTableEntry.getBytecodeIndexHandler() - exceptionTableEntry1.getBytecodeIndexHandler();
@@ -249,8 +245,55 @@ public class ExceptionAggregator {
                 }
         );
 
-        rawExceptions.clear();
-        /* 
+        rawExceptions = ListFactory.newList();
+
+        /*
+         * If there are two exceptions which both vector to the same target,
+         *
+         * A,B  [e1] ->   X
+         * G,H  [e1] ->   X
+         *
+         * but there is another exception in the range of the EARLIER one which
+         * vectors to the later one
+         *
+         * A,B  [e2] ->   G
+         *
+         * Then we make the (probably dodgy) assumption that the first exceptions
+         * actually are one range.
+         *
+         */
+        Map<Short, ByTarget> byTargetMap = MapFactory.newMap();
+        for (ByTarget t : byTargetList) {
+            byTargetMap.put(t.entries.get(0).getBytecodeIndexHandler(), t);
+        }
+//
+//        for (ByTarget t : byTargetList) {
+//            List<ExceptionTableEntry> e = t.entries;
+//            for (int x=1;x<e.size();++x) {
+//                ExceptionTableEntry e1 = e.get(x-1);
+//                ExceptionTableEntry e2 = e.get(x);
+//                ByTarget alternate = byTargetMap.get(e2.getBytecodeIndexFrom());
+//                if (alternate == null) continue;
+//                for (ExceptionTableEntry o : alternate.entries) {
+//                    if (o == null) continue;
+//                    if (o.getBytecodeIndexFrom() == e1.getBytecodeIndexFrom() &&
+//                        o.getBytecodeIndexTo() == e1.getBytecodeIndexTo()) {
+//                        JavaRefTypeInstance t1 = o.getCatchType(cp);
+//                        JavaRefTypeInstance t2 = e1.getCatchType(cp);
+//                        boolean cast1 = t1.implicitlyCastsTo(t2);
+//                        boolean cast2 = t2.implicitlyCastsTo(t1);
+//                        if ((cast1 || cast2)) {
+//                            e.set(x, e1.copyWithRange(e1.getBytecodeIndexFrom(), e2.getBytecodeIndexTo()));
+//                            e.set(x-1, null);
+//                            e.remove(x-1);
+//                            x--;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+        /*
          * Each of these is now lists which point to the same handler+type.
          */
         for (ByTarget byTarget : byTargetList) {
@@ -269,14 +312,18 @@ public class ExceptionAggregator {
         CompareExceptionTablesByRange compareExceptionTablesByStart = new CompareExceptionTablesByRange();
         ExceptionTableEntry prev = null;
         ExceptionGroup currentGroup = null;
+        List<ExceptionGroup> rawExceptionsByRange = ListFactory.newList();
         for (ExceptionTableEntry e : rawExceptions) {
             if (prev == null || compareExceptionTablesByStart.compare(e, prev) != 0) {
                 currentGroup = new ExceptionGroup(e.getBytecodeIndexFrom(), blockIdentifierFactory.getNextBlockIdentifier(BlockType.TRYBLOCK), cp);
-                exceptionsByRange.add(currentGroup);
+                rawExceptionsByRange.add(currentGroup);
                 prev = e;
             }
             currentGroup.add(e);
         }
+
+
+        exceptionsByRange.addAll(rawExceptionsByRange);
     }
 
     public List<ExceptionGroup> getExceptionsGroups() {

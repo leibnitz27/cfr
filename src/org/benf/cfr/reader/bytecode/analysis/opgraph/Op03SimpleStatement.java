@@ -16,10 +16,12 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
+import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -339,7 +341,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    private void markFirstStatementInBlock(BlockIdentifier blockIdentifier) {
+    public void markFirstStatementInBlock(BlockIdentifier blockIdentifier) {
         if (this.firstStatementInThisBlock != null && this.firstStatementInThisBlock != blockIdentifier) {
             throw new ConfusedCFRException("Statement already marked as first in another block");
         }
@@ -2715,7 +2717,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 //        return true;
 //    }
 
-    public static void identifyFinally(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    public static void identifyFinally(CFRState cfrState, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+        if (!cfrState.getBooleanOpt(CFRState.DECODE_FINALLY)) return;
         /* Get all the try statements, get their catches.  For all the EXIT points to the catches, try to identify
          * a common block of code (either before a throw, return or goto.)
          * Be careful, if a finally block contains a throw, this will mess up...
@@ -2744,17 +2747,28 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static boolean verifyLinearBlock(Op03SimpleStatement current, BlockIdentifier block, int num) {
         while (num >= 0) {
             if (num > 0) {
-                if (current.targets.size() != 1) return false;
-                if (!current.containedInBlocks.contains(block)) return false;
+                if (current.getStatement() instanceof Nop && current.targets.size() == 0) {
+                    break;
+                }
+                if (current.targets.size() != 1) {
+                    return false;
+                }
+                if (!current.containedInBlocks.contains(block)) {
+                    return false;
+                }
                 current = current.targets.get(0);
             } else {
-                if (!current.containedInBlocks.contains(block)) return false;
+                if (!current.containedInBlocks.contains(block)) {
+                    return false;
+                }
             }
             num--;
         }
         // None of current's targets should be contained in block.
         for (Op03SimpleStatement target : current.targets) {
-            if (target.containedInBlocks.contains(block)) return false;
+            if (target.containedInBlocks.contains(block)) {
+                return false;
+            }
         }
         return true;
     }
@@ -2774,27 +2788,48 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement catchStatementContainer = start.sources.get(0);
         // Again, the catch statement should have only one source.
         if (catchStatementContainer.sources.size() != 1) return false;
-        if (!(catchStatementContainer.containedStatement instanceof CatchStatement)) return false;
-        CatchStatement catchStatement = (CatchStatement) catchStatementContainer.containedStatement;
-        List<ExceptionGroup.Entry> exceptions = catchStatement.getExceptions();
-        if (exceptions.size() != 1) return false;
-        ExceptionGroup.Entry exception = exceptions.get(0);
-        // Exception is *.
-        if (!exception.isJustThrowable()) return false;
+        Statement catchOrFinally = catchStatementContainer.containedStatement;
+        boolean isFinally = false;
+        if (catchOrFinally instanceof CatchStatement) {
+            CatchStatement catchStatement = (CatchStatement) catchStatementContainer.containedStatement;
+            List<ExceptionGroup.Entry> exceptions = catchStatement.getExceptions();
+            if (exceptions.size() != 1) return false;
+            ExceptionGroup.Entry exception = exceptions.get(0);
+            // Exception is *.
+            if (!exception.isJustThrowable()) return false;
+        } else if (catchOrFinally instanceof FinallyStatement) {
+            isFinally = true;
+        } else {
+            return false;
+        }
 
         // We expect the next 2 and NO more to be in this catch block.
-        if (!verifyLinearBlock(start, block, 2)) return false;
+        if (!verifyLinearBlock(start, block, 2)) {
+            return false;
+        }
 
-        Op03SimpleStatement variableAss = start;
-        Op03SimpleStatement monitorExit = start.targets.get(0);
-        Op03SimpleStatement rethrow = monitorExit.targets.get(0);
+        Op03SimpleStatement variableAss;
+        Op03SimpleStatement monitorExit;
+        Op03SimpleStatement rethrow;
+
+        if (isFinally) {
+            monitorExit = start;
+            variableAss = null;
+            rethrow = null;
+        } else {
+            variableAss = start;
+            monitorExit = start.targets.get(0);
+            rethrow = monitorExit.targets.get(0);
+        }
 
         WildcardMatch wildcardMatch = new WildcardMatch();
 
-        if (!wildcardMatch.match(
-                new AssignmentSimple(wildcardMatch.getLValueWildCard("var"), wildcardMatch.getExpressionWildCard("e")),
-                variableAss.containedStatement)) {
-            return false;
+        if (!isFinally) {
+            if (!wildcardMatch.match(
+                    new AssignmentSimple(wildcardMatch.getLValueWildCard("var"), wildcardMatch.getExpressionWildCard("e")),
+                    variableAss.containedStatement)) {
+                return false;
+            }
         }
 
         if (!wildcardMatch.match(
@@ -2803,30 +2838,45 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             return false;
         }
 
-        if (!wildcardMatch.match(
-                new ThrowStatement(new LValueExpression(wildcardMatch.getLValueWildCard("var"))),
-                rethrow.containedStatement)) return false;
+        if (!isFinally) {
+            if (!wildcardMatch.match(
+                    new ThrowStatement(new LValueExpression(wildcardMatch.getLValueWildCard("var"))),
+                    rethrow.containedStatement)) return false;
+        }
+
+        Op03SimpleStatement tryStatementContainer = catchStatementContainer.sources.get(0);
+
+        if (isFinally) {
+            MonitorExitStatement monitorExitStatement = (MonitorExitStatement) monitorExit.getStatement();
+            TryStatement tryStatement = (TryStatement) tryStatementContainer.getStatement();
+            tryStatement.addExitMutex(monitorExitStatement.getMonitor());
+        }
 
         /* This is an artificial catch block - probably.  Remove it, and if we can, remove the associated try
          * statement.
          * (This only makes sense if we eventually replace the MONITOR(ENTER|EXIT) pair with a synchronized
          * block).
          */
-        Op03SimpleStatement tryStatementContainer = catchStatementContainer.sources.get(0);
         tryStatementContainer.removeTarget(catchStatementContainer);
         catchStatementContainer.removeSource(tryStatementContainer);
         catchStatementContainer.nopOut();
-        variableAss.nopOut();
-        monitorExit.nopOut();
-        for (Op03SimpleStatement target : rethrow.targets) {
-            target.removeSource(rethrow);
-            rethrow.removeTarget(target);
+        if (!isFinally) {
+            variableAss.nopOut();
         }
-        rethrow.nopOut();
+        monitorExit.nopOut();
+        if (!isFinally) {
+            for (Op03SimpleStatement target : rethrow.targets) {
+                target.removeSource(rethrow);
+                rethrow.removeTarget(target);
+            }
+            rethrow.nopOut();
+        }
+
+
         /*
          * Can we remove the try too?
          */
-        if (tryStatementContainer.targets.size() == 1) {
+        if (tryStatementContainer.targets.size() == 1 && !isFinally) {
             TryStatement tryStatement = (TryStatement) tryStatementContainer.containedStatement;
             BlockIdentifier tryBlock = tryStatement.getBlockIdentifier();
             tryStatementContainer.nopOut();
@@ -2861,9 +2911,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *
      * Remove the catch block and try statement.
      */
-    public static void removeSynchronizedCatchBlocks(List<Op03SimpleStatement> in) {
+    public static void removeSynchronizedCatchBlocks(CFRState cfrState, List<Op03SimpleStatement> in) {
+        if (!cfrState.getBooleanOpt(CFRState.TIDY_MONITORS)) return;
         // find all the block statements which are the first statement in a CATCHBLOCK.
         List<Op03SimpleStatement> catchStarts = Functional.filter(in, new FindBlockStarts(BlockType.CATCHBLOCK));
+        if (catchStarts.isEmpty()) return;
         boolean effect = false;
         for (Op03SimpleStatement catchStart : catchStarts) {
             effect = removeSynchronizedCatchBlock(catchStart, in) || effect;
@@ -3412,6 +3464,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+
     public static void findSynchronizedStart(final Op03SimpleStatement start, final Expression monitor) {
         final Set<Op03SimpleStatement> addToBlock = SetFactory.newSet();
 
@@ -3431,11 +3484,35 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          *   However, there must necessarily be a monitorexit before this throw.
          * }
          */
-        GraphVisitor<Op03SimpleStatement> marker = new GraphVisitorDFS<Op03SimpleStatement>(start,
+
+        final Set<BlockIdentifier> leaveExitsMutex = SetFactory.newSet();
+
+        GraphVisitor<Op03SimpleStatement> marker = new GraphVisitorDFS<Op03SimpleStatement>(start.getTargets(),
                 new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
                     @Override
                     public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                        Statement statement = arg1.containedStatement;
+                        //
+                        //
+
+                        Statement statement = arg1.getStatement();
+
+                        if (statement instanceof TryStatement) {
+                            TryStatement tryStatement = (TryStatement) statement;
+                            Set<Expression> tryMonitors = tryStatement.getMonitors();
+                            if (tryMonitors.contains(monitor)) {
+                                leaveExitsMutex.add(tryStatement.getBlockIdentifier());
+                                List<Op03SimpleStatement> tgts = arg1.getTargets();
+                                for (int x = 1, len = tgts.size(); x < len; ++x) {
+                                    Statement innerS = tgts.get(x).getStatement();
+                                    if (innerS instanceof CatchStatement) {
+                                        leaveExitsMutex.add(((CatchStatement) innerS).getCatchBlockIdent());
+                                    } else if (innerS instanceof FinallyStatement) {
+                                        leaveExitsMutex.add(((FinallyStatement) innerS).getFinallyBlockIdent());
+                                    }
+                                }
+                            }
+                        }
+
                         if (statement instanceof MonitorExitStatement) {
                             if (monitor.equals(((MonitorExitStatement) statement).getMonitor())) {
                                 foundExits.add(arg1);
@@ -3444,22 +3521,29 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                                  * is validly moved.
                                  */
                                 if (arg1.targets.size() == 1) {
-                                    Op03SimpleStatement target = arg1.targets.get(0);
-                                    Statement targetStatement = target.containedStatement;
+                                    arg1 = arg1.targets.get(0);
+                                    Statement targetStatement = arg1.containedStatement;
                                     if (targetStatement instanceof ReturnStatement ||
                                             targetStatement instanceof ThrowStatement ||
                                             targetStatement instanceof Nop ||
                                             targetStatement instanceof GotoStatement) {
                                         // TODO : Should perform a block check on targetStatement.
-                                        extraNodes.add(target);
+                                        extraNodes.add(arg1);
                                     }
                                 }
+
                                 return;
                             }
                         }
                         addToBlock.add(arg1);
-                        for (Op03SimpleStatement target : arg1.getTargets()) {
-                            arg2.enqueue(target);
+                        if (SetUtil.hasIntersection(arg1.getBlockIdentifiers(), leaveExitsMutex)) {
+                            for (Op03SimpleStatement tgt : arg1.getTargets()) {
+                                if (SetUtil.hasIntersection(tgt.getBlockIdentifiers(), leaveExitsMutex)) {
+                                    arg2.enqueue(tgt);
+                                }
+                            }
+                        } else {
+                            arg2.enqueue(arg1.getTargets());
                         }
                     }
                 }

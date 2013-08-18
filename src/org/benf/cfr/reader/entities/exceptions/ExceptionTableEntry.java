@@ -120,4 +120,5 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
     public String toString() {
         return "ExceptionTableEntry " + priority + " : [" + bytecode_index_from + "->" + bytecode_index_to + ") : " + bytecode_index_handler;
     }
+
 }

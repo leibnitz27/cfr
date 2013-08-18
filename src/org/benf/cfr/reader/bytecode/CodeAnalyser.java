@@ -229,7 +229,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
 
-        Op03SimpleStatement.identifyFinally(op03SimpleParseNodes, blockIdentifierFactory);
+        Op03SimpleStatement.identifyFinally(cfrState, op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
 
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
@@ -303,7 +303,7 @@ public class CodeAnalyser {
 
 
         logger.info("removeSynchronizedCatchBlocks");
-        Op03SimpleStatement.removeSynchronizedCatchBlocks(op03SimpleParseNodes);
+        Op03SimpleStatement.removeSynchronizedCatchBlocks(cfrState, op03SimpleParseNodes);
 
         // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
         // where xx and yy have no GOTOs in them.

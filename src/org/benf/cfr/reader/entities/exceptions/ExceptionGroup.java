@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.ComparableUnderEC;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.CommaHelp;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 public class ExceptionGroup {
 
-    private final short bytecodeIndexFrom;        // [ a
+    private short bytecodeIndexFrom;        // [ a
     private short byteCodeIndexTo;          // ) b    st a <= x < b
     private short minHandlerStart = Short.MAX_VALUE;
     private List<Entry> entries = ListFactory.newList();
@@ -39,8 +40,11 @@ public class ExceptionGroup {
     }
 
     public List<Entry> getEntries() {
-
         return entries;
+    }
+
+    public void mutateBytecodeIndexFrom(short bytecodeIndexFrom) {
+        this.bytecodeIndexFrom = bytecodeIndexFrom;
     }
 
     public short getBytecodeIndexFrom() {
@@ -86,8 +90,8 @@ public class ExceptionGroup {
         }
 
         public boolean isJustThrowable() {
-            short type = entry.getCatchType();
-            return type == 0;
+            JavaRefTypeInstance type = entry.getCatchType(cp);
+            return type.getRawName().equals(TypeConstants.throwableName);
         }
 
         public int getPriority() {
@@ -122,5 +126,50 @@ public class ExceptionGroup {
             if (!constraint.equivalent(refType, other.refType)) return false;
             return true;
         }
+
+        public ExtenderKey getExtenderKey() {
+            return new ExtenderKey(refType, entry.getBytecodeIndexHandler());
+        }
+
+
     }
+
+    public class ExtenderKey {
+        private final JavaRefTypeInstance type;
+        private final short handler;
+
+        public ExtenderKey(JavaRefTypeInstance type, short handler) {
+            this.type = type;
+            this.handler = handler;
+        }
+
+        public JavaRefTypeInstance getType() {
+            return type;
+        }
+
+        public short getHandler() {
+            return handler;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ExtenderKey that = (ExtenderKey) o;
+
+            if (handler != that.handler) return false;
+            if (type != null ? !type.equals(that.type) : that.type != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = type != null ? type.hashCode() : 0;
+            result = 31 * result + (int) handler;
+            return result;
+        }
+    }
+
 }

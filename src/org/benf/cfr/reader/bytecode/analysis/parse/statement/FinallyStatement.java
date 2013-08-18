@@ -54,6 +54,10 @@ public class FinallyStatement extends AbstractStatement {
         return new UnstructuredFinally(finallyBlockIdent);
     }
 
+    public BlockIdentifier getFinallyBlockIdent() {
+        return finallyBlockIdent;
+    }
+
     @Override
     public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
         if (o == null) return false;

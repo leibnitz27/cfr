@@ -115,7 +115,6 @@ public class FinalAnalyzer {
                 return false;
             }
         }
-        ;
 
         if (results.isEmpty()) {
             // No finally detected.
@@ -151,6 +150,9 @@ public class FinalAnalyzer {
          */
         final PeerTries.PeerTrySet originalTryGroupPeers = triesByLevel.get(0);
         for (final PeerTries.PeerTrySet peerSet : triesByLevel) {
+            boolean firstTryInBlock = true;
+            boolean artificalTry = true;
+
             for (Op03SimpleStatement peerTry : peerSet.getPeerTries()) {
                 if (peerTry == in) {
                     peerTry.removeTarget(possibleFinallyCatch);
@@ -159,19 +161,73 @@ public class FinalAnalyzer {
                     /*
                      * We need to unlink the original from the expected finally catch, but that is it.
                      */
+                    firstTryInBlock = false;
                     continue;
                 }
 
                 TryStatement peerTryStmt = (TryStatement) peerTry.getStatement();
                 final BlockIdentifier oldBlockIdent = peerTryStmt.getBlockIdentifier();
                 /*
-                 * Unlink this peer try from its catch handlers, (move them into the original try).
+                 * Decide whether this try really is artificial.
+                 * If it's got a target which is other than the outer throwable, then
                  */
                 List<Op03SimpleStatement> handlers = ListFactory.newList(peerTry.getTargets());
+//                if (firstTryInBlock) {
+//                    firstTryInBlock = false;
+//                    Set<Op03SimpleStatement> inHandlers = SetFactory.newSet(originalTryTargets);
+//                    for (int x=1, len=handlers.size();x<len;++x) {
+//                        if (!inHandlers.contains(handlers.get(x))) {
+//                            artificalTry = false;
+//                        }
+//                    }
+//                    if (artificalTry) {
+//                        continue;
+//                    }
+//                }
+
+                /*
+                 * Unlink this peer try from its catch handlers, (move them into the original try).
+                 */
                 for (int x = 1, len = handlers.size(); x < len; ++x) {
                     Op03SimpleStatement tgt = handlers.get(x);
                     tgt.removeSource(peerTry);
                     peerTry.removeTarget(tgt);
+                    CatchStatement catchStatement = (CatchStatement) tgt.getStatement();
+                    final BlockIdentifier catchBlockIdent = catchStatement.getCatchBlockIdent();
+                    catchStatement.removeCatchBlockFor(oldBlockIdent);
+                    /*
+                     * We need to remove tgt (and its entire catchblock) from the block set of
+                     * any removed inner.
+                     */
+                    List<Op03SimpleStatement> catchSources = tgt.getSources();
+                    final Set<BlockIdentifier> unionBlocks = SetFactory.newSet();
+                    for (Op03SimpleStatement catchSource : catchSources) {
+                        unionBlocks.addAll(catchSource.getBlockIdentifiers());
+                    }
+                    /*
+                     * Now, find the blocks that tgt THINKS it's in which are not in this, and remove them from tgt,
+                     * AND from every statement that belongs to tgt.
+                     */
+                    final Set<BlockIdentifier> previousTgtBlocks = SetFactory.newSet(tgt.getBlockIdentifiers());
+                    previousTgtBlocks.removeAll(unionBlocks);
+                    /*
+                     * The remainder are the blocks we SHOULD NO LONGER be in.
+                     */
+                    tgt.getBlockIdentifiers().removeAll(previousTgtBlocks);
+                    if (!previousTgtBlocks.isEmpty()) {
+                        tgt.getBlockIdentifiers().removeAll(previousTgtBlocks);
+                        GraphVisitor<Op03SimpleStatement> gv2 = new GraphVisitorDFS<Op03SimpleStatement>(tgt.getTargets(), new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
+                            @Override
+                            public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+                                if (arg1.getBlockIdentifiers().contains(catchBlockIdent)) {
+                                    arg1.getBlockIdentifiers().removeAll(previousTgtBlocks);
+                                    arg2.enqueue(arg1.getTargets());
+                                }
+                            }
+                        });
+                        gv2.process();
+                    }
+
                     if (tgt.getSources().isEmpty()) {
                         /*
                          * Nop out entire catch block.
@@ -179,6 +235,7 @@ public class FinalAnalyzer {
                         catchBlocksToNop.add(tgt);
                     }
                 }
+
                 peerTry.nopOut();
                 if (peerSet.equals(originalTryGroupPeers)) {
                     //throw new IllegalStateException();
@@ -216,6 +273,7 @@ public class FinalAnalyzer {
         }
         Op03SimpleStatement lastCatchContentStatement = allStatements.get(found);
         InstrIndex newIdx = lastCatchContentStatement.getIndex().justAfter();
+//        Op03SimpleStatement afterLast = found+1 >= allStatements.size() ? null : allStatements.get(found+1);
 
         Result cloneThis = results.iterator().next();
         List<Op03SimpleStatement> oldFinallyBody = ListFactory.newList(cloneThis.getToRemove());
@@ -248,10 +306,14 @@ public class FinalAnalyzer {
             newIdx = newIdx.justAfter();
             old2new.put(old, newOp);
         }
+        if (newFinallyBody.size() > 1) {
+            newFinallyBody.get(1).markFirstStatementInBlock(finallyBlock);
+        }
         /*
          * And add a nop after the end to redirect jumps to.
          */
         Op03SimpleStatement endRewrite = new Op03SimpleStatement(extraBlocks, new Nop(), newIdx);
+        endRewrite.getBlockIdentifiers().remove(finallyBlock);
         newFinallyBody.add(endRewrite);
 
         for (Op03SimpleStatement old : oldFinallyBody) {
@@ -311,7 +373,23 @@ public class FinalAnalyzer {
                         source.replaceTarget(start, afterEnd);
                         afterEnd.addSource(source);
                     } else {
-                        source.removeTarget(start);
+                        if (source.getStatement().getClass() == GotoStatement.class) {
+                            source.replaceStatement(new Nop());
+                            source.removeTarget(start);
+                        } else if (source.getStatement().getClass() == IfStatement.class) {
+                            /* If which peters out into finally body.
+                             * We need our if to jump /somewhere/, so swap the targets around,
+                             * reverse the condition, and insert a nop just before the old fall through
+                             */
+                            IfStatement ifStatement = (IfStatement) source.getStatement();
+                            boolean flip = (ifStatement.getJumpTarget().getContainer() == start);
+                            if (!flip) throw new IllegalStateException("If jumping OVER finally body.");
+
+                            source.replaceTarget(start, endRewrite);
+                            endRewrite.addSource(source);
+                        } else {
+                            source.removeTarget(start);
+                        }
                     }
                 }
             }
