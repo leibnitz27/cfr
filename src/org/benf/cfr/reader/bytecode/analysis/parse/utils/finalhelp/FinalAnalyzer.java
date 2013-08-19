@@ -2,13 +2,18 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -29,7 +34,7 @@ public class FinalAnalyzer {
  * This is the INITIAL entry point - i.e. we'll call this once for a finally block.
  * If it's recalled later for a different try in the same block, that try should have already been nopped out.
  */
-    public static boolean identifyFinally(Op03SimpleStatement in, List<Op03SimpleStatement> allStatements,
+    public static boolean identifyFinally(Method method, Op03SimpleStatement in, List<Op03SimpleStatement> allStatements,
                                           BlockIdentifierFactory blockIdentifierFactory,
                                           Set<Op03SimpleStatement> analysedTries) {
         // Already modified.
@@ -401,25 +406,48 @@ public class FinalAnalyzer {
                             allStatements.add(afterSource);
                         }
                     } else {
-                        if (source.getStatement().getClass() == GotoStatement.class) {
+                        Statement sourceStatement = source.getStatement();
+                        if (sourceStatement.getClass() == GotoStatement.class) {
                             source.replaceStatement(new Nop());
                             source.removeTarget(start);
-                        } else if (source.getStatement().getClass() == IfStatement.class) {
+                        } else if (sourceStatement.getClass() == IfStatement.class) {
                             /* If which peters out into finally body.
                              * We need our if to jump /somewhere/, so swap the targets around,
                              * reverse the condition, and insert a nop just before the old fall through
                              */
-                            IfStatement ifStatement = (IfStatement) source.getStatement();
+                            IfStatement ifStatement = (IfStatement) sourceStatement;
                             boolean flip = (ifStatement.getJumpTarget().getContainer() == start);
                             if (!flip) throw new IllegalStateException("If jumping OVER finally body.");
 
                             source.replaceTarget(start, endRewrite);
                             endRewrite.addSource(source);
                         } else {
-                            source.removeTarget(start);
+                            /*
+                             *
+                             */
+                            JavaTypeInstance returnType = method.getMethodPrototype().getReturnType();
+                            if (returnType == RawJavaType.VOID) {
+                                source.removeTarget(start);
+                                // Append return.
+                            } else if (sourceStatement instanceof AssignmentSimple) {
+                                AssignmentSimple sourceAssignment = (AssignmentSimple) sourceStatement;
+                                LValue lValue = sourceAssignment.getCreatedLValue();
+                                JavaTypeInstance lValueType = lValue.getInferredJavaType().getJavaTypeInstance();
+                                if (lValueType.implicitlyCastsTo(lValueType)) {
+                                    Op03SimpleStatement afterSource = new Op03SimpleStatement(source.getBlockIdentifiers(), new ReturnValueStatement(new LValueExpression(lValue), returnType), source.getIndex().justAfter());
+                                    source.replaceTarget(start, afterSource);
+                                    afterSource.addSource(source);
+                                    allStatements.add(afterSource);
+                                } else {
+                                    source.removeTarget(start);
+                                }
+                            } else {
+                                source.removeTarget(start);
+                            }
                         }
                     }
                 }
+
             }
             for (Op03SimpleStatement remove : toRemove) {
                 for (Op03SimpleStatement source : remove.getSources()) {

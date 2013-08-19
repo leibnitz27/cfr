@@ -17,6 +17,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -2717,7 +2718,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 //        return true;
 //    }
 
-    public static void identifyFinally(CFRState cfrState, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    public static void identifyFinally(CFRState cfrState, Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
         if (!cfrState.getBooleanOpt(CFRState.DECODE_FINALLY)) return;
         /* Get all the try statements, get their catches.  For all the EXIT points to the catches, try to identify
          * a common block of code (either before a throw, return or goto.)
@@ -2735,7 +2736,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             });
             for (Op03SimpleStatement tryS : tryStarts) {
-                FinalAnalyzer.identifyFinally(tryS, in, blockIdentifierFactory, analysedTries);
+                FinalAnalyzer.identifyFinally(method, tryS, in, blockIdentifierFactory, analysedTries);
             }
             /*
              * We may need to reloop, if analysis has created new tries inside finally handlers. (!).

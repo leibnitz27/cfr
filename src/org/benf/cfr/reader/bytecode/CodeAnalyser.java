@@ -229,7 +229,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
 
-        Op03SimpleStatement.identifyFinally(cfrState, op03SimpleParseNodes, blockIdentifierFactory);
+        Op03SimpleStatement.identifyFinally(cfrState, method, op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
 
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
