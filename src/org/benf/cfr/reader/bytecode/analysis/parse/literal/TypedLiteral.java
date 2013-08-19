@@ -179,9 +179,9 @@ public class TypedLiteral {
     }
 
     public static TypedLiteral getMethodType(ConstantPoolEntryMethodType methodType, ConstantPool cp) {
-        ConstantPoolEntryUTF8 descriptor = methodType.getDescriptor();
+//        ConstantPoolEntryUTF8 descriptor = methodType.getDescriptor();
         JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor(cp, "java.lang.invoke.MethodType");
-        return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), descriptor);
+        return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodType);
     }
 
     // TODO : Quote strings properly

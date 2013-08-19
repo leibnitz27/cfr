@@ -20,6 +20,10 @@ public class ConstantPoolEntryMethodType extends AbstractConstantPoolEntry {
         this.descriptorIndex = data.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
     }
 
+    public ConstantPool getCp() {
+        return super.getCp();
+    }
+
     @Override
     public long getRawByteLength() {
         return 3;

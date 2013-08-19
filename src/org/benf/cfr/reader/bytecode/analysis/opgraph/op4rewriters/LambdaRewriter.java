@@ -21,6 +21,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 
@@ -110,12 +111,28 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         return dynamicExpression;
     }
 
+    private static TypedLiteral.LiteralType getLiteralType(Expression e) {
+        if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
+        TypedLiteral t = ((Literal) e).getValue();
+        return t.getType();
+    }
+
     private static ConstantPoolEntryMethodHandle getHandle(Expression e) {
         if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
         TypedLiteral t = ((Literal) e).getValue();
-        if (t.getType() != TypedLiteral.LiteralType.MethodHandle)
+        if (t.getType() != TypedLiteral.LiteralType.MethodHandle) {
             throw new IllegalArgumentException("Expecting method handle");
+        }
         return (ConstantPoolEntryMethodHandle) t.getValue();
+    }
+
+    private static ConstantPoolEntryMethodType getType(Expression e) {
+        if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
+        TypedLiteral t = ((Literal) e).getValue();
+        if (t.getType() != TypedLiteral.LiteralType.MethodType) {
+            throw new IllegalArgumentException("Expecting method type");
+        }
+        return (ConstantPoolEntryMethodType) t.getValue();
     }
 
     private static class CannotDelambaException extends IllegalStateException {
@@ -129,11 +146,25 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         return (LocalVariable) lValue;
     }
 
+    private static enum MetaFactoryType {
+        TYPE_1,
+        TYPE_2
+    }
+
     private Expression rewriteDynamicExpression(Expression dynamicExpression, StaticFunctionInvokation functionInvokation, List<Expression> curriedArgs) {
         String name = functionInvokation.getName();
         JavaTypeInstance typeInstance = functionInvokation.getClazz();
         if (!typeInstance.getRawName().equals("java.lang.invoke.LambdaMetafactory")) return dynamicExpression;
-        if (!functionInvokation.getName().equals("metaFactory")) return dynamicExpression;
+        String functionName = functionInvokation.getName();
+
+        MetaFactoryType metaFactoryType = null;
+        if (functionName.equals("metaFactory")) {
+            metaFactoryType = MetaFactoryType.TYPE_1;
+        } else if (functionName.equals("metafactory")) {
+            metaFactoryType = MetaFactoryType.TYPE_2;
+        } else {
+            return dynamicExpression;
+        }
 
         List<Expression> metaFactoryArgs = functionInvokation.getArgs();
         if (metaFactoryArgs.size() != 6) return dynamicExpression;
@@ -141,13 +172,30 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
          * Right, it's the 6 argument form of LambdaMetafactory.metaFactory, which we understand.
          *
          */
-        ConstantPoolEntryMethodHandle targetFnHandle = getHandle(metaFactoryArgs.get(3));
-        ConstantPoolEntryMethodHandle lambdaFnHandle = getHandle(metaFactoryArgs.get(4));
-        ConstantPoolEntryMethodRef targetMethRef = targetFnHandle.getMethodRef();
-        JavaTypeInstance targetTypeLocation = targetMethRef.getClassEntry().getTypeInstance();
-        MethodPrototype targetFn = targetMethRef.getMethodPrototype();
-        List<JavaTypeInstance> targetFnArgTypes = targetFn.getArgs();
+        TypedLiteral.LiteralType flavour = getLiteralType(metaFactoryArgs.get(3));
 
+        List<JavaTypeInstance> targetFnArgTypes = null;
+        switch (flavour) {
+            case MethodHandle: {
+                ConstantPoolEntryMethodHandle targetFnHandle = getHandle(metaFactoryArgs.get(3));
+                ConstantPoolEntryMethodRef targetMethRef = targetFnHandle.getMethodRef();
+                MethodPrototype targetFn = targetMethRef.getMethodPrototype();
+                targetFnArgTypes = targetFn.getArgs();
+                break;
+            }
+            case MethodType: {
+                ConstantPoolEntryMethodType targetFnType = getType(metaFactoryArgs.get(3));
+                ConstantPoolEntryUTF8 descriptor = targetFnType.getDescriptor();
+                MethodPrototype tmpProto = ConstantPoolUtils.parseJavaMethodPrototype(null, null, null, false, descriptor, targetFnType.getCp(), false, null);
+                targetFnArgTypes = tmpProto.getArgs();
+                break;
+            }
+            default:
+                throw new ConfusedCFRException("Can't understand this lambda - disable lambdas.");
+        }
+
+
+        ConstantPoolEntryMethodHandle lambdaFnHandle = getHandle(metaFactoryArgs.get(4));
         ConstantPoolEntryMethodRef lambdaMethRef = lambdaFnHandle.getMethodRef();
         JavaTypeInstance lambdaTypeLocation = lambdaMethRef.getClassEntry().getTypeInstance();
         MethodPrototype lambdaFn = lambdaMethRef.getMethodPrototype();
