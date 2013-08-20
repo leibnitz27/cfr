@@ -23,6 +23,7 @@ public class StackEntry {
 
     private final long id0;
     private final Set<Long> ids = SetFactory.newSet();
+    private int artificalSourceCount = 0;
     private final StackSSALabel lValue;
     private long usageCount = 0;
     private final StackType stackType;
@@ -61,7 +62,15 @@ public class StackEntry {
     }
 
     public int getSourceCount() {
-        return ids.size();
+        return ids.size() + artificalSourceCount;
+    }
+
+    public void incSourceCount() {
+        artificalSourceCount++;
+    }
+
+    public void decSourceCount() {
+        artificalSourceCount--;
     }
 
     public List<Long> getSources() {
