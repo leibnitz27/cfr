@@ -54,7 +54,7 @@ public class Method implements KnowsRawSize {
     private static final long OFFSET_OF_ATTRIBUTES = 8;
 
     private final long length;
-    private final Set<AccessFlagMethod> accessFlags;
+    private final EnumSet<AccessFlagMethod> accessFlags;
     private final Map<String, Attribute> attributes;
     private final String name;
     private MethodConstructor isConstructor;
@@ -242,7 +242,7 @@ public class Method implements KnowsRawSize {
 
         dumpMethodAnnotations(d);
 
-        Set<AccessFlagMethod> localAccessFlags = accessFlags;
+        EnumSet<AccessFlagMethod> localAccessFlags = accessFlags;
         if (!asClass) {
             if (codeAttribute != null) d.print("default ");
             // Dumping as interface.

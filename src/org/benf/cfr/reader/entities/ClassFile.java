@@ -359,7 +359,7 @@ public class ClassFile implements Dumpable {
         return res;
     }
 
-    private <X extends Attribute> X getAttributeByName(String name) {
+    public <X extends Attribute> X getAttributeByName(String name) {
         Attribute attribute = attributes.get(name);
         if (attribute == null) return null;
         @SuppressWarnings("unchecked")

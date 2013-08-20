@@ -8,6 +8,8 @@ import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
+import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -80,5 +82,11 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         d.print("\n");
     }
 
+    protected void dumpAnnotations(ClassFile classFile, Dumper d) {
+        AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = classFile.getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
+        AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = classFile.getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
+        if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
+        if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
+    }
 
 }

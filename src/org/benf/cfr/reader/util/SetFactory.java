@@ -1,9 +1,6 @@
 package org.benf.cfr.reader.util;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,6 +12,10 @@ import java.util.Set;
 public class SetFactory {
     public static <X extends Object> Set<X> newSet() {
         return new HashSet<X>();
+    }
+
+    public static <X extends Enum<X>> EnumSet<X> newSet(EnumSet<X> content) {
+        return EnumSet.copyOf(content);
     }
 
     public static <X extends Object> Set<X> newSet(Collection<X> content) {
