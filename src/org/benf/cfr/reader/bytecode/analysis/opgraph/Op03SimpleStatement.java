@@ -2289,8 +2289,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (ternary.lValue instanceof StackSSALabel) {
                 StackSSALabel stackSSALabel = (StackSSALabel) ternary.lValue;
                 StackEntry stackEntry = stackSSALabel.getStackEntry();
-                List<Long> sources = stackEntry.getSources();
-                stackEntry.removeSource(sources.get(sources.size() - 1));
+                stackEntry.decSourceCount();
+//                List<Long> sources = stackEntry.getSources();
+//                stackEntry.removeSource(sources.get(sources.size() - 1));
             }
 
             // If statement now should have only one target.
