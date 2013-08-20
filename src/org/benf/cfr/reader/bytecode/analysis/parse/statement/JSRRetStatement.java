@@ -47,10 +47,6 @@ public class JSRRetStatement extends AbstractStatement {
         return new StructuredComment("JSR Ret");
     }
 
-    @Override
-    public void collectObjectCreation(CreationCollector creationCollector) {
-        creationCollector.markJump();
-    }
 
     @Override
     public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {

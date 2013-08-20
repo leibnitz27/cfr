@@ -78,11 +78,6 @@ public class RawSwitchStatement extends AbstractStatement {
     }
 
     @Override
-    public void collectObjectCreation(CreationCollector creationCollector) {
-        creationCollector.markJump();
-    }
-
-    @Override
     public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
         if (o == null) return false;
         if (o == this) return true;

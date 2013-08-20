@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -7,8 +8,12 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.List;
 import java.util.Map;
@@ -66,27 +71,26 @@ public class CreationCollector {
     }
 
     private final List<Triple> collectedConstructions = ListFactory.newList();
-    private final Map<LValue, StatementPair<NewObject>> pendingCreations = MapFactory.newMap();
-
-    private <X> void mark(Map<LValue, StatementPair<X>> map, LValue lValue, X rValue, StatementContainer container) {
-        if (map.containsKey(lValue)) {
-            map.put(lValue, null);
-        } else {
-            map.put(lValue, new StatementPair<X>(rValue, container));
+    private final Map<LValue, List<StatementContainer>> collectedCreations = MapFactory.newLazyMap(new UnaryFunction<LValue, List<StatementContainer>>() {
+        @Override
+        public List<StatementContainer> invoke(LValue arg) {
+            return ListFactory.newList();
         }
-    }
-
-    public void markJump() {
-        pendingCreations.clear();
-    }
+    });
 
     public void collectCreation(LValue lValue, Expression rValue, StatementContainer container) {
         if (!(rValue instanceof NewObject)) return;
         if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) return;
-        mark(pendingCreations, lValue, (NewObject) rValue, container);
+        collectedCreations.get(lValue).add(container);
     }
 
     public void collectConstruction(Expression expression, MemberFunctionInvokation rValue, StatementContainer container) {
+        /*
+         * We shouldn't collect a construction to turn it into a temp new IF the construction is, say, this.
+         *
+         * We cheat, and check that the LValue has been new'd SOMEWHERE before this.
+         */
+
         if (expression instanceof StackValue) {
             StackSSALabel lValue = ((StackValue) expression).getStackValue();
             markConstruction(lValue, rValue, container);
@@ -101,51 +105,81 @@ public class CreationCollector {
 
 
     private void markConstruction(LValue lValue, MemberFunctionInvokation rValue, StatementContainer container) {
-        StatementPair<NewObject> newObj = pendingCreations.get(lValue);
-        if (newObj == null) return;
-        pendingCreations.remove(lValue);
-        collectedConstructions.add(new Triple(lValue, newObj, new StatementPair<MemberFunctionInvokation>(rValue, container)));
+        collectedConstructions.add(new Triple(lValue, null, new StatementPair<MemberFunctionInvokation>(rValue, container)));
     }
 
     /*
     *
     */
     public void condenseConstructions() {
+
         for (Triple construction : collectedConstructions) {
             LValue lValue = construction.getlValue();
             StatementPair<MemberFunctionInvokation> constructionValue = construction.getConstruction();
             if (constructionValue == null) continue;
-            StatementPair<NewObject> creationValue = construction.getCreation();
-            if (creationValue == null) continue;
+
+            InstrIndex idx = constructionValue.getLocation().getIndex();
+            if (!collectedCreations.containsKey(lValue)) continue;
+            List<StatementContainer> creations = collectedCreations.get(lValue);
+            boolean found = false;
+            for (StatementContainer creation : creations) {
+                if (creation.getIndex().isBackJumpFrom(idx)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) continue;
+
+//            StatementPair<NewObject> creationValue = construction.getCreation();
+//            if (creationValue == null) continue;
 
             MemberFunctionInvokation memberFunctionInvokation = constructionValue.getValue();
-            NewObject newObject = creationValue.getValue();
+//            NewObject newObject = creationValue.getValue();
+            JavaTypeInstance lValueType = memberFunctionInvokation.getClassTypeInstance();
+//            InferredJavaType inferredJavaType = new InferredJavaType(lValueType, InferredJavaType.Source.EXPRESSION, true);
+            InferredJavaType inferredJavaType = lValue.getInferredJavaType();
+
 
             AbstractConstructorInvokation constructorInvokation = null;
-            if (newObject.getType().getTypeInstance().getInnerClassHereInfo().isAnoynmousInnerClass()) {
+            if (lValueType.getInnerClassHereInfo().isAnoynmousInnerClass()) {
                 /* anonymous inner class - so we need to match the arguments we're deliberately passing
                  * (i.e. the ones which are being passed into the constructor for the base of the anonymous
                  * class), vs ones which are being bound without being passed in.
                  */
                 constructorInvokation = new ConstructorInvokationAnoynmousInner(
                         memberFunctionInvokation,
-                        newObject.getInferredJavaType(),
+                        inferredJavaType,
                         memberFunctionInvokation.getArgs());
             } else {
                 constructorInvokation = new ConstructorInvokationSimple(
-                        newObject.getInferredJavaType(),
+                        inferredJavaType,
                         memberFunctionInvokation.getArgs());
             }
 
             AssignmentSimple replacement = new AssignmentSimple(lValue, constructorInvokation);
 
             if (lValue instanceof StackSSALabel) {
-                ((StackSSALabel) lValue).getStackEntry().decrementUsage();
+                StackSSALabel stackSSALabel = (StackSSALabel) lValue;
+                StackEntry stackEntry = stackSSALabel.getStackEntry();
+                stackEntry.decrementUsage();
+                stackEntry.incSourceCount();
             }
             StatementContainer constructionContainer = constructionValue.getLocation();
-            StatementContainer creationContainer = creationValue.getLocation();
-            creationContainer.nopOut();
+//            StatementContainer creationContainer = creationValue.getLocation();
+//            creationContainer.nopOut();
             constructionContainer.replaceStatement(replacement);
         }
+
+        for (Map.Entry<LValue, List<StatementContainer>> creations : collectedCreations.entrySet()) {
+            LValue lValue = creations.getKey();
+            for (StatementContainer statementContainer : creations.getValue()) {
+                if (lValue instanceof StackSSALabel) {
+                    StackEntry stackEntry = ((StackSSALabel) lValue).getStackEntry();
+                    stackEntry.decSourceCount();
+                }
+                statementContainer.nopOut();
+            }
+        }
+
     }
 }

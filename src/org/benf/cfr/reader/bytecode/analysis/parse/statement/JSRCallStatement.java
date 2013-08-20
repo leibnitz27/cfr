@@ -40,10 +40,6 @@ public class JSRCallStatement extends AbstractStatement {
         return new StructuredComment("JSR Call");
     }
 
-    @Override
-    public void collectObjectCreation(CreationCollector creationCollector) {
-        creationCollector.markJump();
-    }
 
     @Override
     public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {

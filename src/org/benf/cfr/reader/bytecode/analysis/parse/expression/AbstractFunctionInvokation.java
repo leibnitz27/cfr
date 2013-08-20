@@ -68,6 +68,10 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         return function;
     }
 
+    public JavaTypeInstance getClassTypeInstance() {
+        return function.getClassEntry().getTypeInstance();
+    }
+
     public List<Expression> getArgs() {
         return args;
     }
@@ -83,6 +87,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
     public ConstantPool getCp() {
         return cp;
     }
+
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {

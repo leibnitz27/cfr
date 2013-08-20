@@ -136,10 +136,6 @@ public class IfStatement extends GotoStatement {
         return true;
     }
 
-    @Override
-    public void collectObjectCreation(CreationCollector creationCollector) {
-        creationCollector.markJump();
-    }
 
     @Override
     public StructuredStatement getStructuredStatement() {

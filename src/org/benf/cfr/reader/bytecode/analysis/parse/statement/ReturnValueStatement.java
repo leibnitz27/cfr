@@ -51,11 +51,6 @@ public class ReturnValueStatement extends ReturnStatement {
     }
 
     @Override
-    public void collectObjectCreation(CreationCollector creationCollector) {
-        creationCollector.markJump();
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (o == null) return false;
         if (o == this) return true;

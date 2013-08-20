@@ -41,11 +41,6 @@ public class ReturnNothingStatement extends ReturnStatement {
     }
 
     @Override
-    public void collectObjectCreation(CreationCollector creationCollector) {
-        creationCollector.markJump();
-    }
-
-    @Override
     public boolean equals(Object o) {
         return (o instanceof ReturnNothingStatement);
     }
