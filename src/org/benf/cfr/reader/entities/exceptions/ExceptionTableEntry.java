@@ -2,7 +2,7 @@ package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;

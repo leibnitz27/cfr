@@ -2,7 +2,7 @@ package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.bytecode.CodeAnalyser;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;

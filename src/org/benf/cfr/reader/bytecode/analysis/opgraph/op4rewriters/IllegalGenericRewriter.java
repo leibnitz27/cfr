@@ -12,7 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 
 /**
  * Created with IntelliJ IDEA.

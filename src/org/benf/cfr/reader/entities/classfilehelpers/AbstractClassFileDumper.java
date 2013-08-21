@@ -7,7 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;

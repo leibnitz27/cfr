@@ -1,6 +1,6 @@
-package org.benf.cfr.reader.bytecode.analysis.parse.utils;
+package org.benf.cfr.reader.bytecode.analysis.variables;
 
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.attributes.AttributeLocalVariableTable;
 
 /**

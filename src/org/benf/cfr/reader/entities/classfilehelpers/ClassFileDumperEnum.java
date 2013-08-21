@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokat
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 

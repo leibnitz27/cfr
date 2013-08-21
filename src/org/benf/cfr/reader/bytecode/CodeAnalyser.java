@@ -8,9 +8,9 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewr
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableFactory;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
@@ -249,6 +249,11 @@ public class CodeAnalyser {
         // Condense again, now we've simplified constructors.
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+
+        // At this point, make a first stab at identifying final variables, (or stack values which can't be
+        // removed and appear as pseudo-variables).
+        Op03SimpleStatement.determineFinal(op03SimpleParseNodes, variableFactory);
+
 
         logger.info("sugarAnyonymousArrays");
         Op03SimpleStatement.resugarAnonymousArrays(op03SimpleParseNodes);

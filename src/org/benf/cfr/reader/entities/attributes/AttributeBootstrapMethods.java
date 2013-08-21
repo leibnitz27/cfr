@@ -1,8 +1,8 @@
 package org.benf.cfr.reader.entities.attributes;
 
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.ConstantPoolEntry;
-import org.benf.cfr.reader.entities.ConstantPoolEntryMethodHandle;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodHandle;
 import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;

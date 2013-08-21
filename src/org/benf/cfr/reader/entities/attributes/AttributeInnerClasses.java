@@ -2,7 +2,7 @@ package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;

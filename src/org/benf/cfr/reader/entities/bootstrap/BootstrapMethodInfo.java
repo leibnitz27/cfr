@@ -1,9 +1,9 @@
 package org.benf.cfr.reader.entities.bootstrap;
 
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.ConstantPoolEntry;
-import org.benf.cfr.reader.entities.ConstantPoolEntryMethodHandle;
-import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodHandle;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 
 /**
  * Created with IntelliJ IDEA.

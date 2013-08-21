@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities.classfilehelpers;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;

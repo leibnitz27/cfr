@@ -19,6 +19,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperEnum;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.CFRState;
 

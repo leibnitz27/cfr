@@ -1,11 +1,11 @@
-package org.benf.cfr.reader.entities;
+package org.benf.cfr.reader.entities.constantpool;
 
-import com.sun.istack.internal.Nullable;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerDefault;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerDefault;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MiscConstants;

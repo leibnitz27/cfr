@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**

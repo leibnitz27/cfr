@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerDefault;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -23,6 +25,7 @@ import org.benf.cfr.reader.bytecode.opcode.OperationFactoryMultiANewArray;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
 import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
+import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;

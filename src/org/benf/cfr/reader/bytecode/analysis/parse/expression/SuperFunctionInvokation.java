@@ -9,8 +9,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.entities.ConstantPool;
-import org.benf.cfr.reader.entities.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 

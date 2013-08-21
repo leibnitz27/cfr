@@ -18,6 +18,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComm
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.*;
 
 import java.util.LinkedList;

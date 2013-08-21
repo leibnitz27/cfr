@@ -16,6 +16,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnonymousInner;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;

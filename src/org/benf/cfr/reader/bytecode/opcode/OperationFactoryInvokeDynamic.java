@@ -7,6 +7,10 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.attributes.AttributeBootstrapMethods;
 import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryInvokeDynamic;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
 /**

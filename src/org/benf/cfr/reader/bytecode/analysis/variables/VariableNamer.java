@@ -1,6 +1,4 @@
-package org.benf.cfr.reader.bytecode.analysis.parse.utils;
-
-import org.benf.cfr.reader.entities.attributes.AttributeLocalVariableTable;
+package org.benf.cfr.reader.bytecode.analysis.variables;
 
 /**
  * Created by IntelliJ IDEA.

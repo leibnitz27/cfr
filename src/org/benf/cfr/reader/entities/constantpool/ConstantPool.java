@@ -1,7 +1,9 @@
-package org.benf.cfr.reader.entities;
+package org.benf.cfr.reader.entities.constantpool;
 
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.entities.ClassCache;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;

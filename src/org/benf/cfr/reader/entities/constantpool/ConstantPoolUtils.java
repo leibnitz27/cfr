@@ -1,10 +1,10 @@
-package org.benf.cfr.reader.entities;
+package org.benf.cfr.reader.entities.constantpool;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDeltaImpl;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.LoggerFactory;

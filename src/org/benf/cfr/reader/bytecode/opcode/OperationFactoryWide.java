@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.opcode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;

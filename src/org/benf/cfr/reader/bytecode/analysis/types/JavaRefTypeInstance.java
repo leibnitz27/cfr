@@ -2,7 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.getopt.CFRState;

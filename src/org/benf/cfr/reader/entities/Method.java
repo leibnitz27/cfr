@@ -1,11 +1,14 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.VariableNamerFactory;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.*;
-import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.*;

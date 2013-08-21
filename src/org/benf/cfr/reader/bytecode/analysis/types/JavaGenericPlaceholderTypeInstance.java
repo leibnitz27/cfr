@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
-import org.benf.cfr.reader.entities.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 
 /**
  * Created with IntelliJ IDEA.

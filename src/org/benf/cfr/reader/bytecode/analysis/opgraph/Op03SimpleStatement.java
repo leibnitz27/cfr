@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.*;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
@@ -16,7 +16,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
-import org.benf.cfr.reader.entities.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
@@ -622,6 +621,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         if (newRhs == null) newRhs = new AssignmentExpression(l1, r1, true);
         stm2.replaceStatement(new AssignmentSimple(l2, newRhs));
+    }
+
+    public static void determineFinal(List<Op03SimpleStatement> statements, VariableFactory variableFactory) {
     }
 
     public static void condenseLValues(List<Op03SimpleStatement> statements) {

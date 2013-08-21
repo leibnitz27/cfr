@@ -1,9 +1,10 @@
-package org.benf.cfr.reader.entities;
+package org.benf.cfr.reader.entities.constantpool;
 
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
+import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
