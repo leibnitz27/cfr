@@ -21,6 +21,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -152,7 +153,6 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
     }
 
     private Expression rewriteDynamicExpression(Expression dynamicExpression, StaticFunctionInvokation functionInvokation, List<Expression> curriedArgs) {
-        String name = functionInvokation.getName();
         JavaTypeInstance typeInstance = functionInvokation.getClazz();
         if (!typeInstance.getRawName().equals("java.lang.invoke.LambdaMetafactory")) return dynamicExpression;
         String functionName = functionInvokation.getName();
@@ -210,7 +210,12 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         if (this.typeInstance.equals(lambdaTypeRefLocation)) {
             classFile = thisClassFile;
         } else {
-            classFile = lambdaTypeRefLocation.getClassFile();
+            try {
+                classFile = lambdaTypeRefLocation.getClassFile();
+            } catch (CannotLoadClassException e) {
+                // We can't load the lambda target - we can't really make any assumptions about what it will do.
+                return dynamicExpression;
+            }
         }
 
         // We can't ask the prototype for instance behaviour, we have to get it from the
@@ -219,6 +224,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         switch (lambdaFnHandle.getReferenceKind()) {
             case INVOKE_INTERFACE:
             case INVOKE_SPECIAL:
+            case INVOKE_VIRTUAL:
                 instance = true;
                 break;
         }
@@ -234,9 +240,9 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         try {
             lambdaMethod = classFile.getMethodByPrototype(lambdaFn);
         } catch (NoSuchMethodException e) {
-        }
-        if (lambdaMethod == null) {
-            throw new IllegalStateException("Can't find lambda target " + lambdaFn);
+            // This might happen if you're using a JRE which doesn't have support classes, etc.
+            return dynamicExpression;
+//            throw new IllegalStateException("Can't find lambda target " + lambdaFn);
         }
         if (this.typeInstance.equals(lambdaTypeRefLocation) && lambdaMethod.testAccessFlag(AccessFlagMethod.ACC_SYNTHETIC)) {
             try {

@@ -105,8 +105,8 @@ public class TypedLiteral {
     }
 
     private static String methodTypeName(Object o) {
-        ConstantPoolEntryUTF8 methodTypeString = (ConstantPoolEntryUTF8) o;
-        return methodTypeString.toString();
+        ConstantPoolEntryMethodType methodType = (ConstantPoolEntryMethodType) o;
+        return methodType.getDescriptor().getValue();
     }
 
     @Override

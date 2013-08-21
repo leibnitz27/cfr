@@ -34,7 +34,7 @@ public class FinallyGraphHelper {
         return finallyCatchBody;
     }
 
-    private List<Op03SimpleStatement> filterFalseNegatives(List<Op03SimpleStatement> in) {
+    private List<Op03SimpleStatement> filterFalseNegatives(List<Op03SimpleStatement> in, Set<Op03SimpleStatement> toRemove) {
         List<Op03SimpleStatement> res = ListFactory.newList();
         for (Op03SimpleStatement i : in) {
             while (i != null && i.getStatement() instanceof Nop) {
@@ -43,6 +43,7 @@ public class FinallyGraphHelper {
                         i = null;
                         break;
                     case 1:
+                        if (toRemove != null) toRemove.add(i);
                         i = i.getTargets().get(0);
                         break;
                     default:
@@ -87,8 +88,8 @@ public class FinallyGraphHelper {
 //            tgta.remove(finalThrowProxy);
 //            tgtb.remove(finallyCatchBody.throwOp);
             /* Process both, walk no-ops ... walk goto as well? */
-            tgta = filterFalseNegatives(tgta);
-            tgtb = filterFalseNegatives(tgtb);
+            tgta = filterFalseNegatives(tgta, toRemove);
+            tgtb = filterFalseNegatives(tgtb, null);
 
             if (tgta.size() != tgtb.size()) {
 //                tgta.remove(finalThrowProxy);

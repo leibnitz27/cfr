@@ -1036,6 +1036,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     }
                 }
                 for (Op03SimpleStatement test : arg1.getTargets()) {
+                    // Also, check for backjump targets on non jumps.
+                    if (!(arg1.getStatement() instanceof JumpingStatement)) {
+                        if (test.getIndex().isBackJumpFrom(arg1)) {
+                            throw new IllegalStateException("Backjump on non jumping statement");
+                        }
+                    }
                     if (!test.getSources().contains(arg1)) {
                         throw new IllegalStateException("Inconsistent graph");
                     }

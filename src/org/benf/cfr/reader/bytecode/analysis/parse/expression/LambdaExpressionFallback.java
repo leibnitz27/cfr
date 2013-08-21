@@ -46,6 +46,11 @@ public class LambdaExpressionFallback extends AbstractExpression {
         switch (curriedArgs.size()) {
             case 0:
                 isColon = targetFnArgTypes.size() <= 1 && !instance;
+                if (instance) {
+                    /* Don't really understand what's going on here.... */
+                    isColon = true;
+                    this.instance = false;
+                }
                 break;
             case 1:
                 isColon = targetFnArgTypes.size() == 1 && instance;

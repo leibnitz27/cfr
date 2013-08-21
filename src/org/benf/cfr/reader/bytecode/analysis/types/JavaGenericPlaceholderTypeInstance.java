@@ -73,7 +73,8 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
 
     @Override
     public BindingSuperContainer getBindingSupers() {
-        throw new UnsupportedOperationException("Binding supers on placeholder");
+        return null;
+//        throw new UnsupportedOperationException("Binding supers on placeholder");
     }
 
     @Override
