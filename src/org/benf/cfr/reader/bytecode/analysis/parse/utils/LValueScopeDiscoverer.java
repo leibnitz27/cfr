@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -28,10 +29,10 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
      * We keep track of the first definition for a given variable.  If we exit the scope that the variable
      * is defined at (i.e. scope depth goes above) we have to remove all earliest definitions at that level.
      */
-    private final Map<String, ScopeDefinition> earliestDefinition = MapFactory.newMap();
-    private final Map<Integer, Set<String>> earliestDefinitionsByLevel = MapFactory.newLazyMap(new UnaryFunction<Integer, Set<String>>() {
+    private final Map<NamedVariable, ScopeDefinition> earliestDefinition = MapFactory.newMap();
+    private final Map<Integer, Set<NamedVariable>> earliestDefinitionsByLevel = MapFactory.newLazyMap(new UnaryFunction<Integer, Set<NamedVariable>>() {
         @Override
-        public Set<String> invoke(Integer arg) {
+        public Set<NamedVariable> invoke(Integer arg) {
             return SetFactory.newSet();
         }
     });
@@ -54,7 +55,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
     }
 
     public void leaveBlock(StructuredStatement structuredStatement) {
-        for (String definedHere : earliestDefinitionsByLevel.get(currentDepth)) {
+        for (NamedVariable definedHere : earliestDefinitionsByLevel.get(currentDepth)) {
             earliestDefinition.remove(definedHere);
         }
         earliestDefinitionsByLevel.remove(currentDepth);
@@ -86,7 +87,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
         // the same variable - if we've reused a stack location, and don't have any naming hints, the name will have
         // been re-used.  This is why we also have to verify that the type of the new assignment is the same as the type
         // of the previous one, and kick out the previous (and remove from earlier scopes) if that's the case).
-        String name = localVariable.getName();
+        NamedVariable name = localVariable.getName();
         ScopeDefinition previousDef = earliestDefinition.get(name);
         if (previousDef == null) {
             // First use is here.
@@ -226,8 +227,8 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
     public void collect(LValue lValue) {
         if (!(lValue instanceof LocalVariable)) return;
         LocalVariable localVariable = (LocalVariable) lValue;
-        String name = localVariable.getName();
-        if (name.equals(MiscConstants.THIS)) return;
+        NamedVariable name = localVariable.getName();
+        if (name.getStringName().equals(MiscConstants.THIS)) return;
 
         ScopeDefinition previousDef = earliestDefinition.get(name);
         // If it's in scope, no problem.
@@ -252,10 +253,10 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
         private final StatementContainer<StructuredStatement> exactStatement;
         private final LocalVariable lValue;
         private final JavaTypeInstance lValueType;
-        private final String name;
+        private final NamedVariable name;
         private final ScopeKey scopeKey;
 
-        private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement, LocalVariable lValue, String name) {
+        private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement, LocalVariable lValue, NamedVariable name) {
             this.depth = depth;
             this.nestedScope = nestedScope == null ? null : ListFactory.newList(nestedScope);
             this.exactStatement = exactStatement;
@@ -281,7 +282,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
             return depth;
         }
 
-        public String getName() {
+        public NamedVariable getName() {
             return name;
         }
 

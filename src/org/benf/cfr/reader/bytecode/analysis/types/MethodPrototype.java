@@ -61,25 +61,21 @@ public class MethodPrototype {
         this.explicitThisRemoval = explicitThisRemoval;
     }
 
-    public String getDeclarationSignature(String methName, Method.MethodConstructor isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
-        StringBuilder sb = new StringBuilder();
+    public void dumpDeclarationSignature(Dumper d, String methName, Method.MethodConstructor isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
+
         if (formalTypeParameters != null) {
-            sb.append('<');
+            d.print('<');
             boolean first = true;
             for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
-                if (!first) {
-                    sb.append(", ");
-                } else {
-                    first = false;
-                }
-                sb.append(formalTypeParameter.toString());
+                first = CommaHelp.comma(first, d);
+                d.print(formalTypeParameter.toString());
             }
-            sb.append("> ");
+            d.print("> ");
         }
         if (!isConstructor.isConstructor()) {
-            sb.append(result.toString()).append(" ");
+            d.print(result.toString()).print(" ");
         }
-        sb.append(methName).append("(");
+        d.print(methName).print("(");
         /* We don't get a vararg type to change itself, as it's a function of the method, not the type
          *
          */
@@ -90,20 +86,19 @@ public class MethodPrototype {
         boolean first = true;
         for (int i = start; i < argssize; ++i) {
             JavaTypeInstance arg = args.get(i);
-            first = CommaHelp.comma(first, sb);
-            annotationsHelper.addAnnotationTextForParameterInto(i, sb);
+            first = CommaHelp.comma(first, d);
+            annotationsHelper.addAnnotationTextForParameterInto(i, d);
             if (varargs && (i == argssize - 1)) {
                 if (!(arg instanceof JavaArrayTypeInstance)) {
                     throw new ConfusedCFRException("VARARGS method doesn't have an array as last arg!!");
                 }
-                sb.append(((JavaArrayTypeInstance) arg).toVarargString());
+                d.print(((JavaArrayTypeInstance) arg).toVarargString());
             } else {
-                sb.append(arg.toString());
+                d.print(arg.toString());
             }
-            sb.append(" ").append(parameterLValues.get(i).getName());
+            d.print(" ").dump(parameterLValues.get(i).getName());
         }
-        sb.append(")");
-        return sb.toString();
+        d.print(")");
     }
 
     public void reset() {

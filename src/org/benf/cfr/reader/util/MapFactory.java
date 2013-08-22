@@ -2,10 +2,7 @@ package org.benf.cfr.reader.util;
 
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,6 +14,10 @@ import java.util.TreeMap;
 public class MapFactory {
     public static <X extends Object, Y extends Object> Map<X, Y> newMap() {
         return new HashMap<X, Y>();
+    }
+
+    public static <X extends Object, Y extends Object> Map<X, Y> newIdentityMap() {
+        return new IdentityHashMap<X, Y>();
     }
 
     public static <X extends Object, Y extends Object> TreeMap<X, Y> newTreeMap() {

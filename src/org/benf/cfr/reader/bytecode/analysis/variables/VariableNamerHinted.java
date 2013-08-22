@@ -16,6 +16,9 @@ import java.util.TreeSet;
  * Date: 02/04/2012
  */
 public class VariableNamerHinted implements VariableNamer {
+
+    private final VariableNamer missingNamer = new VariableNamerDefault();
+
     private final OrderLocalVariables orderLocalVariable = new OrderLocalVariables();
     private final Map<Short, TreeSet<LocalVariableEntry>> localVariableEntryTreeSet =
             MapFactory.newLazyMap(new UnaryFunction<Short, TreeSet<LocalVariableEntry>>() {
@@ -24,6 +27,7 @@ public class VariableNamerHinted implements VariableNamer {
                     return new TreeSet<LocalVariableEntry>(orderLocalVariable);
                 }
             });
+    private final Map<LocalVariableEntry, NamedVariable> cache = MapFactory.newIdentityMap();
 
     private final ConstantPool cp;
 
@@ -36,30 +40,33 @@ public class VariableNamerHinted implements VariableNamer {
     }
 
     @Override
-    public String getName(int originalRawOffset, long stackPosition) {
+    public NamedVariable getName(int originalRawOffset, long stackPosition) {
         originalRawOffset += 2;
 
         short sstackPos = (short) stackPosition;
         if (!localVariableEntryTreeSet.containsKey(sstackPos)) {
-            return "var" + stackPosition;
+            return missingNamer.getName(0, sstackPos);
         }
         LocalVariableEntry tmp = new LocalVariableEntry((short) (originalRawOffset), (short) 1, (short) -1, (short) -1, (short) stackPosition);
         LocalVariableEntry lve = localVariableEntryTreeSet.get(sstackPos).floor(tmp);
 
         if (lve == null) {
-            return "var" + stackPosition;
+            return missingNamer.getName(0, sstackPos);
         }
 
-        if (lve.getIndex() == stackPosition &&
-                lve.getStartPc() <= (originalRawOffset) &&
-                (lve.getStartPc() + lve.getLength()) >= originalRawOffset) {
-            return cp.getUTF8Entry(lve.getNameIndex()).getValue();
-        } else {
-            return cp.getUTF8Entry(lve.getNameIndex()).getValue();
-//
-//            String lveName = cp.getUTF8Entry(lve.getNameIndex()).getValue();
-//            return "unnamed_local_" + lveName + "_" + stackPosition;
+        NamedVariable namedVariable = cache.get(lve);
+        if (namedVariable == null) {
+            namedVariable = new NamedVariableFromHint(cp.getUTF8Entry(lve.getNameIndex()).getValue(), lve.getIndex());
+            cache.put(lve, namedVariable);
         }
+        return namedVariable;
+
+//        if (lve.getIndex() == stackPosition &&
+//                lve.getStartPc() <= (originalRawOffset) &&
+//                (lve.getStartPc() + lve.getLength()) >= originalRawOffset) {
+//        } else {
+//            return cp.getUTF8Entry(lve.getNameIndex()).getValue();
+//        }
 
     }
 

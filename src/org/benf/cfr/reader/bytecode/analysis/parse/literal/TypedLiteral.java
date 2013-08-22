@@ -96,7 +96,11 @@ public class TypedLiteral {
         if (l == Long.MIN_VALUE) return "Long.MIN_VALUE";
         if (l == Integer.MAX_VALUE) return "Integer.MAX_VALUE";
         if (l == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
-        return o.toString() + "L";
+        if (l > Integer.MAX_VALUE || l < Integer.MIN_VALUE) {
+            return o.toString() + "L";
+        } else {
+            return o.toString();
+        }
     }
 
     private static String methodHandleName(Object o) {

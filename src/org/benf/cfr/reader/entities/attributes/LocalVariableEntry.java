@@ -39,4 +39,5 @@ public class LocalVariableEntry {
     public short getIndex() {
         return index;
     }
+
 }

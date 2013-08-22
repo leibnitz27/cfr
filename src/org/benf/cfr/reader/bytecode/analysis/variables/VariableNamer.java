@@ -6,7 +6,7 @@ package org.benf.cfr.reader.bytecode.analysis.variables;
  * Date: 02/04/2012
  */
 public interface VariableNamer {
-    String getName(int originalRawOffset, long stackPosition);
+    NamedVariable getName(int originalRawOffset, long stackPosition);
 
     void forceName(long stackPosition, String name);
 }

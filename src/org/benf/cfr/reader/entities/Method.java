@@ -271,7 +271,7 @@ public class Method implements KnowsRawSize {
         if (isConstructor.isConstructor()) {
             displayName = classFile.getClassType().toString();
         }
-        d.print(getMethodPrototype().getDeclarationSignature(displayName, isConstructor, paramAnnotationsHelper));
+        getMethodPrototype().dumpDeclarationSignature(d, displayName, isConstructor, paramAnnotationsHelper);
         AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
             d.print(" throws ");

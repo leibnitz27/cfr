@@ -123,7 +123,7 @@ public class FieldVariable extends AbstractLValue {
         if (object instanceof LValueExpression) {
             LValue lValue = ((LValueExpression) object).getLValue();
             if (lValue instanceof LocalVariable) {
-                return ((LocalVariable) lValue).getName().equals(MiscConstants.THIS);
+                return ((LocalVariable) lValue).getName().getStringName().equals(MiscConstants.THIS);
             }
         }
         return false;

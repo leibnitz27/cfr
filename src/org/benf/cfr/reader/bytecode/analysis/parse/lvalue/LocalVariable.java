@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariableDefault;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -19,7 +21,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 18:28
  */
 public class LocalVariable extends AbstractLValue {
-    private final String name;
+    private final NamedVariable name;
     // We keep this so we don't confuse two variables with the same name, tricksy.
     private final long idx;
 
@@ -31,7 +33,7 @@ public class LocalVariable extends AbstractLValue {
 
     public LocalVariable(String name, InferredJavaType inferredJavaType) {
         super(inferredJavaType);
-        this.name = name;
+        this.name = new NamedVariableDefault(name);
         this.idx = -1;
     }
 
@@ -50,10 +52,10 @@ public class LocalVariable extends AbstractLValue {
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print(name + typeToString());
+        return name.dump(d).print(typeToString());
     }
 
-    public String getName() {
+    public NamedVariable getName() {
         return name;
     }
 
