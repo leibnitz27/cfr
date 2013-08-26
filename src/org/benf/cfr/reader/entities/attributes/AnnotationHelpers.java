@@ -3,7 +3,6 @@ package org.benf.cfr.reader.entities.attributes;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
-import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.annotations.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
@@ -16,7 +15,6 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -31,7 +29,7 @@ public class AnnotationHelpers {
         offset += 2;
         int numElementPairs = raw.getS2At(offset);
         offset += 2;
-        Map<String, ElementValue> elementValueMap = MapFactory.newOrderedMap();
+        Map<String, ElementValue> elementValueMap = MapFactory.newLinkedMap();
         for (int x = 0; x < numElementPairs; ++x) {
             offset = getElementValuePair(raw, offset, cp, elementValueMap);
         }

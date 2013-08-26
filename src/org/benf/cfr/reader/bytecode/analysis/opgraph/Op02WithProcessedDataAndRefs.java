@@ -58,7 +58,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     private InstrIndex index;
 
-    private final JVMInstr instr;
+    private JVMInstr instr;
     private final int originalRawOffset;
     private final byte[] rawData;
 
@@ -77,7 +77,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private StackSim unconsumedJoinedStack = null;
 
     private SSAIdentifiers<Slot> ssaIdentifiers;
-    private Map<Integer, Ident> localVariablesBySlot = MapFactory.newOrderedMap();
+    private Map<Integer, Ident> localVariablesBySlot = MapFactory.newLinkedMap();
 
     public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, int index, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset) {
         this(instr, rawData, new InstrIndex(index), cp, cpEntries, originalRawOffset);
@@ -384,6 +384,103 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             return new AssignmentSimple(getStackLValue(0), funcCall);
         }
 
+    }
+
+    private Pair<JavaTypeInstance, Integer> getRetrieveType() {
+        JavaTypeInstance type = null;
+        switch (instr) {
+            case ALOAD:
+            case ALOAD_0:
+            case ALOAD_1:
+            case ALOAD_2:
+            case ALOAD_3:
+            case ALOAD_WIDE:
+                type = RawJavaType.REF;
+                break;
+            case ILOAD:
+            case ILOAD_0:
+            case ILOAD_1:
+            case ILOAD_2:
+            case ILOAD_3:
+            case ILOAD_WIDE:
+            case IINC:
+            case IINC_WIDE:
+                type = RawJavaType.INT;
+                break;
+            case LLOAD:
+            case LLOAD_0:
+            case LLOAD_1:
+            case LLOAD_2:
+            case LLOAD_3:
+            case LLOAD_WIDE:
+                type = RawJavaType.LONG;
+                break;
+            case DLOAD:
+            case DLOAD_0:
+            case DLOAD_1:
+            case DLOAD_2:
+            case DLOAD_3:
+            case DLOAD_WIDE:
+                type = RawJavaType.DOUBLE;
+                break;
+            case FLOAD:
+            case FLOAD_0:
+            case FLOAD_1:
+            case FLOAD_2:
+            case FLOAD_3:
+            case FLOAD_WIDE:
+                type = RawJavaType.FLOAT;
+                break;
+            default:
+                return null;
+        }
+        int idx = 0;
+        switch (instr) {
+            case ALOAD:
+            case ILOAD:
+            case LLOAD:
+            case DLOAD:
+            case FLOAD:
+                idx = getInstrArgByte(0);
+                break;
+            case ALOAD_0:
+            case ILOAD_0:
+            case LLOAD_0:
+            case DLOAD_0:
+            case FLOAD_0:
+                idx = 0;
+                break;
+            case ALOAD_1:
+            case ILOAD_1:
+            case LLOAD_1:
+            case DLOAD_1:
+            case FLOAD_1:
+                idx = 1;
+                break;
+            case ALOAD_2:
+            case ILOAD_2:
+            case LLOAD_2:
+            case DLOAD_2:
+            case FLOAD_2:
+                idx = 2;
+                break;
+            case ALOAD_3:
+            case ILOAD_3:
+            case LLOAD_3:
+            case DLOAD_3:
+            case FLOAD_3:
+                idx = 3;
+                break;
+            case ALOAD_WIDE:
+            case ILOAD_WIDE:
+            case LLOAD_WIDE:
+            case DLOAD_WIDE:
+            case FLOAD_WIDE:
+                throw new UnsupportedOperationException("LOAD_WIDE");
+            default:
+                return null;
+        }
+        return Pair.make(type, idx);
     }
 
     private Pair<JavaTypeInstance, Integer> getStorageType() {
@@ -1042,6 +1139,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 for (Op02WithProcessedDataAndRefs target : op.targets) {
                     target.removeSource(op);
                 }
+                op.instr = JVMInstr.NOP;
                 op.targets.clear();
             }
         }
@@ -1057,6 +1155,40 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     public static void assignSSAIdentifiers(Method method, List<Op02WithProcessedDataAndRefs> statements) {
+        assignSSAIdentifiersInner(method, statements);
+
+        /*
+         * We can walk all the reads to see if there are any reads of 'uninitialised' slots.
+         * These are masking hidden parameters. (usually synthetic ones?).
+         */
+        Map<Integer, JavaTypeInstance> missing = MapFactory.newTreeMap();
+
+        for (Op02WithProcessedDataAndRefs op02 : statements) {
+            Pair<JavaTypeInstance, Integer> load = op02.getRetrieveType();
+            if (load == null) continue;
+
+            SSAIdent ident = op02.ssaIdentifiers.getSSAIdent(new Slot(load.getFirst(), load.getSecond()));
+            if (ident == null) {
+                missing.put(load.getSecond(), load.getFirst());
+            }
+        }
+
+        if (missing.isEmpty()) return;
+
+        if (!method.getConstructorFlag().isConstructor()) {
+            throw new IllegalStateException("Invisible function parameters on a non-constructor");
+        }
+
+        /*
+         * The (now known) missing arguments should be in the first available slots.
+         * Add them to the method prototype, and re-scan.
+         */
+        method.getMethodPrototype().setSyntheticConstructorParameters(missing);
+
+        assignSSAIdentifiersInner(method, statements);
+    }
+
+    public static void assignSSAIdentifiersInner(Method method, List<Op02WithProcessedDataAndRefs> statements) {
 
         SSAIdentifierFactory<Slot> ssaIdentifierFactory = new SSAIdentifierFactory<Slot>();
         /*
@@ -1097,7 +1229,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 toProcess.addAll(statement.getTargets());
             }
         }
-        int x = 1;
     }
 
 
@@ -1109,11 +1240,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         // Way to handle this is to walk the graph again, testing each ssa ident against target's idents
         // If the target's ident is a superset of the source's, then copy the target into the source.
         // (of course we don't want to rewind every time, or we'll be n^2).
-        Map<Slot, Map<SSAIdent, Set<SSAIdent>>> identChain = MapFactory.newOrderedLazyMap(
+        Map<Slot, Map<SSAIdent, Set<SSAIdent>>> identChain = MapFactory.newLinkedLazyMap(
                 new UnaryFunction<Slot, Map<SSAIdent, Set<SSAIdent>>>() {
                     @Override
                     public Map<SSAIdent, Set<SSAIdent>> invoke(Slot arg) {
-                        return MapFactory.newOrderedLazyMap(new UnaryFunction<SSAIdent, Set<SSAIdent>>() {
+                        return MapFactory.newLinkedLazyMap(new UnaryFunction<SSAIdent, Set<SSAIdent>>() {
                             @Override
                             public Set<SSAIdent> invoke(SSAIdent arg) {
                                 return SetFactory.newOrderedSet();
@@ -1141,7 +1272,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
         }
         // Now rationalise this map.
-        final Map<Pair<Slot, SSAIdent>, Ident> combinedMap = MapFactory.newOrderedMap();
+        final Map<Pair<Slot, SSAIdent>, Ident> combinedMap = MapFactory.newLinkedMap();
 
         final IdentFactory identFactory = new IdentFactory();
 
@@ -1211,7 +1342,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     private static Map<SSAIdent, Set<SSAIdent>> createReverseMap(Map<SSAIdent, Set<SSAIdent>> downMap) {
-        Map<SSAIdent, Set<SSAIdent>> res = MapFactory.newOrderedLazyMap(new UnaryFunction<SSAIdent, Set<SSAIdent>>() {
+        Map<SSAIdent, Set<SSAIdent>> res = MapFactory.newLinkedLazyMap(new UnaryFunction<SSAIdent, Set<SSAIdent>>() {
             @Override
             public Set<SSAIdent> invoke(SSAIdent arg) {
                 return SetFactory.newOrderedSet();
@@ -1227,14 +1358,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return res;
     }
 
+
     public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list,
                                                               final Method method,
                                                               final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory) {
-
-        /*
-         * Walk the op02, discovering liveness regions of variable slots.
-         */
-        discoverStorageLiveness(method, op2list);
 
 
         final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
@@ -1552,6 +1679,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             tryOp.targets.add(0, startInstruction);
             startInstruction.addSource(tryOp);
             op2list.add(tryOp);
+
+            if (tryOp.sources.isEmpty()) {
+                int x = 1;
+            }
         }
 
         /*

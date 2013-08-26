@@ -301,6 +301,9 @@ public class Method implements KnowsRawSize {
             if (codeAttribute != null) {
                 codeAttribute.analyse();
             } else {
+                /*
+                 * No code attribute - we still need to assign variable names.
+                 */
                 Map<Integer, Ident> identMap = MapFactory.newLazyMap(new UnaryFunction<Integer, Ident>() {
                     public int x = 0;
 

@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -13,7 +12,7 @@ import java.util.Map;
  */
 public class SSAIdentifierFactory<KEYTYPE> {
     private final Map<KEYTYPE, Integer> nextIdentFor = MapFactory.newLazyMap(
-            MapFactory.<KEYTYPE, Integer>newOrderedMap(),
+            MapFactory.<KEYTYPE, Integer>newLinkedMap(),
             new UnaryFunction<KEYTYPE, Integer>() {
                 @Override
                 public Integer invoke(KEYTYPE ignore) {

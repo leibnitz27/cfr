@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdent;
@@ -39,6 +38,7 @@ public class MethodPrototype {
     private final String name;
     private final ConstantPool cp;
     private final ClassFile classFile;
+    private final List<Slot> syntheticArgs = ListFactory.newList();
     private transient List<LocalVariable> parameterLValues = null;
     private transient boolean explicitThisRemoval = false;
 
@@ -119,18 +119,25 @@ public class MethodPrototype {
         return parameterLValues;
     }
 
+    public void setSyntheticConstructorParameters(Map<Integer, JavaTypeInstance> synthetics) {
+        syntheticArgs.clear();
+        for (Map.Entry<Integer, JavaTypeInstance> entry : synthetics.entrySet()) {
+            syntheticArgs.add(new Slot(entry.getValue(), entry.getKey()));
+        }
+    }
+
     public Map<Slot, SSAIdent> collectInitialSlotUsage(Method.MethodConstructor constructorFlag, SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
-        Map<Slot, SSAIdent> res = MapFactory.newOrderedMap();
+        Map<Slot, SSAIdent> res = MapFactory.newLinkedMap();
         int offset = 0;
         switch (constructorFlag) {
             case ENUM_CONSTRUCTOR: {
-                offset = 3;
                 Slot tgt0 = new Slot(classFile.getClassType(), 0);
                 res.put(tgt0, ssaIdentifierFactory.getIdent(tgt0));
                 Slot tgt1 = new Slot(RawJavaType.REF, 1);
                 res.put(tgt1, ssaIdentifierFactory.getIdent(tgt1));
                 Slot tgt2 = new Slot(RawJavaType.INT, 2);
                 res.put(tgt2, ssaIdentifierFactory.getIdent(tgt2));
+                offset = 3;
                 break;
             }
             default: {
@@ -141,6 +148,13 @@ public class MethodPrototype {
                 offset = instanceMethod ? 1 : 0;
                 break;
             }
+        }
+        for (Slot synthetic : syntheticArgs) {
+            if (offset != synthetic.getIdx()) {
+                throw new IllegalStateException();
+            }
+            res.put(synthetic, ssaIdentifierFactory.getIdent(synthetic));
+            offset += synthetic.getJavaTypeInstance().getStackType().getComputationCategory();
         }
         for (JavaTypeInstance arg : args) {
             Slot tgt = new Slot(arg, offset);
@@ -161,12 +175,17 @@ public class MethodPrototype {
             variableNamer.forceName(slotToIdentMap.get(0), 0, MiscConstants.THIS);
             offset = 1;
         }
-        if (constructorFlag == Method.MethodConstructor.ENUM_CONSTRUCTOR) offset += 2;
-        int argssize = args.size();
-        for (int i = 0; i < argssize; ++i) {
-            JavaTypeInstance arg = args.get(i);
-            // TODO : This should share a variable factory with the method, so we're sure they're
-            // the same instance.
+        if (constructorFlag == Method.MethodConstructor.ENUM_CONSTRUCTOR) {
+            offset += 2;
+        } else {
+            for (Slot synthetic : syntheticArgs) {
+                JavaTypeInstance typeInstance = synthetic.getJavaTypeInstance();
+                parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true)));
+                offset += typeInstance.getStackType().getComputationCategory();
+            }
+        }
+
+        for (JavaTypeInstance arg : args) {
             parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(offset), variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)));
             offset += arg.getStackType().getComputationCategory();
         }

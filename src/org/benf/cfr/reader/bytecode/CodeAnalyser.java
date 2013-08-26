@@ -171,6 +171,10 @@ public class CodeAnalyser {
 
         // Create a non final version...
         final VariableFactory variableFactory = new VariableFactory(method);
+
+        // Discover slot re-use, infer invisible constructor parameters, etc.
+        Op02WithProcessedDataAndRefs.discoverStorageLiveness(method, op2list);
+
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory);
 
 

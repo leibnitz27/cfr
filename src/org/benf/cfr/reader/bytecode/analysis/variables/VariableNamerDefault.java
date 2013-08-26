@@ -14,6 +14,7 @@ public class VariableNamerDefault implements VariableNamer {
     private Map<Ident, NamedVariable> cached = MapFactory.newMap();
 
     public VariableNamerDefault() {
+        int x = 1;
     }
 
     @Override

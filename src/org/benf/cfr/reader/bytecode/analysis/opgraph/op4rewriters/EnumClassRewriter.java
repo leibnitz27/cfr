@@ -197,7 +197,7 @@ public class EnumClassRewriter {
     private class EnumInitMatchCollector implements MatchResultCollector {
 
         private final WildcardMatch wcm;
-        private final Map<StaticVariable, CollectedEnumData<? extends AbstractConstructorInvokation>> entryMap = MapFactory.newOrderedMap();
+        private final Map<StaticVariable, CollectedEnumData<? extends AbstractConstructorInvokation>> entryMap = MapFactory.newLinkedMap();
         private CollectedEnumData<NewAnonymousArray> matchedArray;
         private List<ClassFileField> matchedHideTheseFields = ListFactory.newList();
 
