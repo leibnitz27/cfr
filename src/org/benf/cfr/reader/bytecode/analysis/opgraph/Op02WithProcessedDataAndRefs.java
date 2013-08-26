@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
+import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerDefault;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -73,6 +75,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private final List<StackEntryHolder> stackConsumed = ListFactory.newList();
     private final List<StackEntryHolder> stackProduced = ListFactory.newList();
     private StackSim unconsumedJoinedStack = null;
+
+    private SSAIdentifiers<Slot> ssaIdentifiers;
+    private Map<Integer, Ident> localVariablesBySlot = MapFactory.newOrderedMap();
 
     public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, int index, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset) {
         this(instr, rawData, new InstrIndex(index), cp, cpEntries, originalRawOffset);
@@ -381,6 +386,114 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     }
 
+    private Pair<JavaTypeInstance, Integer> getStorageType() {
+        JavaTypeInstance type = null;
+        switch (instr) {
+            case ASTORE:
+            case ASTORE_0:
+            case ASTORE_1:
+            case ASTORE_2:
+            case ASTORE_3:
+            case ASTORE_WIDE:
+                type = RawJavaType.REF;
+                break;
+            case ISTORE:
+            case ISTORE_0:
+            case ISTORE_1:
+            case ISTORE_2:
+            case ISTORE_3:
+            case ISTORE_WIDE:
+//            case IINC:
+//            case IINC_WIDE:
+                type = RawJavaType.INT;
+                break;
+            case LSTORE:
+            case LSTORE_0:
+            case LSTORE_1:
+            case LSTORE_2:
+            case LSTORE_3:
+            case LSTORE_WIDE:
+                type = RawJavaType.LONG;
+                break;
+            case DSTORE:
+            case DSTORE_0:
+            case DSTORE_1:
+            case DSTORE_2:
+            case DSTORE_3:
+            case DSTORE_WIDE:
+                type = RawJavaType.DOUBLE;
+                break;
+            case FSTORE:
+            case FSTORE_0:
+            case FSTORE_1:
+            case FSTORE_2:
+            case FSTORE_3:
+            case FSTORE_WIDE:
+                type = RawJavaType.FLOAT;
+                break;
+            default:
+                return null;
+        }
+        int idx = 0;
+        switch (instr) {
+            case ASTORE:
+            case ISTORE:
+            case LSTORE:
+            case DSTORE:
+            case FSTORE:
+//            case IINC:
+                idx = getInstrArgByte(0);
+                break;
+            case ASTORE_0:
+            case ISTORE_0:
+            case LSTORE_0:
+            case DSTORE_0:
+            case FSTORE_0:
+                idx = 0;
+                break;
+            case ASTORE_1:
+            case ISTORE_1:
+            case LSTORE_1:
+            case DSTORE_1:
+            case FSTORE_1:
+                idx = 1;
+                break;
+            case ASTORE_2:
+            case ISTORE_2:
+            case LSTORE_2:
+            case DSTORE_2:
+            case FSTORE_2:
+                idx = 2;
+                break;
+            case ASTORE_3:
+            case ISTORE_3:
+            case LSTORE_3:
+            case DSTORE_3:
+            case FSTORE_3:
+                idx = 3;
+                break;
+            case ASTORE_WIDE:
+            case ISTORE_WIDE:
+            case LSTORE_WIDE:
+            case DSTORE_WIDE:
+            case FSTORE_WIDE:
+                throw new UnsupportedOperationException("STORE_WIDE");
+            default:
+                return null;
+        }
+        return Pair.make(type, idx);
+    }
+
+    private Statement mkAssign(Pair<JavaTypeInstance, Integer> storageTypeAndIdx, VariableFactory variableFactory) {
+        int idx = storageTypeAndIdx.getSecond();
+        Ident ident = localVariablesBySlot.get(idx);
+        return new AssignmentSimple(variableFactory.localVariable(idx, ident, originalRawOffset), getStackRValue(0));
+    }
+
+    private Statement mkRetrieve(VariableFactory variableFactory, int slot) {
+        return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, localVariablesBySlot.get(slot), originalRawOffset)));
+    }
+
     public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory) {
         switch (instr) {
             case ALOAD:
@@ -388,31 +501,31 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LLOAD:
             case DLOAD:
             case FLOAD:
-                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset)));
+                return mkRetrieve(variableFactory, getInstrArgByte(0));
             case ALOAD_0:
             case ILOAD_0:
             case LLOAD_0:
             case DLOAD_0:
             case FLOAD_0:
-                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(0, originalRawOffset)));
+                return mkRetrieve(variableFactory, 0);
             case ALOAD_1:
             case ILOAD_1:
             case LLOAD_1:
             case DLOAD_1:
             case FLOAD_1:
-                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(1, originalRawOffset)));
+                return mkRetrieve(variableFactory, 1);
             case ALOAD_2:
             case ILOAD_2:
             case LLOAD_2:
             case DLOAD_2:
             case FLOAD_2:
-                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(2, originalRawOffset)));
+                return mkRetrieve(variableFactory, 2);
             case ALOAD_3:
             case ILOAD_3:
             case LLOAD_3:
             case DLOAD_3:
             case FLOAD_3:
-                return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(3, originalRawOffset)));
+                return mkRetrieve(variableFactory, 3);
             case ACONST_NULL:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getNull()));
             case ICONST_M1:
@@ -452,31 +565,27 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LSTORE:
             case DSTORE:
             case FSTORE:
-                return new AssignmentSimple(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset), getStackRValue(0));
             case ISTORE_0:
             case ASTORE_0:
             case LSTORE_0:
             case DSTORE_0:
             case FSTORE_0:
-                return new AssignmentSimple(variableFactory.localVariable(0, originalRawOffset), getStackRValue(0));
             case ISTORE_1:
             case ASTORE_1:
             case LSTORE_1:
             case DSTORE_1:
             case FSTORE_1:
-                return new AssignmentSimple(variableFactory.localVariable(1, originalRawOffset), getStackRValue(0));
             case ISTORE_2:
             case ASTORE_2:
             case LSTORE_2:
             case DSTORE_2:
             case FSTORE_2:
-                return new AssignmentSimple(variableFactory.localVariable(2, originalRawOffset), getStackRValue(0));
             case ISTORE_3:
             case ASTORE_3:
             case LSTORE_3:
             case DSTORE_3:
             case FSTORE_3:
-                return new AssignmentSimple(variableFactory.localVariable(3, originalRawOffset), getStackRValue(0));
+                return mkAssign(getStorageType(), variableFactory);
             case NEW:
                 return new AssignmentSimple(getStackLValue(0), new NewObject(cpEntries[0]));
             case NEWARRAY:
@@ -667,8 +776,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 );
             }
             case RET: {
+                int slot = getInstrArgByte(0);
                 // This ret could return to after any JSR instruction which it is reachable from.  This is ... tricky.
-                Expression retVal = new LValueExpression(variableFactory.localVariable(getInstrArgByte(0), originalRawOffset));
+                Expression retVal = new LValueExpression(variableFactory.localVariable(slot, localVariablesBySlot.get(slot), originalRawOffset));
                 return new JSRRetStatement(retVal);
             }
             case GOTO:
@@ -832,8 +942,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     op = ArithOp.MINUS;
                 }
                 // Can we have ++ / += instead?
-                return new AssignmentSimple(variableFactory.localVariable(variableIndex, originalRawOffset),
-                        new ArithmeticOperation(new LValueExpression(variableFactory.localVariable(variableIndex, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
+                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset);
+                return new AssignmentSimple(lvalue,
+                        new ArithmeticOperation(new LValueExpression(lvalue), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
             case IINC_WIDE: {
                 int variableIndex = getInstrArgShort(1);
@@ -844,8 +955,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     op = ArithOp.MINUS;
                 }
                 // Can we have ++ / += instead?
-                return new AssignmentSimple(variableFactory.localVariable(variableIndex, originalRawOffset),
-                        new ArithmeticOperation(new LValueExpression(variableFactory.localVariable(variableIndex, originalRawOffset)), new Literal(TypedLiteral.getInt(incrAmount)), op));
+                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset);
+
+                return new AssignmentSimple(lvalue,
+                        new ArithmeticOperation(new LValueExpression(lvalue), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
 
             case DNEG:
@@ -934,13 +1047,200 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
+    private void collectLocallyMutatedVariables(SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
+        Pair<JavaTypeInstance, Integer> storage = getStorageType();
+        if (storage == null) {
+            ssaIdentifiers = new SSAIdentifiers<Slot>();
+        } else {
+            ssaIdentifiers = new SSAIdentifiers<Slot>(new Slot(storage.getFirst(), storage.getSecond()), ssaIdentifierFactory);
+        }
+    }
+
+    public static void assignSSAIdentifiers(Method method, List<Op02WithProcessedDataAndRefs> statements) {
+
+        SSAIdentifierFactory<Slot> ssaIdentifierFactory = new SSAIdentifierFactory<Slot>();
+        /*
+         * before we do anything, we need to generate identifiers for the parameters.
+         */
+        Map<Slot, SSAIdent> idents = method.getMethodPrototype().collectInitialSlotUsage(method.getConstructorFlag(), ssaIdentifierFactory);
+
+        for (Op02WithProcessedDataAndRefs statement : statements) {
+            statement.collectLocallyMutatedVariables(ssaIdentifierFactory);
+        }
+        statements.get(0).ssaIdentifiers = new SSAIdentifiers<Slot>(idents);
+
+        final BinaryPredicate<Slot, Slot> testSlot = new BinaryPredicate<Slot, Slot>() {
+            @Override
+            public boolean test(Slot a, Slot b) {
+                JavaTypeInstance t1 = a.getJavaTypeInstance();
+                JavaTypeInstance t2 = b.getJavaTypeInstance();
+                if (t1 instanceof RawJavaType && t2 instanceof RawJavaType) {
+                    if (t1 == t2) return true;
+                }
+                return false;
+            }
+        };
+
+        LinkedList<Op02WithProcessedDataAndRefs> toProcess = ListFactory.newLinkedList();
+        toProcess.addAll(statements);
+        while (!toProcess.isEmpty()) {
+            Op02WithProcessedDataAndRefs statement = toProcess.remove();
+            SSAIdentifiers<Slot> ssaIdentifiers = statement.ssaIdentifiers;
+            boolean changed = false;
+            for (Op02WithProcessedDataAndRefs source : statement.getSources()) {
+                if (ssaIdentifiers.mergeWith(source.ssaIdentifiers, testSlot)) {
+                    changed = true;
+                }
+            }
+            // If anything's changed, we need to check this statements children.
+            if (changed) {
+                toProcess.addAll(statement.getTargets());
+            }
+        }
+        int x = 1;
+    }
+
+
+    public static void discoverStorageLiveness(Method method, List<Op02WithProcessedDataAndRefs> op2list) {
+        assignSSAIdentifiers(method, op2list);
+        // Now we've assigned SSA identifiers, we want to find, for each ident, the 'most encompassing'
+        // set - so if we have one store which has S{0} = 1, one which has S{0} = 2, and one which has
+        // S{0} = {1,2}, then all three should be S{0} = {1,2}
+        // Way to handle this is to walk the graph again, testing each ssa ident against target's idents
+        // If the target's ident is a superset of the source's, then copy the target into the source.
+        // (of course we don't want to rewind every time, or we'll be n^2).
+        Map<Slot, Map<SSAIdent, Set<SSAIdent>>> identChain = MapFactory.newOrderedLazyMap(
+                new UnaryFunction<Slot, Map<SSAIdent, Set<SSAIdent>>>() {
+                    @Override
+                    public Map<SSAIdent, Set<SSAIdent>> invoke(Slot arg) {
+                        return MapFactory.newOrderedLazyMap(new UnaryFunction<SSAIdent, Set<SSAIdent>>() {
+                            @Override
+                            public Set<SSAIdent> invoke(SSAIdent arg) {
+                                return SetFactory.newOrderedSet();
+                            }
+                        });
+                    }
+                });
+
+        for (Op02WithProcessedDataAndRefs op : op2list) {
+            SSAIdentifiers<Slot> identifiers = op.ssaIdentifiers;
+            Map<Slot, SSAIdent> identMap = identifiers.getKnownIdentifiers();
+            for (Map.Entry<Slot, SSAIdent> entry : identMap.entrySet()) {
+                Slot thisSlot = entry.getKey();
+                SSAIdent thisIdents = entry.getValue();
+                Map<SSAIdent, Set<SSAIdent>> map = identChain.get(thisSlot);
+                // Note - because this is a lazy map, this will force us to get a key.
+                // This is needed for later, as we use this to determine the universe of keys.
+                Set<SSAIdent> thisNextSet = map.get(thisIdents);
+                for (Op02WithProcessedDataAndRefs tgt : op.getTargets()) {
+                    SSAIdent nextIdents = tgt.ssaIdentifiers.getSSAIdent(thisSlot);
+                    if (nextIdents != null && nextIdents.isSuperSet(thisIdents)) {
+                        thisNextSet.add(nextIdents);
+                    }
+                }
+            }
+        }
+        // Now rationalise this map.
+        final Map<Pair<Slot, SSAIdent>, Ident> combinedMap = MapFactory.newOrderedMap();
+
+        final IdentFactory identFactory = new IdentFactory();
+
+        for (Map.Entry<Slot, Map<SSAIdent, Set<SSAIdent>>> entry : identChain.entrySet()) {
+            // This is a map of all the things that are ever in slot Slot, if they alias.
+            // If they have aliases, they might not resolve to the same eventual chain, if one of them
+            // is an early return - we need to get the superest-set...
+            final Slot slot = entry.getKey();
+            // This map contains a->{a,b},{a,c} etc.
+            //                   b->{a,b}
+            //                   c->{a,c}
+            // (and maybe {a,b}->{a,b,c} etc if we're lucky and have no early returns, but we can't
+            // guarantee that).
+            // We need to find a 'full relationship' - i.e. create a reverse map as well, and then fully
+            // walk both.
+            final Map<SSAIdent, Set<SSAIdent>> downMap = entry.getValue();
+            final Map<SSAIdent, Set<SSAIdent>> upMap = createReverseMap(downMap);
+            Set<SSAIdent> keys = SetFactory.newOrderedSet();
+            keys.addAll(downMap.keySet());
+            keys.addAll(upMap.keySet());  // this is probably not necessary.....
+            // Remember that this represents MULTIPLE maps, all usages of this slot superimposed.
+            // there will disjoint sets.
+
+            for (SSAIdent key : keys) {
+                if (combinedMap.containsKey(key)) continue;
+                final Ident thisIdent = identFactory.getNextIdent(slot.getIdx());
+                GraphVisitor<SSAIdent> gv = new GraphVisitorDFS<SSAIdent>(key, new BinaryProcedure<SSAIdent, GraphVisitor<SSAIdent>>() {
+                    @Override
+                    public void call(SSAIdent arg1, GraphVisitor<SSAIdent> arg2) {
+                        if (combinedMap.containsKey(arg1)) return;
+                        combinedMap.put(Pair.make(slot, arg1), thisIdent);
+                        arg2.enqueue(downMap.get(arg1));
+                        arg2.enqueue(upMap.get(arg1));
+                    }
+                });
+                gv.process();
+            }
+        }
+
+        /*
+         * Now, finally, map the SSAIdents on the individual statements back to
+         */
+        for (Op02WithProcessedDataAndRefs op2 : op2list) {
+            op2.mapSSASlots(combinedMap);
+        }
+
+        method.getMethodPrototype().computeParameters(method.getConstructorFlag(), op2list.get(0).localVariablesBySlot);
+    }
+
+    private void mapSSASlots(Map<Pair<Slot, SSAIdent>, Ident> identmap) {
+        Map<Slot, SSAIdent> knownIdents = ssaIdentifiers.getKnownIdentifiers();
+        for (Map.Entry<Slot, SSAIdent> entry : knownIdents.entrySet()) {
+            Ident ident = identmap.get(Pair.make(entry.getKey(), entry.getValue()));
+            if (ident == null) {
+                throw new IllegalStateException("Null ident");
+            }
+            localVariablesBySlot.put(entry.getKey().getIdx(), ident);
+        }
+    }
+
+    private static class IdentFactory {
+        int nextIdx = 0;
+
+        public Ident getNextIdent(int slot) {
+            return new Ident(slot, nextIdx++);
+        }
+    }
+
+    private static Map<SSAIdent, Set<SSAIdent>> createReverseMap(Map<SSAIdent, Set<SSAIdent>> downMap) {
+        Map<SSAIdent, Set<SSAIdent>> res = MapFactory.newOrderedLazyMap(new UnaryFunction<SSAIdent, Set<SSAIdent>>() {
+            @Override
+            public Set<SSAIdent> invoke(SSAIdent arg) {
+                return SetFactory.newOrderedSet();
+            }
+        });
+        for (Map.Entry<SSAIdent, Set<SSAIdent>> entry : downMap.entrySet()) {
+            SSAIdent revValue = entry.getKey();
+            Set<SSAIdent> revKeys = entry.getValue();
+            for (SSAIdent revKey : revKeys) {
+                res.get(revKey).add(revValue);
+            }
+        }
+        return res;
+    }
+
     public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list,
                                                               final Method method,
                                                               final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory) {
 
+        /*
+         * Walk the op02, discovering liveness regions of variable slots.
+         */
+        discoverStorageLiveness(method, op2list);
+
+
         final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
         // Convert the op2s into a simple set of statements.
         // Do these need to be processed in a sensible order?  Could just iterate?
+
         final GraphConversionHelper<Op02WithProcessedDataAndRefs, Op03SimpleStatement> conversionHelper = new GraphConversionHelper<Op02WithProcessedDataAndRefs, Op03SimpleStatement>();
         // By only processing reachable bytecode, we ignore deliberate corruption.   However, we could
         // Nop out unreachable code, so as to not have this ugliness.

@@ -29,6 +29,15 @@ public class SSAIdent {
         return new SSAIdent(b1);
     }
 
+    public boolean isSuperSet(SSAIdent other) {
+        BitSet tmp = (BitSet) val.clone();
+        tmp.or(other.val);
+        // if or-ing it changed cardinality, then it wasn't a superset.
+        if (tmp.cardinality() != val.cardinality()) return false;
+        tmp.xor(other.val);
+        return (tmp.cardinality() > 0);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;

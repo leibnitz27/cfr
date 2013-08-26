@@ -40,18 +40,18 @@ public class VariableNamerHinted implements VariableNamer {
     }
 
     @Override
-    public NamedVariable getName(int originalRawOffset, long stackPosition) {
+    public NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition) {
         originalRawOffset += 2;
 
         short sstackPos = (short) stackPosition;
         if (!localVariableEntryTreeSet.containsKey(sstackPos)) {
-            return missingNamer.getName(0, sstackPos);
+            return missingNamer.getName(0, ident, sstackPos);
         }
         LocalVariableEntry tmp = new LocalVariableEntry((short) (originalRawOffset), (short) 1, (short) -1, (short) -1, (short) stackPosition);
         LocalVariableEntry lve = localVariableEntryTreeSet.get(sstackPos).floor(tmp);
 
         if (lve == null) {
-            return missingNamer.getName(0, sstackPos);
+            return missingNamer.getName(0, ident, sstackPos);
         }
 
         NamedVariable namedVariable = cache.get(lve);
@@ -80,7 +80,7 @@ public class VariableNamerHinted implements VariableNamer {
     }
 
     @Override
-    public void forceName(long stackPosition, String name) {
+    public void forceName(Ident ident, long stackPosition, String name) {
 
     }
 }

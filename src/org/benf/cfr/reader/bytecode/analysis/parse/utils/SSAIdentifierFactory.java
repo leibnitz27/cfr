@@ -11,15 +11,17 @@ import java.util.Map;
  * User: lee
  * Date: 24/04/2012
  */
-public class SSAIdentifierFactory {
-    private static final Map<LValue, Integer> nextIdentFor = MapFactory.newLazyMap(new UnaryFunction<LValue, Integer>() {
-        @Override
-        public Integer invoke(LValue ignore) {
-            return 0;
-        }
-    });
+public class SSAIdentifierFactory<KEYTYPE> {
+    private final Map<KEYTYPE, Integer> nextIdentFor = MapFactory.newLazyMap(
+            MapFactory.<KEYTYPE, Integer>newOrderedMap(),
+            new UnaryFunction<KEYTYPE, Integer>() {
+                @Override
+                public Integer invoke(KEYTYPE ignore) {
+                    return 0;
+                }
+            });
 
-    public SSAIdent getIdent(LValue lValue) {
+    public SSAIdent getIdent(KEYTYPE lValue) {
         int val = nextIdentFor.get(lValue);
         nextIdentFor.put(lValue, val + 1);
         return new SSAIdent(val);

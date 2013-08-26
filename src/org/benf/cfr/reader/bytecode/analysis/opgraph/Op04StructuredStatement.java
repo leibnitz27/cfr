@@ -562,7 +562,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     private static LValue removeSyntheticConstructorParam(Method method, Op04StructuredStatement root) {
         MethodPrototype prototype = method.getMethodPrototype();
-        List<LocalVariable> vars = prototype.getParameters(method.getConstructorFlag());
+        // method.getConstructorFlag());
+        List<LocalVariable> vars = prototype.getComputedParameters();
         if (vars.isEmpty()) return null;
         LocalVariable outerThis = vars.get(0);
         // Todo : Should we test that it's the right type?  Already been done, really....
@@ -623,7 +624,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public static void rewriteLambdas(CFRState cfrState, Method method, Op04StructuredStatement root) {
         if (!cfrState.rewriteLambdas()) return;
 
-        new LambdaRewriter(method.getClassFile()).rewrite(root);
+        new LambdaRewriter(cfrState, method.getClassFile()).rewrite(root);
     }
 
     public static void removePrimitiveDeconversion(CFRState cfrState, Method method, Op04StructuredStatement root) {

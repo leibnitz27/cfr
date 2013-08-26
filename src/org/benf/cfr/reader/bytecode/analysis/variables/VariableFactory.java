@@ -39,10 +39,6 @@ public class VariableFactory {
         if (methodPrototype.isInstanceMethod()) {
             JavaTypeInstance thisType = method.getClassFile().getClassType();
             typedArgs.add(new InferredJavaType(thisType, InferredJavaType.Source.UNKNOWN, true));
-            /*
-             * And hey, let's hardcode that the name is 'this' too.
-             */
-            variableNamer.forceName(0, MiscConstants.THIS);
         }
         for (JavaTypeInstance arg : args) {
             typedArgs.add(new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN, true));
@@ -54,14 +50,17 @@ public class VariableFactory {
         return method.getMethodPrototype().getReturnType();
     }
 
-    public LValue localVariable(int idx, int origRawOffset) {
+    public LValue localVariable(int idx, Ident ident, int origRawOffset) {
+        if (ident == null) {
+            throw new IllegalStateException();
+        }
         InferredJavaType varType;
         if (idx < typedArgs.size()) {
             varType = typedArgs.get(idx);
         } else {
             varType = new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.UNKNOWN);
         }
-        LValue tmp = new LocalVariable(idx, variableNamer, origRawOffset, varType);
+        LValue tmp = new LocalVariable(idx, ident, variableNamer, origRawOffset, varType);
         LValue val = cache.get(tmp);
         if (val == null) {
             cache.put(tmp, tmp);

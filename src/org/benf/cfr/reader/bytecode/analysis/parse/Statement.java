@@ -39,7 +39,7 @@ public interface Statement extends Dumpable, ComparableUnderEC {
 
     void collectObjectCreation(CreationCollector creationCollector);
 
-    SSAIdentifiers collectLocallyMutatedVariables(SSAIdentifierFactory ssaIdentifierFactory);
+    SSAIdentifiers<LValue> collectLocallyMutatedVariables(SSAIdentifierFactory<LValue> ssaIdentifierFactory);
 
     boolean condenseWithNextConditional();
 

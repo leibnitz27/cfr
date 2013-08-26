@@ -35,6 +35,7 @@ public class AssignmentSimple extends AbstractAssignment {
         this.rvalue = rvalue;
     }
 
+
     @Override
     public Dumper dump(Dumper d) {
         return d.dump(lvalue).print(" = ").dump(rvalue).endCodeln();
@@ -56,7 +57,7 @@ public class AssignmentSimple extends AbstractAssignment {
     }
 
     @Override
-    public SSAIdentifiers collectLocallyMutatedVariables(SSAIdentifierFactory ssaIdentifierFactory) {
+    public SSAIdentifiers<LValue> collectLocallyMutatedVariables(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
         return lvalue.collectVariableMutation(ssaIdentifierFactory);
     }
 

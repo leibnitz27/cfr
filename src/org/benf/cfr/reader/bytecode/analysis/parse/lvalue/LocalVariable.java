@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 
+import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariableDefault;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
@@ -24,17 +25,20 @@ public class LocalVariable extends AbstractLValue {
     private final NamedVariable name;
     // We keep this so we don't confuse two variables with the same name, tricksy.
     private final long idx;
+    private final Ident ident;
 
-    public LocalVariable(long index, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType) {
+    public LocalVariable(long index, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType) {
         super(inferredJavaType);
-        this.name = variableNamer.getName(originalRawOffset, index);
+        this.name = variableNamer.getName(originalRawOffset, ident, index);
         this.idx = index;
+        this.ident = ident;
     }
 
     public LocalVariable(String name, InferredJavaType inferredJavaType) {
         super(inferredJavaType);
         this.name = new NamedVariableDefault(name);
         this.idx = -1;
+        this.ident = null;
     }
 
     @Override
@@ -70,8 +74,8 @@ public class LocalVariable extends AbstractLValue {
     }
 
     @Override
-    public SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory) {
-        return new SSAIdentifiers(this, ssaIdentifierFactory);
+    public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
+        return new SSAIdentifiers<LValue>(this, ssaIdentifierFactory);
     }
 
     @Override
@@ -90,6 +94,11 @@ public class LocalVariable extends AbstractLValue {
         if (idx != that.idx) {
             return false;
         }
+        if (ident == null) {
+            if (that.ident != null) return false;
+        } else {
+            if (!ident.equals(that.ident)) return false;
+        }
 
         return true;
     }
@@ -98,6 +107,7 @@ public class LocalVariable extends AbstractLValue {
     public int hashCode() {
         int result = name.hashCode();
         result = 31 * result + (int) idx;
+        if (ident != null) result = 31 * result + ident.hashCode();
         return result;
     }
 }

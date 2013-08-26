@@ -20,7 +20,7 @@ public interface LValue extends Dumpable, DeepCloneable<LValue> {
 
     <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector<T> lValueAssigmentCollector);
 
-    SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory);
+    SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory);
 
     LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
 

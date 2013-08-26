@@ -22,4 +22,6 @@ public interface TypeConstants {
     public final static String boxingNameDouble = "java.lang.Double";
 
     public final static String throwableName = "java.lang.Throwable";
+    public final static String stringName = "java.lang.String";
+    public final static String stringBuilderName = "java.lang.StringBuilder";
 }

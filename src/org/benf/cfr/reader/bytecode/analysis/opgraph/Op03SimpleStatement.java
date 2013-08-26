@@ -1,6 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
-import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;import org.benf.cfr.reader.bytecode.analysis.parse.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
@@ -47,7 +50,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private boolean isNop;
     private InstrIndex index;
     private Statement containedStatement;
-    private SSAIdentifiers ssaIdentifiers;
+    private SSAIdentifiers<LValue> ssaIdentifiers;
     // 
     // This statement triggers a block
     //
@@ -69,7 +72,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.containedStatement = statement;
         this.isNop = false;
         this.index = original.getIndex();
-        this.ssaIdentifiers = new SSAIdentifiers();
+        this.ssaIdentifiers = new SSAIdentifiers<LValue>();
         this.containedInBlocks.addAll(original.getContainedInTheseBlocks());
         statement.setContainer(this);
     }
@@ -78,7 +81,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.containedStatement = statement;
         this.isNop = false;
         this.index = index;
-        this.ssaIdentifiers = new SSAIdentifiers();
+        this.ssaIdentifiers = new SSAIdentifiers<LValue>();
         this.containedInBlocks.addAll(containedIn);
         statement.setContainer(this);
     }
@@ -203,7 +206,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     @Override
-    public SSAIdentifiers getSSAIdentifiers() {
+    public SSAIdentifiers<LValue> getSSAIdentifiers() {
         return ssaIdentifiers;
     }
 
@@ -513,22 +516,36 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statements.addAll(newStatements);
     }
 
-    private void collectLocallyMutatedVariables(SSAIdentifierFactory ssaIdentifierFactory) {
+    private void collectLocallyMutatedVariables(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
         this.ssaIdentifiers = containedStatement.collectLocallyMutatedVariables(ssaIdentifierFactory);
     }
 
-    public static void assignSSAIdentifiers(List<Op03SimpleStatement> statements) {
-        SSAIdentifierFactory ssaIdentifierFactory = new SSAIdentifierFactory();
+    public static void assignSSAIdentifiers(Method method, List<Op03SimpleStatement> statements) {
+
+        SSAIdentifierFactory<LValue> ssaIdentifierFactory = new SSAIdentifierFactory<LValue>();
+
+        List<LocalVariable> params = method.getMethodPrototype().getComputedParameters();
+        Map<LValue, SSAIdent> initialSSAValues = MapFactory.newMap();
+        for (LocalVariable param : params) {
+            initialSSAValues.put(param, ssaIdentifierFactory.getIdent(param));
+        }
+        SSAIdentifiers<LValue> initialIdents = new SSAIdentifiers<LValue>(initialSSAValues);
+
         for (Op03SimpleStatement statement : statements) {
             statement.collectLocallyMutatedVariables(ssaIdentifierFactory);
         }
+
+        Op03SimpleStatement entry = statements.get(0);
 
         LinkedList<Op03SimpleStatement> toProcess = ListFactory.newLinkedList();
         toProcess.addAll(statements);
         while (!toProcess.isEmpty()) {
             Op03SimpleStatement statement = toProcess.remove();
-            SSAIdentifiers ssaIdentifiers = statement.ssaIdentifiers;
+            SSAIdentifiers<LValue> ssaIdentifiers = statement.ssaIdentifiers;
             boolean changed = false;
+            if (statement == entry) {
+                if (ssaIdentifiers.mergeWith(initialIdents)) changed = true;
+            }
             for (Op03SimpleStatement source : statement.getSources()) {
                 if (ssaIdentifiers.mergeWith(source.ssaIdentifiers)) changed = true;
             }

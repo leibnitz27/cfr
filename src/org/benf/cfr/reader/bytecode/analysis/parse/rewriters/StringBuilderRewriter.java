@@ -10,7 +10,9 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
 
@@ -21,6 +23,12 @@ import java.util.List;
  * Time: 06:43
  */
 public class StringBuilderRewriter implements ExpressionRewriter {
+    private final CFRState cfrState;
+
+    public StringBuilderRewriter(CFRState cfrState) {
+        this.cfrState = cfrState;
+    }
+
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (expression instanceof MemberFunctionInvokation) {
@@ -76,7 +84,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
             } else if (lhs instanceof ConstructorInvokationSimple) {
                 ConstructorInvokationSimple newObject = (ConstructorInvokationSimple) lhs;
                 String rawName = newObject.getTypeInstance().getRawName();
-                if (rawName.equals("java.lang.StringBuilder")) {
+                if (rawName.equals(TypeConstants.stringBuilderName)) {
                     JavaTypeInstance lastType = reverseAppendChain.get(reverseAppendChain.size() - 1).getInferredJavaType().getJavaTypeInstance();
                     if (lastType instanceof RawJavaType) {
                         return null;
@@ -96,6 +104,9 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         int x = revList.size() - 1;
         if (x < 0) return null;
         Expression head = revList.get(x);
+//        ClassFile stringClass = cfrState.getClassFile(TypeConstants.stringName, false);
+//        if (stringClass == null) return null;
+//        JavaTypeInstance stringType = stringClass.getClassType();
         InferredJavaType inferredJavaType = new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.STRING_TRANSFORM, true);
         for (--x; x >= 0; --x) {
             head = new ArithmeticOperation(inferredJavaType, head, revList.get(x), ArithOp.PLUS);

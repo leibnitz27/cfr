@@ -26,6 +26,7 @@ import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
 import java.util.Map;
@@ -38,10 +39,12 @@ import java.util.Map;
  */
 public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
 
+    private final CFRState cfrState;
     private final ClassFile thisClassFile;
     private final JavaTypeInstance typeInstance;
 
-    public LambdaRewriter(ClassFile thisClassFile) {
+    public LambdaRewriter(CFRState cfrState, ClassFile thisClassFile) {
+        this.cfrState = cfrState;
         this.thisClassFile = thisClassFile;
         this.typeInstance = thisClassFile.getClassType().getDeGenerifiedType();
     }
@@ -212,11 +215,14 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             classFile = thisClassFile;
         } else {
             try {
-                classFile = lambdaTypeRefLocation.getClassFile();
+                classFile = cfrState.getClassFile(lambdaTypeRefLocation, false);
             } catch (CannotLoadClassException e) {
                 // We can't load the lambda target - we can't really make any assumptions about what it will do.
                 return dynamicExpression;
             }
+        }
+        if (classFile == null) {
+            return dynamicExpression;
         }
 
         // We can't ask the prototype for instance behaviour, we have to get it from the
@@ -266,7 +272,8 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                     anonymousLambdaArgs.add(tmp);
                     replacementParameters.add(tmp);
                 }
-                List<LocalVariable> originalParameters = lambdaMethod.getMethodPrototype().getParameters(lambdaMethod.getConstructorFlag());
+                List<LocalVariable> originalParameters = lambdaMethod.getMethodPrototype().getComputedParameters();
+                // getParameters(lambdaMethod.getConstructorFlag());
 
                 /*
                  * Now we need to take the arguments for the lambda function, and replace them with names

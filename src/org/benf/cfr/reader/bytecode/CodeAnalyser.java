@@ -201,7 +201,7 @@ public class CodeAnalyser {
 
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        Op03SimpleStatement.assignSSAIdentifiers(op03SimpleParseNodes);
+        Op03SimpleStatement.assignSSAIdentifiers(method, op03SimpleParseNodes);
 
         // Condense pointless assignments
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
@@ -362,7 +362,7 @@ public class CodeAnalyser {
 //            node.dumpInner(dumper);
 //        }
 
-        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter());
+        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter(cfrState));
 //        dumper.print("Final Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
 

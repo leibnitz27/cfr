@@ -11,26 +11,26 @@ import java.util.Map;
  */
 public class VariableNamerDefault implements VariableNamer {
 
-    private Map<Long, NamedVariable> cached = MapFactory.newMap();
+    private Map<Ident, NamedVariable> cached = MapFactory.newMap();
 
     public VariableNamerDefault() {
     }
 
     @Override
-    public NamedVariable getName(int originalRawOffset, long stackPosition) {
-        NamedVariable res = cached.get(stackPosition);
+    public NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition) {
+        NamedVariable res = cached.get(ident);
         if (res == null) {
-            res = new NamedVariableDefault("var" + stackPosition);
-            cached.put(stackPosition, res);
+            res = new NamedVariableDefault("var" + ident);
+            cached.put(ident, res);
         }
         return res;
     }
 
     @Override
-    public void forceName(long stackPosition, String name) {
-        NamedVariable res = cached.get(stackPosition);
+    public void forceName(Ident ident, long stackPosition, String name) {
+        NamedVariable res = cached.get(ident);
         if (res == null) {
-            cached.put(stackPosition, new NamedVariableDefault(name));
+            cached.put(ident, new NamedVariableDefault(name));
             return;
         }
         res.forceName(name);

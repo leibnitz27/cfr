@@ -1,8 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdent;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
+import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -10,11 +15,13 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -80,7 +87,7 @@ public class MethodPrototype {
          *
          */
 
-        List<LocalVariable> parameterLValues = getParameters(isConstructor);
+        List<LocalVariable> parameterLValues = getComputedParameters();
         int argssize = args.size();
         int start = explicitThisRemoval ? 1 : 0;
         boolean first = true;
@@ -101,26 +108,66 @@ public class MethodPrototype {
         d.print(")");
     }
 
-    public void reset() {
-        parameterLValues = null;
-    }
-
     public int getNumHiddenArguments() {
         return explicitThisRemoval ? 1 : 0;
     }
 
-    public List<LocalVariable> getParameters(Method.MethodConstructor constructorFlag) {
-        if (parameterLValues != null) return parameterLValues;
+    public List<LocalVariable> getComputedParameters() {
+        if (parameterLValues == null) {
+            throw new IllegalStateException("Parameters not created");
+        }
+        return parameterLValues;
+    }
+
+    public Map<Slot, SSAIdent> collectInitialSlotUsage(Method.MethodConstructor constructorFlag, SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
+        Map<Slot, SSAIdent> res = MapFactory.newOrderedMap();
+        int offset = 0;
+        switch (constructorFlag) {
+            case ENUM_CONSTRUCTOR: {
+                offset = 3;
+                Slot tgt0 = new Slot(classFile.getClassType(), 0);
+                res.put(tgt0, ssaIdentifierFactory.getIdent(tgt0));
+                Slot tgt1 = new Slot(RawJavaType.REF, 1);
+                res.put(tgt1, ssaIdentifierFactory.getIdent(tgt1));
+                Slot tgt2 = new Slot(RawJavaType.INT, 2);
+                res.put(tgt2, ssaIdentifierFactory.getIdent(tgt2));
+                break;
+            }
+            default: {
+                if (instanceMethod) {
+                    Slot tgt = new Slot(classFile.getClassType(), 0);
+                    res.put(tgt, ssaIdentifierFactory.getIdent(tgt));
+                }
+                offset = instanceMethod ? 1 : 0;
+                break;
+            }
+        }
+        for (JavaTypeInstance arg : args) {
+            Slot tgt = new Slot(arg, offset);
+            res.put(tgt, ssaIdentifierFactory.getIdent(tgt));
+            offset += arg.getStackType().getComputationCategory();
+        }
+        return res;
+    }
+
+    public List<LocalVariable> computeParameters(Method.MethodConstructor constructorFlag, Map<Integer, Ident> slotToIdentMap) {
+        if (parameterLValues != null) {
+            throw new IllegalStateException("Parameters already created");
+        }
 
         parameterLValues = ListFactory.newList();
-        int offset = instanceMethod ? 1 : 0;
+        int offset = 0;
+        if (instanceMethod) {
+            variableNamer.forceName(slotToIdentMap.get(0), 0, MiscConstants.THIS);
+            offset = 1;
+        }
         if (constructorFlag == Method.MethodConstructor.ENUM_CONSTRUCTOR) offset += 2;
         int argssize = args.size();
         for (int i = 0; i < argssize; ++i) {
             JavaTypeInstance arg = args.get(i);
             // TODO : This should share a variable factory with the method, so we're sure they're
             // the same instance.
-            parameterLValues.add(new LocalVariable(offset, variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)));
+            parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(offset), variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)));
             offset += arg.getStackType().getComputationCategory();
         }
         return parameterLValues;
@@ -160,15 +207,6 @@ public class MethodPrototype {
                 genericRefTypeInstance = (JavaGenericRefTypeInstance) thisTypeInstance;
                 thisTypeInstance = genericRefTypeInstance.getDeGenerifiedType();
             }
-//            ClassFile classFile = null;
-//
-//            try {
-//                // Wouldn't be neccessary if we kept a back ref?
-//                // However, we should /always/ get a hit immediately here?
-//                classFile = cp.getCFRState().getClassFile(thisTypeInstance);
-//            } catch (CannotLoadClassException _) {
-//                return result;
-//            }
 
             /*
              * Now we need to specialise the method according to the existing specialisation on

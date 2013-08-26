@@ -42,7 +42,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
     private final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
 
     public LValueScopeDiscoverer(MethodPrototype prototype, Method.MethodConstructor constructorFlag) {
-        final List<LocalVariable> parameters = prototype.getParameters(constructorFlag);
+        final List<LocalVariable> parameters = prototype.getComputedParameters();
         for (LocalVariable parameter : parameters) {
             final ScopeDefinition prototypeScope = new ScopeDefinition(0, null, null, parameter, parameter.getName());
             earliestDefinition.put(parameter.getName(), prototypeScope);

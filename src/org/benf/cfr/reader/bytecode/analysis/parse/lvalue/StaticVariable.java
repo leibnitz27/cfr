@@ -90,7 +90,7 @@ public class StaticVariable extends AbstractLValue {
     }
 
     @Override
-    public SSAIdentifiers collectVariableMutation(SSAIdentifierFactory ssaIdentifierFactory) {
+    public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
         return new SSAIdentifiers(this, ssaIdentifierFactory);
     }
 

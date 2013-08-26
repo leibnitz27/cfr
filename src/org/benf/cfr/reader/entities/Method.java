@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
@@ -297,7 +298,19 @@ public class Method implements KnowsRawSize {
 
     public void analyse() {
         try {
-            if (codeAttribute != null) codeAttribute.analyse();
+            if (codeAttribute != null) {
+                codeAttribute.analyse();
+            } else {
+                Map<Integer, Ident> identMap = MapFactory.newLazyMap(new UnaryFunction<Integer, Ident>() {
+                    public int x = 0;
+
+                    @Override
+                    public Ident invoke(Integer arg) {
+                        return new Ident(arg, 0);
+                    }
+                });
+                methodPrototype.computeParameters(getConstructorFlag(), identMap);
+            }
         } catch (RuntimeException e) {
             System.out.println("While processing method : " + this.getName());
             throw e;
