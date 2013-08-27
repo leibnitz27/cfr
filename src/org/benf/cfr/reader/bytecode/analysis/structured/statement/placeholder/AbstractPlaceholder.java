@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -72,6 +73,16 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
 
     @Override
     public void markCreator(LocalVariable localVariable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<LocalVariable> findCreatedHere() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String suggestName(LocalVariable createdHere, Predicate<String> testNameUsedFn) {
         throw new UnsupportedOperationException();
     }
 

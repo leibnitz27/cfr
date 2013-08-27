@@ -3,8 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
@@ -13,6 +12,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -96,6 +99,38 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         this.isCreator = true;
     }
 
+    @Override
+    public List<LocalVariable> findCreatedHere() {
+        if (!isCreator) return null;
+        LValue created = initial.getCreatedLValue();
+        if (!(created instanceof LocalVariable)) return null;
+        return ListFactory.newList((LocalVariable) created);
+    }
+
+    @Override
+    public String suggestName(LocalVariable createdHere, Predicate<String> testNameUsedFn) {
+        JavaTypeInstance loopType = createdHere.getInferredJavaType().getJavaTypeInstance();
+
+        if (!(assignment instanceof AbstractMutatingAssignmentExpression)) return null;
+
+        if (!(loopType instanceof RawJavaType)) return null;
+        RawJavaType rawJavaType = (RawJavaType) loopType;
+        switch (rawJavaType) {
+            case INT:
+            case SHORT:
+            case LONG:
+                break;
+            default:
+                return null;
+        }
+        String[] poss = {"i", "j", "k"};
+        for (String posss : poss) {
+            if (!testNameUsedFn.test(posss)) {
+                return posss;
+            }
+        }
+        return "i"; // And we'll
+    }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {

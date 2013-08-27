@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
 
@@ -54,4 +55,8 @@ public interface StructuredStatement extends Dumpable, Matcher<StructuredStateme
 
     // Is it a comment, or a block containing nothign but comments?
     boolean isEffectivelyNOP();
+
+    List<LocalVariable> findCreatedHere();
+
+    String suggestName(LocalVariable createdHere, Predicate<String> testNameUsedFn);
 }

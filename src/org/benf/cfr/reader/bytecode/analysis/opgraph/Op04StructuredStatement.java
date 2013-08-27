@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.CanRemovePointlessBlock;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.VariableNameTidier;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -528,6 +529,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void inlinePossibles(Op04StructuredStatement root) {
         root.transform(new Inliner(), new StructuredScope());
+    }
+
+    public static void tidyVariableNames(Method method, Op04StructuredStatement root) {
+        new VariableNameTidier().transform(method, root);
     }
 
     public static void removePointlessReturn(Op04StructuredStatement root) {

@@ -188,4 +188,9 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     public boolean canCastTo(JavaTypeInstance other) {
         return true;
     }
+
+    @Override
+    public String suggestVarName() {
+        return typeInstance.suggestVarName();
+    }
 }

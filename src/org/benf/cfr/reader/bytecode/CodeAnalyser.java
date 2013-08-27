@@ -424,6 +424,10 @@ public class CodeAnalyser {
         // Some misc translations.
         Op04StructuredStatement.removePrimitiveDeconversion(cfrState, method, block);
 
+        // Tidy variable names
+        Op04StructuredStatement.tidyVariableNames(method, block);
+
+
         this.analysed = block;
         return analysed;
     }

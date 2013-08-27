@@ -5,11 +5,12 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -58,6 +59,16 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     @Override
     public void markCreator(LocalVariable localVariable) {
         throw new IllegalArgumentException("Shouldn't be calling markCreator on " + this);
+    }
+
+    @Override
+    public List<LocalVariable> findCreatedHere() {
+        return null;
+    }
+
+    @Override
+    public String suggestName(LocalVariable createdHere, Predicate<String> testNameUsedFn) {
+        return null;
     }
 
     @Override

@@ -138,4 +138,9 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     public boolean canCastTo(JavaTypeInstance other) {
         return true;
     }
+
+    @Override
+    public String suggestVarName() {
+        return null;
+    }
 }

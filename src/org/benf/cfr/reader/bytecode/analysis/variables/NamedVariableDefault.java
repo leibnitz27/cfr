@@ -10,6 +10,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class NamedVariableDefault implements NamedVariable {
     private String name;
+    private boolean isGoodName = false;
 
     public NamedVariableDefault(String name) {
         this.name = name;
@@ -18,6 +19,7 @@ public class NamedVariableDefault implements NamedVariable {
     @Override
     public void forceName(String name) {
         this.name = name;
+        isGoodName = true;
     }
 
     @Override
@@ -28,6 +30,11 @@ public class NamedVariableDefault implements NamedVariable {
     @Override
     public Dumper dump(Dumper d) {
         return d.print(name);
+    }
+
+    @Override
+    public boolean isGoodName() {
+        return isGoodName;
     }
 
     @Override

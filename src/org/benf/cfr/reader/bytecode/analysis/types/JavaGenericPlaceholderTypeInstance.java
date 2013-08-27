@@ -125,4 +125,9 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     public boolean canCastTo(JavaTypeInstance other) {
         return true;
     }
+
+    @Override
+    public String suggestVarName() {
+        return null;
+    }
 }

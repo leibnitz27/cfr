@@ -16,7 +16,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * <p/>
  * (eg) x >>= 3,  ++x
  */
-public class ArithmeticPostMutationOperation extends AbstractAssignmentExpression {
+public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentExpression {
     private LValue mutated;
     private final ArithOp op;
 

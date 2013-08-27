@@ -37,6 +37,24 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         this.cfrState = classCache.getCfrState();
     }
 
+    private String truncate(String hay, String needle) {
+        int idx = hay.lastIndexOf(needle);
+        if (idx == -1) return hay;
+        return hay.substring(idx + 1);
+    }
+
+    @Override
+    public String suggestVarName() {
+        String displayName = this.displayableName;
+        displayName = truncate(displayName, ".");
+        displayName = truncate(displayName, "$");
+        if (displayName.isEmpty()) return null;
+        char[] chars = displayName.toCharArray();
+        chars[0] = Character.toLowerCase(chars[0]);
+        displayName = new String(chars);
+        return displayName;
+    }
+
     private JavaRefTypeInstance(String className, String displayableName, JavaRefTypeInstance[] supers) {
         this.innerClassInfo = InnerClassInfo.NOT;
         this.className = className;

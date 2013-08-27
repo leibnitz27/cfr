@@ -14,21 +14,22 @@ import java.util.Set;
  * Time: 06:57
  */
 public enum RawJavaType implements JavaTypeInstance {
-    BOOLEAN("boolean", StackType.INT, true, TypeConstants.boxingNameBoolean),
-    BYTE("byte", StackType.INT, true, TypeConstants.boxingNameByte),
-    CHAR("char", StackType.INT, true, TypeConstants.boxingNameChar),
-    SHORT("short", StackType.INT, true, TypeConstants.boxingNameShort),
-    INT("int", StackType.INT, true, TypeConstants.boxingNameInt),
-    LONG("long", StackType.LONG, true, TypeConstants.boxingNameLong),
-    FLOAT("float", StackType.FLOAT, true, TypeConstants.boxingNameFloat),
-    DOUBLE("double", StackType.DOUBLE, true, TypeConstants.boxingNameDouble),
-    VOID("void", StackType.VOID, false),
-    REF("reference", StackType.REF, false),  // Don't use for fixedtypeinstance.
-    RETURNADDRESS("returnaddress", StackType.RETURNADDRESS, false),
-    RETURNADDRESSORREF("returnaddress or ref", StackType.RETURNADDRESSORREF, false),
-    NULL("null", StackType.REF, false);  // Null is a special type, sort of.
+    BOOLEAN("boolean", "bl", StackType.INT, true, TypeConstants.boxingNameBoolean),
+    BYTE("byte", "by", StackType.INT, true, TypeConstants.boxingNameByte),
+    CHAR("char", "c", StackType.INT, true, TypeConstants.boxingNameChar),
+    SHORT("short", "s", StackType.INT, true, TypeConstants.boxingNameShort),
+    INT("int", "n", StackType.INT, true, TypeConstants.boxingNameInt),
+    LONG("long", "l", StackType.LONG, true, TypeConstants.boxingNameLong),
+    FLOAT("float", "f", StackType.FLOAT, true, TypeConstants.boxingNameFloat),
+    DOUBLE("double", "d", StackType.DOUBLE, true, TypeConstants.boxingNameDouble),
+    VOID("void", null, StackType.VOID, false),
+    REF("reference", null, StackType.REF, false),  // Don't use for fixedtypeinstance.
+    RETURNADDRESS("returnaddress", null, StackType.RETURNADDRESS, false),
+    RETURNADDRESSORREF("returnaddress or ref", null, StackType.RETURNADDRESSORREF, false),
+    NULL("null", null, StackType.REF, false);  // Null is a special type, sort of.
 
     private final String name;
+    private final String suggestedVarName;
     private final StackType stackType;
     private final boolean usableType;
     private final String boxedName;
@@ -57,15 +58,16 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
 
-    private RawJavaType(String name, StackType stackType, boolean usableType, String boxedName) {
+    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName) {
         this.name = name;
         this.stackType = stackType;
         this.usableType = usableType;
         this.boxedName = boxedName;
+        this.suggestedVarName = suggestedVarName;
     }
 
-    private RawJavaType(String name, StackType stackType, boolean usableType) {
-        this(name, stackType, usableType, null);
+    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType) {
+        this(name, suggestedVarName, stackType, usableType, null);
     }
 
     public String getName() {
@@ -81,6 +83,7 @@ public enum RawJavaType implements JavaTypeInstance {
     public boolean isComplexType() {
         return false;
     }
+
 
     /*
      * Compare integral type priorities.
@@ -185,6 +188,11 @@ public enum RawJavaType implements JavaTypeInstance {
             return other.canCastTo(this);
         }
         return true;
+    }
+
+    @Override
+    public String suggestVarName() {
+        return suggestedVarName;
     }
 
 

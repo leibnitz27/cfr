@@ -80,7 +80,7 @@ public class StructuredScope {
         }
     }
 
-    private static class AtLevel {
+    protected static class AtLevel {
         StructuredStatement statement;
         int next;
 

@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -78,6 +79,12 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     @Override
     public void markCreator(LocalVariable localVariable) {
         // Nop.  Structured iter is always the creator.
+    }
+
+    @Override
+    public List<LocalVariable> findCreatedHere() {
+        if (!(iterator instanceof LocalVariable)) return null;
+        return ListFactory.newList((LocalVariable) iterator);
     }
 
 

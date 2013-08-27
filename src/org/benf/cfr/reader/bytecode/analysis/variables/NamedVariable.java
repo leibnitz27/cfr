@@ -14,6 +14,8 @@ public interface NamedVariable extends Dumpable {
 
     String getStringName();
 
+    boolean isGoodName();
+
     @Override
     Dumper dump(Dumper d);
 }

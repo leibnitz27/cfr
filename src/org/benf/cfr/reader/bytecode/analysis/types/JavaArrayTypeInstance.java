@@ -118,4 +118,9 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     public boolean canCastTo(JavaTypeInstance other) {
         return true;
     }
+
+    @Override
+    public String suggestVarName() {
+        return "arr" + underlyingType.suggestVarName();
+    }
 }

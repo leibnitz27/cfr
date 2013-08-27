@@ -41,4 +41,6 @@ public interface JavaTypeInstance {
     public boolean implicitlyCastsTo(JavaTypeInstance other);
 
     public boolean canCastTo(JavaTypeInstance other);
+
+    public String suggestVarName();
 }
