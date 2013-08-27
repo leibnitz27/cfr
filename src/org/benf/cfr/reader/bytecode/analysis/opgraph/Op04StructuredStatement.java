@@ -554,7 +554,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * in what looks like invalid variable re-use, which we can now convert.
      */
     public static void discoverVariableScopes(Method method, Op04StructuredStatement root) {
-        LValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverer(method.getMethodPrototype(), method.getConstructorFlag());
+        LValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverer(method.getMethodPrototype());
         root.traceLocalVariableScope(scopeDiscoverer);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();

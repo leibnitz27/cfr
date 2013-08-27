@@ -29,11 +29,11 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
      * We keep track of the first definition for a given variable.  If we exit the scope that the variable
      * is defined at (i.e. scope depth goes above) we have to remove all earliest definitions at that level.
      */
-    private final Map<NamedVariable, ScopeDefinition> earliestDefinition = MapFactory.newMap();
-    private final Map<Integer, Set<NamedVariable>> earliestDefinitionsByLevel = MapFactory.newLazyMap(new UnaryFunction<Integer, Set<NamedVariable>>() {
+    private final Map<NamedVariable, ScopeDefinition> earliestDefinition = MapFactory.newIdentityMap();
+    private final Map<Integer, Map<NamedVariable, Boolean>> earliestDefinitionsByLevel = MapFactory.newLazyMap(new UnaryFunction<Integer, Map<NamedVariable, Boolean>>() {
         @Override
-        public Set<NamedVariable> invoke(Integer arg) {
-            return SetFactory.newSet();
+        public Map<NamedVariable, Boolean> invoke(Integer arg) {
+            return MapFactory.newIdentityMap();
         }
     });
     private transient int currentDepth = 0;
@@ -41,7 +41,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
 
     private final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
 
-    public LValueScopeDiscoverer(MethodPrototype prototype, Method.MethodConstructor constructorFlag) {
+    public LValueScopeDiscoverer(MethodPrototype prototype) {
         final List<LocalVariable> parameters = prototype.getComputedParameters();
         for (LocalVariable parameter : parameters) {
             final ScopeDefinition prototypeScope = new ScopeDefinition(0, null, null, parameter, parameter.getName());
@@ -55,7 +55,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
     }
 
     public void leaveBlock(StructuredStatement structuredStatement) {
-        for (NamedVariable definedHere : earliestDefinitionsByLevel.get(currentDepth)) {
+        for (NamedVariable definedHere : earliestDefinitionsByLevel.get(currentDepth).keySet()) {
             earliestDefinition.remove(definedHere);
         }
         earliestDefinitionsByLevel.remove(currentDepth);
@@ -93,7 +93,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
             // First use is here.
             ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, name);
             earliestDefinition.put(name, scopeDefinition);
-            earliestDefinitionsByLevel.get(currentDepth).add(name);
+            earliestDefinitionsByLevel.get(currentDepth).put(name, true);
             discoveredCreations.add(scopeDefinition);
             return;
         }
@@ -114,7 +114,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
 
             ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, name);
             earliestDefinition.put(name, scopeDefinition);
-            earliestDefinitionsByLevel.get(currentDepth).add(name);
+            earliestDefinitionsByLevel.get(currentDepth).put(name, true);
             discoveredCreations.add(scopeDefinition);
         }
     }
@@ -238,7 +238,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
         // outer scope later!
         ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), localVariable, name);
         earliestDefinition.put(name, scopeDefinition);
-        earliestDefinitionsByLevel.get(currentDepth).add(name);
+        earliestDefinitionsByLevel.get(currentDepth).put(name, true);
         discoveredCreations.add(scopeDefinition);
     }
 
