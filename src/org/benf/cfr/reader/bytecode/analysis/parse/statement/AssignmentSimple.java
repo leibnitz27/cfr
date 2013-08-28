@@ -24,6 +24,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class AssignmentSimple extends AbstractAssignment {
     private LValue lvalue;
     private Expression rvalue;
+    private boolean initialAssign = false;
 
     public AssignmentSimple(LValue lvalue, Expression rvalue) {
         this.lvalue = lvalue;
@@ -35,6 +36,13 @@ public class AssignmentSimple extends AbstractAssignment {
         this.rvalue = rvalue;
     }
 
+    public void setInitialAssign(boolean initialAssign) {
+        this.initialAssign = initialAssign;
+    }
+
+    public boolean isInitialAssign() {
+        return initialAssign;
+    }
 
     @Override
     public Dumper dump(Dumper d) {

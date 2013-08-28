@@ -952,7 +952,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * AND following single parents back, there is only conditionals and assignments,
      * AND this chain terminates in a back jump.....
      */
-    private static boolean appropriateForIfAssignmentCollapse(Op03SimpleStatement statement) {
+    private static boolean appropriateForIfAssignmentCollapse1(Op03SimpleStatement statement) {
         boolean extraCondSeen = false;
         boolean preCondAssignmentSeen = false;
         while (statement.sources.size() == 1) {
@@ -982,20 +982,42 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return false;
     }
 
+    private static boolean appropriateForIfAssignmentCollapse2(Op03SimpleStatement statement) {
+        boolean extraCondSeen = false;
+        boolean preCondAssignmentSeen = false;
+        while (statement.sources.size() == 1) {
+            Op03SimpleStatement source = statement.sources.get(0);
+            if (source.getTargets().size() != 1) break;
+            Statement contained = source.containedStatement;
+            if (contained instanceof AbstractAssignment) {
+                preCondAssignmentSeen = true;
+            }
+            statement = source;
+        }
+        if (!preCondAssignmentSeen) return false;
+        return true;
+    }
+
     // a=x
     // b=y
     // if (b==a)
     //
     // --> if ((b=x)==(a=y))
     private static void collapseAssignmentsIntoConditional(Op03SimpleStatement ifStatement) {
-        logger.fine("Collapse assignment into conditional " + ifStatement);
-        if (!appropriateForIfAssignmentCollapse(ifStatement)) return;
 
+        WildcardMatch wcm = new WildcardMatch();
+
+        logger.fine("Collapse assignment into conditional " + ifStatement);
+        if (!(appropriateForIfAssignmentCollapse1(ifStatement) ||
+                appropriateForIfAssignmentCollapse2(ifStatement))) return;
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
         ConditionalExpression conditionalExpression = innerIf.getCondition();
         /* where possible, collapse any single parent assignments into this. */
         Op03SimpleStatement previousSource = null;
         while (ifStatement.sources.size() == 1) {
+            Expression e1 = wcm.getMemberFunction("tst", "next", wcm.getExpressionWildCard("e"));
+            Expression e2 = new ArrayIndex(wcm.getExpressionWildCard("a"), new LValueExpression(wcm.getLValueWildCard("i")));
+
             Op03SimpleStatement source = ifStatement.sources.get(0);
             if (source == previousSource) return;
             previousSource = source;
@@ -1007,6 +1029,22 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             conditionalExpression.collectUsedLValues(lvc);
             if (!lvc.isUsed(lValue)) return;
             AbstractAssignment assignment = (AbstractAssignment) (source.containedStatement);
+            /*
+             * HACK ALERT.  Don't roll up /next/.
+             */
+            if (assignment instanceof AssignmentSimple) {
+                AssignmentSimple assignmentSimple = (AssignmentSimple) assignment;
+                if (assignmentSimple.isInitialAssign()) {
+                    Expression rV = assignment.getRValue();
+                    if (e1.equals(rV) || e2.equals(rV)) return;
+                }
+            }
+            // This stops us rolling up finals, but at the cost of un-finalling them...
+//            if (lValue instanceof LocalVariable) {
+//                LocalVariable localVariable = (LocalVariable)lValue;
+//                if (localVariable.isGuessedFinal()) return;
+//            }
+
             AbstractAssignmentExpression assignmentExpression = assignment.getInliningExpression();
             if (!ifStatement.getSSAIdentifiers().isValidReplacement(lValue, source.getSSAIdentifiers())) return;
             LValueAssignmentExpressionRewriter rewriter = new LValueAssignmentExpressionRewriter(lValue, assignmentExpression, source);
@@ -2972,6 +3010,27 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         RawSwitchStatement switchStatement = (RawSwitchStatement) swatch.containedStatement;
         DecodedSwitch switchData = switchStatement.getSwitchData();
         BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SWITCH);
+        /*
+         * If all of the targets /INCLUDING DEFAULT/ point at the same place, replace the switch with a goto, and
+         * leave it at that.
+         */
+        Op03SimpleStatement oneTarget = targets.get(0);
+        boolean mismatch = false;
+        for (int x = 1; x < targets.size(); ++x) {
+            Op03SimpleStatement target = targets.get(x);
+            if (target != oneTarget) {
+                mismatch = true;
+                break;
+            }
+        }
+        if (!mismatch) {
+            /*
+             * TODO : May have to clear out sources / targets?
+             */
+            swatch.replaceStatement(new GotoStatement());
+            return;
+        }
+
         // For each of the switch targets, add a 'case' statement
         // We can add them at the end, as long as we've got a post hoc sort.
 

@@ -14,16 +14,20 @@ import java.util.Map;
 public class SSAIdentifiers<KEYTYPE> {
 
     private final KEYTYPE fixedHere;
+    private final SSAIdent valFixedHere;
     private final Map<KEYTYPE, SSAIdent> knownIdentifiers;
+    private boolean initialAssign = false;
 
     public SSAIdentifiers() {
         fixedHere = null;
+        valFixedHere = null;
         knownIdentifiers = MapFactory.newMap();
     }
 
     public SSAIdentifiers(KEYTYPE lValue, SSAIdentifierFactory<KEYTYPE> ssaIdentifierFactory) {
         SSAIdent id = ssaIdentifierFactory.getIdent(lValue);
         fixedHere = lValue;
+        valFixedHere = id;
         knownIdentifiers = MapFactory.newMap();
         knownIdentifiers.put(lValue, id);
     }
@@ -31,6 +35,15 @@ public class SSAIdentifiers<KEYTYPE> {
     public SSAIdentifiers(Map<KEYTYPE, SSAIdent> precomputedIdentifiers) {
         this.knownIdentifiers = precomputedIdentifiers;
         this.fixedHere = null;
+        this.valFixedHere = null;
+    }
+
+    public void setInitialAssign() {
+        initialAssign = true;
+    }
+
+    public boolean isInitialAssign() {
+        return initialAssign;
     }
 
     public boolean mergeWith(SSAIdentifiers<KEYTYPE> other) {
@@ -65,6 +78,14 @@ public class SSAIdentifiers<KEYTYPE> {
 
     public boolean isFixedHere(KEYTYPE lValue) {
         return lValue.equals(fixedHere);
+    }
+
+    public KEYTYPE getFixedHere() {
+        return fixedHere;
+    }
+
+    public SSAIdent getValFixedHere() {
+        return valFixedHere;
     }
 
     public boolean isValidReplacement(LValue lValue, SSAIdentifiers<KEYTYPE> other) {

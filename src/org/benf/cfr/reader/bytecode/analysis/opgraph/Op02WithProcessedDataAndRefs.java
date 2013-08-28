@@ -581,14 +581,26 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return Pair.make(type, idx);
     }
 
-    private Statement mkAssign(Pair<JavaTypeInstance, Integer> storageTypeAndIdx, VariableFactory variableFactory) {
-        int idx = storageTypeAndIdx.getSecond();
-        Ident ident = localVariablesBySlot.get(idx);
-        return new AssignmentSimple(variableFactory.localVariable(idx, ident, originalRawOffset), getStackRValue(0));
+    private Statement mkAssign(VariableFactory variableFactory) {
+        Pair<JavaTypeInstance, Integer> storageTypeAndIdx = getStorageType();
+        int slot = storageTypeAndIdx.getSecond();
+        Ident ident = localVariablesBySlot.get(slot);
+
+        SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(new Slot(storageTypeAndIdx.getFirst(), slot));
+        AssignmentSimple res = new AssignmentSimple(variableFactory.localVariable(slot, ident, originalRawOffset, ssaIdent.card() == 1), getStackRValue(0));
+        if (ssaIdentifiers.isInitialAssign()) {
+            res.setInitialAssign(true);
+        }
+        return res;
     }
 
-    private Statement mkRetrieve(VariableFactory variableFactory, int slot) {
-        return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, localVariablesBySlot.get(slot), originalRawOffset)));
+    private Statement mkRetrieve(VariableFactory variableFactory) {
+        Pair<JavaTypeInstance, Integer> storageTypeAndIdx = getRetrieveType();
+        int slot = storageTypeAndIdx.getSecond();
+        Ident ident = localVariablesBySlot.get(slot);
+
+        SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(new Slot(storageTypeAndIdx.getFirst(), slot));
+        return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, ident, originalRawOffset, ssaIdent.card() == 1)));
     }
 
     public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory) {
@@ -598,31 +610,27 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LLOAD:
             case DLOAD:
             case FLOAD:
-                return mkRetrieve(variableFactory, getInstrArgByte(0));
             case ALOAD_0:
             case ILOAD_0:
             case LLOAD_0:
             case DLOAD_0:
             case FLOAD_0:
-                return mkRetrieve(variableFactory, 0);
             case ALOAD_1:
             case ILOAD_1:
             case LLOAD_1:
             case DLOAD_1:
             case FLOAD_1:
-                return mkRetrieve(variableFactory, 1);
             case ALOAD_2:
             case ILOAD_2:
             case LLOAD_2:
             case DLOAD_2:
             case FLOAD_2:
-                return mkRetrieve(variableFactory, 2);
             case ALOAD_3:
             case ILOAD_3:
             case LLOAD_3:
             case DLOAD_3:
             case FLOAD_3:
-                return mkRetrieve(variableFactory, 3);
+                return mkRetrieve(variableFactory);
             case ACONST_NULL:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getNull()));
             case ICONST_M1:
@@ -682,7 +690,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LSTORE_3:
             case DSTORE_3:
             case FSTORE_3:
-                return mkAssign(getStorageType(), variableFactory);
+                return mkAssign(variableFactory);
             case NEW:
                 return new AssignmentSimple(getStackLValue(0), new NewObject(cpEntries[0]));
             case NEWARRAY:
@@ -875,7 +883,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case RET: {
                 int slot = getInstrArgByte(0);
                 // This ret could return to after any JSR instruction which it is reachable from.  This is ... tricky.
-                Expression retVal = new LValueExpression(variableFactory.localVariable(slot, localVariablesBySlot.get(slot), originalRawOffset));
+                Expression retVal = new LValueExpression(variableFactory.localVariable(slot, localVariablesBySlot.get(slot), originalRawOffset, false));
                 return new JSRRetStatement(retVal);
             }
             case GOTO:
@@ -1039,7 +1047,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     op = ArithOp.MINUS;
                 }
                 // Can we have ++ / += instead?
-                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset);
+                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset, false);
                 return new AssignmentSimple(lvalue,
                         new ArithmeticOperation(new LValueExpression(lvalue), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
@@ -1052,7 +1060,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     op = ArithOp.MINUS;
                 }
                 // Can we have ++ / += instead?
-                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset);
+                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset, false);
 
                 return new AssignmentSimple(lvalue,
                         new ArithmeticOperation(new LValueExpression(lvalue), new Literal(TypedLiteral.getInt(incrAmount)), op));
@@ -1204,11 +1212,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         final BinaryPredicate<Slot, Slot> testSlot = new BinaryPredicate<Slot, Slot>() {
             @Override
             public boolean test(Slot a, Slot b) {
-                JavaTypeInstance t1 = a.getJavaTypeInstance();
-                JavaTypeInstance t2 = b.getJavaTypeInstance();
-                if (t1 instanceof RawJavaType && t2 instanceof RawJavaType) {
-                    if (t1 == t2) return true;
-                }
+                StackType t1 = a.getJavaTypeInstance().getStackType();
+                StackType t2 = b.getJavaTypeInstance().getStackType();
+                if (t1 == t2) return true;
                 return false;
             }
         };
@@ -1255,6 +1261,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         for (Op02WithProcessedDataAndRefs op : op2list) {
             SSAIdentifiers<Slot> identifiers = op.ssaIdentifiers;
+
+            Slot fixedHere = identifiers.getFixedHere();
+            if (fixedHere != null) {
+                SSAIdent finalIdent = identifiers.getSSAIdent(fixedHere);
+                SSAIdent fixedIdent = identifiers.getValFixedHere();
+                if (fixedIdent.isFirstIn(finalIdent)) {
+                    identifiers.setInitialAssign();
+                }
+            }
+
             Map<Slot, SSAIdent> identMap = identifiers.getKnownIdentifiers();
             for (Map.Entry<Slot, SSAIdent> entry : identMap.entrySet()) {
                 Slot thisSlot = entry.getKey();

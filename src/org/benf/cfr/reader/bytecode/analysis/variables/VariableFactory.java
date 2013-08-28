@@ -50,7 +50,7 @@ public class VariableFactory {
         return method.getMethodPrototype().getReturnType();
     }
 
-    public LValue localVariable(int idx, Ident ident, int origRawOffset) {
+    public LValue localVariable(int idx, Ident ident, int origRawOffset, boolean guessedFinal) {
         if (ident == null) {
             throw new IllegalStateException();
         }
@@ -60,7 +60,7 @@ public class VariableFactory {
         } else {
             varType = new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.UNKNOWN);
         }
-        LValue tmp = new LocalVariable(idx, ident, variableNamer, origRawOffset, varType);
+        LValue tmp = new LocalVariable(idx, ident, variableNamer, origRawOffset, varType, guessedFinal);
         LValue val = cache.get(tmp);
         if (val == null) {
             cache.put(tmp, tmp);

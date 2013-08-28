@@ -101,7 +101,26 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         Expression prev = null;
         if (res instanceof LValueExpression && replacementIdentifiers != null) {
             LValue resLValue = ((LValueExpression) res).getLValue();
-            if (!ssaIdentifiers.isValidReplacement(resLValue, replacementIdentifiers)) return null;
+            replaceTest:
+            if (!ssaIdentifiers.isValidReplacement(resLValue, replacementIdentifiers)) {
+                /* Second chance - self assignment
+                 */
+                Statement lvStm = lvSc.getStatement();
+                if (lvStm instanceof AssignmentSimple) {
+                    if (lvStm.getCreatedLValue().equals(resLValue)) {
+                        Op03SimpleStatement lv03 = (Op03SimpleStatement) lvSc;
+                        for (Op03SimpleStatement source : lv03.getSources()) {
+                            if (!source.getSSAIdentifiers().isValidReplacement(resLValue, replacementIdentifiers))
+                                return null;
+                        }
+                        /*
+                         * Ok, we can get away with it.
+                         */
+                        break replaceTest;
+                    }
+                }
+                return null;
+            }
         }
         if (statementContainer != null) {
             lvSc.copyBlockInformationFrom(statementContainer);

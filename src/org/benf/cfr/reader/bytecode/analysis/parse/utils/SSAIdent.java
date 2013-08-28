@@ -38,6 +38,10 @@ public class SSAIdent {
         return (tmp.cardinality() > 0);
     }
 
+    public int card() {
+        return val.cardinality();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
@@ -54,5 +58,11 @@ public class SSAIdent {
     @Override
     public String toString() {
         return val.toString();
+    }
+
+    public boolean isFirstIn(SSAIdent other) {
+        int bit1 = val.nextSetBit(0);
+        int bit2 = other.val.nextSetBit(0);
+        return bit1 == bit2;
     }
 }

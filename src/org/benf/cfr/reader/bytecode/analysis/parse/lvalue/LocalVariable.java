@@ -26,12 +26,14 @@ public class LocalVariable extends AbstractLValue {
     // We keep this so we don't confuse two variables with the same name, tricksy.
     private final long idx;
     private final Ident ident;
+    private final boolean guessedFinal;
 
-    public LocalVariable(long index, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType) {
+    public LocalVariable(long index, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType, boolean guessedFinal) {
         super(inferredJavaType);
         this.name = variableNamer.getName(originalRawOffset, ident, index);
         this.idx = index;
         this.ident = ident;
+        this.guessedFinal = guessedFinal;
     }
 
     public LocalVariable(String name, InferredJavaType inferredJavaType) {
@@ -39,6 +41,7 @@ public class LocalVariable extends AbstractLValue {
         this.name = new NamedVariableDefault(name);
         this.idx = -1;
         this.ident = null;
+        this.guessedFinal = false;
     }
 
     @Override
@@ -46,9 +49,13 @@ public class LocalVariable extends AbstractLValue {
         throw new ConfusedCFRException("NYI");
     }
 
+    public boolean isGuessedFinal() {
+        return guessedFinal;
+    }
+
     /*
-     * Can't modify, so deep clone is this.
-     */
+         * Can't modify, so deep clone is this.
+         */
     @Override
     public LValue deepClone(CloneHelper cloneHelper) {
         return this;
