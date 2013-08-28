@@ -12,14 +12,24 @@ import java.util.Map;
  */
 public class BindingSuperContainer {
 
-    public static BindingSuperContainer POISON = new BindingSuperContainer(null, null);
+    public enum Route {
+        EXTENSION,
+        INTERFACE
+    }
+
+    ;
+
+    public static BindingSuperContainer POISON = new BindingSuperContainer(null, null, null);
 
     private final ClassFile thisClass;
     private final Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses;
+    private final Map<JavaTypeInstance, Route> boundSuperRoute;
 
-    public BindingSuperContainer(ClassFile thisClass, Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses) {
+    public BindingSuperContainer(ClassFile thisClass, Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses,
+                                 Map<JavaTypeInstance, Route> boundSuperRoute) {
         this.thisClass = thisClass;
         this.boundSuperClasses = boundSuperClasses;
+        this.boundSuperRoute = boundSuperRoute;
     }
 
     public JavaTypeInstance getBoundAssignable(JavaGenericRefTypeInstance assignable, JavaGenericRefTypeInstance superType) {
@@ -42,5 +52,13 @@ public class BindingSuperContainer {
 
     public boolean containsBase(JavaTypeInstance possBase) {
         return boundSuperClasses.containsKey(possBase);
+    }
+
+    public Map<JavaTypeInstance, JavaGenericRefTypeInstance> getBoundSuperClasses() {
+        return boundSuperClasses;
+    }
+
+    public Map<JavaTypeInstance, Route> getBoundSuperRoute() {
+        return boundSuperRoute;
     }
 }

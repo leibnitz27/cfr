@@ -61,11 +61,13 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         this.displayableName = displayableName;
         this.cfrState = null;
         Map<JavaTypeInstance, JavaGenericRefTypeInstance> tmp = MapFactory.newMap();
+        Map<JavaTypeInstance, BindingSuperContainer.Route> routes = MapFactory.newMap();
         for (JavaRefTypeInstance supr : supers) {
             tmp.put(supr, null);
+            routes.put(supr, BindingSuperContainer.Route.EXTENSION);
         }
 
-        this.cachedBindingSupers = new BindingSuperContainer(null, tmp);
+        this.cachedBindingSupers = new BindingSuperContainer(null, tmp, routes);
     }
 
     /*

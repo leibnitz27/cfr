@@ -593,16 +593,16 @@ public class ClassFile implements Dumpable {
             genericTypeBinder = null;
         }
 
-        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector);
+        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.EXTENSION);
         for (JavaTypeInstance interfaceBase : classSignature.getInterfaces()) {
-            getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector);
+            getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.INTERFACE);
         }
 
         return boundSuperCollector.getBoundSupers();
 
     }
 
-    public void getBoundSuperClasses(JavaTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector) {
+    public void getBoundSuperClasses(JavaTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector, BindingSuperContainer.Route route) {
         // TODO: This seems deeply over complicated ;)
         // Perhaps rather than matching in terms of types, we could match in terms of the signature?
         JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType(), getConstantPool());
@@ -637,9 +637,9 @@ public class ClassFile implements Dumpable {
         /*
          * Now, apply this to each of our superclass/interfaces.
          */
-        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector);
+        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector, route);
         for (JavaTypeInstance interfaceBase : classSignature.getInterfaces()) {
-            getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector);
+            getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.INTERFACE);
         }
     }
 
@@ -653,12 +653,12 @@ public class ClassFile implements Dumpable {
         }
     }
 
-    private void getBoundSuperClasses2(JavaTypeInstance base, GenericTypeBinder genericTypeBinder, BoundSuperCollector boundSuperCollector) {
+    private void getBoundSuperClasses2(JavaTypeInstance base, GenericTypeBinder genericTypeBinder, BoundSuperCollector boundSuperCollector, BindingSuperContainer.Route route) {
         if (base instanceof JavaRefTypeInstance) {
             // No bindings to do, can't go any further, mark relationship and move on.
-            boundSuperCollector.collect((JavaRefTypeInstance) base);
+            boundSuperCollector.collect((JavaRefTypeInstance) base, route);
             ClassFile classFile = ((JavaRefTypeInstance) base).getClassFile();
-            if (classFile != null) classFile.getBoundSuperClasses(base, boundSuperCollector);
+            if (classFile != null) classFile.getBoundSuperClasses(base, boundSuperCollector, route);
             return;
         }
 
@@ -672,7 +672,7 @@ public class ClassFile implements Dumpable {
          */
         JavaGenericRefTypeInstance boundBase = genericBase.getBoundInstance(genericTypeBinder);
 
-        boundSuperCollector.collect(boundBase);
+        boundSuperCollector.collect(boundBase, route);
         /*
          * And recurse.
          */
@@ -680,6 +680,6 @@ public class ClassFile implements Dumpable {
         if (classFile == null) {
             return;
         }
-        classFile.getBoundSuperClasses(boundBase, boundSuperCollector);
+        classFile.getBoundSuperClasses(boundBase, boundSuperCollector, route);
     }
 }

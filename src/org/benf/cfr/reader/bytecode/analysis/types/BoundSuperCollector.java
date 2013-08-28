@@ -12,23 +12,31 @@ import java.util.Map;
  * Time: 17:45
  */
 public class BoundSuperCollector {
+
+
     private final ClassFile classFile;
     private final Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers;
+    private final Map<JavaTypeInstance, BindingSuperContainer.Route> boundSuperRoute;
 
     public BoundSuperCollector(ClassFile classFile) {
         this.classFile = classFile;
         this.boundSupers = MapFactory.newMap();
+        this.boundSuperRoute = MapFactory.newMap();
     }
 
     public BindingSuperContainer getBoundSupers() {
-        return new BindingSuperContainer(classFile, boundSupers);
+        return new BindingSuperContainer(classFile, boundSupers, boundSuperRoute);
     }
 
-    public void collect(JavaGenericRefTypeInstance boundBase) {
-        JavaGenericRefTypeInstance prev = boundSupers.put(boundBase.getDeGenerifiedType(), boundBase);
+    public void collect(JavaGenericRefTypeInstance boundBase, BindingSuperContainer.Route route) {
+        JavaRefTypeInstance key = boundBase.getDeGenerifiedType();
+        JavaGenericRefTypeInstance prev = boundSupers.put(key, boundBase);
+        boundSuperRoute.put(key, route);
+
     }
 
-    public void collect(JavaRefTypeInstance boundBase) {
+    public void collect(JavaRefTypeInstance boundBase, BindingSuperContainer.Route route) {
         JavaGenericRefTypeInstance prev = boundSupers.put(boundBase, null);
+        boundSuperRoute.put(boundBase, route);
     }
 }

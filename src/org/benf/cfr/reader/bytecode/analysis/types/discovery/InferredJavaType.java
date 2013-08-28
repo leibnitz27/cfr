@@ -4,8 +4,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.Troolean;
+import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
+
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -58,11 +60,222 @@ public class InferredJavaType {
         Resolved
     }
 
-    private static class IJTInternal {
+    private interface IJTInternal {
+        public RawJavaType getRawType();
+
+        public JavaTypeInstance getJavaTypeInstance();
+
+        public Source getSource();
+
+        public int getFinalId();
+
+        public ClashState getClashState();
+
+        public void collapseTypeClash();
+
+        public void mkDelegate(IJTInternal newDelegate);
+
+        public void forceType(JavaTypeInstance rawJavaType, boolean ignoreLock);
+
+        public void markClashState(ClashState newClashState);
+
+        public boolean isLocked();
+
+        public IJTInternal getFirstLocked();
+    }
+
+    private static class IJTInternal_Clash implements IJTInternal {
+
+        private boolean resolved = false;
+
+        private List<IJTInternal> clashes;
+        private final int id;
+
+        private JavaTypeInstance type = null;
+
+
+        private IJTInternal_Clash(Collection<IJTInternal> clashes) {
+            this.id = global_id++;
+            this.clashes = ListFactory.newList(clashes);
+        }
+
+        private static Map<JavaTypeInstance, JavaGenericRefTypeInstance> getMatches(List<IJTInternal> clashes) {
+            Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = MapFactory.newMap();
+            {
+                IJTInternal clash = clashes.get(0);
+                JavaTypeInstance clashType = clash.getJavaTypeInstance();
+                BindingSuperContainer otherSupers = clashType.getBindingSupers();
+                Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
+                matches.putAll(boundSupers);
+            }
+            for (int x = 1, len = clashes.size(); x < len; ++x) {
+                IJTInternal clash = clashes.get(x);
+                JavaTypeInstance clashType = clash.getJavaTypeInstance();
+                BindingSuperContainer otherSupers = clashType.getBindingSupers();
+                Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
+                Iterator<Map.Entry<JavaTypeInstance, JavaGenericRefTypeInstance>> iterator = matches.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<JavaTypeInstance, JavaGenericRefTypeInstance> entry = iterator.next();
+                    if (!boundSupers.containsKey(entry.getKey())) {
+                        iterator.remove();
+                    }
+                }
+            }
+            return matches;
+        }
+
+        private static IJTInternal mkClash(IJTInternal delegate1, IJTInternal delegate2) {
+            List<IJTInternal> clashes = ListFactory.newList();
+            if (delegate1 instanceof IJTInternal_Clash) {
+                for (IJTInternal clash : ((IJTInternal_Clash) delegate1).clashes) {
+                    clashes.add(clash);
+                }
+            } else {
+                clashes.add(delegate1);
+            }
+            if (delegate2 instanceof IJTInternal_Clash) {
+                for (IJTInternal clash : ((IJTInternal_Clash) delegate2).clashes) {
+                    clashes.add(clash);
+                }
+            } else {
+                clashes.add(delegate2);
+            }
+
+            /*
+             * Find the common ancestors amongst the clashes.
+             */
+            Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = getMatches(clashes);
+            if (matches.isEmpty()) {
+                return new IJTInternal_Impl(TypeConstants.OBJECT, Source.UNKNOWN, true);
+            }
+            if (matches.size() == 1) {
+                return new IJTInternal_Impl(matches.keySet().iterator().next(), Source.UNKNOWN, true);
+            }
+            return new IJTInternal_Clash(clashes);
+        }
+
+        @Override
+        public void collapseTypeClash() {
+            if (resolved) return;
+
+            Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = getMatches(clashes);
+            if (matches.isEmpty()) {
+                type = TypeConstants.OBJECT;
+                resolved = true;
+                return;
+            }
+
+            List<JavaTypeInstance> poss = ListFactory.newList(matches.keySet());
+            boolean effect = true;
+            do {
+                effect = false;
+                for (JavaTypeInstance pos : poss) {
+                    Collection<JavaTypeInstance> supers = pos.getBindingSupers().getBoundSuperClasses().keySet();
+                    if (poss.removeAll(supers)) {
+                        effect = true;
+                        break;
+                    }
+                }
+            } while (effect);
+            /*
+             * If we still have >1 left, we have to pick one.  Prefer a base class to an interface?
+             */
+            JavaTypeInstance oneClash = clashes.get(0).getJavaTypeInstance();
+            Map<JavaTypeInstance, BindingSuperContainer.Route> routes = oneClash.getBindingSupers().getBoundSuperRoute();
+            for (JavaTypeInstance pos : poss) {
+                if (BindingSuperContainer.Route.EXTENSION == routes.get(pos)) {
+                    type = pos;
+                    resolved = true;
+                    return;
+                }
+            }
+            type = poss.get(0);
+            resolved = true;
+        }
+
+        @Override
+        public RawJavaType getRawType() {
+            if (resolved) {
+                return type.getRawTypeOfSimpleType();
+            } else {
+                return clashes.get(0).getRawType();
+            }
+        }
+
+        @Override
+        public JavaTypeInstance getJavaTypeInstance() {
+            if (resolved) {
+                return type;
+            } else {
+                return clashes.get(0).getJavaTypeInstance();
+            }
+        }
+
+        @Override
+        public Source getSource() {
+            return clashes.get(0).getSource();
+        }
+
+        @Override
+        public int getFinalId() {
+            return id;
+        }
+
+        @Override
+        public ClashState getClashState() {
+            if (resolved) {
+                return ClashState.Resolved;
+            } else {
+                return ClashState.Clash;
+            }
+        }
+
+        @Override
+        public void mkDelegate(IJTInternal newDelegate) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void forceType(JavaTypeInstance rawJavaType, boolean ignoreLock) {
+//            for (IJTInternal delegate : clashes) {
+//                delegate.forceType(rawJavaType, ignoreLock);
+//            }
+            type = rawJavaType;
+            resolved = true;
+        }
+
+        @Override
+        public void markClashState(ClashState newClashState) {
+        }
+
+        @Override
+        public boolean isLocked() {
+            return resolved;
+        }
+
+        @Override
+        public IJTInternal getFirstLocked() {
+            return null;
+        }
+
+        public String toString() {
+            if (resolved) {
+                return "#" + id + " " + type.toString();
+            } else {
+                StringBuilder sb = new StringBuilder();
+                for (IJTInternal clash : clashes) {
+                    sb.append("" + id + " -> " + clash.toString() + ", ");
+                }
+                return sb.toString();
+            }
+        }
+
+    }
+
+    private static class IJTInternal_Impl implements IJTInternal {
 
         private boolean isDelegate = false;
         private final boolean locked;
-        private ClashState clashState;
         // When not delegating
         private JavaTypeInstance type;
 
@@ -71,24 +284,15 @@ public class InferredJavaType {
         // When delegating
         private IJTInternal delegate;
 
-        private IJTInternal(JavaTypeInstance type, Source source, boolean locked) {
+
+        private IJTInternal_Impl(JavaTypeInstance type, Source source, boolean locked) {
             this.type = type;
             this.source = source;
             this.id = global_id++;
             this.locked = locked;
-            this.clashState = ClashState.None;
         }
 
-        private IJTInternal(IJTInternal delegate, boolean locked, ClashState markedBad) {
-            this.isDelegate = true;
-            this.locked = locked;
-            this.type = null;
-            this.source = null;
-            this.id = global_id++;
-            this.delegate = delegate;
-            this.clashState = markedBad;
-        }
-
+        @Override
         public RawJavaType getRawType() {
             // Think this might bite me later?
             if (isDelegate) {
@@ -114,6 +318,13 @@ public class InferredJavaType {
             }
         }
 
+        @Override
+        public void collapseTypeClash() {
+            if (isDelegate) {
+                delegate.collapseTypeClash();
+            }
+        }
+
         public int getFinalId() {
             if (isDelegate) {
                 return delegate.getFinalId();
@@ -123,9 +334,10 @@ public class InferredJavaType {
         }
 
         public ClashState getClashState() {
-            if (clashState != null) return clashState;
-            if (isDelegate) return delegate.getClashState();
             return ClashState.None;
+//            if (clashState != null) return clashState;
+//            if (isDelegate) return delegate.getClashState();
+//            return ClashState.None;
         }
 
         public void mkDelegate(IJTInternal newDelegate) {
@@ -151,13 +363,14 @@ public class InferredJavaType {
         }
 
         public void markClashState(ClashState newClashState) {
-            if (this.clashState != null) {
-                this.clashState = newClashState;
-                return;
-            }
-            if (isDelegate) {
-                delegate.markClashState(newClashState);
-            }
+            throw new UnsupportedOperationException();
+//            if (this.clashState != null) {
+//                this.clashState = newClashState;
+//                return;
+//            }
+//            if (isDelegate) {
+//                delegate.markClashState(newClashState);
+//            }
         }
 
         public String toString() {
@@ -184,15 +397,15 @@ public class InferredJavaType {
     public static final InferredJavaType IGNORE = new InferredJavaType();
 
     public InferredJavaType() {
-        value = new IJTInternal(RawJavaType.VOID, Source.UNKNOWN, false);
+        value = new IJTInternal_Impl(RawJavaType.VOID, Source.UNKNOWN, false);
     }
 
     public InferredJavaType(JavaTypeInstance type, Source source) {
-        value = new IJTInternal(type, source, false);
+        value = new IJTInternal_Impl(type, source, false);
     }
 
     public InferredJavaType(JavaTypeInstance type, Source source, boolean locked) {
-        value = new IJTInternal(type, source, locked);
+        value = new IJTInternal_Impl(type, source, locked);
     }
 
     public Source getSource() {
@@ -209,7 +422,7 @@ public class InferredJavaType {
         }
         JavaTypeInstance boundThisType = degenerifiedThisClassFile.getBindingSupers().getBoundAssignable(thisType, otherTypeInstance);
         if (!boundThisType.equals(thisType)) {
-            mkDelegate(this.value, new IJTInternal(boundThisType, Source.GENERICCALL, true));
+            mkDelegate(this.value, new IJTInternal_Impl(boundThisType, Source.GENERICCALL, true));
         }
     }
 
@@ -221,6 +434,14 @@ public class InferredJavaType {
                 value.markClashState(ClashState.Resolved);
             }
         }
+    }
+
+    public boolean isClash() {
+        return value.getClashState() == ClashState.Clash;
+    }
+
+    public void collapseTypeClash() {
+        value.collapseTypeClash();
     }
 
     private boolean checkBaseCompatibility(JavaTypeInstance otherType) {
@@ -246,14 +467,17 @@ public class InferredJavaType {
         /*
          * Can't chain if this isn't a simple, or a supertype of other.
          */
+        boolean basecast = false;
         if (thisTypeInstance.isComplexType() && otherTypeInstance.isComplexType()) {
             if (!checkBaseCompatibility(other.getJavaTypeInstance())) {
                 // Break the chain here, mark this delegate as bad.
-                this.value = new IJTInternal(new IJTInternal(other.getJavaTypeInstance(), other.getSource(), true), false, ClashState.Clash);
+                this.value = IJTInternal_Clash.mkClash(this.value, other.value);
                 // this.value.markTypeClash();
                 return CastAction.None;
             } else if (this.value.getClashState() == ClashState.Resolved) {
                 return CastAction.None;
+            } else if (thisTypeInstance.getClass() == otherTypeInstance.getClass()) {
+                basecast = true;
             }
         }
 
@@ -264,6 +488,9 @@ public class InferredJavaType {
             }
         }
 
+        if (basecast) {
+            return CastAction.None;
+        }
         mkDelegate(this.value, other.value);
         if (!other.value.isLocked()) {
             this.value = other.value; // new IJTDelegate(other);
@@ -356,7 +583,7 @@ public class InferredJavaType {
     public void useAsWithCast(RawJavaType otherRaw) {
         if (this == IGNORE) return;
 
-        this.value = new IJTInternal(otherRaw, Source.OPERATION, true);
+        this.value = new IJTInternal_Impl(otherRaw, Source.OPERATION, true);
     }
 
     public void useInArithOp(InferredJavaType other, boolean forbidBool) {
@@ -529,6 +756,6 @@ public class InferredJavaType {
     @Override
     public String toString() {
         return (value.getClashState() == ClashState.Clash) ? " /* !! */ " : "";
-        //return "[" + (value.isMarkedBad() ? "!!" : "") + value.toString() + "]";
+        //  return "[" + ((value.getClashState() == ClashState.Clash) ? " /* !! */ " : "") + value.toString() + "]";
     }
 }
