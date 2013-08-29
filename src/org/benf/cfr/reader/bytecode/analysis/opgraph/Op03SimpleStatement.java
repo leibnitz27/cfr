@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
-import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -948,6 +947,146 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+
+    public static boolean condenseConditionals2(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
+        boolean result = false;
+        for (Op03SimpleStatement ifStatement : ifStatements) {
+            if (condenseConditional2_type1(ifStatement, statements)) {
+                result = true;
+            }
+        }
+        return result;
+    }
+
+    private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in) {
+        if (in.sources.size() != 1) return in;
+        if (in.targets.size() != 1) return in;
+        Statement statement = in.getStatement();
+        if (statement instanceof Nop || statement instanceof GotoStatement) {
+            in = in.targets.get(0);
+        }
+        return in;
+    }
+
+    private static boolean condenseConditional2_type2(Op03SimpleStatement ifStatement) {
+        return false;
+    }
+
+    /*
+     * Look for a very specific pattern which is really awkward to pull out later
+     *
+     * if (w) goto a [taken1]                  [ifstatement1]
+     * if (x) goto b [taken2]                  [ifstatement2]
+     * [nottaken2] goto c [nottaken3]
+     * [taken1] a: if (z) goto b  [taken3]     [ifstatement3]
+     * [nottaken3] c:
+     * ....
+     * b:
+     *
+     *
+     * if ((w && z) || x) goto b
+     * goto c:
+     *
+     * c:
+     */
+    private static boolean condenseConditional2_type1(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> allStatements) {
+        if (!(ifStatement.containedStatement instanceof IfStatement)) return false;
+
+        final Op03SimpleStatement taken1 = ifStatement.getTargets().get(1);
+        final Op03SimpleStatement nottaken1 = ifStatement.getTargets().get(0);
+        if (!(nottaken1.containedStatement instanceof IfStatement)) return false;
+        Op03SimpleStatement ifStatement2 = nottaken1;
+        Op03SimpleStatement taken2 = ifStatement2.getTargets().get(1);
+        Op03SimpleStatement nottaken2 = ifStatement2.getTargets().get(0);
+        final Op03SimpleStatement nottaken2Immed = nottaken2;
+        if (nottaken2Immed.sources.size() != 1) return false;
+        Op03SimpleStatement notTaken2Source = ifStatement2;
+        do {
+            Op03SimpleStatement nontaken2rewrite = followNopGoto(nottaken2);
+            if (nontaken2rewrite == nottaken2) break;
+            notTaken2Source = nottaken2;
+            nottaken2 = nontaken2rewrite;
+        } while (true);
+        if (!(taken1.containedStatement instanceof IfStatement)) return false;
+        if (taken1.sources.size() != 1) return false;
+        Op03SimpleStatement ifStatement3 = taken1;
+        Op03SimpleStatement taken3 = ifStatement3.getTargets().get(1);
+        Op03SimpleStatement nottaken3 = ifStatement3.getTargets().get(0);
+        final Op03SimpleStatement nottaken3Immed = nottaken3;
+        Op03SimpleStatement notTaken3Source = ifStatement3;
+        do {
+            Op03SimpleStatement nontaken3rewrite = followNopGoto(nottaken3);
+            if (nontaken3rewrite == nottaken3) break;
+            notTaken3Source = nottaken3;
+            nottaken3 = nontaken3rewrite;
+        } while (true);
+
+
+        if (nottaken2 != nottaken3) return false;   // nottaken2 = nottaken3 = c
+        if (taken2 != taken3) return false; // taken2 = taken3 = b;
+        /*
+         * rewrite as if ((w && z) || x)
+         *
+         *
+         */
+        IfStatement if1 = (IfStatement) ifStatement.containedStatement;
+        IfStatement if2 = (IfStatement) ifStatement2.containedStatement;
+        IfStatement if3 = (IfStatement) ifStatement3.containedStatement;
+        ConditionalExpression newCond =
+                new BooleanOperation(
+                        new BooleanOperation(if1.getCondition(), if2.getCondition(), BoolOp.OR),
+                        if3.getCondition(), BoolOp.AND);
+
+        ifStatement.replaceTarget(taken1, taken3);
+        taken3.addSource(ifStatement);
+        taken3.removeSource(ifStatement2);
+        taken3.removeSource(ifStatement3);
+
+        nottaken1.sources.remove(ifStatement);
+        nottaken2Immed.replaceSource(ifStatement2, ifStatement);
+        ifStatement.replaceTarget(nottaken1, nottaken2Immed);
+
+//        nottaken3.removeSource(notTaken3Source);
+        nottaken3.removeSource(notTaken3Source);
+
+        ifStatement2.replaceStatement(new Nop());
+        ifStatement3.replaceStatement(new Nop());
+        ifStatement2.removeTarget(taken3);
+        ifStatement3.removeTarget(taken3);
+
+        ifStatement.replaceStatement(new IfStatement(newCond));
+
+        /*
+         * Now we're cleared up, see if nottaken2immed actually jumps straight to its target.
+         */
+        if (nottaken2Immed.sources.size() == 1) {
+            if (nottaken2Immed.sources.get(0).getIndex().isBackJumpFrom(nottaken2Immed)) {
+                if (nottaken2Immed.containedStatement.getClass() == GotoStatement.class) {
+                    Op03SimpleStatement nottaken2ImmedTgt = nottaken2Immed.targets.get(0);
+                    int idx = allStatements.indexOf(nottaken2Immed);
+                    int idx2 = idx + 1;
+                    do {
+                        Op03SimpleStatement next = allStatements.get(idx2);
+                        if (next.containedStatement instanceof Nop) {
+                            idx2++;
+                            continue;
+                        }
+                        if (next == nottaken2ImmedTgt) {
+                            // Replace nottaken2 with nottaken2ImmedTgt.
+                            nottaken2ImmedTgt.replaceSource(nottaken2Immed, ifStatement);
+                            ifStatement.replaceTarget(nottaken2Immed, nottaken2ImmedTgt);
+                        }
+                        break;
+                    } while (true);
+                }
+            }
+        }
+
+        return true;
+
+    }
+
     /* If there is a chain of assignments before this conditional,
      * AND following single parents back, there is only conditionals and assignments,
      * AND this chain terminates in a back jump.....
@@ -1243,7 +1382,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         aStatement.targets.get(1) == xStatement) {
 
                     Statement innerZStatement = zStatement.getStatement();
-                    if (innerZStatement instanceof GotoStatement) {
+                    if (innerZStatement.getClass() == GotoStatement.class) {
                         // Yep, this is it.
                         Op03SimpleStatement yStatement = zStatement.targets.get(0);
 

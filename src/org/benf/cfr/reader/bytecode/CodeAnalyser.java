@@ -262,12 +262,21 @@ public class CodeAnalyser {
         logger.info("sugarAnyonymousArrays");
         Op03SimpleStatement.resugarAnonymousArrays(op03SimpleParseNodes);
 
-        logger.info("collapseAssignmentsIntoConditionals");
-        Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes);
+        boolean reloop = false;
+        do {
+            logger.info("collapseAssignmentsIntoConditionals");
+            Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes);
 
-        // Collapse conditionals into || / &&
-        logger.info("condenseConditionals");
-        Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
+            // Collapse conditionals into || / &&
+            logger.info("condenseConditionals");
+            Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
+            // Condense odder conditionals, which may involve inline ternaries which are
+            // hard to work out later.  This isn't going to get everything, but may help!
+            reloop = Op03SimpleStatement.condenseConditionals2(op03SimpleParseNodes);
+
+            op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
+        } while (reloop);
+
         logger.info("simplifyConditionals");
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
