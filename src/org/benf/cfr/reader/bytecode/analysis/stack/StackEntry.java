@@ -49,12 +49,14 @@ public class StackEntry {
         return usageCount;
     }
 
-    public void mergeWith(StackEntry other) {
+    public boolean mergeWith(StackEntry other) {
         if (other.stackType != this.stackType) {
-            throw new ConfusedCFRException("Trying to merge different stackTypes " + stackType + " vs " + other.stackType + " [" + id0 + "/" + other.id0 + "]");
+            return false;
+//            throw new ConfusedCFRException("Trying to merge different stackTypes " + stackType + " vs " + other.stackType + " [" + id0 + "/" + other.id0 + "]");
         }
         ids.addAll(other.ids);
         usageCount += other.usageCount;
+        return true;
     }
 
     public long getUsageCount() {

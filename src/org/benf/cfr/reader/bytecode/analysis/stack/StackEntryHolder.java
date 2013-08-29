@@ -17,8 +17,9 @@ public class StackEntryHolder {
     }
 
     public void mergeWith(StackEntryHolder other) {
-        stackEntry.mergeWith(other.stackEntry);
-        other.stackEntry = stackEntry;
+        if (stackEntry.mergeWith(other.stackEntry)) {
+            other.stackEntry = stackEntry;
+        }
     }
 
     @Override
