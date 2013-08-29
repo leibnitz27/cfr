@@ -71,10 +71,12 @@ public class CodeAnalyser {
         if (analysed == null) {
             try {
                 analysed = getAnalysisInner();
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 CFRState cfrState = cp.getCFRState();
                 if (cfrState.getBooleanOpt(CFRState.ALLOW_PARTIAL_FAILURE)) {
                     analysed = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
+                } else {
+                    throw e;
                 }
             }
         }
