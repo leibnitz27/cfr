@@ -1033,10 +1033,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         IfStatement if1 = (IfStatement) ifStatement.containedStatement;
         IfStatement if2 = (IfStatement) ifStatement2.containedStatement;
         IfStatement if3 = (IfStatement) ifStatement3.containedStatement;
-        ConditionalExpression newCond =
-                new BooleanOperation(
-                        new BooleanOperation(if1.getCondition(), if2.getCondition(), BoolOp.OR),
-                        if3.getCondition(), BoolOp.AND);
+
+        ConditionalExpression newCond = new BooleanExpression(new TernaryExpression(
+                if1.getCondition().getNegated().simplify(),
+                if2.getCondition().getNegated().simplify(),
+                if3.getCondition().getNegated().simplify())).getNegated();
+//        TernaryExpression
+//        ConditionalExpression newCond =
+//                new BooleanOperation(
+//                        new BooleanOperation(if1.getCondition(), if2.getCondition(), BoolOp.OR),
+//                        if3.getCondition(), BoolOp.AND);
 
         ifStatement.replaceTarget(taken1, taken3);
         taken3.addSource(ifStatement);
