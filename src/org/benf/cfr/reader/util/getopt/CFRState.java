@@ -194,6 +194,8 @@ public class CFRState {
             "decodefinally", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> TIDY_MONITORS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "tidymonitors", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> ALLOW_PARTIAL_FAILURE = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "allowfailure", defaultTrueBooleanDecoder);
 
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
@@ -431,7 +433,7 @@ public class CFRState {
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
-                    DECODE_FINALLY, TIDY_MONITORS);
+                    DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE);
         }
 
         @Override

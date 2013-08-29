@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewr
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredFakeDecompFailure;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
@@ -67,9 +68,20 @@ public class CodeAnalyser {
     }
 
     public Op04StructuredStatement getAnalysis() {
+        if (analysed == null) {
+            try {
+                analysed = getAnalysisInner();
+            } catch (Exception e) {
+                CFRState cfrState = cp.getCFRState();
+                if (cfrState.getBooleanOpt(CFRState.ALLOW_PARTIAL_FAILURE)) {
+                    analysed = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
+                }
+            }
+        }
+        return analysed;
+    }
 
-        if (analysed != null) return analysed;
-
+    public Op04StructuredStatement getAnalysisInner() {
         CFRState cfrState = cp.getCFRState();
         ByteData rawCode = originalCodeAttribute.getRawData();
         long codeLength = originalCodeAttribute.getCodeLength();
@@ -406,8 +418,7 @@ public class CodeAnalyser {
          * If we can't fully structure the code, we bow out here.
          */
         if (!block.isFullyStructured()) {
-            this.analysed = block;
-            return analysed;
+            return block;
         }
 
         // Replace with a more generic interface, etc.
@@ -436,9 +447,7 @@ public class CodeAnalyser {
         // Tidy variable names
         Op04StructuredStatement.tidyVariableNames(method, block);
 
-
-        this.analysed = block;
-        return analysed;
+        return block;
     }
 
 

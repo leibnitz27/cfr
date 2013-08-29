@@ -1234,18 +1234,18 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 arg2.enqueue(arg1.getTargets());
                 for (Op03SimpleStatement source : arg1.getSources()) {
                     if (!source.getTargets().contains(arg1)) {
-                        throw new IllegalStateException("Inconsistent graph");
+                        throw new IllegalStateException("Inconsistent graph " + source + " does not have a target of " + arg1);
                     }
                 }
                 for (Op03SimpleStatement test : arg1.getTargets()) {
                     // Also, check for backjump targets on non jumps.
                     if (!(arg1.getStatement() instanceof JumpingStatement)) {
                         if (test.getIndex().isBackJumpFrom(arg1)) {
-                            throw new IllegalStateException("Backjump on non jumping statement");
+                            throw new IllegalStateException("Backjump on non jumping statement " + arg1);
                         }
                     }
                     if (!test.getSources().contains(arg1)) {
-                        throw new IllegalStateException("Inconsistent graph");
+                        throw new IllegalStateException("Inconsistent graph " + test + " does not have a source " + arg1);
                     }
                 }
             }
