@@ -105,8 +105,10 @@ public class InferredJavaType {
                 IJTInternal clash = clashes.get(0);
                 JavaTypeInstance clashType = clash.getJavaTypeInstance();
                 BindingSuperContainer otherSupers = clashType.getBindingSupers();
-                Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
-                matches.putAll(boundSupers);
+                if (otherSupers != null) {
+                    Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
+                    matches.putAll(boundSupers);
+                }
             }
             for (int x = 1, len = clashes.size(); x < len; ++x) {
                 IJTInternal clash = clashes.get(x);
