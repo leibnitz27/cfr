@@ -433,6 +433,7 @@ public class CodeAnalyser {
         new SwitchStringRewriter(cfrState).rewrite(block);
         new SwitchEnumRewriter(cfrState).rewrite(block);
 
+        // These should logically be here, but the current versions are better!!
 //        new ArrayIterRewriter(cfrState).rewrite(block);
 //        new LoopIterRewriter(cfrState).rewrite(block);
 
