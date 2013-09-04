@@ -170,7 +170,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                         new KleenePlus(new ResetAfterTest(wcm2,
                                 new MatchSequence(
                                         new StructuredTry(null, null),
-                                        new BeginBlock(),
+                                        new BeginBlock(null),
                                         new StructuredAssignment(
                                                 new ArrayVariable(
                                                         new ArrayIndex(
@@ -184,10 +184,10 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                                                 ),
                                                 wcm2.getExpressionWildCard("literal")
                                         ),
-                                        new EndBlock(),
+                                        new EndBlock(null),
                                         new StructuredCatch(null, null, null),
-                                        new BeginBlock(),
-                                        new EndBlock()
+                                        new BeginBlock(null),
+                                        new EndBlock(null)
                                 )
                         ))
                 )
@@ -274,7 +274,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         return (Integer) typedLiteral.getValue();
     }
 
-    private static class SwitchEnumMatchResultCollector implements MatchResultCollector {
+    private static class SwitchEnumMatchResultCollector extends AbstractMatchResultIterator {
 
         private final WildcardMatch wcm;
 
@@ -318,7 +318,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         }
     }
 
-    private class SwitchForeignEnumMatchResultCollector implements MatchResultCollector {
+    private class SwitchForeignEnumMatchResultCollector extends AbstractMatchResultIterator {
         private final WildcardMatch wcmOuter;
         private final WildcardMatch wcmCase;
         private boolean bad;

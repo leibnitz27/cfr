@@ -14,5 +14,7 @@ public interface MatchResultCollector {
 
     void collectStatement(String name, StructuredStatement statement);
 
+    void collectStatementRange(String name, MatchIterator<StructuredStatement> start, MatchIterator<StructuredStatement> end);
+
     void collectMatches(String name, WildcardMatch wcm);
 }

@@ -8,11 +8,11 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
  * Date: 30/01/2013
  * Time: 17:43
  */
-public class CollectMatch implements Matcher<StructuredStatement> {
+public class CollectMatchRange implements Matcher<StructuredStatement> {
     private final Matcher<StructuredStatement> inner;
     private final String name;
 
-    public CollectMatch(String name, Matcher<StructuredStatement> inner) {
+    public CollectMatchRange(String name, Matcher<StructuredStatement> inner) {
         this.inner = inner;
         this.name = name;
     }
@@ -22,7 +22,8 @@ public class CollectMatch implements Matcher<StructuredStatement> {
         MatchIterator<StructuredStatement> orig = matchIterator.copy();
         boolean res = inner.match(matchIterator, matchResultCollector);
         if (res) {
-            matchResultCollector.collectStatement(name, orig.getCurrent());
+            MatchIterator<StructuredStatement> end = matchIterator.copy();
+            matchResultCollector.collectStatementRange(name, orig, end);
         }
         return res;
     }

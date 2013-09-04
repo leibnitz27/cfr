@@ -17,7 +17,7 @@ public abstract class AbstractStructuredBlockStatement extends AbstractStructure
         this.body = body;
     }
 
-    protected Op04StructuredStatement getBody() {
+    public Op04StructuredStatement getBody() {
         return body;
     }
 

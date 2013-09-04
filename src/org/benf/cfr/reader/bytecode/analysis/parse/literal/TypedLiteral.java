@@ -51,6 +51,12 @@ public class TypedLiteral {
         }
     }
 
+    public boolean getBoolValue() {
+        if (type != LiteralType.Integer) throw new IllegalStateException("Expecting integral literal");
+        Integer i = (Integer) value;
+        return (i != 0);
+    }
+
     private static String charName(Object o) {
         if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting char-as-int");
         int i = (Integer) o;

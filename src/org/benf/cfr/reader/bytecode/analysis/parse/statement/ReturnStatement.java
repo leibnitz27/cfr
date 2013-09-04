@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.GraphConversionHelper;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 
 /**
  * Created by IntelliJ IDEA.

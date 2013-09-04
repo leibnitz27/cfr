@@ -104,20 +104,20 @@ public class SwitchStringRewriter implements Op04Rewriter {
                         new StructuredSwitch(wcm1.getMemberFunction("switch", "hashCode", new LValueExpression(wcm1.getLValueWildCard("stringobject"))),
                                 null,
                                 wcm1.getBlockIdentifier("switchblock"))),
-                new BeginBlock(),
+                new BeginBlock(null),
                 new KleenePlus(
                         new ResetAfterTest(wcm2,
                                 new MatchSequence(
                                         new StructuredCase(wcm2.<Expression>getList("hashvals"), null, null, wcm2.getBlockIdentifier("case")),
-                                        new BeginBlock(),
+                                        new BeginBlock(null),
                                         new KleeneStar(
                                                 new ResetAfterTest(wcm3,
                                                         new MatchSequence(
                                                                 new StructuredIf(new BooleanExpression(wcm3.getMemberFunction("collision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm3.getExpressionWildCard("stringvalue"))), null),
-                                                                new BeginBlock(),
+                                                                new BeginBlock(null),
                                                                 new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm3.getExpressionWildCard("case2id")),
                                                                 new StructuredBreak(wcm1.getBlockIdentifier("switchblock"), true),
-                                                                new EndBlock()
+                                                                new EndBlock(null)
                                                         )
                                                 )
                                         ),
@@ -126,11 +126,11 @@ public class SwitchStringRewriter implements Op04Rewriter {
                                         new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm2.getExpressionWildCard("case2id")),
                                         // Strictly speaking wrong, but I want to capture a missing break at the end.
                                         new KleeneStar(new StructuredBreak(wcm1.getBlockIdentifier("switchblock"), true)),
-                                        new EndBlock()
+                                        new EndBlock(null)
                                 )
                         )
                 ),
-                new EndBlock(),
+                new EndBlock(null),
                 // We don't actually CARE what the branches of the switch-on-intermediate are...
                 // we just want to make sure that there is one.
                 new CollectMatch("switch2", new StructuredSwitch(new LValueExpression(wcm1.getLValueWildCard("intermed")), null, wcm1.getBlockIdentifier("switchblock2")))
@@ -202,7 +202,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
     }
 
 
-    private static class SwitchStringMatchResultCollector implements MatchResultCollector {
+    private static class SwitchStringMatchResultCollector extends AbstractMatchResultIterator {
 
         private final WildcardMatch wholeBlock;
         private final WildcardMatch caseStatement;

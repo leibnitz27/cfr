@@ -92,7 +92,7 @@ public class AssertRewriter {
 
     }
 
-    private class AssertVarCollector implements MatchResultCollector {
+    private class AssertVarCollector extends AbstractMatchResultIterator {
 
         private final WildcardMatch wcm;
         ClassFileField assertField = null;
@@ -147,9 +147,9 @@ public class AssertRewriter {
                                         new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))),
                                         wcm1.getConditionalExpressionWildcard("condition"),
                                         BoolOp.AND), null)),
-                        new BeginBlock(),
+                        new BeginBlock(null),
                         new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
-                        new EndBlock()
+                        new EndBlock(null)
                 )
         );
 
@@ -172,7 +172,7 @@ public class AssertRewriter {
 
     }
 
-    private class AssertUseCollector implements MatchResultCollector {
+    private class AssertUseCollector extends AbstractMatchResultIterator {
 
         private final WildcardMatch wcm;
 

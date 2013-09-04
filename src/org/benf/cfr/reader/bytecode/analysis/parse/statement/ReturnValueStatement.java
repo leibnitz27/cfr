@@ -30,6 +30,14 @@ public class ReturnValueStatement extends ReturnStatement {
         return dumper.print("return ").dump(rvalue).endCodeln();
     }
 
+    public Expression getReturnValue() {
+        return rvalue;
+    }
+
+    public JavaTypeInstance getFnReturnType() {
+        return fnReturnType;
+    }
+
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         this.rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());

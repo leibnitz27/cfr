@@ -53,6 +53,12 @@ public class StructuredFinally extends AbstractStructuredStatement {
     }
 
     @Override
+    public boolean isRecursivelyStructured() {
+        return catchBlock.isFullyStructured();
+    }
+
+
+    @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         StructuredStatement o = matchIterator.getCurrent();
         if (!(o instanceof StructuredFinally)) return false;

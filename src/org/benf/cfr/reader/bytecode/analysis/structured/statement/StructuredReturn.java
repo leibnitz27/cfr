@@ -87,7 +87,11 @@ public class StructuredReturn extends AbstractStructuredStatement implements Box
         StructuredStatement o = matchIterator.getCurrent();
         if (!(o instanceof StructuredReturn)) return false;
         StructuredReturn other = (StructuredReturn) o;
-        if (!value.equals(other.value)) return false;
+        if (value == null) {
+            if (other.value != null) return false;
+        } else {
+            if (!value.equals(other.value)) return false;
+        }
 
         matchIterator.advance();
         return true;

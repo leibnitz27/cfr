@@ -54,7 +54,7 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
         return matchedLValue;
     }
 
-    private static class ConstructResultCollector implements MatchResultCollector {
+    private static class ConstructResultCollector extends AbstractMatchResultIterator {
 
         private final WildcardMatch wcm;
 

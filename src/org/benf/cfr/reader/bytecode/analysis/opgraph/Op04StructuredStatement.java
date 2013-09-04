@@ -1,8 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.CanRemovePointlessBlock;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.VariableNameTidier;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -10,7 +9,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredGoto;
@@ -541,6 +539,15 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             Block block = (Block) statement;
             block.removeLastNVReturn();
         }
+    }
+
+
+    public static void tidyTypedBooleans(Op04StructuredStatement root) {
+        new TypedBooleanTidier().transform(root);
+    }
+
+    public static void prettifyBadLoops(Op04StructuredStatement root) {
+        new BadLoopPrettifier().transform(root);
     }
 
     public static void removeStructuredGotos(Op04StructuredStatement root) {

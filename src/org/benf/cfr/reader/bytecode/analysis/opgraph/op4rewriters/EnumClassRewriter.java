@@ -154,7 +154,7 @@ public class EnumClassRewriter {
         JavaTypeInstance arrayType = new JavaArrayTypeInstance(1, classType);
         InferredJavaType clazzAIJT = new InferredJavaType(arrayType, InferredJavaType.Source.UNKNOWN, true);
         Matcher<StructuredStatement> matcher = new MatchSequence(
-                new BeginBlock(),
+                new BeginBlock(null),
                 new KleenePlus(
                         new MatchOneOf(
                                 new ResetAfterTest(wcm, new CollectMatch("entry", new StructuredAssignment(wcm.getStaticVariable("e", classType, clazzIJT), wcm.getConstructorSimpleWildcard("c", classType)))),
@@ -194,7 +194,7 @@ public class EnumClassRewriter {
         }
     }
 
-    private class EnumInitMatchCollector implements MatchResultCollector {
+    private class EnumInitMatchCollector extends AbstractMatchResultIterator {
 
         private final WildcardMatch wcm;
         private final Map<StaticVariable, CollectedEnumData<? extends AbstractConstructorInvokation>> entryMap = MapFactory.newLinkedMap();

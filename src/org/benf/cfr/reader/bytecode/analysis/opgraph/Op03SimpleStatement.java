@@ -959,6 +959,41 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return result;
     }
 
+    private static void replaceReturningIf(Op03SimpleStatement ifStatement) {
+        if (!(ifStatement.containedStatement instanceof IfStatement)) return;
+        IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
+        Op03SimpleStatement tgt = ifStatement.getTargets().get(1);
+        final Op03SimpleStatement origtgt = tgt;
+        do {
+            Op03SimpleStatement next = followNopGoto(tgt);
+            if (next == tgt) break;
+            tgt = next;
+        } while (true);
+        if (!(tgt.containedStatement instanceof ReturnStatement)) return;
+        ReturnStatement returnStatement = (ReturnStatement) tgt.containedStatement;
+
+        if (returnStatement instanceof ReturnValueStatement) {
+            ReturnValueStatement returnValueStatement = (ReturnValueStatement) returnStatement;
+            Expression res = returnValueStatement.getReturnValue();
+            JavaTypeInstance fnReturnType = returnValueStatement.getFnReturnType();
+            ifStatement.replaceStatement(new IfExitingStatement(innerIf.getCondition(), res, fnReturnType));
+        } else if (returnStatement instanceof ReturnNothingStatement) {
+            ifStatement.replaceStatement(new IfExitingStatement(innerIf.getCondition(), null, null));
+        } else {
+            return;
+        }
+        origtgt.removeSource(ifStatement);
+        ifStatement.removeTarget(origtgt);
+    }
+
+    public static void replaceReturningIfs(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
+        for (Op03SimpleStatement ifStatement : ifStatements) {
+            replaceReturningIf(ifStatement);
+        }
+    }
+
+    // Should have a set to make sure we've not looped.
     private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in) {
         if (in.sources.size() != 1) return in;
         if (in.targets.size() != 1) return in;
@@ -3378,13 +3413,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *
      * TODO : The tests in here are very rigid (and gross!), and need loosening up when it's working.
      */
-    private static void rewriteArrayForLoop(final Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
+    private static boolean rewriteArrayForLoop(final Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
 
         /*
          * loop should have one back-parent.
          */
         Op03SimpleStatement preceeding = findSingleBackSource(loop);
-        if (preceeding == null) return;
+        if (preceeding == null) return false;
 
         ForStatement forStatement = (ForStatement) loop.containedStatement;
 
@@ -3392,20 +3427,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         if (!wildcardMatch.match(
                 new AssignmentSimple(wildcardMatch.getLValueWildCard("iter"), new Literal(TypedLiteral.getInt(0))),
-                forStatement.getInitial())) return;
+                forStatement.getInitial())) return false;
 
         LValue originalLoopVariable = wildcardMatch.getLValueWildCard("iter").getMatch();
 
         // Assignments are fiddly, as they can be assignmentPreChange or regular Assignment.
         AbstractAssignmentExpression assignment = forStatement.getAssignment();
         boolean incrMatch = assignment.isSelfMutatingOp1(originalLoopVariable, ArithOp.PLUS);
-        if (!incrMatch) return;
+        if (!incrMatch) return false;
 
         if (!wildcardMatch.match(
                 new ComparisonOperation(
                         new LValueExpression(originalLoopVariable),
                         new LValueExpression(wildcardMatch.getLValueWildCard("bound")),
-                        CompOp.LT), forStatement.getCondition())) return;
+                        CompOp.LT), forStatement.getCondition())) return false;
 
         LValue originalLoopBound = wildcardMatch.getLValueWildCard("bound").getMatch();
 
@@ -3413,7 +3448,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // TODO: Let's just check the single backref from the for loop test.
         if (!wildcardMatch.match(
                 new AssignmentSimple(originalLoopBound, new ArrayLength(new LValueExpression(wildcardMatch.getLValueWildCard("array")))),
-                preceeding.containedStatement)) return;
+                preceeding.containedStatement)) return false;
 
         LValue originalArray = wildcardMatch.getLValueWildCard("array").getMatch();
 
@@ -3438,7 +3473,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (!wildcardMatch.match(
                 new AssignmentSimple(wildcardMatch.getLValueWildCard("sugariter"),
                         new ArrayIndex(new LValueExpression(originalArray), new LValueExpression(originalLoopVariable))),
-                loopStart.containedStatement)) return;
+                loopStart.containedStatement)) return false;
 
         LValue sugarIter = wildcardMatch.getLValueWildCard("sugariter").getMatch();
 
@@ -3451,16 +3486,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return in.containedInBlocks.contains(forBlock);
             }
         });
-//
-//        for (Op03SimpleStatement inBlock : statementsInBlock) {
-//            if (inBlock == loopStart) continue;
-//            Statement inStatement = inBlock.containedStatement;
-//            LValue updated = inStatement.getCreatedLValue();
-//            if (updated == null) continue;
-//            if (updated.equals(sugarIter) || updated.equals(originalArray)) {
-//                return;
-//            }
-//        }
 
         /*
          * It's not simple enough to check if they're assigned to - we also have to verify that i$ (for example ;) isn't
@@ -3475,13 +3500,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             inStatement.collectLValueUsage(usageCollector);
             for (LValue cantUse : cantUpdate) {
                 if (usageCollector.isUsed(cantUse)) {
-                    return;
+                    return false;
                 }
             }
             LValue updated = inStatement.getCreatedLValue();
             if (updated == null) continue;
             if (cantUpdate.contains(updated)) {
-                return;
+                return false;
             }
         }
 
@@ -3521,7 +3546,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 });
         graphVisitor.process();
         if (res.get()) {
-            return;
+            return false;
         }
 
 
@@ -3531,11 +3556,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (prepreceeding != null) {
             prepreceeding.nopOut();
         }
+
+        return true;
     }
 
     public static void rewriteArrayForLoops(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> loops = Functional.filter(statements, new TypeFilter<ForStatement>(ForStatement.class));
-        for (Op03SimpleStatement loop : loops) {
+        for (Op03SimpleStatement loop : Functional.filter(statements, new TypeFilter<ForStatement>(ForStatement.class))) {
             rewriteArrayForLoop(loop, statements);
         }
     }

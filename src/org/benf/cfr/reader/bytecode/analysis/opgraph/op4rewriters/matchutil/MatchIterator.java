@@ -49,10 +49,23 @@ public class MatchIterator<T> {
         return idx >= data.size();
     }
 
+    public int getRemaining() {
+        return data.size() - idx;
+    }
+
     public boolean advance() {
         if (!isFinished()) idx++;
         return !isFinished();
     }
 
+    public void rewind1() {
+        if (idx > 0) idx--;
+    }
 
+    @Override
+    public String toString() {
+        if (isFinished()) return "Finished";
+        T t = data.get(idx);
+        return t == null ? "null" : t.toString();
+    }
 }

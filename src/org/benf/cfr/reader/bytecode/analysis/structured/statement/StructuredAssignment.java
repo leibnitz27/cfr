@@ -36,6 +36,12 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
         this.isCreator = false;
     }
 
+    public StructuredAssignment(LValue lvalue, Expression rvalue, boolean isCreator) {
+        this.lvalue = lvalue;
+        this.rvalue = rvalue;
+        this.isCreator = isCreator;
+    }
+
 
     @Override
     public Dumper dump(Dumper dumper) {
@@ -107,6 +113,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
         StructuredAssignment other = (StructuredAssignment) o;
         if (!lvalue.equals(other.lvalue)) return false;
         if (!rvalue.equals(other.rvalue)) return false;
+//        if (isCreator != other.isCreator) return false;
         return true;
     }
 

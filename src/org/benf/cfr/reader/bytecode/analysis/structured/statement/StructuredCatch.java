@@ -85,6 +85,11 @@ public class StructuredCatch extends AbstractStructuredStatement {
     }
 
     @Override
+    public boolean isRecursivelyStructured() {
+        return catchBlock.isFullyStructured();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

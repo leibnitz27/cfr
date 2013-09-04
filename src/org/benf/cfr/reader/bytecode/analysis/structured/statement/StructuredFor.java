@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -135,6 +137,28 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
         condition = expressionRewriter.rewriteExpression(condition, null, this.getContainer(), null);
+    }
+
+    public BlockIdentifier getBlock() {
+        return block;
+    }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        StructuredStatement o = matchIterator.getCurrent();
+        if (!(o instanceof StructuredFor)) return false;
+        StructuredFor other = (StructuredFor) o;
+        if (!initial.equals(other.initial)) return false;
+        if (condition == null) {
+            if (other.condition != null) return false;
+        } else {
+            if (!condition.equals(other.condition)) return false;
+        }
+        if (!assignment.equals(other.assignment)) return false;
+        if (!block.equals(other.block)) return false;
+        // Don't check locality.
+        matchIterator.advance();
+        return true;
     }
 
 }

@@ -37,6 +37,10 @@ public class StructuredBreak extends AbstractStructuredStatement {
         return dumper;
     }
 
+    public BlockIdentifier getBreakBlock() {
+        return breakBlock;
+    }
+
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
     }

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,11 +12,22 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
  * Time: 06:04
  */
 public class EndBlock extends AbstractPlaceholder {
+
+    private final Block block;
+
+    public EndBlock(Block block) {
+        this.block = block;
+    }
+
     @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
-        if (matchIterator.getCurrent() instanceof EndBlock) {
-            matchIterator.advance();
-            return true;
+        StructuredStatement current = matchIterator.getCurrent();
+        if (current instanceof EndBlock) {
+            EndBlock other = (EndBlock) current;
+            if (block == null || block.equals(other.block)) {
+                matchIterator.advance();
+                return true;
+            }
         }
         return false;
     }

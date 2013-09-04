@@ -4,6 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByt
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.iterrewriter.ArrayIterRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.iterrewriter.LoopIterRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
@@ -291,6 +293,7 @@ public class CodeAnalyser {
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
         } while (reloop);
 
+
         logger.info("simplifyConditionals");
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
@@ -311,6 +314,13 @@ public class CodeAnalyser {
         logger.info("identifyLoops1");
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
 
+        // If statements which end up jumping to the final return can really confuse loop detection, so we want
+        // to remove them.
+        // There is a downside, as this will end up turning a pleasnat while (fred) { ... } return
+        // into do { if (!fred) return;  ... } while (true).
+        //
+        // So, we have a pass to eliminate this at the Op04 stage.
+        Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
 
         if (cfrState.getShowOps() == SHOW_L3_LOOPS1) {
             debugDumper.newln().newln();
@@ -409,25 +419,22 @@ public class CodeAnalyser {
         Op04StructuredStatement.removePointlessBlocks(block);
         Op04StructuredStatement.removePointlessReturn(block);
 
-
-
-        /*
-         * The /absolute LAST/ thing we do before requiring fully structured code, is to
-         * transform impossible forward gotos in to break statements.
-         */
-
         /*
          * If we can't fully structure the code, we bow out here.
          */
         if (!block.isFullyStructured()) {
             return block;
         }
+        Op04StructuredStatement.tidyTypedBooleans(block);
+        Op04StructuredStatement.prettifyBadLoops(block);
 
         // Replace with a more generic interface, etc.
 
         new SwitchStringRewriter(cfrState).rewrite(block);
         new SwitchEnumRewriter(cfrState).rewrite(block);
 
+//        new ArrayIterRewriter(cfrState).rewrite(block);
+//        new LoopIterRewriter(cfrState).rewrite(block);
 
         // Now we've got everything nicely block structured, we can have an easier time
         Op04StructuredStatement.discoverVariableScopes(method, block);

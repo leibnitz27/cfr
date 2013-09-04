@@ -184,7 +184,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
 
         // Try dealing with the class of access$000 etc which are simple accessors / mutators.
         Matcher<StructuredStatement> matcher = new MatchSequence(
-                new BeginBlock(),
+                new BeginBlock(null),
                 new MatchOneOf(
                         new ResetAfterTest(wcm, RETURN_LVALUE,
                                 new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
@@ -226,7 +226,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                 )
                         )
                 ),
-                new EndBlock()
+                new EndBlock(null)
         );
 
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
@@ -330,7 +330,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
 //        }
     }
 
-    private class AccessorMatchCollector implements MatchResultCollector {
+    private class AccessorMatchCollector extends AbstractMatchResultIterator {
 
         String matchType;
         LValue lValue;
@@ -366,7 +366,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         WildcardMatch wcm = new WildcardMatch();
 
         Matcher<StructuredStatement> matcher = new MatchSequence(
-                new BeginBlock(),
+                new BeginBlock(null),
                 new MatchOneOf(
                         new ResetAfterTest(wcm, MEM_SUB1,
                                 new StructuredExpressionStatement(wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null), false)
@@ -381,7 +381,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                 new StructuredReturn(wcm.getStaticFunction("func", otherType, null, (List<Expression>) null), null)
                         )
                 ),
-                new EndBlock()
+                new EndBlock(null)
         );
 
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
@@ -407,7 +407,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         return cloneHelper.replaceOrClone(funcMatchCollector.functionInvokation);
     }
 
-    private class FuncMatchCollector implements MatchResultCollector {
+    private class FuncMatchCollector extends AbstractMatchResultIterator {
 
         String matchType;
         LValue lValue;

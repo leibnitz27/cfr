@@ -42,6 +42,15 @@ public class Block extends AbstractStructuredStatement {
         return new Block(emptyBlockStatements, false);
     }
 
+    public static Block getBlockFor(boolean indenting, StructuredStatement... statements) {
+        LinkedList<Op04StructuredStatement> tmp = ListFactory.newLinkedList();
+        for (StructuredStatement statement : statements) {
+            tmp.add(new Op04StructuredStatement(statement));
+        }
+        return new Block(tmp, indenting);
+    }
+
+
     public boolean removeLastContinue(BlockIdentifier block) {
         StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof AbstractStructuredContinue) {
@@ -285,11 +294,15 @@ public class Block extends AbstractStructuredStatement {
 
     @Override
     public void linearizeInto(List<StructuredStatement> out) {
-        out.add(new BeginBlock());
+        if (isIndenting()) {
+            out.add(new BeginBlock(this));
+        }
         for (Op04StructuredStatement structuredBlock : containedStatements) {
             structuredBlock.linearizeStatementsInto(out);
         }
-        out.add(new EndBlock());
+        if (isIndenting()) {
+            out.add(new EndBlock(this));
+        }
     }
 
     @Override

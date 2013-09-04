@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.wildcard;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -10,11 +11,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -47,6 +50,7 @@ public class WildcardMatch {
     private Map<String, ConstructorInvokationAnonymousInnerWildcard> constructorAnonymousWildcardMap = MapFactory.newMap();
     private Map<String, CastExpressionWildcard> castWildcardMap = MapFactory.newMap();
     private Map<String, ConditionalExpressionWildcard> conditionalWildcardMap = MapFactory.newMap();
+    private Map<String, BlockWildcard> blockWildcardMap = MapFactory.newMap();
 
     private <T> void reset(Collection<? extends Wildcard<T>> coll) {
         for (Wildcard<T> item : coll) {
@@ -69,6 +73,16 @@ public class WildcardMatch {
         reset(constructorAnonymousWildcardMap.values());
         reset(castWildcardMap.values());
         reset(conditionalWildcardMap.values());
+        reset(blockWildcardMap.values());
+    }
+
+    public BlockWildcard getBlockWildcard(String name) {
+        BlockWildcard res = blockWildcardMap.get(name);
+        if (res != null) return res;
+
+        res = new BlockWildcard();
+        blockWildcardMap.put(name, res);
+        return res;
     }
 
     public StackLabelWildCard getStackLabelWildcard(String name) {
@@ -126,11 +140,20 @@ public class WildcardMatch {
     }
 
 
+    public LValueWildcard getLValueWildCard(String name, Predicate<LValue> test) {
+        LValueWildcard res = lValueMap.get(name);
+        if (res != null) return res;
+
+        res = new LValueWildcard(name, test);
+        lValueMap.put(name, res);
+        return res;
+    }
+
     public LValueWildcard getLValueWildCard(String name) {
         LValueWildcard res = lValueMap.get(name);
         if (res != null) return res;
 
-        res = new LValueWildcard(name);
+        res = new LValueWildcard(name, null);
         lValueMap.put(name, res);
         return res;
     }
@@ -284,10 +307,13 @@ public class WildcardMatch {
 
     public class LValueWildcard extends DebugDumpable implements LValue, Wildcard<LValue> {
         private final String name;
+        private final Predicate<LValue> test;
         private transient LValue matchedValue;
 
-        private LValueWildcard(String name) {
+
+        private LValueWildcard(String name, Predicate<LValue> test) {
             this.name = name;
+            this.test = test;
         }
 
         @Override
@@ -336,8 +362,11 @@ public class WildcardMatch {
                 return false;
             }
             if (matchedValue == null) {
-                matchedValue = (LValue) o;
-                return true;
+                if (test == null || test.test((LValue) o)) {
+                    matchedValue = (LValue) o;
+                    return true;
+                }
+                return false;
             }
             return matchedValue.equals(o);
         }
@@ -959,8 +988,41 @@ public class WildcardMatch {
         public ConditionalExpression getNegated() {
             throw new UnsupportedOperationException();
         }
+    }
 
+    public class BlockWildcard extends Block implements Wildcard<Block> {
+        private Block match;
 
+        public BlockWildcard() {
+            super(null, false);
+        }
+
+        @Override
+        public Block getMatch() {
+            return match;
+        }
+
+        @Override
+        public void resetMatch() {
+            match = null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null) return false;
+            if (!(o instanceof Block)) return false;
+
+            if (match != null) {
+                // NB: THIS IS A VERY DELIBERATE == MATCH.
+                return match == o;
+            }
+
+            Block other = (Block) o;
+
+            match = other;
+            return true;
+        }
     }
 
 }

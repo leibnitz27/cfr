@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -69,6 +71,30 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
         if (condition != null) {
             condition = expressionRewriter.rewriteExpression(condition, null, this.getContainer(), null);
         }
+    }
+
+    public BlockIdentifier getBlock() {
+        return block;
+    }
+
+    public ConditionalExpression getCondition() {
+        return condition;
+    }
+
+    @Override
+    public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
+        StructuredStatement o = matchIterator.getCurrent();
+        if (!(o instanceof StructuredDo)) return false;
+        StructuredDo other = (StructuredDo) o;
+        if (condition == null) {
+            if (other.condition != null) return false;
+        } else {
+            if (!condition.equals(other.condition)) return false;
+        }
+        if (!block.equals(other.block)) return false;
+        // Don't check locality.
+        matchIterator.advance();
+        return true;
     }
 
 }
