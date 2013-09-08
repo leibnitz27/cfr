@@ -256,6 +256,7 @@ public class CodeAnalyser {
 
         // Remove LValues which are on their own as expressionstatements.
         Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
 
         // Now we've done our first stage condensation, we want to transform assignments which are
         // self updates into preChanges, if we can.  I.e. x = x | 3  ->  x |= 3,  x = x + 1 -> x+=1 (===++x).
@@ -292,7 +293,6 @@ public class CodeAnalyser {
 
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
         } while (reloop);
-
 
         logger.info("simplifyConditionals");
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes);
@@ -343,7 +343,7 @@ public class CodeAnalyser {
         logger.info("rewriteWhilesAsFors");
         Op03SimpleStatement.rewriteWhilesAsFors(op03SimpleParseNodes);
 
-
+        // TODO : I think this is now redundant.
         logger.info("removeSynchronizedCatchBlocks");
         Op03SimpleStatement.removeSynchronizedCatchBlocks(cfrState, op03SimpleParseNodes);
 
@@ -409,6 +409,7 @@ public class CodeAnalyser {
             debugDumper.print("Final Op3 statements:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
+        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 

@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -62,6 +64,13 @@ public class CatchStatement extends AbstractStatement {
 
     @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+    }
+
+    @Override
+    public void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
+        if (catching instanceof LocalVariable) {
+            lValueAssigmentCollector.collectLocalVariableAssignment((LocalVariable) catching, this.getContainer(), null);
+        }
     }
 
     @Override

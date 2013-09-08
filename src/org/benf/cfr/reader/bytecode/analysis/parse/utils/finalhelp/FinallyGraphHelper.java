@@ -1,14 +1,19 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.DefaultEquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollector;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -69,7 +74,7 @@ public class FinallyGraphHelper {
         pending.add(start);
         matched.put(start.b, start.a);
 
-        final EquivalenceConstraint equivalenceConstraint = new FinallyEquivalenceConstraint();
+        final FinallyEquivalenceConstraint equivalenceConstraint = new FinallyEquivalenceConstraint();
 
         Set<Op03SimpleStatement> finalThrowProxySources = SetFactory.newOrderedSet();
         while (!pending.isEmpty()) {
@@ -78,6 +83,13 @@ public class FinallyGraphHelper {
             Op03SimpleStatement b = p.b;
             Statement sa = a.getStatement();
             Statement sb = b.getStatement();
+
+            /*
+             * Collect anything which is created here.  We will only consider something as being
+             * equivalent if it's been overwritten inside the finally statement, or actually IS identical.
+             */
+            sa.collectLValueAssignments(equivalenceConstraint);
+
             if (!sa.equivalentUnder(sb, equivalenceConstraint)) {
                 return Result.FAIL;
             }
@@ -110,9 +122,21 @@ public class FinallyGraphHelper {
                 if (newBlockIdentifiers.containsAll(minBlockSet)) {
                     if (tgthayx == finalThrow) {
                         if (finalThrowProxy != null && finalThrowProxy != tgttestx) {
-                            return Result.FAIL;
+                            /*
+                             * What if it's identical to finalThrowProxy?
+                             */
+                            Statement s1 = tgttestx.getStatement();
+                            Statement s2 = finalThrowProxy.getStatement();
+                            if (s1.getClass() == GotoStatement.class && s1.equals(s2)) {
+                                // nada.
+                                int y = 1;
+                            } else {
+                                return Result.FAIL;
+                            }
                         }
-                        finalThrowProxy = tgttestx;
+                        if (finalThrowProxy == null) {
+                            finalThrowProxy = tgttestx;
+                        }
                         finalThrowProxySources.add(a);
                     }
                     if ((!matched.containsKey(tgthayx)) && finallyCatchBody.contains(tgthayx)) {
@@ -127,12 +151,14 @@ public class FinallyGraphHelper {
     }
 
 
-    private class FinallyEquivalenceConstraint extends DefaultEquivalenceConstraint {
+    private class FinallyEquivalenceConstraint extends DefaultEquivalenceConstraint implements LValueAssignmentCollector<Statement> {
         /*
         * We allow ssa lvalues to mismatch, but they must continue to....
         */
         private final Map<StackSSALabel, StackSSALabel> rhsToLhsMap = MapFactory.newMap();
         private final Map<LocalVariable, LocalVariable> rhsToLhsLVMap = MapFactory.newMap();
+        private final Set<StackSSALabel> validSSA = SetFactory.newSet();
+        private final Set<LocalVariable> validLocal = SetFactory.newSet();
 
         private StackSSALabel mapSSALabel(StackSSALabel s1, StackSSALabel s2) {
             StackSSALabel r1 = rhsToLhsMap.get(s2);
@@ -156,15 +182,43 @@ public class FinallyGraphHelper {
                 return equivalent((Collection) o1, (Collection) o2);
             }
             if (o1 instanceof StackSSALabel && o2 instanceof StackSSALabel) {
-                o2 = mapSSALabel((StackSSALabel) o1, (StackSSALabel) o2);
+                if (validSSA.contains(o1)) {
+                    o2 = mapSSALabel((StackSSALabel) o1, (StackSSALabel) o2);
+                } else {
+                    int x = 1;
+                }
             }
             if (o1 instanceof LocalVariable && o2 instanceof LocalVariable) {
-                o2 = mapLocalVariable((LocalVariable) o1, (LocalVariable) o2);
+                if (validLocal.contains(o1)) {
+                    o2 = mapLocalVariable((LocalVariable) o1, (LocalVariable) o2);
+                } else {
+                    int x = 1;
+                }
             }
             if (o1 instanceof ExceptionTableEntry && o2 instanceof ExceptionTableEntry) {
                 return true;
             }
             return super.equivalent(o1, o2);
+        }
+
+        @Override
+        public void collect(StackSSALabel lValue, StatementContainer<Statement> statementContainer, Expression value) {
+            validSSA.add(lValue);
+        }
+
+        @Override
+        public void collectMultiUse(StackSSALabel lValue, StatementContainer<Statement> statementContainer, Expression value) {
+            validSSA.add(lValue);
+        }
+
+        @Override
+        public void collectMutatedLValue(LValue lValue, StatementContainer<Statement> statementContainer, Expression value) {
+            int x = 1;
+        }
+
+        @Override
+        public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<Statement> statementContainer, Expression value) {
+            validLocal.add(localVariable);
         }
     }
 }

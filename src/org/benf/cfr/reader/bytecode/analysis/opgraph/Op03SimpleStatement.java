@@ -965,7 +965,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement tgt = ifStatement.getTargets().get(1);
         final Op03SimpleStatement origtgt = tgt;
         do {
-            Op03SimpleStatement next = followNopGoto(tgt);
+            Op03SimpleStatement next = followNopGoto(tgt, true);
             if (next == tgt) break;
             tgt = next;
         } while (true);
@@ -993,15 +993,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+
     // Should have a set to make sure we've not looped.
-    private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in) {
-        if (in.sources.size() != 1) return in;
+    private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource) {
+        if (requireJustOneSource && in.sources.size() != 1) return in;
         if (in.targets.size() != 1) return in;
         Statement statement = in.getStatement();
         if (statement instanceof Nop || statement instanceof GotoStatement) {
             in = in.targets.get(0);
         }
         return in;
+    }
+
+    private static Op03SimpleStatement followNopGotoChain(Op03SimpleStatement in, boolean requireJustOneSource) {
+        Set<Op03SimpleStatement> seen = SetFactory.newSet();
+        do {
+            if (!seen.add(in)) return in;
+            Op03SimpleStatement next = followNopGoto(in, requireJustOneSource);
+            if (next == in) return in;
+            in = next;
+        } while (true);
     }
 
     private static boolean condenseConditional2_type2(Op03SimpleStatement ifStatement) {
@@ -1037,8 +1048,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         final Op03SimpleStatement nottaken2Immed = nottaken2;
         if (nottaken2Immed.sources.size() != 1) return false;
         Op03SimpleStatement notTaken2Source = ifStatement2;
+        nottaken2 = followNopGotoChain(nottaken2, true);
         do {
-            Op03SimpleStatement nontaken2rewrite = followNopGoto(nottaken2);
+            Op03SimpleStatement nontaken2rewrite = followNopGoto(nottaken2, true);
             if (nontaken2rewrite == nottaken2) break;
             notTaken2Source = nottaken2;
             nottaken2 = nontaken2rewrite;
@@ -1051,7 +1063,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         final Op03SimpleStatement nottaken3Immed = nottaken3;
         Op03SimpleStatement notTaken3Source = ifStatement3;
         do {
-            Op03SimpleStatement nontaken3rewrite = followNopGoto(nottaken3);
+            Op03SimpleStatement nontaken3rewrite = followNopGoto(nottaken3, true);
             if (nontaken3rewrite == nottaken3) break;
             notTaken3Source = nottaken3;
             nottaken3 = nontaken3rewrite;
@@ -1259,22 +1271,29 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static List<Op03SimpleStatement> removeUnreachableCode(List<Op03SimpleStatement> statements) {
+    public static List<Op03SimpleStatement> removeUnreachableCode(final List<Op03SimpleStatement> statements) {
         final Set<Op03SimpleStatement> reachable = SetFactory.newSet();
         reachable.add(statements.get(0));
         GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(0), new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
             @Override
             public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
                 reachable.add(arg1);
+//                if (!statements.contains(arg1)) {
+//                    throw new IllegalStateException("Statement missing");
+//                }
                 arg2.enqueue(arg1.getTargets());
                 for (Op03SimpleStatement source : arg1.getSources()) {
+//                    if (!statements.contains(source)) {
+//                        throw new IllegalStateException("Source not in graph!");
+//                    }
                     if (!source.getTargets().contains(arg1)) {
                         throw new IllegalStateException("Inconsistent graph " + source + " does not have a target of " + arg1);
                     }
                 }
                 for (Op03SimpleStatement test : arg1.getTargets()) {
                     // Also, check for backjump targets on non jumps.
-                    if (!(arg1.getStatement() instanceof JumpingStatement)) {
+                    Statement argContained = arg1.getStatement();
+                    if (!(argContained instanceof JumpingStatement || argContained instanceof WhileStatement)) {
                         if (test.getIndex().isBackJumpFrom(arg1)) {
                             throw new IllegalStateException("Backjump on non jumping statement " + arg1);
                         }
@@ -1291,6 +1310,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement statement : statements) {
             if (reachable.contains(statement)) {
                 result.add(statement);
+            }
+        }
+        // Too expensive....
+        for (Op03SimpleStatement res1 : result) {
+            List<Op03SimpleStatement> sources = ListFactory.newList(res1.getSources());
+            for (Op03SimpleStatement source : sources) {
+                if (!reachable.contains(source)) {
+                    res1.removeSource(source);
+                }
             }
         }
         return result;
@@ -1374,6 +1402,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     if (jumpingInnerPriorTarget == innerStatement) {
                         statement.nopOut();
                     }
+                }
+            }
+        }
+
+        /*
+         * Do this backwards.  Generally, there'll be more chains shortened that way.
+         */
+        for (int x = statements.size() - 1; x >= 0; --x) {
+            Op03SimpleStatement statement = statements.get(x);
+            Statement innerStatement = statement.getStatement();
+            if (innerStatement.getClass() == GotoStatement.class) {
+                Op03SimpleStatement target = statement.targets.get(0);
+                Op03SimpleStatement ultimateTarget = followNopGotoChain(target, false);
+                if (target != ultimateTarget) {
+                    target.removeSource(statement);
+                    statement.replaceTarget(target, ultimateTarget);
+                    ultimateTarget.addSource(statement);
                 }
             }
         }
@@ -2281,6 +2326,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         notTakenTarget.replaceStatement(new CommentStatement("empty if block"));
         // Replace the not taken target with an 'empty if statement'.
+
         return false;
     }
 
@@ -2447,12 +2493,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     boolean found = false;
                     for (int x = 0; x < targets.size(); ++x) {
                         Op03SimpleStatement target = targets.get(x);
-                        if (target == eventualTarget) {
+                        if (target == eventualTarget && target != stmtLastBlockRewrite) {
                             targets.set(x, stmtLastBlockRewrite);
+                            stmtLastBlockRewrite.addSource(statementCurrent);
                             eventualTarget.replaceSource(statementCurrent, stmtLastBlockRewrite);
+
                             found = true;
                         }
                     }
+
                     return found;
                 }
             }

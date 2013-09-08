@@ -335,9 +335,9 @@ public class FinalAnalyzer {
             }
         }
         if (endRewrite == null) {
-            endRewrite = new Op03SimpleStatement(extraBlocks, new Nop(), newIdx);
+            endRewrite = new Op03SimpleStatement(extraBlocks, new CommentStatement(""), newIdx);
         }
-        endRewrite.getBlockIdentifiers().remove(finallyBlock);
+        //endRewrite.getBlockIdentifiers().remove(finallyBlock);
         newFinallyBody.add(endRewrite);
 
         for (Op03SimpleStatement old : oldFinallyBody) {
@@ -356,6 +356,11 @@ public class FinalAnalyzer {
                 Op03SimpleStatement newTgt = old2new.get(tgt);
                 if (newTgt == null) {
                     if (tgt == cloneThis.getAfterEnd()) {
+                        /*
+                         * It's not in the block....
+                         *
+                         */
+
                         endRewrite.addSource(newOp);
                         newTgt = endRewrite;
                         // allow.
@@ -365,10 +370,23 @@ public class FinalAnalyzer {
 //                        }
 //                        newTgt.addSource(newOp);
                     } else {
-                        //                    continue;
-                        newTgt = tgt;
-                        newTgt.addSource(newOp);
-//                         throw new IllegalStateException();
+                        if (!(newOp.getStatement() instanceof JumpingStatement)) {
+                            continue;
+                        }
+                        if (tgt.getIndex().isBackJumpFrom(endRewrite)) {
+                            newTgt = tgt;
+                            tgt.addSource(newOp);
+                        } else {
+                            endRewrite.addSource(newOp);
+                            newOp.addTarget(endRewrite);
+
+
+                            if (!endRewrite.getTargets().contains(tgt)) {
+                                endRewrite.addTarget(tgt);
+                                tgt.addSource(endRewrite);
+                            }
+                            continue;
+                        }
                     }
                 }
                 newOp.addTarget(newTgt);

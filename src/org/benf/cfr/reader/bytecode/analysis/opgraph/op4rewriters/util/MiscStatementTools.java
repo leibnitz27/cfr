@@ -28,6 +28,7 @@ public class MiscStatementTools {
 
     public static boolean isDeadCode(Op04StructuredStatement code) {
         List<Op04StructuredStatement> statements = getBlockStatements(code);
+        if (statements == null) return false;
         for (Op04StructuredStatement statement : statements) {
             if (!(statement.getStatement() instanceof StructuredComment)) return false;
         }
