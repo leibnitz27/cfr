@@ -969,16 +969,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (next == tgt) break;
             tgt = next;
         } while (true);
-        if (!(tgt.containedStatement instanceof ReturnStatement)) return;
-        ReturnStatement returnStatement = (ReturnStatement) tgt.containedStatement;
-
-        if (returnStatement instanceof ReturnValueStatement) {
-            ReturnValueStatement returnValueStatement = (ReturnValueStatement) returnStatement;
-            Expression res = returnValueStatement.getReturnValue();
-            JavaTypeInstance fnReturnType = returnValueStatement.getFnReturnType();
-            ifStatement.replaceStatement(new IfExitingStatement(innerIf.getCondition(), res, fnReturnType));
-        } else if (returnStatement instanceof ReturnNothingStatement) {
-            ifStatement.replaceStatement(new IfExitingStatement(innerIf.getCondition(), null, null));
+        Statement tgtStatement = tgt.containedStatement;
+        if (tgtStatement instanceof ReturnStatement) {
+            ifStatement.replaceStatement(new IfExitingStatement(innerIf.getCondition(), tgtStatement));
         } else {
             return;
         }
@@ -1005,7 +998,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return in;
     }
 
-    private static Op03SimpleStatement followNopGotoChain(Op03SimpleStatement in, boolean requireJustOneSource) {
+    public static Op03SimpleStatement followNopGotoChain(Op03SimpleStatement in, boolean requireJustOneSource) {
         Set<Op03SimpleStatement> seen = SetFactory.newSet();
         do {
             if (!seen.add(in)) return in;

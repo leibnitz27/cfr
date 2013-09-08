@@ -26,27 +26,20 @@ import java.util.LinkedList;
  */
 public class IfExitingStatement extends AbstractStatement {
 
-    private static final int JUMP_NOT_TAKEN = 0;
-    private static final int JUMP_TAKEN = 1;
-
     private ConditionalExpression condition;
-    private Expression returnExpression;
-    private JavaTypeInstance fnReturnType;
+    //    private Expression returnExpression;
+//    private JavaTypeInstance fnReturnType;
+    private Statement statement;
 
-
-    public IfExitingStatement(ConditionalExpression conditionalExpression, Expression returnExpression, JavaTypeInstance fnReturnType) {
+    public IfExitingStatement(ConditionalExpression conditionalExpression, Statement statement) {
         this.condition = conditionalExpression;
-        this.returnExpression = returnExpression;
-        this.fnReturnType = fnReturnType;
+        this.statement = statement;
     }
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("if (").dump(condition).print(") return");
-        if (returnExpression != null) {
-            dumper.dump(returnExpression);
-        }
-        dumper.endCodeln();
+        dumper.print("if (").dump(condition).print(") ");
+        statement.dump(dumper);
         return dumper;
     }
 
@@ -56,25 +49,19 @@ public class IfExitingStatement extends AbstractStatement {
         if (replacementCondition != condition) {
             this.condition = (ConditionalExpression) replacementCondition;
         }
-        if (returnExpression != null) {
-            returnExpression = returnExpression.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
-        }
+        statement.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
     }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
         condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
-        if (returnExpression != null) {
-            returnExpression = expressionRewriter.rewriteExpression(returnExpression, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
-        }
+        statement.rewriteExpressions(expressionRewriter, ssaIdentifiers);
     }
 
     @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
         condition.collectUsedLValues(lValueUsageCollector);
-        if (returnExpression != null) {
-            returnExpression.collectUsedLValues(lValueUsageCollector);
-        }
+        statement.collectLValueUsage(lValueUsageCollector);
     }
 
     @Override
@@ -88,13 +75,7 @@ public class IfExitingStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        StructuredReturn structuredReturn;
-        if (returnExpression == null) {
-            structuredReturn = new StructuredReturn();
-        } else {
-            structuredReturn = new StructuredReturn(returnExpression, fnReturnType);
-        }
-        return new StructuredIf(condition, new Op04StructuredStatement(Block.getBlockFor(false, structuredReturn)));
+        return new StructuredIf(condition, new Op04StructuredStatement(Block.getBlockFor(false, statement.getStructuredStatement())));
     }
 
     public void optimiseForTypes() {
@@ -109,8 +90,7 @@ public class IfExitingStatement extends AbstractStatement {
         IfExitingStatement that = (IfExitingStatement) o;
 
         if (condition != null ? !condition.equals(that.condition) : that.condition != null) return false;
-        if (returnExpression != null ? !returnExpression.equals(that.returnExpression) : that.returnExpression != null)
-            return false;
+        if (!statement.equals(that.statement)) return false;
 
         return true;
     }
@@ -122,7 +102,7 @@ public class IfExitingStatement extends AbstractStatement {
         if (getClass() != o.getClass()) return false;
         IfExitingStatement other = (IfExitingStatement) o;
         if (!constraint.equivalent(condition, other.condition)) return false;
-        if (!constraint.equivalent(returnExpression, other.returnExpression)) return false;
+        if (!constraint.equivalent(statement, other.statement)) return false;
         return true;
     }
 }

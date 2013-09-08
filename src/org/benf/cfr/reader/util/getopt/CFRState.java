@@ -382,7 +382,10 @@ public class CFRState {
                 File f = new File(path);
                 if (f.exists()) {
                     if (f.isDirectory()) {
-                        // Ignore for now.
+                        // Load all the jars in that directory.
+                        for (File file : f.listFiles()) {
+                            processClassPathFile(file, file.getAbsolutePath(), classToPathMap);
+                        }
                     } else {
                         processClassPathFile(f, path, classToPathMap);
                     }
