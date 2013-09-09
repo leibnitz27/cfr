@@ -989,6 +989,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     // Should have a set to make sure we've not looped.
     private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource) {
+        if (in == null) {
+            return null;
+        }
         if (requireJustOneSource && in.sources.size() != 1) return in;
         if (in.targets.size() != 1) return in;
         Statement statement = in.getStatement();
@@ -999,6 +1002,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public static Op03SimpleStatement followNopGotoChain(Op03SimpleStatement in, boolean requireJustOneSource) {
+        if (in == null) return null;
         Set<Op03SimpleStatement> seen = SetFactory.newSet();
         do {
             if (!seen.add(in)) return in;
@@ -2897,6 +2901,63 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 identifyCatchBlock(catchStart, blockIdentifier, in);
             }
         }
+    }
+
+
+    /*
+     * This is a terrible order cheat.
+     */
+    private static void extendTryBlock(Op03SimpleStatement tryStatement, List<Op03SimpleStatement> in) {
+        TryStatement tryStatementInner = (TryStatement) tryStatement.getStatement();
+        BlockIdentifier tryBlockIdent = tryStatementInner.getBlockIdentifier();
+        Op03SimpleStatement currentStatement = tryStatement.targets.get(0);
+        int x = in.indexOf(currentStatement);
+
+        while (currentStatement.getBlockIdentifiers().contains(tryBlockIdent)) {
+            if (x >= in.size()) {
+                return;
+            }
+            ++x;
+            currentStatement = in.get(x);
+        }
+
+        Set<BlockIdentifier> validBlocks = SetFactory.newSet();
+        validBlocks.add(tryBlockIdent);
+        for (int i = 1, len = tryStatement.targets.size(); i < len; ++i) {
+            Op03SimpleStatement tgt = tryStatement.targets.get(i);
+            Statement tgtStatement = tgt.getStatement();
+            if (tgtStatement instanceof CatchStatement) {
+                validBlocks.add(((CatchStatement) tgtStatement).getCatchBlockIdent());
+            } else if (tgtStatement instanceof FinallyStatement) {
+                validBlocks.add(((FinallyStatement) tgtStatement).getFinallyBlockIdent());
+            } else {
+                return;
+            }
+        }
+
+        boolean foundSource = false;
+        for (Op03SimpleStatement source : currentStatement.sources) {
+            if (!SetUtil.hasIntersection(validBlocks, source.getBlockIdentifiers())) return;
+            if (source.getBlockIdentifiers().contains(tryBlockIdent)) foundSource = true;
+        }
+
+        if (!foundSource) return;
+        /*
+         * If this statement is a return statement, in the same blocks as JUST THE try (i.e. it hasn't fallen
+         * into a catch etc), we can assume it belonged in the try.
+         */
+        Statement currentContent = currentStatement.getStatement();
+        if (currentContent instanceof ReturnStatement) {
+            currentStatement.getBlockIdentifiers().add(tryBlockIdent);
+        }
+    }
+
+    public static void extendTryBlocks(List<Op03SimpleStatement> in) {
+        List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
+        for (Op03SimpleStatement tryStatement : tries) {
+            extendTryBlock(tryStatement, in);
+        }
+
     }
 
     public static void identifyFinally(CFRState cfrState, Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {

@@ -236,6 +236,7 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
 
+
         if (cfrState.getShowOps() == SHOW_L3_CAUGHT) {
             debugDumper.newln().newln();
             debugDumper.print("After catchblocks.:\n");
@@ -250,9 +251,16 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
 
         Op03SimpleStatement.identifyFinally(cfrState, method, op03SimpleParseNodes, blockIdentifierFactory);
-        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
 
+        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+
+        /*
+         * See if try blocks can be extended with simple returns here.  This is an extra pass, because we might have
+         * missed backjumps from catches earlier.
+         */
+        Op03SimpleStatement.extendTryBlocks(op03SimpleParseNodes);
+
 
         // Remove LValues which are on their own as expressionstatements.
         Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);

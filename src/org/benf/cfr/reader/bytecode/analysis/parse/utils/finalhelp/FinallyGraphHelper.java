@@ -117,13 +117,15 @@ public class FinallyGraphHelper {
                 Op03SimpleStatement tgthayx = tgtb.get(x); // expected tgt
                 Op03SimpleStatement tgttestx2 = Op03SimpleStatement.followNopGotoChain(tgttestx, false);
                 Op03SimpleStatement tgthayx2 = Op03SimpleStatement.followNopGotoChain(tgthayx, false);
+                Op03SimpleStatement finalyThrowProxy2 = Op03SimpleStatement.followNopGotoChain(finalThrowProxy, false);
                 /*
                  * We require that it's in at LEAST all the blocks the test started in.
                  */
                 Set<BlockIdentifier> newBlockIdentifiers = tgttestx.getBlockIdentifiers();
                 if (newBlockIdentifiers.containsAll(minBlockSet)) {
                     if (tgthayx2 == finalThrow) {
-                        if (finalThrowProxy != null && finalThrowProxy != tgttestx2) {
+                        if (finalThrowProxy != null &&
+                                !(finalThrowProxy == tgttestx2 || finalyThrowProxy2 == tgttestx2)) {
                             /*
                              * What if it's identical to finalThrowProxy?
                              */
@@ -149,7 +151,7 @@ public class FinallyGraphHelper {
             }
         }
 
-        return new Result(toRemove, test, finalThrowProxy);
+        return new Result(toRemove, test, Op03SimpleStatement.followNopGotoChain(finalThrowProxy, false));
     }
 
 

@@ -355,7 +355,7 @@ public class FinalAnalyzer {
             for (Op03SimpleStatement tgt : old.getTargets()) {
                 Op03SimpleStatement newTgt = old2new.get(tgt);
                 if (newTgt == null) {
-                    if (tgt == cloneThis.getAfterEnd()) {
+                    if (Op03SimpleStatement.followNopGotoChain(tgt, false) == cloneThis.getAfterEnd()) {
                         /*
                          * It's not in the block....
                          *
@@ -412,7 +412,13 @@ public class FinalAnalyzer {
             for (Op03SimpleStatement source : startSources) {
                 if (!toRemove.contains(source)) {
                     if (afterEnd != null) {
-                        if (source.getStatement() instanceof JumpingStatement || source.getIndex().isBackJumpFrom(afterEnd)) {
+                        boolean canDirect = source.getStatement() instanceof JumpingStatement || source.getIndex().isBackJumpFrom(afterEnd);
+                        if (canDirect) {
+                            if (source.getStatement().getClass() == IfStatement.class) {
+                                if (start == source.getTargets().get(0)) canDirect = false;
+                            }
+                        }
+                        if (canDirect) {
                             source.replaceTarget(start, afterEnd);
                             afterEnd.addSource(source);
                         } else {
@@ -536,6 +542,7 @@ public class FinalAnalyzer {
                 }
             }
         }
+
 
         /*
          * Remove any dead catch blocks.
