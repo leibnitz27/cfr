@@ -62,6 +62,11 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     }
 
     @Override
+    public boolean alwaysDefines(LocalVariable localVariable) {
+        return false;
+    }
+
+    @Override
     public List<LocalVariable> findCreatedHere() {
         return null;
     }

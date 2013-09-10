@@ -25,12 +25,14 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     private final BlockIdentifier block;
     private LValue iterator;
     private Expression list;
+    private boolean creator;
 
     public StructuredIter(BlockIdentifier block, LValue iterator, Expression list, Op04StructuredStatement body) {
         super(body);
         this.block = block;
         this.iterator = iterator;
         this.list = list;
+        this.creator = false;
         /*
          * We need to be able to type the iterator.
          */
@@ -44,7 +46,9 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     public Dumper dump(Dumper dumper) {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         JavaTypeInstance itertype = iterator.getInferredJavaType().getJavaTypeInstance();
-        dumper.print("for (" + itertype + " ").dump(iterator).print(" : ").dump(list).print(") ");
+        dumper.print("for (");
+        dumper.print(itertype.toString()).print(" ");
+        dumper.dump(iterator).print(" : ").dump(list).print(") ");
         getBody().dump(dumper);
         return dumper;
     }
@@ -78,7 +82,14 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
 
     @Override
     public void markCreator(LocalVariable localVariable) {
-        // Nop.  Structured iter is always the creator.
+        // we're always creator.  But we could verify additionally.
+        creator = true;
+    }
+
+    @Override
+    public boolean alwaysDefines(LocalVariable localVariable) {
+        // Could check!
+        return true;
     }
 
     @Override

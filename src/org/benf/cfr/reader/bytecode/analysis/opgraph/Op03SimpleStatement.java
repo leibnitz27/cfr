@@ -1410,6 +1410,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Op03SimpleStatement statement = statements.get(x);
             Statement innerStatement = statement.getStatement();
             if (innerStatement.getClass() == GotoStatement.class) {
+                GotoStatement innerGoto = (GotoStatement) innerStatement;
+                switch (innerGoto.getJumpType()) {
+                    case BREAK:
+                        continue;
+                }
                 Op03SimpleStatement target = statement.targets.get(0);
                 Op03SimpleStatement ultimateTarget = followNopGotoChain(target, false);
                 if (target != ultimateTarget) {
@@ -2726,6 +2731,61 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     }
 
+
+    private static void combineTryCatchEnds(Op03SimpleStatement tryStatement, List<Op03SimpleStatement> in) {
+        TryStatement innerTryStatement = (TryStatement) tryStatement.getStatement();
+        List<Op03SimpleStatement> lastStatements = ListFactory.newList();
+        lastStatements.add(getLastContiguousBlockStatement(innerTryStatement.getBlockIdentifier(), in, tryStatement));
+        for (int x = 1, len = tryStatement.targets.size(); x < len; ++x) {
+            Op03SimpleStatement statementContainer = tryStatement.targets.get(x);
+            Statement statement = statementContainer.getStatement();
+            if (statement instanceof CatchStatement) {
+                lastStatements.add(getLastContiguousBlockStatement(((CatchStatement) statement).getCatchBlockIdent(), in, statementContainer));
+            } else if (statement instanceof FinallyStatement) {
+                return;
+//                lastStatements.add(getLastContiguousBlockStatement(((FinallyStatement) statement).getFinallyBlockIdent(), in, statementContainer));
+            } else {
+                return;
+            }
+        }
+        if (lastStatements.size() <= 1) return;
+        for (Op03SimpleStatement last : lastStatements) {
+            if (last == null) return;
+            if (last.getStatement().getClass() != GotoStatement.class) {
+                return;
+            }
+        }
+        Op03SimpleStatement target = lastStatements.get(0).getTargets().get(0);
+        for (Op03SimpleStatement last : lastStatements) {
+            if (last.getTargets().get(0) != target) return;
+        }
+        // Insert a fake target after the final one.
+        Op03SimpleStatement finalStatement = lastStatements.get(lastStatements.size() - 1);
+        int beforeTgt = in.indexOf(finalStatement);
+        Op03SimpleStatement proxy = new Op03SimpleStatement(tryStatement.getBlockIdentifiers(), new GotoStatement(), finalStatement.getIndex().justAfter());
+        in.add(beforeTgt + 1, proxy);
+        proxy.addTarget(target);
+        target.addSource(proxy);
+
+        for (Op03SimpleStatement last : lastStatements) {
+            GotoStatement gotoStatement = (GotoStatement) last.containedStatement;
+            gotoStatement.setJumpType(JumpType.END_BLOCK);
+            last.replaceTarget(target, proxy);
+            target.removeSource(last);
+            proxy.addSource(last);
+        }
+
+        int x = 1;
+
+    }
+
+    public static void combineTryCatchEnds(List<Op03SimpleStatement> in) {
+        List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
+        for (Op03SimpleStatement tryStatement : tries) {
+            combineTryCatchEnds(tryStatement, in);
+        }
+    }
+
     /*
      * The Op4 -> Structured op4 transform requires blocks to have a member, in order to trigger the parent being claimed.
      * We may need to add synthetic block entries.
@@ -2903,6 +2963,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    /*
+     * Find the last statement in the block, assuming that this statement is the one BEFORE, linearly.
+     */
+    private static Op03SimpleStatement getLastContiguousBlockStatement(BlockIdentifier blockIdentifier, List<Op03SimpleStatement> in, Op03SimpleStatement preBlock) {
+        Op03SimpleStatement currentStatement = preBlock.targets.get(0);
+        int x = in.indexOf(currentStatement);
+
+        if (!currentStatement.getBlockIdentifiers().contains(blockIdentifier)) return null;
+
+        Op03SimpleStatement last = currentStatement;
+        while (currentStatement.getBlockIdentifiers().contains(blockIdentifier)) {
+            ++x;
+            if (x >= in.size()) {
+                break;
+            }
+            last = currentStatement;
+            currentStatement = in.get(x);
+        }
+        return last;
+    }
 
     /*
      * This is a terrible order cheat.
@@ -2910,6 +2990,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static void extendTryBlock(Op03SimpleStatement tryStatement, List<Op03SimpleStatement> in) {
         TryStatement tryStatementInner = (TryStatement) tryStatement.getStatement();
         BlockIdentifier tryBlockIdent = tryStatementInner.getBlockIdentifier();
+
         Op03SimpleStatement currentStatement = tryStatement.targets.get(0);
         int x = in.indexOf(currentStatement);
 

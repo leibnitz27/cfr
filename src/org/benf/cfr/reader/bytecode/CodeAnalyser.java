@@ -260,7 +260,7 @@ public class CodeAnalyser {
          * missed backjumps from catches earlier.
          */
         Op03SimpleStatement.extendTryBlocks(op03SimpleParseNodes);
-
+        Op03SimpleStatement.combineTryCatchEnds(op03SimpleParseNodes);
 
         // Remove LValues which are on their own as expressionstatements.
         Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);

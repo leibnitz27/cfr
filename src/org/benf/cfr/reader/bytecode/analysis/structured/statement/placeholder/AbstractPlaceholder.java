@@ -77,6 +77,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
+    public boolean alwaysDefines(LocalVariable localVariable) {
+        return false;
+    }
+
+    @Override
     public List<LocalVariable> findCreatedHere() {
         throw new UnsupportedOperationException();
     }

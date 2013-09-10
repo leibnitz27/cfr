@@ -324,6 +324,11 @@ public class Block extends AbstractStructuredStatement {
     }
 
     @Override
+    public boolean alwaysDefines(LocalVariable localVariable) {
+        return false;
+    }
+
+    @Override
     public Dumper dump(Dumper d) {
         if (containedStatements.isEmpty()) {
             d.print("\n");

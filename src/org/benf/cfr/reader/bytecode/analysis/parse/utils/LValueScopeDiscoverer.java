@@ -170,6 +170,10 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
             List<StatementContainer<StructuredStatement>> commonScope = null;
             ScopeDefinition bestDefn = null;
             for (ScopeDefinition definition : definitions) {
+                if (definition.exactStatement.getStatement().alwaysDefines(scopeKey.lValue)) {
+                    definition.exactStatement.getStatement().markCreator(scopeKey.lValue);
+                    continue;
+                }
                 List<StatementContainer<StructuredStatement>> scopeList = definition.getNestedScope();
                 if (scopeList == null) {
                     commonScope = null;
@@ -189,14 +193,16 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
                     bestDefn = null;
                 }
             }
-            StatementContainer<StructuredStatement> creationContainer;
+            StatementContainer<StructuredStatement> creationContainer = null;
             if (bestDefn != null) {
                 creationContainer = bestDefn.getStatementContainer();
-            } else {
+            } else if (commonScope != null) {
                 creationContainer = commonScope.get(commonScope.size() - 1);
             }
 
-            creationContainer.getStatement().markCreator(scopeKey.lValue);
+            if (creationContainer != null) {
+                creationContainer.getStatement().markCreator(scopeKey.lValue);
+            }
         }
     }
 

@@ -153,7 +153,7 @@ public class StructuredTry extends AbstractStructuredStatement {
     @Override
     public boolean inlineable() {
 //        return false;
-        return // isPointlessTry() ||
+        return isPointlessTry() ||
                 isJustTryCatchThrow();
     }
 

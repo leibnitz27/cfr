@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredBreak;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredContinue;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredGoto;
@@ -91,6 +92,8 @@ public class GotoStatement extends JumpingStatement {
     @Override
     public StructuredStatement getStructuredStatement() {
         switch (jumpType) {
+            case END_BLOCK:
+                return new StructuredComment("");
             case GOTO:
             case GOTO_OUT_OF_IF:
                 return new UnstructuredGoto();
