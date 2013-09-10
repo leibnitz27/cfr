@@ -300,7 +300,8 @@ public class Method implements KnowsRawSize {
         try {
             if (codeAttribute != null) {
                 codeAttribute.analyse();
-            } else {
+            }
+            if (!methodPrototype.parametersComputed()) {
                 /*
                  * No code attribute - we still need to assign variable names.
                  */

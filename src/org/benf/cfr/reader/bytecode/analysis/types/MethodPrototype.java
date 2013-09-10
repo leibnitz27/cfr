@@ -112,6 +112,10 @@ public class MethodPrototype {
         return explicitThisRemoval ? 1 : 0;
     }
 
+    public boolean parametersComputed() {
+        return parameterLValues != null;
+    }
+
     public List<LocalVariable> getComputedParameters() {
         if (parameterLValues == null) {
             throw new IllegalStateException("Parameters not created");

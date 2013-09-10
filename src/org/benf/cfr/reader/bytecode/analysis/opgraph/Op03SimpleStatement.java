@@ -1786,20 +1786,31 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // Find back references.
         // Verify that they belong to jump instructions (otherwise something has gone wrong)
         // (if, goto).
-        List<Op03SimpleStatement> backjumps = Functional.filter(statements, new HasBackJump());
-        List<Op03SimpleStatement> starts = Functional.uniqAll(Functional.map(backjumps, new GetBackJump()));
-        /* Each of starts is the target of a back jump.
-         * Consider each of these seperately, and for each of these verify
-         * that it contains a forward jump to something which is not a parent except through p.
-         */
-        Map<BlockIdentifier, Op03SimpleStatement> blockEndsCache = MapFactory.newMap();
-        Collections.sort(starts, new CompareByIndex());
 
-        for (Op03SimpleStatement start : starts) {
-            if (considerAsWhileLoopStart(start, statements, blockIdentifierFactory, blockEndsCache)) continue;
-            considerAsDoLoopStart(start, statements, blockIdentifierFactory, blockEndsCache);
+        List<Op03SimpleStatement> pathtests = Functional.filter(statements, new TypeFilter<GotoStatement>(GotoStatement.class));
+        for (Op03SimpleStatement start : pathtests) {
+            considerAsPathologicalLoop(start, statements);
         }
 
+        boolean success = false;
+        do {
+            success = false;
+            List<Op03SimpleStatement> backjumps = Functional.filter(statements, new HasBackJump());
+            List<Op03SimpleStatement> starts = Functional.uniqAll(Functional.map(backjumps, new GetBackJump()));
+            /* Each of starts is the target of a back jump.
+             * Consider each of these seperately, and for each of these verify
+             * that it contains a forward jump to something which is not a parent except through p.
+             */
+            Map<BlockIdentifier, Op03SimpleStatement> blockEndsCache = MapFactory.newMap();
+            Collections.sort(starts, new CompareByIndex());
+
+            for (Op03SimpleStatement start : starts) {
+                if (considerAsWhileLoopStart(start, statements, blockIdentifierFactory, blockEndsCache) ||
+                        considerAsDoLoopStart(start, statements, blockIdentifierFactory, blockEndsCache)) {
+                    success = true;   // consider relooping.  Now, don't as it breaks stuff!
+                }
+            }
+        } while (false);
     }
 
     private static class HasBackJump implements Predicate<Op03SimpleStatement> {
@@ -1810,7 +1821,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             for (Op03SimpleStatement target : targets) {
                 if (target.getIndex().compareTo(inIndex) < 0) {
                     if (!(in.containedStatement instanceof JumpingStatement)) {
-                        if (in.containedStatement instanceof JSRRetStatement) {
+                        if (in.containedStatement instanceof JSRRetStatement ||
+                                in.containedStatement instanceof WhileStatement) {
                             return false;
                         }
                         throw new ConfusedCFRException("Invalid back jump on " + in.containedStatement);
@@ -1876,6 +1888,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    /*
+     * To handle special case tricksiness.
+     */
+    private static boolean considerAsPathologicalLoop(final Op03SimpleStatement start, List<Op03SimpleStatement> statements) {
+        if (start.containedStatement.getClass() != GotoStatement.class) return false;
+        if (start.targets.get(0) != start) return false;
+        Op03SimpleStatement next = new Op03SimpleStatement(start.getBlockIdentifiers(), new GotoStatement(), start.getIndex().justAfter());
+        start.replaceStatement(new CommentStatement("Infinite loop"));
+        start.replaceTarget(start, next);
+        start.replaceSource(start, next);
+        next.addSource(start);
+        next.addTarget(start);
+        statements.add(statements.indexOf(start) + 1, next);
+        return true;
+    }
 
     private static boolean considerAsDoLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
                                                  BlockIdentifierFactory blockIdentifierFactory,
