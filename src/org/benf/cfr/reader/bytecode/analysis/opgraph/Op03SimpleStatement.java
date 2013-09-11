@@ -1711,6 +1711,29 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         whileBlockIdentifier.setBlockType(BlockType.FORLOOP);
         whileStatement.replaceWithForLoop(initalAssignmentSimple, updateAssignment.getInliningExpression());
+
+        for (Op03SimpleStatement source : backSources) {
+            if (source.containedInBlocks.contains(whileBlockIdentifier)) {
+                /*
+                 * Loop at anything which jumps directly to here.
+                 */
+                List<Op03SimpleStatement> ssources = ListFactory.newList(source.getSources());
+                for (Op03SimpleStatement ssource : ssources) {
+                    if (ssource.containedInBlocks.contains(whileBlockIdentifier)) {
+                        Statement sstatement = ssource.getStatement();
+                        if (sstatement instanceof JumpingStatement) {
+                            JumpingStatement jumpingStatement = (JumpingStatement) sstatement;
+                            if (jumpingStatement.getJumpTarget().getContainer() == source) {
+                                ((JumpingStatement) sstatement).setJumpType(JumpType.CONTINUE);
+                                ssource.replaceTarget(source, statement);
+                                statement.addSource(ssource);
+                                source.removeSource(ssource);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public static void rewriteWhilesAsFors(List<Op03SimpleStatement> statements) {
