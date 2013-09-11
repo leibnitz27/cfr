@@ -78,7 +78,7 @@ public class EnumClassRewriter {
 
         Method staticInit = null;
         try {
-            staticInit = classFile.getMethodByName(MiscConstants.STATIC_INIT_METHOD);
+            staticInit = classFile.getMethodByName(MiscConstants.STATIC_INIT_METHOD).get(0);
         } catch (NoSuchMethodException e) {
             // Should have a static constructor.
             throw new ConfusedCFRException("No static init method on enum");
@@ -95,8 +95,8 @@ public class EnumClassRewriter {
         Method valueOf = null;
         Method values = null;
         try {
-            valueOf = classFile.getMethodByName("valueOf");
-            values = classFile.getMethodByName("values");
+            valueOf = classFile.getMethodByName("valueOf").get(0);
+            values = classFile.getMethodByName("values").get(0);
         } catch (NoSuchMethodException e) {
             return false;
         }

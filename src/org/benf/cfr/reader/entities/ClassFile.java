@@ -51,7 +51,7 @@ public class ClassFile implements Dumpable {
     private Map<String, ClassFileField> fieldsByName; // Lazily populated if interrogated.
 
     private final List<Method> methods;
-    private Map<String, Method> methodsByName; // Lazily populated if interrogated.
+    private Map<String, List<Method>> methodsByName; // Lazily populated if interrogated.
 
     private final Map<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
 
@@ -342,14 +342,19 @@ public class ClassFile implements Dumpable {
     }
 
     // Can't handle duplicates.  Remove?
-    public Method getMethodByName(String name) throws NoSuchMethodException {
+    public List<Method> getMethodByName(String name) throws NoSuchMethodException {
         if (methodsByName == null) {
             methodsByName = MapFactory.newMap();
             for (Method method : methods) {
-                methodsByName.put(method.getName(), method);
+                List<Method> list = methodsByName.get(method.getName());
+                if (list == null) {
+                    list = ListFactory.newList();
+                    methodsByName.put(method.getName(), list);
+                }
+                list.add(method);
             }
         }
-        Method method = methodsByName.get(name);
+        List<Method> method = methodsByName.get(name);
         if (method == null) throw new NoSuchMethodException(name);
         return method;
     }

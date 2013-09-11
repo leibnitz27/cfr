@@ -142,7 +142,7 @@ public class CodeAnalyserWholeClass {
     private static Method getStaticConstructor(ClassFile classFile) {
         Method staticInit;
         try {
-            staticInit = classFile.getMethodByName(MiscConstants.STATIC_INIT_METHOD);
+            staticInit = classFile.getMethodByName(MiscConstants.STATIC_INIT_METHOD).get(0);
         } catch (NoSuchMethodException e) {
             return null;
         }

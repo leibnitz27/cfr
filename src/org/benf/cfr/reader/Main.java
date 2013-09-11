@@ -1,6 +1,7 @@
 package org.benf.cfr.reader;
 
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.getopt.BadParametersException;
@@ -43,7 +44,9 @@ public class Main {
                 c.dump(d);
             } else {
                 try {
-                    c.getMethodByName(methname).dump(d, true);
+                    for (Method method : c.getMethodByName(methname)) {
+                        method.dump(d, true);
+                    }
                 } catch (NoSuchMethodException e) {
                     throw new BadParametersException("No such method '" + methname + "'.", CFRState.getFactory());
                 }

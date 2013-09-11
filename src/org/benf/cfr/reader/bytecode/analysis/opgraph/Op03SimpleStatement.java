@@ -1819,7 +1819,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             InstrIndex inIndex = in.getIndex();
             List<Op03SimpleStatement> targets = in.getTargets();
             for (Op03SimpleStatement target : targets) {
-                if (target.getIndex().compareTo(inIndex) < 0) {
+                if (target.getIndex().compareTo(inIndex) <= 0) {
                     if (!(in.containedStatement instanceof JumpingStatement)) {
                         if (in.containedStatement instanceof JSRRetStatement ||
                                 in.containedStatement instanceof WhileStatement) {
@@ -1841,7 +1841,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             InstrIndex inIndex = in.getIndex();
             List<Op03SimpleStatement> targets = in.getTargets();
             for (Op03SimpleStatement target : targets) {
-                if (target.getIndex().compareTo(inIndex) < 0) {
+                if (target.getIndex().compareTo(inIndex) <= 0) {
                     return target;
                 }
             }
@@ -1917,7 +1917,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
             @Override
             public boolean test(Op03SimpleStatement in) {
-                return in.getIndex().compareTo(startIndex) > 0;
+                return in.getIndex().compareTo(startIndex) >= 0;
             }
         });
         Collections.sort(backJumpSources, new CompareByIndex());
@@ -2048,7 +2048,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
             @Override
             public boolean test(Op03SimpleStatement in) {
-                return in.getIndex().compareTo(startIndex) > 0;
+                return in.getIndex().compareTo(startIndex) >= 0;
             }
         });
         Collections.sort(backJumpSources, new CompareByIndex());
@@ -2076,6 +2076,29 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * jump past a catch block.....
          */
         Op03SimpleStatement loopBreak = conditionalTargets.get(1);
+
+        /*
+         * One very special case here - if the conditional is an EXPLICIT self-loop.
+         * In which case the taken branch isn't the exit, it's the loop.
+         *
+         * Rewrote as
+         * x :  if (cond) goto x+2
+         * x+1 : goto x
+         * x+2
+         *
+         */
+        if (loopBreak == conditional && start == conditional) {
+            Op03SimpleStatement backJump = new Op03SimpleStatement(conditional.getBlockIdentifiers(), new GotoStatement(), conditional.getIndex().justAfter());
+            Op03SimpleStatement notTaken = conditional.targets.get(0);
+            conditional.replaceTarget(notTaken, backJump);
+            conditional.replaceSource(conditional, backJump);
+            conditional.replaceTarget(conditional, notTaken);
+            backJump.addSource(conditional);
+            backJump.addTarget(conditional);
+            statements.add(statements.indexOf(conditional) + 1, backJump);
+            conditionalTargets = conditional.getTargets();
+            loopBreak = notTaken;
+        }
 
         if (loopBreak.getIndex().compareTo(lastJump.getIndex()) <= 0) {
             // The conditional doesn't take us to after the last back jump, i.e. it's not a while {} loop.

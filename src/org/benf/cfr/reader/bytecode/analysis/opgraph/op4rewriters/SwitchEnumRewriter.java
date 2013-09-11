@@ -139,7 +139,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
         Method lutStaticInit;
         try {
-            lutStaticInit = enumLutClass.getMethodByName("<clinit>");
+            lutStaticInit = enumLutClass.getMethodByName("<clinit>").get(0);
         } catch (NoSuchMethodException e) {
             return;
         }
