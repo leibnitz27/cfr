@@ -378,9 +378,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);
                 StatementContainer canReplaceIn = mutableReplacable.get(versionedLValue);
                 if (canReplaceIn == statementContainer) {
+                    ExpressionStatement replaceWith = mutableFound.get(versionedLValue);
+                    if (replaceWith.statementContainer == statementContainer) return null;
+
                     // Only the first time.
                     mutableReplacable.remove(versionedLValue);
-                    ExpressionStatement replaceWith = mutableFound.get(versionedLValue);
                     replaceWith.statementContainer.nopOut();
                     return replaceWith.expression;
                 }
