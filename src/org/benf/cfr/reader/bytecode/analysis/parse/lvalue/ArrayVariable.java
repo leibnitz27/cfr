@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArrayIndex;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -19,16 +20,16 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class ArrayVariable extends AbstractLValue {
 
-    private Expression arrayIndex;
+    private ArrayIndex arrayIndex;
 
-    public ArrayVariable(Expression arrayIndex) {
+    public ArrayVariable(ArrayIndex arrayIndex) {
         super(arrayIndex.getInferredJavaType());
         this.arrayIndex = arrayIndex;
     }
 
     @Override
     public LValue deepClone(CloneHelper cloneHelper) {
-        return new ArrayVariable(cloneHelper.replaceOrClone(arrayIndex));
+        return new ArrayVariable((ArrayIndex) cloneHelper.replaceOrClone(arrayIndex));
     }
 
     @Override
@@ -41,20 +42,24 @@ public class ArrayVariable extends AbstractLValue {
         return arrayIndex.dump(d);
     }
 
+    public ArrayIndex getArrayIndex() {
+        return arrayIndex;
+    }
+
     @Override
     public void collectLValueAssignments(Expression assignedTo, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
     }
 
     @Override
     public LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        arrayIndex = arrayIndex.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+        arrayIndex = (ArrayIndex) arrayIndex.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;
     }
 
     @Override
     public LValue applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         // Note ,we say as rvalue, as we're not changing the ARRAY. (bit dodgy this).
-        arrayIndex = arrayIndex.applyExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, ExpressionRewriterFlags.RVALUE);
+        arrayIndex = (ArrayIndex) arrayIndex.applyExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, ExpressionRewriterFlags.RVALUE);
         return this;
     }
 

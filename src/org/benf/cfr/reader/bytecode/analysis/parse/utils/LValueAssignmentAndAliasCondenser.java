@@ -5,7 +5,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArrayIndex;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -220,21 +222,41 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             // a = x[1]
             // However, since we're looking at this from the point of view of SSALabels, we don't have that info here
             // so we ban LValues like this, to stop array creation being reordered.
-            if (guessAlias instanceof ArrayVariable) return null;
+            final LValue returnGuessAlias = guessAlias;
+            List<LValue> checkThese = ListFactory.newList();
+            if (guessAlias instanceof ArrayVariable) {
+                ArrayVariable arrayVariable = (ArrayVariable) guessAlias;
+                ArrayIndex arrayIndex = arrayVariable.getArrayIndex();
+                Expression array = arrayIndex.getArray();
+                if (!(array instanceof LValueExpression)) return null;
+                LValueExpression lValueArrayIndex = (LValueExpression) array;
+                checkThese.add(lValueArrayIndex.getLValue());
+                Expression index = arrayIndex.getIndex();
+                if (index instanceof LValueExpression) {
+                    checkThese.add(((LValueExpression) index).getLValue());
+                } else if (index instanceof Literal) {
+                } else {
+                    return null;
+                }
+            } else {
+                checkThese.add(guessAlias);
+            }
             for (StatementContainer verifyStatement : usages.get(stackSSALabel)) {
                 /*
                  * verify that 'guessAlias' is the same version in verifyStatement
                  * as it is in guessStatement.
                  */
-                if (!guessStatement.getSSAIdentifiers().isValidReplacement(guessAlias, verifyStatement.getSSAIdentifiers())) {
-                    return null;
+                for (LValue checkThis : checkThese) {
+                    if (!guessStatement.getSSAIdentifiers().isValidReplacement(checkThis, verifyStatement.getSSAIdentifiers())) {
+                        return null;
+                    }
                 }
             }
 
             /*
              * ok, guessAlias is a valid replacement for stackSSALabel.
              */
-            return guessAlias;
+            return returnGuessAlias;
         }
 
         public void inferAliases() {
