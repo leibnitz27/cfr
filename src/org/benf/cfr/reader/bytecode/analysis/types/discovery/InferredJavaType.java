@@ -604,7 +604,10 @@ public class InferredJavaType {
             // (We've probably got an arithop between an inferred boolean and a real int... )
             int cmp = thisRaw.compareTypePriorityTo(otherRaw);
             if (cmp < 0) {
-                this.value.forceType(otherRaw, false);
+                if (thisRaw == RawJavaType.BOOLEAN && forbidBool) {
+                    this.value.forceType(otherRaw, false);
+                }
+//                this.value.forceType(otherRaw, false);
             } else if (cmp == 0) {
                 if (thisRaw == RawJavaType.BOOLEAN && forbidBool) {
                     this.value.forceType(RawJavaType.INT, false);
