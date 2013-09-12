@@ -61,6 +61,10 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
     }
 
+    public LValue getMutated() {
+        return mutated;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;

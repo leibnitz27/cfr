@@ -768,6 +768,18 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 esc.nopOut();
             }
         }
+        List<Op03SimpleStatement> sas = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
+        for (Op03SimpleStatement ass : sas) {
+            AssignmentSimple assignmentSimple = (AssignmentSimple) ass.containedStatement;
+            LValue lValue = assignmentSimple.getCreatedLValue();
+            Expression rValue = assignmentSimple.getRValue();
+            if (rValue.getClass() == LValueExpression.class) {
+                LValueExpression lValueExpression = (LValueExpression) rValue;
+                if (lValueExpression.getLValue().equals(lValue)) {
+                    ass.nopOut();
+                }
+            }
+        }
 
     }
 

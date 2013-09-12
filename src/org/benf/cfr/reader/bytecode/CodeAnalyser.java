@@ -244,11 +244,12 @@ public class CodeAnalyser {
         }
 
 
+        //      Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
+
         // Rewrite new / constructor pairs.
         Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
-        Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
 
         Op03SimpleStatement.identifyFinally(cfrState, method, op03SimpleParseNodes, blockIdentifierFactory);
 
@@ -274,6 +275,8 @@ public class CodeAnalyser {
 
         logger.info("pushPreChangeBack");
         Op03SimpleStatement.pushPreChangeBack(op03SimpleParseNodes);
+
+        Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
 
         // Condense again, now we've simplified constructors.
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
