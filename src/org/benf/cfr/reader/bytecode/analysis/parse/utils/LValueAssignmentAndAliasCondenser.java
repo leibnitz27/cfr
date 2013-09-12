@@ -112,8 +112,9 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     if (lvStm.getCreatedLValue().equals(resLValue)) {
                         Op03SimpleStatement lv03 = (Op03SimpleStatement) lvSc;
                         for (Op03SimpleStatement source : lv03.getSources()) {
-                            if (!source.getSSAIdentifiers().isValidReplacement(resLValue, replacementIdentifiers))
+                            if (!source.getSSAIdentifiers().isValidReplacement(resLValue, replacementIdentifiers)) {
                                 return null;
+                            }
                         }
                         /*
                          * Ok, we can get away with it.
