@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -85,10 +86,6 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                 ConstructorInvokationSimple newObject = (ConstructorInvokationSimple) lhs;
                 String rawName = newObject.getTypeInstance().getRawName();
                 if (rawName.equals(TypeConstants.stringBuilderName)) {
-                    JavaTypeInstance lastType = reverseAppendChain.get(reverseAppendChain.size() - 1).getInferredJavaType().getJavaTypeInstance();
-                    if (lastType instanceof RawJavaType) {
-                        return null;
-                    }
                     return genStringConcat(reverseAppendChain);
                 } else {
                     return null;
@@ -101,9 +98,16 @@ public class StringBuilderRewriter implements ExpressionRewriter {
     }
 
     private Expression genStringConcat(List<Expression> revList) {
+
+        JavaTypeInstance lastType = revList.get(revList.size() - 1).getInferredJavaType().getJavaTypeInstance();
+        if (lastType instanceof RawJavaType) {
+            revList.add(new Literal(TypedLiteral.getString("")));
+        }
+
         int x = revList.size() - 1;
         if (x < 0) return null;
         Expression head = revList.get(x);
+
 //        ClassFile stringClass = cfrState.getClassFile(TypeConstants.stringName, false);
 //        if (stringClass == null) return null;
 //        JavaTypeInstance stringType = stringClass.getClassType();

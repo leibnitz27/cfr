@@ -332,7 +332,7 @@ public class Method implements KnowsRawSize {
             if (annotationDefault != null) {
                 d.print(" default ").dump(annotationDefault.getElementValue());
             }
-            d.print(";");
+            d.endCodeln();
         } else {
             d.print(' ').dump(codeAttribute);
         }

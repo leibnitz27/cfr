@@ -18,7 +18,7 @@ public enum AccessFlagMethod {
     ACC_SYNCHRONISED("synchronised"),
     ACC_BRIDGE("/* bridge */"),
     ACC_VARARGS("/* varargs */"),
-    ACC_NATIVE("/* native */"),
+    ACC_NATIVE("native"),
     ACC_ABSTRACT("abstract"),
     ACC_STRICT("strictfp"),
     ACC_SYNTHETIC("/* synthetic */");
