@@ -33,14 +33,22 @@ public class UnstructuredCatch extends AbstractUnStructuredStatement {
         return dumper;
     }
 
+    public StructuredStatement getCatchFor(Op04StructuredStatement innerBlock) {
+        JavaRefTypeInstance eType = exceptions.get(0).getCatchType();
+        return new StructuredCatch(eType, innerBlock, catching);
+    }
+
+    public StructuredStatement getCatchForEmpty() {
+        return getCatchFor(new Op04StructuredStatement(Block.getEmptyBlock(true)));
+    }
+
     @Override
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == this.blockIdentifier) {
             /*
              * Convert to types (should verify elsewhere that there's only 1.
              */
-            JavaRefTypeInstance eType = exceptions.get(0).getCatchType();
-            return new StructuredCatch(eType, innerBlock, catching);
+            return getCatchFor(innerBlock);
         } else {
             return null;
         }

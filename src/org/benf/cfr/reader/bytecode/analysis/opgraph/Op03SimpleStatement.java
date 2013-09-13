@@ -3052,6 +3052,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * Find the last statement in the block, assuming that this statement is the one BEFORE, linearly.
      */
     private static Op03SimpleStatement getLastContiguousBlockStatement(BlockIdentifier blockIdentifier, List<Op03SimpleStatement> in, Op03SimpleStatement preBlock) {
+        if (preBlock.targets.isEmpty()) return null;
         Op03SimpleStatement currentStatement = preBlock.targets.get(0);
         int x = in.indexOf(currentStatement);
 

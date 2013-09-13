@@ -425,6 +425,7 @@ public class CodeAnalyser {
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         logger.info("tidyTryCatch");
+        Op04StructuredStatement.tidyEmptyCatch(block);
         Op04StructuredStatement.tidyTryCatch(block);
         Op04StructuredStatement.inlinePossibles(block);
         Op04StructuredStatement.removeStructuredGotos(block);

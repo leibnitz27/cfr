@@ -42,6 +42,10 @@ public class Block extends AbstractStructuredStatement {
         return new Block(emptyBlockStatements, false);
     }
 
+    public static Block getEmptyBlock(boolean indenting) {
+        return new Block(emptyBlockStatements, indenting);
+    }
+
     public static Block getBlockFor(boolean indenting, StructuredStatement... statements) {
         LinkedList<Op04StructuredStatement> tmp = ListFactory.newLinkedList();
         for (StructuredStatement statement : statements) {
@@ -331,7 +335,11 @@ public class Block extends AbstractStructuredStatement {
     @Override
     public Dumper dump(Dumper d) {
         if (containedStatements.isEmpty()) {
-            d.print("\n");
+            if (isIndenting()) {
+                d.print("{}\n");
+            } else {
+                d.print("\n");
+            }
             return d;
         }
         try {

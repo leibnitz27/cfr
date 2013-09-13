@@ -9,10 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredGoto;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWhile;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
@@ -465,6 +462,17 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
 
+    private static class EmptyCatchTidier implements StructuredStatementTransformer {
+        @Override
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            if (in instanceof UnstructuredCatch) {
+                return ((UnstructuredCatch) in).getCatchForEmpty();
+            }
+            in.transformStructuredChildren(this, scope);
+            return in;
+        }
+    }
+
     private static class TryCatchTidier implements StructuredStatementTransformer {
         @Override
         public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
@@ -520,6 +528,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * mutually exclusive blocks may have trailling gotos after them.  It's hard to remove them prior to here, but now we have
      * structure, we can find them more easily.
      */
+
+    public static void tidyEmptyCatch(Op04StructuredStatement root) {
+        root.transform(new EmptyCatchTidier(), new StructuredScope());
+    }
 
     public static void tidyTryCatch(Op04StructuredStatement root) {
         root.transform(new TryCatchTidier(), new StructuredScope());
