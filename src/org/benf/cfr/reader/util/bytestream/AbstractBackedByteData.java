@@ -68,6 +68,17 @@ public abstract class AbstractBackedByteData implements ByteData {
     }
 
     @Override
+    public int getU2At(long o) throws ConfusedCFRException {
+        // Let's find an EFFICIENT way to do this later!
+        DataInputStream dis = rawDataAsStream((int) o, 2);
+        try {
+            return dis.readUnsignedShort();
+        } catch (Exception e) {
+            throw new ConfusedCFRException(e);
+        }
+    }
+
+    @Override
     public short getU1At(long o) throws ConfusedCFRException {
         // Let's find an EFFICIENT way to do this later!
         DataInputStream dis = rawDataAsStream((int) o, 1);

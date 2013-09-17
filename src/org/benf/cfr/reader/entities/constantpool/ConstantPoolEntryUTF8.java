@@ -20,14 +20,14 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_LENGTH = 1;
     private static final long OFFSET_OF_DATA = 3;
 
-    private final short length;
+    private final int length;
     private final String value;
 
     private static int idx;
 
     public ConstantPoolEntryUTF8(ConstantPool cp, ByteData data) {
         super(cp);
-        this.length = data.getS2At(OFFSET_OF_LENGTH);
+        this.length = data.getU2At(OFFSET_OF_LENGTH);
         byte[] bytes = data.getBytesAt(length, OFFSET_OF_DATA);
         String tmpValue = new String(bytes, UTF8_CHARSET);
         if (tmpValue.length() > 512 && GlobalArgs.hideExtremelyLongStrings) {

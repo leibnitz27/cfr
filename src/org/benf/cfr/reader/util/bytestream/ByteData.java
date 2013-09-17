@@ -16,6 +16,8 @@ public interface ByteData {
 
     short getS2At(long offset);
 
+    int getU2At(long offset);
+
     int getS4At(long offset);
 
     double getDoubleAt(long o);
