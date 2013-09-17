@@ -195,9 +195,11 @@ public class TypedLiteral {
         return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodType);
     }
 
-    // TODO : Quote strings properly
+    // Todo - uuencode?
     private static String enQuote(String in) {
-        return '\"' + in.replaceAll("\"", "\\\\\"") + '\"';
+        in = in.replaceAll("\"", "\\\"");
+        in = in.replaceAll("\\\\", "\\\\\\\\");
+        return '\"' + in + '\"';
     }
 
     public static TypedLiteral getConstantPoolEntryUTF8(ConstantPool cp, ConstantPoolEntryUTF8 cpe) {
