@@ -170,12 +170,19 @@ public class InferredJavaType {
                 return;
             }
 
+            /*
+             * Matches defines the common set of parent / actual classes - i.e. the match could be one of these.
+             *
+             * We now want to remove any which are less derived.
+             */
             List<JavaTypeInstance> poss = ListFactory.newList(matches.keySet());
             boolean effect = true;
             do {
                 effect = false;
                 for (JavaTypeInstance pos : poss) {
-                    Collection<JavaTypeInstance> supers = pos.getBindingSupers().getBoundSuperClasses().keySet();
+                    Set<JavaTypeInstance> supers = SetFactory.newSet(pos.getBindingSupers().getBoundSuperClasses().keySet());
+                    // but don't remove the actual type.
+                    supers.remove(pos);
                     if (poss.removeAll(supers)) {
                         effect = true;
                         break;
@@ -187,6 +194,10 @@ public class InferredJavaType {
              */
             JavaTypeInstance oneClash = clashes.get(0).getJavaTypeInstance();
             Map<JavaTypeInstance, BindingSuperContainer.Route> routes = oneClash.getBindingSupers().getBoundSuperRoute();
+            if (poss.isEmpty()) {
+                // If we ended up with nothing, we've been stupidly aggressive.  Take a guess.
+                poss = ListFactory.newList(matches.keySet());
+            }
             for (JavaTypeInstance pos : poss) {
                 if (BindingSuperContainer.Route.EXTENSION == routes.get(pos)) {
                     type = pos;
@@ -242,7 +253,7 @@ public class InferredJavaType {
 
         @Override
         public void mkDelegate(IJTInternal newDelegate) {
-            throw new UnsupportedOperationException();
+            // ignore.
         }
 
         @Override

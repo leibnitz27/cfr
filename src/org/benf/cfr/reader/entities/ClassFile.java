@@ -635,8 +635,10 @@ public class ClassFile implements Dumpable {
         if (thisType instanceof JavaGenericRefTypeInstance) {
             JavaGenericRefTypeInstance genericThisType = (JavaGenericRefTypeInstance) thisType;
             genericTypeBinder = GenericTypeBinder.buildIdentityBindings(genericThisType);
+            boundSuperCollector.collect(genericThisType, BindingSuperContainer.Route.IDENTITY);
         } else {
             genericTypeBinder = null;
+            boundSuperCollector.collect((JavaRefTypeInstance) thisType, BindingSuperContainer.Route.IDENTITY);
         }
 
         getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.EXTENSION);

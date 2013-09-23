@@ -13,6 +13,7 @@ import java.util.Map;
 public class BindingSuperContainer {
 
     public enum Route {
+        IDENTITY,
         EXTENSION,
         INTERFACE
     }
