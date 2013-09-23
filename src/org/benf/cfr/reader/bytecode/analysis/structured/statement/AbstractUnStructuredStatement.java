@@ -55,7 +55,6 @@ public abstract class AbstractUnStructuredStatement extends AbstractStructuredSt
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

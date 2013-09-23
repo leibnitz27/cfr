@@ -1,9 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.VarArgsRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.FunctionProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -22,7 +24,7 @@ import java.util.List;
  * Time: 17:26
  * To change this template use File | Settings | File Templates.
  */
-public abstract class AbstractFunctionInvokation extends AbstractExpression implements BoxingProcessor {
+public abstract class AbstractFunctionInvokation extends AbstractExpression implements FunctionProcessor, BoxingProcessor {
     private final ConstantPoolEntryMethodRef function;
     private Expression object;
     private final List<Expression> args;
@@ -111,6 +113,14 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
     public abstract String getName();
 
     @Override
+    public void rewriteVarArgs(VarArgsRewriter varArgsRewriter) {
+        if (!methodPrototype.isVarArgs()) return;
+        OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
+        if (overloadMethodSet == null) return;
+        varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, args);
+    }
+
+    @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
         if (args.isEmpty()) return false;
         /*
@@ -118,8 +128,12 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
          */
 
         OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
-        if (overloadMethodSet == null) return false;
+        if (overloadMethodSet == null) {
+            boxingRewriter.removeRedundantCastOnly(args);
+            return false;
+        }
 
+        boolean callsCorrectEntireMethod = overloadMethodSet.callsCorrectEntireMethod(args);
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -
@@ -133,16 +147,16 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
              * we only need to shove a cast to the exact type on it if our current argument
              * doesn't call the 'correct' method.
              */
-            if (!overloadMethodSet.callsCorrectMethod(arg, x)) {
+            if (!callsCorrectEntireMethod && !overloadMethodSet.callsCorrectMethod(arg, x)) {
                 /*
                  * If arg isn't the right type, shove an extra cast on the front now.
                  * Then we will forcibly remove it if we don't need it.
                  */
-                JavaTypeInstance argType = overloadMethodSet.getArgType(x);
+                JavaTypeInstance argType = overloadMethodSet.getArgType(x, arg.getInferredJavaType().getJavaTypeInstance());
                 boolean ignore = false;
                 if (argType instanceof JavaGenericBaseInstance) {
                     // TODO : Should check flag for ignore bad generics?
-                    ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp);
+                    ignore |= ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp);
                 }
                 /*
                  * Lambda types will always look wrong.

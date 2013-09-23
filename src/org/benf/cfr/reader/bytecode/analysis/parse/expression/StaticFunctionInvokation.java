@@ -1,14 +1,17 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.VarArgsRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.FunctionProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
@@ -24,7 +27,7 @@ import java.util.List;
  * Time: 17:26
  * To change this template use File | Settings | File Templates.
  */
-public class StaticFunctionInvokation extends AbstractExpression implements BoxingProcessor {
+public class StaticFunctionInvokation extends AbstractExpression implements FunctionProcessor, BoxingProcessor {
     private final ConstantPoolEntryMethodRef function;
     private final List<Expression> args;
     private final JavaTypeInstance clazz;
@@ -104,10 +107,21 @@ public class StaticFunctionInvokation extends AbstractExpression implements Boxi
         return function;
     }
 
+    @Override
+    public void rewriteVarArgs(VarArgsRewriter varArgsRewriter) {
+        MethodPrototype methodPrototype = function.getMethodPrototype();
+        if (!methodPrototype.isVarArgs()) return;
+        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        if (overloadMethodSet == null) return;
+        varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, getArgs());
+    }
+
 
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
         OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
-        if (overloadMethodSet == null) return false;
+        if (overloadMethodSet == null) {
+            return false;
+        }
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -

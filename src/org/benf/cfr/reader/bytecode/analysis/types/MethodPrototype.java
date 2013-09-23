@@ -237,7 +237,7 @@ public class MethodPrototype {
              *
              * i.e. given that genericRefTypeInstance has the correct bindings, apply those to method.
              */
-            JavaTypeInstance boundResult = getResultBoundAccordingly(result, classFile.getClassSignature(), genericRefTypeInstance, invokingArgs);
+            JavaTypeInstance boundResult = getResultBoundAccordingly(result, genericRefTypeInstance, invokingArgs);
             return boundResult;
         } else {
             return result;
@@ -301,6 +301,49 @@ public class MethodPrototype {
             JavaTypeInstance type = args.get(x);
             expression.getInferredJavaType().useAsWithoutCasting(type);
         }
+
+    }
+
+    public void addExplicitCasts(Expression object, List<Expression> expressions) {
+        int length = expressions.size();
+
+        GenericTypeBinder genericTypeBinder = null;
+        if (object != null && object.getInferredJavaType().getJavaTypeInstance() instanceof JavaGenericBaseInstance) {
+            List<JavaTypeInstance> invokingTypes = ListFactory.newList();
+            for (Expression invokingArg : expressions) {
+                invokingTypes.add(invokingArg.getInferredJavaType().getJavaTypeInstance());
+            }
+
+            /*
+             * For each of the formal type parameters of the class signature, what has it been bound to in the
+             * instance?
+             */
+            JavaGenericRefTypeInstance boundInstance = (object instanceof JavaGenericRefTypeInstance) ? (JavaGenericRefTypeInstance) object : null;
+            if (classFile != null) {
+                genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classFile.getClassSignature(), args, boundInstance, invokingTypes);
+            }
+        }
+
+        /*
+         * And then (daft, I know) place an explicit cast infront of the arg.  These will get stripped out later
+         * IF that's appropriate.
+         */
+        for (int x = 0; x < length; ++x) {
+            Expression expression = expressions.get(x);
+            JavaTypeInstance type = args.get(x);
+            //
+            // But... we can't put a cast infront of it to arg type if it's a generic.
+            // Otherwise we lose type propagation information.
+            // AARGH.
+            JavaTypeInstance exprType = expression.getInferredJavaType().getJavaTypeInstance();
+            if (exprType instanceof JavaGenericBaseInstance) {
+                continue;
+            }
+            if (genericTypeBinder != null) {
+                type = genericTypeBinder.getBindingFor(type);
+            }
+            expressions.set(x, new CastExpression(new InferredJavaType(type, InferredJavaType.Source.FUNCTION, true), expression));
+        }
     }
 
     @Override
@@ -342,7 +385,21 @@ public class MethodPrototype {
         return true;
     }
 
-    private JavaTypeInstance getResultBoundAccordingly(JavaTypeInstance result, ClassSignature classSignature, JavaGenericRefTypeInstance boundInstance, List<Expression> invokingArgs) {
+    public GenericTypeBinder getTypeBinderFor(List<Expression> invokingArgs) {
+        List<JavaTypeInstance> invokingTypes = ListFactory.newList();
+        for (Expression invokingArg : invokingArgs) {
+            invokingTypes.add(invokingArg.getInferredJavaType().getJavaTypeInstance());
+        }
+
+        /*
+         * For each of the formal type parameters of the class signature, what has it been bound to in the
+         * instance?
+         */
+        GenericTypeBinder genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classFile.getClassSignature(), args, null, invokingTypes);
+        return genericTypeBinder;
+    }
+
+    private JavaTypeInstance getResultBoundAccordingly(JavaTypeInstance result, JavaGenericRefTypeInstance boundInstance, List<Expression> invokingArgs) {
         if (!(result instanceof JavaGenericBaseInstance)) {
             // Don't care - (i.e. iterator<E> hasNext)
             return result;
@@ -357,10 +414,15 @@ public class MethodPrototype {
          * For each of the formal type parameters of the class signature, what has it been bound to in the
          * instance?
          */
-        GenericTypeBinder genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classSignature, args, boundInstance, invokingTypes);
+        GenericTypeBinder genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classFile.getClassSignature(), args, boundInstance, invokingTypes);
 
         JavaGenericBaseInstance genericResult = (JavaGenericBaseInstance) result;
         return genericResult.getBoundInstance(genericTypeBinder);
+    }
+
+
+    public boolean isVarArgs() {
+        return varargs;
     }
 
     /*

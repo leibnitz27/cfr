@@ -50,6 +50,10 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
                 cp.getNameAndTypeEntry(nameAndTypeIndex).getDescriptor().getValue());
     }
 
+    public ConstantPool getCp() {
+        return super.getCp();
+    }
+
     @Override
     public String toString() {
         return "Method classIndex " + classIndex + " nameAndTypeIndex " + nameAndTypeIndex;
@@ -85,7 +89,9 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
                 overloadMethodSet = classFile.getOverloadMethodSet(replacement);
                 basePrototype = replacement;
             } catch (NoSuchMethodException ignore) {
+                int x = 1;
             } catch (CannotLoadClassException ignore) {
+                int x = 1;
             }
 
             methodPrototype = basePrototype;

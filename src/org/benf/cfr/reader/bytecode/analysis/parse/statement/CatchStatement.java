@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCatch;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.Predicate;
@@ -29,6 +30,10 @@ public class CatchStatement extends AbstractStatement {
     public CatchStatement(List<ExceptionGroup.Entry> exceptions, LValue catching) {
         this.exceptions = exceptions;
         this.catching = catching;
+        if (!exceptions.isEmpty()) {
+            InferredJavaType catchType = new InferredJavaType(exceptions.get(0).getCatchType(), InferredJavaType.Source.EXCEPTION, true);
+            this.catching.getInferredJavaType().chain(catchType);
+        }
     }
 
     public void removeCatchBlockFor(final BlockIdentifier tryBlockIdent) {

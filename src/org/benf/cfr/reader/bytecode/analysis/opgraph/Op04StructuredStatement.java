@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -577,8 +578,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * We can also discover if stack locations have been re-used with a type change - this would have resulted
      * in what looks like invalid variable re-use, which we can now convert.
      */
-    public static void discoverVariableScopes(Method method, Op04StructuredStatement root) {
-        LValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverer(method.getMethodPrototype());
+    public static void discoverVariableScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
+        LValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverer(method.getMethodPrototype(), variableFactory);
         root.traceLocalVariableScope(scopeDiscoverer);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
@@ -651,10 +652,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new LambdaRewriter(cfrState, method.getClassFile()).rewrite(root);
     }
 
+    public static void removeUnnecessaryVarargArrays(CFRState cfrState, Method method, Op04StructuredStatement root) {
+        new VarArgsRewriter().rewrite(root);
+    }
+
     public static void removePrimitiveDeconversion(CFRState cfrState, Method method, Op04StructuredStatement root) {
         if (!cfrState.getBooleanOpt(CFRState.SUGAR_BOXING)) return;
 
-        new PrimitiveBoxingRewriter().rewrite(root);
+        root.transform(new PrimitiveBoxingRewriter(), new StructuredScope());
     }
 
     public static void replaceNestedSyntheticOuterRefs(Op04StructuredStatement root) {

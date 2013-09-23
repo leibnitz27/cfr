@@ -142,7 +142,7 @@ public class Method implements KnowsRawSize {
         return isConstructor;
     }
 
-    private AttributeSignature getSignatureAttribute() {
+    public AttributeSignature getSignatureAttribute() {
         return this.<AttributeSignature>getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
     }
 

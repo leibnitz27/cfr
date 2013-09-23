@@ -68,4 +68,8 @@ public class VariableFactory {
         }
         return val;
     }
+
+    public void mutatingRenameUnClash(LocalVariable toRename) {
+        variableNamer.mutatingRenameUnClash(toRename.getName());
+    }
 }

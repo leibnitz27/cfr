@@ -61,6 +61,8 @@ public class ClassFile implements Dumpable {
     private final ConstantPoolEntryClass rawSuperClass;
     private final List<ConstantPoolEntryClass> rawInterfaces;
     private final ClassSignature classSignature;
+    private final ClassFileVersion classFileVersion;
+    private DecompilerComments decompilerComments;
 
     private boolean begunAnalysis;
 
@@ -188,6 +190,35 @@ public class ClassFile implements Dumpable {
         } else {
             dumpHelper = new ClassFileDumperNormal(cfrState);
         }
+
+        /*
+         *
+         */
+        ClassFileVersion classFileVersion = new ClassFileVersion(majorVer, minorVer);
+        if (classFileVersion.before(ClassFileVersion.JAVA_6)) {
+            boolean hasSignature = false;
+            if (null != getAttributeByName(AttributeSignature.ATTRIBUTE_NAME)) hasSignature = true;
+            if (!hasSignature) {
+                for (Method method : methods) {
+                    if (null != method.getSignatureAttribute()) {
+                        hasSignature = true;
+                        break;
+                    }
+                }
+            }
+            if (hasSignature) {
+                addComment("This class specifies class file version " + classFileVersion + " but uses Java 6 signatures.  Assuming Java 6.");
+                classFileVersion = ClassFileVersion.JAVA_6;
+            }
+        }
+
+        this.classFileVersion = classFileVersion;
+
+    }
+
+    private void addComment(String comment) {
+        if (decompilerComments == null) decompilerComments = new DecompilerComments();
+        decompilerComments.addComment(comment);
     }
 
     /* Get the list of constantPools, and that of inner classes */
@@ -226,7 +257,7 @@ public class ClassFile implements Dumpable {
     }
 
     public ClassFileVersion getClassFileVersion() {
-        return new ClassFileVersion(majorVer, minorVer);
+        return classFileVersion;
     }
 
     public boolean isInnerClass() {
@@ -290,15 +321,25 @@ public class ClassFile implements Dumpable {
     public OverloadMethodSet getOverloadMethodSet(final MethodPrototype prototype) {
         List<Method> named = getMethodsWithMatchingName(prototype);
         /*
-         * Filter this list to final all methods with the name number of args.
+         * Filter this list to find all methods with the name number of args.
          */
         final boolean isInstance = prototype.isInstanceMethod();
         final int numArgs = prototype.getArgs().size();
+        final boolean isVarArgs = (prototype.isVarArgs());
         named = Functional.filter(named, new Predicate<Method>() {
             @Override
             public boolean test(Method in) {
                 MethodPrototype other = in.getMethodPrototype();
-                return other.isInstanceMethod() == isInstance && other.getArgs().size() == numArgs;
+                if (other.isInstanceMethod() != isInstance) return false;
+                boolean otherIsVarargs = other.isVarArgs();
+                if (isVarArgs) {
+                    if (otherIsVarargs) return true;
+                    return (other.getArgs().size() >= numArgs);
+                }
+                if (otherIsVarargs) {
+                    return (other.getArgs().size() <= numArgs);
+                }
+                return (other.getArgs().size() == numArgs);
             }
         });
         List<MethodPrototype> prototypes = Functional.map(named, new UnaryFunction<Method, MethodPrototype>() {

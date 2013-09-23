@@ -431,6 +431,7 @@ public class CodeAnalyser {
         Op04StructuredStatement.removeStructuredGotos(block);
         Op04StructuredStatement.removePointlessBlocks(block);
         Op04StructuredStatement.removePointlessReturn(block);
+        Op04StructuredStatement.removePrimitiveDeconversion(cfrState, method, block);
 
         /*
          * If we can't fully structure the code, we bow out here.
@@ -451,7 +452,7 @@ public class CodeAnalyser {
 //        new LoopIterRewriter(cfrState).rewrite(block);
 
         // Now we've got everything nicely block structured, we can have an easier time
-        Op04StructuredStatement.discoverVariableScopes(method, block);
+        Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory);
 
         // Done by wholeClass analyser.
 //        Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);
@@ -465,8 +466,9 @@ public class CodeAnalyser {
         Op04StructuredStatement.rewriteLambdas(cfrState, method, block);
 
         // Some misc translations.
-        Op04StructuredStatement.removePrimitiveDeconversion(cfrState, method, block);
+        Op04StructuredStatement.removeUnnecessaryVarargArrays(cfrState, method, block);
 
+        Op04StructuredStatement.removePrimitiveDeconversion(cfrState, method, block);
         // Tidy variable names
         Op04StructuredStatement.tidyVariableNames(method, block);
 

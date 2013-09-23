@@ -39,9 +39,15 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         return childType.implicitlyCastsTo(tgtType);
     }
 
+    public boolean couldBeImplicit(JavaTypeInstance tgtType) {
+        JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
+        return childType.implicitlyCastsTo(tgtType);
+    }
+
     @Override
     public Dumper dump(Dumper d) {
-        if (child.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN) {
+        if (child.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN &&
+                !(RawJavaType.BOOLEAN.implicitlyCastsTo(getInferredJavaType().getJavaTypeInstance()))) {
             // This is ugly.  Unfortunately, it's necessary (currently!) as we don't have an extra pass to
             // transform invalid casts like this.
             return d.print("(" + getInferredJavaType().getCastString() + ")(").dump(child).print(" ? 1 : 0)");
@@ -84,13 +90,30 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         // Horrible edge case.  If we're forcibly downcasting a cast, then skip the middle one.
         while (child instanceof CastExpression) {
             CastExpression childCast = (CastExpression) child;
-            if (getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(childCast.getInferredJavaType().getJavaTypeInstance())) {
+            JavaTypeInstance thisType = getInferredJavaType().getJavaTypeInstance();
+            JavaTypeInstance childType = childCast.getInferredJavaType().getJavaTypeInstance();
+            JavaTypeInstance grandChildType = childCast.child.getInferredJavaType().getJavaTypeInstance();
+//            if (thisType.implicitlyCastsTo(grandChildType)) {
+//                child = childCast.child;
+//            } else {
+//                break;
+//            }
+            if (grandChildType.implicitlyCastsTo(childType) && childType.implicitlyCastsTo(thisType)) {
                 child = childCast.child;
             } else {
+                if (grandChildType instanceof RawJavaType && childType instanceof RawJavaType && thisType instanceof RawJavaType) {
+                    if (!grandChildType.implicitlyCastsTo(childType) && !childType.implicitlyCastsTo(thisType)) {
+                        child = childCast.child;
+                        continue;
+                    }
+                }
                 break;
             }
         }
-        child = boxingRewriter.sugarNonParameterBoxing(child, getInferredJavaType().getJavaTypeInstance());
+        Expression newchild = boxingRewriter.sugarNonParameterBoxing(child, getInferredJavaType().getJavaTypeInstance());
+        if (newchild.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(child.getInferredJavaType().getJavaTypeInstance())) {
+            child = newchild;
+        }
         return false;
     }
 
@@ -105,4 +128,22 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         if (!constraint.equivalent(child, other.child)) return false;
         return true;
     }
+
+    public static Expression removeImplicit(Expression e) {
+        while (e instanceof CastExpression && ((CastExpression) e).couldBeImplicit()) {
+            e = ((CastExpression) e).getChild();
+        }
+        return e;
+    }
+
+    public static Expression removeImplicitOuterType(Expression e) {
+        final JavaTypeInstance t = e.getInferredJavaType().getJavaTypeInstance();
+        while (e instanceof CastExpression
+                && ((CastExpression) e).couldBeImplicit()
+                && ((CastExpression) e).couldBeImplicit(t)) {
+            e = ((CastExpression) e).getChild();
+        }
+        return e;
+    }
+
 }

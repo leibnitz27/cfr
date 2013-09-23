@@ -47,13 +47,15 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
 
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         maybeRewriteExpressionType(expression.getInferredJavaType());
         return expression;
     }
 
     @Override
     public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        return expression;
+        ConditionalExpression res = (ConditionalExpression) expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        return res;
     }
 
     @Override

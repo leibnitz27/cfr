@@ -78,7 +78,14 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                 if (memberFunctionInvokation.getName().equals("append") &&
                         memberFunctionInvokation.getArgs().size() == 1) {
                     lhs = memberFunctionInvokation.getObject();
-                    reverseAppendChain.add(memberFunctionInvokation.getAppropriatelyCastArgument(0));
+                    Expression e = memberFunctionInvokation.getAppropriatelyCastArgument(0);
+                    if (e instanceof CastExpression) {
+                        Expression ce = ((CastExpression) e).getChild();
+                        if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance())) {
+                            e = ce;
+                        }
+                    }
+                    reverseAppendChain.add(e);
                 } else {
                     return null;
                 }

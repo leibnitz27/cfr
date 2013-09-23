@@ -9,6 +9,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 public class JavaArrayTypeInstance implements JavaTypeInstance {
     private final int dimensions;
     private final JavaTypeInstance underlyingType;
+    private JavaTypeInstance cachedDegenerifiedType;
 
     public JavaArrayTypeInstance(int dimensions, JavaTypeInstance underlyingType) {
         this.dimensions = dimensions;
@@ -95,7 +96,10 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public JavaTypeInstance getDeGenerifiedType() {
-        return this;
+        if (cachedDegenerifiedType == null) {
+            cachedDegenerifiedType = new JavaArrayTypeInstance(dimensions, underlyingType.getDeGenerifiedType());
+        }
+        return cachedDegenerifiedType;
     }
 
     @Override

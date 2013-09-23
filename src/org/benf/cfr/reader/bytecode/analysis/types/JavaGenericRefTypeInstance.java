@@ -181,6 +181,17 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     @Override
     public boolean implicitlyCastsTo(JavaTypeInstance other) {
         if (other == TypeConstants.OBJECT) return true;
+        if (this.equals(other)) return true;
+        BindingSuperContainer bindingSuperContainer = getBindingSupers();
+        if (bindingSuperContainer == null) return false;
+        JavaTypeInstance degenerifiedOther = other.getDeGenerifiedType();
+        JavaTypeInstance degenerifiedThis = getDeGenerifiedType();
+        if (degenerifiedThis.equals(other)) return true;
+
+        if (!bindingSuperContainer.containsBase(degenerifiedOther)) return false;
+        JavaTypeInstance boundBase = bindingSuperContainer.getBoundSuperForBase(degenerifiedOther);
+        if (other.equals(boundBase)) return true;
+        if (degenerifiedOther.equals(other)) return true;
         return false;
     }
 

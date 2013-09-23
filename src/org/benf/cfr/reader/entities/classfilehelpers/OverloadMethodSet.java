@@ -12,6 +12,7 @@ import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -40,14 +41,30 @@ public class OverloadMethodSet {
     private static class MethodData {
         private final MethodPrototype methodPrototype;
         private final List<JavaTypeInstance> methodArgs;
+        private final int size;
 
         private MethodData(MethodPrototype methodPrototype, List<JavaTypeInstance> methodArgs) {
             this.methodPrototype = methodPrototype;
             this.methodArgs = methodArgs;
+            this.size = methodArgs.size();
         }
 
-        private JavaTypeInstance getArgType(int idx) {
+        private JavaTypeInstance getArgType(int idx, JavaTypeInstance used) {
+            if (idx >= size - 1 && methodPrototype.isVarArgs()) {
+                JavaTypeInstance res = methodArgs.get(size - 1);
+                if (res.getNumArrayDimensions() == used.getNumArrayDimensions() + 1) {
+                    return res.removeAnArrayIndirection();
+                }
+                return res;
+            }
+            if (idx >= size) {
+                return null;
+            }
             return methodArgs.get(idx);
+        }
+
+        public boolean isVararg(int idx) {
+            return (idx >= size - 1 && methodPrototype.isVarArgs());
         }
 
         public boolean is(MethodData other) {
@@ -108,8 +125,48 @@ public class OverloadMethodSet {
         return new OverloadMethodSet(classFile, mk.invoke(actualPrototype), Functional.map(allPrototypes, mk));
     }
 
-    public JavaTypeInstance getArgType(int idx) {
-        return actualPrototype.methodArgs.get(idx);
+    public JavaTypeInstance getArgType(int idx, JavaTypeInstance used) {
+        return actualPrototype.getArgType(idx, used);
+    }
+
+
+    public boolean callsCorrectEntireMethod(List<Expression> args) {
+        final int argCount = args.size();
+        /*
+         * Don't even consider any of the matches which have too many required arguments
+         */
+
+        Set<MethodData> possibleMatches = SetFactory.newSet(
+                Functional.filter(allPrototypes, new Predicate<MethodData>() {
+                    @Override
+                    public boolean test(MethodData in) {
+                        return in.methodArgs.size() <= argCount;
+                    }
+                }));
+
+        for (int x = 0, len = args.size(); x < len; ++x) {
+            Expression arg = args.get(x);
+            JavaTypeInstance actual = arg.getInferredJavaType().getJavaTypeInstance();
+            Iterator<MethodData> possiter = possibleMatches.iterator();
+            while (possiter.hasNext()) {
+                MethodData prototype = possiter.next();
+                JavaTypeInstance argType = prototype.getArgType(x, actual);
+                if (argType == null) {
+                    possiter.remove();
+                    continue;
+                }
+                // If it was equal, it would have been satisfied previously.
+                if (!(actual.implicitlyCastsTo(argType) && actual.canCastTo(argType))) {
+                    possiter.remove();
+                }
+            }
+        }
+        if (possibleMatches.isEmpty()) return false;
+        if (possibleMatches.size() == 1) {
+            MethodData methodData = possibleMatches.iterator().next();
+            return methodData.methodPrototype.equals(actualPrototype.methodPrototype);
+        }
+        return false;
     }
 
     /*
@@ -137,9 +194,9 @@ public class OverloadMethodSet {
          */
         Set<MethodPrototype> exactMatches = SetFactory.newSet();
         for (MethodData prototype : allPrototypes) {
-            JavaTypeInstance type = prototype.getArgType(idx);
+            JavaTypeInstance type = prototype.getArgType(idx, newArgType);
 
-            if (type.equals(newArgType)) {
+            if (type != null && type.equals(newArgType)) {
                 exactMatches.add(prototype.methodPrototype);
             }
         }
@@ -153,18 +210,19 @@ public class OverloadMethodSet {
          * We have to be aware of boxing here - (i.e.) Integer is a close match for int, but not perfect.
          * .. however integer is
          */
-        JavaTypeInstance expectedArgType = actualPrototype.getArgType(idx);
+        JavaTypeInstance expectedArgType = actualPrototype.getArgType(idx, newArgType);
+
         if (expectedArgType instanceof RawJavaType) {
-            return callsCorrectApproxRawMethod(newArg, expectedArgType, newArgType, idx);
+            return callsCorrectApproxRawMethod(newArg, newArgType, idx);
         } else {
-            return callsCorrectApproxObjMethod(newArg, expectedArgType, newArgType, idx);
+            return callsCorrectApproxObjMethod(newArg, newArgType, idx);
         }
     }
 
-    public boolean callsCorrectApproxRawMethod(Expression newArg, JavaTypeInstance expected, JavaTypeInstance actual, int idx) {
+    public boolean callsCorrectApproxRawMethod(Expression newArg, JavaTypeInstance actual, int idx) {
         List<MethodData> matches = ListFactory.newList();
         for (MethodData prototype : allPrototypes) {
-            JavaTypeInstance arg = prototype.getArgType(idx);
+            JavaTypeInstance arg = prototype.getArgType(idx, actual);
             // If it was equal, it would have been satisfied previously.
             if (actual.implicitlyCastsTo(arg) && actual.canCastTo(arg)) {
                 matches.add(prototype);
@@ -193,10 +251,10 @@ public class OverloadMethodSet {
          * We don't need to sort, we can just do a single run.
          */
         MethodData lowest = matches.get(0);
-        JavaTypeInstance lowestType = lowest.getArgType(idx);
+        JavaTypeInstance lowestType = lowest.getArgType(idx, actual);
         for (int x = 1; x < matches.size(); ++x) {
             MethodData next = matches.get(x);
-            JavaTypeInstance nextType = next.getArgType(idx);
+            JavaTypeInstance nextType = next.getArgType(idx, actual);
             if (nextType.implicitlyCastsTo(lowestType)) {
                 lowest = next;
                 lowestType = nextType;
@@ -207,12 +265,12 @@ public class OverloadMethodSet {
         return false;
     }
 
-    public boolean callsCorrectApproxObjMethod(Expression newArg, JavaTypeInstance expected, JavaTypeInstance actual, final int idx) {
+    public boolean callsCorrectApproxObjMethod(Expression newArg, final JavaTypeInstance actual, final int idx) {
         List<MethodData> matches = ListFactory.newList();
         boolean podMatchExists = false;
         boolean nonPodMatchExists = false;
         for (MethodData prototype : allPrototypes) {
-            JavaTypeInstance arg = prototype.getArgType(idx);
+            JavaTypeInstance arg = prototype.getArgType(idx, actual);
             // If it was equal, it would have been satisfied previously.
             if (actual.implicitlyCastsTo(arg) && actual.canCastTo(arg)) {
                 if (arg instanceof RawJavaType) {
@@ -224,8 +282,9 @@ public class OverloadMethodSet {
             }
         }
         if (matches.isEmpty()) {
-            // WTF?
+            // Something's obviously very confusing.  It's probably a generic/vararg screwup.
             return false;
+//            return true;
         }
         if (matches.size() == 1 && matches.get(0).is(actualPrototype)) {
             return true;
@@ -238,7 +297,7 @@ public class OverloadMethodSet {
             MethodData best = null;
             JavaTypeInstance bestType = null;
             for (MethodData match : matches) {
-                JavaTypeInstance arg = match.getArgType(idx);
+                JavaTypeInstance arg = match.getArgType(idx, actual);
                 if (!arg.equals(TypeConstants.OBJECT)) {
                     if (best == null) {
                         best = match;
@@ -276,7 +335,7 @@ public class OverloadMethodSet {
         if (onlyMatchPod) matches = Functional.filter(matches, new Predicate<MethodData>() {
             @Override
             public boolean test(MethodData in) {
-                return (in.getArgType(idx) instanceof RawJavaType);
+                return (in.getArgType(idx, actual) instanceof RawJavaType);
             }
         });
         if (!isPOD) {
@@ -284,7 +343,7 @@ public class OverloadMethodSet {
             Pair<List<MethodData>, List<MethodData>> partition = Functional.partition(matches, new Predicate<MethodData>() {
                 @Override
                 public boolean test(MethodData in) {
-                    return !(in.getArgType(idx) instanceof RawJavaType);
+                    return !(in.getArgType(idx, actual) instanceof RawJavaType);
                 }
             });
             matches.clear();
@@ -294,10 +353,10 @@ public class OverloadMethodSet {
 
         if (matches.isEmpty()) return false;
         MethodData lowest = matches.get(0);
-        JavaTypeInstance lowestType = lowest.getArgType(idx);
+        JavaTypeInstance lowestType = lowest.getArgType(idx, actual);
         for (int x = 0; x < matches.size(); ++x) {
             MethodData next = matches.get(x);
-            JavaTypeInstance nextType = next.getArgType(idx);
+            JavaTypeInstance nextType = next.getArgType(idx, actual);
             if (nextType.implicitlyCastsTo(lowestType)) {
                 lowest = next;
                 lowestType = nextType;

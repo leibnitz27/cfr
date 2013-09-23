@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -12,9 +13,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
@@ -31,20 +34,17 @@ import java.util.List;
  * This seems daft - why do I need to have all this boilerplate?
  * Why not just replace with a cast, and a function pointer.
  */
-public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter {
+public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, ExpressionRewriter {
 
 
     public PrimitiveBoxingRewriter() {
     }
 
     @Override
-    public void rewrite(Op04StructuredStatement root) {
-        List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
-        if (structuredStatements == null) return;
-
-        for (StructuredStatement statement : structuredStatements) {
-            statement.rewriteExpressions(this);
-        }
+    public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+        in.transformStructuredChildren(this, scope);
+        in.rewriteExpressions(this);
+        return in;
     }
 
     @Override
@@ -63,7 +63,8 @@ public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter
         if (expression instanceof BoxingProcessor) {
             ((BoxingProcessor) expression).rewriteBoxing(this);
         }
-        return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        expression = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        return expression;
     }
 
     @Override
@@ -98,19 +99,53 @@ public class PrimitiveBoxingRewriter implements Op04Rewriter, ExpressionRewriter
     // ignore the change.
     public Expression sugarParameterBoxing(Expression in, int argIdx, OverloadMethodSet possibleMethods) {
         Expression res = in;
-        if (in instanceof CastExpression && ((CastExpression) in).couldBeImplicit()) {
-            // We can strip this IF it is a cast that could be implicit.
-            res = ((CastExpression) in).getChild();
-        } else if (in instanceof MemberFunctionInvokation) {
-            res = BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);
-        } else if (in instanceof StaticFunctionInvokation) {
-            res = BoxingHelper.sugarBoxing((StaticFunctionInvokation) in);
+        InferredJavaType outerCastType = null;
+        Expression res1 = null;
+        if (in instanceof CastExpression) {
+            outerCastType = in.getInferredJavaType();
+            res = CastExpression.removeImplicitOuterType(res);
+            res1 = res;
+        }
+
+        if (res instanceof MemberFunctionInvokation) {
+            res = BoxingHelper.sugarUnboxing((MemberFunctionInvokation) res);
+        } else if (res instanceof StaticFunctionInvokation) {
+            res = BoxingHelper.sugarBoxing((StaticFunctionInvokation) res);
         }
         if (res == in) return in;
         if (!possibleMethods.callsCorrectMethod(res, argIdx)) {
+            if (outerCastType != null) {
+                if (res.getInferredJavaType().getJavaTypeInstance().canCastTo(outerCastType.getJavaTypeInstance())) {
+                    res = new CastExpression(outerCastType, res);
+                    if (possibleMethods.callsCorrectMethod(res, argIdx)) {
+                        return res;
+                    }
+                }
+            }
+            if (res1 != null && possibleMethods.callsCorrectMethod(res1, argIdx)) {
+                return res1;
+            }
             return in;
         }
-        return sugarParameterBoxing(res, argIdx, possibleMethods);
+        return res;
+//        return sugarParameterBoxing(res, argIdx, possibleMethods);
+    }
+
+    public void removeRedundantCastOnly(List<Expression> mutableIn) {
+        for (int x = 0, len = mutableIn.size(); x < len; ++x) {
+            mutableIn.set(x, removeRedundantCastOnly(mutableIn.get(x)));
+        }
+    }
+
+    public Expression removeRedundantCastOnly(Expression in) {
+        if (in instanceof CastExpression) {
+            JavaTypeInstance castType = in.getInferredJavaType().getJavaTypeInstance();
+            JavaTypeInstance childType = ((CastExpression) in).getChild().getInferredJavaType().getJavaTypeInstance();
+            if (castType.equals(childType)) {
+                return removeRedundantCastOnly(((CastExpression) in).getChild());
+            }
+        }
+        return in;
     }
 
     public Expression sugarNonParameterBoxing(Expression in, JavaTypeInstance tgtType) {

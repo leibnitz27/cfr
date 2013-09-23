@@ -49,10 +49,14 @@ public class BoxingHelper {
         String name = staticFunctionInvokation.getName();
         JavaTypeInstance type = staticFunctionInvokation.getClazz();
         if (staticFunctionInvokation.getArgs().size() != 1) return staticFunctionInvokation;
+        Expression arg1 = staticFunctionInvokation.getArgs().get(0);
         String rawTypeName = type.getRawName();
         Pair<String, String> testPair = Pair.make(rawTypeName, name);
         if (boxing.contains(testPair)) {
-            return staticFunctionInvokation.getArgs().get(0);
+            JavaTypeInstance argType = arg1.getInferredJavaType().getJavaTypeInstance();
+            if (argType.implicitlyCastsTo(type)) {
+                return staticFunctionInvokation.getArgs().get(0);
+            }
         }
         return staticFunctionInvokation;
     }

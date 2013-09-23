@@ -14,14 +14,14 @@ import java.util.Set;
  * Time: 06:57
  */
 public enum RawJavaType implements JavaTypeInstance {
-    BOOLEAN("boolean", "bl", StackType.INT, true, TypeConstants.boxingNameBoolean),
-    BYTE("byte", "by", StackType.INT, true, TypeConstants.boxingNameByte),
-    CHAR("char", "c", StackType.INT, true, TypeConstants.boxingNameChar),
-    SHORT("short", "s", StackType.INT, true, TypeConstants.boxingNameShort),
-    INT("int", "n", StackType.INT, true, TypeConstants.boxingNameInt),
-    LONG("long", "l", StackType.LONG, true, TypeConstants.boxingNameLong),
-    FLOAT("float", "f", StackType.FLOAT, true, TypeConstants.boxingNameFloat),
-    DOUBLE("double", "d", StackType.DOUBLE, true, TypeConstants.boxingNameDouble),
+    BOOLEAN("boolean", "bl", StackType.INT, true, TypeConstants.boxingNameBoolean, false),
+    BYTE("byte", "by", StackType.INT, true, TypeConstants.boxingNameByte, true),
+    CHAR("char", "c", StackType.INT, true, TypeConstants.boxingNameChar, false),
+    SHORT("short", "s", StackType.INT, true, TypeConstants.boxingNameShort, true),
+    INT("int", "n", StackType.INT, true, TypeConstants.boxingNameInt, true),
+    LONG("long", "l", StackType.LONG, true, TypeConstants.boxingNameLong, true),
+    FLOAT("float", "f", StackType.FLOAT, true, TypeConstants.boxingNameFloat, true),
+    DOUBLE("double", "d", StackType.DOUBLE, true, TypeConstants.boxingNameDouble, true),
     VOID("void", null, StackType.VOID, false),
     REF("reference", null, StackType.REF, false),  // Don't use for fixedtypeinstance.
     RETURNADDRESS("returnaddress", null, StackType.RETURNADDRESS, false),
@@ -33,6 +33,7 @@ public enum RawJavaType implements JavaTypeInstance {
     private final StackType stackType;
     private final boolean usableType;
     private final String boxedName;
+    private final boolean isNumber;
 
     private static final Map<RawJavaType, Set<RawJavaType>> implicitCasts = MapFactory.newMap();
     private static final Map<String, RawJavaType> boxingTypes = MapFactory.newMap();
@@ -58,16 +59,17 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
 
-    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName) {
+    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber) {
         this.name = name;
         this.stackType = stackType;
         this.usableType = usableType;
         this.boxedName = boxedName;
         this.suggestedVarName = suggestedVarName;
+        this.isNumber = isNumber;
     }
 
     private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType) {
-        this(name, suggestedVarName, stackType, usableType, null);
+        this(name, suggestedVarName, stackType, usableType, null, false);
     }
 
     public String getName() {
@@ -175,8 +177,15 @@ public enum RawJavaType implements JavaTypeInstance {
                 return true;
             }
             RawJavaType tgt = getUnboxedTypeFor((JavaRefTypeInstance) other);
-            if (tgt == null) return false;
-            return implicitlyCastsTo(tgt);
+            if (tgt == null) {
+                // One final special case.
+                if (other.getRawName().equals(TypeConstants.boxingNameNumber)) {
+                    return isNumber;
+                }
+                return false;
+            }
+//            return implicitlyCastsTo(tgt);
+            return equals(tgt);
         }
         return false;
     }
@@ -184,8 +193,20 @@ public enum RawJavaType implements JavaTypeInstance {
     @Override
     public boolean canCastTo(JavaTypeInstance other) {
         if (this.boxedName != null && other instanceof JavaRefTypeInstance) {
+            RawJavaType tgt = getUnboxedTypeFor((JavaRefTypeInstance) other);
+            if (tgt == null) {
+                if (other == TypeConstants.OBJECT) {
+                    return true;
+                }
+                if (other.getRawName().equals(TypeConstants.boxingNameNumber)) {
+                    return isNumber;
+                }
+//                int x = 1;
+                return false;
+            }
+            return implicitlyCastsTo(tgt) || tgt.implicitlyCastsTo(this);
             // Can only cast directly to the 'correct' type.
-            return other.canCastTo(this);
+//            return other.canCastTo(this);
         }
         return true;
     }

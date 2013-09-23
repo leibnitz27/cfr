@@ -292,9 +292,27 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          * Use information about arguments to help us deduce lValue types.
          */
         methodPrototype.tightenArgs(object, args);
+        methodPrototype.addExplicitCasts(object, args);
         AbstractFunctionInvokation funcCall = isSuper ?
                 new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
                 new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
+        /*
+         * And, while we're at it, does this give us better information about the object?
+         * ... But - this guess could be too specific.  If we have an untyped map, eg, this will bind
+         * the first seen arg types (which is wrong).
+         */
+//        if (object != null) {
+//            JavaTypeInstance objectType = object.getInferredJavaType().getJavaTypeInstance();
+//            if (objectType instanceof JavaGenericBaseInstance) {
+//                if (((JavaGenericBaseInstance) objectType).hasUnbound()) {
+//                    GenericTypeBinder typeBinder = methodPrototype.getTypeBinderFor(args);
+//                    JavaTypeInstance boundObjectType = typeBinder.getBindingFor(objectType);
+//                    if (boundObjectType != null) {
+//                        object.getInferredJavaType().deGenerify(boundObjectType);
+//                    }
+//                }
+//            }
+//        }
         if (!isSuper && function.isInitMethod()) {
             return new ConstructorStatement((MemberFunctionInvokation) funcCall);
         } else {
@@ -366,7 +384,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         dynamicPrototype.getArgs();
         List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
         dynamicPrototype.tightenArgs(null, dynamicArgs);
-
+        dynamicPrototype.addExplicitCasts(null, dynamicArgs); // todo - useful?
         Expression funcCall = null;
         switch (bootstrapBehaviour) {
             case INVOKE_STATIC:
@@ -441,6 +459,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LLOAD:
             case DLOAD:
             case FLOAD:
+            case IINC:
                 idx = getInstrArgByte(0);
                 break;
             case ALOAD_0:
@@ -538,7 +557,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LSTORE:
             case DSTORE:
             case FSTORE:
-//            case IINC:
+            case IINC:
                 idx = getInstrArgByte(0);
                 break;
             case ASTORE_0:
@@ -574,6 +593,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LSTORE_WIDE:
             case DSTORE_WIDE:
             case FSTORE_WIDE:
+            case IINC_WIDE:
                 throw new UnsupportedOperationException("STORE_WIDE");
             default:
                 return null;
@@ -819,6 +839,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 MethodPrototype methodPrototype = function.getMethodPrototype();
                 List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size());
                 methodPrototype.tightenArgs(null, args);
+                methodPrototype.addExplicitCasts(null, args);
                 StaticFunctionInvokation funcCall = new StaticFunctionInvokation(function, args);
                 if (stackProduced.size() == 0) {
                     return new ExpressionStatement(funcCall);
@@ -1046,6 +1067,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     incrAmount = -incrAmount;
                     op = ArithOp.MINUS;
                 }
+
                 // Can we have ++ / += instead?
                 LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset, false);
                 return new AssignmentSimple(lvalue,
@@ -1059,6 +1081,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     incrAmount = -incrAmount;
                     op = ArithOp.MINUS;
                 }
+
                 // Can we have ++ / += instead?
                 LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset, false);
 
@@ -1155,15 +1178,17 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     private void collectLocallyMutatedVariables(SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
         Pair<JavaTypeInstance, Integer> storage = getStorageType();
-        if (storage == null) {
-            ssaIdentifiers = new SSAIdentifiers<Slot>();
-        } else {
+        if (storage != null) {
             ssaIdentifiers = new SSAIdentifiers<Slot>(new Slot(storage.getFirst(), storage.getSecond()), ssaIdentifierFactory);
+            return;
         }
+
+        ssaIdentifiers = new SSAIdentifiers<Slot>();
+        return;
     }
 
-    public static void assignSSAIdentifiers(Method method, List<Op02WithProcessedDataAndRefs> statements) {
-        assignSSAIdentifiersInner(method, statements);
+    public static void assignSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements) {
+        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements);
 
         /*
          * We can walk all the reads to see if there are any reads of 'uninitialised' slots.
@@ -1193,12 +1218,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          */
         method.getMethodPrototype().setSyntheticConstructorParameters(missing);
 
-        assignSSAIdentifiersInner(method, statements);
+        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements);
     }
 
-    public static void assignSSAIdentifiersInner(Method method, List<Op02WithProcessedDataAndRefs> statements) {
+    public static void assignSSAIdentifiersInner(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements) {
 
-        SSAIdentifierFactory<Slot> ssaIdentifierFactory = new SSAIdentifierFactory<Slot>();
         /*
          * before we do anything, we need to generate identifiers for the parameters.
          */
@@ -1237,9 +1261,145 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
+    /*
+     * If we have
+     *
+     * if (a) {
+     *   int b =  1;
+     *
+     * } else {
+     *   int c = 1;
+     * }
+     *
+     * return
+     *
+     * Then b and c may share the same slot. (say ,slot 2).  This means that (because we don't know any better)
+     * they both appear to be live at the return, which means that they get aliased to the same variable.
+     *
+     * Detect that this aliasing is never READ, and therefore these two can be considered to be seperate.
+     */
+    private static void removeUnusedSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> op2list) {
+        final List<Op02WithProcessedDataAndRefs> endPoints = ListFactory.newList();
+        GraphVisitor<Op02WithProcessedDataAndRefs> gv = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(
+                op2list.get(0),
+                new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
+                    @Override
+                    public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
+                        if (arg1.getTargets().isEmpty()) {
+                            endPoints.add(arg1);
+                        } else {
+                            arg2.enqueue(arg1.getTargets());
+                        }
+                    }
+                });
+        gv.process();
+        /*
+         * If there's an identifier which /hasn't/ been used, remove the back propagation.
+         */
+        Set<Op02WithProcessedDataAndRefs> seenOnce = SetFactory.newSet();
+        Set<Op02WithProcessedDataAndRefs> toProcessContent = SetFactory.newSet();
+        LinkedList<Op02WithProcessedDataAndRefs> toProcess = ListFactory.newLinkedList();
+
+        toProcess.addAll(endPoints);
+        toProcessContent.addAll(endPoints);
+
+        List<Op02WithProcessedDataAndRefs> storeWithoutRead = ListFactory.newList();
+        while (!toProcess.isEmpty()) {
+            Op02WithProcessedDataAndRefs node = toProcess.removeFirst();
+            toProcessContent.remove(node);
+
+            Pair<JavaTypeInstance, Integer> retrieved = node.getRetrieveType();
+            Pair<JavaTypeInstance, Integer> stored = node.getStorageType();
+            /*
+             * If there's an SSA identifier which DOESN'T exist in targets, and isn't read here
+             * simply remove it.
+             */
+            SSAIdentifiers<Slot> ssaIdents = node.ssaIdentifiers;
+            Map<Slot, SSAIdent> idents = ssaIdents.getKnownIdentifiers();
+            Iterator<Map.Entry<Slot, SSAIdent>> iterator = idents.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<Slot, SSAIdent> entry = iterator.next();
+                Slot slot = entry.getKey();
+                SSAIdent thisIdent = entry.getValue();
+                /*
+                 * Is this either used here, or used in a child?
+                 * (if it's used in a child, it must not be SET in that child).
+                 */
+                boolean used = false;
+                if (retrieved != null && retrieved.getSecond() == slot.getIdx()) {
+                    used = true;
+                }
+                if (!used) {
+                    for (Op02WithProcessedDataAndRefs target : node.targets) {
+                        if (target.ssaIdentifiers.getSSAIdent(slot) != null) {
+                            used = true;
+                            break;
+                        }
+                    }
+                }
+
+                /*
+                 * This is not, strictly speaking, necessary, but leads to nicer code.
+                 * otherwise i = i + (i= 2) + (i= 5) introduces pointless variables.
+                 */
+                if (!used) {
+                    if (stored != null) {
+                        /*
+                         * If one of the SOURCES
+                         */
+                        for (Op02WithProcessedDataAndRefs source : node.sources) {
+                            SSAIdent sourceIdent = source.ssaIdentifiers.getSSAIdent(slot);
+                            if (sourceIdent != null && thisIdent.isSuperSet(sourceIdent)) {
+                                used = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!used) {
+                    for (Op02WithProcessedDataAndRefs source : node.sources) {
+                        if (!toProcessContent.contains(source)) {
+                            toProcessContent.add(source);
+                            toProcess.add(source);
+                            seenOnce.add(source);
+                        }
+                    }
+                    if (stored != null && stored.getSecond() == slot.getIdx()) {
+                        storeWithoutRead.add(node);
+                    }
+                    iterator.remove();
+                } else {
+                    /*
+                     * we only need to process sources if they've never been seen, OR if we changed something.
+                     */
+                    for (Op02WithProcessedDataAndRefs source : node.sources) {
+                        if (!seenOnce.contains(source)) {
+                            if (!toProcessContent.contains(source)) {
+                                toProcessContent.add(source);
+                                toProcess.add(source);
+                                seenOnce.add(source);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (Op02WithProcessedDataAndRefs store : storeWithoutRead) {
+            Pair<JavaTypeInstance, Integer> storage = store.getStorageType();
+            Slot slot = new Slot(storage.getFirst(), storage.getSecond());
+            SSAIdent ident = ssaIdentifierFactory.getIdent(slot);
+            store.ssaIdentifiers.getKnownIdentifiers().put(slot, ident);
+        }
+    }
 
     public static void discoverStorageLiveness(Method method, List<Op02WithProcessedDataAndRefs> op2list) {
-        assignSSAIdentifiers(method, op2list);
+        SSAIdentifierFactory<Slot> ssaIdentifierFactory = new SSAIdentifierFactory<Slot>();
+
+        assignSSAIdentifiers(ssaIdentifierFactory, method, op2list);
+
+        removeUnusedSSAIdentifiers(ssaIdentifierFactory, method, op2list);
         // Now we've assigned SSA identifiers, we want to find, for each ident, the 'most encompassing'
         // set - so if we have one store which has S{0} = 1, one which has S{0} = 2, and one which has
         // S{0} = {1,2}, then all three should be S{0} = {1,2}

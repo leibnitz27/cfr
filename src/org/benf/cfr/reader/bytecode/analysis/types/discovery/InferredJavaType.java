@@ -48,6 +48,7 @@ public class InferredJavaType {
         EXPRESSION,
         INSTRUCTION, // Instr returns type which guarantees this (eg arraylength returns int).
         GENERICCALL,
+        EXCEPTION,
         STRING_TRANSFORM
     }
 
@@ -484,6 +485,9 @@ public class InferredJavaType {
         }
 
 
+        /*
+         * Push extra generic info back into RHS if it helps.
+         */
         if (otherTypeInstance instanceof JavaGenericRefTypeInstance) {
             if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
                 other.mergeGenericInfo((JavaGenericRefTypeInstance) thisTypeInstance);
@@ -631,6 +635,7 @@ public class InferredJavaType {
     public void useAsWithoutCasting(JavaTypeInstance otherTypeInstance) {
         if (this == IGNORE) return;
 
+
         /* If value is something that can legitimately be forced /DOWN/
          * (i.e. from int to char) then we should push it down.
          *
@@ -686,7 +691,7 @@ public class InferredJavaType {
 
     public void deGenerify(JavaTypeInstance other) {
         JavaTypeInstance typeInstanceThis = getJavaTypeInstance().getDeGenerifiedType();
-        JavaTypeInstance typeInstanceOther = other;
+        JavaTypeInstance typeInstanceOther = other.getDeGenerifiedType();
         if (!typeInstanceOther.equals(typeInstanceThis)) {
             if (TypeConstants.OBJECT != typeInstanceThis) {
                 throw new ConfusedCFRException("Incompatible types : " + typeInstanceThis.getClass() + "[" + typeInstanceThis + "] / " + typeInstanceOther.getClass() + "[" + typeInstanceOther + "]");

@@ -20,6 +20,7 @@ public interface TypeConstants {
     public final static String boxingNameLong = "java.lang.Long";
     public final static String boxingNameFloat = "java.lang.Float";
     public final static String boxingNameDouble = "java.lang.Double";
+    public final static String boxingNameNumber = "java.lang.Number";
 
     public final static String throwableName = "java.lang.Throwable";
     public final static String stringName = "java.lang.String";

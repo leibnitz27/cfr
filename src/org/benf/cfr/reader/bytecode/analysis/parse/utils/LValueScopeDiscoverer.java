@@ -3,15 +3,13 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
-import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -40,9 +38,11 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
     private transient Stack<StatementContainer<StructuredStatement>> currentBlock = new Stack<StatementContainer<StructuredStatement>>();
 
     private final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
+    private final VariableFactory variableFactory;
 
-    public LValueScopeDiscoverer(MethodPrototype prototype) {
+    public LValueScopeDiscoverer(MethodPrototype prototype, VariableFactory variableFactory) {
         final List<LocalVariable> parameters = prototype.getComputedParameters();
+        this.variableFactory = variableFactory;
         for (LocalVariable parameter : parameters) {
             final ScopeDefinition prototypeScope = new ScopeDefinition(0, null, null, parameter, parameter.getName());
             earliestDefinition.put(parameter.getName(), prototypeScope);
@@ -104,12 +104,11 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
         JavaTypeInstance oldType = previousDef.getJavaTypeInstance();
         JavaTypeInstance newType = localVariable.getInferredJavaType().getJavaTypeInstance();
         if (!oldType.equals(newType)) {
-            //
-            // TODO : Should rename variable, or we'll have a clash.
-            //
             earliestDefinitionsByLevel.get(previousDef.getDepth()).remove(previousDef.getName());
             if (previousDef.getDepth() == currentDepth) {
-                throw new UnsupportedOperationException("Re-use of anonymous local variable in same scope with different type.  Renaming required. NYI.");
+                int x = 1;
+                variableFactory.mutatingRenameUnClash(localVariable);
+                name = localVariable.getName();
             }
 
             ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, name);

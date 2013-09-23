@@ -8,7 +8,7 @@ package org.benf.cfr.reader.util;
  */
 public class ClassFileVersion {
     private final int major;
-    private final int minor; // not used in comparison.
+    private final int minor;
 
     public ClassFileVersion(int major, int minor) {
         this.major = major;
@@ -16,7 +16,19 @@ public class ClassFileVersion {
     }
 
     public boolean equalOrLater(ClassFileVersion other) {
-        return this.major >= other.major;
+        if (this.major < other.major) return false;
+        if (this.major > other.major) return true;
+        if (this.minor < other.minor) return false;
+        return true;
+    }
+
+    public boolean before(ClassFileVersion other) {
+        return !equalOrLater(other);
+    }
+
+    @Override
+    public String toString() {
+        return "" + major + "." + minor;
     }
 
     public static ClassFileVersion JAVA_1_4 = new ClassFileVersion(48, 0); // 48->49

@@ -217,6 +217,10 @@ public class CodeAnalyserWholeClass {
             for (StructuredStatement statement : statements) {
                 statement.rewriteExpressions(r);
             }
+            /*
+             * Apply boxing rewriter once more as well, to get rid of anything that's occured.
+             */
+            Op04StructuredStatement.removePrimitiveDeconversion(state, m, code);
         }
     }
 

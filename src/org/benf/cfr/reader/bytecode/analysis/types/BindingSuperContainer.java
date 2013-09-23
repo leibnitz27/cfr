@@ -58,6 +58,10 @@ public class BindingSuperContainer {
         return boundSuperClasses;
     }
 
+    public JavaGenericRefTypeInstance getBoundSuperForBase(JavaTypeInstance possBase) {
+        return boundSuperClasses.get(possBase);
+    }
+
     public Map<JavaTypeInstance, Route> getBoundSuperRoute() {
         return boundSuperRoute;
     }

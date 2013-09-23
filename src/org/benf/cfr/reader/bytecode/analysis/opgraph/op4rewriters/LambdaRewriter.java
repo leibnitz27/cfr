@@ -78,7 +78,14 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         if (expression instanceof DynamicInvokation) {
             return rewriteDynamicExpression((DynamicInvokation) expression);
         }
-        return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        if (res instanceof CastExpression) {
+            Expression child = ((CastExpression) res).getChild();
+            if (child instanceof LambdaExpression || child instanceof LambdaExpressionFallback) {
+                return child;
+            }
+        }
+        return res;
     }
 
     @Override
@@ -250,6 +257,9 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             // This might happen if you're using a JRE which doesn't have support classes, etc.
             return dynamicExpression;
 //            throw new IllegalStateException("Can't find lambda target " + lambdaFn);
+        }
+        for (int x = 0, len = curriedArgs.size(); x < len; ++x) {
+            curriedArgs.set(x, CastExpression.removeImplicit(curriedArgs.get(x)));
         }
         if (this.typeInstance.equals(lambdaTypeRefLocation) && lambdaMethod.testAccessFlag(AccessFlagMethod.ACC_SYNTHETIC)) {
             try {
