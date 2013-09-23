@@ -68,16 +68,20 @@ public class Functional {
 
     public static <Y, X> Map<Y, List<X>> groupToMapBy(List<X> input, UnaryFunction<X, Y> mapF) {
         Map<Y, List<X>> temp = MapFactory.newMap();
+        return groupToMapBy(input, temp, mapF);
+    }
+
+    public static <Y, X> Map<Y, List<X>> groupToMapBy(List<X> input, Map<Y, List<X>> tgt, UnaryFunction<X, Y> mapF) {
         for (X x : input) {
             Y key = mapF.invoke(x);
-            List<X> lx = temp.get(key);
+            List<X> lx = tgt.get(key);
             if (lx == null) {
                 lx = ListFactory.newList();
-                temp.put(key, lx);
+                tgt.put(key, lx);
             }
             lx.add(x);
         }
-        return temp;
+        return tgt;
     }
 
     public static <Y, X> List<Y> groupBy(List<X> input, Comparator<? super X> comparator, UnaryFunction<List<X>, Y> gf) {

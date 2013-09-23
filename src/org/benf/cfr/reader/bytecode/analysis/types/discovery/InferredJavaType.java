@@ -68,6 +68,8 @@ public class InferredJavaType {
 
         public Source getSource();
 
+        public int getLocalId();
+
         public int getFinalId();
 
         public ClashState getClashState();
@@ -225,6 +227,11 @@ public class InferredJavaType {
         }
 
         @Override
+        public int getLocalId() {
+            return id;
+        }
+
+        @Override
         public ClashState getClashState() {
             if (resolved) {
                 return ClashState.Resolved;
@@ -336,6 +343,10 @@ public class InferredJavaType {
             }
         }
 
+        public int getLocalId() {
+            return id;
+        }
+
         public ClashState getClashState() {
             return ClashState.None;
 //            if (clashState != null) return clashState;
@@ -445,6 +456,10 @@ public class InferredJavaType {
 
     public void collapseTypeClash() {
         value.collapseTypeClash();
+    }
+
+    public int getLocalId() {
+        return value.getLocalId();
     }
 
     private boolean checkBaseCompatibility(JavaTypeInstance otherType) {

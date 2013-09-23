@@ -212,6 +212,12 @@ public class CodeAnalyser {
         // Expand any 'multiple' statements (eg from dups)
         Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
 
+        // Very early, we make a pass through collecting all the method calls for a given type
+        // SPECIFICALLY by type pointer, don't alias identical types.
+        // We then see if we can infer information from RHS <- LHS re generics, but make sure that we
+        // don't do it over aggressievly (see UntypedMapTest);
+        Op03SimpleStatement.inferGenericObjectInfoFromCalls(op03SimpleParseNodes);
+
         // Expand raw switch statements into more useful ones.
         Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);

@@ -2,9 +2,11 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -126,5 +128,38 @@ public class GenericTypeBinder {
         if (isBetterBinding(binding, alreadyBound)) {
             nameToBoundType.put(name, binding);
         }
+    }
+
+    public GenericTypeBinder mergeWith(GenericTypeBinder other, boolean mergeToCommonClass) {
+        Set<String> keys = SetFactory.newSet(nameToBoundType.keySet());
+        keys.addAll(other.nameToBoundType.keySet());
+        Map<String, JavaTypeInstance> res = MapFactory.newMap();
+        for (String key : keys) {
+            JavaTypeInstance t1 = nameToBoundType.get(key);
+            JavaTypeInstance t2 = other.nameToBoundType.get(key);
+            if (t1 == null) {
+                res.put(key, t2);
+                continue;
+            }
+            if (t2 == null) {
+                res.put(key, t1);
+                continue;
+            }
+            /*
+             * Ok. Try to merge. Find highest common base class.
+             * If completely incompatible, return null.
+             */
+            if (mergeToCommonClass) {
+                if (t1.implicitlyCastsTo(t2)) {
+                    res.put(key, t2);
+                    continue;
+                }
+                if (t2.implicitlyCastsTo(t1)) {
+                    res.put(key, t1);
+                }
+            }
+            return null;
+        }
+        return new GenericTypeBinder(res);
     }
 }

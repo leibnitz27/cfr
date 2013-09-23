@@ -188,6 +188,9 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         return thisBindingSuper.containsBase(otherRaw);
     }
 
+    /*
+     * Fixme - shouldn't this use binding supercontainer?
+     */
     @Override
     public boolean canCastTo(JavaTypeInstance other) {
         if (other instanceof RawJavaType) {
