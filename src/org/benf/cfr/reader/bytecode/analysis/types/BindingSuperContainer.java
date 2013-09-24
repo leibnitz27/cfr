@@ -36,10 +36,10 @@ public class BindingSuperContainer {
     public JavaTypeInstance getBoundAssignable(JavaGenericRefTypeInstance assignable, JavaGenericRefTypeInstance superType) {
         JavaRefTypeInstance baseKey = superType.getDeGenerifiedType();
         JavaRefTypeInstance assignableKey = assignable.getDeGenerifiedType();
-        if (assignableKey.equals(baseKey)) {
-            // Nothing we can do!
-            return assignable;
-        }
+//        if (assignableKey.equals(baseKey)) {
+//            // Nothing we can do!
+//            return assignable;
+//        }
 
         JavaGenericRefTypeInstance reboundBase = boundSuperClasses.get(baseKey);
         if (reboundBase == null) {

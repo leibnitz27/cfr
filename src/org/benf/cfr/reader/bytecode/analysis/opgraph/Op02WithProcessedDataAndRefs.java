@@ -840,6 +840,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size());
                 methodPrototype.tightenArgs(null, args);
                 methodPrototype.addExplicitCasts(null, args);
+                // FIXME - BIND RESULT.
                 StaticFunctionInvokation funcCall = new StaticFunctionInvokation(function, args);
                 if (stackProduced.size() == 0) {
                     return new ExpressionStatement(funcCall);

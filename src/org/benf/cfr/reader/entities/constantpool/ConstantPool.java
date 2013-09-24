@@ -36,6 +36,8 @@ public class ConstantPool {
     private final ClassFile classFile;
     private String comparisonKey;
     private boolean isLoaded = false;
+    private final int idx = sidx++;
+    private static int sidx = 0;
 
     public ConstantPool(ClassFile classFile, CFRState cfrState, ByteData raw, short count) {
         this.classFile = classFile;
@@ -180,12 +182,17 @@ public class ConstantPool {
     }
 
     @Override
-    public int hashCode() {
-        getComparisonKey();
-        return comparisonKey.hashCode();
+    public String toString() {
+        return getComparisonKey() + "[" + idx + "]";
     }
 
-    private void getComparisonKey() {
+    @Override
+    public int hashCode() {
+        return getComparisonKey().hashCode();
+    }
+
+    private String getComparisonKey() {
         if (comparisonKey == null) comparisonKey = classFile.getFilePath();
+        return comparisonKey;
     }
 }

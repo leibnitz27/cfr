@@ -695,7 +695,11 @@ public class InferredJavaType {
             if (thisArrayTypeInstance.getNumArrayDimensions() != otherArrayTypeInstance.getNumArrayDimensions()) return;
 
             JavaTypeInstance thisStripped = thisArrayTypeInstance.getArrayStrippedType().getDeGenerifiedType();
-            JavaTypeInstance otherStripped = otherArrayTypeInstance.getArrayStrippedType().getDeGenerifiedType();
+            JavaTypeInstance otherArrayStripped = otherArrayTypeInstance.getArrayStrippedType();
+
+
+            JavaTypeInstance otherStripped = otherArrayStripped.getDeGenerifiedType();
+            if (otherArrayStripped instanceof JavaGenericBaseInstance) return;
 
             if (thisStripped instanceof JavaRefTypeInstance &&
                     otherStripped instanceof JavaRefTypeInstance) {

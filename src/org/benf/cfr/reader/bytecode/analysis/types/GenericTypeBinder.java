@@ -60,6 +60,12 @@ public class GenericTypeBinder {
             for (int x = 0; x < args.size(); ++x) {
                 JavaTypeInstance unbound = args.get(x);
                 JavaTypeInstance bound = boundArgs.get(x);
+                if (unbound instanceof JavaArrayTypeInstance && bound instanceof JavaArrayTypeInstance) {
+                    if (unbound.getNumArrayDimensions() == bound.getNumArrayDimensions()) {
+                        unbound = unbound.getArrayStrippedType();
+                        bound = bound.getArrayStrippedType();
+                    }
+                }
                 if (unbound instanceof JavaGenericBaseInstance) {
                     JavaGenericBaseInstance unboundGeneric = (JavaGenericBaseInstance) unbound;
                     unboundGeneric.tryFindBinding(bound, res);

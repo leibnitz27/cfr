@@ -56,7 +56,10 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public JavaTypeInstance getArrayStrippedType() {
-        return underlyingType.getArrayStrippedType();
+        if (underlyingType instanceof JavaArrayTypeInstance) {
+            return underlyingType.getArrayStrippedType();
+        }
+        return underlyingType;
     }
 
     @Override

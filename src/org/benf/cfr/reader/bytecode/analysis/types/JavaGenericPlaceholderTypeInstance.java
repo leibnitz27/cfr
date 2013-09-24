@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.util.MiscConstants;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,7 +30,10 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
 
     @Override
     public boolean hasForeignUnbound(ConstantPool cp) {
-        return cp != this.cp; // reference equality on cp.
+        // can't do reference equality on cp, because some types might come from the second load.
+        // This needs reworking.
+        if (className.equals(MiscConstants.UNBOUND_GENERIC)) return true;
+        return !cp.equals(this.cp);
     }
 
     /*

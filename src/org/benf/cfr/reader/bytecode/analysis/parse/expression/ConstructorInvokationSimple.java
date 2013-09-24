@@ -38,7 +38,6 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
         super(inferredJavaType, args);
         this.function = function;
         this.methodPrototype = methodPrototype;
-
     }
 
     @Override

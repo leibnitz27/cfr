@@ -336,14 +336,23 @@ public class MethodPrototype {
             // Otherwise we lose type propagation information.
             // AARGH.
             JavaTypeInstance exprType = expression.getInferredJavaType().getJavaTypeInstance();
-            if (exprType instanceof JavaGenericBaseInstance) {
+            if (isGenericArg(exprType)) {
                 continue;
             }
             if (genericTypeBinder != null) {
                 type = genericTypeBinder.getBindingFor(type);
             }
+            if (isGenericArg(type)) {
+                continue;
+            }
             expressions.set(x, new CastExpression(new InferredJavaType(type, InferredJavaType.Source.FUNCTION, true), expression));
         }
+    }
+
+    private static boolean isGenericArg(JavaTypeInstance arg) {
+        arg = arg.getArrayStrippedType();
+        if (arg instanceof JavaGenericBaseInstance) return true;
+        return false;
     }
 
     @Override
