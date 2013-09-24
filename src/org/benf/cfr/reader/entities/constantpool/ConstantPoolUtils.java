@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities.constantpool;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDeltaImpl;
@@ -25,11 +26,38 @@ public class ConstantPoolUtils {
 
     private static JavaTypeInstance parseRefType(String tok, ConstantPool cp, boolean isTemplate) {
         int idxGen = tok.indexOf('<');
+        int idxStart = 0;
+
         if (idxGen != -1) {
-            String pre = tok.substring(0, idxGen);
-            String gen = tok.substring(idxGen + 1, tok.length() - 1);
-            JavaRefTypeInstance clazzType = cp.getClassCache().getRefClassFor(cp, pre);
-            List<JavaTypeInstance> genericTypes = parseTypeList(gen, cp);
+            List<JavaTypeInstance> genericTypes = null;
+            String already = "";
+            while (idxGen != -1) {
+                String pre = tok.substring(idxStart, idxGen);
+                already += pre;
+                String gen = tok.substring(idxGen + 1, tok.length() - 1);
+                Pair<List<JavaTypeInstance>, Integer> genericTypePair = parseTypeList(gen, cp);
+                genericTypes = genericTypePair.getFirst();
+                idxStart = idxGen + genericTypePair.getSecond() + 1;
+                if (idxStart < gen.length()) {
+                    if (tok.charAt(idxStart) != '>') {
+                        throw new IllegalStateException();
+                    }
+                    idxStart++;
+                    idxGen = tok.indexOf('<', idxStart);
+                    if (idxGen == -1) {
+                        // Append rest, treat as if no generics.
+                        already += tok.substring(idxStart, tok.length());
+                        return cp.getClassCache().getRefClassFor(cp, already);
+                    }
+                    /*
+                     * At this point we're discarding the outer generics info - that's not good....
+                     */
+
+                } else {
+                    break;
+                }
+            }
+            JavaRefTypeInstance clazzType = cp.getClassCache().getRefClassFor(cp, already);
             return new JavaGenericRefTypeInstance(clazzType, genericTypes);
         } else if (isTemplate) {
             return new JavaGenericPlaceholderTypeInstance(tok, cp);
@@ -213,7 +241,7 @@ public class ConstantPoolUtils {
     }
 
     public static ClassSignature parseClassSignature(ConstantPoolEntryUTF8 signature, ConstantPool cp) {
-        String sig = signature.getValue();
+        final String sig = signature.getValue();
         int curridx = 0;
 
         /*
@@ -287,16 +315,16 @@ public class ConstantPoolUtils {
         return res;
     }
 
-    public static List<JavaTypeInstance> parseTypeList(String proto, ConstantPool cp) {
+    public static Pair<List<JavaTypeInstance>, Integer> parseTypeList(String proto, ConstantPool cp) {
         int curridx = 0;
         int len = proto.length();
         List<JavaTypeInstance> res = ListFactory.newList();
-        while (curridx < len) {
+        while (curridx < len && proto.charAt(curridx) != '>') {
             String typeTok = getNextTypeTok(proto, curridx);
             res.add(decodeTypeTok(typeTok, cp));
             curridx += typeTok.length();
         }
-        return res;
+        return Pair.make(res, curridx);
     }
 
     /*

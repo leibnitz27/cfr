@@ -395,6 +395,10 @@ public class MethodPrototype {
     }
 
     public GenericTypeBinder getTypeBinderFor(List<Expression> invokingArgs) {
+        if (classFile == null) {
+            return null;
+        }
+
         List<JavaTypeInstance> invokingTypes = ListFactory.newList();
         for (Expression invokingArg : invokingArgs) {
             invokingTypes.add(invokingArg.getInferredJavaType().getJavaTypeInstance());
