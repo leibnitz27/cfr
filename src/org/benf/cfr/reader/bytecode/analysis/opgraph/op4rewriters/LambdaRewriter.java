@@ -16,16 +16,11 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredStatementExpression;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.*;
-import org.benf.cfr.reader.util.CannotLoadClassException;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
@@ -158,24 +153,13 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         return (LocalVariable) lValue;
     }
 
-    private static enum MetaFactoryType {
-        TYPE_1,
-        TYPE_2
-    }
-
     private Expression rewriteDynamicExpression(Expression dynamicExpression, StaticFunctionInvokation functionInvokation, List<Expression> curriedArgs) {
         JavaTypeInstance typeInstance = functionInvokation.getClazz();
-        if (!typeInstance.getRawName().equals("java.lang.invoke.LambdaMetafactory")) return dynamicExpression;
+        if (!typeInstance.getRawName().equals(TypeConstants.lambdaMetaFactoryName)) return dynamicExpression;
         String functionName = functionInvokation.getName();
 
-        MetaFactoryType metaFactoryType = null;
-        if (functionName.equals("metaFactory")) {
-            metaFactoryType = MetaFactoryType.TYPE_1;
-        } else if (functionName.equals("metafactory")) {
-            metaFactoryType = MetaFactoryType.TYPE_2;
-        } else {
-            return dynamicExpression;
-        }
+        DynamicInvokeType dynamicInvokeType = DynamicInvokeType.lookup(functionName);
+        if (dynamicInvokeType == DynamicInvokeType.UNKNOWN) return dynamicExpression;
 
         List<Expression> metaFactoryArgs = functionInvokation.getArgs();
         if (metaFactoryArgs.size() != 6) return dynamicExpression;

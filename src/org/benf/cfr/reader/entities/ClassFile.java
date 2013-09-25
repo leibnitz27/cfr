@@ -382,8 +382,7 @@ public class ClassFile implements Dumpable {
         throw new NoSuchMethodException();
     }
 
-    // Can't handle duplicates.  Remove?
-    public List<Method> getMethodByName(String name) throws NoSuchMethodException {
+    public List<Method> getMethodsByNameOrNull(String name) {
         if (methodsByName == null) {
             methodsByName = MapFactory.newMap();
             for (Method method : methods) {
@@ -395,10 +394,15 @@ public class ClassFile implements Dumpable {
                 list.add(method);
             }
         }
-        List<Method> method = methodsByName.get(name);
-        if (method == null) throw new NoSuchMethodException(name);
-        return method;
+        return methodsByName.get(name);
     }
+
+    public List<Method> getMethodByName(String name) throws NoSuchMethodException {
+        List<Method> methods = getMethodsByNameOrNull(name);
+        if (methods == null) throw new NoSuchMethodException(name);
+        return methods;
+    }
+
 
     public List<Method> getConstructors() {
         List<Method> res = ListFactory.newList();

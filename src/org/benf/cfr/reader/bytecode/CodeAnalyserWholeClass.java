@@ -74,6 +74,10 @@ public class CodeAnalyserWholeClass {
         if (state.getBooleanOpt(CFRState.REMOVE_DEAD_METHODS)) {
             removeDeadMethods(classFile, state);
         }
+
+        if (state.getBooleanOpt(CFRState.REMOVE_BOILERPLATE)) {
+            removeBoilerplateMethods(classFile);
+        }
     }
 
     private static void replaceNestedSyntheticOuterRefs(ClassFile classFile) {
@@ -183,6 +187,18 @@ public class CodeAnalyserWholeClass {
         // If there's only one constructor, and it's the default (0 args, public, non final)
         // with no code, we can remove it.
         tryRemoveConstructor(classFile);
+    }
+
+    private static void removeBoilerplateMethods(ClassFile classFile) {
+        String[] removeThese = {MiscConstants.DESERIALISE_LAMBDA_METHOD};
+        for (String methName : removeThese) {
+            List<Method> methods = classFile.getMethodsByNameOrNull(methName);
+            if (methods != null) {
+                for (Method method : methods) {
+                    method.hideSynthetic();
+                }
+            }
+        }
     }
 
     private static void tryRemoveConstructor(ClassFile classFile) {

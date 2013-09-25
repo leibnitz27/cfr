@@ -25,4 +25,6 @@ public interface TypeConstants {
     public final static String throwableName = "java.lang.Throwable";
     public final static String stringName = "java.lang.String";
     public final static String stringBuilderName = "java.lang.StringBuilder";
+
+    public final static String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
 }

@@ -324,6 +324,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
+
     private Statement buildInvokeDynamic(Method method) {
         ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
 
@@ -341,46 +342,29 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         ConstantPoolEntryMethodRef methodRef = bootstrapMethodInfo.getConstantPoolEntryMethodRef();
         MethodPrototype prototype = methodRef.getMethodPrototype();
         MethodHandleBehaviour bootstrapBehaviour = bootstrapMethodInfo.getMethodHandleBehaviour();
+        String methodName = methodRef.getName();
 
-        /*
-         * First 3 arguments to an invoke dynamic are stacked automatically by the JVM.
-         *  MethodHandles.Lookup caller,
-         *  String invokedName,
-         *  MethodType invokedType,
-         *
-         * [ Guess (vaguely), see LambdaMetaFactory documentation, but it's not clear if that's special case. ]
-         *
-         * So we expect our prototype to be equal to these 3, plus the arguments from our bootstrap.
-         */
-        List<JavaTypeInstance> argTypes = prototype.getArgs();
-        final int ARG_OFFSET = 3;
-        ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
-        if ((bootstrapArguments.length + ARG_OFFSET) != argTypes.size()) {
-            throw new IllegalStateException("Dynamic invoke arg count mismatch " + bootstrapArguments.length + "(+3) vs " + argTypes.size());
+        DynamicInvokeType dynamicInvokeType = DynamicInvokeType.lookup(methodName);
+
+        if (dynamicInvokeType == DynamicInvokeType.UNKNOWN) {
+            throw new IllegalStateException("MetaFactory usage [" + methodName + "] not recognised.");
         }
 
-        List<Expression> callargs = ListFactory.newList();
-        Expression nullExp = new Literal(TypedLiteral.getNull());
-        callargs.add(nullExp);
-        callargs.add(nullExp);
-        callargs.add(nullExp);
-
-        for (int x = 0; x < bootstrapArguments.length; ++x) {
-            JavaTypeInstance expected = argTypes.get(ARG_OFFSET + x);
-            ConstantPoolEntry entry = bootstrapArguments[x];
-            TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntry(cp, entry);
-            if (!expected.equals(typedLiteral.getInferredJavaType().getJavaTypeInstance())) {
-                throw new IllegalStateException("Dynamic invoke Expected " + expected + ", got " + typedLiteral);
-            }
-            callargs.add(new Literal(typedLiteral));
+        // These two builders should be combined once I'm sure what's going on... .(!!).
+        List<Expression> callargs;
+        switch (dynamicInvokeType) {
+            case METAFACTORY_1:
+            case METAFACTORY_2:
+                callargs = buildInvokeDynamicMetaFactoryArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
+                break;
+            case ALTMETAFACTORY_2:
+                callargs = buildInvokeDynamicAltMetaFactoryArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
+                break;
+            default:
+                throw new IllegalStateException();
         }
 
-        /*
-         * We slightly lie about the dynamic arguments, currently, by putting them in a structure which is
-         * invalid java.  The alternative is to explicitly return a callsite, and call that, but that's
-         * needless complexity, which we're going to unwind back into a lambda or the like as soon as possible
-         * anyway,
-         */
+
         dynamicPrototype.getArgs();
         List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
         dynamicPrototype.tightenArgs(null, dynamicArgs);
@@ -401,7 +385,107 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         } else {
             return new AssignmentSimple(getStackLValue(0), funcCall);
         }
+    }
 
+    private static TypedLiteral getBootstrapArg(ConstantPoolEntry[] bootstrapArguments, int x, ConstantPool cp) {
+        ConstantPoolEntry entry = bootstrapArguments[x];
+        TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntry(cp, entry);
+        return typedLiteral;
+    }
+
+    private List<Expression> buildInvokeDynamicAltMetaFactoryArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef) {
+
+        final int ARG_OFFSET = 3;
+        /*
+         * First 3 arguments to an invoke dynamic are stacked automatically by the JVM.
+         *  MethodHandles.Lookup caller,
+         *  String invokedName,
+         *  MethodType invokedType,
+         *
+         * then we have
+         * Object ... args
+         *
+         * Alternate meta-factory for conversion of lambda expressions or method references to functional interfaces,
+         * which supports serialization and other uncommon options. The declared argument list for this method is:
+         * CallSite altMetafactory(MethodHandles.Lookup caller, String invokedName, MethodType invokedType, Object... args)
+         * but it behaves as if the argument list is: CallSite altMetafactory(MethodHandles.Lookup caller,
+         * String invokedName, MethodType invokedType, MethodType samMethodType MethodHandle implMethod,
+         * MethodType instantiatedMethodType, int flags,
+         * IF flags has MARKERS set - int markerInterfaceCount,
+         * IF flags has MARKERS set - Class... markerInterfaces
+         * IF flags has BRIDGES set - int bridgeCount,
+         * IF flags has BRIDGES set - MethodType... bridges )
+         */
+        List<JavaTypeInstance> argTypes = prototype.getArgs();
+        ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
+        if (bootstrapArguments.length < 4) {
+            throw new IllegalStateException("Dynamic invoke arg count mismatch ");
+        }
+
+        List<Expression> callargs = ListFactory.newList();
+        Expression nullExp = new Literal(TypedLiteral.getNull());
+        callargs.add(nullExp);
+        callargs.add(nullExp);
+        callargs.add(nullExp);
+
+        /*
+         * We can't really verify the bootstrap args against the arg type, as it's weak. (Object ... ).
+         */
+        TypedLiteral tlMethodType = getBootstrapArg(bootstrapArguments, 0, cp);
+        TypedLiteral tlImplMethod = getBootstrapArg(bootstrapArguments, 1, cp);
+        TypedLiteral tlInstantiatedMethodType = getBootstrapArg(bootstrapArguments, 2, cp);
+        TypedLiteral flags = getBootstrapArg(bootstrapArguments, 3, cp);
+
+        callargs.add(new Literal(tlMethodType));
+        callargs.add(new Literal(tlImplMethod));
+        callargs.add(new Literal(tlInstantiatedMethodType));
+
+
+        /*
+         * We slightly lie about the dynamic arguments, currently, by putting them in a structure which is
+         * invalid java.  The alternative is to explicitly return a callsite, and call that, but that's
+         * needless complexity, which we're going to unwind back into a lambda or the like as soon as possible
+         * anyway,
+         */
+        return callargs;
+    }
+
+
+    private List<Expression> buildInvokeDynamicMetaFactoryArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef) {
+
+        final int ARG_OFFSET = 3;
+        /*
+         * First 3 arguments to an invoke dynamic are stacked automatically by the JVM.
+         *  MethodHandles.Lookup caller,
+         *  String invokedName,
+         *  MethodType invokedType,
+         *
+         * [ Guess (vaguely), see LambdaMetaFactory documentation, but it's not clear if that's special case. ]
+         *
+         * So we expect our prototype to be equal to these 3, plus the arguments from our bootstrap.
+         */
+        List<JavaTypeInstance> argTypes = prototype.getArgs();
+        ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
+        if ((bootstrapArguments.length + ARG_OFFSET) != argTypes.size()) {
+            throw new IllegalStateException("Dynamic invoke arg count mismatch " + bootstrapArguments.length + "(+3) vs " + argTypes.size());
+        }
+
+        List<Expression> callargs = ListFactory.newList();
+        Expression nullExp = new Literal(TypedLiteral.getNull());
+        callargs.add(nullExp);
+        callargs.add(nullExp);
+        callargs.add(nullExp);
+
+        for (int x = 0; x < bootstrapArguments.length; ++x) {
+            JavaTypeInstance expected = argTypes.get(ARG_OFFSET + x);
+            TypedLiteral typedLiteral = getBootstrapArg(bootstrapArguments, x, cp);
+            if (!expected.equals(typedLiteral.getInferredJavaType().getJavaTypeInstance())) {
+                throw new IllegalStateException("Dynamic invoke Expected " + expected + ", got " + typedLiteral);
+            }
+            callargs.add(new Literal(typedLiteral));
+        }
+
+        return callargs;
     }
 
     private Pair<JavaTypeInstance, Integer> getRetrieveType() {
