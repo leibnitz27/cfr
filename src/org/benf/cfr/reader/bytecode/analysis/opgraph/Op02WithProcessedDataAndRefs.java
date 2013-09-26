@@ -357,6 +357,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case METAFACTORY_2:
                 callargs = buildInvokeDynamicMetaFactoryArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
                 break;
+            case ALTMETAFACTORY_1:
             case ALTMETAFACTORY_2:
                 callargs = buildInvokeDynamicAltMetaFactoryArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
                 break;
