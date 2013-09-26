@@ -586,7 +586,9 @@ public class ClassFile implements Dumpable {
 
 
     public void dumpNamedInnerClasses(Dumper d) {
-        if (innerClassesByTypeInfo == null) return;
+        if (innerClassesByTypeInfo == null || innerClassesByTypeInfo.isEmpty()) return;
+
+        d.newln();
 
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassEntry : innerClassesByTypeInfo.values()) {
             // catchy!

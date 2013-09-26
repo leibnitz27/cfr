@@ -69,22 +69,26 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         dumpHeader(classFile, d);
         d.print("{\n");
         d.indent(1);
+        boolean first = true;
 
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
             if (!field.shouldNotDisplay()) {
                 field.dump(d, cp);
+                first = false;
             }
         }
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {
             for (Method method : methods) {
                 if (method.isHiddenFromDisplay()) continue;
-                d.newln();
+                if (!first) {
+                    d.newln();
+                }
+                first = false;
                 method.dump(d, true);
             }
         }
-        d.newln();
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
         d.print("}\n");

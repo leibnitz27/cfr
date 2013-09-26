@@ -50,6 +50,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
             dumpImports(d, cp.getClassCache(), classFile);
         }
 
+        boolean first = true;
         dumpHeader(classFile, d);
         d.print("{\n");
         d.indent(1);
@@ -57,16 +58,19 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
             field.dump(d, cp);
+            first = false;
         }
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {
             for (Method meth : methods) {
-                d.newln();
+                if (!first) {
+                    d.newln();
+                }
+                first = false;
                 // Java 8 supports 'defender' interfaces, i.e. method bodies on interfaces (eww).
                 meth.dump(d, false);
             }
         }
-        d.newln();
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
         d.print("}\n");

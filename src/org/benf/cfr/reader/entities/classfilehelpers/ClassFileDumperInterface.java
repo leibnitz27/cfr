@@ -60,23 +60,27 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
 
         dumpAnnotations(classFile, d);
         dumpHeader(classFile, d);
+        boolean first = true;
         d.print("{\n");
         d.indent(1);
         // Horrid, but an interface can have fields....
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
             field.dump(d, cp);
+            first = false;
         }
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {
             for (Method method : methods) {
                 if (method.isHiddenFromDisplay()) continue;
-                d.newln();
+                if (!first) {
+                    d.newln();
+                }
+                first = false;
                 // Java 8 supports 'defender' interfaces, i.e. method bodies on interfaces (eww).
                 method.dump(d, false);
             }
         }
-        d.newln();
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
         d.print("}\n");

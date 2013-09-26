@@ -102,7 +102,6 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
                 method.dump(d, true);
             }
         }
-        d.newln();
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
         d.print("}\n");
