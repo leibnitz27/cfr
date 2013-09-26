@@ -238,6 +238,10 @@ public class MethodPrototype {
              * i.e. given that genericRefTypeInstance has the correct bindings, apply those to method.
              */
             JavaTypeInstance boundResult = getResultBoundAccordingly(result, genericRefTypeInstance, invokingArgs);
+            /*
+             * If there are any parameters in this binding which are method parameters, this means we've been unable
+             * to correctly bind them.  We can't leave them in, it'll confuse the issue.
+             */
             return boundResult;
         } else {
             return result;
@@ -394,22 +398,26 @@ public class MethodPrototype {
         return true;
     }
 
-    public GenericTypeBinder getTypeBinderFor(List<Expression> invokingArgs) {
+    public GenericTypeBinder getTypeBinderForTypes(List<JavaTypeInstance> invokingArgTypes) {
         if (classFile == null) {
             return null;
-        }
-
-        List<JavaTypeInstance> invokingTypes = ListFactory.newList();
-        for (Expression invokingArg : invokingArgs) {
-            invokingTypes.add(invokingArg.getInferredJavaType().getJavaTypeInstance());
         }
 
         /*
          * For each of the formal type parameters of the class signature, what has it been bound to in the
          * instance?
          */
-        GenericTypeBinder genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classFile.getClassSignature(), args, null, invokingTypes);
+        GenericTypeBinder genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classFile.getClassSignature(), args, null, invokingArgTypes);
         return genericTypeBinder;
+    }
+
+    public GenericTypeBinder getTypeBinderFor(List<Expression> invokingArgs) {
+
+        List<JavaTypeInstance> invokingTypes = ListFactory.newList();
+        for (Expression invokingArg : invokingArgs) {
+            invokingTypes.add(invokingArg.getInferredJavaType().getJavaTypeInstance());
+        }
+        return getTypeBinderForTypes(invokingTypes);
     }
 
     private JavaTypeInstance getResultBoundAccordingly(JavaTypeInstance result, JavaGenericRefTypeInstance boundInstance, List<Expression> invokingArgs) {

@@ -38,6 +38,7 @@ import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.graph.GraphVisitorFIFO;
+import org.benf.cfr.reader.util.lambda.LambdaUtils;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
@@ -350,7 +351,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             throw new IllegalStateException("MetaFactory usage [" + methodName + "] not recognised.");
         }
 
-        // These two builders should be combined once I'm sure what's going on... .(!!).
         List<Expression> callargs;
         switch (dynamicInvokeType) {
             case METAFACTORY_1:
@@ -363,9 +363,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             default:
                 throw new IllegalStateException();
         }
+        Expression strippedType = callargs.get(3);
+        Expression instantiatedType = callargs.get(5);
 
+        /*
+         * Try to determine the relevant method on the functional interface.
+         */
+        JavaTypeInstance callSiteReturnType = dynamicPrototype.getReturnType();
+        callSiteReturnType = determineDynamicGeneric(callSiteReturnType, dynamicPrototype, strippedType, instantiatedType);
 
-        dynamicPrototype.getArgs();
         List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
         dynamicPrototype.tightenArgs(null, dynamicArgs);
         dynamicPrototype.addExplicitCasts(null, dynamicArgs); // todo - useful?
@@ -379,12 +385,57 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 throw new UnsupportedOperationException("Only static invoke dynamic calls supported currently. This is " + bootstrapBehaviour);
         }
 
-        funcCall = new DynamicInvokation(new InferredJavaType(dynamicPrototype.getReturnType(), InferredJavaType.Source.OPERATION), funcCall, dynamicArgs);
+        funcCall = new DynamicInvokation(new InferredJavaType(callSiteReturnType, InferredJavaType.Source.OPERATION), funcCall, dynamicArgs);
         if (stackProduced.size() == 0) {
             return new ExpressionStatement(funcCall);
         } else {
             return new AssignmentSimple(getStackLValue(0), funcCall);
         }
+    }
+
+
+    private JavaTypeInstance determineDynamicGeneric(final JavaTypeInstance callsiteReturn, MethodPrototype proto, Expression stripped, Expression instantiated) {
+
+        ClassFile classFile = null;
+        try {
+            classFile = cp.getCFRState().getClassFile(proto.getReturnType(), false);
+        } catch (CannotLoadClassException e) {
+        }
+        if (classFile == null) return callsiteReturn;
+
+        // Note - we need to examine the methods, but NOT look at their code.
+        List<Method> methods = Functional.filter(classFile.getMethods(), new Predicate<Method>() {
+            @Override
+            public boolean test(Method in) {
+                return !in.hasCodeAttribute();
+            }
+        });
+        if (methods.size() != 1) return callsiteReturn;
+        Method method = methods.get(0);
+        MethodPrototype genericProto = method.getMethodPrototype();
+
+        MethodPrototype boundProto = LambdaUtils.getLiteralProto(instantiated);
+        GenericTypeBinder gtb = genericProto.getTypeBinderForTypes(boundProto.getArgs());
+
+        JavaTypeInstance unboundReturn = genericProto.getReturnType();
+        JavaTypeInstance boundReturn = boundProto.getReturnType();
+        if (unboundReturn instanceof JavaGenericBaseInstance) {
+            GenericTypeBinder gtb2 = GenericTypeBinder.extractBindings((JavaGenericBaseInstance) unboundReturn, boundReturn);
+            gtb = gtb.mergeWith(gtb2, true);
+        }
+
+        JavaTypeInstance classType = classFile.getClassType();
+        BindingSuperContainer b = classFile.getBindingSupers();
+        classType = b.getBoundSuperForBase(classType);
+        if (classType == null) return callsiteReturn;
+
+        if (!callsiteReturn.getDeGenerifiedType().equals(classType.getDeGenerifiedType())) {
+            // Something's gone wrong.
+            return callsiteReturn;
+        }
+
+        JavaTypeInstance alternateCallSite = gtb.getBindingFor(classType);
+        return alternateCallSite;
     }
 
     private static TypedLiteral getBootstrapArg(ConstantPoolEntry[] bootstrapArguments, int x, ConstantPool cp) {
@@ -395,7 +446,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     private List<Expression> buildInvokeDynamicAltMetaFactoryArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef) {
 
-        final int ARG_OFFSET = 3;
         /*
          * First 3 arguments to an invoke dynamic are stacked automatically by the JVM.
          *  MethodHandles.Lookup caller,

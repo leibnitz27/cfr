@@ -1,7 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,6 +29,11 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     @Override
     public boolean hasUnbound() {
         return true;
+    }
+
+    @Override
+    public List<JavaTypeInstance> getGenericTypes() {
+        return ListFactory.<JavaTypeInstance>newList(this);
     }
 
     @Override

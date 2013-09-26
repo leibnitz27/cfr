@@ -325,6 +325,10 @@ public class Method implements KnowsRawSize {
         return codeAttribute != null;
     }
 
+    public boolean isInstanceMethod() {
+        return !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
+    }
+
     public void dump(Dumper d, boolean asClass) {
         dumpSignatureText(asClass, d);
         if (codeAttribute == null) {

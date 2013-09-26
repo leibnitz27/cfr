@@ -22,6 +22,7 @@ import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.lambda.LambdaUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -118,30 +119,6 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         return dynamicExpression;
     }
 
-    private static TypedLiteral.LiteralType getLiteralType(Expression e) {
-        if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
-        TypedLiteral t = ((Literal) e).getValue();
-        return t.getType();
-    }
-
-    private static ConstantPoolEntryMethodHandle getHandle(Expression e) {
-        if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
-        TypedLiteral t = ((Literal) e).getValue();
-        if (t.getType() != TypedLiteral.LiteralType.MethodHandle) {
-            throw new IllegalArgumentException("Expecting method handle");
-        }
-        return (ConstantPoolEntryMethodHandle) t.getValue();
-    }
-
-    private static ConstantPoolEntryMethodType getType(Expression e) {
-        if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
-        TypedLiteral t = ((Literal) e).getValue();
-        if (t.getType() != TypedLiteral.LiteralType.MethodType) {
-            throw new IllegalArgumentException("Expecting method type");
-        }
-        return (ConstantPoolEntryMethodType) t.getValue();
-    }
-
     private static class CannotDelambaException extends IllegalStateException {
     }
 
@@ -167,30 +144,11 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
          * Right, it's the 6 argument form of LambdaMetafactory.metaFactory, which we understand.
          *
          */
-        TypedLiteral.LiteralType flavour = getLiteralType(metaFactoryArgs.get(3));
+        Expression arg = metaFactoryArgs.get(3);
 
-        List<JavaTypeInstance> targetFnArgTypes = null;
-        switch (flavour) {
-            case MethodHandle: {
-                ConstantPoolEntryMethodHandle targetFnHandle = getHandle(metaFactoryArgs.get(3));
-                ConstantPoolEntryMethodRef targetMethRef = targetFnHandle.getMethodRef();
-                MethodPrototype targetFn = targetMethRef.getMethodPrototype();
-                targetFnArgTypes = targetFn.getArgs();
-                break;
-            }
-            case MethodType: {
-                ConstantPoolEntryMethodType targetFnType = getType(metaFactoryArgs.get(3));
-                ConstantPoolEntryUTF8 descriptor = targetFnType.getDescriptor();
-                MethodPrototype tmpProto = ConstantPoolUtils.parseJavaMethodPrototype(null, null, null, false, descriptor, targetFnType.getCp(), false, null);
-                targetFnArgTypes = tmpProto.getArgs();
-                break;
-            }
-            default:
-                throw new ConfusedCFRException("Can't understand this lambda - disable lambdas.");
-        }
+        List<JavaTypeInstance> targetFnArgTypes = LambdaUtils.getLiteralProto(arg).getArgs();
 
-
-        ConstantPoolEntryMethodHandle lambdaFnHandle = getHandle(metaFactoryArgs.get(4));
+        ConstantPoolEntryMethodHandle lambdaFnHandle = LambdaUtils.getHandle(metaFactoryArgs.get(4));
         ConstantPoolEntryMethodRef lambdaMethRef = lambdaFnHandle.getMethodRef();
         JavaTypeInstance lambdaTypeLocation = lambdaMethRef.getClassEntry().getTypeInstance();
         MethodPrototype lambdaFn = lambdaMethRef.getMethodPrototype();

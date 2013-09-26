@@ -18,4 +18,6 @@ public interface JavaGenericBaseInstance extends JavaTypeInstance {
     public boolean hasUnbound();
 
     public boolean hasForeignUnbound(ConstantPool cp);
+
+    public List<JavaTypeInstance> getGenericTypes();
 }

@@ -13,6 +13,8 @@ import java.util.Set;
  * User: lee
  * Date: 25/02/2013
  * Time: 10:09
+ * <p/>
+ * FIXME - this class has multiple ways of implementing the same thing - definitely feels redundant!
  */
 public class GenericTypeBinder {
     private final Map<String, JavaTypeInstance> nameToBoundType;
@@ -90,23 +92,43 @@ public class GenericTypeBinder {
         return new GenericTypeBinder(unboundNames);
     }
 
-    public static GenericTypeBinder extractBindings(JavaGenericRefTypeInstance unbound, JavaGenericRefTypeInstance bound) {
-        List<JavaTypeInstance> typeParameters = unbound.getGenericTypes();
-        List<JavaTypeInstance> boundTypeParameters = bound.getGenericTypes();
-        if (typeParameters.size() != boundTypeParameters.size())
-            throw new IllegalStateException("Generic info mismatch");
 
+    public static GenericTypeBinder extractBindings(JavaGenericBaseInstance unbound, JavaTypeInstance maybeBound) {
         Map<String, JavaTypeInstance> boundNames = MapFactory.newMap();
+        doBind(boundNames, unbound, maybeBound);
+        return new GenericTypeBinder(boundNames);
+    }
+
+    private static void doBind(Map<String, JavaTypeInstance> boundNames,
+                               JavaGenericBaseInstance unbound, JavaTypeInstance maybeBound) {
+
+        if (unbound.getClass() == JavaGenericPlaceholderTypeInstance.class) {
+            JavaGenericPlaceholderTypeInstance placeholder = (JavaGenericPlaceholderTypeInstance) unbound;
+            boundNames.put(placeholder.getRawName(), maybeBound);
+            return;
+        }
+
+        List<JavaTypeInstance> typeParameters = unbound.getGenericTypes();
+
+
+        if (!(maybeBound instanceof JavaGenericBaseInstance)) {
+            return;
+        }
+
+        JavaGenericBaseInstance bound = (JavaGenericBaseInstance) maybeBound;
+        List<JavaTypeInstance> boundTypeParameters = bound.getGenericTypes();
+        if (typeParameters.size() != boundTypeParameters.size()) {
+            throw new IllegalStateException("Generic info mismatch");
+        }
+
         for (int x = 0, len = typeParameters.size(); x < len; ++x) {
             JavaTypeInstance unboundParam = typeParameters.get(x);
             JavaTypeInstance boundParam = boundTypeParameters.get(x);
-            if (!(unboundParam instanceof JavaGenericPlaceholderTypeInstance)) {
+            if (!(unboundParam instanceof JavaGenericBaseInstance)) {
                 continue;
             }
-            JavaGenericPlaceholderTypeInstance placeholder = (JavaGenericPlaceholderTypeInstance) unboundParam;
-            boundNames.put(placeholder.getRawName(), boundParam);
+            doBind(boundNames, (JavaGenericBaseInstance) unboundParam, boundParam);
         }
-        return new GenericTypeBinder(boundNames);
     }
 
     public JavaTypeInstance getBindingFor(JavaTypeInstance maybeUnbound) {

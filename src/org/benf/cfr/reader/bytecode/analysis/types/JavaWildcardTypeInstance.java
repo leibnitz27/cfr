@@ -1,6 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.util.ListFactory;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -55,6 +58,15 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
         }
         return false;
     }
+
+    @Override
+    public List<JavaTypeInstance> getGenericTypes() {
+        if (underlyingType instanceof JavaGenericBaseInstance) {
+            return ((JavaGenericBaseInstance) underlyingType).getGenericTypes();
+        }
+        return ListFactory.newList();
+    }
+
 
     @Override
     public String toString() {
