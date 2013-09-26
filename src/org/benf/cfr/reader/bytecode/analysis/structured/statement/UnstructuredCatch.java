@@ -6,9 +6,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 
 /**
@@ -34,8 +38,15 @@ public class UnstructuredCatch extends AbstractUnStructuredStatement {
     }
 
     public StructuredStatement getCatchFor(Op04StructuredStatement innerBlock) {
-        JavaRefTypeInstance eType = exceptions.get(0).getCatchType();
-        return new StructuredCatch(eType, innerBlock, catching);
+        /*
+         * Get the unique set of exception types.
+         */
+        Map<String, JavaRefTypeInstance> catchTypes = MapFactory.newTreeMap();
+        for (ExceptionGroup.Entry entry : exceptions) {
+            JavaRefTypeInstance typ = entry.getCatchType();
+            catchTypes.put(typ.getRawName(), typ);
+        }
+        return new StructuredCatch(catchTypes.values(), innerBlock, catching);
     }
 
     public StructuredStatement getCatchForEmpty() {

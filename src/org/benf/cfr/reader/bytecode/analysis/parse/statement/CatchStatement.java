@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCatch;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.Functional;
@@ -31,9 +32,22 @@ public class CatchStatement extends AbstractStatement {
         this.exceptions = exceptions;
         this.catching = catching;
         if (!exceptions.isEmpty()) {
-            InferredJavaType catchType = new InferredJavaType(exceptions.get(0).getCatchType(), InferredJavaType.Source.EXCEPTION, true);
+            JavaTypeInstance collapsedCatchType = determineType(exceptions);
+            InferredJavaType catchType = new InferredJavaType(collapsedCatchType, InferredJavaType.Source.EXCEPTION, true);
             this.catching.getInferredJavaType().chain(catchType);
         }
+    }
+
+    public static JavaTypeInstance determineType(List<ExceptionGroup.Entry> exceptions) {
+        InferredJavaType ijt = new InferredJavaType();
+        ijt.chain(new InferredJavaType(exceptions.get(0).getCatchType(), InferredJavaType.Source.EXCEPTION));
+        for (int x = 1, len = exceptions.size(); x < len; ++x) {
+            ijt.chain(new InferredJavaType(exceptions.get(x).getCatchType(), InferredJavaType.Source.EXCEPTION));
+        }
+        if (ijt.isClash()) {
+            ijt.collapseTypeClash();
+        }
+        return ijt.getJavaTypeInstance();
     }
 
     public void removeCatchBlockFor(final BlockIdentifier tryBlockIdent) {

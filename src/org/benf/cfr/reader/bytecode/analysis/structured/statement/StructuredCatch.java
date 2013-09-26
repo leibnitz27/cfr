@@ -11,9 +11,14 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created:
@@ -21,19 +26,26 @@ import java.util.List;
  * Date: 15/05/2012
  */
 public class StructuredCatch extends AbstractStructuredStatement {
-    private final JavaRefTypeInstance typeName;
+    private final List<JavaRefTypeInstance> catchTypes;
     private final Op04StructuredStatement catchBlock;
     private final LValue catching;
 
-    public StructuredCatch(JavaRefTypeInstance typeName, Op04StructuredStatement catchBlock, LValue catching) {
-        this.typeName = typeName;
+    public StructuredCatch(Collection<JavaRefTypeInstance> catchTypes, Op04StructuredStatement catchBlock, LValue catching) {
+        this.catchTypes = catchTypes == null ? null : ListFactory.newList(catchTypes);
         this.catchBlock = catchBlock;
         this.catching = catching;
     }
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("catch (" + typeName + " ").dump(catching).print(") ");
+        boolean first = true;
+        dumper.print("catch (");
+        for (JavaRefTypeInstance catchType : catchTypes) {
+            if (!first) dumper.print(" | ");
+            dumper.print(catchType.toString());
+            first = false;
+        }
+        dumper.print(" ").dump(catching).print(") ");
         catchBlock.dump(dumper);
         return dumper;
     }

@@ -134,7 +134,7 @@ public class FinalAnalyzer {
         /*
          * Looking at the ORIGINAL try block, find the last catch block for it.
          */
-        List<Op03SimpleStatement> originalTryTargets = ListFactory.newList(in.getTargets());
+        List<Op03SimpleStatement> originalTryTargets = ListFactory.newList(SetFactory.newOrderedSet(in.getTargets()));
         Collections.sort(originalTryTargets, new Op03SimpleStatement.CompareByIndex());
         Op03SimpleStatement lastCatch = originalTryTargets.get(originalTryTargets.size() - 1);
         if (!(lastCatch.getStatement() instanceof CatchStatement)) {
