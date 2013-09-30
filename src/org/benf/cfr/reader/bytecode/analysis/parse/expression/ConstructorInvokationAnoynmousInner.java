@@ -32,8 +32,16 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
 
     public ConstructorInvokationAnoynmousInner(MemberFunctionInvokation constructorInvokation,
                                                InferredJavaType inferredJavaType, List<Expression> args) {
-        super(inferredJavaType, args);
+        super(inferredJavaType, constructorInvokation.getFunction(), args);
         this.constructorInvokation = constructorInvokation;
+        /*
+         * As much as I'd rather not tie this to its use, we have to make sure that the target variables etc
+         * are available at the time of usage, so we can hide anonymous inner member clones.
+         */
+        ClassFile classFile = constructorInvokation.getCp().getCFRState().getClassFile(constructorInvokation.getMethodPrototype().getReturnType());
+        if (classFile != null) {
+            classFile.noteAnonymousUse(this);
+        }
     }
 
     @Override
@@ -45,7 +53,7 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
     public Dumper dump(Dumper d) {
         // We need the inner classes on the anonymous class (!)
         ConstantPool cp = constructorInvokation.getCp();
-        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(getTypeInstance(), true);
+        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(getTypeInstance());
 
         d.print("new ");
         ClassFileDumperAnonymousInner cfd = new ClassFileDumperAnonymousInner();
@@ -56,17 +64,19 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
         } catch (NoSuchMethodException e) {
         }
 
-        return cfd.dumpWithArgs(anonymousClassFile, true, args.subList(prototype.getNumHiddenArguments(), args.size()), false, d);
+        cfd.dumpWithArgs(anonymousClassFile, prototype, args, false, d);
+        d.removePendingCarriageReturn();
+        return d;
     }
 
     public Dumper dumpForEnum(Dumper d) {
         ConstantPool cp = constructorInvokation.getCp();
-        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(getTypeInstance(), true);
+        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(getTypeInstance());
         ClassFileDumperAnonymousInner cfd = new ClassFileDumperAnonymousInner();
         List<Expression> args = getArgs();
 
         /* Enums always have 2 initial arguments */
-        return cfd.dumpWithArgs(anonymousClassFile, true, args.subList(2, args.size()), true, d);
+        return cfd.dumpWithArgs(anonymousClassFile, null, args.subList(2, args.size()), true, d);
     }
 
     @Override

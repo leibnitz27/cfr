@@ -399,7 +399,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         ClassFile classFile = null;
         try {
-            classFile = cp.getCFRState().getClassFile(proto.getReturnType(), false);
+            classFile = cp.getCFRState().getClassFile(proto.getReturnType());
         } catch (CannotLoadClassException e) {
         }
         if (classFile == null) return callsiteReturn;

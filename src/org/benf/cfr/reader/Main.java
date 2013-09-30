@@ -26,14 +26,15 @@ public class Main {
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
             CFRState params = getOptParser.parse(args, CFRState.getFactory());
-            ClassFile c = params.getClassFileMaybePath(params.getFileName(), params.analyseInnerClasses());
+            ClassFile c = params.getClassFileMaybePath(params.getFileName());
             // We set the class file version for the analysis, so any unspecified parameters
             // can default to a class file appropriate version.
             params.setClassFileVersion(c.getClassFileVersion());
             // This may seem odd, but we want to make sure we're analysing the version
             // from the cache.
             try {
-                c = params.getClassFile(c.getClassType(), true);
+                c = params.getClassFile(c.getClassType());
+                if (params.analyseInnerClasses()) c.loadInnerClasses(params);
             } catch (CannotLoadClassException e) {
             }
             // THEN analyse.

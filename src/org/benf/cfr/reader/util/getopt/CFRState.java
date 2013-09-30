@@ -287,14 +287,14 @@ public class CFRState {
         return bytes;
     }
 
-    private Map<Pair<String, Boolean>, ClassFile> classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<Pair<String, Boolean>, ClassFile>() {
+    private Map<String, ClassFile> classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
         @Override
-        public ClassFile invoke(Pair<String, Boolean> arg) {
-            return loadClassFileAtPath(arg.getFirst(), arg.getSecond());
+        public ClassFile invoke(String arg) {
+            return loadClassFileAtPath(arg);
         }
     });
 
-    private ClassFile loadClassFileAtPath(final String path, boolean withInnerClasses) {
+    private ClassFile loadClassFileAtPath(final String path) {
         Map<String, String> classPathFiles = getClassPathClasses();
         String jarName = classPathFiles.get(path);
         ZipFile zipFile = null;
@@ -336,7 +336,7 @@ public class CFRState {
             try {
                 byte[] content = getBytesFromFile(is, length);
                 ByteData data = new BaseByteData(content);
-                ClassFile res = new ClassFile(data, CFRState.this, withInnerClasses, configCallback);
+                ClassFile res = new ClassFile(data, CFRState.this, configCallback);
                 return res;
             } finally {
                 if (zipFile != null) zipFile.close();
@@ -395,28 +395,28 @@ public class CFRState {
         return classToPathMap;
     }
 
-    public ClassFile getClassFileMaybePath(String pathOrName, boolean needInnerClasses) throws CannotLoadClassException {
+    public ClassFile getClassFileMaybePath(String pathOrName) throws CannotLoadClassException {
         if (pathOrName.endsWith(".class")) {
             // Fine - we're sure it's a class file.
-            return getClassFile(pathOrName, needInnerClasses);
+            return getClassFile(pathOrName);
         }
         // See if this file exists - in which case it's odd.
         File f = new File(pathOrName);
         if (f.exists()) {
             f = null;
-            return getClassFile(pathOrName, needInnerClasses);
+            return getClassFile(pathOrName);
         }
-        return getClassFile(ClassNameUtils.convertToPath(pathOrName) + ".class", needInnerClasses);
+        return getClassFile(ClassNameUtils.convertToPath(pathOrName) + ".class");
     }
 
-    public ClassFile getClassFile(String path, boolean needInnerClasses) throws CannotLoadClassException {
-        return classFileCache.get(new Pair<String, Boolean>(path, needInnerClasses));
+    public ClassFile getClassFile(String path) throws CannotLoadClassException {
+        return classFileCache.get(path);
     }
 
-    public ClassFile getClassFile(JavaTypeInstance classInfo, boolean needInnerClasses) throws CannotLoadClassException {
+    public ClassFile getClassFile(JavaTypeInstance classInfo) throws CannotLoadClassException {
         String path = classInfo.getRawName();
         path = ClassNameUtils.convertToPath(path) + ".class";
-        return getClassFile(path, needInnerClasses);
+        return getClassFile(path);
     }
 
     public static GetOptSinkFactory<CFRState> getFactory() {

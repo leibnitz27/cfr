@@ -127,7 +127,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         boolean parent = tgtType.getInnerClassHereInfo().isTransitiveInnerClassOf(thisClassType);
         if (!(child || parent)) return null;
 
-        ClassFile otherClass = cfrState.getClassFile(tgtType, true);
+        ClassFile otherClass = cfrState.getClassFile(tgtType);
         JavaTypeInstance otherType = otherClass.getClassType();
         MethodPrototype otherPrototype = functionInvokation.getFunction().getMethodPrototype();
         List<Expression> appliedArgs = functionInvokation.getArgs();

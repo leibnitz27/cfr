@@ -122,7 +122,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
          */
         ClassFile enumLutClass;
         try {
-            enumLutClass = state.getClassFile(classInfo, true);
+            enumLutClass = state.getClassFile(classInfo);
         } catch (CannotLoadClassException e) {
             // Oh dear, can't load that class.  Proceed without it.
             return;

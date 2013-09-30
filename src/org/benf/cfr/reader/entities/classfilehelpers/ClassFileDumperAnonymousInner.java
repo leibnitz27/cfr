@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities.classfilehelpers;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
@@ -22,10 +23,10 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
 
     @Override
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
-        return dumpWithArgs(classFile, innerClass, ListFactory.<Expression>newList(), false, d);
+        return dumpWithArgs(classFile, null, ListFactory.<Expression>newList(), false, d);
     }
 
-    public Dumper dumpWithArgs(ClassFile classFile, boolean innerClass, List<Expression> args, boolean isEnum, Dumper d) {
+    public Dumper dumpWithArgs(ClassFile classFile, MethodPrototype usedMethod, List<Expression> args, boolean isEnum, Dumper d) {
 
         ConstantPool cp = classFile.getConstantPool();
 
@@ -42,7 +43,9 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         if (!(isEnum && args.isEmpty())) {
             d.print("(");
             boolean first = true;
-            for (Expression arg : args) {
+            for (int i = 0, len = args.size(); i < len; ++i) {
+                if (usedMethod != null && usedMethod.isHiddenArg(i)) continue;
+                Expression arg = args.get(i);
                 first = CommaHelp.comma(first, d);
                 d.dump(arg);
             }
@@ -54,7 +57,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
 
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
-            field.dump(d, cp);
+            if (!field.shouldNotDisplay()) field.dump(d, cp);
         }
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {

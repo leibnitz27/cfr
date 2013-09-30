@@ -12,15 +12,13 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -31,6 +29,7 @@ import java.util.Map;
 public class MethodPrototype {
     private final List<FormalTypeParameter> formalTypeParameters;
     private final List<JavaTypeInstance> args;
+    private final Set<Integer> hidden = SetFactory.newSet();
     private JavaTypeInstance result;
     private final VariableNamer variableNamer;
     private final boolean instanceMethod;
@@ -40,7 +39,6 @@ public class MethodPrototype {
     private final ClassFile classFile;
     private final List<Slot> syntheticArgs = ListFactory.newList();
     private transient List<LocalVariable> parameterLValues = null;
-    private transient boolean explicitThisRemoval = false;
 
     public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
         this.formalTypeParameters = formalTypeParameters;
@@ -64,8 +62,12 @@ public class MethodPrototype {
         this.classFile = classFile;
     }
 
-    public void setExplicitThisRemoval(boolean explicitThisRemoval) {
-        this.explicitThisRemoval = explicitThisRemoval;
+    public void hide(int x) {
+        hidden.add(x);
+    }
+
+    public boolean isHiddenArg(int x) {
+        return hidden.contains(x);
     }
 
     public void dumpDeclarationSignature(Dumper d, String methName, Method.MethodConstructor isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
@@ -89,10 +91,10 @@ public class MethodPrototype {
 
         List<LocalVariable> parameterLValues = getComputedParameters();
         int argssize = args.size();
-        int start = explicitThisRemoval ? 1 : 0;
         boolean first = true;
-        for (int i = start; i < argssize; ++i) {
+        for (int i = 0; i < argssize; ++i) {
             JavaTypeInstance arg = args.get(i);
+            if (hidden.contains(i)) continue;
             first = CommaHelp.comma(first, d);
             annotationsHelper.addAnnotationTextForParameterInto(i, d);
             if (varargs && (i == argssize - 1)) {
@@ -106,10 +108,6 @@ public class MethodPrototype {
             d.print(" ").dump(parameterLValues.get(i).getName());
         }
         d.print(")");
-    }
-
-    public int getNumHiddenArguments() {
-        return explicitThisRemoval ? 1 : 0;
     }
 
     public boolean parametersComputed() {
@@ -250,6 +248,10 @@ public class MethodPrototype {
 
     public List<JavaTypeInstance> getArgs() {
         return args;
+    }
+
+    public int getVisibleArgCount() {
+        return args.size() - hidden.size();
     }
 
     public boolean isInstanceMethod() {

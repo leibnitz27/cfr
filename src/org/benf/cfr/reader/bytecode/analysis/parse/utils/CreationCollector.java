@@ -152,9 +152,8 @@ public class CreationCollector {
                         memberFunctionInvokation.getArgs());
             } else {
                 constructorInvokation = new ConstructorInvokationSimple(
+                        memberFunctionInvokation,
                         inferredJavaType,
-                        memberFunctionInvokation.getFunction(),
-                        memberFunctionInvokation.getMethodPrototype(),
                         memberFunctionInvokation.getArgs());
             }
 

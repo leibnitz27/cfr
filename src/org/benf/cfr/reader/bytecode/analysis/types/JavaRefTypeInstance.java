@@ -209,7 +209,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     public ClassFile getClassFile() {
         if (cfrState == null) return null;
-        ClassFile classFile = cfrState.getClassFile(this, false);
+        ClassFile classFile = cfrState.getClassFile(this);
         return classFile;
     }
 

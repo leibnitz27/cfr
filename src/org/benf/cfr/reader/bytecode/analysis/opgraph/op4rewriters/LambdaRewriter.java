@@ -164,7 +164,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             classFile = thisClassFile;
         } else {
             try {
-                classFile = cfrState.getClassFile(lambdaTypeRefLocation, false);
+                classFile = cfrState.getClassFile(lambdaTypeRefLocation);
             } catch (CannotLoadClassException e) {
                 // We can't load the lambda target - we can't really make any assumptions about what it will do.
                 return dynamicExpression;

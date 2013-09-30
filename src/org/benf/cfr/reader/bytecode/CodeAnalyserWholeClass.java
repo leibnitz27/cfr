@@ -39,15 +39,6 @@ public class CodeAnalyserWholeClass {
     public static void wholeClassAnalysisPass1(ClassFile classFile, CFRState state) {
 
         /*
-         * All constructors of inner classes should have their first argument removed,
-         * and it should be marked as hidden.
-         */
-        if (classFile.isInnerClass() && state.removeInnerClassSynthetics()) {
-            fixInnerClassConstructors(classFile);
-            // We need to fix up nested synthetic outer accessors OUTERCLASS first.
-        }
-
-        /*
          * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
          * several methods.
          */
@@ -69,10 +60,6 @@ public class CodeAnalyserWholeClass {
         if (state.getBooleanOpt(CFRState.LIFT_CONSTRUCTOR_INIT)) {
             liftStaticInitialisers(classFile, state);
             liftNonStaticInitialisers(classFile, state);
-        }
-
-        if (state.getBooleanOpt(CFRState.REMOVE_DEAD_METHODS)) {
-            removeDeadMethods(classFile, state);
         }
 
         if (state.getBooleanOpt(CFRState.REMOVE_BOILERPLATE)) {
@@ -208,7 +195,7 @@ public class CodeAnalyserWholeClass {
 
         // 0 args.
         MethodPrototype methodPrototype = constructor.getMethodPrototype();
-        if ((methodPrototype.getArgs().size() - methodPrototype.getNumHiddenArguments()) > 0) return;
+        if (methodPrototype.getVisibleArgCount() > 0) return;
         // public, non final.
         if (constructor.testAccessFlag(AccessFlagMethod.ACC_FINAL)) return;
         if (!constructor.testAccessFlag(AccessFlagMethod.ACC_PUBLIC)) return;
@@ -258,9 +245,22 @@ public class CodeAnalyserWholeClass {
          * Rewrite 'outer.this' references.
          */
         if (state.removeInnerClassSynthetics()) {
+
+            /*
+             * All constructors of inner classes should have their first argument removed,
+             * and it should be marked as hidden.
+             */
+            if (classFile.isInnerClass()) {
+                fixInnerClassConstructors(classFile);
+            }
+
             replaceNestedSyntheticOuterRefs(classFile);
 
             inlineAccessors(state, classFile);
+        }
+
+        if (state.getBooleanOpt(CFRState.REMOVE_DEAD_METHODS)) {
+            removeDeadMethods(classFile, state);
         }
 
     }

@@ -3,8 +3,13 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnoynmousInner;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
@@ -585,28 +590,90 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         scopeDiscoverer.markDiscoveredCreations();
     }
 
-    private static LValue removeSyntheticConstructorParam(Method method, Op04StructuredStatement root) {
+    private static LValue removeSyntheticConstructorParams(Method method, Op04StructuredStatement root, boolean isInstance) {
         MethodPrototype prototype = method.getMethodPrototype();
         // method.getConstructorFlag());
         List<LocalVariable> vars = prototype.getComputedParameters();
         if (vars.isEmpty()) return null;
-        LocalVariable outerThis = vars.get(0);
-        // Todo : Should we test that it's the right type?  Already been done, really....
-        prototype.setExplicitThisRemoval(true);
+        FieldVariable matchedLValue = null;
 
-        /* Now we need to remove the usage of outerThis */
-        InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(outerThis);
-        innerClassConstructorRewriter.rewrite(root);
-        LValue matchedLValue = innerClassConstructorRewriter.getMatchedLValue();
-        if (matchedLValue == null) return null;
-        /* If there was a value to match, we now have to replace the parameter with the member anywhere it was used
-         * in the constructor.
-         */
         Map<LValue, LValue> replacements = MapFactory.newMap();
-        replacements.put(outerThis, matchedLValue);
-        LValueReplacingRewriter lValueReplacingRewriter = new LValueReplacingRewriter(replacements);
 
-        MiscStatementTools.applyExpressionRewriter(root, lValueReplacingRewriter);
+        List<ConstructorInvokationAnoynmousInner> usages = method.getClassFile().getAnonymousUsages();
+        /*
+         * In normal usage, there will be only one instance of the construction of an anonymous inner.
+         * If there are multiple, then we will have an issue rewriting the inner variables to match the outer
+         * ones.
+         */
+        ConstructorInvokationAnoynmousInner usage = usages.size() == 1 ? usages.get(0) : null;
+
+        if (isInstance) {
+            LocalVariable outerThis = vars.get(0);
+            // Todo : Should we test that it's the right type?  Already been done, really....
+
+            InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(method.getClassFile(), outerThis);
+            innerClassConstructorRewriter.rewrite(root);
+            matchedLValue = innerClassConstructorRewriter.getMatchedField();
+            if (matchedLValue != null) {
+                /* If there was a value to match, we now have to replace the parameter with the member anywhere it was used
+                 * in the constructor.
+                 */
+                ClassFileField classFileField = matchedLValue.getClassFileField();
+                classFileField.markHidden();
+                classFileField.markSyntheticOuterRef();
+
+                replacements.put(outerThis, matchedLValue);
+                innerClassConstructorRewriter.getAssignmentStatement().getContainer().nopOut();
+                prototype.hide(0);
+            }
+        }
+
+        /* If this inner class is an anonymous inner class, it could capture outer locals directly.
+         * for all the other members - we'll search for any private final members which are initialised in the constructor
+         * and alias those members to the argument that called them.
+         */
+        if (usage != null) {
+            List<Expression> actualArgs = usage.getArgs();
+            if (actualArgs.size() != vars.size()) {
+                throw new IllegalStateException();
+            }
+            int start = isInstance ? 1 : 0;
+            for (int x = start, len = vars.size(); x < len; ++x) {
+                LocalVariable protoVar = vars.get(x);
+                Expression arg = actualArgs.get(x);
+
+                arg = CastExpression.removeImplicit(arg);
+                /*
+                 * For this to be a captured variable, it needs to not be computed - i.e. an Lvalue.
+                 */
+                if (!(arg instanceof LValueExpression)) continue;
+                LValue lValueArg = ((LValueExpression) arg).getLValue();
+                String name = null;
+                if (!(lValueArg instanceof LocalVariable)) continue;
+                LocalVariable localVariable = (LocalVariable) lValueArg;
+
+                InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(method.getClassFile(), protoVar);
+                innerClassConstructorRewriter.rewrite(root);
+                FieldVariable matchedField = innerClassConstructorRewriter.getMatchedField();
+                if (matchedField != null) {
+                    // Nop out the assign statement, rename the field, hide the argument.
+                    innerClassConstructorRewriter.getAssignmentStatement().getContainer().nopOut();
+                    // We need to link the name to the outer variable in such a way that if that changes name,
+                    // we don't lose it.
+                    ClassFileField classFileField = matchedField.getClassFileField();
+                    classFileField.overrideName(localVariable.getName().getStringName());
+                    classFileField.markSyntheticOuterRef();
+                    classFileField.markHidden();
+                    prototype.hide(x);
+                }
+            }
+        }
+
+
+        if (!replacements.isEmpty()) {
+            LValueReplacingRewriter lValueReplacingRewriter = new LValueReplacingRewriter(replacements);
+            MiscStatementTools.applyExpressionRewriter(root, lValueReplacingRewriter);
+        }
 
         return matchedLValue;
     }
@@ -630,8 +697,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         LValue res = null;
         if (method.isConstructor()) {
             ClassFile classFile = method.getClassFile();
-            if (classFile.isInnerClass() && !classFile.testAccessFlag(AccessFlag.ACC_STATIC)) {
-                res = removeSyntheticConstructorParam(method, root);
+            if (classFile.isInnerClass()) {
+                res = removeSyntheticConstructorParams(method, root, !classFile.testAccessFlag(AccessFlag.ACC_STATIC));
             }
         }
         return res;

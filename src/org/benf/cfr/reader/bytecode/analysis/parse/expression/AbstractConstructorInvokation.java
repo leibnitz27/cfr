@@ -1,17 +1,19 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
@@ -25,12 +27,16 @@ import java.util.List;
  * Date: 16/03/2012
  * Time: 17:26
  */
-public abstract class AbstractConstructorInvokation extends AbstractExpression {
+public abstract class AbstractConstructorInvokation extends AbstractExpression implements BoxingProcessor {
+    private final ConstantPoolEntryMethodRef function;
+    private final MethodPrototype methodPrototype;
     private final List<Expression> args;
 
-    public AbstractConstructorInvokation(InferredJavaType inferredJavaType, List<Expression> args) {
+    public AbstractConstructorInvokation(InferredJavaType inferredJavaType, ConstantPoolEntryMethodRef function, List<Expression> args) {
         super(inferredJavaType);
         this.args = args;
+        this.function = function;
+        this.methodPrototype = function.getMethodPrototype();
     }
 
     public List<Expression> getArgs() {
@@ -90,4 +96,86 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression {
         return true;
 
     }
+
+
+    /*
+     * Duplicate code with abstractFunctionInvokation
+     */
+    protected final OverloadMethodSet getOverloadMethodSet() {
+        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        if (overloadMethodSet == null) return null;
+        JavaTypeInstance objectType = getInferredJavaType().getJavaTypeInstance();
+        if (objectType instanceof JavaGenericRefTypeInstance) {
+            JavaGenericRefTypeInstance genericType = (JavaGenericRefTypeInstance) objectType;
+            return overloadMethodSet.specialiseTo(genericType);
+        }
+        return overloadMethodSet;
+    }
+
+    protected final MethodPrototype getMethodPrototype() {
+        return methodPrototype;
+    }
+
+    @Override
+    public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
+
+        List<Expression> args = getArgs();
+
+        if (args.isEmpty()) return false;
+        /*
+         * Ignore completely for lambda, etc.
+         */
+
+        OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
+        if (overloadMethodSet == null) {
+            /* We can't change any of the types here.
+             * Best we can do is remove invalid casts.
+             */
+            boxingRewriter.removeRedundantCastOnly(args);
+            return false;
+        }
+
+        for (int x = 0; x < args.size(); ++x) {
+            /*
+             * We can only remove explicit boxing if the target type is correct -
+             * i.e. calling an object function with an explicit box can't have the box removed.
+             *
+             * This is fixed by a later pass which makes sure that the argument
+             * can be passed to the target.
+             */
+            Expression arg = args.get(x);
+            /*
+             * we only need to shove a cast to the exact type on it if our current argument
+             * doesn't call the 'correct' method.
+             */
+            if (!overloadMethodSet.callsCorrectMethod(arg, x)) {
+                /*
+                 * If arg isn't the right type, shove an extra cast on the front now.
+                 * Then we will forcibly remove it if we don't need it.
+                 */
+                JavaTypeInstance argType = overloadMethodSet.getArgType(x, arg.getInferredJavaType().getJavaTypeInstance());
+                boolean ignore = false;
+                if (argType instanceof JavaGenericBaseInstance) {
+                    // TODO : Should check flag for ignore bad generics?
+                    ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(function.getCp());
+                }
+                /*
+                 * Lambda types will always look wrong.
+                 */
+                if (!ignore) {
+                    ignore |= arg instanceof LambdaExpression;
+                    ignore |= arg instanceof LambdaExpressionFallback;
+                }
+                if (!ignore) {
+                    arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
+                }
+            }
+
+            arg = boxingRewriter.rewriteExpression(arg, null, null, null);
+            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet);
+            args.set(x, arg);
+        }
+        return false;
+    }
+
 }

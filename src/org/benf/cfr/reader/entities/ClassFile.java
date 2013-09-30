@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnoynmousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.Attribute;
@@ -79,7 +80,7 @@ public class ClassFile implements Dumpable {
     /*
      * Be sure to call loadInnerClasses directly after.
      */
-    public ClassFile(final ByteData data, CFRState cfrState, boolean withInnerClasses, ConfigCallback configCallback) {
+    public ClassFile(final ByteData data, CFRState cfrState, ConfigCallback configCallback) {
         int magic = data.getS4At(OFFSET_OF_MAGIC);
         if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe");
 
@@ -172,9 +173,6 @@ public class ClassFile implements Dumpable {
 
         // Need to load inner classes asap so we can infer staticness before any analysis
         this.innerClassesByTypeInfo = new LinkedHashMap<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>>();
-        if (withInnerClasses) {
-            loadInnerClasses(cfrState);
-        }
 
         boolean isInterface = accessFlags.contains(AccessFlag.ACC_INTERFACE);
         boolean isAnnotation = accessFlags.contains(AccessFlag.ACC_ANNOTATION);
@@ -461,7 +459,7 @@ public class ClassFile implements Dumpable {
     }
 
     // just after construction
-    private void loadInnerClasses(CFRState cfrState) {
+    public void loadInnerClasses(CFRState cfrState) {
         AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
         if (attributeInnerClasses == null) {
             return;
@@ -484,7 +482,8 @@ public class ClassFile implements Dumpable {
             /* If we're loading inner classes, then we definitely want to recursively apply that
              */
             try {
-                ClassFile innerClass = cfrState.getClassFile(innerType, true);
+                ClassFile innerClass = cfrState.getClassFile(innerType);
+                innerClass.loadInnerClasses(cfrState);
                 markInnerClassAsStatic(cfrState, innerClass, thisType);
 
                 innerClassesByTypeInfo.put(innerType, new Pair<InnerClassAttributeInfo, ClassFile>(innerClassAttributeInfo, innerClass));
@@ -735,5 +734,15 @@ public class ClassFile implements Dumpable {
             return;
         }
         classFile.getBoundSuperClasses(boundBase, boundSuperCollector, route);
+    }
+
+    private List<ConstructorInvokationAnoynmousInner> anonymousUsages = ListFactory.newList();
+
+    public void noteAnonymousUse(ConstructorInvokationAnoynmousInner anoynmousInner) {
+        anonymousUsages.add(anoynmousInner);
+    }
+
+    public List<ConstructorInvokationAnoynmousInner> getAnonymousUsages() {
+        return anonymousUsages;
     }
 }
