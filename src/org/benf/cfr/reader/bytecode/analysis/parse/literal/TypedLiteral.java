@@ -102,10 +102,30 @@ public class TypedLiteral {
         if (l == Long.MIN_VALUE) return "Long.MIN_VALUE";
         if (l == Integer.MAX_VALUE) return "Integer.MAX_VALUE";
         if (l == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
+        String longString = o.toString();
+        if (l > 0xfffffL) {
+            String hexTest = Long.toHexString(l).toUpperCase();
+            byte[] bytes = hexTest.getBytes();
+            byte[] count = new byte[16];
+            int diff = 0;
+            for (int i = 0, len = bytes.length; i < len; ++i) {
+                byte b = bytes[i];
+                if (b >= '0' && b <= '9') {
+                    if (++count[bytes[i] - '0'] == 1) diff++;
+                } else if (b >= 'A' && b <= 'F') {
+                    if (++count[bytes[i] - 'A' + 10] == 1) diff++;
+                } else {
+                    diff = 10;
+                    break;
+                }
+            }
+            if (diff <= 2) longString = "0x" + hexTest;
+        }
+
         if (l > Integer.MAX_VALUE || l < Integer.MIN_VALUE) {
-            return o.toString() + "L";
+            return longString + "L";
         } else {
-            return o.toString();
+            return longString;
         }
     }
 
