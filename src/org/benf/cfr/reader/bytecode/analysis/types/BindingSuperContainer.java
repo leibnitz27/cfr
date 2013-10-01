@@ -18,8 +18,6 @@ public class BindingSuperContainer {
         INTERFACE
     }
 
-    ;
-
     public static BindingSuperContainer POISON = new BindingSuperContainer(null, null, null);
 
     private final ClassFile thisClass;

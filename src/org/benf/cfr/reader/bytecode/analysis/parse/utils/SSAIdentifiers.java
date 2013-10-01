@@ -110,9 +110,9 @@ public class SSAIdentifiers<KEYTYPE> {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (Map.Entry<KEYTYPE, SSAIdent> entry : knownIdentifiers.entrySet()) {
-            sb.append("" + entry.getKey() + "@" + entry.getValue() + " ");
+            sb.append(entry.getKey()).append("@").append(entry.getValue()).append(" ");
         }
         return sb.toString();
     }

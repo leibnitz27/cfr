@@ -1609,13 +1609,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             // there will disjoint sets.
 
             for (SSAIdent key : keys) {
-                if (combinedMap.containsKey(key)) continue;
+                Pair<Slot, SSAIdent> slotkey = Pair.make(slot, key);
+                if (combinedMap.containsKey(slotkey)) continue;
                 final Ident thisIdent = identFactory.getNextIdent(slot.getIdx());
                 GraphVisitor<SSAIdent> gv = new GraphVisitorDFS<SSAIdent>(key, new BinaryProcedure<SSAIdent, GraphVisitor<SSAIdent>>() {
                     @Override
                     public void call(SSAIdent arg1, GraphVisitor<SSAIdent> arg2) {
-                        if (combinedMap.containsKey(arg1)) return;
-                        combinedMap.put(Pair.make(slot, arg1), thisIdent);
+                        Pair<Slot, SSAIdent> slotkey = Pair.make(slot, arg1);
+                        if (combinedMap.containsKey(slotkey)) return;
+                        combinedMap.put(slotkey, thisIdent);
                         arg2.enqueue(downMap.get(arg1));
                         arg2.enqueue(upMap.get(arg1));
                     }

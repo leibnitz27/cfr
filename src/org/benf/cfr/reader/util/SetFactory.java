@@ -24,9 +24,7 @@ public class SetFactory {
 
     public static <X extends Object> Set<X> newSet(X... content) {
         Set<X> res = new HashSet<X>();
-        for (X x : content) {
-            res.add(x);
-        }
+        Collections.addAll(res, content);
         return res;
     }
 
@@ -40,9 +38,7 @@ public class SetFactory {
 
     public static <X extends Object> Set<X> newOrderedSet(X... content) {
         Set<X> res = new LinkedHashSet<X>();
-        for (X x : content) {
-            res.add(x);
-        }
+        Collections.addAll(res, content);
         return res;
     }
 

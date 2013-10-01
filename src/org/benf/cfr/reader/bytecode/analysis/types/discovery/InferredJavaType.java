@@ -285,7 +285,7 @@ public class InferredJavaType {
             } else {
                 StringBuilder sb = new StringBuilder();
                 for (IJTInternal clash : clashes) {
-                    sb.append("" + id + " -> " + clash.toString() + ", ");
+                    sb.append(id).append(" -> ").append(clash.toString()).append(", ");
                 }
                 return sb.toString();
             }

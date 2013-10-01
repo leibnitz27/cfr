@@ -127,7 +127,6 @@ public class AssertRewriter {
 
         @Override
         public void collectMatches(String name, WildcardMatch wcm) {
-
         }
 
         public boolean matched() {
