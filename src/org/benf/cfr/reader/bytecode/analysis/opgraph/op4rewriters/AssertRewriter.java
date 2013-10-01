@@ -159,6 +159,7 @@ public class AssertRewriter {
             if (!method.hasCodeAttribute()) continue;
 
             List<StructuredStatement> statements = MiscStatementTools.linearise(method.getAnalysis());
+            if (statements == null) continue;
 
             MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(statements);
 
