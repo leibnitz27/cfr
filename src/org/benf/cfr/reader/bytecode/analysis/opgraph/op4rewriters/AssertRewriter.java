@@ -15,6 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredThrow;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
@@ -55,11 +56,19 @@ public class AssertRewriter {
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(statements);
         WildcardMatch wcm1 = new WildcardMatch();
 
-        JavaTypeInstance classType = classFile.getClassType();
+        final JavaTypeInstance topClassType = classFile.getClassType();
+        InnerClassInfo innerClassInfo = topClassType.getInnerClassHereInfo();
+        JavaTypeInstance classType = topClassType;
+        while (innerClassInfo != InnerClassInfo.NOT) {
+            JavaTypeInstance nextClass = innerClassInfo.getOuterClass();
+            if (nextClass == null || nextClass.equals(classType)) break;
+            classType = nextClass;
+            innerClassInfo = classType.getInnerClassHereInfo();
+        }
 
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1,
                 new CollectMatch("ass1", new StructuredAssignment(
-                        wcm1.getStaticVariable("assertbool", classType, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TEST)),
+                        wcm1.getStaticVariable("assertbool", topClassType, new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TEST)),
                         new NotOperation(new BooleanExpression(
                                 wcm1.getMemberFunction("assertmeth", "desiredAssertionStatus",
                                         new Literal(TypedLiteral.getClass(classType))
