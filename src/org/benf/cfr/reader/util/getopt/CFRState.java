@@ -108,7 +108,7 @@ public class CFRState {
                 } else {
                     // We're loading from the wrong directory.  We need to rebase so that dependencies are sought
                     // in similar locations.
-                    // TODO : File.seperator, rather than hardcoded!
+                    // TODO : File.separator, rather than hardcoded!
                     getCommonRoot(path, actualPath);
                 }
             }
