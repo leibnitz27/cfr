@@ -660,6 +660,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                     innerClassConstructorRewriter.getAssignmentStatement().getContainer().nopOut();
                     // We need to link the name to the outer variable in such a way that if that changes name,
                     // we don't lose it.
+                    //
+                    // Once this has occurred, there's a possibility that we may have caused collisions
+                    // between these renamed members and locals in other code.
                     ClassFileField classFileField = matchedField.getClassFileField();
                     classFileField.overrideName(localVariable.getName().getStringName());
                     classFileField.markSyntheticOuterRef();

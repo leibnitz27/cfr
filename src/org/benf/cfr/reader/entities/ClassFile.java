@@ -528,17 +528,15 @@ public class ClassFile implements Dumpable {
         }
         boolean exceptionRecovered = false;
         for (Method method : methods) {
-            if (state.analyseMethod(method.getName())) {
-                try {
-                    method.analyse();
-                } catch (Exception e) {
-                    System.out.println("Exception analysing " + method.getName());
-                    System.out.println(e);
-                    for (StackTraceElement s : e.getStackTrace()) {
-                        System.out.println(s);
-                    }
-                    exceptionRecovered = true;
+            try {
+                method.analyse();
+            } catch (Exception e) {
+                System.out.println("Exception analysing " + method.getName());
+                System.out.println(e);
+                for (StackTraceElement s : e.getStackTrace()) {
+                    System.out.println(s);
                 }
+                exceptionRecovered = true;
             }
         }
         if (exceptionRecovered) throw new ConfusedCFRException("Failed to analyse file");

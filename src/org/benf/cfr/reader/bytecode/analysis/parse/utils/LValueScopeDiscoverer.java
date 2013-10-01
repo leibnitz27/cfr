@@ -106,7 +106,6 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
         if (!oldType.equals(newType)) {
             earliestDefinitionsByLevel.get(previousDef.getDepth()).remove(previousDef.getName());
             if (previousDef.getDepth() == currentDepth) {
-                int x = 1;
                 variableFactory.mutatingRenameUnClash(localVariable);
                 name = localVariable.getName();
             }
