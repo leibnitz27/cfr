@@ -137,6 +137,13 @@ public class CFRState {
             return Boolean.parseBoolean(arg);
         }
     };
+    private static final BinaryFunction<String, CFRState, Boolean> defaultFalseBooleanDecoder = new BinaryFunction<String, CFRState, Boolean>() {
+        @Override
+        public Boolean invoke(String arg, CFRState ignore) {
+            if (arg == null) return false;
+            return Boolean.parseBoolean(arg);
+        }
+    };
 
     private static class VersionSpecificDefaulter implements BinaryFunction<String, CFRState, Boolean> {
 
@@ -196,6 +203,8 @@ public class CFRState {
             "tidymonitors", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> ALLOW_PARTIAL_FAILURE = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "allowfailure", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> LENIENT = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "lenient", defaultFalseBooleanDecoder);
 
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
@@ -225,7 +234,7 @@ public class CFRState {
     }
 
     public boolean isLenient() {
-        return false;
+        return getBooleanOpt(LENIENT);
     }
 
     public boolean hideBridgeMethods() {
@@ -427,7 +436,7 @@ public class CFRState {
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
-                    DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE);
+                    DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT);
         }
 
         @Override

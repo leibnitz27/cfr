@@ -298,15 +298,11 @@ public class Block extends AbstractStructuredStatement {
 
     @Override
     public void linearizeInto(List<StructuredStatement> out) {
-        if (isIndenting()) {
-            out.add(new BeginBlock(this));
-        }
+        out.add(new BeginBlock(this));
         for (Op04StructuredStatement structuredBlock : containedStatements) {
             structuredBlock.linearizeStatementsInto(out);
         }
-        if (isIndenting()) {
-            out.add(new EndBlock(this));
-        }
+        out.add(new EndBlock(this));
     }
 
     @Override

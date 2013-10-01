@@ -9,10 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssert;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredThrow;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
@@ -149,15 +146,36 @@ public class AssertRewriter {
         WildcardMatch wcm1 = new WildcardMatch();
 
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1,
-                new MatchSequence(
-                        new CollectMatch("ass1", new StructuredIf(
-                                new BooleanOperation(
-                                        new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))),
-                                        wcm1.getConditionalExpressionWildcard("condition"),
-                                        BoolOp.AND), null)),
-                        new BeginBlock(null),
-                        new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
-                        new EndBlock(null)
+                new MatchOneOf(
+                        new CollectMatch("ass1", new MatchSequence(
+                                new StructuredIf(
+                                        new BooleanOperation(
+                                                new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))),
+                                                wcm1.getConditionalExpressionWildcard("condition"),
+                                                BoolOp.AND), null),
+                                new BeginBlock(null),
+                                new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
+                                new EndBlock(null)
+                        )),
+                        new CollectMatch("ass2", new MatchSequence(
+                                new MatchOneOf(
+                                        new StructuredIf(
+                                                new BooleanOperation(
+                                                        new BooleanExpression(new LValueExpression(assertionStatic)),
+                                                        wcm1.getConditionalExpressionWildcard("condition2"),
+                                                        BoolOp.OR), null),
+                                        new StructuredIf(
+                                                new BooleanExpression(new LValueExpression(assertionStatic)), null)
+                                ),
+                                new BeginBlock(wcm1.getBlockWildcard("condBlock")),
+                                new MatchOneOf(
+                                        new StructuredReturn(null, null),
+                                        new StructuredReturn(wcm1.getExpressionWildCard("retval"), null),
+                                        new StructuredBreak(wcm1.getBlockIdentifier("breakblock"), false)
+                                ),
+                                new EndBlock(wcm1.getBlockWildcard("condBlock")),
+                                new CollectMatch("ass2throw", new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception2", TypeConstants.ASSERTION_ERROR)))
+                        ))
                 )
         );
 
@@ -183,9 +201,9 @@ public class AssertRewriter {
 
     private class AssertUseCollector extends AbstractMatchResultIterator {
 
-        private final WildcardMatch wcm;
+        private StructuredStatement ass2throw;
 
-        private StructuredIf ifStatement;
+        private final WildcardMatch wcm;
 
         private AssertUseCollector(WildcardMatch wcm) {
             this.wcm = wcm;
@@ -193,21 +211,32 @@ public class AssertRewriter {
 
         @Override
         public void clear() {
-            ifStatement = null;
+            ass2throw = null;
         }
 
         @Override
         public void collectStatement(String name, StructuredStatement statement) {
-            ifStatement = (StructuredIf) statement;
-        }
-
-        @Override
-        public void collectMatches(String name, WildcardMatch wcm) {
-            ConditionalExpression condition = wcm.getConditionalExpressionWildcard("condition").getMatch();
-            condition = new NotOperation(condition).simplify();
-            StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(condition));
-            ifStatement.getContainer().replaceContainedStatement(structuredAssert);
-
+            if (name.equals("ass1")) {
+                StructuredIf ifStatement = (StructuredIf) statement;
+                ConditionalExpression condition = wcm.getConditionalExpressionWildcard("condition").getMatch();
+                condition = new NotOperation(condition).simplify();
+                StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(condition));
+                ifStatement.getContainer().replaceContainedStatement(structuredAssert);
+            } else if (name.equals("ass2")) {
+                if (ass2throw == null) throw new IllegalStateException();
+                StructuredIf ifStatement = (StructuredIf) statement;
+                // If there's a condition, it's in condition 2, otherwise it's an assert literal.
+                WildcardMatch.ConditionalExpressionWildcard wcard = wcm.getConditionalExpressionWildcard("condition2");
+                ConditionalExpression conditionalExpression = wcard.getMatch();
+                if (conditionalExpression == null)
+                    conditionalExpression = new BooleanExpression(new Literal(TypedLiteral.getBoolean(0)));
+                // The if statement becomes an assert conditjon, the throw statement becomes the content of the if block.
+                StructuredStatement structuredAssert = new StructuredAssert(conditionalExpression);
+                ifStatement.getContainer().replaceContainedStatement(structuredAssert);
+                ass2throw.getContainer().replaceContainedStatement(ifStatement.getIfTaken().getStatement());
+            } else if (name.equals("ass2throw")) {
+                ass2throw = statement;
+            }
         }
     }
 
