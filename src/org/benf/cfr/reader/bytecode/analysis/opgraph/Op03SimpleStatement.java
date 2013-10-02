@@ -1763,6 +1763,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public static void rewriteBreakStatements(List<Op03SimpleStatement> statements) {
+        test:
         for (Op03SimpleStatement statement : statements) {
             Statement innerStatement = statement.getStatement();
             if (innerStatement instanceof JumpingStatement) {
@@ -1779,17 +1780,22 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         // Continue loopBlock, IF this statement is INSIDE that block.
                         if (BlockIdentifier.blockIsOneOf(targetStatement.thisComparisonBlock, statement.containedInBlocks)) {
                             jumpingStatement.setJumpType(JumpType.CONTINUE);
+                            continue test;
                         }
-                    } else if (targetStatement.getBlockStarted() != null &&
+                    }
+                    if (targetStatement.getBlockStarted() != null &&
                             targetStatement.getBlockStarted().getBlockType() == BlockType.UNCONDITIONALDOLOOP) {
                         if (BlockIdentifier.blockIsOneOf(targetStatement.getBlockStarted(), statement.containedInBlocks)) {
                             jumpingStatement.setJumpType(JumpType.CONTINUE);
+                            continue test;
                         }
-                    } else if (!targetStatement.immediatelyAfterBlocks.isEmpty()) {
+                    }
+                    if (!targetStatement.immediatelyAfterBlocks.isEmpty()) {
                         BlockIdentifier outermostContainedIn = BlockIdentifier.getOutermostContainedIn(targetStatement.immediatelyAfterBlocks, statement.containedInBlocks);
                         // Break to the outermost block.
                         if (outermostContainedIn != null) {
                             jumpingStatement.setJumpType(JumpType.BREAK);
+                            continue test;
                         }
                     }
                 }
