@@ -1,9 +1,6 @@
 package org.benf.cfr.reader.bytecode;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.iterrewriter.ArrayIterRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.iterrewriter.LoopIterRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
@@ -326,6 +323,9 @@ public class CodeAnalyser {
             debugDumper.print("After jumps.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
+
+        // Experimental - topologically sort op03 nodes according to basic blocks, if they are obviously wrong.
+//        op03SimpleParseNodes = Op03Blocks.topologicalSort(op03SimpleParseNodes);
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
