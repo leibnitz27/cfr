@@ -51,6 +51,7 @@ public class UnstructuredWhile extends AbstractUnStructuredStatement {
             default:
                 return null;
         }
+        if (blockIdentifiers.isEmpty()) return null;
         if (blockIdentifier != blockIdentifiers.get(blockIdentifiers.size() - 1)) {
             // We think we're ending a block, but we're inside something else?  This must have been a backjump
             // on an unterminated loop.  We need to convert this into a continue statement.

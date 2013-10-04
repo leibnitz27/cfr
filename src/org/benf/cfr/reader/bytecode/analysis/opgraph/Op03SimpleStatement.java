@@ -1354,6 +1354,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return result;
     }
 
+    public static void renumberInPlace(List<Op03SimpleStatement> statements) {
+        int newIndex = 0;
+        // Sort result by existing index.
+        Collections.sort(statements, new CompareByIndex());
+        for (Op03SimpleStatement statement : statements) {
+            statement.setIndex(new InstrIndex(newIndex++));
+        }
+    }
 
     /* Remove pointless jumps 
     *
@@ -3392,11 +3400,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (int x = 0; x < targets.size(); ++x) {
             Op03SimpleStatement target = targets.get(x);
             InstrIndex tindex = target.getIndex();
-            if (firstPrev.containsKey(tindex)) {
+            if (firstPrev.containsKey(tindex)) { // Get previous case statement if already exists, so we stack them.
                 target = firstPrev.get(tindex);
             }
             List<Expression> expression = ListFactory.newList();
+            // 0 is default, no values.
             if (x != 0) {
+                // Otherwise we know that our branches are in the same order as our targets.
                 List<Integer> vals = entries.get(x - 1).getValue();
                 for (int val : vals) {
                     expression.add(new Literal(TypedLiteral.getInt(val)));
@@ -3415,8 +3425,135 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             in.add(caseStatement);
             firstPrev.put(tindex, caseStatement);
         }
+
+        renumberInPlace(in);
+        /*
+         * Now, we have one final possible issue - what if a case block is reachable from a LATER block?
+         * i.e.
+         *
+         * case 1:
+         *   goto b
+         * case 2:
+         *   goto a
+         * ...
+         * ...
+         * a:
+         *
+         * return
+         * b:
+         * ...
+         * ...
+         * goto a
+         */
+        /*
+         * For each of the case statements - find which is reachable from the others WITHOUT going through
+         * the switch again.  Then we might have to move a whole block... (!).
+         *
+         * If this is the case, we then figure out which order the switch blocks depend on each other, and perform a code
+         * reordering walk through the case statements in new order (and re-write the order of the targets.
+         */
+        Set<Op03SimpleStatement> caseTargets = SetFactory.newSet(targets);
+        /*
+         * For the START of each block, find if it's reachable from the start of the others, without going through
+         * switch.
+         * // /Users/lee/Downloads/samples/android/support/v4/app/FragmentActivity.class
+         */
+        Map<Op03SimpleStatement, InstrIndex> lastStatementBefore = MapFactory.newMap();
+        for (Op03SimpleStatement target : targets) {
+            NodeReachable nodeReachable = new NodeReachable(caseTargets, target, swatch);
+            GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(target, nodeReachable);
+            gv.process();
+
+            List<Op03SimpleStatement> backReachable = Functional.filter(nodeReachable.reaches, new IsForwardJumpTo(target.getIndex()));
+            if (backReachable.isEmpty()) continue;
+
+            if (backReachable.size() != 1) {
+//                throw new IllegalStateException("Can't handle case statement with multiple reachable back edges to other cases (yet)");
+                continue;
+            }
+
+            Op03SimpleStatement backTarget = backReachable.get(0);
+            /*
+             * If this block is contiguous AND fully contains the found nodes, AND has no other sources, we can re-label
+             * all of the entries, and place it just before backTarget.
+             *
+             * Need to cache the last entry, as we might move multiple blocks.
+             *
+             */
+            if (target.getSources().size() != 1) {
+                continue;
+            }
+            if (!blockIsContiguous(in, target, nodeReachable.inBlock)) {
+                // Can't handle this.
+                continue;
+            }
+            // Yay.  Move (in order) all these statements to before backTarget.
+            // Well, don't really move them.  Relabel them.
+            InstrIndex prev = lastStatementBefore.get(backTarget);
+            if (prev == null) {
+                prev = backTarget.getIndex().justBefore();
+            }
+            int idx = in.indexOf(target) + nodeReachable.inBlock.size() - 1;
+            for (int i = 0, len = nodeReachable.inBlock.size(); i < len; ++i, --idx) {
+                in.get(idx).setIndex(prev);
+                prev = prev.justBefore();
+            }
+            lastStatementBefore.put(backTarget, prev);
+//            throw new IllegalStateException("Backjump fallthrough");
+        }
+
         swatch.replaceStatement(switchStatement.getSwitchStatement(blockIdentifier));
     }
+
+    private static boolean blockIsContiguous(List<Op03SimpleStatement> in, Op03SimpleStatement start, Set<Op03SimpleStatement> blockContent) {
+        int idx = in.indexOf(start);
+        int len = blockContent.size();
+        if (idx + blockContent.size() > in.size()) return false;
+        for (int found = 1; found < len; ++found, ++idx) {
+            Op03SimpleStatement next = in.get(idx);
+            if (!blockContent.contains(next)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /* This WILL go too far, as we have no way of knowing when the common code ends....
+     *
+     */
+    private static class NodeReachable implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
+
+        private final Set<Op03SimpleStatement> otherCases;
+        private final Op03SimpleStatement switchStatement;
+
+        private final Op03SimpleStatement start;
+        private final List<Op03SimpleStatement> reaches = ListFactory.newList();
+        private final Set<Op03SimpleStatement> inBlock = SetFactory.newSet();
+
+        private NodeReachable(Set<Op03SimpleStatement> otherCases, Op03SimpleStatement start, Op03SimpleStatement switchStatement) {
+            this.otherCases = otherCases;
+            this.switchStatement = switchStatement;
+            this.start = start;
+        }
+
+        @Override
+        public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+            if (arg1 == switchStatement) {
+                return;
+            }
+            if (arg1.getIndex().isBackJumpFrom(start)) {
+                // If it's a backjump from the switch statement as well, ignore.  Otherwise we have to process.
+                if (arg1.getIndex().isBackJumpFrom(switchStatement)) return;
+            }
+            if (arg1 != start && otherCases.contains(arg1)) {
+                reaches.add(arg1);
+                return;
+            }
+            inBlock.add(arg1);
+            arg2.enqueue(arg1.getTargets());
+        }
+    }
+
 
     private static boolean examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
         Set<Op03SimpleStatement> forwardTargets = SetFactory.newSet();
