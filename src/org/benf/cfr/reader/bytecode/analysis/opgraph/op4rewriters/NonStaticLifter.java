@@ -123,12 +123,16 @@ public class NonStaticLifter {
             if (blockStatements.size() < minSize) minSize = blockStatements.size();
         }
 
+        if (constructorCodeList.isEmpty()) return;
+
         /*
          * We have to be more involved than in a static constructor - each of the statements has to match.
          */
         int numConstructors = constructorCodeList.size();
+        final List<Op04StructuredStatement> constructorCode = constructorCodeList.get(0);
         for (int x = 0; x < minSize; ++x) {
-            StructuredStatement s1 = constructorCodeList.get(0).get(x).getStatement();
+            if (constructorCode.isEmpty()) return; // can't happen.
+            StructuredStatement s1 = constructorCode.get(x).getStatement();
             for (int y = 1; y < numConstructors; ++y) {
                 StructuredStatement sOther = constructorCodeList.get(y).get(x).getStatement();
                 if (!s1.equals(sOther)) return;
@@ -149,8 +153,8 @@ public class NonStaticLifter {
             if (!tryLift((FieldVariable) lValue, structuredAssignment.getRvalue(), fieldMap)) {
                 return;
             }
-            for (List<Op04StructuredStatement> constructorCode : constructorCodeList) {
-                constructorCode.get(x).nopOut();
+            for (List<Op04StructuredStatement> constructorCodeLst1 : constructorCodeList) {
+                constructorCodeLst1.get(x).nopOut();
             }
         }
 
