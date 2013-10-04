@@ -205,6 +205,8 @@ public class CFRState {
             "allowfailure", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> LENIENT = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "lenient", defaultFalseBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> DUMP_CLASS_PATH = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "dumpclasspath", defaultFalseBooleanDecoder);
 
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
@@ -347,7 +349,7 @@ public class CFRState {
         }
     }
 
-    private void processClassPathFile(File file, String path, Map<String, String> classToPathMap) {
+    private void processClassPathFile(File file, String path, Map<String, String> classToPathMap, boolean dump) {
         try {
 //            System.err.println("Processclasspathfile " + path);
             ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
@@ -358,7 +360,14 @@ public class CFRState {
                     if (!entry.isDirectory()) {
                         String name = entry.getName();
                         if (name.endsWith(".class")) {
+                            if (dump) {
+                                System.out.println("  " + name);
+                            }
                             classToPathMap.put(name, path);
+                        } else {
+                            if (dump) {
+                                System.out.println("  [ignoring] " + name);
+                            }
                         }
                     }
                 }
@@ -374,20 +383,34 @@ public class CFRState {
     private Map<String, String> getClassPathClasses() {
 //        System.err.println("getClassPathClasses");
         if (classToPathMap == null) {
+            boolean dump = getBooleanOpt(DUMP_CLASS_PATH);
+
             classToPathMap = MapFactory.newMap();
             String classPath = System.getProperty("java.class.path") + ":" + System.getProperty("sun.boot.class.path");
-//            System.err.println("ClassPath:" + classPath);
+            if (dump) {
+                System.out.println("ClassPath Diagnostic - searching :" + classPath);
+            }
             String[] classPaths = classPath.split(":");
             for (String path : classPaths) {
+                if (dump) {
+                    System.out.println(" " + path);
+                }
                 File f = new File(path);
                 if (f.exists()) {
                     if (f.isDirectory()) {
+                        if (dump) {
+                            System.out.println(" (Directory)");
+                        }
                         // Load all the jars in that directory.
                         for (File file : f.listFiles()) {
-                            processClassPathFile(file, file.getAbsolutePath(), classToPathMap);
+                            processClassPathFile(file, file.getAbsolutePath(), classToPathMap, dump);
                         }
                     } else {
-                        processClassPathFile(f, path, classToPathMap);
+                        processClassPathFile(f, path, classToPathMap, dump);
+                    }
+                } else {
+                    if (dump) {
+                        System.out.println(" (Can't access)");
                     }
                 }
             }
@@ -436,7 +459,7 @@ public class CFRState {
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
-                    DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT);
+                    DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT, DUMP_CLASS_PATH);
         }
 
         @Override
