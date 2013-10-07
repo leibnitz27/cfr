@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.util.getopt;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -39,7 +38,6 @@ public class CFRState {
     private final Map<String, String> opts;
     private ClassFileVersion classFileVersion = new ClassFileVersion(46, 0);
 
-
     /*
      * Initialisation info
      */
@@ -47,6 +45,9 @@ public class CFRState {
     private boolean unexpectedDirectory = false;
     private String pathPrefix = "";
     private String classRemovePrefix = "";
+
+    private transient LinkedHashSet<String> couldNotLoadClasses = new LinkedHashSet<String>();
+
 
     private class Configurator implements ConfigCallback {
         private final String path;
@@ -207,6 +208,8 @@ public class CFRState {
             "lenient", defaultFalseBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> DUMP_CLASS_PATH = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "dumpclasspath", defaultFalseBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean, CFRState> DECOMPILER_COMMENTS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
+            "comments", defaultTrueBooleanDecoder);
 
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
@@ -257,6 +260,10 @@ public class CFRState {
 
     public boolean rewriteLambdas() {
         return getBooleanOpt(REWRITE_LAMBDAS);
+    }
+
+    public Set<String> getCouldNotLoadClasses() {
+        return couldNotLoadClasses;
     }
 
     private byte[] getBytesFromFile(InputStream is, long length) throws IOException {
@@ -344,14 +351,13 @@ public class CFRState {
                 if (zipFile != null) zipFile.close();
             }
         } catch (IOException e) {
-            System.err.println("** Unable to find " + path);
+            couldNotLoadClasses.add(path);
             throw new CannotLoadClassException(path, e);
         }
     }
 
     private void processClassPathFile(File file, String path, Map<String, String> classToPathMap, boolean dump) {
         try {
-//            System.err.println("Processclasspathfile " + path);
             ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
             try {
                 Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
@@ -381,14 +387,13 @@ public class CFRState {
     private Map<String, String> classToPathMap;
 
     private Map<String, String> getClassPathClasses() {
-//        System.err.println("getClassPathClasses");
         if (classToPathMap == null) {
             boolean dump = getBooleanOpt(DUMP_CLASS_PATH);
 
             classToPathMap = MapFactory.newMap();
             String classPath = System.getProperty("java.class.path") + ":" + System.getProperty("sun.boot.class.path");
             if (dump) {
-                System.out.println("ClassPath Diagnostic - searching :" + classPath);
+                System.out.println("/* ClassPath Diagnostic - searching :" + classPath);
             }
             String[] classPaths = classPath.split(":");
             for (String path : classPaths) {
@@ -413,6 +418,9 @@ public class CFRState {
                         System.out.println(" (Can't access)");
                     }
                 }
+            }
+            if (dump) {
+                System.out.println(" */");
             }
         }
         return classToPathMap;
@@ -459,7 +467,7 @@ public class CFRState {
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
-                    DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT, DUMP_CLASS_PATH);
+                    DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT, DUMP_CLASS_PATH, DECOMPILER_COMMENTS);
         }
 
         @Override

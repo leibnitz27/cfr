@@ -53,7 +53,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
         ConstantPool cp = classFile.getConstantPool();
         if (!innerClass) {
-            d.print(getCFRHeader(cfrState));
+            dumpTopHeader(cfrState, d);
             d.print("package ").print(classFile.getThisClassConstpoolEntry().getPackageName()).endCodeln().newln();
             dumpImports(d, cp.getClassCache(), classFile);
         }

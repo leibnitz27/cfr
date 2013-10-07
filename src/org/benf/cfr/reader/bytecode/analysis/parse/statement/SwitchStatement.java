@@ -68,4 +68,8 @@ public class SwitchStatement extends AbstractStatement {
         return true;
     }
 
+    @Override
+    public boolean fallsToNext() {
+        return false;
+    }
 }

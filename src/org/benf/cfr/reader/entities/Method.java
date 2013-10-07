@@ -69,6 +69,7 @@ public class Method implements KnowsRawSize {
     private final MethodPrototype methodPrototype;
     private final ClassFile classFile;
     private boolean hidden;
+    private DecompilerComments comments;
 
     public Method(ByteData raw, ClassFile classFile, final ConstantPool cp) {
         this.cp = cp;
@@ -329,7 +330,22 @@ public class Method implements KnowsRawSize {
         return !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
     }
 
+    public void dumpComments(Dumper d) {
+        if (comments != null) {
+            comments.dump(d);
+        }
+    }
+
+    public void setComments(DecompilerComments comments) {
+        this.comments = comments;
+    }
+
     public void dump(Dumper d, boolean asClass) {
+        if (codeAttribute != null) {
+            // force analysis so we have comments.
+            codeAttribute.analyse();
+        }
+        dumpComments(d);
         dumpSignatureText(asClass, d);
         if (codeAttribute == null) {
             AttributeAnnotationDefault annotationDefault = getAttributeByName(AttributeAnnotationDefault.ATTRIBUTE_NAME);

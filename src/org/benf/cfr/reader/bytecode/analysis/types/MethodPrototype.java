@@ -168,7 +168,7 @@ public class MethodPrototype {
 
     public List<LocalVariable> computeParameters(Method.MethodConstructor constructorFlag, Map<Integer, Ident> slotToIdentMap) {
         if (parameterLValues != null) {
-            throw new IllegalStateException("Parameters already created");
+            return parameterLValues;
         }
 
         parameterLValues = ListFactory.newList();

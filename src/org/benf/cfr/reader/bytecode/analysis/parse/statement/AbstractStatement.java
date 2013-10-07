@@ -87,4 +87,8 @@ public abstract class AbstractStatement implements Statement {
         return d.toString();
     }
 
+    @Override
+    public boolean fallsToNext() {
+        return true;
+    }
 }

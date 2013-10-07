@@ -39,11 +39,22 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         return sb.toString();
     }
 
-    protected String getCFRHeader(CFRState cfrState) {
+    protected void dumpTopHeader(CFRState cfrState, Dumper d) {
         String header = MiscConstants.CFR_HEADER_BRA +
-                (cfrState.getBooleanOpt(CFRState.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") +
-                MiscConstants.CFR_HEADER_KET;
-        return header;
+                (cfrState.getBooleanOpt(CFRState.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
+        d.print("/*").newln();
+        d.print(" * ").print(header).newln();
+        if (cfrState.getBooleanOpt(CFRState.DECOMPILER_COMMENTS)) {
+            Set<String> couldNotLoad = cfrState.getCouldNotLoadClasses();
+            if (!couldNotLoad.isEmpty()) {
+                d.print(" * ").newln();
+                d.print(" * Could not load the following classes:").newln();
+                for (String classStr : couldNotLoad) {
+                    d.print(" *  ").print(classStr).newln();
+                }
+            }
+        }
+        d.print(" */").newln();
     }
 
     protected static String getFormalParametersText(ClassSignature signature) {

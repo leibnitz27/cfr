@@ -60,4 +60,6 @@ public interface Statement extends Dumpable, ComparableUnderEC {
     StructuredStatement getStructuredStatement();
 
     boolean equivalentUnder(Object o, EquivalenceConstraint constraint);
+
+    boolean fallsToNext();
 }

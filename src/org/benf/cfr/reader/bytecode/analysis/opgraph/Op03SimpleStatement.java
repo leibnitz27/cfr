@@ -279,7 +279,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return index;
     }
 
-    private void setIndex(InstrIndex index) {
+    public void setIndex(InstrIndex index) {
         this.index = index;
     }
 

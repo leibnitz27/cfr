@@ -58,5 +58,8 @@ public class JSRRetStatement extends AbstractStatement {
         return true;
     }
 
-
+    @Override
+    public boolean fallsToNext() {
+        return false;
+    }
 }

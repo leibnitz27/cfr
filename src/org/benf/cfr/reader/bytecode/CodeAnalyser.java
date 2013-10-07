@@ -1,12 +1,11 @@
 package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.iterrewriter.ArrayIterRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.iterrewriter.LoopIterRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredFakeDecompFailure;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
@@ -14,6 +13,8 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
+import org.benf.cfr.reader.util.DecompilerComment;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
@@ -69,7 +70,24 @@ public class CodeAnalyser {
     public Op04StructuredStatement getAnalysis() {
         if (analysed == null) {
             try {
-                analysed = getAnalysisInner();
+                boolean aggressive = false;
+                Pair<DecompilerComments, Op04StructuredStatement> res = null;
+                try {
+                    res = getAnalysisInner(false);
+                    if (!res.getSecond().isFullyStructured()) aggressive = true;
+                } catch (RuntimeException e) {
+                    aggressive = true;
+                }
+                // Fail, and fall back to aggressive topological sort?
+                if (aggressive) {
+                    res = getAnalysisInner(true);
+                    res.getFirst().addComment(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
+                }
+                DecompilerComments comments = res.getFirst();
+                if (cp.getCFRState().getBooleanOpt(CFRState.DECOMPILER_COMMENTS)) {
+                    method.setComments(comments);
+                }
+                analysed = res.getSecond();
             } catch (RuntimeException e) {
                 CFRState cfrState = cp.getCFRState();
                 if (cfrState.getBooleanOpt(CFRState.ALLOW_PARTIAL_FAILURE)) {
@@ -82,7 +100,7 @@ public class CodeAnalyser {
         return analysed;
     }
 
-    public Op04StructuredStatement getAnalysisInner() {
+    private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(boolean aggressive) {
         CFRState cfrState = cp.getCFRState();
         ByteData rawCode = originalCodeAttribute.getRawData();
         long codeLength = originalCodeAttribute.getCodeLength();
@@ -92,6 +110,7 @@ public class CodeAnalyser {
         OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(0);
         int idx = 1;
         int offset = 0;
+        DecompilerComments comments = new DecompilerComments();
         Dumper debugDumper = new StdOutDumper();
 
         // We insert a fake NOP right at the start, so that we always know that each operation has a valid
@@ -324,8 +343,13 @@ public class CodeAnalyser {
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
 
-        // Experimental - topologically sort op03 nodes according to basic blocks, if they are obviously wrong.
-//        op03SimpleParseNodes = Op03Blocks.topologicalSort(op03SimpleParseNodes);
+        //
+        // If we have been asked to, topologically sort graph.
+        // We won't do this unless there's been a problem with normal decompilation strategy.
+        //
+        if (aggressive) {
+            op03SimpleParseNodes = Op03Blocks.topologicalSort(op03SimpleParseNodes);
+        }
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
@@ -443,7 +467,8 @@ public class CodeAnalyser {
          * If we can't fully structure the code, we bow out here.
          */
         if (!block.isFullyStructured()) {
-            return block;
+            comments.addComment(DecompilerComment.UNABLE_TO_STRUCTURE);
+            return Pair.make(comments, block);
         }
         Op04StructuredStatement.tidyTypedBooleans(block);
         Op04StructuredStatement.prettifyBadLoops(block);
@@ -478,7 +503,7 @@ public class CodeAnalyser {
         // Tidy variable names
         Op04StructuredStatement.tidyVariableNames(method, block);
 
-        return block;
+        return Pair.make(comments, block);
     }
 
 

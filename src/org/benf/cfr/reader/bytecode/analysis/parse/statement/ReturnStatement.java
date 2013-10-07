@@ -12,4 +12,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class ReturnStatement extends AbstractStatement {
+    @Override
+    public boolean fallsToNext() {
+        return false;
+    }
 }

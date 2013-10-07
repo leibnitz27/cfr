@@ -126,4 +126,8 @@ public class GotoStatement extends JumpingStatement {
         return constraint.equivalent(jumpType, that.jumpType);
     }
 
+    @Override
+    public boolean fallsToNext() {
+        return false;
+    }
 }
