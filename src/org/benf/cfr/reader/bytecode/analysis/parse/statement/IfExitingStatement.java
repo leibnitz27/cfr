@@ -73,6 +73,10 @@ public class IfExitingStatement extends AbstractStatement {
         return condition;
     }
 
+    public Statement getExitStatement() {
+        return statement;
+    }
+
     @Override
     public StructuredStatement getStructuredStatement() {
         return new StructuredIf(condition, new Op04StructuredStatement(Block.getBlockFor(false, statement.getStructuredStatement())));

@@ -1,15 +1,19 @@
 package org.benf.cfr.reader.entities.exceptions;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.ComparableUnderEC;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
+import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.CommaHelp;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created:
@@ -57,6 +61,57 @@ public class ExceptionGroup {
 
     public BlockIdentifier getTryBlockIdentifier() {
         return tryBlockIdentifier;
+    }
+
+    public void removeSynchronisedHandlers(final Map<Integer, Integer> lutByOffset,
+                                           final Map<Integer, Integer> lutByIdx,
+                                           List<Op01WithProcessedDataAndByteJumps> instrs) {
+        Iterator<Entry> entryIterator = entries.iterator();
+        while (entryIterator.hasNext()) {
+            Entry entry = entryIterator.next();
+            if (isSynchronisedHandler(entry, lutByOffset, lutByIdx, instrs)) entryIterator.remove();
+        }
+    }
+
+    private boolean isSynchronisedHandler(Entry entry,
+                                          final Map<Integer, Integer> lutByOffset,
+                                          final Map<Integer, Integer> lutByIdx,
+                                          List<Op01WithProcessedDataAndByteJumps> instrs) {
+        /*
+         * TODO : Type should be 'any'.
+         */
+        ExceptionTableEntry tableEntry = entry.entry;
+
+        /*
+         * We expect - astore X, (aload, monitorexit)+, aload X, athrow
+         */
+        Integer offset = lutByOffset.get((int) tableEntry.getBytecodeIndexHandler());
+        if (offset == null) return false;
+
+        int idx = offset;
+        if (idx >= instrs.size()) return false;
+
+        Op01WithProcessedDataAndByteJumps start = instrs.get(idx);
+        Integer catchStore = start.getAStoreIdx();
+        if (catchStore == null) return false;
+        idx++;
+        int nUnlocks = 0;
+        do {
+            if (idx + 1 >= instrs.size()) return false;
+            Op01WithProcessedDataAndByteJumps load = instrs.get(idx);
+            Integer loadIdx = load.getALoadIdx();
+            if (loadIdx == null) break;
+            Op01WithProcessedDataAndByteJumps next = instrs.get(idx + 1);
+            if (next.getJVMInstr() != JVMInstr.MONITOREXIT) break;
+            nUnlocks++;
+            idx += 2;
+        } while (true);
+        if (nUnlocks == 0) return false;
+        Integer catchLoad = instrs.get(idx).getALoadIdx();
+        if (!catchStore.equals(catchLoad)) return false;
+        idx++;
+        if (instrs.get(idx).getJVMInstr() != JVMInstr.ATHROW) return false;
+        return true;
     }
 
     @Override

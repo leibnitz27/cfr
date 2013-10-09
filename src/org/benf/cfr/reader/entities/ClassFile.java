@@ -205,7 +205,7 @@ public class ClassFile implements Dumpable {
                 }
             }
             if (hasSignature) {
-                addComment("This class specifies class file version " + classFileVersion + " but uses Java 6 signatures.  Assuming Java 6.");
+                addComment("This class specifies class file version " + classFileVersion + " but uses Java 6 signatures.  Assumed Java 6.");
                 classFileVersion = ClassFileVersion.JAVA_6;
             }
         }
@@ -501,7 +501,16 @@ public class ClassFile implements Dumpable {
     }
 
     private void analysePassOuterFirst(CFRState state) {
-        CodeAnalyserWholeClass.wholeClassAnalysisPass2(this, state);
+
+        try {
+            CodeAnalyserWholeClass.wholeClassAnalysisPass2(this, state);
+        } catch (RuntimeException e) {
+            if (!state.getBooleanOpt(CFRState.ALLOW_WHOLE_FAILURE)) {
+                throw new RuntimeException("Whole class analysis failure - hide with " + CFRState.ALLOW_WHOLE_FAILURE, e);
+            }
+            addComment("Exception performing whole class analysis ignored - use " + CFRState.ALLOW_WHOLE_FAILURE.getName() + " to show");
+        }
+
         if (innerClassesByTypeInfo == null) return;
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
             ClassFile classFile = innerClassInfoClassFilePair.getSecond();
@@ -541,7 +550,14 @@ public class ClassFile implements Dumpable {
         }
         if (exceptionRecovered) throw new ConfusedCFRException("Failed to analyse file");
 
-        CodeAnalyserWholeClass.wholeClassAnalysisPass1(this, state);
+        try {
+            CodeAnalyserWholeClass.wholeClassAnalysisPass1(this, state);
+        } catch (RuntimeException e) {
+            if (!state.getBooleanOpt(CFRState.ALLOW_WHOLE_FAILURE)) {
+                throw new RuntimeException("Whole class analysis failure - hide with " + CFRState.ALLOW_WHOLE_FAILURE, e);
+            }
+            addComment("Exception performing whole class analysis ignored - use " + CFRState.ALLOW_WHOLE_FAILURE.getName() + " to show");
+        }
 
     }
 

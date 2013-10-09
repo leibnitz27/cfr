@@ -1770,6 +1770,92 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    private static void rewriteDoWhileTruePredAsWhile(Op03SimpleStatement end, List<Op03SimpleStatement> statements) {
+        WhileStatement whileStatement = (WhileStatement) end.getStatement();
+        if (null != whileStatement.getCondition()) return;
+
+        /*
+         * The first statement inside this loop needs to be a test which breaks out of the loop.
+         */
+        List<Op03SimpleStatement> endTargets = end.getTargets();
+        if (endTargets.size() != 1) return;
+
+        Op03SimpleStatement loopStart = endTargets.get(0);
+        Statement loopBodyStartStatement = loopStart.getStatement();
+        /*
+         * loopBodyStartStatement is NOT the do Statement, but is the first statement.
+         * We need to search its sources to find the DO statement, and verify that it's the
+         * correct one for the block.
+         */
+        BlockIdentifier whileBlockIdentifier = whileStatement.getBlockIdentifier();
+
+        Op03SimpleStatement doStart = null;
+        for (Op03SimpleStatement source : loopStart.getSources()) {
+            Statement statement = source.getStatement();
+            if (statement.getClass() == DoStatement.class) {
+                DoStatement doStatement = (DoStatement) statement;
+                if (doStatement.getBlockIdentifier() == whileBlockIdentifier) {
+                    doStart = source;
+                    break;
+                }
+            }
+        }
+        if (doStart == null) return;
+
+        /* Now - is the loopBodyStartStatement a conditional?
+         * If it's a direct jump, we can just target the while statement.
+         */
+        if (loopBodyStartStatement.getClass() == IfStatement.class) {
+            return; // Not handled yet.
+        } else if (loopBodyStartStatement.getClass() == IfExitingStatement.class) {
+            IfExitingStatement ifExitingStatement = (IfExitingStatement) loopBodyStartStatement;
+            Statement exitStatement = ifExitingStatement.getExitStatement();
+            ConditionalExpression conditionalExpression = ifExitingStatement.getCondition();
+            WhileStatement replacementWhile = new WhileStatement(conditionalExpression.getNegated(), whileBlockIdentifier);
+            GotoStatement endGoto = new GotoStatement();
+            endGoto.setJumpType(JumpType.CONTINUE);
+            end.replaceStatement(endGoto);
+            Op03SimpleStatement after = new Op03SimpleStatement(doStart.getBlockIdentifiers(), exitStatement, end.getIndex().justAfter());
+            statements.add(statements.indexOf(end) + 1, after);
+            doStart.addTarget(after);
+            after.addSource(doStart);
+            doStart.replaceStatement(replacementWhile);
+            /*
+             * Replace everything that pointed at loopStart with a pointer to doStart.
+             */
+            Op03SimpleStatement afterLoopStart = loopStart.getTargets().get(0);
+            doStart.replaceTarget(loopStart, afterLoopStart);
+            afterLoopStart.replaceSource(loopStart, doStart);
+            loopStart.removeSource(doStart);
+            loopStart.removeTarget(afterLoopStart);
+            for (Op03SimpleStatement otherSource : loopStart.getSources()) {
+                otherSource.replaceTarget(loopStart, doStart);
+                doStart.addSource(otherSource);
+            }
+            loopStart.getSources().clear();
+            loopStart.nopOut();
+            whileBlockIdentifier.setBlockType(BlockType.WHILELOOP);
+            return;
+        } else {
+            return;
+        }
+    }
+
+    public static void rewriteDoWhileTruePredAsWhile(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> doWhileEnds = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return (in.containedStatement instanceof WhileStatement) && ((WhileStatement) in.containedStatement).getBlockIdentifier().getBlockType() == BlockType.UNCONDITIONALDOLOOP;
+            }
+        });
+
+        if (doWhileEnds.isEmpty()) return;
+
+        for (Op03SimpleStatement whileEnd : doWhileEnds) {
+            rewriteDoWhileTruePredAsWhile(whileEnd, statements);
+        }
+    }
+
     public static void rewriteBreakStatements(List<Op03SimpleStatement> statements) {
         test:
         for (Op03SimpleStatement statement : statements) {
@@ -2651,7 +2737,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         Op03SimpleStatement realEnd = statements.get(idxEnd);
         Set<BlockIdentifier> blocksAtEnd = realEnd.containedInBlocks;
-        if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) return takenAction;
+        if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) {
+            return takenAction;
+        }
 
         // It's an if statement / simple if/else, for sure.  Can we replace it with a ternary?
         DiscoveredTernary ternary = testForTernary(ifBranch, elseBranch, leaveIfBranchHolder);

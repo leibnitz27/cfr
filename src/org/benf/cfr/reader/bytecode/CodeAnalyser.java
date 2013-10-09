@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.iterrewriter.ArrayIterRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -70,20 +71,27 @@ public class CodeAnalyser {
     public Op04StructuredStatement getAnalysis() {
         if (analysed == null) {
             try {
-                boolean aggressive = false;
+                boolean aggressive = cp.getCFRState().getBooleanOpt(CFRState.FORCE_TOPSORT);
+                boolean fellToAggressive = false;
                 Pair<DecompilerComments, Op04StructuredStatement> res = null;
-                try {
-                    res = getAnalysisInner(false);
-                    if (!res.getSecond().isFullyStructured()) aggressive = true;
-                } catch (RuntimeException e) {
-                    aggressive = true;
+                if (!aggressive) {
+                    try {
+                        res = getAnalysisInner(false);
+                        if (!res.getSecond().isFullyStructured()) {
+                            aggressive = true;
+                            fellToAggressive = true;
+                        }
+                    } catch (RuntimeException e) {
+                        aggressive = true;
+                        fellToAggressive = true;
+                    }
                 }
                 // Fail, and fall back to aggressive topological sort?
                 if (aggressive) {
                     res = getAnalysisInner(true);
-                    res.getFirst().addComment(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
                 }
                 DecompilerComments comments = res.getFirst();
+                if (fellToAggressive) comments.addComment(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
                 if (cp.getCFRState().getBooleanOpt(CFRState.DECOMPILER_COMMENTS)) {
                     method.setComments(comments);
                 }
@@ -178,6 +186,9 @@ public class CodeAnalyser {
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
         //
+        if (aggressive) {
+            exceptions.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
+        }
 
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength);
         lutByOffset = null; // No longer valid.
@@ -343,11 +354,21 @@ public class CodeAnalyser {
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
 
+        // If statements which end up jumping to the final return can really confuse loop detection, so we want
+        // to remove them.
+        // There is a downside, as this will end up turning a pleasant while (fred) { ... } return
+        // into do { if (!fred) return;  ... } while (true).
+        //
+        // So, we have a pass to eliminate this at the Op04 stage.
+        //
+        // Before loop detection / sorting, we have a pass to make sure they're not backjumps.
+
         //
         // If we have been asked to, topologically sort graph.
         // We won't do this unless there's been a problem with normal decompilation strategy.
         //
         if (aggressive) {
+            Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(op03SimpleParseNodes);
         }
 
@@ -355,12 +376,8 @@ public class CodeAnalyser {
         logger.info("identifyLoops1");
         Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
 
-        // If statements which end up jumping to the final return can really confuse loop detection, so we want
-        // to remove them.
-        // There is a downside, as this will end up turning a pleasnat while (fred) { ... } return
-        // into do { if (!fred) return;  ... } while (true).
-        //
-        // So, we have a pass to eliminate this at the Op04 stage.
+        // Replacing returning ifs early (above, aggressively) interferes with some nice output.
+        // Normally we'd do it AFTER loops.
         Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
 
         if (cfrState.getShowOps() == SHOW_L3_LOOPS1) {
@@ -382,6 +399,7 @@ public class CodeAnalyser {
         logger.info("rewriteBreakStatements");
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
         logger.info("rewriteWhilesAsFors");
+        Op03SimpleStatement.rewriteDoWhileTruePredAsWhile(op03SimpleParseNodes);
         Op03SimpleStatement.rewriteWhilesAsFors(op03SimpleParseNodes);
 
         // TODO : I think this is now redundant.

@@ -77,4 +77,41 @@ public class Op01WithProcessedDataAndByteJumps {
     public String toString() {
         return "op1 : " + instruction + ", length " + getInstructionLength();
     }
+
+    public Integer getAStoreIdx() {
+        switch (instruction) {
+            case ASTORE:
+                return (int) data[0];
+            case ASTORE_WIDE:
+                throw new UnsupportedOperationException();
+            case ASTORE_0:
+                return 0;
+            case ASTORE_1:
+                return 1;
+            case ASTORE_2:
+                return 2;
+            case ASTORE_3:
+                return 3;
+        }
+        return null;
+    }
+
+    public Integer getALoadIdx() {
+        switch (instruction) {
+            case ALOAD:
+                return (int) data[0];
+            case ALOAD_WIDE:
+                throw new UnsupportedOperationException();
+            case ALOAD_0:
+                return 0;
+            case ALOAD_1:
+                return 1;
+            case ALOAD_2:
+                return 2;
+            case ALOAD_3:
+                return 3;
+        }
+        return null;
+    }
+
 }

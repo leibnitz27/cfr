@@ -329,4 +329,20 @@ public class ExceptionAggregator {
     public List<ExceptionGroup> getExceptionsGroups() {
         return exceptionsByRange;
     }
+
+    /*
+     * Remove try statements which simply jump to monitorexit+ , throw statements.
+     */
+    public void removeSynchronisedHandlers(final Map<Integer, Integer> lutByOffset,
+                                           final Map<Integer, Integer> lutByIdx,
+                                           List<Op01WithProcessedDataAndByteJumps> instrs) {
+        Iterator<ExceptionGroup> groupIterator = exceptionsByRange.iterator();
+        while (groupIterator.hasNext()) {
+            ExceptionGroup group = groupIterator.next();
+            group.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
+            if (group.getEntries().isEmpty()) {
+                groupIterator.remove();
+            }
+        }
+    }
 }
