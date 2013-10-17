@@ -88,6 +88,8 @@ public class CodeAnalyser {
                         if (aggressive == Troolean.NEITHER) {
                             aggressive = Troolean.TRUE;
                             fellToAggressive = true;
+                        } else {
+                            throw e;
                         }
                     }
                 }
