@@ -408,7 +408,7 @@ public class CFRState {
             if (dump) {
                 System.out.println("/* ClassPath Diagnostic - searching :" + classPath);
             }
-            String[] classPaths = classPath.split(File.separator);
+            String[] classPaths = classPath.split("" + File.pathSeparatorChar);
             for (String path : classPaths) {
                 if (dump) {
                     System.out.println(" " + path);
