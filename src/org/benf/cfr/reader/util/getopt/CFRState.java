@@ -5,10 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.util.CannotLoadClassException;
-import org.benf.cfr.reader.util.ClassFileVersion;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.configuration.ConfigCallback;
@@ -131,6 +128,13 @@ public class CFRState {
                 }
             }
     );
+    private static final BinaryFunction<String, CFRState, Troolean> defaultNeitherTrooleanDecoder = new BinaryFunction<String, CFRState, Troolean>() {
+        @Override
+        public Troolean invoke(String arg, CFRState ignore) {
+            if (arg == null) return Troolean.NEITHER;
+            return Troolean.get(Boolean.parseBoolean(arg));
+        }
+    };
     private static final BinaryFunction<String, CFRState, Boolean> defaultTrueBooleanDecoder = new BinaryFunction<String, CFRState, Boolean>() {
         @Override
         public Boolean invoke(String arg, CFRState ignore) {
@@ -138,6 +142,7 @@ public class CFRState {
             return Boolean.parseBoolean(arg);
         }
     };
+
     private static final BinaryFunction<String, CFRState, Boolean> defaultFalseBooleanDecoder = new BinaryFunction<String, CFRState, Boolean>() {
         @Override
         public Boolean invoke(String arg, CFRState ignore) {
@@ -212,8 +217,8 @@ public class CFRState {
             "dumpclasspath", defaultFalseBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean, CFRState> DECOMPILER_COMMENTS = new PermittedOptionProvider.Argument<Boolean, CFRState>(
             "comments", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, CFRState> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Boolean, CFRState>(
-            "forcetopsort", defaultFalseBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Troolean, CFRState> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Troolean, CFRState>(
+            "forcetopsort", defaultNeitherTrooleanDecoder);
 
 
     public CFRState(String fileName, String methodName, Map<String, String> opts) {
@@ -235,6 +240,10 @@ public class CFRState {
     }
 
     public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, CFRState> argument) {
+        return argument.getFn().invoke(opts.get(argument.getName()), this);
+    }
+
+    public Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, CFRState> argument) {
         return argument.getFn().invoke(opts.get(argument.getName()), this);
     }
 
@@ -399,7 +408,7 @@ public class CFRState {
             if (dump) {
                 System.out.println("/* ClassPath Diagnostic - searching :" + classPath);
             }
-            String[] classPaths = classPath.split(":");
+            String[] classPaths = classPath.split(File.separator);
             for (String path : classPaths) {
                 if (dump) {
                     System.out.println(" " + path);

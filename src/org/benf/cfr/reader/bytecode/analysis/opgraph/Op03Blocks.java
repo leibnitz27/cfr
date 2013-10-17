@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.ListFactory;
@@ -72,6 +73,29 @@ public class Op03Blocks {
                 for (Block3 tgt : postBlocks) {
                     tgt.addSources(depends);
                     depends.add(tgt);
+                }
+            }
+        }
+
+        /*
+         * If a block has no targets, but multiple sources, make sure it appears AFTER its last source
+         * in the sorted blocks.
+         */
+        for (int idx = blocks.size() - 1; idx >= 0; idx--) {
+            Block3 block = blocks.get(idx);
+            if (block.targets.isEmpty()) {
+                boolean move = false;
+                Block3 lastSource = block;
+                for (Block3 source : block.sources) {
+                    if (lastSource.compareTo(source) < 0) {
+                        move = true;
+                        lastSource = source;
+                    }
+                }
+                if (move) {
+                    block.startIndex = lastSource.startIndex.justAfter();
+                    blocks.add(blocks.indexOf(lastSource) + 1, block);
+                    blocks.remove(idx);
                 }
             }
         }
@@ -165,6 +189,27 @@ public class Op03Blocks {
         int newIndex = 0;
         for (Op03SimpleStatement statement : outStatements) {
             statement.setIndex(new InstrIndex(newIndex++));
+        }
+
+        /*
+         * Patch up conditionals.
+         */
+        for (int x = 0, len = outStatements.size() - 1; x < len; ++x) {
+            Op03SimpleStatement stm = outStatements.get(x);
+            if (stm.getStatement().getClass() == IfStatement.class) {
+                List<Op03SimpleStatement> targets = stm.getTargets();
+                Op03SimpleStatement next = outStatements.get(x + 1);
+                if (targets.get(0) == next) {
+                    // Nothing.
+                } else if (targets.get(1) == next) {
+                    Op03SimpleStatement a = targets.get(0);
+                    Op03SimpleStatement b = targets.get(1);
+                    targets.set(0, b);
+                    targets.set(1, a);
+                } else {
+                    throw new IllegalStateException("Failed topsort - if lost targets");
+                }
+            }
         }
 
         return Op03SimpleStatement.removeUnreachableCode(outStatements);

@@ -5,7 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
 
@@ -585,7 +584,7 @@ public class InferredJavaType {
         InferredJavaType litType = null;
         InferredJavaType betterType = null;
         Expression litExp = null;
-        switch (Troolean.get(
+        switch (BoolPair.get(
                 a.getSource() == InferredJavaType.Source.LITERAL,
                 b.getSource() == InferredJavaType.Source.LITERAL)) {
             case NEITHER:

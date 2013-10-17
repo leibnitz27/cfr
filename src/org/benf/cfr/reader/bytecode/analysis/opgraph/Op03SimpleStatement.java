@@ -1363,6 +1363,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    public static void reindexInPlace(List<Op03SimpleStatement> statements) {
+        int newIndex = 0;
+        for (Op03SimpleStatement statement : statements) {
+            statement.setIndex(new InstrIndex(newIndex++));
+        }
+    }
+
+
     /* Remove pointless jumps 
     *
     * Normalise code by removing jumps which have been introduced to confuse.
@@ -2430,8 +2438,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Object value = typedLiteral.getValue();
             if (!(value instanceof Integer)) return Troolean.NEITHER;
             int iValue = (Integer) value;
-            if (iValue == 1) return Troolean.FIRST;
-            if (iValue == 0) return Troolean.SECOND;
+            if (iValue == 1) return Troolean.TRUE;
+            if (iValue == 0) return Troolean.FALSE;
             return Troolean.NEITHER;
         }
 
@@ -2439,8 +2447,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (!(e1.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN &&
                     e2.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN)) return false;
 
-            if (isOneOrZeroLiteral(e1) != Troolean.FIRST) return false;
-            if (isOneOrZeroLiteral(e2) != Troolean.SECOND) return false;
+            if (isOneOrZeroLiteral(e1) != Troolean.TRUE) return false;
+            if (isOneOrZeroLiteral(e2) != Troolean.FALSE) return false;
             return true;
         }
     }
@@ -2517,6 +2525,173 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return false;
     }
 
+    /*
+     * Spot a rather perverse structure that only happens with DEX2Jar, as far as I can tell.
+     *
+     * if (x) goto b
+     * (a:)
+     * ....[1] [ LINEAR STATEMENTS (* or already discounted) ]
+     * goto c
+     * b:
+     * ....[2] [ LINEAR STATEMENTS (*) ]
+     * goto d
+     * c:
+     * ....[3]
+     *
+     * Can be replaced with
+     *
+     * if (!x) goto a
+     * b:
+     * ...[2]
+     * goto d
+     * a:
+     * ....[1]
+     * c:
+     * ....[3]
+     *
+     * Which, in turn, may allow us to make some more interesting choices later.
+     */
+    private static boolean considerAsDexIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps) {
+        Statement innerStatement = ifStatement.getStatement();
+        if (innerStatement.getClass() != IfStatement.class) {
+            return false;
+        }
+        IfStatement innerIfStatement = (IfStatement) innerStatement;
+
+        int startIdx = statements.indexOf(ifStatement);
+        int bidx = statements.indexOf(ifStatement.getTargets().get(1));
+        if (bidx <= startIdx) return false; // shouldn't happen.
+        InstrIndex startIndex = ifStatement.getIndex();
+        InstrIndex bIndex = ifStatement.getTargets().get(1).getIndex();
+        if (startIndex.compareTo(bIndex) >= 0) {
+            return false; // likewise.  Indicates we need a renumber.
+        }
+
+        int aidx = startIdx + 1;
+
+        int cidx = findOverIdx(bidx, statements);
+        if (cidx == -1) return false;
+
+        int didx = findOverIdx(cidx, statements);
+        if (didx == -1) return false;
+
+        if (didx <= cidx) return false;
+
+        Set<Op03SimpleStatement> permittedSources = SetFactory.newSet(ifStatement);
+        if (!isRangeOnlyReachable(aidx, bidx, cidx, statements, permittedSources)) return false;
+        if (!isRangeOnlyReachable(bidx, cidx, didx, statements, permittedSources)) return false;
+
+        /*
+         * Looks like a legitimate reordering - rewrite statements.  Pick up the entire block, and
+         * move as per above.
+         */
+        List<Op03SimpleStatement> alist = statements.subList(aidx, bidx);
+        List<Op03SimpleStatement> blist = statements.subList(bidx, cidx);
+
+        /*
+         * Nop out the last entry of alist.
+         */
+        alist.get(alist.size() - 1).nopOut();
+
+        List<Op03SimpleStatement> ifTargets = ifStatement.getTargets();
+        // Swap targets.
+        Op03SimpleStatement tgtA = ifTargets.get(0);
+        Op03SimpleStatement tgtB = ifTargets.get(1);
+        ifTargets.set(0, tgtB);
+        ifTargets.set(1, tgtA);
+        innerIfStatement.setCondition(innerIfStatement.getCondition().getNegated().simplify());
+
+        List<Op03SimpleStatement> acopy = ListFactory.newList(alist);
+        blist.addAll(acopy);
+        alist = statements.subList(aidx, bidx);
+        alist.clear();
+
+        reindexInPlace(statements);
+
+        return true;
+    }
+
+    private static int findOverIdx(int startNext, List<Op03SimpleStatement> statements) {
+        /*
+         * Find a forward goto before b.
+         */
+        Op03SimpleStatement next = statements.get(startNext);
+
+        Op03SimpleStatement cStatement = null;
+        for (int gSearch = startNext - 1; gSearch >= 0; gSearch--) {
+            Op03SimpleStatement stm = statements.get(gSearch);
+            Statement s = stm.getStatement();
+            if (s instanceof Nop) continue;
+            if (s.getClass() == GotoStatement.class) {
+                Op03SimpleStatement tgtC = stm.getTargets().get(0);
+                if (tgtC.getIndex().isBackJumpFrom(next)) return -1;
+                cStatement = tgtC;
+                break;
+            }
+            return -1;
+        }
+        if (cStatement == null) return -1;
+        int cidx = statements.indexOf(cStatement);
+        return cidx;
+    }
+
+    /*
+     * Is this structured as
+     *
+     * ..
+     * ..
+     * ..
+     * goto X
+     *
+     * Where the range is self-contained.
+     */
+    private static boolean isRangeOnlyReachable(int startIdx, int endIdx, int tgtIdx, List<Op03SimpleStatement> statements, Set<Op03SimpleStatement> permittedSources) {
+
+        Set<Op03SimpleStatement> reachable = SetFactory.newSet();
+        final Op03SimpleStatement startStatement = statements.get(startIdx);
+        final Op03SimpleStatement endStatement = statements.get(endIdx);
+        final Op03SimpleStatement tgtStatement = statements.get(tgtIdx);
+        InstrIndex startIndex = startStatement.getIndex();
+        InstrIndex endIndex = endStatement.getIndex();
+        InstrIndex finalTgtIndex = tgtStatement.getIndex();
+
+        reachable.add(statements.get(startIdx));
+        boolean foundEnd = false;
+        for (int idx = startIdx; idx < endIdx; ++idx) {
+            Op03SimpleStatement stm = statements.get(idx);
+            if (!reachable.contains(stm)) {
+                return false;
+            }
+            // We don't expect this statement to have sources before startIndex or after bIndex.
+            // We don't expect any raw gotos ( or targets ) after bIndex / beforeStartIndex. (break / continue are ok).
+            for (Op03SimpleStatement source : stm.getSources()) {
+                InstrIndex sourceIndex = source.getIndex();
+                if (sourceIndex.compareTo(startIndex) < 0) {
+                    if (!permittedSources.contains(source)) {
+                        return false;
+                    }
+                }
+                if (sourceIndex.compareTo(endIndex) >= 0) {
+                    return false;
+                }
+            }
+            for (Op03SimpleStatement target : stm.getTargets()) {
+                InstrIndex tgtIndex = target.getIndex();
+                if (tgtIndex.compareTo(startIndex) < 0) {
+                    return false;
+                }
+                if (tgtIndex.compareTo(endIndex) >= 0) {
+                    if (tgtIndex == finalTgtIndex) {
+                        foundEnd = true;
+                    } else {
+                        return false;
+                    }
+                }
+                reachable.add(target);
+            }
+        }
+        return foundEnd;
+    }
 
     /*
     * This is an if statement where both targets are forward.
@@ -2827,7 +3002,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
             for (Op03SimpleStatement forwardIf : forwardIfs) {
                 if (considerAsTrivialIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
-                        considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps)) {
+                        considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
+                        considerAsDexIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps)) {
                     success = true;
                 }
             }

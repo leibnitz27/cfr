@@ -41,6 +41,9 @@ public class UnstructuredContinue extends AbstractStructuredContinue {
 
         boolean localBreak = false;
         BlockIdentifier outermostBreakable = BlockIdentifier.getInnermostBreakable(blockIdentifiers);
+        if (!blockIdentifiers.contains(continueTgt)) {
+            return null;
+        }
         if (outermostBreakable == continueTgt) {
             localBreak = true;
         } else {
@@ -51,6 +54,11 @@ public class UnstructuredContinue extends AbstractStructuredContinue {
 
     @Override
     public boolean isProperlyStructured() {
+        return false;
+    }
+
+    @Override
+    public boolean isRecursivelyStructured() {
         return false;
     }
 

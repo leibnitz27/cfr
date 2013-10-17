@@ -10,16 +10,11 @@ package org.benf.cfr.reader.util;
  */
 public enum Troolean {
     NEITHER,
-    FIRST,
-    SECOND,
-    BOTH;
+    TRUE,
+    FALSE;
 
-    public static Troolean get(boolean a, boolean b) {
-        if (a) {
-            if (b) return BOTH;
-            return FIRST;
-        }
-        if (b) return SECOND;
-        return NEITHER;
+    public static Troolean get(Boolean a) {
+        if (a == null) return NEITHER;
+        return a ? TRUE : FALSE;
     }
 }

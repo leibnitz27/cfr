@@ -17,6 +17,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
 import org.benf.cfr.reader.util.getopt.CFRState;
@@ -71,23 +72,27 @@ public class CodeAnalyser {
     public Op04StructuredStatement getAnalysis() {
         if (analysed == null) {
             try {
-                boolean aggressive = cp.getCFRState().getBooleanOpt(CFRState.FORCE_TOPSORT);
+                Troolean aggressive = cp.getCFRState().getTrooleanOpt(CFRState.FORCE_TOPSORT);
                 boolean fellToAggressive = false;
                 Pair<DecompilerComments, Op04StructuredStatement> res = null;
-                if (!aggressive) {
+                if (aggressive == Troolean.FALSE || aggressive == Troolean.NEITHER) {
                     try {
                         res = getAnalysisInner(false);
                         if (!res.getSecond().isFullyStructured()) {
-                            aggressive = true;
-                            fellToAggressive = true;
+                            if (aggressive == Troolean.NEITHER) {
+                                aggressive = Troolean.TRUE;
+                                fellToAggressive = true;
+                            }
                         }
                     } catch (RuntimeException e) {
-                        aggressive = true;
-                        fellToAggressive = true;
+                        if (aggressive == Troolean.NEITHER) {
+                            aggressive = Troolean.TRUE;
+                            fellToAggressive = true;
+                        }
                     }
                 }
                 // Fail, and fall back to aggressive topological sort?
-                if (aggressive) {
+                if (aggressive == Troolean.TRUE) {
                     res = getAnalysisInner(true);
                 }
                 DecompilerComments comments = res.getFirst();
@@ -315,6 +320,12 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
+        if (aggressive) {
+            Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
+            op03SimpleParseNodes = Op03Blocks.topologicalSort(op03SimpleParseNodes);
+            Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
+        }
+
         // At this point, make a first stab at identifying final variables, (or stack values which can't be
         // removed and appear as pseudo-variables).
         Op03SimpleStatement.determineFinal(op03SimpleParseNodes, variableFactory);
@@ -367,10 +378,6 @@ public class CodeAnalyser {
         // If we have been asked to, topologically sort graph.
         // We won't do this unless there's been a problem with normal decompilation strategy.
         //
-        if (aggressive) {
-            Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
-            op03SimpleParseNodes = Op03Blocks.topologicalSort(op03SimpleParseNodes);
-        }
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
