@@ -18,6 +18,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -54,6 +55,13 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
             }
         }
         this.values = values;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        if (inferredJavaTypeOfSwitch != null) collector.collect(inferredJavaTypeOfSwitch.getJavaTypeInstance());
+        collector.collectFrom(values);
+        super.collectTypeUsages(collector);
     }
 
     private static StaticVariable getEnumStatic(Expression expression) {

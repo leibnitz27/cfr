@@ -112,14 +112,11 @@ public class Field implements KnowsRawSize {
     }
 
     public void dump(Dumper d, String name, ConstantPool cp) {
-        StringBuilder sb = new StringBuilder();
         String prefix = CollectionUtils.join(accessFlags, " ");
         if (!prefix.isEmpty()) {
-            sb.append(prefix);
-            sb.append(' ');
+            d.print(prefix).print(' ');
         }
         JavaTypeInstance type = getJavaTypeInstance(cp);
-        sb.append(type.toString()).append(' ').append(name);
-        d.print(sb.toString());
+        d.dump(type).print(' ').print(name);
     }
 }

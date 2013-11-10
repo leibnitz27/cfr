@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -40,6 +41,11 @@ public class UnstructuredWhile extends AbstractUnStructuredStatement {
             dumper.dump(condition);
         }
         return dumper.print(")\n");
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collectFrom(condition);
     }
 
     @Override

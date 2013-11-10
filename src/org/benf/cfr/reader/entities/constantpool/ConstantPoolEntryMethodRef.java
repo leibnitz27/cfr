@@ -83,7 +83,7 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
 
             try {
                 JavaTypeInstance loadType = classType.getArrayStrippedType().getDeGenerifiedType();
-                ClassFile classFile = cp.getCFRState().getClassFile(loadType);
+                ClassFile classFile = cp.getDCCommonState().getClassFile(loadType);
                 MethodPrototype replacement = classFile.getMethodByPrototype(basePrototype).getMethodPrototype();
 
                 overloadMethodSet = classFile.getOverloadMethodSet(replacement);

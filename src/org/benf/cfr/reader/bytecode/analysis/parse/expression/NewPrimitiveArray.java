@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -40,6 +41,12 @@ public class NewPrimitiveArray extends AbstractNewArray {
         super(inferredJavaType);
         this.type = type;
         this.size = size;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        size.collectTypeUsages(collector);
+        collector.collect(type);
     }
 
     @Override

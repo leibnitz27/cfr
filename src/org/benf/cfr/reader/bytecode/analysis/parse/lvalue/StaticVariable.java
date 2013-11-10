@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.*;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -45,6 +46,12 @@ public class StaticVariable extends AbstractLValue {
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(clazz);
+        super.collectTypeUsages(collector);
+    }
+
+    @Override
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");
     }
@@ -67,7 +74,7 @@ public class StaticVariable extends AbstractLValue {
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print(clazz.toString() + "." + varName);
+        return d.dump(clazz).print(".").print(varName);
     }
 
     @Override

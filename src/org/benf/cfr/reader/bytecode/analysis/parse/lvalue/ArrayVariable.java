@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -30,6 +31,11 @@ public class ArrayVariable extends AbstractLValue {
     @Override
     public LValue deepClone(CloneHelper cloneHelper) {
         return new ArrayVariable((ArrayIndex) cloneHelper.replaceOrClone(arrayIndex));
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        arrayIndex.collectTypeUsages(collector);
     }
 
     @Override

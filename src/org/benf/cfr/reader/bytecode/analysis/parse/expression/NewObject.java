@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -27,6 +28,11 @@ public class NewObject extends AbstractExpression {
         // TODO : we have more information than this...
         super(new InferredJavaType(((ConstantPoolEntryClass) type).getTypeInstance(), InferredJavaType.Source.EXPRESSION));
         this.type = (ConstantPoolEntryClass) type;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(getTypeInstance());
     }
 
     @Override

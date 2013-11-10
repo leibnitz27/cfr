@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -52,6 +53,12 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(allocatedType);
+        collector.collectFrom(values);
+    }
+
+    @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
         for (int i = 0; i < values.size(); ++i) {
             values.set(i, boxingRewriter.sugarNonParameterBoxing(values.get(i), allocatedType));
@@ -68,7 +75,7 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     @Override
     public Dumper dump(Dumper d) {
         if (!isCompletelyAnonymous) {
-            d.print("new ").print(allocatedType.toString());
+            d.print("new ").dump(allocatedType);
             for (int x = 0; x < numDims; ++x) d.print("[]");
         }
         d.print("{");

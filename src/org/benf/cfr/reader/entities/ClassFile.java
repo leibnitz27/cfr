@@ -4,10 +4,7 @@ import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnoynmousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
-import org.benf.cfr.reader.entities.attributes.Attribute;
-import org.benf.cfr.reader.entities.attributes.AttributeBootstrapMethods;
-import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
-import org.benf.cfr.reader.entities.attributes.AttributeSignature;
+import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.classfilehelpers.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
@@ -15,11 +12,12 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
+import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
-import org.benf.cfr.reader.util.configuration.ConfigCallback;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -32,7 +30,7 @@ import java.util.*;
  * Time: 18:25
  * To change this template use File | Settings | File Templates.
  */
-public class ClassFile implements Dumpable {
+public class ClassFile implements Dumpable, TypeUsageCollectable {
     // Constants
     private final long OFFSET_OF_MAGIC = 0;
     private final long OFFSET_OF_MINOR = 4;
@@ -75,19 +73,25 @@ public class ClassFile implements Dumpable {
      */
     private boolean hiddenInnerClass;
 
+    private BindingSuperContainer boundSuperClasses;
+
     private ClassFileDumper dumpHelper;
+
+    private final String usePath;
 
     /*
      * Be sure to call loadInnerClasses directly after.
      */
-    public ClassFile(final ByteData data, CFRState cfrState, ConfigCallback configCallback) {
+    public ClassFile(final ByteData data, final String usePath, final DCCommonState dcCommonState) {
+        this.usePath = usePath;
+
         int magic = data.getS4At(OFFSET_OF_MAGIC);
         if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe");
 
         minorVer = data.getS2At(OFFSET_OF_MINOR);
         majorVer = data.getS2At(OFFSET_OF_MAJOR);
         short constantPoolCount = data.getS2At(OFFSET_OF_CONSTANT_POOL_COUNT);
-        this.constantPool = new ConstantPool(this, cfrState, data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
+        this.constantPool = new ConstantPool(this, dcCommonState, data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
         final long OFFSET_OF_ACCESS_FLAGS = OFFSET_OF_CONSTANT_POOL + constantPool.getRawByteLength();
         final long OFFSET_OF_THIS_CLASS = OFFSET_OF_ACCESS_FLAGS + 2;
         final long OFFSET_OF_SUPER_CLASS = OFFSET_OF_THIS_CLASS + 2;
@@ -106,9 +110,9 @@ public class ClassFile implements Dumpable {
         );
         thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_THIS_CLASS));
 
-        if (configCallback != null) {
-            configCallback.configureWith(this);
-        }
+//        if (configCallback != null) {
+//            configCallback.configureWith(this);
+//        }
         this.rawInterfaces = tmpInterfaces;
 
 
@@ -139,7 +143,7 @@ public class ClassFile implements Dumpable {
                 new UnaryFunction<ByteData, Method>() {
                     @Override
                     public Method invoke(ByteData arg) {
-                        return new Method(arg, ClassFile.this, constantPool);
+                        return new Method(arg, ClassFile.this, constantPool, dcCommonState);
                     }
                 });
         this.methods = tmpMethods;
@@ -179,14 +183,15 @@ public class ClassFile implements Dumpable {
         /*
          * Choose a default dump helper.  This may be overwritten.
          */
+        Options options = dcCommonState.getOptions();
         if (isInterface) {
             if (isAnnotation) {
-                dumpHelper = new ClassFileDumperAnnotation(cfrState);
+                dumpHelper = new ClassFileDumperAnnotation(options);
             } else {
-                dumpHelper = new ClassFileDumperInterface(cfrState);
+                dumpHelper = new ClassFileDumperInterface(options);
             }
         } else {
-            dumpHelper = new ClassFileDumperNormal(cfrState);
+            dumpHelper = new ClassFileDumperNormal(options);
         }
 
         /*
@@ -214,6 +219,10 @@ public class ClassFile implements Dumpable {
 
     }
 
+    public String getUsePath() {
+        return usePath;
+    }
+
     private void addComment(String comment) {
         if (decompilerComments == null) decompilerComments = new DecompilerComments();
         decompilerComments.addComment(comment);
@@ -237,6 +246,28 @@ public class ClassFile implements Dumpable {
         List<JavaTypeInstance> res = ListFactory.newList();
         getAllClassTypes(res);
         return res;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        if (thisClass != null) {
+            collector.collect(thisClass.getTypeInstance());
+        }
+        collector.collectFrom(classSignature);
+        // Collect all fields.
+        for (ClassFileField field : fields) {
+            collector.collect(field.getField().getJavaTypeInstance(constantPool));
+            collector.collectFrom(field.getInitialValue());
+        }
+        collector.collectFrom(methods);
+        // Collect the types of all inner classes, then process recursively.
+        for (Map.Entry<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassByTypeInfo : innerClassesByTypeInfo.entrySet()) {
+            collector.collect(innerClassByTypeInfo.getKey());
+            ClassFile innerClassFile = innerClassByTypeInfo.getValue().getSecond();
+            innerClassFile.collectTypeUsages(collector);
+        }
+        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
     }
 
     private void getAllClassTypes(List<JavaTypeInstance> tgt) {
@@ -355,9 +386,9 @@ public class ClassFile implements Dumpable {
         List<MethodPrototype> out = ListFactory.newList();
         Set<String> matched = SetFactory.newSet();
         out.add(prototype);
-        matched.add(prototype.toString());
+        matched.add(prototype.getComparableString());
         for (MethodPrototype other : prototypes) {
-            if (matched.add(other.toString())) {
+            if (matched.add(other.getComparableString())) {
                 out.add(other);
             }
         }
@@ -427,7 +458,7 @@ public class ClassFile implements Dumpable {
     }
 
     //    FIXME - inside constructor for inner class classfile
-    private void markInnerClassAsStatic(CFRState cfrState, ClassFile innerClass, JavaTypeInstance thisType) {
+    private void markInnerClassAsStatic(Options options, ClassFile innerClass, JavaTypeInstance thisType) {
         /*
         * We need to tell the inner class it's a static, if it doesn't have the outer
         * class as a first constructor parameter, which is assigned to a synthetic local.
@@ -452,14 +483,16 @@ public class ClassFile implements Dumpable {
          * Else it's not static.  If the params say so, tweak the inner class info to let
          * users know the first parameter is to be elided.
          */
-        if (cfrState.removeInnerClassSynthetics()) {
+        if (options.removeInnerClassSynthetics()) {
             innerClassInfo.setHideSyntheticThis();
         }
 
     }
 
     // just after construction
-    public void loadInnerClasses(CFRState cfrState) {
+    public void loadInnerClasses(DCCommonState dcCommonState) {
+        Options options = dcCommonState.getOptions();
+
         AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
         if (attributeInnerClasses == null) {
             return;
@@ -482,9 +515,9 @@ public class ClassFile implements Dumpable {
             /* If we're loading inner classes, then we definitely want to recursively apply that
              */
             try {
-                ClassFile innerClass = cfrState.getClassFile(innerType);
-                innerClass.loadInnerClasses(cfrState);
-                markInnerClassAsStatic(cfrState, innerClass, thisType);
+                ClassFile innerClass = dcCommonState.getClassFile(innerType);
+                innerClass.loadInnerClasses(dcCommonState);
+                markInnerClassAsStatic(options, innerClass, thisType);
 
                 innerClassesByTypeInfo.put(innerType, new Pair<InnerClassAttributeInfo, ClassFile>(innerClassAttributeInfo, innerClass));
             } catch (CannotLoadClassException e) {
@@ -492,7 +525,7 @@ public class ClassFile implements Dumpable {
         }
     }
 
-    private void analyseInnerClassesPass1(CFRState state) {
+    private void analyseInnerClassesPass1(DCCommonState state) {
         if (innerClassesByTypeInfo == null) return;
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
             ClassFile classFile = innerClassInfoClassFilePair.getSecond();
@@ -500,15 +533,15 @@ public class ClassFile implements Dumpable {
         }
     }
 
-    private void analysePassOuterFirst(CFRState state) {
-
+    private void analysePassOuterFirst(DCCommonState state) {
+        Options options = state.getOptions();
         try {
             CodeAnalyserWholeClass.wholeClassAnalysisPass2(this, state);
         } catch (RuntimeException e) {
-            if (!state.getBooleanOpt(CFRState.ALLOW_WHOLE_FAILURE)) {
-                throw new RuntimeException("Whole class analysis failure - hide with " + CFRState.ALLOW_WHOLE_FAILURE, e);
+            if (!options.getBooleanOpt(Options.ALLOW_WHOLE_FAILURE)) {
+                throw new RuntimeException("Whole class analysis failure - hide with " + Options.ALLOW_WHOLE_FAILURE, e);
             }
-            addComment("Exception performing whole class analysis ignored - use " + CFRState.ALLOW_WHOLE_FAILURE.getName() + " to show");
+            addComment("Exception performing whole class analysis ignored - use " + Options.ALLOW_WHOLE_FAILURE.getName() + " to show");
         }
 
         if (innerClassesByTypeInfo == null) return;
@@ -518,12 +551,13 @@ public class ClassFile implements Dumpable {
         }
     }
 
-    public void analyseTop(CFRState state) {
-        analyseMid(state);
-        analysePassOuterFirst(state);
+    public void analyseTop(DCCommonState dcCommonState) {
+        analyseMid(dcCommonState);
+        analysePassOuterFirst(dcCommonState);
     }
 
-    public void analyseMid(CFRState state) {
+    public void analyseMid(DCCommonState state) {
+        Options options = state.getOptions();
         if (this.begunAnalysis) {
             return;
         }
@@ -532,7 +566,7 @@ public class ClassFile implements Dumpable {
          * Analyse inner classes first, so we know if they're static when we reference them
          * from the outer class.
          */
-        if (state.analyseInnerClasses()) {
+        if (options.analyseInnerClasses()) {
             analyseInnerClassesPass1(state);
         }
         boolean exceptionRecovered = false;
@@ -553,10 +587,10 @@ public class ClassFile implements Dumpable {
         try {
             CodeAnalyserWholeClass.wholeClassAnalysisPass1(this, state);
         } catch (RuntimeException e) {
-            if (!state.getBooleanOpt(CFRState.ALLOW_WHOLE_FAILURE)) {
-                throw new RuntimeException("Whole class analysis failure - hide with " + CFRState.ALLOW_WHOLE_FAILURE, e);
+            if (!options.getBooleanOpt(Options.ALLOW_WHOLE_FAILURE)) {
+                throw new RuntimeException("Whole class analysis failure - hide with " + Options.ALLOW_WHOLE_FAILURE, e);
             }
-            addComment("Exception performing whole class analysis ignored - use " + CFRState.ALLOW_WHOLE_FAILURE.getName() + " to show");
+            addComment("Exception performing whole class analysis ignored - use " + Options.ALLOW_WHOLE_FAILURE.getName() + " to show");
         }
 
     }
@@ -618,6 +652,7 @@ public class ClassFile implements Dumpable {
         }
     }
 
+    @Override
     public Dumper dump(Dumper d) {
         return dumpHelper.dump(this, false, d);
     }
@@ -630,8 +665,6 @@ public class ClassFile implements Dumpable {
     public String toString() {
         return thisClass.getTextPath();
     }
-
-    private BindingSuperContainer boundSuperClasses;
 
     /*
      * Go from a bound instance of this class to a bound instance of the super class.  superType is currently partially unbound.

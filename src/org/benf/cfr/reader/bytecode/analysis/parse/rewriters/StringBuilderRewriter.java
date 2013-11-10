@@ -11,9 +11,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.List;
 
@@ -24,10 +23,10 @@ import java.util.List;
  * Time: 06:43
  */
 public class StringBuilderRewriter implements ExpressionRewriter {
-    private final CFRState cfrState;
+    private final Options options;
 
-    public StringBuilderRewriter(CFRState cfrState) {
-        this.cfrState = cfrState;
+    public StringBuilderRewriter(Options options) {
+        this.options = options;
     }
 
     @Override

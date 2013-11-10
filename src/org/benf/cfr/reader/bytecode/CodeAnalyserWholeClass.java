@@ -5,19 +5,18 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.DeadMethodRemover;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
-import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.SetFactory;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.List;
 import java.util.Set;
@@ -36,33 +35,34 @@ public class CodeAnalyserWholeClass {
     /*
      * This pass is performed INNER CLASS FIRST.
      */
-    public static void wholeClassAnalysisPass1(ClassFile classFile, CFRState state) {
+    public static void wholeClassAnalysisPass1(ClassFile classFile, DCCommonState state) {
+        Options options = state.getOptions();
 
         /*
          * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
          * several methods.
          */
-        EnumClassRewriter.rewriteEnumClass(classFile, state);
+        EnumClassRewriter.rewriteEnumClass(classFile, options);
 
         /* Remove generics which 'don't belong here' - i.e. ones which we brought in for analysis, but have
          * ended up in the body of the code.
          *
          * (sign of this would be Map<K,V> etc hanging around).
          */
-        if (state.getBooleanOpt(CFRState.REMOVE_BAD_GENERICS)) {
-            removeIllegalGenerics(classFile, state);
+        if (options.getBooleanOpt(Options.REMOVE_BAD_GENERICS)) {
+            removeIllegalGenerics(classFile, options);
         }
 
-        if (state.getBooleanOpt(CFRState.SUGAR_ASSERTS)) {
-            resugarAsserts(classFile, state);
+        if (options.getBooleanOpt(Options.SUGAR_ASSERTS)) {
+            resugarAsserts(classFile, options);
         }
 
-        if (state.getBooleanOpt(CFRState.LIFT_CONSTRUCTOR_INIT)) {
-            liftStaticInitialisers(classFile, state);
-            liftNonStaticInitialisers(classFile, state);
+        if (options.getBooleanOpt(Options.LIFT_CONSTRUCTOR_INIT)) {
+            liftStaticInitialisers(classFile, options);
+            liftNonStaticInitialisers(classFile, options);
         }
 
-        if (state.getBooleanOpt(CFRState.REMOVE_BOILERPLATE)) {
+        if (options.getBooleanOpt(Options.REMOVE_BOILERPLATE)) {
             removeBoilerplateMethods(classFile);
         }
     }
@@ -76,11 +76,11 @@ public class CodeAnalyserWholeClass {
         }
     }
 
-    private static void inlineAccessors(CFRState cfrState, ClassFile classFile) {
+    private static void inlineAccessors(DCCommonState state, ClassFile classFile) {
         for (Method method : classFile.getMethods()) {
             if (method.hasCodeAttribute()) {
                 Op04StructuredStatement code = method.getAnalysis();
-                Op04StructuredStatement.inlineSyntheticAccessors(cfrState, method, code);
+                Op04StructuredStatement.inlineSyntheticAccessors(state, method, code);
             }
         }
     }
@@ -113,7 +113,8 @@ public class CodeAnalyserWholeClass {
          * OuterClassName.this
          */
         JavaTypeInstance fieldType = outerThis.getInferredJavaType().getJavaTypeInstance();
-        String name = fieldType.toString();
+        JavaRefTypeInstance fieldRefType = (JavaRefTypeInstance) fieldType.getDeGenerifiedType();
+        String name = fieldRefType.getRawShortName();
         ClassFileField classFileField = fieldVariable.getClassFileField();
         classFileField.overrideName(name + ".this");
         classFileField.markSyntheticOuterRef();
@@ -147,13 +148,13 @@ public class CodeAnalyserWholeClass {
      * b) interfaces MAY have static initialisers, but MAY NOT have clinit methods.
      *    (in java 1.7)
      */
-    private static void liftStaticInitialisers(ClassFile classFile, CFRState state) {
+    private static void liftStaticInitialisers(ClassFile classFile, Options state) {
         Method staticInit = getStaticConstructor(classFile);
         if (staticInit == null) return;
         new StaticLifter(classFile).liftStatics(staticInit);
     }
 
-    private static void liftNonStaticInitialisers(ClassFile classFile, CFRState state) {
+    private static void liftNonStaticInitialisers(ClassFile classFile, Options state) {
         new NonStaticLifter(classFile).liftNonStatics();
     }
 
@@ -165,7 +166,7 @@ public class CodeAnalyserWholeClass {
      *
      * Obviously, this step has to come AFTER any constructor rewriting (static lifting)
      */
-    private static void removeDeadMethods(ClassFile classFile, CFRState state) {
+    private static void removeDeadMethods(ClassFile classFile) {
         Method staticInit = getStaticConstructor(classFile);
         if (staticInit != null) {
             DeadMethodRemover.removeDeadMethod(classFile, staticInit);
@@ -205,7 +206,7 @@ public class CodeAnalyserWholeClass {
     }
 
     /* Performed prior to lifting code into fields, just check code */
-    private static void removeIllegalGenerics(ClassFile classFile, CFRState state) {
+    private static void removeIllegalGenerics(ClassFile classFile, Options state) {
         ConstantPool cp = classFile.getConstantPool();
         ExpressionRewriter r = new IllegalGenericRewriter(cp);
 
@@ -228,7 +229,7 @@ public class CodeAnalyserWholeClass {
     }
 
 
-    private static void resugarAsserts(ClassFile classFile, CFRState state) {
+    private static void resugarAsserts(ClassFile classFile, Options state) {
         Method staticInit = getStaticConstructor(classFile);
         if (staticInit != null) {
             new AssertRewriter(classFile).sugarAsserts(staticInit);
@@ -240,11 +241,12 @@ public class CodeAnalyserWholeClass {
      *
      * This is the point at which we can perform analysis like rewriting references like accessors inner -> outer.
      */
-    public static void wholeClassAnalysisPass2(ClassFile classFile, CFRState state) {
+    public static void wholeClassAnalysisPass2(ClassFile classFile, DCCommonState state) {
+        Options options = state.getOptions();
         /*
          * Rewrite 'outer.this' references.
          */
-        if (state.removeInnerClassSynthetics()) {
+        if (options.removeInnerClassSynthetics()) {
 
             /*
              * All constructors of inner classes should have their first argument removed,
@@ -259,8 +261,8 @@ public class CodeAnalyserWholeClass {
             inlineAccessors(state, classFile);
         }
 
-        if (state.getBooleanOpt(CFRState.REMOVE_DEAD_METHODS)) {
-            removeDeadMethods(classFile, state);
+        if (options.getBooleanOpt(Options.REMOVE_DEAD_METHODS)) {
+            removeDeadMethods(classFile);
         }
 
     }

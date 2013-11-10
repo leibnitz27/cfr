@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -28,6 +29,11 @@ public class ArrayLength extends AbstractExpression {
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return new ArrayLength(cloneHelper.replaceOrClone(array));
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        array.collectTypeUsages(collector);
     }
 
     @Override

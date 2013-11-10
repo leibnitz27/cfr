@@ -16,6 +16,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -52,6 +53,14 @@ public class StaticFunctionInvokation extends AbstractExpression implements Func
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(clazz);
+        for (Expression arg : args) {
+            arg.collectTypeUsages(collector);
+        }
+    }
+
+    @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         for (int x = 0; x < args.size(); ++x) {
             args.set(x, args.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));
@@ -69,7 +78,7 @@ public class StaticFunctionInvokation extends AbstractExpression implements Func
 
     @Override
     public Dumper dump(Dumper d) {
-        d.print(clazz.toString() + ".");
+        d.dump(clazz).print(".");
         ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
         d.print(nameAndType.getName().getValue() + "(");
         boolean first = true;

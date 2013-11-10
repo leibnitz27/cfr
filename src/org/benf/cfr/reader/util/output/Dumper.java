@@ -1,5 +1,9 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageInformation;
+
 import java.util.List;
 
 /**
@@ -9,6 +13,13 @@ import java.util.List;
  * Time: 08:26
  */
 public interface Dumper {
+
+    /*
+     * A dumper is initialised with knowledge of the types, so that two
+     * dumpers can dump the same code with different import shortening.
+     */
+    TypeUsageInformation getTypeUsageInformation();
+
     void printLabel(String s);
 
     void enqueuePendingCarriageReturn();
@@ -30,6 +41,8 @@ public interface Dumper {
     void indent(int diff);
 
     void dump(List<? extends Dumpable> d);
+
+    Dumper dump(JavaTypeInstance javaTypeInstance);
 
     Dumper dump(Dumpable d);
 }

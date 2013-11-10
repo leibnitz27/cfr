@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxin
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
@@ -17,6 +18,7 @@ import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -37,6 +39,22 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
         this.args = args;
         this.function = function;
         this.methodPrototype = function.getMethodPrototype();
+    }
+
+    protected AbstractConstructorInvokation(AbstractConstructorInvokation other, CloneHelper cloneHelper) {
+        super(other.getInferredJavaType());
+        this.args = cloneHelper.replaceOrClone(other.args);
+        this.function = other.function;
+        this.methodPrototype = other.methodPrototype;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        methodPrototype.collectTypeUsages(collector);
+        for (Expression arg : args) {
+            arg.collectTypeUsages(collector);
+        }
+        super.collectTypeUsages(collector);
     }
 
     public List<Expression> getArgs() {

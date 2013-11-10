@@ -1,5 +1,9 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
+
 import java.util.List;
 
 /**
@@ -13,14 +17,14 @@ public class ToStringDumper implements Dumper {
     private int indent;
     private boolean atStart = true;
     private boolean pendingCR = false;
-    StringBuilder sb;
+    private final StringBuilder sb = new StringBuilder();
+    private final TypeUsageInformation typeUsageInformation = new TypeUsageInformationEmpty();
 
-    public ToStringDumper(StringBuilder sb) {
-        this.sb = sb;
+    public static String toString(Dumpable d) {
+        return new ToStringDumper().dump(d).toString();
     }
 
     public ToStringDumper() {
-        this.sb = new StringBuilder();
     }
 
     @Override
@@ -115,6 +119,17 @@ public class ToStringDumper implements Dumper {
             return this;
         }
         d.dump(this);
+        return this;
+    }
+
+    @Override
+    public TypeUsageInformation getTypeUsageInformation() {
+        return typeUsageInformation;
+    }
+
+    @Override
+    public Dumper dump(JavaTypeInstance javaTypeInstance) {
+        javaTypeInstance.dumpInto(this, typeUsageInformation);
         return this;
     }
 

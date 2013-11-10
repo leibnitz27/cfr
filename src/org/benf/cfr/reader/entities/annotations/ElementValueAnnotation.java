@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities.annotations;
 
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -18,5 +19,10 @@ public class ElementValueAnnotation implements ElementValue {
     @Override
     public Dumper dump(Dumper d) {
         return annotationTableEntry.dump(d);
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        annotationTableEntry.collectTypeUsages(collector);
     }
 }

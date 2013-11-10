@@ -1,8 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
@@ -56,6 +59,11 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     @Override
     public StackType getStackType() {
         return StackType.REF;
+    }
+
+    @Override
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+        d.print(this.toString());
     }
 
     @Override
@@ -125,6 +133,10 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     @Override
     public RawJavaType getRawTypeOfSimpleType() {
         return RawJavaType.REF;
+    }
+
+    @Override
+    public void collectInto(TypeUsageCollector typeUsageCollector) {
     }
 
     @Override

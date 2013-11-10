@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -54,6 +55,12 @@ public class Block extends AbstractStructuredStatement {
         return new Block(tmp, indenting);
     }
 
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        for (Op04StructuredStatement statement : containedStatements) {
+            statement.collectTypeUsages(collector);
+        }
+    }
 
     public boolean removeLastContinue(BlockIdentifier block) {
         StructuredStatement structuredStatement = containedStatements.getLast().getStatement();

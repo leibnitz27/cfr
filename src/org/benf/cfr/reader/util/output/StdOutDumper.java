@@ -1,5 +1,8 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.state.TypeUsageInformation;
+
 import java.util.List;
 
 /**
@@ -10,9 +13,21 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class StdOutDumper implements Dumper {
+    private final TypeUsageInformation typeUsageInformation;
+
     private int indent;
     private boolean atStart = true;
     private boolean pendingCR = false;
+
+
+    public StdOutDumper(TypeUsageInformation typeUsageInformation) {
+        this.typeUsageInformation = typeUsageInformation;
+    }
+
+    @Override
+    public TypeUsageInformation getTypeUsageInformation() {
+        return typeUsageInformation;
+    }
 
     @Override
     public void printLabel(String s) {
@@ -107,6 +122,12 @@ public class StdOutDumper implements Dumper {
         for (Dumpable dumpable : d) {
             dumpable.dump(this);
         }
+    }
+
+    @Override
+    public Dumper dump(JavaTypeInstance javaTypeInstance) {
+        javaTypeInstance.dumpInto(this, typeUsageInformation);
+        return this;
     }
 
     @Override

@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -35,6 +36,13 @@ public class UnstructuredCatch extends AbstractUnStructuredStatement {
     public Dumper dump(Dumper dumper) {
         dumper.print("** catch " + exceptions + " { \n");
         return dumper;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        for (ExceptionGroup.Entry entry : exceptions) {
+            collector.collect(entry.getCatchType());
+        }
     }
 
     public StructuredStatement getCatchFor(Op04StructuredStatement innerBlock) {

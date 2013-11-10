@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -45,14 +46,20 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(getInferredJavaType().getJavaTypeInstance());
+        child.collectTypeUsages(collector);
+    }
+
+    @Override
     public Dumper dump(Dumper d) {
         if (child.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN &&
                 !(RawJavaType.BOOLEAN.implicitlyCastsTo(getInferredJavaType().getJavaTypeInstance()))) {
             // This is ugly.  Unfortunately, it's necessary (currently!) as we don't have an extra pass to
             // transform invalid casts like this.
-            return d.print("(" + getInferredJavaType().getCastString() + ")(").dump(child).print(" ? 1 : 0)");
+            return d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")(").dump(child).print(" ? 1 : 0)");
         } else {
-            return d.print("(" + getInferredJavaType().getCastString() + ")(").dump(child).print(")");
+            return d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")(").dump(child).print(")");
         }
     }
 

@@ -47,11 +47,10 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         }
     }
 
+    // TODO : Refactor into constructor.
     public JavaRefTypeInstance getCatchType(ConstantPool cp) {
         if (catch_type == 0) {
-            // Cache locally?
-            // TODO : this is wrong - it should be using the constPool for throwable.
-            return cp.getClassCache().getRefClassFor(cp, TypeConstants.throwableName);
+            return cp.getClassCache().getRefClassFor(TypeConstants.throwableName);
         } else {
             return (JavaRefTypeInstance) cp.getClassEntry(catch_type).getTypeInstance();
         }

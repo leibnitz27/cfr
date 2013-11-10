@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -43,6 +44,11 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return new MemberFunctionInvokation(getCp(), getFunction(), getMethodPrototype(), cloneHelper.replaceOrClone(getObject()), special, cloneHelper.replaceOrClone(getArgs()));
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        super.collectTypeUsages(collector);
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.StdOutDumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
@@ -30,14 +31,17 @@ public abstract class AbstractLValue implements LValue {
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(inferredJavaType.getJavaTypeInstance());
+    }
+
+    @Override
     public LValue outerDeepClone(CloneHelper cloneHelper) {
         return cloneHelper.replaceOrClone(this);
     }
 
     @Override
     public final String toString() {
-        Dumper d = new ToStringDumper();
-        this.dump(d);
-        return d.toString();
+        return ToStringDumper.toString(this);
     }
 }

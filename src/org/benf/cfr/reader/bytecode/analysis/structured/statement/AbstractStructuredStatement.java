@@ -78,9 +78,7 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
 
     @Override
     public final String toString() {
-        Dumper d = new ToStringDumper();
-        d.print(getClass().toString()).dump(this);
-        return d.toString();
+        return ToStringDumper.toString(this);
     }
 
     @Override

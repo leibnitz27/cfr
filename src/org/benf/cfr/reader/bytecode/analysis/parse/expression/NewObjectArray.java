@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -51,8 +52,13 @@ public class NewObjectArray extends AbstractNewArray {
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(allocatedType);
+    }
+
+    @Override
     public Dumper dump(Dumper d) {
-        d.print("new " + allocatedType);
+        d.print("new ").dump(allocatedType);
         for (Expression dimSize : dimSizes) {
             d.print("[").dump(dimSize).print("]");
         }

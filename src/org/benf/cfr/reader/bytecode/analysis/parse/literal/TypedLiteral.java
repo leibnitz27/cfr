@@ -6,7 +6,12 @@ import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.*;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.TypeUsageCollectable;
+import org.benf.cfr.reader.util.output.Dumpable;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,7 +20,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * Time: 05:42
  * To change this template use File | Settings | File Templates.
  */
-public class TypedLiteral {
+public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     public enum LiteralType {
         Integer,
@@ -36,6 +41,13 @@ public class TypedLiteral {
         this.type = type;
         this.value = value;
         this.inferredJavaType = inferredJavaType;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        if (type == LiteralType.Class) {
+            collector.collect((JavaTypeInstance) value);
+        }
     }
 
     private static String integerName(Object o) {
@@ -141,32 +153,37 @@ public class TypedLiteral {
     }
 
     @Override
-    public String toString() {
+    public Dumper dump(Dumper d) {
         switch (type) {
             case String:
-                return enQuote((String) value);
+                return d.print(enQuote((String) value));
             case NullObject:
-                return "null";
+                return d.print("null");
             case Integer:
                 switch (inferredJavaType.getRawType()) {
                     case CHAR:
-                        return charName(value);
+                        return d.print(charName(value));
                     case BOOLEAN:
-                        return boolName(value);
+                        return d.print(boolName(value));
                     default:
-                        return integerName(value);
+                        return d.print(integerName(value));
                 }
             case Long:
-                return longName(value);
+                return d.print(longName(value));
             case MethodType:
-                return methodTypeName(value);
+                return d.print(methodTypeName(value));
             case MethodHandle:
-                return methodHandleName(value);
+                return d.print(methodHandleName(value));
             case Class:
-                return value.toString() + ".class";
+                return d.dump((JavaTypeInstance) value).print(".class");
             default:
-                return value.toString();
+                return d.print(value.toString());
         }
+    }
+
+    @Override
+    public String toString() {
+        return ToStringDumper.toString(this);
     }
 
     public static TypedLiteral getLong(long v) {
@@ -205,13 +222,13 @@ public class TypedLiteral {
     }
 
     public static TypedLiteral getMethodHandle(ConstantPoolEntryMethodHandle methodHandle, ConstantPool cp) {
-        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor(cp, "java.lang.invoke.MethodHandle");
+        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodHandle");
         return new TypedLiteral(LiteralType.MethodHandle, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodHandle);
     }
 
     public static TypedLiteral getMethodType(ConstantPoolEntryMethodType methodType, ConstantPool cp) {
 //        ConstantPoolEntryUTF8 descriptor = methodType.getDescriptor();
-        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor(cp, "java.lang.invoke.MethodType");
+        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodType");
         return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodType);
     }
 

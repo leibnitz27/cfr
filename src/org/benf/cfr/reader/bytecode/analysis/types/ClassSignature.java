@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.TypeUsageCollectable;
 
 import java.util.List;
 
@@ -11,7 +13,7 @@ import java.util.List;
  * Date: 13/02/2013
  * Time: 06:32
  */
-public class ClassSignature {
+public class ClassSignature implements TypeUsageCollectable {
     private final List<FormalTypeParameter> formalTypeParameters;
     private final JavaTypeInstance superClass;
     private final List<JavaTypeInstance> interfaces;
@@ -32,6 +34,13 @@ public class ClassSignature {
 
     public List<JavaTypeInstance> getInterfaces() {
         return interfaces;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(superClass);
+        collector.collectFrom(formalTypeParameters);
+        collector.collect(interfaces);
     }
 
     // TODO : This is pointless.

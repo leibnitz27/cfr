@@ -30,11 +30,14 @@ import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
 import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.graph.GraphVisitorFIFO;
@@ -326,7 +329,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
 
-    private Statement buildInvokeDynamic(Method method) {
+    private Statement buildInvokeDynamic(Method method, DCCommonState dcCommonState) {
         ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
 
         ConstantPoolEntryNameAndType nameAndType = invokeDynamic.getNameAndTypeEntry();
@@ -371,7 +374,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          * Try to determine the relevant method on the functional interface.
          */
         JavaTypeInstance callSiteReturnType = dynamicPrototype.getReturnType();
-        callSiteReturnType = determineDynamicGeneric(callSiteReturnType, dynamicPrototype, strippedType, instantiatedType);
+        callSiteReturnType = determineDynamicGeneric(callSiteReturnType, dynamicPrototype, strippedType, instantiatedType, dcCommonState);
 
         List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
         dynamicPrototype.tightenArgs(null, dynamicArgs);
@@ -395,11 +398,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
 
-    private JavaTypeInstance determineDynamicGeneric(final JavaTypeInstance callsiteReturn, MethodPrototype proto, Expression stripped, Expression instantiated) {
+    private JavaTypeInstance determineDynamicGeneric(final JavaTypeInstance callsiteReturn, MethodPrototype proto, Expression stripped, Expression instantiated, DCCommonState dcCommonState) {
 
         ClassFile classFile = null;
         try {
-            classFile = cp.getCFRState().getClassFile(proto.getReturnType());
+            classFile = dcCommonState.getClassFile(proto.getReturnType());
         } catch (CannotLoadClassException e) {
         }
         if (classFile == null) return callsiteReturn;
@@ -758,7 +761,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, ident, originalRawOffset, ssaIdent.card() == 1)));
     }
 
-    public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory) {
+    public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory, DCCommonState dcCommonState) {
         switch (instr) {
             case ALOAD:
             case ILOAD:
@@ -986,7 +989,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case INVOKEDYNAMIC: {
                 // Java uses invokedynamic for lambda expressions.
                 // see http://download.java.net/jdk8/docs/api/java/lang/invoke/LambdaMetafactory.html
-                return buildInvokeDynamic(method);
+                return buildInvokeDynamic(method, dcCommonState);
             }
             case INVOKESPECIAL:
                 // Invoke special == invokenonvirtual.
@@ -1270,7 +1273,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         try {
             o2start.populateStackInfo(new StackSim(), method);
         } catch (ConfusedCFRException e) {
-            Dumper dmp = new StdOutDumper();
+            Dumper dmp = new StdOutDumper(new TypeUsageInformationEmpty());
             dmp.print("----[known stack info]------------\n\n");
             for (Op02WithProcessedDataAndRefs op : op2list) {
                 op.dump(dmp);
@@ -1675,7 +1678,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     public static List<Op03SimpleStatement> convertToOp03List(List<Op02WithProcessedDataAndRefs> op2list,
                                                               final Method method,
-                                                              final VariableFactory variableFactory, final BlockIdentifierFactory blockIdentifierFactory) {
+                                                              final VariableFactory variableFactory,
+                                                              final BlockIdentifierFactory blockIdentifierFactory,
+                                                              final DCCommonState dcCommonState) {
 
 
         final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
@@ -1690,7 +1695,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override
                     public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(method, variableFactory, blockIdentifierFactory));
+                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(method, variableFactory, blockIdentifierFactory, dcCommonState));
                         conversionHelper.registerOriginalAndNew(arg1, res);
                         op03SimpleParseNodesTmp.add(res);
                         for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {
@@ -1910,9 +1915,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             ExceptionAggregator exceptions,
             Map<Integer, Integer> lutByOffset,
             ConstantPool cp,
-            long codeLength
+            long codeLength,
+            DCCommonState dcCommonState
     ) {
-        CFRState cfrState = cp.getCFRState();
+        Options options = dcCommonState.getOptions();
         int originalInstrCount = op2list.size();
 
         if (exceptions.getExceptionsGroups().isEmpty()) return op2list;
@@ -1961,7 +1967,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 //                    if (testSyncUnlock(handlerIndex, op2list)) {
 //                        continue;
 //                    }
-                    if (!cfrState.isLenient()) {
+                    if (!options.isLenient()) {
                         throw new ConfusedCFRException("Back jump on a try block " + exceptionEntry);
                     }
                 }
@@ -2032,7 +2038,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                         if (source.getInstr() == JVMInstr.FAKE_CATCH) {
                             preCatchOp = source;
                         } else {
-                            if (!cfrState.isLenient()) {
+                            if (!options.isLenient()) {
                                 throw new ConfusedCFRException("non catch before exception catch block");
                             }
                         }

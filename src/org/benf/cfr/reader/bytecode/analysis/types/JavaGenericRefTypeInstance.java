@@ -1,8 +1,12 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 
@@ -33,6 +37,14 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
             }
         }
         hasUnbound = unbound;
+    }
+
+    @Override
+    public void collectInto(TypeUsageCollector typeUsageCollector) {
+        typeUsageCollector.collectRefType(typeInstance);
+        for (JavaTypeInstance genericType : genericTypes) {
+            typeUsageCollector.collect(genericType);
+        }
     }
 
     @Override
@@ -89,17 +101,19 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(typeInstance.toString());
-        sb.append("<");
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+        d.dump(typeInstance).print('<');
         boolean first = true;
         for (JavaTypeInstance type : genericTypes) {
-            first = CommaHelp.comma(first, sb);
-            sb.append(type.toString());
+            first = CommaHelp.comma(first, d);
+            d.dump(type);
         }
-        sb.append(">");
-        return sb.toString();
+        d.print('>');
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringDumper().dump(this).toString();
     }
 
     @Override
@@ -130,7 +144,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
 
     @Override
     public String getRawName() {
-        return toString();
+        return new ToStringDumper().dump(this).toString();
     }
 
     @Override

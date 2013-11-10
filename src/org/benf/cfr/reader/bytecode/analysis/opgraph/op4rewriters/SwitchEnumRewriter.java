@@ -22,8 +22,9 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Field;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -36,16 +37,19 @@ import java.util.Map;
  * Time: 05:49
  */
 public class SwitchEnumRewriter implements Op04Rewriter {
-    private final CFRState state;
+    private final DCCommonState dcCommonState;
+    private final ClassFileVersion classFileVersion;
     private final static JavaTypeInstance expectedLUTType = new JavaArrayTypeInstance(1, RawJavaType.INT);
 
-    public SwitchEnumRewriter(CFRState state) {
-        this.state = state;
+    public SwitchEnumRewriter(DCCommonState dcCommonState, ClassFileVersion classFileVersion) {
+        this.dcCommonState = dcCommonState;
+        this.classFileVersion = classFileVersion;
     }
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        if (!state.getBooleanOpt(CFRState.ENUM_SWITCH)) return;
+        Options options = dcCommonState.getOptions();
+        if (!options.getBooleanOpt(Options.ENUM_SWITCH, classFileVersion)) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;
@@ -122,7 +126,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
          */
         ClassFile enumLutClass;
         try {
-            enumLutClass = state.getClassFile(classInfo);
+            enumLutClass = dcCommonState.getClassFile(classInfo);
         } catch (CannotLoadClassException e) {
             // Oh dear, can't load that class.  Proceed without it.
             return;

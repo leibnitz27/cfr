@@ -1,5 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.output.Dumper;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -43,4 +47,8 @@ public interface JavaTypeInstance {
     public boolean canCastTo(JavaTypeInstance other);
 
     public String suggestVarName();
+
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation);
+
+    public void collectInto(TypeUsageCollector typeUsageCollector);
 }

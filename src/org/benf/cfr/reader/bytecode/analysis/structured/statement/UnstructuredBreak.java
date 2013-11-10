@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Set;
@@ -23,6 +24,10 @@ public class UnstructuredBreak extends AbstractUnStructuredStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print("** break;\n");
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
     }
 
     @Override

@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -25,6 +26,10 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print("** do \n");
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
     }
 
     @Override

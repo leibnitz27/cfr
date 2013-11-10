@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Set;
@@ -21,6 +22,10 @@ public class UnstructuredGoto extends AbstractUnStructuredStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print("** GOTO " + getContainer().getTargetLabel(0) + "\n");
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
     }
 
     public StructuredStatement transformWithScope(StructuredScope scope) {

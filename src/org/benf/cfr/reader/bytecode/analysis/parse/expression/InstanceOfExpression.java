@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -36,6 +37,12 @@ public class InstanceOfExpression extends AbstractExpression {
         super(inferredJavaType);
         this.lhs = lhs;
         this.typeInstance = typeInstance;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        lhs.collectTypeUsages(collector);
+        collector.collect(typeInstance);
     }
 
     @Override

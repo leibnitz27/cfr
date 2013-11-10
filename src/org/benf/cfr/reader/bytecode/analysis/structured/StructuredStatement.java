@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
 
@@ -18,7 +19,7 @@ import java.util.Vector;
  * User: lee
  * Date: 14/05/2012
  */
-public interface StructuredStatement extends Dumpable, Matcher<StructuredStatement> {
+public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Matcher<StructuredStatement> {
 
     Op04StructuredStatement getContainer();
 

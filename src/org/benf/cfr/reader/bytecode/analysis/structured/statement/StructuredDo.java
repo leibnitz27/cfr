@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -42,6 +43,12 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
             dumper.dump(condition);
         }
         return dumper.print(");\n");
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collectFrom(condition);
+        super.collectTypeUsages(collector);
     }
 
     @Override

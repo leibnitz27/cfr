@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -42,11 +43,16 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
         this.isCreator = isCreator;
     }
 
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        lvalue.collectTypeUsages(collector);
+        collector.collectFrom(rvalue);
+    }
 
     @Override
     public Dumper dump(Dumper dumper) {
         if (isCreator) {
-            dumper.print(lvalue.getInferredJavaType().getJavaTypeInstance().toString() + " ");
+            dumper.dump(lvalue.getInferredJavaType().getJavaTypeInstance()).print(" ");
         }
         dumper.dump(lvalue).print(" = ").dump(rvalue).endCodeln();
         return dumper;

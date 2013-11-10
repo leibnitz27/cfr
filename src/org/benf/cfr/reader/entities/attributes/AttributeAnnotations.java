@@ -4,7 +4,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.annotations.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -17,7 +19,7 @@ import java.util.List;
  * Time: 19:01
  * To change this template use File | Settings | File Templates.
  */
-public abstract class AttributeAnnotations extends Attribute {
+public abstract class AttributeAnnotations extends Attribute implements TypeUsageCollectable {
 
     private static final long OFFSET_OF_ATTRIBUTE_LENGTH = 2;
     private static final long OFFSET_OF_REMAINDER = 6;
@@ -57,4 +59,10 @@ public abstract class AttributeAnnotations extends Attribute {
         return OFFSET_OF_REMAINDER + length;
     }
 
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        for (AnnotationTableEntry annotationTableEntry : annotationTableEntryList) {
+            annotationTableEntry.collectTypeUsages(collector);
+        }
+    }
 }

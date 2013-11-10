@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -34,9 +35,14 @@ public class StackValue extends AbstractExpression {
         return true;
     }
 
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        stackValue.collectTypeUsages(collector);
+    }
+
     /*
-     * Makes no sense to modify so deep clone is this.
-     */
+         * Makes no sense to modify so deep clone is this.
+         */
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return this;

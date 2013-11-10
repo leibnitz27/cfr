@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -43,11 +44,18 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        iterator.collectTypeUsages(collector);
+        list.collectTypeUsages(collector);
+        super.collectTypeUsages(collector);
+    }
+
+    @Override
     public Dumper dump(Dumper dumper) {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         JavaTypeInstance itertype = iterator.getInferredJavaType().getJavaTypeInstance();
         dumper.print("for (");
-        dumper.print(itertype.toString()).print(" ");
+        dumper.dump(itertype).print(" ");
         dumper.dump(iterator).print(" : ").dump(list).print(") ");
         getBody().dump(dumper);
         return dumper;

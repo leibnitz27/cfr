@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -25,7 +26,12 @@ public class Literal extends AbstractExpression {
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print("" + value + typeToString());
+        return d.dump(value);
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        value.collectTypeUsages(collector);
     }
 
     @Override

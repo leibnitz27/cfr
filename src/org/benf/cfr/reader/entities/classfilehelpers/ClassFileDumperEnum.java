@@ -8,7 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -26,21 +26,19 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
             AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_ABSTRACT
     };
 
-    private final CFRState cfrState;
+    private final Options options;
     private final List<Pair<StaticVariable, AbstractConstructorInvokation>> entries;
 
-    public ClassFileDumperEnum(CFRState cfrState, List<Pair<StaticVariable, AbstractConstructorInvokation>> entries) {
-        this.cfrState = cfrState;
+    public ClassFileDumperEnum(Options options, List<Pair<StaticVariable, AbstractConstructorInvokation>> entries) {
+        this.options = options;
         this.entries = entries;
     }
 
     private static void dumpHeader(ClassFile c, Dumper d) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsEnum));
+        d.print(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsEnum));
 
-        sb.append("enum ").append(c.getThisClassConstpoolEntry().getTypeInstance());
-        sb.append(" {\n");
-        d.print(sb.toString());
+        d.print("enum ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
+        d.print(" {\n");
     }
 
     private static void dumpEntry(Dumper d, Pair<StaticVariable, AbstractConstructorInvokation> entry, boolean last) {
@@ -74,9 +72,9 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
         ConstantPool cp = classFile.getConstantPool();
         if (!innerClass) {
-            dumpTopHeader(cfrState, d);
+            dumpTopHeader(options, d);
             d.print("package ").print(classFile.getThisClassConstpoolEntry().getPackageName()).endCodeln().newln();
-            dumpImports(d, cp.getClassCache(), classFile);
+            dumpImports(d, classFile);
         }
 
         dumpAnnotations(classFile, d);

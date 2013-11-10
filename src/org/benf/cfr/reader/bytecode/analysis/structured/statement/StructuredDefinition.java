@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -28,10 +29,14 @@ public class StructuredDefinition extends AbstractStructuredStatement {
         this.lvalue = lvalue;
     }
 
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        lvalue.collectTypeUsages(collector);
+    }
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print(lvalue.getInferredJavaType().getJavaTypeInstance().toString()).print(" ").dump(lvalue).endCodeln();
+        return dumper.dump(lvalue.getInferredJavaType().getJavaTypeInstance()).print(" ").dump(lvalue).endCodeln();
     }
 
     @Override

@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -75,6 +76,13 @@ public class LambdaExpressionFallback extends AbstractExpression {
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(targetFnArgTypes);
+        collector.collectFrom(curriedArgs);
+        collector.collect(callClassType);
+    }
+
+    @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         throw new UnsupportedOperationException();
     }
@@ -100,7 +108,7 @@ public class LambdaExpressionFallback extends AbstractExpression {
             if (instance) {
                 d.dump(curriedArgs.get(0)).print("::").print(lambdaFnName);
             } else {
-                d.print(callClassType.toString()).print("::").print(lambdaFnName);
+                d.dump(callClassType).print("::").print(lambdaFnName);
             }
         } else {
             int n = targetFnArgTypes.size();
@@ -114,7 +122,7 @@ public class LambdaExpressionFallback extends AbstractExpression {
             if (instance) {
                 d.print(" -> ").dump(curriedArgs.get(0)).print('.').print(lambdaFnName);
             } else {
-                d.print(" -> ").print(callClassType.toString()).print('.').print(lambdaFnName);
+                d.print(" -> ").dump(callClassType).print('.').print(lambdaFnName);
             }
             d.print("(");
             boolean first = true;

@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -37,6 +38,12 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
             }
         }
         return dumper;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collectFrom(values);
+        collector.collect(caseType.getJavaTypeInstance());
     }
 
     public StructuredStatement getEmptyStructuredCase() {

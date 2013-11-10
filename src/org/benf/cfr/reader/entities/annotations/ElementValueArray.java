@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities.annotations;
 
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -28,5 +29,12 @@ public class ElementValueArray implements ElementValue {
         }
         d.print('}');
         return d;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        for (ElementValue e : content) {
+            e.collectTypeUsages(collector);
+        }
     }
 }

@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Vector;
@@ -28,6 +29,12 @@ public class UnstructuredIter extends AbstractUnStructuredStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print("** for (").dump(iterator).print(" : ").dump(list).print(")\n");
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        iterator.collectTypeUsages(collector);
+        collector.collectFrom(list);
     }
 
     @Override

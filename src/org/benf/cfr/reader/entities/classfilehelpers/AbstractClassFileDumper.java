@@ -1,20 +1,19 @@
 package org.benf.cfr.reader.entities.classfilehelpers;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
-import org.benf.cfr.reader.entities.ClassCache;
+import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
-import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -39,13 +38,14 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         return sb.toString();
     }
 
-    protected void dumpTopHeader(CFRState cfrState, Dumper d) {
+    protected void dumpTopHeader(Options options, Dumper d) {
         String header = MiscConstants.CFR_HEADER_BRA +
-                (cfrState.getBooleanOpt(CFRState.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
+                (options.getBooleanOpt(Options.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
         d.print("/*").newln();
         d.print(" * ").print(header).newln();
-        if (cfrState.getBooleanOpt(CFRState.DECOMPILER_COMMENTS)) {
-            Set<String> couldNotLoad = cfrState.getCouldNotLoadClasses();
+        /*
+        if (options.getBooleanOpt(Options.DECOMPILER_COMMENTS)) {
+            Set<String> couldNotLoad = options.getCouldNotLoadClasses();
             if (!couldNotLoad.isEmpty()) {
                 d.print(" * ").newln();
                 d.print(" * Could not load the following classes:").newln();
@@ -53,32 +53,29 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
                     d.print(" *  ").print(classStr).newln();
                 }
             }
-        }
+        }*/
         d.print(" */").newln();
     }
 
-    protected static String getFormalParametersText(ClassSignature signature) {
+    protected static void getFormalParametersText(ClassSignature signature, Dumper d) {
         List<FormalTypeParameter> formalTypeParameters = signature.getFormalTypeParameters();
-        if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return "";
-        StringBuilder sb = new StringBuilder();
-        sb.append('<');
+        if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return;
+        d.print('<');
         boolean first = true;
         for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
-            first = CommaHelp.comma(first, sb);
-            sb.append(formalTypeParameter.toString());
+            first = CommaHelp.comma(first, d);
+            d.dump(formalTypeParameter);
         }
-        sb.append('>');
-        return sb.toString();
+        d.print('>');
     }
 
-    public void dumpImports(Dumper d, ClassCache classCache, ClassFile classFile) {
-        List<ConstantPool> poolList = classFile.getAllCps();
+    public void dumpImports(Dumper d, ClassFile classFile) {
         List<JavaTypeInstance> classTypes = classFile.getAllClassTypes();
-        Set<JavaTypeInstance> types = classCache.getImports(poolList);
+        Set<JavaRefTypeInstance> types = d.getTypeUsageInformation().getUsedClassTypes();
         types.removeAll(classTypes);
-        List<String> names = Functional.map(types, new UnaryFunction<JavaTypeInstance, String>() {
+        List<String> names = Functional.map(types, new UnaryFunction<JavaRefTypeInstance, String>() {
             @Override
-            public String invoke(JavaTypeInstance arg) {
+            public String invoke(JavaRefTypeInstance arg) {
                 String name = arg.getRawName();
                 return name.replace('$', '.');
             }

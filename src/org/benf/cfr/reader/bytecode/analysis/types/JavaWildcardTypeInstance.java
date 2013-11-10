@@ -1,7 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 
@@ -67,18 +71,25 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
         return ListFactory.newList();
     }
 
+    @Override
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+        d.print("? ").print(wildcardType.toString()).print(' ');
+        d.dump(underlyingType);
+    }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("? ").append(wildcardType).append(' ');
-        sb.append(underlyingType.toString());
-        return sb.toString();
+        return new ToStringDumper().dump(this).toString();
     }
 
     @Override
     public String getRawName() {
         return toString();
+    }
+
+    @Override
+    public void collectInto(TypeUsageCollector typeUsageCollector) {
+        underlyingType.collectInto(typeUsageCollector);
     }
 
     @Override

@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -37,12 +38,18 @@ public class StructuredCatch extends AbstractStructuredStatement {
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(catchTypes);
+        catchBlock.collectTypeUsages(collector);
+    }
+
+    @Override
     public Dumper dump(Dumper dumper) {
         boolean first = true;
         dumper.print("catch (");
         for (JavaRefTypeInstance catchType : catchTypes) {
             if (!first) dumper.print(" | ");
-            dumper.print(catchType.toString());
+            dumper.dump(catchType);
             first = false;
         }
         dumper.print(" ").dump(catching).print(") ");

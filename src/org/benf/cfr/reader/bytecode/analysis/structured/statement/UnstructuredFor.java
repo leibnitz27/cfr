@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpress
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Vector;
@@ -26,6 +27,13 @@ public class UnstructuredFor extends AbstractUnStructuredStatement {
         this.blockIdentifier = blockIdentifier;
         this.initial = initial;
         this.assignment = assignment;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collectFrom(condition);
+        collector.collectFrom(assignment);
+        // collector.collectFrom(initial);
     }
 
     @Override

@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Set;
@@ -24,6 +25,11 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
     public NotOperation(ConditionalExpression lhs) {
         super(lhs.getInferredJavaType());
         this.inner = lhs;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        inner.collectTypeUsages(collector);
     }
 
     @Override

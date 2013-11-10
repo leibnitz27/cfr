@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -30,6 +31,13 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
         this.condition = condition;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        condition.collectTypeUsages(collector);
+        lhs.collectTypeUsages(collector);
+        rhs.collectTypeUsages(collector);
     }
 
     @Override

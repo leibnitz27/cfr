@@ -6,7 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -20,8 +19,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.*;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.lambda.LambdaUtils;
 
 import java.util.List;
@@ -35,12 +34,12 @@ import java.util.Map;
  */
 public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
 
-    private final CFRState cfrState;
+    private final DCCommonState state;
     private final ClassFile thisClassFile;
     private final JavaTypeInstance typeInstance;
 
-    public LambdaRewriter(CFRState cfrState, ClassFile thisClassFile) {
-        this.cfrState = cfrState;
+    public LambdaRewriter(DCCommonState state, ClassFile thisClassFile) {
+        this.state = state;
         this.thisClassFile = thisClassFile;
         this.typeInstance = thisClassFile.getClassType().getDeGenerifiedType();
     }
@@ -164,7 +163,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             classFile = thisClassFile;
         } else {
             try {
-                classFile = cfrState.getClassFile(lambdaTypeRefLocation);
+                classFile = state.getClassFile(lambdaTypeRefLocation);
             } catch (CannotLoadClassException e) {
                 // We can't load the lambda target - we can't really make any assumptions about what it will do.
                 return dynamicExpression;

@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 
 import java.util.List;
 
@@ -42,6 +43,14 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         this.object = object;
         this.args = args;
         this.cp = cp;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        for (Expression arg : args) arg.collectTypeUsages(collector);
+        methodPrototype.collectTypeUsages(collector);
+        collector.collectFrom(object);
+        super.collectTypeUsages(collector);
     }
 
     @Override

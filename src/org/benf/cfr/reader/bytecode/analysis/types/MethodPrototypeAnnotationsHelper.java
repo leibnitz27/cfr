@@ -5,7 +5,6 @@ import org.benf.cfr.reader.entities.attributes.AttributeParameterAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleParameterAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleParameterAnnotations;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 

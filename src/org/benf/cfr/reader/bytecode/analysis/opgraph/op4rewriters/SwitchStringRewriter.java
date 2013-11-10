@@ -14,10 +14,11 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -76,15 +77,17 @@ import java.util.Map;
 
  */
 public class SwitchStringRewriter implements Op04Rewriter {
-    private final CFRState state;
+    private final Options options;
+    private final ClassFileVersion classFileVersion;
 
-    public SwitchStringRewriter(CFRState state) {
-        this.state = state;
+    public SwitchStringRewriter(Options options, ClassFileVersion classFileVersion) {
+        this.options = options;
+        this.classFileVersion = classFileVersion;
     }
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        if (!state.getBooleanOpt(CFRState.STRING_SWITCH)) return;
+        if (!options.getBooleanOpt(Options.STRING_SWITCH, classFileVersion)) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -42,6 +43,13 @@ public class StructuredTry extends AbstractStructuredStatement {
             finallyBlock.dump(dumper);
         }
         return dumper;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collectFrom(tryBlock);
+        collector.collectFrom(catchBlocks);
+        collector.collectFrom(finallyBlock);
     }
 
     @Override

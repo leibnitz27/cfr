@@ -12,9 +12,12 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
+import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -32,7 +35,7 @@ import java.util.*;
  *
  */
 
-public class Method implements KnowsRawSize {
+public class Method implements KnowsRawSize, TypeUsageCollectable {
 
     public enum MethodConstructor {
         NOT(false),
@@ -71,7 +74,9 @@ public class Method implements KnowsRawSize {
     private boolean hidden;
     private DecompilerComments comments;
 
-    public Method(ByteData raw, ClassFile classFile, final ConstantPool cp) {
+    public Method(ByteData raw, ClassFile classFile, final ConstantPool cp, final DCCommonState dcCommonState) {
+        Options options = dcCommonState.getOptions();
+
         this.cp = cp;
         this.classFile = classFile;
         this.accessFlags = AccessFlagMethod.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
@@ -118,9 +123,22 @@ public class Method implements KnowsRawSize {
 
         this.methodPrototype = generateMethodPrototype();
         if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
-                cp.getCFRState().hideBridgeMethods()) {
+                options.hideBridgeMethods()) {
             this.hidden = true;
         }
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        methodPrototype.collectTypeUsages(collector);
+        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
+        if (codeAttribute != null) {
+            codeAttribute.analyse().collectTypeUsages(collector);
+        }
+        collector.collectFrom(getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME));
     }
 
     public Set<AccessFlagMethod> getAccessFlags() {
@@ -271,7 +289,7 @@ public class Method implements KnowsRawSize {
 
         String displayName = name;
         if (isConstructor.isConstructor()) {
-            displayName = classFile.getClassType().toString();
+            displayName = d.getTypeUsageInformation().getName(classFile.getClassType());
         }
         getMethodPrototype().dumpDeclarationSignature(d, displayName, isConstructor, paramAnnotationsHelper);
         AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
@@ -282,7 +300,7 @@ public class Method implements KnowsRawSize {
             for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
                 first = CommaHelp.comma(first, d);
                 JavaTypeInstance typeInstance = exceptionClass.getTypeInstance();
-                d.print(typeInstance.toString());
+                d.dump(typeInstance);
             }
         }
     }

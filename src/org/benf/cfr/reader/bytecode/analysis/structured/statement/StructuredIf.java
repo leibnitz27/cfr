@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.ElseBlock;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -40,6 +41,13 @@ public class StructuredIf extends AbstractStructuredStatement implements CanRemo
         this.elseBlock = elseBlock;
     }
 
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        conditionalExpression.collectTypeUsages(collector);
+        collector.collectFrom(ifTaken);
+        collector.collectFrom(elseBlock);
+    }
 
     @Override
     public Dumper dump(Dumper dumper) {

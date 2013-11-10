@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -33,6 +34,12 @@ public class DynamicInvokation extends AbstractExpression {
     }
 
     @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collectFrom(innerInvokation);
+        collector.collectFrom(dynamicArgs);
+    }
+
+    @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         innerInvokation.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         for (int x = 0; x < dynamicArgs.size(); ++x) {
@@ -52,7 +59,7 @@ public class DynamicInvokation extends AbstractExpression {
 
     @Override
     public Dumper dump(Dumper d) {
-        d.print("(" + getInferredJavaType().getCastString() + ")");
+        d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
         d.dump(innerInvokation);
         d.print("(");
         boolean first = true;

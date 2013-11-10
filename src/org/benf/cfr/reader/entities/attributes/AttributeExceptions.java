@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities.attributes;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -33,6 +34,13 @@ public class AttributeExceptions extends Attribute {
         long offset = OFFSET_OF_EXCEPTION_TABLE;
         for (int x = 0; x < numExceptions; ++x, offset += 2) {
             exceptionClassList.add(cp.getClassEntry(raw.getS2At(offset)));
+        }
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        for (ConstantPoolEntryClass exceptionClass : exceptionClassList) {
+            collector.collect(exceptionClass.getTypeInstance());
         }
     }
 

@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -21,6 +22,10 @@ public class UnstructuredFinally extends AbstractUnStructuredStatement {
 
     public UnstructuredFinally(BlockIdentifier blockIdentifier) {
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
     }
 
     @Override

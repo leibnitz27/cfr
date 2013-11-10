@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -40,6 +41,12 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
                 (ConditionalExpression) cloneHelper.replaceOrClone(rhs),
                 op);
 
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        lhs.collectTypeUsages(collector);
+        rhs.collectTypeUsages(collector);
     }
 
     @Override

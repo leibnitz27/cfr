@@ -19,9 +19,11 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
@@ -36,7 +38,7 @@ import java.util.logging.Logger;
  * <p/>
  * Structured statements
  */
-public class Op04StructuredStatement implements MutableGraph<Op04StructuredStatement>, Dumpable, StatementContainer<StructuredStatement> {
+public class Op04StructuredStatement implements MutableGraph<Op04StructuredStatement>, Dumpable, StatementContainer<StructuredStatement>, TypeUsageCollectable {
     private static final Logger logger = LoggerFactory.create(Op04StructuredStatement.class);
 
     private InstrIndex instrIndex;
@@ -83,6 +85,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     @Override
     public StructuredStatement getStatement() {
         return structuredStatement;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        structuredStatement.collectTypeUsages(collector);
     }
 
     @Override
@@ -394,7 +401,6 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             finishedBlock.replaceAsSource(blockJustEnded.getFirst());
             Op04StructuredStatement blockStartContainer = popBlock.outerStart;
 
-            logger.fine("Trying to claim with " + blockStartContainer);
             if (!blockStartContainer.claimBlock(finishedBlock, mutableProcessingBlockState.currentBlockIdentifier, blocksCurrentlyIn)) {
                 mutableProcessingBlockState.currentBlock.add(finishedBlock);
             }
@@ -707,27 +713,28 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return res;
     }
 
-    public static void inlineSyntheticAccessors(CFRState cfrState, Method method, Op04StructuredStatement root) {
+    public static void inlineSyntheticAccessors(DCCommonState state, Method method, Op04StructuredStatement root) {
         JavaTypeInstance classType = method.getClassFile().getClassType();
-        new SyntheticAccessorRewriter(cfrState, classType).rewrite(root);
+        new SyntheticAccessorRewriter(state, classType).rewrite(root);
     }
 
     public static void removeConstructorBoilerplate(Op04StructuredStatement root) {
         new RedundantSuperRewriter().rewrite(root);
     }
 
-    public static void rewriteLambdas(CFRState cfrState, Method method, Op04StructuredStatement root) {
-        if (!cfrState.rewriteLambdas()) return;
+    public static void rewriteLambdas(DCCommonState state, Method method, Op04StructuredStatement root) {
+        Options options = state.getOptions();
+        if (!options.rewriteLambdas(method.getClassFile().getClassFileVersion())) return;
 
-        new LambdaRewriter(cfrState, method.getClassFile()).rewrite(root);
+        new LambdaRewriter(state, method.getClassFile()).rewrite(root);
     }
 
-    public static void removeUnnecessaryVarargArrays(CFRState cfrState, Method method, Op04StructuredStatement root) {
+    public static void removeUnnecessaryVarargArrays(Options options, Method method, Op04StructuredStatement root) {
         new VarArgsRewriter().rewrite(root);
     }
 
-    public static void removePrimitiveDeconversion(CFRState cfrState, Method method, Op04StructuredStatement root) {
-        if (!cfrState.getBooleanOpt(CFRState.SUGAR_BOXING)) return;
+    public static void removePrimitiveDeconversion(Options options, Method method, Op04StructuredStatement root) {
+        if (!options.getBooleanOpt(Options.SUGAR_BOXING)) return;
 
         root.transform(new PrimitiveBoxingRewriter(), new StructuredScope());
     }

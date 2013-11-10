@@ -16,6 +16,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -41,6 +42,13 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         this.assignment = assignment;
         this.block = block;
         this.isCreator = false;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collectFrom(condition);
+        collector.collectFrom(assignment);
+        super.collectTypeUsages(collector);
     }
 
     @Override
@@ -104,6 +112,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     @Override
     public List<LocalVariable> findCreatedHere() {
         if (!isCreator) return null;
+        if (initial == null) return null;
         LValue created = initial.getCreatedLValue();
         if (!(created instanceof LocalVariable)) return null;
         return ListFactory.newList((LocalVariable) created);

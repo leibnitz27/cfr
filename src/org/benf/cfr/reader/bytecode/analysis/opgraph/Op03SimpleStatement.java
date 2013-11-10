@@ -20,10 +20,11 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -889,12 +890,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *
      * a1 = new foo(x,y,z)
      */
-    public static void condenseConstruction(List<Op03SimpleStatement> statements) {
+    public static void condenseConstruction(DCCommonState state, List<Op03SimpleStatement> statements) {
         CreationCollector creationCollector = new CreationCollector();
         for (Op03SimpleStatement statement : statements) {
             statement.findCreation(creationCollector);
         }
-        creationCollector.condenseConstructions();
+        creationCollector.condenseConstructions(state);
     }
 
     /*
@@ -1208,7 +1209,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         WildcardMatch wcm = new WildcardMatch();
 
-        logger.fine("Collapse assignment into conditional " + ifStatement);
         if (!(appropriateForIfAssignmentCollapse1(ifStatement) ||
                 appropriateForIfAssignmentCollapse2(ifStatement))) return;
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
@@ -2052,7 +2052,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                                                  Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
 
         final InstrIndex startIndex = start.getIndex();
-        logger.fine("Is this a do loop start ? " + start);
         List<Op03SimpleStatement> backJumpSources = start.getSources();
         if (backJumpSources.isEmpty()) {
             throw new ConfusedCFRException("Node doesn't have ANY sources! " + start);
@@ -2186,7 +2185,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                                                     BlockIdentifierFactory blockIdentifierFactory,
                                                     Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
         final InstrIndex startIndex = start.getIndex();
-        logger.fine("Is this a while loop start ? " + start);
         List<Op03SimpleStatement> backJumpSources = start.getSources();
         backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
             @Override
@@ -2962,8 +2960,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             joinStatement.sources.clear();
             joinStatement.sources.addAll(tmp);
 
-            logger.info("IfStatement targets : " + ifStatement.targets);
-
             /*
              * And now we need to reapply LValue condensing in the region! :(
              */
@@ -3405,8 +3401,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     }
 
-    public static void identifyFinally(CFRState cfrState, Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
-        if (!cfrState.getBooleanOpt(CFRState.DECODE_FINALLY)) return;
+    public static void identifyFinally(Options options, Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+        if (!options.getBooleanOpt(Options.DECODE_FINALLY)) return;
         /* Get all the try statements, get their catches.  For all the EXIT points to the catches, try to identify
          * a common block of code (either before a throw, return or goto.)
          * Be careful, if a finally block contains a throw, this will mess up...
@@ -3599,8 +3595,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *
      * Remove the catch block and try statement.
      */
-    public static void removeSynchronizedCatchBlocks(CFRState cfrState, List<Op03SimpleStatement> in) {
-        if (!cfrState.getBooleanOpt(CFRState.TIDY_MONITORS)) return;
+    public static void removeSynchronizedCatchBlocks(Options options, List<Op03SimpleStatement> in) {
+        if (!options.getBooleanOpt(Options.TIDY_MONITORS)) return;
         // find all the block statements which are the first statement in a CATCHBLOCK.
         List<Op03SimpleStatement> catchStarts = Functional.filter(in, new FindBlockStarts(BlockType.CATCHBLOCK));
         if (catchStarts.isEmpty()) return;

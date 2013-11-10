@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -62,6 +63,12 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return new ComparisonOperation(cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op);
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        lhs.collectTypeUsages(collector);
+        rhs.collectTypeUsages(collector);
     }
 
     @Override

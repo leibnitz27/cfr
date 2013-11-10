@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.annotations;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -21,5 +22,9 @@ public class ElementValueEnum implements ElementValue {
     @Override
     public Dumper dump(Dumper d) {
         return d.print(className).print('.').print(valueName);
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
     }
 }

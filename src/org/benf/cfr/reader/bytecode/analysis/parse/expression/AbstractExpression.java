@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.StdOutDumper;
@@ -22,8 +23,15 @@ public abstract class AbstractExpression implements Expression {
         this.inferredJavaType = inferredJavaType;
     }
 
+    /*
     protected String typeToString() {
         return inferredJavaType.toString();
+    }
+    */
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(inferredJavaType.getJavaTypeInstance());
     }
 
     @Override
@@ -58,9 +66,7 @@ public abstract class AbstractExpression implements Expression {
 
     @Override
     public final String toString() {
-        Dumper d = new ToStringDumper();
-        d.print(getClass().getSimpleName()).print(": ").dump(this);
-        return d.toString();
+        return ToStringDumper.toString(this);
     }
 
     public abstract boolean equals(Object o);

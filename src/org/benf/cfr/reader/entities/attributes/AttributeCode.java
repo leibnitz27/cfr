@@ -8,7 +8,6 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
-import org.benf.cfr.reader.util.getopt.CFRState;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -76,7 +75,7 @@ public class AttributeCode extends Attribute {
     }
 
     public Op04StructuredStatement analyse() {
-        return codeAnalyser.getAnalysis();
+        return codeAnalyser.getAnalysis(getConstantPool().getDCCommonState());
     }
 
     public ConstantPool getConstantPool() {
@@ -112,7 +111,7 @@ public class AttributeCode extends Attribute {
 
     @Override
     public Dumper dump(Dumper d) {
-        return codeAnalyser.getAnalysis().dump(d);
+        return codeAnalyser.getAnalysis(getConstantPool().getDCCommonState()).dump(d);
     }
 
     @Override

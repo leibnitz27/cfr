@@ -12,9 +12,11 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +28,7 @@ import java.util.Set;
  * Date: 13/07/2012
  * Time: 07:49
  */
-public class MethodPrototype {
+public class MethodPrototype implements TypeUsageCollectable {
     private final List<FormalTypeParameter> formalTypeParameters;
     private final List<JavaTypeInstance> args;
     private final Set<Integer> hidden = SetFactory.newSet();
@@ -62,6 +64,13 @@ public class MethodPrototype {
         this.classFile = classFile;
     }
 
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(result);
+        collector.collect(args);
+        collector.collectFrom(formalTypeParameters);
+    }
+
     public void hide(int x) {
         hidden.add(x);
     }
@@ -77,12 +86,12 @@ public class MethodPrototype {
             boolean first = true;
             for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
                 first = CommaHelp.comma(first, d);
-                d.print(formalTypeParameter.toString());
+                d.dump(formalTypeParameter);
             }
             d.print("> ");
         }
         if (!isConstructor.isConstructor()) {
-            d.print(result.toString()).print(" ");
+            d.dump(result).print(" ");
         }
         d.print(methName).print("(");
         /* We don't get a vararg type to change itself, as it's a function of the method, not the type
@@ -101,9 +110,9 @@ public class MethodPrototype {
                 if (!(arg instanceof JavaArrayTypeInstance)) {
                     throw new ConfusedCFRException("VARARGS method doesn't have an array as last arg!!");
                 }
-                d.print(((JavaArrayTypeInstance) arg).toVarargString());
+                ((JavaArrayTypeInstance) arg).toVarargString(d);
             } else {
-                d.print(arg.toString());
+                d.dump(arg);
             }
             d.print(" ").dump(parameterLValues.get(i).getName());
         }
@@ -361,15 +370,19 @@ public class MethodPrototype {
         return false;
     }
 
-    @Override
-    public String toString() {
+    public String getComparableString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getName()).append('(');
         for (JavaTypeInstance arg : args) {
-            sb.append(arg).append(" ");
+            sb.append(arg.getRawName()).append(" ");
         }
         sb.append(')');
         return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        throw new IllegalStateException();
     }
 
     public boolean equalsGeneric(MethodPrototype other) {

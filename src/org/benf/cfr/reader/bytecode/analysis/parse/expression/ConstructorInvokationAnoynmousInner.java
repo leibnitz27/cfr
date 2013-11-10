@@ -17,6 +17,7 @@ import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnonymousInner;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -29,49 +30,61 @@ import java.util.List;
  */
 public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvokation {
     private final MemberFunctionInvokation constructorInvokation;
+    private final ClassFile classFile;
 
     public ConstructorInvokationAnoynmousInner(MemberFunctionInvokation constructorInvokation,
-                                               InferredJavaType inferredJavaType, List<Expression> args) {
+                                               InferredJavaType inferredJavaType, List<Expression> args,
+                                               DCCommonState dcCommonState) {
         super(inferredJavaType, constructorInvokation.getFunction(), args);
         this.constructorInvokation = constructorInvokation;
         /*
          * As much as I'd rather not tie this to its use, we have to make sure that the target variables etc
          * are available at the time of usage, so we can hide anonymous inner member clones.
          */
-        ClassFile classFile = constructorInvokation.getCp().getCFRState().getClassFile(constructorInvokation.getMethodPrototype().getReturnType());
+        this.classFile = dcCommonState.getClassFile(constructorInvokation.getMethodPrototype().getReturnType());
         if (classFile != null) {
             classFile.noteAnonymousUse(this);
         }
     }
 
+    protected ConstructorInvokationAnoynmousInner(ConstructorInvokationAnoynmousInner other, CloneHelper cloneHelper) {
+        super(other, cloneHelper);
+        this.constructorInvokation = (MemberFunctionInvokation) cloneHelper.replaceOrClone(other.constructorInvokation);
+        this.classFile = other.classFile;
+    }
+
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ConstructorInvokationAnoynmousInner((MemberFunctionInvokation) cloneHelper.replaceOrClone(constructorInvokation), getInferredJavaType(), cloneHelper.replaceOrClone(getArgs()));
+        return new ConstructorInvokationAnoynmousInner(this, cloneHelper);
     }
 
     @Override
     public Dumper dump(Dumper d) {
         // We need the inner classes on the anonymous class (!)
         ConstantPool cp = constructorInvokation.getCp();
-        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(getTypeInstance());
+
+        ClassFile anonymousClassFile = cp.getDCCommonState().getClassFile(getTypeInstance());
+        if (anonymousClassFile != classFile) {
+            throw new IllegalStateException("Inner class got unexpected class file - revert this change");
+        }
 
         d.print("new ");
         ClassFileDumperAnonymousInner cfd = new ClassFileDumperAnonymousInner();
         List<Expression> args = getArgs();
         MethodPrototype prototype = this.constructorInvokation.getMethodPrototype();
         try {
-            prototype = anonymousClassFile.getMethodByPrototype(prototype).getMethodPrototype();
+            if (classFile != null) prototype = classFile.getMethodByPrototype(prototype).getMethodPrototype();
         } catch (NoSuchMethodException e) {
         }
 
-        cfd.dumpWithArgs(anonymousClassFile, prototype, args, false, d);
+        cfd.dumpWithArgs(classFile, prototype, args, false, d);
         d.removePendingCarriageReturn();
         return d;
     }
 
     public Dumper dumpForEnum(Dumper d) {
-        ConstantPool cp = constructorInvokation.getCp();
-        ClassFile anonymousClassFile = cp.getCFRState().getClassFile(getTypeInstance());
+        // ConstantPool cp = constructorInvokation.getCp();
+        ClassFile anonymousClassFile = classFile; //cp.getCFRState().getClassFile(getTypeInstance());
         ClassFileDumperAnonymousInner cfd = new ClassFileDumperAnonymousInner();
         List<Expression> args = getArgs();
 

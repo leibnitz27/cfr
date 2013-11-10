@@ -18,7 +18,6 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 
@@ -49,7 +48,7 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
         InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
         List<Expression> args = getArgs();
 
-        d.print("new ").print(clazz.toString()).print("(");
+        d.print("new ").dump(clazz).print("(");
         boolean first = true;
         int start = innerClassInfo.isHideSyntheticThis() ? 1 : 0;
         for (int i = start; i < args.size(); ++i) {

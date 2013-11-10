@@ -1,22 +1,16 @@
 package org.benf.cfr.reader.entities.constantpool;
 
-import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.entities.ClassCache;
+import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
-import org.benf.cfr.reader.util.getopt.CFRState;
-import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -31,7 +25,8 @@ public class ConstantPool {
 
     private final long length;
     private final List<ConstantPoolEntry> entries;
-    private final CFRState cfrState;
+    //    private final Options options;
+    private final DCCommonState dcCommonState;
     private final ClassCache classCache;
     private final ClassFile classFile;
     private String comparisonKey;
@@ -39,21 +34,22 @@ public class ConstantPool {
     private final int idx = sidx++;
     private static int sidx = 0;
 
-    public ConstantPool(ClassFile classFile, CFRState cfrState, ByteData raw, short count) {
+    public ConstantPool(ClassFile classFile, DCCommonState dcCommonState, ByteData raw, short count) {
         this.classFile = classFile;
-        this.cfrState = cfrState;
+//        this.options = options;
         ArrayList<ConstantPoolEntry> res = new ArrayList<ConstantPoolEntry>();
         count--;
         res.ensureCapacity(count);
 
         length = processRaw(raw, count, res);
         entries = res;
-        this.classCache = cfrState.getClassCache();
+        this.dcCommonState = dcCommonState;
+        this.classCache = dcCommonState.getClassCache();
         this.isLoaded = true;
     }
 
-    public CFRState getCFRState() {
-        return cfrState;
+    public DCCommonState getDCCommonState() {
+        return dcCommonState;
     }
 
     public boolean isLoaded() {

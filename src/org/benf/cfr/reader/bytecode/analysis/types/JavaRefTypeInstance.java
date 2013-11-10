@@ -1,11 +1,16 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
-import org.benf.cfr.reader.entities.ClassCache;
+import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.Map;
 
@@ -17,37 +22,29 @@ import java.util.Map;
  */
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
-    private final String displayableName;
+    private final String shortName; // may not be unique
     private final InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
-    private final CFRState cfrState;
+    //    private final Options options;
+    private final DCCommonState dcCommonState; // Shouldn't need this here...
     private BindingSuperContainer cachedBindingSupers = BindingSuperContainer.POISON;
 
-    private JavaRefTypeInstance(ConstantPool cp, String className, ClassCache classCache) {
+    private JavaRefTypeInstance(String className, DCCommonState dcCommonState) {
         InnerClassInfo innerClassInfo = InnerClassInfo.NOT;
         // We should be careful to ONLY check for "$" here, as we'll eliminate it elsewhere.
+        this.dcCommonState = dcCommonState;
         if (className.contains("$")) {
             String outer = className.substring(0, className.lastIndexOf('$'));
-            JavaRefTypeInstance outerClassTmp = classCache.getRefClassFor(cp, outer);
+            JavaRefTypeInstance outerClassTmp = dcCommonState.getClassCache().getRefClassFor(outer);
             innerClassInfo = new RefTypeInnerClassInfo(outerClassTmp);
         }
         this.className = className;
+        this.shortName = getShortName(className);
         this.innerClassInfo = innerClassInfo;
-        classCache.markClassNameUsed(cp, this);
-        this.displayableName = classCache.getDisplayableClassName(className);
-        this.cfrState = classCache.getCfrState();
-    }
-
-    private String truncate(String hay, String needle) {
-        int idx = hay.lastIndexOf(needle);
-        if (idx == -1) return hay;
-        return hay.substring(idx + 1);
     }
 
     @Override
     public String suggestVarName() {
-        String displayName = this.displayableName;
-        displayName = truncate(displayName, ".");
-        displayName = truncate(displayName, "$");
+        String displayName = this.shortName;
         if (displayName.isEmpty()) return null;
         char[] chars = displayName.toCharArray();
         chars[0] = Character.toLowerCase(chars[0]);
@@ -57,9 +54,9 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     private JavaRefTypeInstance(String className, String displayableName, JavaRefTypeInstance[] supers) {
         this.innerClassInfo = InnerClassInfo.NOT;
+        this.dcCommonState = null; // TODO : Wrong.
         this.className = className;
-        this.displayableName = displayableName;
-        this.cfrState = null;
+        this.shortName = displayableName;
         Map<JavaTypeInstance, JavaGenericRefTypeInstance> tmp = MapFactory.newMap();
         Map<JavaTypeInstance, BindingSuperContainer.Route> routes = MapFactory.newMap();
         for (JavaRefTypeInstance supr : supers) {
@@ -73,8 +70,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     /*
      * Only call from constPool cache.
      */
-    public static JavaRefTypeInstance create(ConstantPool cp, String rawClassName, ClassCache classCache) {
-        return new JavaRefTypeInstance(cp, rawClassName, classCache);
+    public static JavaRefTypeInstance create(String rawClassName, DCCommonState dcCommonState) {
+        return new JavaRefTypeInstance(rawClassName, dcCommonState);
     }
 
     /*
@@ -90,8 +87,15 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+        String res = typeUsageInformation.getName(this);
+        if (res == null) throw new IllegalStateException();
+        d.print(res);
+    }
+
+    @Override
     public String toString() {
-        return displayableName;
+        return new ToStringDumper().dump(this).toString();
     }
 
     @Override
@@ -107,6 +111,10 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     @Override
     public String getRawName() {
         return className;
+    }
+
+    public String getRawShortName() {
+        return shortName;
     }
 
     @Override
@@ -208,9 +216,21 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     public ClassFile getClassFile() {
-        if (cfrState == null) return null;
-        ClassFile classFile = cfrState.getClassFile(this);
+        if (dcCommonState == null) return null;
+        ClassFile classFile = dcCommonState.getClassFile(this);
         return classFile;
+    }
+
+    private static String getShortName(String fullClassName) {
+        fullClassName = fullClassName.replace('$', '.');
+        int idxlast = fullClassName.lastIndexOf('.');
+        String partname = idxlast == -1 ? fullClassName : fullClassName.substring(idxlast + 1);
+        return partname;
+    }
+
+    @Override
+    public void collectInto(TypeUsageCollector typeUsageCollector) {
+        typeUsageCollector.collectRefType(this);
     }
 
     private static class RefTypeInnerClassInfo implements InnerClassInfo {
@@ -267,4 +287,5 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             return hideSyntheticThis;
         }
     }
+
 }

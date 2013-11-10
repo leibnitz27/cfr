@@ -34,10 +34,10 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
             ClassSignature signature = classFile.getClassSignature();
             if (signature.getInterfaces().isEmpty()) {
                 JavaTypeInstance superclass = signature.getSuperClass();
-                d.print(superclass.toString());
+                d.dump(superclass);
             } else {
                 JavaTypeInstance interfaceType = signature.getInterfaces().get(0);
-                d.print(interfaceType.toString());
+                d.dump(interfaceType);
             }
         }
         if (!(isEnum && args.isEmpty())) {

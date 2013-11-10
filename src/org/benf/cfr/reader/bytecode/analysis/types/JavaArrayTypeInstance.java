@@ -1,5 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -22,26 +27,30 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+        toCommonString(getNumArrayDimensions(), d);
+    }
+
+    @Override
     public String toString() {
-        return toCommonString(getNumArrayDimensions());
+        return new ToStringDumper().dump(this).toString();
     }
 
-    private String toCommonString(int numDims) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(underlyingType.getArrayStrippedType().toString());
+    private void toCommonString(int numDims, Dumper d) {
+        d.dump(underlyingType.getArrayStrippedType());
         for (int x = 0; x < numDims; ++x) {
-            sb.append("[]");
+            d.print("[]");
         }
-        return sb.toString();
     }
 
-    public String toVarargString() {
-        return toCommonString(getNumArrayDimensions() - 1) + " ...";
+    public void toVarargString(Dumper d) {
+        toCommonString(getNumArrayDimensions() - 1, d);
+        d.print(" ...");
     }
 
     @Override
     public String getRawName() {
-        return toString();
+        return new ToStringDumper().dump(this).toString();
     }
 
     @Override
@@ -108,6 +117,11 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     @Override
     public RawJavaType getRawTypeOfSimpleType() {
         return underlyingType.getRawTypeOfSimpleType();
+    }
+
+    @Override
+    public void collectInto(TypeUsageCollector typeUsageCollector) {
+        typeUsageCollector.collect(underlyingType);
     }
 
     @Override

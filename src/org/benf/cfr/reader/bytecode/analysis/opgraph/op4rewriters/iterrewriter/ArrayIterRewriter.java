@@ -18,7 +18,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.En
 import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.List;
 
@@ -29,15 +29,17 @@ import java.util.List;
  * Time: 05:49
  */
 public class ArrayIterRewriter implements Op04Rewriter {
-    private final CFRState state;
+    private final Options options;
+    private final ClassFileVersion classFileVersion;
 
-    public ArrayIterRewriter(CFRState state) {
-        this.state = state;
+    public ArrayIterRewriter(Options options, ClassFileVersion classFileVersion) {
+        this.options = options;
+        this.classFileVersion = classFileVersion;
     }
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        if (!state.getBooleanOpt(CFRState.ARRAY_ITERATOR)) return;
+        if (!options.getBooleanOpt(Options.ARRAY_ITERATOR, classFileVersion)) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;

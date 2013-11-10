@@ -271,9 +271,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     /* The assignment between stackSSAlabel and alias can be elided, and
                      * referenced to stackSSALabel can be replaced with references to alias.
                      */
-                    logger.info("We can replace " + stackSSALabel + " with " + multi.getValue().expression);
                     found.put(stackSSALabel, multi.getValue());
-                    logger.info("And then subsequently " + alias);
                     aliasReplacements.put(stackSSALabel, new LValueExpression(alias));
                 }
             }

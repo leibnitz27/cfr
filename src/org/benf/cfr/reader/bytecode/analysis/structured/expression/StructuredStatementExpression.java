@@ -12,8 +12,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.ToStringDumper;
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,6 +37,11 @@ public class StructuredStatementExpression extends AbstractExpression {
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return this;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        content.collectTypeUsages(collector);
     }
 
     @Override

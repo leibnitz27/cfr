@@ -47,7 +47,7 @@ public class ConstantPoolUtils {
                     if (idxGen == -1) {
                         // Append rest, treat as if no generics.
                         already += tok.substring(idxStart, tok.length());
-                        return cp.getClassCache().getRefClassFor(cp, already);
+                        return cp.getClassCache().getRefClassFor(already);
                     }
                     /*
                      * At this point we're discarding the outer generics info - that's not good....
@@ -57,12 +57,12 @@ public class ConstantPoolUtils {
                     break;
                 }
             }
-            JavaRefTypeInstance clazzType = cp.getClassCache().getRefClassFor(cp, already);
+            JavaRefTypeInstance clazzType = cp.getClassCache().getRefClassFor(already);
             return new JavaGenericRefTypeInstance(clazzType, genericTypes);
         } else if (isTemplate) {
             return new JavaGenericPlaceholderTypeInstance(tok, cp);
         } else {
-            return cp.getClassCache().getRefClassFor(cp, tok);
+            return cp.getClassCache().getRefClassFor(tok);
         }
     }
 

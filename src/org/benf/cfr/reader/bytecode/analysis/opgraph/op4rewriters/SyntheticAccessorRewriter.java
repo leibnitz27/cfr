@@ -14,7 +14,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -26,8 +25,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.AccessFlagMethod;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.getopt.CFRState;
 
 import java.util.List;
 import java.util.Map;
@@ -40,11 +39,11 @@ import java.util.Map;
  */
 public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewriter {
 
-    private final CFRState cfrState;
+    private final DCCommonState state;
     private final JavaTypeInstance thisClassType;
 
-    public SyntheticAccessorRewriter(CFRState cfrState, JavaTypeInstance thisClassType) {
-        this.cfrState = cfrState;
+    public SyntheticAccessorRewriter(DCCommonState state, JavaTypeInstance thisClassType) {
+        this.state = state;
         this.thisClassType = thisClassType;
     }
 
@@ -127,7 +126,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         boolean parent = tgtType.getInnerClassHereInfo().isTransitiveInnerClassOf(thisClassType);
         if (!(child || parent)) return null;
 
-        ClassFile otherClass = cfrState.getClassFile(tgtType);
+        ClassFile otherClass = state.getClassFile(tgtType);
         JavaTypeInstance otherType = otherClass.getClassType();
         MethodPrototype otherPrototype = functionInvokation.getFunction().getMethodPrototype();
         List<Expression> appliedArgs = functionInvokation.getArgs();

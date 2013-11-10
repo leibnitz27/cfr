@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -111,7 +112,7 @@ public class CreationCollector {
     /*
     *
     */
-    public void condenseConstructions() {
+    public void condenseConstructions(DCCommonState dcCommonState) {
 
         for (Triple construction : collectedConstructions) {
             LValue lValue = construction.getlValue();
@@ -149,7 +150,8 @@ public class CreationCollector {
                 constructorInvokation = new ConstructorInvokationAnoynmousInner(
                         memberFunctionInvokation,
                         inferredJavaType,
-                        memberFunctionInvokation.getArgs());
+                        memberFunctionInvokation.getArgs(),
+                        dcCommonState);
             } else {
                 constructorInvokation = new ConstructorInvokationSimple(
                         memberFunctionInvokation,

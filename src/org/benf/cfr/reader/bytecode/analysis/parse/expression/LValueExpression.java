@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -28,6 +29,11 @@ public class LValueExpression extends AbstractExpression {
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return new LValueExpression(cloneHelper.replaceOrClone(lValue));
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        lValue.collectTypeUsages(collector);
     }
 
     @Override

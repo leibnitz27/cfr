@@ -2,10 +2,13 @@ package org.benf.cfr.reader;
 
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.getopt.BadParametersException;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.StdOutDumper;
@@ -25,22 +28,32 @@ public class Main {
 
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
-            CFRState params = getOptParser.parse(args, CFRState.getFactory());
-            ClassFile c = params.getClassFileMaybePath(params.getFileName());
-            // We set the class file version for the analysis, so any unspecified parameters
-            // can default to a class file appropriate version.
-            params.setClassFileVersion(c.getClassFileVersion());
+            Options options = getOptParser.parse(args, Options.getFactory());
+
+            DCCommonState dcCommonState = new DCCommonState(options);
+            String path = options.getFileName();
+            ClassFile c = dcCommonState.getClassFileMaybePath(path);
+            dcCommonState.configureWith(c);
+
             // This may seem odd, but we want to make sure we're analysing the version
             // from the cache.
             try {
-                c = params.getClassFile(c.getClassType());
-                if (params.analyseInnerClasses()) c.loadInnerClasses(params);
+                c = dcCommonState.getClassFile(c.getClassType());
+                if (options.analyseInnerClasses()) {
+                    c.loadInnerClasses(dcCommonState);
+                }
             } catch (CannotLoadClassException e) {
             }
             // THEN analyse.
-            c.analyseTop(params);
-            Dumper d = new StdOutDumper();
-            String methname = params.getMethodName();
+            c.analyseTop(dcCommonState);
+            /*
+             * Perform a pass to determine what imports / classes etc we used / failed.
+             */
+            TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
+            c.collectTypeUsages(collectingDumper);
+
+            Dumper d = new StdOutDumper(collectingDumper.getTypeUsageInformation());
+            String methname = options.getMethodName();
             if (methname == null) {
                 c.dump(d);
             } else {
@@ -49,7 +62,7 @@ public class Main {
                         method.dump(d, true);
                     }
                 } catch (NoSuchMethodException e) {
-                    throw new BadParametersException("No such method '" + methname + "'.", CFRState.getFactory());
+                    throw new BadParametersException("No such method '" + methname + "'.", Options.getFactory());
                 }
             }
             d.print("");

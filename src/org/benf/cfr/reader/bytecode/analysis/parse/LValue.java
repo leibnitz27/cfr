@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumpable;
 
 /**
@@ -15,7 +16,7 @@ import org.benf.cfr.reader.util.output.Dumpable;
  * Time: 18:04
  * To change this template use File | Settings | File Templates.
  */
-public interface LValue extends Dumpable, DeepCloneable<LValue> {
+public interface LValue extends Dumpable, DeepCloneable<LValue>, TypeUsageCollectable {
     int getNumberOfCreators();
 
     <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector<T> lValueAssigmentCollector);

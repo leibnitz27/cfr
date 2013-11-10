@@ -4,7 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -20,27 +20,25 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
     private static final AccessFlag[] dumpableAccessFlagsClass = new AccessFlag[]{
             AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
     };
-    private final CFRState cfrState;
+    private final Options options;
 
-    public ClassFileDumperNormal(CFRState cfrState) {
-        this.cfrState = cfrState;
+    public ClassFileDumperNormal(Options options) {
+        this.options = options;
     }
 
     private void dumpHeader(ClassFile c, Dumper d) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsClass));
+        d.print(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsClass));
 
         ClassSignature signature = c.getClassSignature();
 
-        sb.append("class ").append(c.getThisClassConstpoolEntry().getTypeInstance());
-        sb.append(getFormalParametersText(signature));
-        sb.append("\n");
-        d.print(sb.toString());
+        d.print("class ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
+        getFormalParametersText(signature, d);
+        d.print("\n");
 
         JavaTypeInstance superClass = signature.getSuperClass();
         if (superClass != null) {
             if (!superClass.getRawName().equals("java.lang.Object")) {
-                d.print("extends " + superClass + "\n");
+                d.print("extends ").dump(superClass).print("\n");
             }
         }
 
@@ -50,7 +48,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
             int size = interfaces.size();
             for (int x = 0; x < size; ++x) {
                 JavaTypeInstance iface = interfaces.get(x);
-                d.print("" + iface + (x < (size - 1) ? ",\n" : "\n"));
+                d.dump(iface).print((x < (size - 1) ? ",\n" : "\n"));
             }
         }
         d.removePendingCarriageReturn().print(" ");
@@ -60,9 +58,9 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
         ConstantPool cp = classFile.getConstantPool();
         if (!innerClass) {
-            dumpTopHeader(cfrState, d);
+            dumpTopHeader(options, d);
             d.print("package ").print(classFile.getThisClassConstpoolEntry().getPackageName()).endCodeln().newln();
-            dumpImports(d, cp.getClassCache(), classFile);
+            dumpImports(d, classFile);
         }
 
         dumpAnnotations(classFile, d);

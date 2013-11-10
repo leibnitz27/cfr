@@ -15,6 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.Predicate;
@@ -317,6 +318,10 @@ public class WildcardMatch {
         }
 
         @Override
+        public void collectTypeUsages(TypeUsageCollector collector) {
+        }
+
+        @Override
         public LValue deepClone(CloneHelper cloneHelper) {
             throw new UnsupportedOperationException();
         }
@@ -469,6 +474,9 @@ public class WildcardMatch {
             throw new UnsupportedOperationException();
         }
 
+        @Override
+        public void collectTypeUsages(TypeUsageCollector collector) {
+        }
     }
 
     public class ExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {

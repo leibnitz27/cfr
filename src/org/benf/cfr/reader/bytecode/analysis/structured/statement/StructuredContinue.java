@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -33,6 +34,10 @@ public class StructuredContinue extends AbstractStructuredContinue {
             dumper.print("continue " + continueTgt.getName() + ";\n");
         }
         return dumper;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
     }
 
     @Override

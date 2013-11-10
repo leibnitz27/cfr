@@ -3,24 +3,24 @@ package org.benf.cfr.reader.bytecode;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.iterrewriter.ArrayIterRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredFakeDecompFailure;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
-import org.benf.cfr.reader.util.DecompilerComment;
-import org.benf.cfr.reader.util.DecompilerComments;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.Troolean;
+import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
-import org.benf.cfr.reader.util.getopt.CFRState;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 import org.benf.cfr.reader.util.output.StdOutDumper;
@@ -69,54 +69,58 @@ public class CodeAnalyser {
         this.method = method;
     }
 
-    public Op04StructuredStatement getAnalysis() {
-        if (analysed == null) {
-            try {
-                Troolean aggressive = cp.getCFRState().getTrooleanOpt(CFRState.FORCE_TOPSORT);
-                boolean fellToAggressive = false;
-                Pair<DecompilerComments, Op04StructuredStatement> res = null;
-                if (aggressive == Troolean.FALSE || aggressive == Troolean.NEITHER) {
-                    try {
-                        res = getAnalysisInner(false);
-                        if (!res.getSecond().isFullyStructured()) {
-                            if (aggressive == Troolean.NEITHER) {
-                                aggressive = Troolean.TRUE;
-                                fellToAggressive = true;
-                            }
-                        }
-                    } catch (RuntimeException e) {
+    public Op04StructuredStatement getAnalysis(DCCommonState dcCommonState) {
+        if (analysed != null) return analysed;
+
+        Options options = dcCommonState.getOptions();
+        try {
+            Troolean aggressive = options.getTrooleanOpt(Options.FORCE_TOPSORT);
+            boolean fellToAggressive = false;
+            Pair<DecompilerComments, Op04StructuredStatement> res = null;
+            if (aggressive == Troolean.FALSE || aggressive == Troolean.NEITHER) {
+                try {
+                    res = getAnalysisInner(dcCommonState, false);
+                    if (!res.getSecond().isFullyStructured()) {
                         if (aggressive == Troolean.NEITHER) {
                             aggressive = Troolean.TRUE;
                             fellToAggressive = true;
-                        } else {
-                            throw e;
                         }
                     }
+                } catch (RuntimeException e) {
+                    if (aggressive == Troolean.NEITHER) {
+                        aggressive = Troolean.TRUE;
+                        fellToAggressive = true;
+                    } else {
+                        throw e;
+                    }
                 }
-                // Fail, and fall back to aggressive topological sort?
-                if (aggressive == Troolean.TRUE) {
-                    res = getAnalysisInner(true);
-                }
-                DecompilerComments comments = res.getFirst();
-                if (fellToAggressive) comments.addComment(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
-                if (cp.getCFRState().getBooleanOpt(CFRState.DECOMPILER_COMMENTS)) {
-                    method.setComments(comments);
-                }
-                analysed = res.getSecond();
-            } catch (RuntimeException e) {
-                CFRState cfrState = cp.getCFRState();
-                if (cfrState.getBooleanOpt(CFRState.ALLOW_PARTIAL_FAILURE)) {
-                    analysed = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
-                } else {
-                    throw e;
-                }
+            }
+            // Fail, and fall back to aggressive topological sort?
+            if (aggressive == Troolean.TRUE) {
+                res = getAnalysisInner(dcCommonState, true);
+            }
+            DecompilerComments comments = res.getFirst();
+            if (fellToAggressive) comments.addComment(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
+            if (options.getBooleanOpt(Options.DECOMPILER_COMMENTS)) {
+                method.setComments(comments);
+            }
+            analysed = res.getSecond();
+        } catch (RuntimeException e) {
+            if (options.getBooleanOpt(Options.ALLOW_PARTIAL_FAILURE)) {
+                analysed = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
+            } else {
+                throw e;
             }
         }
         return analysed;
     }
 
-    private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(boolean aggressive) {
-        CFRState cfrState = cp.getCFRState();
+    private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(DCCommonState dcCommonState, boolean aggressive) {
+
+        ClassFile classFile = method.getClassFile();
+        ClassFileVersion classFileVersion = classFile.getClassFileVersion();
+
+        Options options = dcCommonState.getOptions();
         ByteData rawCode = originalCodeAttribute.getRawData();
         long codeLength = originalCodeAttribute.getCodeLength();
         ArrayList<Op01WithProcessedDataAndByteJumps> instrs = new ArrayList<Op01WithProcessedDataAndByteJumps>();
@@ -126,7 +130,7 @@ public class CodeAnalyser {
         int idx = 1;
         int offset = 0;
         DecompilerComments comments = new DecompilerComments();
-        Dumper debugDumper = new StdOutDumper();
+        Dumper debugDumper = new StdOutDumper(new TypeUsageInformationEmpty());
 
         // We insert a fake NOP right at the start, so that we always know that each operation has a valid
         // parent.  This sentinel assumption is used when inserting try { catch blocks.
@@ -184,7 +188,7 @@ public class CodeAnalyser {
 
 //        RawCombinedExceptions rawCombinedExceptions = new RawCombinedExceptions(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
 
-        if (cfrState.getShowOps() == SHOW_L2_RAW) {
+        if (options.getShowOps() == SHOW_L2_RAW) {
             debugDumper.print("Op2 statements:\n");
             debugDumper.dump(op2list);
             debugDumper.newln().newln();
@@ -197,7 +201,7 @@ public class CodeAnalyser {
             exceptions.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
         }
 
-        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength);
+        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, dcCommonState);
         lutByOffset = null; // No longer valid.
 
 
@@ -207,7 +211,7 @@ public class CodeAnalyser {
         // stacks.
         Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
 
-        if (cfrState.getShowOps() == SHOW_L2_OPS) {
+        if (options.getShowOps() == SHOW_L2_OPS) {
             debugDumper.print("Op2 statements:\n");
             debugDumper.dump(op2list);
             debugDumper.newln().newln();
@@ -225,10 +229,10 @@ public class CodeAnalyser {
         // Discover slot re-use, infer invisible constructor parameters, etc.
         Op02WithProcessedDataAndRefs.discoverStorageLiveness(method, op2list);
 
-        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory);
+        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState);
 
 
-        if (cfrState.getShowOps() == SHOW_L3_RAW) {
+        if (options.getShowOps() == SHOW_L3_RAW) {
             debugDumper.print("Raw Op3 statements:\n");
             for (Op03SimpleStatement node : op03SimpleParseNodes) {
                 node.dumpInner(debugDumper);
@@ -236,7 +240,7 @@ public class CodeAnalyser {
             debugDumper.print("\n\n");
         }
 
-        if (cfrState.getShowOps() == SHOW_L3_ORDERED) {
+        if (options.getShowOps() == SHOW_L3_ORDERED) {
             debugDumper.newln().newln();
             debugDumper.print("Linked Op3 statements:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -277,7 +281,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
 
 
-        if (cfrState.getShowOps() == SHOW_L3_CAUGHT) {
+        if (options.getShowOps() == SHOW_L3_CAUGHT) {
             debugDumper.newln().newln();
             debugDumper.print("After catchblocks.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -287,11 +291,11 @@ public class CodeAnalyser {
         //      Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
 
         // Rewrite new / constructor pairs.
-        Op03SimpleStatement.condenseConstruction(op03SimpleParseNodes);
+        Op03SimpleStatement.condenseConstruction(dcCommonState, op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
 
-        Op03SimpleStatement.identifyFinally(cfrState, method, op03SimpleParseNodes, blockIdentifierFactory);
+        Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
 
         op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
@@ -361,7 +365,7 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.optimiseForTypes(op03SimpleParseNodes);
 
-        if (cfrState.getShowOps() == SHOW_L3_JUMPS) {
+        if (options.getShowOps() == SHOW_L3_JUMPS) {
             debugDumper.newln().newln();
             debugDumper.print("After jumps.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -389,7 +393,7 @@ public class CodeAnalyser {
         // Normally we'd do it AFTER loops.
         Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
 
-        if (cfrState.getShowOps() == SHOW_L3_LOOPS1) {
+        if (options.getShowOps() == SHOW_L3_LOOPS1) {
             debugDumper.newln().newln();
             debugDumper.print("After loops.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -397,7 +401,7 @@ public class CodeAnalyser {
 
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        if (cfrState.getShowOps() == SHOW_L3_EXCEPTION_BLOCKS) {
+        if (options.getShowOps() == SHOW_L3_EXCEPTION_BLOCKS) {
             debugDumper.newln().newln();
             debugDumper.print("After exception.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -413,7 +417,7 @@ public class CodeAnalyser {
 
         // TODO : I think this is now redundant.
         logger.info("removeSynchronizedCatchBlocks");
-        Op03SimpleStatement.removeSynchronizedCatchBlocks(cfrState, op03SimpleParseNodes);
+        Op03SimpleStatement.removeSynchronizedCatchBlocks(options, op03SimpleParseNodes);
 
         // identify conditionals which are of the form if (a) { xx } [ else { yy } ]
         // where xx and yy have no GOTOs in them.
@@ -440,12 +444,12 @@ public class CodeAnalyser {
 
         // Introduce java 6 style for (x : array)
         logger.info("rewriteArrayForLoops");
-        if (cfrState.getBooleanOpt(CFRState.ARRAY_ITERATOR)) {
+        if (options.getBooleanOpt(Options.ARRAY_ITERATOR, classFileVersion)) {
             Op03SimpleStatement.rewriteArrayForLoops(op03SimpleParseNodes);
         }
         // and for (x : iterable)
         logger.info("rewriteIteratorWhileLoops");
-        if (cfrState.getBooleanOpt(CFRState.COLLECTION_ITERATOR)) {
+        if (options.getBooleanOpt(Options.COLLECTION_ITERATOR, classFileVersion)) {
             Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
         }
 
@@ -467,12 +471,12 @@ public class CodeAnalyser {
 //            node.dumpInner(dumper);
 //        }
 
-        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter(cfrState));
+        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter(options));
 //        dumper.print("Final Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
 
 
-        if (cfrState.getShowOps() == SHOW_L4_FINAL_OP3) {
+        if (options.getShowOps() == SHOW_L4_FINAL_OP3) {
             debugDumper.newln().newln();
             debugDumper.print("Final Op3 statements:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -488,7 +492,7 @@ public class CodeAnalyser {
         Op04StructuredStatement.removeStructuredGotos(block);
         Op04StructuredStatement.removePointlessBlocks(block);
         Op04StructuredStatement.removePointlessReturn(block);
-        Op04StructuredStatement.removePrimitiveDeconversion(cfrState, method, block);
+        Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
 
         /*
          * If we can't fully structure the code, we bow out here.
@@ -502,8 +506,8 @@ public class CodeAnalyser {
 
         // Replace with a more generic interface, etc.
 
-        new SwitchStringRewriter(cfrState).rewrite(block);
-        new SwitchEnumRewriter(cfrState).rewrite(block);
+        new SwitchStringRewriter(options, classFileVersion).rewrite(block);
+        new SwitchEnumRewriter(dcCommonState, classFileVersion).rewrite(block);
 
         // These should logically be here, but the current versions are better!!
 //        new ArrayIterRewriter(cfrState).rewrite(block);
@@ -517,16 +521,16 @@ public class CodeAnalyser {
 
 //        Op04StructuredStatement.inlineSyntheticAccessors(cfrState, method, block);
 
-        if (cfrState.removeBoilerplate()) {
+        if (options.removeBoilerplate()) {
             if (this.method.isConstructor()) Op04StructuredStatement.removeConstructorBoilerplate(block);
         }
 
-        Op04StructuredStatement.rewriteLambdas(cfrState, method, block);
+        Op04StructuredStatement.rewriteLambdas(dcCommonState, method, block);
 
         // Some misc translations.
-        Op04StructuredStatement.removeUnnecessaryVarargArrays(cfrState, method, block);
+        Op04StructuredStatement.removeUnnecessaryVarargArrays(options, method, block);
 
-        Op04StructuredStatement.removePrimitiveDeconversion(cfrState, method, block);
+        Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
         // Tidy variable names
         Op04StructuredStatement.tidyVariableNames(method, block);
 

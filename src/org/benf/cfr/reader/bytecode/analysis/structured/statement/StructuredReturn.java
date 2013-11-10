@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -37,6 +38,12 @@ public class StructuredReturn extends AbstractStructuredStatement implements Box
     public StructuredReturn(Expression value, JavaTypeInstance fnReturnType) {
         this.value = value;
         this.fnReturnType = fnReturnType;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(fnReturnType);
+        collector.collectFrom(value);
     }
 
     @Override
