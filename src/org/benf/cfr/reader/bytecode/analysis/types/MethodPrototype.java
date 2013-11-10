@@ -382,7 +382,7 @@ public class MethodPrototype implements TypeUsageCollectable {
 
     @Override
     public String toString() {
-        throw new IllegalStateException();
+        return getComparableString();
     }
 
     public boolean equalsGeneric(MethodPrototype other) {

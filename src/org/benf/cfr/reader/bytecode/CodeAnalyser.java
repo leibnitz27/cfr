@@ -328,7 +328,8 @@ public class CodeAnalyser {
 
         if (aggressive) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
-            op03SimpleParseNodes = Op03Blocks.topologicalSort(op03SimpleParseNodes);
+            op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
+            op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
         }
 

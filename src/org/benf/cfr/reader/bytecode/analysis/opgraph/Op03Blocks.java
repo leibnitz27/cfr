@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -20,7 +21,7 @@ import java.util.*;
  * Time: 06:39
  */
 public class Op03Blocks {
-    public static List<Op03SimpleStatement> topologicalSort(final List<Op03SimpleStatement> statements) {
+    public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements) {
         /*
          *
          */
@@ -55,7 +56,11 @@ public class Op03Blocks {
             List<Op03SimpleStatement> prevList = start.getSources();
             List<Block3> prevBlocks = ListFactory.newList(prevList.size());
             for (Op03SimpleStatement prev : prevList) {
-                prevBlocks.add(ends.get(prev));
+                Block3 prevEnd = ends.get(prev);
+                if (prevEnd == null) {
+                    throw new IllegalStateException("Topological sort failed, explicitly disable");
+                }
+                prevBlocks.add(prevEnd);
             }
 
             Op03SimpleStatement end = block.getEnd();
@@ -267,6 +272,11 @@ public class Op03Blocks {
         }
 
         public void addSources(List<Block3> sources) {
+            for (Block3 source : sources) {
+                if (source == null) {
+                    throw new IllegalStateException();
+                }
+            }
             this.sources.addAll(sources);
         }
 
