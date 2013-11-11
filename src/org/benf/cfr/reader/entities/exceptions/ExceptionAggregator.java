@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -111,7 +112,8 @@ public class ExceptionAggregator {
                                final Map<Integer, Integer> lutByOffset,
                                final Map<Integer, Integer> lutByIdx,
                                List<Op01WithProcessedDataAndByteJumps> instrs,
-                               final ConstantPool cp) {
+                               final ConstantPool cp,
+                               final Method method) {
 
         rawExceptions = Functional.filter(rawExceptions, new ValidException());
         if (rawExceptions.isEmpty()) return;

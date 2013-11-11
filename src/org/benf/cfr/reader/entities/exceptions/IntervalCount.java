@@ -29,6 +29,20 @@ public class IntervalCount {
             op.put(from, true);
         } else {
             from = prevEntry.getKey();
+            /*
+             * If the new exception entry is entirely subsumed within from -> next ket, then we have
+             * a totally redundant exception entry.
+             */
+            Map.Entry<Short, Boolean> nextEntry = op.ceilingEntry((short) (from + 1));
+            if (nextEntry == null) {
+                throw new IllegalStateException("Internal exception pattern invalid");
+            }
+            if (!nextEntry.getValue()) { // next is a ket
+                if (nextEntry.getKey() >= to) {
+                    // Entirely subsumed within previous entry, redundant.
+                    return null;
+                }
+            }
         }
 
         NavigableMap<Short, Boolean> afterMap = op.tailMap(from, false);

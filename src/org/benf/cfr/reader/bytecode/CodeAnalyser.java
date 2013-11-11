@@ -184,7 +184,7 @@ public class CodeAnalyser {
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
 
         // These are 'processed' exceptions, which we can use to lay out code.
-        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
+        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp, method);
 
 //        RawCombinedExceptions rawCombinedExceptions = new RawCombinedExceptions(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
 
