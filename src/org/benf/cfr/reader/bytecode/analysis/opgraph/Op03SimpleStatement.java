@@ -2147,9 +2147,92 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
+        /*
+         * One final very grotty 'optimisation' - if there are any try blocks that began INSIDE the
+         * loop (so present in the last statement, but not in the first), shuffle the lastJump until it
+         * is after them.
+         *
+         * This (seems) to only apply to unconditionals.
+         */
+        shuntLoop:
+        if (!conditional) {
+            Set<BlockIdentifier> lastContent = SetFactory.newSet(lastJump.getBlockIdentifiers());
+            lastContent.removeAll(start.getBlockIdentifiers());
+            Set<BlockIdentifier> internalTryBlocks = SetFactory.newOrderedSet(Functional.filter(lastContent, new Predicate<BlockIdentifier>() {
+                @Override
+                public boolean test(BlockIdentifier in) {
+                    return in.getBlockType() == BlockType.TRYBLOCK;
+                }
+            }));
+            // internalTryBlocks represents try blocks which started AFTER the loop did.
+            if (internalTryBlocks.isEmpty()) break shuntLoop;
+
+            final int postBlockIdx = statements.indexOf(postBlock);
+            int lastPostBlock = postBlockIdx;
+            innerShutLoop:
+            do {
+
+                int currentIdx = lastPostBlock + 1;
+                Op03SimpleStatement stm = statements.get(lastPostBlock);
+                if (!(stm.getStatement() instanceof CatchStatement)) break innerShutLoop;
+
+                CatchStatement catchStatement = (CatchStatement) stm.getStatement();
+                BlockIdentifier catchBlockIdent = catchStatement.getCatchBlockIdent();
+                List<BlockIdentifier> tryBlocks = Functional.map(catchStatement.getExceptions(), new UnaryFunction<ExceptionGroup.Entry, BlockIdentifier>() {
+                    @Override
+                    public BlockIdentifier invoke(ExceptionGroup.Entry arg) {
+                        return arg.getTryBlockIdentifier();
+                    }
+                });
+                if (!internalTryBlocks.containsAll(tryBlocks)) break innerShutLoop;
+                while (currentIdx < statements.size() && statements.get(currentIdx).getBlockIdentifiers().contains(catchBlockIdent)) {
+                    currentIdx++;
+                }
+                lastPostBlock = currentIdx;
+            } while (true);
+            if (lastPostBlock != postBlockIdx) {
+                final Op03SimpleStatement afterNewJump = statements.get(lastPostBlock);
+                // Find after statement.  Insert a jump forward (out) here, and then insert
+                // a synthetic lastJump.  The previous lastJump should now jump to our synthetic
+                // We can insert a BACK jump to lastJump's target
+                //
+                Op03SimpleStatement newBackJump = new Op03SimpleStatement(afterNewJump.getBlockIdentifiers(), new GotoStatement(), afterNewJump.getIndex().justBefore());
+                newBackJump.addTarget(start);
+                newBackJump.addSource(lastJump);
+                lastJump.replaceTarget(start, newBackJump);
+                start.replaceSource(lastJump, newBackJump);
+                /*
+                 * If the instruction we're being placed infront of has a direct precedent, then that needs to get transformed
+                 * into a goto (actually a break, but that will happen later).  Otherwise, it will be fine.
+                 */
+                Op03SimpleStatement preNewJump = statements.get(lastPostBlock - 1);
+                if (afterNewJump.getSources().contains(preNewJump)) {
+                    Op03SimpleStatement interstit = new Op03SimpleStatement(preNewJump.getBlockIdentifiers(), new GotoStatement(), newBackJump.getIndex().justBefore());
+                    preNewJump.replaceTarget(afterNewJump, interstit);
+                    afterNewJump.replaceSource(preNewJump, interstit);
+                    interstit.addSource(preNewJump);
+                    interstit.addTarget(afterNewJump);
+                    statements.add(lastPostBlock, interstit);
+                    lastPostBlock++;
+                }
+
+                statements.add(lastPostBlock, newBackJump);
+                lastJump = newBackJump;
+                postBlock = afterNewJump;
+                /*
+                 * Now mark everything we just walked into the loop body.
+                 */
+                for (int idx = postBlockIdx; idx <= lastPostBlock; ++idx) {
+                    statements.get(idx).markBlock(blockIdentifier);
+                }
+            }
+        }
+
         statements.add(statements.indexOf(start), doStatement);
         lastJump.markBlockStatement(blockIdentifier, null, lastJump, statements);
         start.markFirstStatementInBlock(blockIdentifier);
+
+
         postBlock.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, postBlock);
 
@@ -2311,6 +2394,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         Op03SimpleStatement lastInBlock = statements.get(lastIdx);
         Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
+        //
         start.markBlockStatement(blockIdentifier, lastInBlock, blockEnd, statements);
         statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
         blockEnd.markPostBlock(blockIdentifier);
