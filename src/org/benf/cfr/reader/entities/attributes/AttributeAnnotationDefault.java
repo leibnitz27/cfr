@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.annotations.ElementValue;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -51,5 +52,10 @@ public class AttributeAnnotationDefault extends Attribute {
 
     public ElementValue getElementValue() {
         return elementValue;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        elementValue.collectTypeUsages(collector);
     }
 }

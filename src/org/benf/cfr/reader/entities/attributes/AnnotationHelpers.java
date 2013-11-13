@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities.attributes;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.annotations.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
@@ -75,7 +76,12 @@ public class AnnotationHelpers {
             }
             case 'c': {
                 ConstantPoolEntryUTF8 className = cp.getUTF8Entry(raw.getS2At(offset));
-                return new Pair<Long, ElementValue>(offset + 2, new ElementValueClass(className.getValue()));
+                String typeName = className.getValue();
+                if (typeName.equals("V")) {
+                    return new Pair<Long, ElementValue>(offset + 2, new ElementValueClass(RawJavaType.VOID));
+                } else {
+                    return new Pair<Long, ElementValue>(offset + 2, new ElementValueClass(ConstantPoolUtils.decodeTypeTok(typeName, cp)));
+                }
             }
             case '@': {
                 Pair<Long, AnnotationTableEntry> ape = getAnnotation(raw, offset, cp);

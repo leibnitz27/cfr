@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities.annotations;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -10,18 +11,19 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 19:24
  */
 public class ElementValueClass implements ElementValue {
-    private final String className;
+    private final JavaTypeInstance classType;
 
-    public ElementValueClass(String className) {
-        this.className = className;
+    public ElementValueClass(JavaTypeInstance classType) {
+        this.classType = classType;
     }
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print(className);
+        return d.dump(classType).print(".class");
     }
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(classType);
     }
 }
