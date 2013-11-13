@@ -91,7 +91,8 @@ public class StringBuilderRewriter implements ExpressionRewriter {
             } else if (lhs instanceof ConstructorInvokationSimple) {
                 ConstructorInvokationSimple newObject = (ConstructorInvokationSimple) lhs;
                 String rawName = newObject.getTypeInstance().getRawName();
-                if (rawName.equals(TypeConstants.stringBuilderName)) {
+                if (rawName.equals(TypeConstants.stringBuilderName) ||
+                        rawName.equals(TypeConstants.stringBufferName)) {
                     return genStringConcat(reverseAppendChain);
                 } else {
                     return null;
