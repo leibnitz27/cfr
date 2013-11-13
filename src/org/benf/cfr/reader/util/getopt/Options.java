@@ -119,6 +119,8 @@ public class Options {
             "comments", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Troolean, Options> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Troolean, Options>(
             "forcetopsort", defaultNeitherTrooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Troolean, Options> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean, Options>(
+            "forceexceptionprune", defaultNeitherTrooleanDecoder);
 
     public Options(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -192,7 +194,7 @@ public class Options {
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT, DUMP_CLASS_PATH,
-                    DECOMPILER_COMMENTS, ALLOW_WHOLE_FAILURE, FORCE_TOPSORT);
+                    DECOMPILER_COMMENTS, ALLOW_WHOLE_FAILURE, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS);
         }
 
         @Override
