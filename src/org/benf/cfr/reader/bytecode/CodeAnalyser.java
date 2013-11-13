@@ -88,7 +88,6 @@ public class CodeAnalyser {
         }
 
         if (failed != null || !coderes.isFullyStructured()) {
-            failed = null;
             // Try to override some options for aggressive behaviour
             MutableOptions mutableOptions = new MutableOptions(options);
             List<DecompilerComment> extraComments = ListFactory.newList();
@@ -102,6 +101,7 @@ public class CodeAnalyser {
                     coderes = res.getSecond();
                     comments = res.getFirst();
                     comments.addComments(extraComments);
+                    failed = null;
                 } catch (RuntimeException e) {
                     failed = e;
                     coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
@@ -121,8 +121,12 @@ public class CodeAnalyser {
         return analysed;
     }
 
-    private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(DCCommonState dcCommonState, Options options) {
+    /*
+     * Note that the options passed in here only apply to this function - don't pass around.
+     */
+    private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(DCCommonState dcCommonState, Options passoptions) {
 
+        Options options = dcCommonState.getOptions();
         ClassFile classFile = method.getClassFile();
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
@@ -202,7 +206,7 @@ public class CodeAnalyser {
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
         //
-        if (options.getTrooleanOpt(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE) {
+        if (passoptions.getTrooleanOpt(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE) {
             /*
              * Aggressive exception pruning.  try { x } catch (e) { throw e } , when NOT covered by another exception handler,
              * is a pointless construct.  It also leads to some very badly structured code.
@@ -339,7 +343,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        if (options.getTrooleanOpt(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
+        if (passoptions.getTrooleanOpt(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
