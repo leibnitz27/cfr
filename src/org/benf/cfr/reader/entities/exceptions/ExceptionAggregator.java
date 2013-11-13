@@ -23,6 +23,7 @@ import java.util.*;
 public class ExceptionAggregator {
 
     private final List<ExceptionGroup> exceptionsByRange = ListFactory.newList();
+    private final Method method;
 
     private static class CompareExceptionTablesByRange implements Comparator<ExceptionTableEntry> {
         @Override
@@ -114,6 +115,7 @@ public class ExceptionAggregator {
                                List<Op01WithProcessedDataAndByteJumps> instrs,
                                final ConstantPool cp,
                                final Method method) {
+        this.method = method;
 
         rawExceptions = Functional.filter(rawExceptions, new ValidException());
         if (rawExceptions.isEmpty()) return;
@@ -344,6 +346,54 @@ public class ExceptionAggregator {
             group.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
             if (group.getEntries().isEmpty()) {
                 groupIterator.remove();
+            }
+        }
+    }
+
+    /*
+     * Remove any exception handlers which can't possibly do anything useful.
+     *
+     * i.e.
+     *
+     * try {
+     *   x
+     * } catch (e) {
+     *   throw e;
+     * }
+     *
+     * We have to be very careful here, as it's not valid to do this if the exception handler
+     * is one of multiple exception handlers for the same block - i.e.
+     *
+     * try {
+     *  x
+     * } catch (e) {
+     *  throw e
+     * } catch (f) {
+     *  // do stuff
+     * }
+     *
+     * for any given catch-rethrow block, we can remove it IF the range covered by its try handler is not covered
+     * by any other try handler.
+     *
+     * We should then re-cover the try block with the coverage which is applied to the exception handler (if any).
+     *
+     */
+    public void aggressivePruning(final Map<Integer, Integer> lutByOffset,
+                                  final Map<Integer, Integer> lutByIdx,
+                                  List<Op01WithProcessedDataAndByteJumps> instrs) {
+        Iterator<ExceptionGroup> groupIterator = exceptionsByRange.iterator();
+        while (groupIterator.hasNext()) {
+            ExceptionGroup group = groupIterator.next();
+            List<ExceptionGroup.Entry> entries = group.getEntries();
+            if (entries.size() != 1) continue;
+            ExceptionGroup.Entry entry = entries.get(0);
+            int handler = entry.getBytecodeIndexHandler();
+            Integer index = lutByOffset.get(handler);
+            if (index == null) continue;
+            Op01WithProcessedDataAndByteJumps handlerStartInstr = instrs.get(index);
+            if (handlerStartInstr.getJVMInstr() == JVMInstr.ATHROW) {
+                groupIterator.remove();
+                continue;
             }
         }
     }
