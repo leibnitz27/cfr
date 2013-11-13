@@ -10,6 +10,7 @@ public class DecompilerComment {
 
     public static DecompilerComment UNABLE_TO_STRUCTURE = new DecompilerComment("Unable to fully structure code");
     public static DecompilerComment AGGRESSIVE_TOPOLOGICAL_SORT = new DecompilerComment("Used aggressive block sorting");
+    public static DecompilerComment PRUNE_EXCEPTIONS = new DecompilerComment("Pruned unnecessary exceptions");
 
     private final String comment;
 

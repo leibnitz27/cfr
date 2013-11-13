@@ -25,6 +25,7 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -49,7 +50,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
     @Override
     public void rewrite(Op04StructuredStatement root) {
         Options options = dcCommonState.getOptions();
-        if (!options.getBooleanOpt(Options.ENUM_SWITCH, classFileVersion)) return;
+        if (!options.getBooleanOpt(OptionsImpl.ENUM_SWITCH, classFileVersion)) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;

@@ -18,6 +18,7 @@ import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -538,10 +539,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         try {
             CodeAnalyserWholeClass.wholeClassAnalysisPass2(this, state);
         } catch (RuntimeException e) {
-            if (!options.getBooleanOpt(Options.ALLOW_WHOLE_FAILURE)) {
-                throw new RuntimeException("Whole class analysis failure - hide with " + Options.ALLOW_WHOLE_FAILURE, e);
+            if (!options.getBooleanOpt(OptionsImpl.ALLOW_WHOLE_FAILURE)) {
+                throw new RuntimeException("Whole class analysis failure - hide with " + OptionsImpl.ALLOW_WHOLE_FAILURE, e);
             }
-            addComment("Exception performing whole class analysis ignored - use " + Options.ALLOW_WHOLE_FAILURE.getName() + " to show");
+            addComment("Exception performing whole class analysis ignored - use " + OptionsImpl.ALLOW_WHOLE_FAILURE.getName() + " to show");
         }
 
         if (innerClassesByTypeInfo == null) return;
@@ -587,10 +588,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         try {
             CodeAnalyserWholeClass.wholeClassAnalysisPass1(this, state);
         } catch (RuntimeException e) {
-            if (!options.getBooleanOpt(Options.ALLOW_WHOLE_FAILURE)) {
-                throw new RuntimeException("Whole class analysis failure - hide with " + Options.ALLOW_WHOLE_FAILURE, e);
+            if (!options.getBooleanOpt(OptionsImpl.ALLOW_WHOLE_FAILURE)) {
+                throw new RuntimeException("Whole class analysis failure - hide with " + OptionsImpl.ALLOW_WHOLE_FAILURE, e);
             }
-            addComment("Exception performing whole class analysis ignored - use " + Options.ALLOW_WHOLE_FAILURE.getName() + " to show");
+            addComment("Exception performing whole class analysis ignored - use " + OptionsImpl.ALLOW_WHOLE_FAILURE.getName() + " to show");
         }
 
     }

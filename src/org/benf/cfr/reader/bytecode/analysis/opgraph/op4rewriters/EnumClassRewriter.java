@@ -22,6 +22,7 @@ import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperEnum;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class EnumClassRewriter {
     public static void rewriteEnumClass(ClassFile classFile, Options options) {
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
-        if (!options.getBooleanOpt(Options.ENUM_SUGAR, classFileVersion)) return;
+        if (!options.getBooleanOpt(OptionsImpl.ENUM_SUGAR, classFileVersion)) return;
 
         JavaTypeInstance classType = classFile.getClassType();
         JavaTypeInstance baseType = classFile.getBaseClassType();

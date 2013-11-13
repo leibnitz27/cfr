@@ -4,12 +4,12 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.getopt.BadParametersException;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.StdOutDumper;
 
@@ -28,7 +28,7 @@ public class Main {
 
         // Load the file, and pass the raw byteStream to the ClassFile constructor
         try {
-            Options options = getOptParser.parse(args, Options.getFactory());
+            Options options = getOptParser.parse(args, OptionsImpl.getFactory());
 
             DCCommonState dcCommonState = new DCCommonState(options);
             String path = options.getFileName();
@@ -62,7 +62,7 @@ public class Main {
                         method.dump(d, true);
                     }
                 } catch (NoSuchMethodException e) {
-                    throw new BadParametersException("No such method '" + methname + "'.", Options.getFactory());
+                    throw new BadParametersException("No such method '" + methname + "'.", OptionsImpl.getFactory());
                 }
             }
             d.print("");

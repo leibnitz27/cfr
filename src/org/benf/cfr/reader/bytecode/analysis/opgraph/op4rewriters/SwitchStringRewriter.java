@@ -19,6 +19,7 @@ import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -87,7 +88,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        if (!options.getBooleanOpt(Options.STRING_SWITCH, classFileVersion)) return;
+        if (!options.getBooleanOpt(OptionsImpl.STRING_SWITCH, classFileVersion)) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;

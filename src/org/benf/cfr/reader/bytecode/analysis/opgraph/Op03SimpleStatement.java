@@ -25,6 +25,7 @@ import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -3486,7 +3487,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public static void identifyFinally(Options options, Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
-        if (!options.getBooleanOpt(Options.DECODE_FINALLY)) return;
+        if (!options.getBooleanOpt(OptionsImpl.DECODE_FINALLY)) return;
         /* Get all the try statements, get their catches.  For all the EXIT points to the catches, try to identify
          * a common block of code (either before a throw, return or goto.)
          * Be careful, if a finally block contains a throw, this will mess up...
@@ -3680,7 +3681,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * Remove the catch block and try statement.
      */
     public static void removeSynchronizedCatchBlocks(Options options, List<Op03SimpleStatement> in) {
-        if (!options.getBooleanOpt(Options.TIDY_MONITORS)) return;
+        if (!options.getBooleanOpt(OptionsImpl.TIDY_MONITORS)) return;
         // find all the block statements which are the first statement in a CATCHBLOCK.
         List<Op03SimpleStatement> catchStarts = Functional.filter(in, new FindBlockStarts(BlockType.CATCHBLOCK));
         if (catchStarts.isEmpty()) return;

@@ -11,6 +11,7 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.configuration.ConfigCallback;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -243,7 +244,7 @@ public class DCCommonState {
 
     private Map<String, String> getClassPathClasses() {
         if (classToPathMap == null) {
-            boolean dump = options.getBooleanOpt(Options.DUMP_CLASS_PATH);
+            boolean dump = options.getBooleanOpt(OptionsImpl.DUMP_CLASS_PATH);
 
             classToPathMap = MapFactory.newMap();
             String classPath = System.getProperty("java.class.path") + ":" + System.getProperty("sun.boot.class.path");

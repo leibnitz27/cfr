@@ -15,12 +15,13 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
+import org.benf.cfr.reader.util.getopt.MutableOptions;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 import org.benf.cfr.reader.util.output.StdOutDumper;
@@ -73,54 +74,58 @@ public class CodeAnalyser {
         if (analysed != null) return analysed;
 
         Options options = dcCommonState.getOptions();
+
+        DecompilerComments comments = null;
+        Op04StructuredStatement coderes = null;
+        RuntimeException failed = null;
         try {
-            Troolean aggressive = options.getTrooleanOpt(Options.FORCE_TOPSORT);
-            boolean fellToAggressive = false;
-            Pair<DecompilerComments, Op04StructuredStatement> res = null;
-            if (aggressive == Troolean.FALSE || aggressive == Troolean.NEITHER) {
+            Pair<DecompilerComments, Op04StructuredStatement> res = getAnalysisInner(dcCommonState, options);
+            coderes = res.getSecond();
+            comments = res.getFirst();
+        } catch (RuntimeException e) {
+            failed = e;
+            coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
+        }
+
+        if (failed != null || !coderes.isFullyStructured()) {
+            failed = null;
+            // Try to override some options for aggressive behaviour
+            MutableOptions mutableOptions = new MutableOptions(options);
+            List<DecompilerComment> extraComments = ListFactory.newList();
+            if (mutableOptions.override(OptionsImpl.FORCE_TOPSORT, true))
+                extraComments.add(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
+            if (mutableOptions.override(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, true))
+                extraComments.add(DecompilerComment.PRUNE_EXCEPTIONS);
+            if (!extraComments.isEmpty()) {
                 try {
-                    res = getAnalysisInner(dcCommonState, false);
-                    if (!res.getSecond().isFullyStructured()) {
-                        if (aggressive == Troolean.NEITHER) {
-                            aggressive = Troolean.TRUE;
-                            fellToAggressive = true;
-                        }
-                    }
+                    Pair<DecompilerComments, Op04StructuredStatement> res = getAnalysisInner(dcCommonState, mutableOptions);
+                    coderes = res.getSecond();
+                    comments = res.getFirst();
+                    comments.addComments(extraComments);
                 } catch (RuntimeException e) {
-                    if (aggressive == Troolean.NEITHER) {
-                        aggressive = Troolean.TRUE;
-                        fellToAggressive = true;
-                    } else {
-                        throw e;
-                    }
+                    failed = e;
+                    coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
                 }
             }
-            // Fail, and fall back to aggressive topological sort?
-            if (aggressive == Troolean.TRUE) {
-                res = getAnalysisInner(dcCommonState, true);
-            }
-            DecompilerComments comments = res.getFirst();
-            if (fellToAggressive) comments.addComment(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
-            if (options.getBooleanOpt(Options.DECOMPILER_COMMENTS)) {
-                method.setComments(comments);
-            }
-            analysed = res.getSecond();
-        } catch (RuntimeException e) {
-            if (options.getBooleanOpt(Options.ALLOW_PARTIAL_FAILURE)) {
-                analysed = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
-            } else {
-                throw e;
-            }
         }
+
+        if (failed != null && !options.getBooleanOpt(OptionsImpl.ALLOW_PARTIAL_FAILURE)) {
+            throw failed;
+        }
+
+        if (comments != null) {
+            method.setComments(comments);
+        }
+
+        analysed = coderes;
         return analysed;
     }
 
-    private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(DCCommonState dcCommonState, boolean aggressive) {
+    private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(DCCommonState dcCommonState, Options options) {
 
         ClassFile classFile = method.getClassFile();
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
-        Options options = dcCommonState.getOptions();
         ByteData rawCode = originalCodeAttribute.getRawData();
         long codeLength = originalCodeAttribute.getCodeLength();
         ArrayList<Op01WithProcessedDataAndByteJumps> instrs = new ArrayList<Op01WithProcessedDataAndByteJumps>();
@@ -197,7 +202,7 @@ public class CodeAnalyser {
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
         //
-        if (aggressive) {
+        if (options.getTrooleanOpt(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE) {
             /*
              * Aggressive exception pruning.  try { x } catch (e) { throw e } , when NOT covered by another exception handler,
              * is a pointless construct.  It also leads to some very badly structured code.
@@ -334,7 +339,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        if (aggressive) {
+        if (options.getTrooleanOpt(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
@@ -453,12 +458,12 @@ public class CodeAnalyser {
 
         // Introduce java 6 style for (x : array)
         logger.info("rewriteArrayForLoops");
-        if (options.getBooleanOpt(Options.ARRAY_ITERATOR, classFileVersion)) {
+        if (options.getBooleanOpt(OptionsImpl.ARRAY_ITERATOR, classFileVersion)) {
             Op03SimpleStatement.rewriteArrayForLoops(op03SimpleParseNodes);
         }
         // and for (x : iterable)
         logger.info("rewriteIteratorWhileLoops");
-        if (options.getBooleanOpt(Options.COLLECTION_ITERATOR, classFileVersion)) {
+        if (options.getBooleanOpt(OptionsImpl.COLLECTION_ITERATOR, classFileVersion)) {
             Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
         }
 

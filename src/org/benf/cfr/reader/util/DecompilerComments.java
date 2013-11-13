@@ -3,6 +3,7 @@ package org.benf.cfr.reader.util;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -24,6 +25,10 @@ public class DecompilerComments implements Dumpable {
 
     public void addComment(DecompilerComment comment) {
         commentList.add(comment);
+    }
+
+    public void addComments(Collection<DecompilerComment> comments) {
+        commentList.addAll(comments);
     }
 
     @Override

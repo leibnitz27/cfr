@@ -17,6 +17,7 @@ import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
 import java.util.Set;
@@ -49,20 +50,20 @@ public class CodeAnalyserWholeClass {
          *
          * (sign of this would be Map<K,V> etc hanging around).
          */
-        if (options.getBooleanOpt(Options.REMOVE_BAD_GENERICS)) {
+        if (options.getBooleanOpt(OptionsImpl.REMOVE_BAD_GENERICS)) {
             removeIllegalGenerics(classFile, options);
         }
 
-        if (options.getBooleanOpt(Options.SUGAR_ASSERTS)) {
+        if (options.getBooleanOpt(OptionsImpl.SUGAR_ASSERTS)) {
             resugarAsserts(classFile, options);
         }
 
-        if (options.getBooleanOpt(Options.LIFT_CONSTRUCTOR_INIT)) {
+        if (options.getBooleanOpt(OptionsImpl.LIFT_CONSTRUCTOR_INIT)) {
             liftStaticInitialisers(classFile, options);
             liftNonStaticInitialisers(classFile, options);
         }
 
-        if (options.getBooleanOpt(Options.REMOVE_BOILERPLATE)) {
+        if (options.getBooleanOpt(OptionsImpl.REMOVE_BOILERPLATE)) {
             removeBoilerplateMethods(classFile);
         }
     }
@@ -261,7 +262,7 @@ public class CodeAnalyserWholeClass {
             inlineAccessors(state, classFile);
         }
 
-        if (options.getBooleanOpt(Options.REMOVE_DEAD_METHODS)) {
+        if (options.getBooleanOpt(OptionsImpl.REMOVE_DEAD_METHODS)) {
             removeDeadMethods(classFile);
         }
 
