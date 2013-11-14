@@ -363,7 +363,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         Set<BlockIdentifier> nowCopy = SetFactory.newSet(nowIn);
         nowCopy.removeAll(wasIn);
         if (nowCopy.size() != 1) {
-            logger.warning("From " + wasIn + " to " + nowIn + " = " + nowCopy);
+//            logger.warning("From " + wasIn + " to " + nowIn + " = " + nowCopy);
             throw new ConfusedCFRException("Started " + nowCopy.size() + " blocks at once");
         }
         return nowCopy.iterator().next();

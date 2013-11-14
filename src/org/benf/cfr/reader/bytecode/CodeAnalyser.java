@@ -180,15 +180,6 @@ public class CodeAnalyser {
             }
         }
 
-        /* Extra fun.  A ret can have a jump back to the instruction immediately following the JSR that called it.
-         * So we have to search for RET instructions, then for each of them find any JSRs which could call it, and add
-         * a branch from that RET to the JSR.
-         *
-         * Good news : the JVM mandates that any two paths which reach an instruction should have the same stack depth.
-         * This applies to the targets of JSRs too. (though there's nothing stopping the target of the JSR from returning a
-         * DIFFERENT stack depth).
-         */
-        Op02WithProcessedDataAndRefs.linkRetsToJSR(op2list);
 
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
 
@@ -233,6 +224,22 @@ public class CodeAnalyser {
             debugDumper.dump(op2list);
             debugDumper.newln().newln();
         }
+
+        /* Extra fun.  A ret can have a jump back to the instruction immediately following the JSR that called it.
+         * So we have to search for RET instructions, then for each of them find any JSRs which could call it, and add
+         * a branch from that RET to the JSR.
+         *
+         * Good news : the JVM mandates that any two paths which reach an instruction should have the same stack depth.
+         * This applies to the targets of JSRs too. (though there's nothing stopping the target of the JSR from returning a
+         * DIFFERENT stack depth).
+         */
+        if (Op02WithProcessedDataAndRefs.processJSR(op2list)) {
+            // Repopulate stack info, as it will have changed, as we might have cloned instructions.
+            Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
+        }
+        // Any left overs get linked to ret.
+//        Op02WithProcessedDataAndRefs.linkRetsToJSR(op2list);
+
 
         // DFS the instructions, unlink any which aren't reachable.
         // This is neccessary because some obfuscated code (and some unobfuscated clojure!!)

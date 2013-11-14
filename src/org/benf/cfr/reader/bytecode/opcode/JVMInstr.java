@@ -232,7 +232,6 @@ public enum JVMInstr {
     POP2(0x58, 0, null, null, null, new OperationFactoryPop2()),
     PUTFIELD(0xb5, 2, null, null, RawJavaType.VOID, new OperationFactoryPutField()),
     PUTSTATIC(0xb3, 2, null, null, RawJavaType.VOID, new OperationFactoryPutStatic()),
-    // TODO : Ret isn't right.
     RET(0xa9, 1, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
     RET_WIDE(-1, 3, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
     RETURN(0xb1, 0, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),

@@ -83,6 +83,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private SSAIdentifiers<Slot> ssaIdentifiers;
     private Map<Integer, Ident> localVariablesBySlot = MapFactory.newLinkedMap();
 
+    private Op02WithProcessedDataAndRefs(Op02WithProcessedDataAndRefs other) {
+        this.instr = other.instr;
+        this.rawData = other.rawData;
+        this.index = null;
+        this.cp = other.cp;
+        this.cpEntries = other.cpEntries;
+        this.originalRawOffset = other.originalRawOffset;
+    }
+
     public Op02WithProcessedDataAndRefs(JVMInstr instr, byte[] rawData, int index, ConstantPool cp, ConstantPoolEntry[] cpEntries, int originalRawOffset) {
         this(instr, rawData, new InstrIndex(index), cp, cpEntries, originalRawOffset);
     }
@@ -96,6 +105,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         this.originalRawOffset = originalRawOffset;
     }
 
+    public void resetStackInfo() {
+        stackDepthBeforeExecution = -1;
+        stackDepthAfterExecution = -1;
+        stackConsumed.clear();
+        stackProduced.clear();
+        unconsumedJoinedStack = null;
+    }
+
     public InstrIndex getIndex() {
         return index;
     }
@@ -106,6 +123,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     public void addTarget(Op02WithProcessedDataAndRefs node) {
         targets.add(node);
+    }
+
+    public void removeTarget(Op02WithProcessedDataAndRefs node) {
+        if (!targets.remove(node)) {
+            throw new ConfusedCFRException("Invalid target, tried to remove " + node + "\nfrom " + this + "\nbut was not a target.");
+        }
     }
 
     public void addSource(Op02WithProcessedDataAndRefs node) {
@@ -657,8 +680,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case ISTORE_2:
             case ISTORE_3:
             case ISTORE_WIDE:
-//            case IINC:
-//            case IINC_WIDE:
+            case IINC:
+            case IINC_WIDE:
                 type = RawJavaType.INT;
                 break;
             case LSTORE:
@@ -726,12 +749,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FSTORE_3:
                 idx = 3;
                 break;
+            case IINC_WIDE:
+                idx = getInstrArgShort(1);
+                break;
             case ASTORE_WIDE:
             case ISTORE_WIDE:
             case LSTORE_WIDE:
             case DSTORE_WIDE:
             case FSTORE_WIDE:
-            case IINC_WIDE:
                 throw new UnsupportedOperationException("STORE_WIDE");
             default:
                 return null;
@@ -1268,6 +1293,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
 
     public static void populateStackInfo(List<Op02WithProcessedDataAndRefs> op2list, Method method) {
+        // We might have two passes if there are JSRS.  Reset.
+        for (Op02WithProcessedDataAndRefs op : op2list) {
+            op.resetStackInfo();
+        }
+
         // This dump block only exists because we're debugging bad stack size calcuations.
         Op02WithProcessedDataAndRefs o2start = op2list.get(0);
         try {
@@ -2174,6 +2204,183 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             if (op.instr == JVMInstr.RET || op.instr == JVMInstr.RET_WIDE) {
                 linkRetToJSR(op, ops);
             }
+        }
+    }
+
+    /*
+     * JSR are used in two different ways - one as an actual GOSUB simulation,
+     * and one as a faked up goto. (JSR followed by something which eventually
+     * pops and discards the callee.)
+     *
+     * The problem comes when a JSR calls itself OR performs a RET (or, heaven
+     * forfend) a RET acts as a RET for different JSRs.
+     *
+     * (fairly) naive approach - mark each instruction that is the START of a sub
+     * (i.e. the target of a JSR) as individual subs.
+     *
+     * We can work with - RETURNADDRESS can't be loaded, or used for anything other than a
+     * pop or a store.  So if we can detect which stores are used, we could work out which
+     * ret corresponds.
+     *
+     * PROBLEM : what if a store is a common target of a goto after two JSR targets?
+     */
+    public static boolean processJSR(List<Op02WithProcessedDataAndRefs> ops) {
+        List<Op02WithProcessedDataAndRefs> jsrInstrs = Functional.filter(ops, new Predicate<Op02WithProcessedDataAndRefs>() {
+            @Override
+            public boolean test(Op02WithProcessedDataAndRefs in) {
+                JVMInstr instr = in.getInstr();
+                return (instr == JVMInstr.JSR) || (instr == JVMInstr.JSR_W);
+            }
+        });
+        if (jsrInstrs.isEmpty()) return false;
+        return processJSRs(jsrInstrs, ops);
+    }
+
+    private static boolean processJSRs(List<Op02WithProcessedDataAndRefs> jsrs, List<Op02WithProcessedDataAndRefs> ops) {
+        // Find the common start instructions for a JSR (i.e. pull out the set of all targets for the JSRs
+        // Then, for each of these, find out if it's possible to get BACK to the JSR instruction without
+        // RETTING.  If that's the case, the JSR has been used as a loop, and we need to treat it as if it's just a
+        // fancy (albeit confusing) GOTO.
+        Map<Op02WithProcessedDataAndRefs, List<Op02WithProcessedDataAndRefs>> targets = Functional.groupToMapBy(jsrs, new UnaryFunction<Op02WithProcessedDataAndRefs, Op02WithProcessedDataAndRefs>() {
+            @Override
+            public Op02WithProcessedDataAndRefs invoke(Op02WithProcessedDataAndRefs arg) {
+                return arg.getTargets().get(0);
+            }
+        });
+        boolean result = false;
+        Set<Op02WithProcessedDataAndRefs> inlineCandidates = SetFactory.newSet();
+        for (final Op02WithProcessedDataAndRefs target : targets.keySet()) {
+            GraphVisitor<Op02WithProcessedDataAndRefs> gv = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(target.getTargets(), new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
+                @Override
+                public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
+                    JVMInstr instr = arg1.getInstr();
+                    if (instr == JVMInstr.RET || instr == JVMInstr.RET_WIDE) {
+                        return;
+                    }
+                    if (arg1 == target) {
+                        arg2.abort();
+                        return;
+                    }
+                    arg2.enqueue(arg1.getTargets());
+                }
+            });
+            gv.process();
+            if (gv.wasAborted()) continue;
+            // Otherwise, this set of nodes is in the subroutine.
+            Set<Op02WithProcessedDataAndRefs> nodes = SetFactory.newSet(gv.getVisitedNodes());
+            // Verify that none of these nodes has a parent NOT in the set!
+            for (Op02WithProcessedDataAndRefs node : nodes) {
+                if (!nodes.containsAll(node.getSources())) {
+                    continue;
+                }
+            }
+            // explicitly add the JSR start to the nodes.
+            nodes.add(target);
+            // Have any of these nodes already been marked as candidates?
+            if (SetUtil.hasIntersection(inlineCandidates, nodes)) {
+                continue;
+            }
+            // Ok, this is a candidate for inlining.
+            inlineCandidates.addAll(nodes);
+
+            inlineJSR(target, nodes, ops);
+            result = true;
+        }
+        return result;
+    }
+
+    private static void inlineJSR(Op02WithProcessedDataAndRefs start, Set<Op02WithProcessedDataAndRefs> nodes,
+                                  List<Op02WithProcessedDataAndRefs> ops) {
+        List<Op02WithProcessedDataAndRefs> instrs = ListFactory.newList(nodes);
+        Collections.sort(instrs, new Comparator<Op02WithProcessedDataAndRefs>() {
+            @Override
+            public int compare(Op02WithProcessedDataAndRefs o1, Op02WithProcessedDataAndRefs o2) {
+                return o1.getIndex().compareTo(o2.getIndex());
+            }
+        });
+        ops.removeAll(instrs);
+        // Take a copy, as we're going to be hacking this....
+        List<Op02WithProcessedDataAndRefs> sources = ListFactory.newList(start.getSources());
+        //
+        // Now, insert an ACONST_NULL infront of the first instruction, to fake production of the original
+        // stack value (this avoids us having inconsistent local usage, alternately we could simply pretend it
+        // never existed, but then we'd have to find the store/pop if it happened much later on.
+        //
+        Op02WithProcessedDataAndRefs newStart = new Op02WithProcessedDataAndRefs(
+                JVMInstr.ACONST_NULL,
+                null,
+                start.getIndex().justBefore(),
+                start.cp,
+                null,
+                -1); // offset is a fake, obviously, as it's synthetic.
+        instrs.add(0, newStart);
+        start.getSources().clear();
+        start.addSource(newStart);
+        newStart.addTarget(start);
+
+        for (Op02WithProcessedDataAndRefs source : sources) {
+            // For each of these JSR instructions, we want to remove it,
+            source.removeTarget(start);
+            // We take a copy of the ENTIRE instrs block, and add it inline after the JSR. The JSR is replaced
+            // with a NOP.
+            List<Op02WithProcessedDataAndRefs> instrCopy = copyBlock(instrs, source.getIndex());
+            // Find each RET in instrCopy, and point them at the node immediately following source.
+            // If there's no following instruction, there can be no ret. (cunning, eh?)
+            int idx = ops.indexOf(source) + 1;
+            if (idx < ops.size()) {
+                Op02WithProcessedDataAndRefs retTgt = ops.get(idx);
+                for (Op02WithProcessedDataAndRefs op : instrCopy) {
+                    if (op.instr == JVMInstr.RET || op.instr == JVMInstr.RET_WIDE) {
+                        op.instr = JVMInstr.GOTO;
+                        op.addTarget(retTgt);
+                        retTgt.addSource(op);
+                    }
+                }
+            }
+            /*
+             * Replace the original JSR / JSR_WIDE with a NOP.
+             */
+            source.instr = JVMInstr.NOP;
+            int sourceIdx = ops.indexOf(source);
+            ops.addAll(sourceIdx + 1, instrCopy);
+            Op02WithProcessedDataAndRefs blockStart = instrCopy.get(0);
+            blockStart.addSource(source);
+            source.addTarget(blockStart);
+        }
+    }
+
+    private static List<Op02WithProcessedDataAndRefs> copyBlock(List<Op02WithProcessedDataAndRefs> orig, InstrIndex afterThis) {
+        List<Op02WithProcessedDataAndRefs> output = ListFactory.newList(orig.size());
+        Map<Op02WithProcessedDataAndRefs, Op02WithProcessedDataAndRefs> fromTo = MapFactory.newMap();
+        for (Op02WithProcessedDataAndRefs in : orig) {
+            Op02WithProcessedDataAndRefs copy = new Op02WithProcessedDataAndRefs(in);
+            afterThis = afterThis.justAfter();
+            copy.index = afterThis;
+            fromTo.put(in, copy);
+            output.add(copy);
+        }
+        for (int x = 0, len = orig.size(); x < len; ++x) {
+            Op02WithProcessedDataAndRefs in = orig.get(x);
+            Op02WithProcessedDataAndRefs copy = output.get(x);
+            copy.exceptionGroups = ListFactory.newList(in.exceptionGroups);
+            copy.containedInTheseBlocks = ListFactory.newList(in.containedInTheseBlocks);
+            copy.catchExceptionGroups = ListFactory.newList(in.catchExceptionGroups);
+
+            // Now, create copies of the sources and targets.
+            tieUpRelations(copy.getSources(), in.getSources(), fromTo);
+            tieUpRelations(copy.getTargets(), in.getTargets(), fromTo);
+        }
+        return output;
+    }
+
+    private static void tieUpRelations(List<Op02WithProcessedDataAndRefs> out, List<Op02WithProcessedDataAndRefs> in, Map<Op02WithProcessedDataAndRefs, Op02WithProcessedDataAndRefs> map) {
+        out.clear();
+        for (Op02WithProcessedDataAndRefs i : in) {
+            Op02WithProcessedDataAndRefs mapped = map.get(i);
+            if (mapped == null) {
+                throw new ConfusedCFRException("Missing node tying up JSR block");
+            }
+            out.add(mapped);
         }
     }
 }
