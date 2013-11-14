@@ -16,5 +16,11 @@ public interface GraphVisitor<T> {
     void enqueue(Collection<? extends T> next);
 
     void process();
+
+    void abort();
+
+    boolean wasAborted();
+
+    Collection<T> getVisitedNodes();
 }
 

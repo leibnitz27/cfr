@@ -20,6 +20,7 @@ public abstract class AbstractGraphVisitorFI<T> implements GraphVisitor<T> {
     protected final LinkedList<T> toVisit = ListFactory.newLinkedList();
     private final Set<T> visited = SetFactory.newSet();
     private final BinaryProcedure<T, GraphVisitor<T>> callee;
+    private boolean aborted = false;
 
     public AbstractGraphVisitorFI(T first, BinaryProcedure<T, GraphVisitor<T>> callee) {
         add(first);
@@ -33,6 +34,22 @@ public abstract class AbstractGraphVisitorFI<T> implements GraphVisitor<T> {
             toVisit.add(next);
             visited.add(next);
         }
+    }
+
+    @Override
+    public void abort() {
+        toVisit.clear();
+        aborted = true;
+    }
+
+    @Override
+    public boolean wasAborted() {
+        return aborted;
+    }
+
+    @Override
+    public Collection<T> getVisitedNodes() {
+        return visited;
     }
 
     @Override

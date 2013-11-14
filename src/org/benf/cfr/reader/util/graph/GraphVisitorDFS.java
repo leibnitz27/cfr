@@ -22,6 +22,7 @@ public class GraphVisitorDFS<T> implements GraphVisitor<T> {
     private final BinaryProcedure<T, GraphVisitor<T>> callee;
     private final LinkedList<T> pending = ListFactory.newLinkedList();
     private final LinkedList<T> enqueued = ListFactory.newLinkedList();
+    private boolean aborted = false;
 
     public GraphVisitorDFS(T first, BinaryProcedure<T, GraphVisitor<T>> callee) {
         this.start = ListFactory.newList(first);
@@ -44,6 +45,22 @@ public class GraphVisitorDFS<T> implements GraphVisitor<T> {
         for (T t : next) enqueue(t);
     }
 
+    @Override
+    public void abort() {
+        enqueued.clear();
+        pending.clear();
+        aborted = true;
+    }
+
+    @Override
+    public boolean wasAborted() {
+        return aborted;
+    }
+
+    @Override
+    public Collection<T> getVisitedNodes() {
+        return visited;
+    }
 
     @Override
     public void process() {
