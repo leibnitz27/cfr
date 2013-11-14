@@ -2207,6 +2207,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 //        }
 //    }
 
+    private static boolean isJSR(Op02WithProcessedDataAndRefs op) {
+        JVMInstr instr = op.instr;
+        return (instr == JVMInstr.JSR) || (instr == JVMInstr.JSR_W);
+    }
+
+    private static boolean isRET(Op02WithProcessedDataAndRefs op) {
+        JVMInstr instr = op.instr;
+        return (instr == JVMInstr.RET) || (instr == JVMInstr.RET_WIDE);
+    }
+
     /*
      * JSR are used in two different ways - one as an actual GOSUB simulation,
      * and one as a faked up goto. (JSR followed by something which eventually
@@ -2228,8 +2238,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         List<Op02WithProcessedDataAndRefs> jsrInstrs = Functional.filter(ops, new Predicate<Op02WithProcessedDataAndRefs>() {
             @Override
             public boolean test(Op02WithProcessedDataAndRefs in) {
-                JVMInstr instr = in.getInstr();
-                return (instr == JVMInstr.JSR) || (instr == JVMInstr.JSR_W);
+                return isJSR(in);
             }
         });
         if (jsrInstrs.isEmpty()) return false;
@@ -2253,8 +2262,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             GraphVisitor<Op02WithProcessedDataAndRefs> gv = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(target.getTargets(), new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                 @Override
                 public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                    JVMInstr instr = arg1.getInstr();
-                    if (instr == JVMInstr.RET || instr == JVMInstr.RET_WIDE) {
+                    if (isRET(arg1)) {
                         return;
                     }
                     if (arg1 == target) {
@@ -2288,11 +2296,52 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
 
         /*
+         * If there's a JSR we couldn't handle, we might still be able to refactor it, IF it's only got one call site.
+         * (unlikely, but allows us to do nasty tricks!)
+         *
+         * Frankly, this pass is a bit of a gimmick.
+         */
+        for (final Op02WithProcessedDataAndRefs jsr : jsrs) {
+            if (!isJSR(jsr)) continue;
+            final Op02WithProcessedDataAndRefs target = jsr.targets.get(0);
+            List<Op02WithProcessedDataAndRefs> sources = targets.get(target);
+            if (sources == null || sources.size() > 1) continue;
+
+            // Process everything, but no longer abort if we cycle, just don't retrace.
+            final List<Op02WithProcessedDataAndRefs> rets = ListFactory.newList();
+            GraphVisitor<Op02WithProcessedDataAndRefs> gv = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(target.getTargets(), new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
+                @Override
+                public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
+                    if (isRET(arg1)) {
+                        rets.add(arg1);
+                        return;
+                    }
+                    if (arg1 == target) {
+                        return;
+                    }
+                    arg2.enqueue(arg1.getTargets());
+                }
+            });
+            gv.process();
+
+            int idx = ops.indexOf(jsr) + 1;
+            if (idx >= ops.size()) continue;
+            Op02WithProcessedDataAndRefs afterJsr = ops.get(idx);
+
+            for (Op02WithProcessedDataAndRefs ret : rets) {
+                ret.instr = JVMInstr.GOTO;
+                ret.targets.clear();
+                ret.addTarget(afterJsr);
+                afterJsr.addSource(ret);
+            }
+            inlineReplaceJSR(jsr, ops);
+        }
+
+        /*
          * Go through the remaining JSRs, and convert them into gotos.  Remaining RETs?
          */
         for (final Op02WithProcessedDataAndRefs jsr : jsrs) {
-            JVMInstr instr = jsr.getInstr();
-            if (!(instr == JVMInstr.JSR || instr == JVMInstr.JSR_W)) continue;
+            if (!isJSR(jsr)) continue;
             /*
              * Replace with a aconst_null, goto.
              */
@@ -2364,7 +2413,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             if (idx < ops.size()) {
                 Op02WithProcessedDataAndRefs retTgt = ops.get(idx);
                 for (Op02WithProcessedDataAndRefs op : instrCopy) {
-                    if (op.instr == JVMInstr.RET || op.instr == JVMInstr.RET_WIDE) {
+                    if (isRET(op)) {
                         op.instr = JVMInstr.GOTO;
                         op.addTarget(retTgt);
                         retTgt.addSource(op);
