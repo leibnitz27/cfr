@@ -237,8 +237,6 @@ public class CodeAnalyser {
             // Repopulate stack info, as it will have changed, as we might have cloned instructions.
             Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
         }
-        // Any left overs get linked to ret.
-//        Op02WithProcessedDataAndRefs.linkRetsToJSR(op2list);
 
 
         // DFS the instructions, unlink any which aren't reachable.

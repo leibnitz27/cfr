@@ -182,6 +182,8 @@ public class Op03Blocks {
             Block3 nextBlock = output.get(i + 1);
             patch(thisBlock, nextBlock);
         }
+        // And a final patch on the last block if it ends in a non goto back jump
+        patch(output.get(output.size() - 1), null);
 
         /*
          * Now go through, and emit the content, in order.
@@ -233,7 +235,7 @@ public class Op03Blocks {
 
         // The 'fallthrough' target is always the 0th one.
         Op03SimpleStatement fallThroughTarget = last.getTargets().get(0);
-        if (fallThroughTarget == b.getStart()) return;
+        if (b != null && fallThroughTarget == b.getStart()) return;
 
         /*
          * Ok, we have reordered something in a way that will cause problems.

@@ -2168,44 +2168,44 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return containedInTheseBlocks;
     }
 
-    /*
-     * Find which JSRs this block is the target of.  This /WILL/ get confused by nested JSRs, and REALLY confused when
-     * the ret doesn't match the JSR.  Will need to revisit.
-     */
-    private static void linkRetToJSR(Op02WithProcessedDataAndRefs ret, List<Op02WithProcessedDataAndRefs> ops) {
-        final Set<Op02WithProcessedDataAndRefs> jsrParents = SetFactory.newSet();
-
-        GraphVisitor<Op02WithProcessedDataAndRefs> graphVisitor = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(
-                ret,
-                new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
-                    @Override
-                    public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                        if (arg1.instr == JVMInstr.JSR || arg1.instr == JVMInstr.JSR_W) {
-                            jsrParents.add(arg1);
-                            return;
-                        }
-                        for (Op02WithProcessedDataAndRefs source : arg1.sources) {
-                            arg2.enqueue(source);
-                        }
-                    }
-                });
-        graphVisitor.process();
-
-        for (Op02WithProcessedDataAndRefs jsr : jsrParents) {
-            int i = ops.indexOf(jsr);
-            Op02WithProcessedDataAndRefs jsrAfter = ops.get(i + 1);
-            ret.addTarget(jsrAfter);
-            jsrAfter.addSource(ret);
-        }
-    }
-
-    public static void linkRetsToJSR(List<Op02WithProcessedDataAndRefs> ops) {
-        for (Op02WithProcessedDataAndRefs op : ops) {
-            if (op.instr == JVMInstr.RET || op.instr == JVMInstr.RET_WIDE) {
-                linkRetToJSR(op, ops);
-            }
-        }
-    }
+//    /*
+//     * Find which JSRs this block is the target of.  This /WILL/ get confused by nested JSRs, and REALLY confused when
+//     * the ret doesn't match the JSR.  Will need to revisit.
+//     */
+//    private static void linkRetToJSR(Op02WithProcessedDataAndRefs ret, List<Op02WithProcessedDataAndRefs> ops) {
+//        final Set<Op02WithProcessedDataAndRefs> jsrParents = SetFactory.newSet();
+//
+//        GraphVisitor<Op02WithProcessedDataAndRefs> graphVisitor = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(
+//                ret,
+//                new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
+//                    @Override
+//                    public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
+//                        if (arg1.instr == JVMInstr.JSR || arg1.instr == JVMInstr.JSR_W) {
+//                            jsrParents.add(arg1);
+//                            return;
+//                        }
+//                        for (Op02WithProcessedDataAndRefs source : arg1.sources) {
+//                            arg2.enqueue(source);
+//                        }
+//                    }
+//                });
+//        graphVisitor.process();
+//
+//        for (Op02WithProcessedDataAndRefs jsr : jsrParents) {
+//            int i = ops.indexOf(jsr);
+//            Op02WithProcessedDataAndRefs jsrAfter = ops.get(i + 1);
+//            ret.addTarget(jsrAfter);
+//            jsrAfter.addSource(ret);
+//        }
+//    }
+//
+//    public static void linkRetsToJSR(List<Op02WithProcessedDataAndRefs> ops) {
+//        for (Op02WithProcessedDataAndRefs op : ops) {
+//            if (op.instr == JVMInstr.RET || op.instr == JVMInstr.RET_WIDE) {
+//                linkRetToJSR(op, ops);
+//            }
+//        }
+//    }
 
     /*
      * JSR are used in two different ways - one as an actual GOSUB simulation,
@@ -2286,7 +2286,41 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             inlineJSR(target, nodes, ops);
             result = true;
         }
+
+        /*
+         * Go through the remaining JSRs, and convert them into gotos.  Remaining RETs?
+         */
+        for (final Op02WithProcessedDataAndRefs jsr : jsrs) {
+            JVMInstr instr = jsr.getInstr();
+            if (!(instr == JVMInstr.JSR || instr == JVMInstr.JSR_W)) continue;
+            /*
+             * Replace with a aconst_null, goto.
+             */
+            inlineReplaceJSR(jsr, ops);
+        }
+
         return result;
+    }
+
+    private static void inlineReplaceJSR(Op02WithProcessedDataAndRefs jsrCall, List<Op02WithProcessedDataAndRefs> ops) {
+        Op02WithProcessedDataAndRefs jsrTarget = jsrCall.getTargets().get(0);
+
+        Op02WithProcessedDataAndRefs newGoto = new Op02WithProcessedDataAndRefs(
+                JVMInstr.GOTO,
+                null,
+                jsrCall.getIndex().justAfter(),
+                jsrCall.cp,
+                null,
+                -1); // offset is a fake, obviously, as it's synthetic.
+        jsrTarget.removeSource(jsrCall);
+        jsrCall.removeTarget(jsrTarget);
+        newGoto.addTarget(jsrTarget);
+        newGoto.addSource(jsrCall);
+        jsrCall.addTarget(newGoto);
+        jsrTarget.addSource(newGoto);
+        jsrCall.instr = JVMInstr.ACONST_NULL;
+        int jsrIdx = ops.indexOf(jsrCall);
+        ops.add(jsrIdx + 1, newGoto);
     }
 
     private static void inlineJSR(Op02WithProcessedDataAndRefs start, Set<Op02WithProcessedDataAndRefs> nodes,
