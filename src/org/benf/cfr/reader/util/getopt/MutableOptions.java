@@ -23,7 +23,7 @@ public class MutableOptions implements Options {
         this.delegate = delegate;
     }
 
-    public boolean override(PermittedOptionProvider.Argument<Troolean, ?> argument, boolean value) {
+    public boolean override(PermittedOptionProvider.Argument<Troolean, Void> argument, boolean value) {
         Troolean originalValue = delegate.getOption(argument);
         if (originalValue == Troolean.NEITHER) {
             overrides.put(argument.getName(), Troolean.get(value).toString());
@@ -49,7 +49,7 @@ public class MutableOptions implements Options {
     }
 
     @Override
-    public <T> T getOption(PermittedOptionProvider.Argument<T, ?> option) {
+    public <T> T getOption(PermittedOptionProvider.Argument<T, Void> option) {
         String override = overrides.get(option.getName());
         if (override != null) {
             return option.getFn().invoke(override, null);
@@ -64,15 +64,5 @@ public class MutableOptions implements Options {
             return option.getFn().invoke(override, arg);
         }
         return delegate.getOption(option, arg);
-    }
-
-    @Override
-    public Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, ?> argument) {
-        return (Troolean) getOption(argument);
-    }
-
-    @Override
-    public int getShowOps() {
-        return delegate.getShowOps();
     }
 }

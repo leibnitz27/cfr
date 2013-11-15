@@ -16,11 +16,7 @@ public interface Options {
 
     boolean optionIsSet(PermittedOptionProvider.Argument<?, ?> option);
 
-    <T> T getOption(PermittedOptionProvider.Argument<T, ?> option);
+    <T> T getOption(PermittedOptionProvider.Argument<T, Void> option);
 
     <T, A> T getOption(PermittedOptionProvider.Argument<T, A> option, A arg);
-
-    Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, ?> argument);
-
-    int getShowOps();
 }

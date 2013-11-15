@@ -16,18 +16,16 @@ public class OptionsImpl implements Options {
     private final String methodName;  // Ugly because we confuse parameters and state.
     private final Map<String, String> opts;
 
-    private static final PermittedOptionProvider.Argument<Integer, Options> SHOWOPS = new PermittedOptionProvider.Argument<Integer, Options>(
-            "showops",
-            new BinaryFunction<String, Options, Integer>() {
-                @Override
-                public Integer invoke(String arg, Options state) {
-                    if (arg == null) return 0;
-                    int x = Integer.parseInt(arg);
-                    if (x < 0) throw new IllegalArgumentException("required int >= 0");
-                    return x;
-                }
-            }
-    );
+
+    private static final BinaryFunction<String, Void, Integer> default0intDecoder = new BinaryFunction<String, Void, Integer>() {
+        @Override
+        public Integer invoke(String arg, Void ignore) {
+            if (arg == null) return 0;
+            int x = Integer.parseInt(arg);
+            if (x < 0) throw new IllegalArgumentException("required int >= 0");
+            return x;
+        }
+    };
     private static final BinaryFunction<String, Void, Troolean> defaultNeitherTrooleanDecoder = new BinaryFunction<String, Void, Troolean>() {
         @Override
         public Troolean invoke(String arg, Void ignore) {
@@ -129,6 +127,9 @@ public class OptionsImpl implements Options {
             "forceexceptionprune", defaultNeitherTrooleanDecoder);
     public static final PermittedOptionProvider.Argument<String, Void> OUTPUT_DIR = new PermittedOptionProvider.Argument<String, Void>(
             "outputdir", defaultNullStringDecoder);
+    public static final PermittedOptionProvider.Argument<Integer, Void> SHOWOPS = new PermittedOptionProvider.Argument<Integer, Void>(
+            "showops", default0intDecoder);
+
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -147,7 +148,7 @@ public class OptionsImpl implements Options {
     }
 
     @Override
-    public <T> T getOption(PermittedOptionProvider.Argument<T, ?> option) {
+    public <T> T getOption(PermittedOptionProvider.Argument<T, Void> option) {
         return option.getFn().invoke(opts.get(option.getName()), null);
     }
 
@@ -159,16 +160,6 @@ public class OptionsImpl implements Options {
     @Override
     public boolean optionIsSet(PermittedOptionProvider.Argument<?, ?> option) {
         return opts.get(option.getName()) != null;
-    }
-
-    @Override
-    public Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, ?> argument) {
-        return argument.getFn().invoke(opts.get(argument.getName()), null);
-    }
-
-    @Override
-    public int getShowOps() {
-        return SHOWOPS.getFn().invoke(opts.get(SHOWOPS.getName()), this);
     }
 
     public static GetOptSinkFactory<Options> getFactory() {

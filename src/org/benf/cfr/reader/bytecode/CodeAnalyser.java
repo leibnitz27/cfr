@@ -128,6 +128,9 @@ public class CodeAnalyser {
     private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(DCCommonState dcCommonState, Options passoptions) {
 
         Options options = dcCommonState.getOptions();
+
+        int showOpsLevel = options.getOption(OptionsImpl.SHOWOPS);
+
         ClassFile classFile = method.getClassFile();
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
@@ -189,7 +192,7 @@ public class CodeAnalyser {
 
 //        RawCombinedExceptions rawCombinedExceptions = new RawCombinedExceptions(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
 
-        if (options.getShowOps() == SHOW_L2_RAW) {
+        if (showOpsLevel == SHOW_L2_RAW) {
             debugDumper.print("Op2 statements:\n");
             debugDumper.dump(op2list);
             debugDumper.newln().newln();
@@ -198,7 +201,7 @@ public class CodeAnalyser {
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
         //
-        if (passoptions.getTrooleanOpt(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE) {
+        if (passoptions.getOption(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE) {
             /*
              * Aggressive exception pruning.  try { x } catch (e) { throw e } , when NOT covered by another exception handler,
              * is a pointless construct.  It also leads to some very badly structured code.
@@ -220,7 +223,7 @@ public class CodeAnalyser {
         // stacks.
         Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
 
-        if (options.getShowOps() == SHOW_L2_OPS) {
+        if (showOpsLevel == SHOW_L2_OPS) {
             debugDumper.print("Op2 statements:\n");
             debugDumper.dump(op2list);
             debugDumper.newln().newln();
@@ -255,7 +258,7 @@ public class CodeAnalyser {
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState);
 
 
-        if (options.getShowOps() == SHOW_L3_RAW) {
+        if (showOpsLevel == SHOW_L3_RAW) {
             debugDumper.print("Raw Op3 statements:\n");
             for (Op03SimpleStatement node : op03SimpleParseNodes) {
                 node.dumpInner(debugDumper);
@@ -263,7 +266,7 @@ public class CodeAnalyser {
             debugDumper.print("\n\n");
         }
 
-        if (options.getShowOps() == SHOW_L3_ORDERED) {
+        if (showOpsLevel == SHOW_L3_ORDERED) {
             debugDumper.newln().newln();
             debugDumper.print("Linked Op3 statements:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -304,7 +307,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
 
 
-        if (options.getShowOps() == SHOW_L3_CAUGHT) {
+        if (showOpsLevel == SHOW_L3_CAUGHT) {
             debugDumper.newln().newln();
             debugDumper.print("After catchblocks.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -349,7 +352,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        if (passoptions.getTrooleanOpt(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
+        if (passoptions.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
@@ -389,7 +392,7 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.optimiseForTypes(op03SimpleParseNodes);
 
-        if (options.getShowOps() == SHOW_L3_JUMPS) {
+        if (showOpsLevel == SHOW_L3_JUMPS) {
             debugDumper.newln().newln();
             debugDumper.print("After jumps.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -417,7 +420,7 @@ public class CodeAnalyser {
         // Normally we'd do it AFTER loops.
         Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
 
-        if (options.getShowOps() == SHOW_L3_LOOPS1) {
+        if (showOpsLevel == SHOW_L3_LOOPS1) {
             debugDumper.newln().newln();
             debugDumper.print("After loops.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -425,7 +428,7 @@ public class CodeAnalyser {
 
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        if (options.getShowOps() == SHOW_L3_EXCEPTION_BLOCKS) {
+        if (showOpsLevel == SHOW_L3_EXCEPTION_BLOCKS) {
             debugDumper.newln().newln();
             debugDumper.print("After exception.:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
@@ -500,7 +503,7 @@ public class CodeAnalyser {
 //        op03SimpleParseNodes.get(0).dump(dumper);
 
 
-        if (options.getShowOps() == SHOW_L4_FINAL_OP3) {
+        if (showOpsLevel == SHOW_L4_FINAL_OP3) {
             debugDumper.newln().newln();
             debugDumper.print("Final Op3 statements:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
