@@ -40,7 +40,7 @@ public class EnumClassRewriter {
         Options options = state.getOptions();
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
-        if (!options.getBooleanOpt(OptionsImpl.ENUM_SUGAR, classFileVersion)) return;
+        if (!options.getOption(OptionsImpl.ENUM_SUGAR, classFileVersion)) return;
 
         JavaTypeInstance classType = classFile.getClassType();
         JavaTypeInstance baseType = classFile.getBaseClassType();

@@ -725,7 +725,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void rewriteLambdas(DCCommonState state, Method method, Op04StructuredStatement root) {
         Options options = state.getOptions();
-        if (!options.rewriteLambdas(method.getClassFile().getClassFileVersion())) return;
+        if (!options.getOption(OptionsImpl.REWRITE_LAMBDAS, method.getClassFile().getClassFileVersion())) return;
 
         new LambdaRewriter(state, method.getClassFile()).rewrite(root);
     }
@@ -735,7 +735,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     public static void removePrimitiveDeconversion(Options options, Method method, Op04StructuredStatement root) {
-        if (!options.getBooleanOpt(OptionsImpl.SUGAR_BOXING)) return;
+        if (!options.getOption(OptionsImpl.SUGAR_BOXING)) return;
 
         root.transform(new PrimitiveBoxingRewriter(), new StructuredScope());
     }

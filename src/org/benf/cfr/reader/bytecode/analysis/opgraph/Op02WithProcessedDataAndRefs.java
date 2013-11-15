@@ -37,6 +37,7 @@ import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.graph.GraphVisitorFIFO;
@@ -1994,7 +1995,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 //                    if (testSyncUnlock(handlerIndex, op2list)) {
 //                        continue;
 //                    }
-                    if (!options.isLenient()) {
+                    if (!options.getOption(OptionsImpl.LENIENT)) {
                         throw new ConfusedCFRException("Back jump on a try block " + exceptionEntry);
                     }
                 }
@@ -2065,7 +2066,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                         if (source.getInstr() == JVMInstr.FAKE_CATCH) {
                             preCatchOp = source;
                         } else {
-                            if (!options.isLenient()) {
+                            if (!options.getOption(OptionsImpl.LENIENT)) {
                                 throw new ConfusedCFRException("non catch before exception catch block");
                             }
                         }

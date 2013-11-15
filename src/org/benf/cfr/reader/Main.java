@@ -36,7 +36,7 @@ public class Main {
             // from the cache.
             try {
                 c = dcCommonState.getClassFile(c.getClassType());
-                if (options.analyseInnerClasses()) {
+                if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
                     c.loadInnerClasses(dcCommonState);
                 }
             } catch (CannotLoadClassException e) {
@@ -88,7 +88,7 @@ public class Main {
                 Dumper d = new ToStringDumper();
                 try {
                     ClassFile c = dcCommonState.getClassFile(type);
-                    if (options.analyseInnerClasses()) {
+                    if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
                         c.loadInnerClasses(dcCommonState);
                     }
                     // THEN analyse.
@@ -104,7 +104,10 @@ public class Main {
                     throw e;
                 } catch (RuntimeException e) {
                     d.print(e.toString()).print("\n\n\n");
+                } finally {
+                    d.close();
                 }
+
             }
         } catch (RuntimeException e) {
             System.err.print("Exception analysing jar " + e);

@@ -110,7 +110,7 @@ public class CodeAnalyser {
             }
         }
 
-        if (failed != null && !options.getBooleanOpt(OptionsImpl.ALLOW_PARTIAL_FAILURE)) {
+        if (failed != null && !options.getOption(OptionsImpl.ALLOW_PARTIAL_FAILURE)) {
             throw failed;
         }
 
@@ -468,12 +468,12 @@ public class CodeAnalyser {
 
         // Introduce java 6 style for (x : array)
         logger.info("rewriteArrayForLoops");
-        if (options.getBooleanOpt(OptionsImpl.ARRAY_ITERATOR, classFileVersion)) {
+        if (options.getOption(OptionsImpl.ARRAY_ITERATOR, classFileVersion)) {
             Op03SimpleStatement.rewriteArrayForLoops(op03SimpleParseNodes);
         }
         // and for (x : iterable)
         logger.info("rewriteIteratorWhileLoops");
-        if (options.getBooleanOpt(OptionsImpl.COLLECTION_ITERATOR, classFileVersion)) {
+        if (options.getOption(OptionsImpl.COLLECTION_ITERATOR, classFileVersion)) {
             Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
         }
 
@@ -545,7 +545,7 @@ public class CodeAnalyser {
 
 //        Op04StructuredStatement.inlineSyntheticAccessors(cfrState, method, block);
 
-        if (options.removeBoilerplate()) {
+        if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
             if (this.method.isConstructor()) Op04StructuredStatement.removeConstructorBoilerplate(block);
         }
 

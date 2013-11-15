@@ -18,6 +18,7 @@ import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -123,7 +124,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
         this.methodPrototype = generateMethodPrototype();
         if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
-                options.hideBridgeMethods()) {
+                options.getOption(OptionsImpl.HIDE_BRIDGE_METHODS)) {
             this.hidden = true;
         }
     }

@@ -50,20 +50,20 @@ public class CodeAnalyserWholeClass {
          *
          * (sign of this would be Map<K,V> etc hanging around).
          */
-        if (options.getBooleanOpt(OptionsImpl.REMOVE_BAD_GENERICS)) {
+        if (options.getOption(OptionsImpl.REMOVE_BAD_GENERICS)) {
             removeIllegalGenerics(classFile, options);
         }
 
-        if (options.getBooleanOpt(OptionsImpl.SUGAR_ASSERTS)) {
+        if (options.getOption(OptionsImpl.SUGAR_ASSERTS)) {
             resugarAsserts(classFile, options);
         }
 
-        if (options.getBooleanOpt(OptionsImpl.LIFT_CONSTRUCTOR_INIT)) {
+        if (options.getOption(OptionsImpl.LIFT_CONSTRUCTOR_INIT)) {
             liftStaticInitialisers(classFile, options);
             liftNonStaticInitialisers(classFile, options);
         }
 
-        if (options.getBooleanOpt(OptionsImpl.REMOVE_BOILERPLATE)) {
+        if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
             removeBoilerplateMethods(classFile);
         }
     }
@@ -247,7 +247,7 @@ public class CodeAnalyserWholeClass {
         /*
          * Rewrite 'outer.this' references.
          */
-        if (options.removeInnerClassSynthetics()) {
+        if (options.getOption(OptionsImpl.REMOVE_INNER_CLASS_SYNTHETICS)) {
 
             /*
              * All constructors of inner classes should have their first argument removed,
@@ -262,7 +262,7 @@ public class CodeAnalyserWholeClass {
             inlineAccessors(state, classFile);
         }
 
-        if (options.getBooleanOpt(OptionsImpl.REMOVE_DEAD_METHODS)) {
+        if (options.getOption(OptionsImpl.REMOVE_DEAD_METHODS)) {
             removeDeadMethods(classFile);
         }
 

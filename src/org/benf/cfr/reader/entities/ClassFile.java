@@ -483,7 +483,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
          * Else it's not static.  If the params say so, tweak the inner class info to let
          * users know the first parameter is to be elided.
          */
-        if (options.removeInnerClassSynthetics()) {
+        if (options.getOption(OptionsImpl.REMOVE_INNER_CLASS_SYNTHETICS)) {
             innerClassInfo.setHideSyntheticThis();
         }
 
@@ -538,7 +538,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         try {
             CodeAnalyserWholeClass.wholeClassAnalysisPass2(this, state);
         } catch (RuntimeException e) {
-            if (!options.getBooleanOpt(OptionsImpl.ALLOW_WHOLE_FAILURE)) {
+            if (!options.getOption(OptionsImpl.ALLOW_WHOLE_FAILURE)) {
                 throw new RuntimeException("Whole class analysis failure - hide with " + OptionsImpl.ALLOW_WHOLE_FAILURE, e);
             }
             addComment("Exception performing whole class analysis ignored - use " + OptionsImpl.ALLOW_WHOLE_FAILURE.getName() + " to show");
@@ -566,7 +566,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
          * Analyse inner classes first, so we know if they're static when we reference them
          * from the outer class.
          */
-        if (options.analyseInnerClasses()) {
+        if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
             analyseInnerClassesPass1(state);
         }
         boolean exceptionRecovered = false;
@@ -587,7 +587,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         try {
             CodeAnalyserWholeClass.wholeClassAnalysisPass1(this, state);
         } catch (RuntimeException e) {
-            if (!options.getBooleanOpt(OptionsImpl.ALLOW_WHOLE_FAILURE)) {
+            if (!options.getOption(OptionsImpl.ALLOW_WHOLE_FAILURE)) {
                 throw new RuntimeException("Whole class analysis failure - hide with " + OptionsImpl.ALLOW_WHOLE_FAILURE, e);
             }
             addComment("Exception performing whole class analysis ignored - use " + OptionsImpl.ALLOW_WHOLE_FAILURE.getName() + " to show");

@@ -18,23 +18,9 @@ public interface Options {
 
     <T> T getOption(PermittedOptionProvider.Argument<T, ?> option);
 
-    boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, Options> argument);
-
-    boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, ClassFileVersion> argument, ClassFileVersion classFileVersion);
+    <T, A> T getOption(PermittedOptionProvider.Argument<T, A> option, A arg);
 
     Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, ?> argument);
 
     int getShowOps();
-
-    boolean isLenient();
-
-    boolean hideBridgeMethods();
-
-    boolean analyseInnerClasses();
-
-    boolean removeBoilerplate();
-
-    boolean removeInnerClassSynthetics();
-
-    boolean rewriteLambdas(ClassFileVersion classFileVersion);
 }

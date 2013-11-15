@@ -58,13 +58,12 @@ public class MutableOptions implements Options {
     }
 
     @Override
-    public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, Options> argument) {
-        return delegate.getBooleanOpt(argument);
-    }
-
-    @Override
-    public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, ClassFileVersion> argument, ClassFileVersion classFileVersion) {
-        return delegate.getBooleanOpt(argument, classFileVersion);
+    public <T, A> T getOption(PermittedOptionProvider.Argument<T, A> option, A arg) {
+        String override = overrides.get(option.getName());
+        if (override != null) {
+            return option.getFn().invoke(override, arg);
+        }
+        return delegate.getOption(option, arg);
     }
 
     @Override
@@ -75,35 +74,5 @@ public class MutableOptions implements Options {
     @Override
     public int getShowOps() {
         return delegate.getShowOps();
-    }
-
-    @Override
-    public boolean isLenient() {
-        return delegate.isLenient();
-    }
-
-    @Override
-    public boolean hideBridgeMethods() {
-        return delegate.hideBridgeMethods();
-    }
-
-    @Override
-    public boolean analyseInnerClasses() {
-        return delegate.analyseInnerClasses();
-    }
-
-    @Override
-    public boolean removeBoilerplate() {
-        return delegate.removeBoilerplate();
-    }
-
-    @Override
-    public boolean removeInnerClassSynthetics() {
-        return delegate.removeInnerClassSynthetics();
-    }
-
-    @Override
-    public boolean rewriteLambdas(ClassFileVersion classFileVersion) {
-        return delegate.rewriteLambdas(classFileVersion);
     }
 }

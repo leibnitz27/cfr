@@ -88,7 +88,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        if (!options.getBooleanOpt(OptionsImpl.STRING_SWITCH, classFileVersion)) return;
+        if (!options.getOption(OptionsImpl.STRING_SWITCH, classFileVersion)) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;

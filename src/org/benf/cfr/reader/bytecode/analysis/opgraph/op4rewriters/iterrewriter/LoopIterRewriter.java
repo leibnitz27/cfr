@@ -38,7 +38,7 @@ public class LoopIterRewriter implements Op04Rewriter {
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        if (!options.getBooleanOpt(OptionsImpl.ARRAY_ITERATOR, classFileVersion)) return;
+        if (!options.getOption(OptionsImpl.ARRAY_ITERATOR, classFileVersion)) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;

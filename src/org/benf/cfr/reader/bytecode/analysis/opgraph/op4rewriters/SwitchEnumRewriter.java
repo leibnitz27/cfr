@@ -50,7 +50,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
     @Override
     public void rewrite(Op04StructuredStatement root) {
         Options options = dcCommonState.getOptions();
-        if (!options.getBooleanOpt(OptionsImpl.ENUM_SWITCH, classFileVersion)) return;
+        if (!options.getOption(OptionsImpl.ENUM_SWITCH, classFileVersion)) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;

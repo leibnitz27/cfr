@@ -51,10 +51,10 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         if (dcCommonState == null) return;
         Options options = dcCommonState.getOptions();
         String header = MiscConstants.CFR_HEADER_BRA +
-                (options.getBooleanOpt(OptionsImpl.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
+                (options.getOption(OptionsImpl.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
         d.print("/*").newln();
         d.print(" * ").print(header).newln();
-        if (options.getBooleanOpt(OptionsImpl.DECOMPILER_COMMENTS)) {
+        if (options.getOption(OptionsImpl.DECOMPILER_COMMENTS)) {
             TypeUsageInformation typeUsageInformation = d.getTypeUsageInformation();
             List<JavaTypeInstance> couldNotLoad = ListFactory.newList();
             for (JavaTypeInstance type : typeUsageInformation.getUsedClassTypes()) {

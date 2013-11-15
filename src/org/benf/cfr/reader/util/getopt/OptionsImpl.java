@@ -28,24 +28,24 @@ public class OptionsImpl implements Options {
                 }
             }
     );
-    private static final BinaryFunction<String, Options, Troolean> defaultNeitherTrooleanDecoder = new BinaryFunction<String, Options, Troolean>() {
+    private static final BinaryFunction<String, Void, Troolean> defaultNeitherTrooleanDecoder = new BinaryFunction<String, Void, Troolean>() {
         @Override
-        public Troolean invoke(String arg, Options ignore) {
+        public Troolean invoke(String arg, Void ignore) {
             if (arg == null) return Troolean.NEITHER;
             return Troolean.get(Boolean.parseBoolean(arg));
         }
     };
-    private static final BinaryFunction<String, Options, Boolean> defaultTrueBooleanDecoder = new BinaryFunction<String, Options, Boolean>() {
+    private static final BinaryFunction<String, Void, Boolean> defaultTrueBooleanDecoder = new BinaryFunction<String, Void, Boolean>() {
         @Override
-        public Boolean invoke(String arg, Options ignore) {
+        public Boolean invoke(String arg, Void ignore) {
             if (arg == null) return true;
             return Boolean.parseBoolean(arg);
         }
     };
 
-    private static final BinaryFunction<String, Options, Boolean> defaultFalseBooleanDecoder = new BinaryFunction<String, Options, Boolean>() {
+    private static final BinaryFunction<String, Void, Boolean> defaultFalseBooleanDecoder = new BinaryFunction<String, Void, Boolean>() {
         @Override
-        public Boolean invoke(String arg, Options ignore) {
+        public Boolean invoke(String arg, Void ignore) {
             if (arg == null) return false;
             return Boolean.parseBoolean(arg);
         }
@@ -87,45 +87,45 @@ public class OptionsImpl implements Options {
             "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true));
     public static final PermittedOptionProvider.Argument<Boolean, ClassFileVersion> REWRITE_LAMBDAS = new PermittedOptionProvider.Argument<Boolean, ClassFileVersion>(
             "decodelambdas", new VersionSpecificDefaulter(ClassFileVersion.JAVA_8, true));
-    public static final PermittedOptionProvider.Argument<Boolean, Options> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean, Void>(
             "innerclasses", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> REMOVE_BOILERPLATE = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> REMOVE_BOILERPLATE = new PermittedOptionProvider.Argument<Boolean, Void>(
             "removeboilerplate", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> REMOVE_INNER_CLASS_SYNTHETICS = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> REMOVE_INNER_CLASS_SYNTHETICS = new PermittedOptionProvider.Argument<Boolean, Void>(
             "removeinnerclasssynthetics", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> HIDE_BRIDGE_METHODS = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> HIDE_BRIDGE_METHODS = new PermittedOptionProvider.Argument<Boolean, Void>(
             "hidebridgemethods", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> LIFT_CONSTRUCTOR_INIT = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> LIFT_CONSTRUCTOR_INIT = new PermittedOptionProvider.Argument<Boolean, Void>(
             "liftconstructorinit", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> REMOVE_DEAD_METHODS = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> REMOVE_DEAD_METHODS = new PermittedOptionProvider.Argument<Boolean, Void>(
             "removedeadmethods", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> REMOVE_BAD_GENERICS = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> REMOVE_BAD_GENERICS = new PermittedOptionProvider.Argument<Boolean, Void>(
             "removebadgenerics", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> SUGAR_ASSERTS = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> SUGAR_ASSERTS = new PermittedOptionProvider.Argument<Boolean, Void>(
             "sugarasserts", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> SUGAR_BOXING = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> SUGAR_BOXING = new PermittedOptionProvider.Argument<Boolean, Void>(
             "sugarboxing", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> SHOW_CFR_VERSION = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> SHOW_CFR_VERSION = new PermittedOptionProvider.Argument<Boolean, Void>(
             "showversion", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> HIDE_CASTS = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> HIDE_CASTS = new PermittedOptionProvider.Argument<Boolean, Void>(
             "hidecasts", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> DECODE_FINALLY = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> DECODE_FINALLY = new PermittedOptionProvider.Argument<Boolean, Void>(
             "decodefinally", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> TIDY_MONITORS = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> TIDY_MONITORS = new PermittedOptionProvider.Argument<Boolean, Void>(
             "tidymonitors", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> ALLOW_PARTIAL_FAILURE = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> ALLOW_PARTIAL_FAILURE = new PermittedOptionProvider.Argument<Boolean, Void>(
             "allowpartialfailure", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> ALLOW_WHOLE_FAILURE = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> ALLOW_WHOLE_FAILURE = new PermittedOptionProvider.Argument<Boolean, Void>(
             "allowwholefailure", defaultFalseBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> LENIENT = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> LENIENT = new PermittedOptionProvider.Argument<Boolean, Void>(
             "lenient", defaultFalseBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> DUMP_CLASS_PATH = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> DUMP_CLASS_PATH = new PermittedOptionProvider.Argument<Boolean, Void>(
             "dumpclasspath", defaultFalseBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean, Options> DECOMPILER_COMMENTS = new PermittedOptionProvider.Argument<Boolean, Options>(
+    public static final PermittedOptionProvider.Argument<Boolean, Void> DECOMPILER_COMMENTS = new PermittedOptionProvider.Argument<Boolean, Void>(
             "comments", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Troolean, Options> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Troolean, Options>(
+    public static final PermittedOptionProvider.Argument<Troolean, Void> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Troolean, Void>(
             "forcetopsort", defaultNeitherTrooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Troolean, Options> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean, Options>(
+    public static final PermittedOptionProvider.Argument<Troolean, Void> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean, Void>(
             "forceexceptionprune", defaultNeitherTrooleanDecoder);
     public static final PermittedOptionProvider.Argument<String, Void> OUTPUT_DIR = new PermittedOptionProvider.Argument<String, Void>(
             "outputdir", defaultNullStringDecoder);
@@ -152,18 +152,13 @@ public class OptionsImpl implements Options {
     }
 
     @Override
+    public <T, A> T getOption(PermittedOptionProvider.Argument<T, A> option, A arg) {
+        return option.getFn().invoke(opts.get(option.getName()), arg);
+    }
+
+    @Override
     public boolean optionIsSet(PermittedOptionProvider.Argument<?, ?> option) {
         return opts.get(option.getName()) != null;
-    }
-
-    @Override
-    public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, Options> argument) {
-        return argument.getFn().invoke(opts.get(argument.getName()), this);
-    }
-
-    @Override
-    public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, ClassFileVersion> argument, ClassFileVersion classFileVersion) {
-        return argument.getFn().invoke(opts.get(argument.getName()), classFileVersion);
     }
 
     @Override
@@ -174,36 +169,6 @@ public class OptionsImpl implements Options {
     @Override
     public int getShowOps() {
         return SHOWOPS.getFn().invoke(opts.get(SHOWOPS.getName()), this);
-    }
-
-    @Override
-    public boolean isLenient() {
-        return getBooleanOpt(LENIENT);
-    }
-
-    @Override
-    public boolean hideBridgeMethods() {
-        return getBooleanOpt(HIDE_BRIDGE_METHODS);
-    }
-
-    @Override
-    public boolean analyseInnerClasses() {
-        return getBooleanOpt(DECOMPILE_INNER_CLASSES);
-    }
-
-    @Override
-    public boolean removeBoilerplate() {
-        return getBooleanOpt(REMOVE_BOILERPLATE);
-    }
-
-    @Override
-    public boolean removeInnerClassSynthetics() {
-        return getBooleanOpt(REMOVE_INNER_CLASS_SYNTHETICS);
-    }
-
-    @Override
-    public boolean rewriteLambdas(ClassFileVersion classFileVersion) {
-        return getBooleanOpt(REWRITE_LAMBDAS, classFileVersion);
     }
 
     public static GetOptSinkFactory<Options> getFactory() {

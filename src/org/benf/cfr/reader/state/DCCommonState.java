@@ -272,7 +272,7 @@ public class DCCommonState {
 
     private Map<String, String> getClassPathClasses() {
         if (classToPathMap == null) {
-            boolean dump = options.getBooleanOpt(OptionsImpl.DUMP_CLASS_PATH);
+            boolean dump = options.getOption(OptionsImpl.DUMP_CLASS_PATH);
 
             classToPathMap = MapFactory.newMap();
             String classPath = System.getProperty("java.class.path") + ":" + System.getProperty("sun.boot.class.path");
