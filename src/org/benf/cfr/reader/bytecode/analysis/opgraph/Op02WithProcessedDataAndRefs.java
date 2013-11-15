@@ -31,7 +31,6 @@ import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
@@ -42,10 +41,7 @@ import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.graph.GraphVisitorFIFO;
 import org.benf.cfr.reader.util.lambda.LambdaUtils;
-import org.benf.cfr.reader.util.output.Dumpable;
-import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.LoggerFactory;
-import org.benf.cfr.reader.util.output.StdOutDumper;
+import org.benf.cfr.reader.util.output.*;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -1303,11 +1299,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         try {
             o2start.populateStackInfo(new StackSim(), method);
         } catch (ConfusedCFRException e) {
-            Dumper dmp = new StdOutDumper(new TypeUsageInformationEmpty());
+            Dumper dmp = new ToStringDumper();
             dmp.print("----[known stack info]------------\n\n");
             for (Op02WithProcessedDataAndRefs op : op2list) {
                 op.dump(dmp);
             }
+            System.err.print(dmp.toString());
             throw e;
         }
 

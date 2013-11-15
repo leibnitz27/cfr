@@ -6,7 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.StdOutDumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 /**

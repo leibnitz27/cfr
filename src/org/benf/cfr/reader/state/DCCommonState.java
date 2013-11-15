@@ -5,11 +5,14 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.configuration.ConfigCallback;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.BadParametersException;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
@@ -113,7 +116,6 @@ public class DCCommonState {
                     getCommonRoot(path, actualPath);
                 }
             }
-//            classCache.setAnalysisType(refTypeInstance);
             initiallyConfigured = true;
         }
     }
@@ -164,11 +166,6 @@ public class DCCommonState {
         String jarName = classPathFiles.get(path);
         ZipFile zipFile = null;
 
-//        ConfigCallback configCallback = null;
-//        if (!initiallyConfigured) {
-//            configCallback = new Configurator(path);
-//        }
-//
         try {
             InputStream is = null;
             long length = 0;
@@ -212,7 +209,7 @@ public class DCCommonState {
         }
     }
 
-    private void processClassPathFile(File file, String path, Map<String, String> classToPathMap, boolean dump) {
+    private boolean processClassPathFile(File file, String path, Map<String, String> classToPathMap, boolean dump) {
         try {
             ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
             try {
@@ -237,10 +234,41 @@ public class DCCommonState {
                 zipFile.close();
             }
         } catch (IOException e) {
+            return false;
         }
+        return true;
     }
 
     private Map<String, String> classToPathMap;
+
+    public List<JavaTypeInstance> explicitlyLoadJar(String path) {
+        /*
+         * Load the jar file explicitly, extract the names.
+         */
+        File file = new File(path);
+        if (!file.exists()) {
+            throw new ConfusedCFRException("No such jar file " + path);
+        }
+        Map<String, String> thisJar = MapFactory.newLinkedMap();
+        if (!processClassPathFile(file, path, thisJar, false)) {
+            throw new ConfusedCFRException("Failed to load jar " + path);
+        }
+        classToPathMap = null;
+        getClassPathClasses();
+        /*
+         * Override everything that's in our target Jar.
+         */
+        List<JavaTypeInstance> output = ListFactory.newList();
+        for (Map.Entry<String, String> entry : thisJar.entrySet()) {
+            String classPath = entry.getKey();
+            if (classPath.toLowerCase().endsWith(".class")) {
+                classToPathMap.put(classPath, entry.getValue());
+                if (classPath.contains("$")) continue;
+                output.add(classCache.getRefClassFor(classPath.substring(0, classPath.length() - 6)));
+            }
+        }
+        return output;
+    }
 
     private Map<String, String> getClassPathClasses() {
         if (classToPathMap == null) {
@@ -313,5 +341,10 @@ public class DCCommonState {
 
     public Options getOptions() {
         return options;
+    }
+
+    // No fancy file identification right now, just very very simple.
+    public boolean isJar(String path) {
+        return path.toLowerCase().endsWith(".jar");
     }
 }

@@ -45,4 +45,12 @@ public interface Dumper {
     Dumper dump(JavaTypeInstance javaTypeInstance);
 
     Dumper dump(Dumpable d);
+
+    void close();
+
+    public static class CannotCreate extends RuntimeException {
+        public CannotCreate(Throwable throwable) {
+            super(throwable);
+        }
+    }
 }

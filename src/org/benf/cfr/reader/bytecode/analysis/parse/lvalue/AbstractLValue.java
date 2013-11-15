@@ -4,8 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
-import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.StdOutDumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 /**

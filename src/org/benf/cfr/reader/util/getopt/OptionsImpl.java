@@ -50,6 +50,12 @@ public class OptionsImpl implements Options {
             return Boolean.parseBoolean(arg);
         }
     };
+    private static final BinaryFunction<String, Void, String> defaultNullStringDecoder = new BinaryFunction<String, Void, String>() {
+        @Override
+        public String invoke(String arg, Void ignore) {
+            return arg;
+        }
+    };
 
     private static class VersionSpecificDefaulter implements BinaryFunction<String, ClassFileVersion, Boolean> {
 
@@ -121,6 +127,8 @@ public class OptionsImpl implements Options {
             "forcetopsort", defaultNeitherTrooleanDecoder);
     public static final PermittedOptionProvider.Argument<Troolean, Options> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean, Options>(
             "forceexceptionprune", defaultNeitherTrooleanDecoder);
+    public static final PermittedOptionProvider.Argument<String, Void> OUTPUT_DIR = new PermittedOptionProvider.Argument<String, Void>(
+            "outputdir", defaultNullStringDecoder);
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;
@@ -139,6 +147,16 @@ public class OptionsImpl implements Options {
     }
 
     @Override
+    public <T> T getOption(PermittedOptionProvider.Argument<T, ?> option) {
+        return option.getFn().invoke(opts.get(option.getName()), null);
+    }
+
+    @Override
+    public boolean optionIsSet(PermittedOptionProvider.Argument<?, ?> option) {
+        return opts.get(option.getName()) != null;
+    }
+
+    @Override
     public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, Options> argument) {
         return argument.getFn().invoke(opts.get(argument.getName()), this);
     }
@@ -149,8 +167,8 @@ public class OptionsImpl implements Options {
     }
 
     @Override
-    public Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, Options> argument) {
-        return argument.getFn().invoke(opts.get(argument.getName()), this);
+    public Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, ?> argument) {
+        return argument.getFn().invoke(opts.get(argument.getName()), null);
     }
 
     @Override
@@ -206,7 +224,7 @@ public class OptionsImpl implements Options {
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT, DUMP_CLASS_PATH,
-                    DECOMPILER_COMMENTS, ALLOW_WHOLE_FAILURE, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS);
+                    DECOMPILER_COMMENTS, ALLOW_WHOLE_FAILURE, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR);
         }
 
         @Override

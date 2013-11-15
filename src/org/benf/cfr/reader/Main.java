@@ -1,5 +1,6 @@
 package org.benf.cfr.reader;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -11,7 +12,10 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.StdOutDumper;
+import org.benf.cfr.reader.util.output.DumperFactory;
+import org.benf.cfr.reader.util.output.ToStringDumper;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,16 +26,9 @@ import org.benf.cfr.reader.util.output.StdOutDumper;
  */
 public class Main {
 
-    public static void main(String[] args) {
-
-        GetOptParser getOptParser = new GetOptParser();
-
-        // Load the file, and pass the raw byteStream to the ClassFile constructor
+    public static void doClass(DCCommonState dcCommonState, String path) {
+        Options options = dcCommonState.getOptions();
         try {
-            Options options = getOptParser.parse(args, OptionsImpl.getFactory());
-
-            DCCommonState dcCommonState = new DCCommonState(options);
-            String path = options.getFileName();
             ClassFile c = dcCommonState.getClassFileMaybePath(path);
             dcCommonState.configureWith(c);
 
@@ -52,7 +49,7 @@ public class Main {
             TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
             c.collectTypeUsages(collectingDumper);
 
-            Dumper d = new StdOutDumper(collectingDumper.getTypeUsageInformation());
+            Dumper d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), collectingDumper.getTypeUsageInformation());
             String methname = options.getMethodName();
             if (methname == null) {
                 c.dump(d);
@@ -68,7 +65,6 @@ public class Main {
             d.print("");
         } catch (CannotLoadClassException e) {
             System.err.println(e.toString());
-            System.exit(1);
         } catch (BadParametersException e) {
             System.err.print(e.toString());
         } catch (ConfusedCFRException e) {
@@ -76,9 +72,64 @@ public class Main {
             for (Object x : e.getStackTrace()) {
                 System.err.println(x);
             }
+        } catch (Dumper.CannotCreate e) {
+            System.err.print("Cannot create dumper " + e.toString());
+        } catch (RuntimeException e) {
+            System.err.print(e.toString());
+        }
+    }
+
+    public static void doJar(DCCommonState dcCommonState, String path) {
+        Options options = dcCommonState.getOptions();
+        try {
+            List<JavaTypeInstance> types = dcCommonState.explicitlyLoadJar(path);
+
+            for (JavaTypeInstance type : types) {
+                Dumper d = new ToStringDumper();
+                try {
+                    ClassFile c = dcCommonState.getClassFile(type);
+                    if (options.analyseInnerClasses()) {
+                        c.loadInnerClasses(dcCommonState);
+                    }
+                    // THEN analyse.
+                    c.analyseTop(dcCommonState);
+
+                    TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
+                    c.collectTypeUsages(collectingDumper);
+                    d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), collectingDumper.getTypeUsageInformation());
+
+                    c.dump(d);
+                    d.print("\n\n");
+                } catch (Dumper.CannotCreate e) {
+                    throw e;
+                } catch (RuntimeException e) {
+                    d.print(e.toString()).print("\n\n\n");
+                }
+            }
+        } catch (RuntimeException e) {
+            System.err.print("Exception analysing jar " + e);
+        }
+    }
+
+    public static void main(String[] args) {
+
+        GetOptParser getOptParser = new GetOptParser();
+
+        Options options = null;
+        try {
+            options = getOptParser.parse(args, OptionsImpl.getFactory());
+        } catch (Exception e) {
+            System.err.print(e);
             System.exit(1);
         }
 
+        DCCommonState dcCommonState = new DCCommonState(options);
+        String path = options.getFileName();
+        if (dcCommonState.isJar(path)) {
+            doJar(dcCommonState, path);
+        } else {
+            doClass(dcCommonState, path);
+        }
 
     }
 }

@@ -12,15 +12,14 @@ import java.util.List;
  * Time: 11:24
  * To change this template use File | Settings | File Templates.
  */
-public class StdOutDumper implements Dumper {
+public abstract class StreamDumper implements Dumper {
     private final TypeUsageInformation typeUsageInformation;
 
     private int indent;
     private boolean atStart = true;
     private boolean pendingCR = false;
 
-
-    public StdOutDumper(TypeUsageInformation typeUsageInformation) {
+    public StreamDumper(TypeUsageInformation typeUsageInformation) {
         this.typeUsageInformation = typeUsageInformation;
     }
 
@@ -29,10 +28,12 @@ public class StdOutDumper implements Dumper {
         return typeUsageInformation;
     }
 
+    protected abstract void write(String s);
+
     @Override
     public void printLabel(String s) {
         processPendingCR();
-        System.out.println(s + ":");
+        write(s + ":");
         atStart = true;
     }
 
@@ -50,7 +51,7 @@ public class StdOutDumper implements Dumper {
 
     private void processPendingCR() {
         if (pendingCR) {
-            System.out.println();
+            write("\n");
             atStart = true;
             pendingCR = false;
         }
@@ -65,7 +66,7 @@ public class StdOutDumper implements Dumper {
             s = s.substring(0, s.length() - 1);
             doNewLn = true;
         }
-        System.out.print(s);
+        write(s);
         atStart = false;
         if (doNewLn) {
             newln();
@@ -80,7 +81,7 @@ public class StdOutDumper implements Dumper {
 
     @Override
     public Dumper newln() {
-        if (pendingCR) System.out.println();
+        if (pendingCR) write("\n");
         pendingCR = true;
         atStart = true;
         return this;
@@ -88,7 +89,7 @@ public class StdOutDumper implements Dumper {
 
     @Override
     public Dumper endCodeln() {
-        System.out.print(";");
+        write(";");
         pendingCR = true;
         atStart = true;
         return this;
@@ -97,13 +98,13 @@ public class StdOutDumper implements Dumper {
     private void doIndent() {
         if (!atStart) return;
         String indents = "    ";
-        for (int x = 0; x < indent; ++x) System.out.print(indents);
+        for (int x = 0; x < indent; ++x) write(indents);
         atStart = false;
     }
 
     @Override
     public void line() {
-        System.out.println("\n// -------------------");
+        write("\n// -------------------");
         atStart = true;
     }
 
@@ -133,7 +134,7 @@ public class StdOutDumper implements Dumper {
     @Override
     public Dumper dump(Dumpable d) {
         if (d == null) {
-            print("null");
+            write("null");
             return this;
         }
         d.dump(this);

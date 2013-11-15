@@ -24,7 +24,8 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
-import org.benf.cfr.reader.util.output.StdOutDumper;
+import org.benf.cfr.reader.util.output.StdIODumper;
+import org.benf.cfr.reader.util.output.StreamDumper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -139,7 +140,7 @@ public class CodeAnalyser {
         int idx = 1;
         int offset = 0;
         DecompilerComments comments = new DecompilerComments();
-        Dumper debugDumper = new StdOutDumper(new TypeUsageInformationEmpty());
+        Dumper debugDumper = new StdIODumper(new TypeUsageInformationEmpty());
 
         // We insert a fake NOP right at the start, so that we always know that each operation has a valid
         // parent.  This sentinel assumption is used when inserting try { catch blocks.

@@ -137,4 +137,8 @@ public class ToStringDumper implements Dumper {
     public String toString() {
         return sb.toString();
     }
+
+    @Override
+    public void close() {
+    }
 }

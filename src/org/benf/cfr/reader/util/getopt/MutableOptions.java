@@ -2,9 +2,11 @@ package org.benf.cfr.reader.util.getopt;
 
 import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.Troolean;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,19 +17,25 @@ import java.util.Map;
 public class MutableOptions implements Options {
     private final Options delegate;
 
-    private Map<PermittedOptionProvider.Argument<Troolean, Options>, Troolean> overrides = MapFactory.newMap();
+    private Map<String, String> overrides = MapFactory.newMap();
 
     public MutableOptions(Options delegate) {
         this.delegate = delegate;
     }
 
-    public boolean override(PermittedOptionProvider.Argument<Troolean, Options> argument, boolean value) {
-        Troolean originalValue = delegate.getTrooleanOpt(argument);
+    public boolean override(PermittedOptionProvider.Argument<Troolean, ?> argument, boolean value) {
+        Troolean originalValue = delegate.getOption(argument);
         if (originalValue == Troolean.NEITHER) {
-            overrides.put(argument, Troolean.get(value));
+            overrides.put(argument.getName(), Troolean.get(value).toString());
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean optionIsSet(PermittedOptionProvider.Argument<?, ?> option) {
+        if (overrides.containsKey(option.getName())) return true;
+        return delegate.optionIsSet(option);
     }
 
     @Override
@@ -41,6 +49,15 @@ public class MutableOptions implements Options {
     }
 
     @Override
+    public <T> T getOption(PermittedOptionProvider.Argument<T, ?> option) {
+        String override = overrides.get(option.getName());
+        if (override != null) {
+            return option.getFn().invoke(override, null);
+        }
+        return delegate.getOption(option);
+    }
+
+    @Override
     public boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, Options> argument) {
         return delegate.getBooleanOpt(argument);
     }
@@ -51,10 +68,8 @@ public class MutableOptions implements Options {
     }
 
     @Override
-    public Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, Options> argument) {
-        Troolean override = overrides.get(argument);
-        if (override != null) return override;
-        return delegate.getTrooleanOpt(argument);
+    public Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, ?> argument) {
+        return (Troolean) getOption(argument);
     }
 
     @Override

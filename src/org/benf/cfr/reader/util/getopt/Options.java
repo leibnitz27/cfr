@@ -14,11 +14,15 @@ public interface Options {
 
     String getMethodName();
 
+    boolean optionIsSet(PermittedOptionProvider.Argument<?, ?> option);
+
+    <T> T getOption(PermittedOptionProvider.Argument<T, ?> option);
+
     boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, Options> argument);
 
     boolean getBooleanOpt(PermittedOptionProvider.Argument<Boolean, ClassFileVersion> argument, ClassFileVersion classFileVersion);
 
-    Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, Options> argument);
+    Troolean getTrooleanOpt(PermittedOptionProvider.Argument<Troolean, ?> argument);
 
     int getShowOps();
 
