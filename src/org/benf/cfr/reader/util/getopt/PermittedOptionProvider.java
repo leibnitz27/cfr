@@ -14,13 +14,13 @@ import java.util.List;
 public interface PermittedOptionProvider {
     List<String> getFlags();
 
-    List<? extends Argument<?, ?>> getArguments();
+    List<? extends ArgumentParam<?, ?>> getArguments();
 
-    public final static class Argument<X, InputType> {
+    public static class ArgumentParam<X, InputType> {
         private final String name;
-        private final BinaryFunction<String, InputType, X> fn;
+        private final OptionDecoderParam<X, InputType> fn;
 
-        public Argument(String name, BinaryFunction<String, InputType, X> fn) {
+        public ArgumentParam(String name, OptionDecoderParam<X, InputType> fn) {
             this.name = name;
             this.fn = fn;
         }
@@ -29,8 +29,14 @@ public interface PermittedOptionProvider {
             return name;
         }
 
-        public BinaryFunction<String, InputType, X> getFn() {
+        public OptionDecoderParam<X, InputType> getFn() {
             return fn;
+        }
+    }
+
+    public static class Argument<X> extends ArgumentParam<X, Void> {
+        public Argument(String name, OptionDecoderParam<X, Void> fn) {
+            super(name, fn);
         }
     }
 }

@@ -18,7 +18,7 @@ public class GetOptParser {
     private static class OptData {
         private final boolean isFlag;
         private final String name;
-        private final PermittedOptionProvider.Argument<?, ?> argument;
+        private final PermittedOptionProvider.ArgumentParam<?, ?> argument;
 
         private OptData(String name) {
             this.name = name;
@@ -26,7 +26,7 @@ public class GetOptParser {
             this.argument = null;
         }
 
-        private OptData(PermittedOptionProvider.Argument<?, ?> argument) {
+        private OptData(PermittedOptionProvider.ArgumentParam<?, ?> argument) {
             this.argument = argument;
             this.isFlag = false;
             this.name = argument.getName();
@@ -40,7 +40,7 @@ public class GetOptParser {
             return name;
         }
 
-        public PermittedOptionProvider.Argument<?, ?> getArgument() {
+        public PermittedOptionProvider.ArgumentParam<?, ?> getArgument() {
             return argument;
         }
     }
@@ -50,7 +50,7 @@ public class GetOptParser {
         for (String flag : permittedOptionProvider.getFlags()) {
             sb.append("   [ --").append(flag).append(" ]\n");
         }
-        for (PermittedOptionProvider.Argument param : permittedOptionProvider.getArguments()) {
+        for (PermittedOptionProvider.ArgumentParam param : permittedOptionProvider.getArguments()) {
             sb.append("   [ --").append(param.getName()).append(" value ]\n");
         }
         return sb.toString();
@@ -61,7 +61,7 @@ public class GetOptParser {
         for (String flagName : optionProvider.getFlags()) {
             optTypeMap.put(flagName, new OptData(flagName));
         }
-        for (PermittedOptionProvider.Argument arg : optionProvider.getArguments()) {
+        for (PermittedOptionProvider.ArgumentParam arg : optionProvider.getArguments()) {
             optTypeMap.put(arg.getName(), new OptData(arg));
         }
         return optTypeMap;

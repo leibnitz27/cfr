@@ -14,9 +14,9 @@ public interface Options {
 
     String getMethodName();
 
-    boolean optionIsSet(PermittedOptionProvider.Argument<?, ?> option);
+    boolean optionIsSet(PermittedOptionProvider.ArgumentParam<?, ?> option);
 
-    <T> T getOption(PermittedOptionProvider.Argument<T, Void> option);
+    <T> T getOption(PermittedOptionProvider.ArgumentParam<T, Void> option);
 
-    <T, A> T getOption(PermittedOptionProvider.Argument<T, A> option, A arg);
+    <T, A> T getOption(PermittedOptionProvider.ArgumentParam<T, A> option, A arg);
 }

@@ -23,7 +23,7 @@ public class MutableOptions implements Options {
         this.delegate = delegate;
     }
 
-    public boolean override(PermittedOptionProvider.Argument<Troolean, Void> argument, boolean value) {
+    public boolean override(PermittedOptionProvider.ArgumentParam<Troolean, Void> argument, boolean value) {
         Troolean originalValue = delegate.getOption(argument);
         if (originalValue == Troolean.NEITHER) {
             overrides.put(argument.getName(), Troolean.get(value).toString());
@@ -33,7 +33,7 @@ public class MutableOptions implements Options {
     }
 
     @Override
-    public boolean optionIsSet(PermittedOptionProvider.Argument<?, ?> option) {
+    public boolean optionIsSet(PermittedOptionProvider.ArgumentParam<?, ?> option) {
         if (overrides.containsKey(option.getName())) return true;
         return delegate.optionIsSet(option);
     }
@@ -49,7 +49,7 @@ public class MutableOptions implements Options {
     }
 
     @Override
-    public <T> T getOption(PermittedOptionProvider.Argument<T, Void> option) {
+    public <T> T getOption(PermittedOptionProvider.ArgumentParam<T, Void> option) {
         String override = overrides.get(option.getName());
         if (override != null) {
             return option.getFn().invoke(override, null);
@@ -58,7 +58,7 @@ public class MutableOptions implements Options {
     }
 
     @Override
-    public <T, A> T getOption(PermittedOptionProvider.Argument<T, A> option, A arg) {
+    public <T, A> T getOption(PermittedOptionProvider.ArgumentParam<T, A> option, A arg) {
         String override = overrides.get(option.getName());
         if (override != null) {
             return option.getFn().invoke(override, arg);
