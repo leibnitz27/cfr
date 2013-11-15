@@ -33,7 +33,7 @@ public abstract class StreamDumper implements Dumper {
     @Override
     public void printLabel(String s) {
         processPendingCR();
-        write(s + ":");
+        write(s + ":\n");
         atStart = true;
     }
 
