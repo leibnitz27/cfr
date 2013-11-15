@@ -11,8 +11,10 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
 
@@ -23,10 +25,12 @@ import java.util.List;
  * Time: 06:43
  */
 public class StringBuilderRewriter implements ExpressionRewriter {
-    private final Options options;
+    private final boolean stringBuilderEnabled;
+    private final boolean stringBufferEnabled;
 
-    public StringBuilderRewriter(Options options) {
-        this.options = options;
+    public StringBuilderRewriter(Options options, ClassFileVersion classFileVersion) {
+        this.stringBufferEnabled = options.getOption(OptionsImpl.SUGAR_STRINGBUFFER, classFileVersion);
+        this.stringBuilderEnabled = options.getOption(OptionsImpl.SUGAR_STRINGBUILDER, classFileVersion);
     }
 
     @Override
@@ -91,9 +95,33 @@ public class StringBuilderRewriter implements ExpressionRewriter {
             } else if (lhs instanceof ConstructorInvokationSimple) {
                 ConstructorInvokationSimple newObject = (ConstructorInvokationSimple) lhs;
                 String rawName = newObject.getTypeInstance().getRawName();
-                if (rawName.equals(TypeConstants.stringBuilderName) ||
-                        rawName.equals(TypeConstants.stringBufferName)) {
-                    return genStringConcat(reverseAppendChain);
+                if ((stringBuilderEnabled && rawName.equals(TypeConstants.stringBuilderName)) ||
+                        (stringBufferEnabled && rawName.equals(TypeConstants.stringBufferName))) {
+                    // If the constructor has an argument of a String or a CharSequence, we need to add
+                    // that to the reverseAppendChain too!
+                    switch (newObject.getArgs().size()) {
+                        default:
+                            return null;
+                        case 1: {
+                            Expression e = newObject.getArgs().get(0);
+                            String typeName = e.getInferredJavaType().getJavaTypeInstance().getRawName();
+                            if (typeName.equals(TypeConstants.stringName)) {
+                                // Could also do it for type sequences, but .....
+                                if (e instanceof CastExpression) {
+                                    Expression ce = ((CastExpression) e).getChild();
+                                    if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance())) {
+                                        e = ce;
+                                    }
+                                }
+                                reverseAppendChain.add(e);
+                            } else {
+                                return null;
+                            }
+                        }
+                        // fall through.
+                        case 0:
+                            return genStringConcat(reverseAppendChain);
+                    }
                 } else {
                     return null;
                 }

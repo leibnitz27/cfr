@@ -102,6 +102,10 @@ public class OptionsImpl implements Options {
         }
     }
 
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGBUFFER = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "stringbuffer", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, false));
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGBUILDER = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "stringbuilder", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ENUM_SWITCH = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodeenumswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ENUM_SUGAR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
@@ -209,7 +213,8 @@ public class OptionsImpl implements Options {
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT, DUMP_CLASS_PATH,
-                    DECOMPILER_COMMENTS, ALLOW_WHOLE_FAILURE, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR);
+                    DECOMPILER_COMMENTS, ALLOW_WHOLE_FAILURE, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
+                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER);
         }
 
         @Override

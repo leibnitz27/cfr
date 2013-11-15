@@ -498,7 +498,7 @@ public class CodeAnalyser {
 //            node.dumpInner(dumper);
 //        }
 
-        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter(options));
+        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter(options, classFileVersion));
 //        dumper.print("Final Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
 
