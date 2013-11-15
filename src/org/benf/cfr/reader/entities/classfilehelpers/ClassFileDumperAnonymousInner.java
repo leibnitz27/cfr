@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.CommaHelp;
@@ -20,6 +21,10 @@ import java.util.List;
  * Time: 05:50
  */
 public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
+
+    public ClassFileDumperAnonymousInner() {
+        super(null);
+    }
 
     @Override
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {

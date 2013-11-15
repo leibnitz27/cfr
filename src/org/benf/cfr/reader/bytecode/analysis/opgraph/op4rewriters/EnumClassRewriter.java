@@ -20,6 +20,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperEnum;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -35,7 +36,8 @@ import java.util.Map;
  */
 public class EnumClassRewriter {
 
-    public static void rewriteEnumClass(ClassFile classFile, Options options) {
+    public static void rewriteEnumClass(ClassFile classFile, DCCommonState state) {
+        Options options = state.getOptions();
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
         if (!options.getBooleanOpt(OptionsImpl.ENUM_SUGAR, classFileVersion)) return;
@@ -53,17 +55,17 @@ public class EnumClassRewriter {
         if (boundTypes == null || boundTypes.size() != 1) return;
         if (!boundTypes.get(0).equals(classType)) return;
 
-        EnumClassRewriter c = new EnumClassRewriter(classFile, classType, options);
+        EnumClassRewriter c = new EnumClassRewriter(classFile, classType, state);
         c.rewrite();
     }
 
     private final ClassFile classFile;
     private final JavaTypeInstance classType;
-    private final Options state;
+    private final DCCommonState state;
     private final InferredJavaType clazzIJT;
 
 
-    public EnumClassRewriter(ClassFile classFile, JavaTypeInstance classType, Options state) {
+    public EnumClassRewriter(ClassFile classFile, JavaTypeInstance classType, DCCommonState state) {
         this.classFile = classFile;
         this.classType = classType;
         this.state = state;

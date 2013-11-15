@@ -8,7 +8,11 @@ import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
+import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.Functional;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
@@ -37,22 +41,42 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         return sb.toString();
     }
 
-    protected void dumpTopHeader(Options options, Dumper d) {
+    private final DCCommonState dcCommonState;
+
+    public AbstractClassFileDumper(DCCommonState dcCommonState) {
+        this.dcCommonState = dcCommonState;
+    }
+
+    protected void dumpTopHeader(ClassFile classFile, Dumper d) {
+        if (dcCommonState == null) return;
+        Options options = dcCommonState.getOptions();
         String header = MiscConstants.CFR_HEADER_BRA +
                 (options.getBooleanOpt(OptionsImpl.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
         d.print("/*").newln();
         d.print(" * ").print(header).newln();
-        /*
-        if (options.getBooleanOpt(Options.DECOMPILER_COMMENTS)) {
-            Set<String> couldNotLoad = options.getCouldNotLoadClasses();
+        if (options.getBooleanOpt(OptionsImpl.DECOMPILER_COMMENTS)) {
+            TypeUsageInformation typeUsageInformation = d.getTypeUsageInformation();
+            List<JavaTypeInstance> couldNotLoad = ListFactory.newList();
+            for (JavaTypeInstance type : typeUsageInformation.getUsedClassTypes()) {
+                if (type instanceof JavaRefTypeInstance) {
+                    ClassFile loadedClass = null;
+                    try {
+                        loadedClass = dcCommonState.getClassFile(type);
+                    } catch (CannotLoadClassException e) {
+                    }
+                    if (loadedClass == null) {
+                        couldNotLoad.add(type);
+                    }
+                }
+            }
             if (!couldNotLoad.isEmpty()) {
                 d.print(" * ").newln();
                 d.print(" * Could not load the following classes:").newln();
-                for (String classStr : couldNotLoad) {
-                    d.print(" *  ").print(classStr).newln();
+                for (JavaTypeInstance type : couldNotLoad) {
+                    d.print(" *  ").print(type.getRawName()).newln();
                 }
             }
-        }*/
+        }
         d.print(" */").newln();
     }
 

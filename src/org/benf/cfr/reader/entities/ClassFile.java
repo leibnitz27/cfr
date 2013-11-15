@@ -184,15 +184,14 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         /*
          * Choose a default dump helper.  This may be overwritten.
          */
-        Options options = dcCommonState.getOptions();
         if (isInterface) {
             if (isAnnotation) {
-                dumpHelper = new ClassFileDumperAnnotation(options);
+                dumpHelper = new ClassFileDumperAnnotation(dcCommonState);
             } else {
-                dumpHelper = new ClassFileDumperInterface(options);
+                dumpHelper = new ClassFileDumperInterface(dcCommonState);
             }
         } else {
-            dumpHelper = new ClassFileDumperNormal(options);
+            dumpHelper = new ClassFileDumperNormal(dcCommonState);
         }
 
         /*

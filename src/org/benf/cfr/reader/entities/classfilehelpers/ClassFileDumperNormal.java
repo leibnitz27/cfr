@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -20,10 +21,9 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
     private static final AccessFlag[] dumpableAccessFlagsClass = new AccessFlag[]{
             AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
     };
-    private final Options options;
 
-    public ClassFileDumperNormal(Options options) {
-        this.options = options;
+    public ClassFileDumperNormal(DCCommonState dcCommonState) {
+        super(dcCommonState);
     }
 
     private void dumpHeader(ClassFile c, Dumper d) {
@@ -58,7 +58,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
         ConstantPool cp = classFile.getConstantPool();
         if (!innerClass) {
-            dumpTopHeader(options, d);
+            dumpTopHeader(classFile, d);
             d.print("package ").print(classFile.getThisClassConstpoolEntry().getPackageName()).endCodeln().newln();
             dumpImports(d, classFile);
         }

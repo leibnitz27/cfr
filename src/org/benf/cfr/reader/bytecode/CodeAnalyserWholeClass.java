@@ -43,7 +43,7 @@ public class CodeAnalyserWholeClass {
          * Whole class analysis / transformation - i.e. if it's an enum class, we will need to rewrite
          * several methods.
          */
-        EnumClassRewriter.rewriteEnumClass(classFile, options);
+        EnumClassRewriter.rewriteEnumClass(classFile, state);
 
         /* Remove generics which 'don't belong here' - i.e. ones which we brought in for analysis, but have
          * ended up in the body of the code.

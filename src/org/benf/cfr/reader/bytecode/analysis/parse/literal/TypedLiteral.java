@@ -234,8 +234,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     // Todo - uuencode?
     private static String enQuote(String in) {
+        in = in.replace("\\", "\\\\");
         in = in.replace("\"", "\\\"");
-        in = in.replace("\\\\", "\\\\\\\\");
         return '\"' + in + '\"';
     }
 
