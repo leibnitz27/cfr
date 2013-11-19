@@ -1214,6 +1214,52 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 appropriateForIfAssignmentCollapse2(ifStatement))) return;
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
         ConditionalExpression conditionalExpression = innerIf.getCondition();
+
+        /*
+         * The 'verify' block stops us winding up unless we'd do it into another conditional
+         * or into a backjump.
+         *
+         * Otherwise, we end up with lots of code like
+         *
+         * int x
+         * if ( (x=3) < y )
+         *
+         * rather than
+         *
+         * int x = 3
+         * if (x < y)
+         *
+         * which is (a) ugly, and (b) screws with final analysis.
+         */
+        Op03SimpleStatement statement = ifStatement;
+        Set<Op03SimpleStatement> visited = SetFactory.newSet();
+        verify:
+        do {
+            if (statement.sources.size() > 1) {
+                // Progress if we're a backjump target.
+                // Otherwise, we'll cause problems with assignments inside
+                // while conditionals.
+                InstrIndex statementIndex = statement.index;
+                for (Op03SimpleStatement source : statement.sources) {
+                    if (statementIndex.isBackJumpFrom(source)) {
+                        break verify;
+                    }
+                }
+            }
+            if (statement.sources.isEmpty()) {
+                return;
+            }
+            statement = statement.sources.get(0);
+            if (!visited.add(statement)) {
+                return;
+            }
+            Statement opStatement = statement.getStatement();
+            if (opStatement instanceof IfStatement) break;
+            if (opStatement instanceof Nop) continue;
+            if (opStatement instanceof AbstractAssignment) continue;
+            return;
+        } while (true);
+
         /* where possible, collapse any single parent assignments into this. */
         Op03SimpleStatement previousSource = null;
         while (ifStatement.sources.size() == 1) {
