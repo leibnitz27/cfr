@@ -1255,6 +1255,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             used.remove(lValue);
             Set<LValue> usedComparison = SetFactory.newSet(lvc.getUsedLValues());
 
+            // Avoid situation where we have
+            // a = x
+            // b = y.f(a)
+            // if (a == b) <-- should not get rolled up.
             if (SetUtil.hasIntersection(used, usedComparison)) {
                 return;
             }
