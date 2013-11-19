@@ -1231,6 +1231,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             conditionalExpression.collectUsedLValues(lvc);
             if (!lvc.isUsed(lValue)) return;
             AbstractAssignment assignment = (AbstractAssignment) (source.containedStatement);
+
             /*
              * HACK ALERT.  Don't roll up /next/.
              */
@@ -1248,6 +1249,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 //            }
 
             AbstractAssignmentExpression assignmentExpression = assignment.getInliningExpression();
+            LValueUsageCollectorSimple assignmentLVC = new LValueUsageCollectorSimple();
+            assignmentExpression.collectUsedLValues(assignmentLVC);
+            Set<LValue> used = SetFactory.newSet(assignmentLVC.getUsedLValues());
+            used.remove(lValue);
+            Set<LValue> usedComparison = SetFactory.newSet(lvc.getUsedLValues());
+
+            if (SetUtil.hasIntersection(used, usedComparison)) {
+                return;
+            }
+
+
             if (!ifStatement.getSSAIdentifiers().isValidReplacement(lValue, source.getSSAIdentifiers())) return;
             LValueAssignmentExpressionRewriter rewriter = new LValueAssignmentExpressionRewriter(lValue, assignmentExpression, source);
             Expression replacement = conditionalExpression.replaceSingleUsageLValues(rewriter, ifStatement.getSSAIdentifiers(), ifStatement);
