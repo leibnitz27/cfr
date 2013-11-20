@@ -50,7 +50,8 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
     }
 
     public void enterBlock(StructuredStatement structuredStatement) {
-        currentBlock.push(structuredStatement.getContainer());
+        StatementContainer<StructuredStatement> container = structuredStatement.getContainer();
+        currentBlock.push(container);
         currentDepth++;
     }
 
@@ -263,6 +264,9 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
         private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement, LocalVariable lValue, NamedVariable name) {
             this.depth = depth;
             this.nestedScope = nestedScope == null ? null : ListFactory.newList(nestedScope);
+            if (exactStatement == null && depth > 1) {
+                int x = 1;
+            }
             this.exactStatement = exactStatement;
             this.lValue = lValue;
             this.lValueType = lValue.getInferredJavaType().getJavaTypeInstance();

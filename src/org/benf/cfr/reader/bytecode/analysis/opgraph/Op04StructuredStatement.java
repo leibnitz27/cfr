@@ -534,7 +534,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     public void transform(StructuredStatementTransformer transformer, StructuredScope scope) {
+        StructuredStatement old = structuredStatement;
         structuredStatement = transformer.transform(structuredStatement, scope);
+        if (structuredStatement != old && structuredStatement != null) {
+            structuredStatement.setContainer(this);
+        }
     }
 
     /*
