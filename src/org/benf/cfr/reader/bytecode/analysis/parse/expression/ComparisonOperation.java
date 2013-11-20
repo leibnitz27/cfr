@@ -56,7 +56,15 @@ public class ComparisonOperation extends AbstractExpression implements Condition
          * but if we've incorrectly guessed the literal as a narrower type before (eg boolean), we need to
          * bring it back up to the other type.
          */
-        InferredJavaType.compareAsWithoutCasting(lhs.getInferredJavaType(), rhs.getInferredJavaType());
+
+        /*
+         * If both have derived their typing from literals (i.e. TypeTest10), we can't decide purely from typing
+         * which is the 'better' type.  In this case, make use of additional hints.
+         */
+        boolean lLiteral = lhs instanceof Literal;
+        boolean rLiteral = rhs instanceof Literal;
+
+        InferredJavaType.compareAsWithoutCasting(lhs.getInferredJavaType(), rhs.getInferredJavaType(), lLiteral, rLiteral);
         this.op = op;
     }
 

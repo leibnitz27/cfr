@@ -572,7 +572,7 @@ public class InferredJavaType {
         return CastAction.None;
     }
 
-    public static void compareAsWithoutCasting(InferredJavaType a, InferredJavaType b) {
+    public static void compareAsWithoutCasting(InferredJavaType a, InferredJavaType b, boolean aLit, boolean bLit) {
         if (a == InferredJavaType.IGNORE) return;
         if (b == InferredJavaType.IGNORE) return;
 
@@ -584,11 +584,11 @@ public class InferredJavaType {
         InferredJavaType litType = null;
         InferredJavaType betterType = null;
         Expression litExp = null;
-        switch (BoolPair.get(
+        BoolPair whichLit = BoolPair.get(
                 a.getSource() == InferredJavaType.Source.LITERAL,
-                b.getSource() == InferredJavaType.Source.LITERAL)) {
-            case NEITHER:
-                return;
+                b.getSource() == InferredJavaType.Source.LITERAL);
+        if (whichLit.getCount() != 1) whichLit = BoolPair.get(aLit, bLit);
+        switch (whichLit) {
             case FIRST:
                 litType = a;
                 betterType = b;
@@ -597,6 +597,7 @@ public class InferredJavaType {
                 litType = b;
                 betterType = a;
                 break;
+            case NEITHER:
             case BOTH:
                 return; // for now.
         }
