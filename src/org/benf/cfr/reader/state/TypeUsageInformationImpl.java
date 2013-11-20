@@ -1,11 +1,10 @@
 package org.benf.cfr.reader.state;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.*;
 
 import java.util.*;
 
@@ -55,8 +54,18 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         });
         this.usedRefTypes.addAll(usedRefs);
 
+        Pair<List<JavaRefTypeInstance>, List<JavaRefTypeInstance>> types = Functional.partition(usedRefs, new Predicate<JavaRefTypeInstance>() {
+            @Override
+            public boolean test(JavaRefTypeInstance in) {
+                return in.getInnerClassHereInfo().isTransitiveInnerClassOf(analysisType);
+            }
+        });
+        addDisplayNames(types.getFirst());
+        addDisplayNames(types.getSecond());
+    }
 
-        for (JavaRefTypeInstance type : usedRefs) {
+    private void addDisplayNames(Collection<JavaRefTypeInstance> types) {
+        for (JavaRefTypeInstance type : types) {
             addDisplayName(type);
         }
     }
@@ -68,6 +77,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         String useName = null;
         if (type.getInnerClassHereInfo().isInnerClass()) {
             useName = generateInnerClassShortName(type);
+            shortNames.add(useName);
         } else {
             String shortName = type.getRawShortName();
             useName = shortNames.add(shortName) ? shortName : type.getRawName();
