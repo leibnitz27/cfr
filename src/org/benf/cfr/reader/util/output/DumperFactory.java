@@ -14,10 +14,19 @@ import java.io.IOException;
  * Time: 18:04
  */
 public class DumperFactory {
-    public static Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation) {
+    public static Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation) {
         if (!options.optionIsSet(OptionsImpl.OUTPUT_DIR)) return new StdIODumper(typeUsageInformation);
 
-        return new FileDumper(options.getOption(OptionsImpl.OUTPUT_DIR), classType, typeUsageInformation);
+        return new FileDumper(options.getOption(OptionsImpl.OUTPUT_DIR), classType, summaryDumper, typeUsageInformation);
+    }
+
+    /*
+     * A summary dumper will receive errors.  Generally, it's only of value when dumping jars to file.
+     */
+    public static SummaryDumper getSummaryDumper(Options options) {
+        if (!options.optionIsSet(OptionsImpl.OUTPUT_DIR)) return new NopSummaryDumper();
+
+        return new FileSummaryDumper(options.getOption(OptionsImpl.OUTPUT_DIR));
     }
 
 }

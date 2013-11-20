@@ -8,19 +8,16 @@ import java.io.*;
 /**
  * Created with IntelliJ IDEA.
  * User: lee
- * Date: 15/11/2013
- * Time: 07:24
+ * Date: 20/11/2013
+ * Time: 13:06
  */
-public class FileDumper extends StreamDumper {
-    private final JavaTypeInstance type;
-    private final SummaryDumper summaryDumper;
+public class FileSummaryDumper implements SummaryDumper {
     private final BufferedWriter writer;
 
-    public FileDumper(String dir, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation) {
-        super(typeUsageInformation);
-        this.type = type;
-        this.summaryDumper = summaryDumper;
-        String fileName = dir + File.separator + type.getRawName().replace(".", File.separator) + ".java";
+    private transient JavaTypeInstance lastControllingType = null;
+
+    public FileSummaryDumper(String dir) {
+        String fileName = dir + File.separator + "summary.txt";
         try {
             File file = new File(fileName);
             File parent = file.getParentFile();
@@ -29,8 +26,31 @@ public class FileDumper extends StreamDumper {
             }
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
         } catch (FileNotFoundException e) {
-            throw new CannotCreate(e);
+            throw new Dumper.CannotCreate(e);
         }
+    }
+
+    @Override
+    public void notify(String message) {
+        try {
+            writer.write(message + "\n");
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
+    public void notifyError(JavaTypeInstance controllingType, String error) {
+        try {
+            if (lastControllingType != controllingType) {
+                lastControllingType = controllingType;
+                writer.write("\n\n" + controllingType.getRawName() + "\n----------------------------\n\n");
+            }
+            writer.write("ERROR : " + error + "\n");
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+
     }
 
     @Override
@@ -40,19 +60,5 @@ public class FileDumper extends StreamDumper {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    @Override
-    protected void write(String s) {
-        try {
-            writer.write(s);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    @Override
-    public void addSummaryError(String s) {
-        summaryDumper.notifyError(type, s);
     }
 }

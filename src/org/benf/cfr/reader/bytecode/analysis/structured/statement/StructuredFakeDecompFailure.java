@@ -36,6 +36,9 @@ public class StructuredFakeDecompFailure extends StructuredComment {
         dumper.indent(-1);
         dumper.print("}");
         dumper.enqueuePendingCarriageReturn();
+
+        dumper.addSummaryError(e.toString());
+
         return dumper;
     }
 }

@@ -139,6 +139,10 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
+    public void addSummaryError(String s) {
+    }
+
+    @Override
     public void close() {
     }
 }

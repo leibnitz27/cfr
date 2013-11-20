@@ -162,6 +162,8 @@ public class OptionsImpl implements Options {
             "outputdir", defaultNullStringDecoder);
     public static final PermittedOptionProvider.Argument<Integer> SHOWOPS = new PermittedOptionProvider.Argument<Integer>(
             "showops", default0intDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> SILENT = new PermittedOptionProvider.Argument<Boolean>(
+            "silent", defaultFalseBooleanDecoder);
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -214,7 +216,7 @@ public class OptionsImpl implements Options {
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT, DUMP_CLASS_PATH,
                     DECOMPILER_COMMENTS, ALLOW_WHOLE_FAILURE, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
-                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER);
+                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT);
         }
 
         @Override

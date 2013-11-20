@@ -48,9 +48,16 @@ public interface Dumper {
 
     void close();
 
+    void addSummaryError(String s);
+
     public static class CannotCreate extends RuntimeException {
         public CannotCreate(Throwable throwable) {
             super(throwable);
+        }
+
+        @Override
+        public String toString() {
+            return "Cannot create dumper " + super.toString();
         }
     }
 }
