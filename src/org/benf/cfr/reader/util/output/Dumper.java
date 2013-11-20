@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
@@ -48,7 +49,7 @@ public interface Dumper {
 
     void close();
 
-    void addSummaryError(String s);
+    void addSummaryError(Method method, String s);
 
     public static class CannotCreate extends RuntimeException {
         public CannotCreate(Throwable throwable) {

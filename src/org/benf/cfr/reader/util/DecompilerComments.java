@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util;
 
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -36,9 +37,13 @@ public class DecompilerComments implements Dumpable {
         if (commentList.isEmpty()) return d;
         d.print("/*").newln();
         for (DecompilerComment comment : commentList) {
-            d.print(" * ").print(comment.toString()).newln();
+            d.print(" * ").dump(comment).newln();
         }
         d.print(" */").newln();
         return d;
+    }
+
+    public List<DecompilerComment> getCommentList() {
+        return commentList;
     }
 }

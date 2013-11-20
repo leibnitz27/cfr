@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
 import java.io.PrintStream;
@@ -22,7 +23,7 @@ public class StdIODumper extends StreamDumper {
     }
 
     @Override
-    public void addSummaryError(String s) {
+    public void addSummaryError(Method method, String s) {
     }
 
     @Override

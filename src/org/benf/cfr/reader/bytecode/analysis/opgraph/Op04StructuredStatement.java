@@ -387,8 +387,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             }
             // Leaving a block, but
             if (!endOfTheseBlocks.remove(mutableProcessingBlockState.currentBlockIdentifier)) {
-                Op04StructuredStatement last = mutableProcessingBlockState.currentBlock.getLast();
-                throw new ConfusedCFRException("Tried to end blocks " + endOfTheseBlocks + ", but top level block is " + mutableProcessingBlockState.currentBlockIdentifier + " " + last);
+                throw new ConfusedCFRException("Tried to end blocks " + endOfTheseBlocks + ", but top level block is " + mutableProcessingBlockState.currentBlockIdentifier);
             }
             BlockIdentifier popBlockIdentifier = blocksCurrentlyIn.pop();
             if (popBlockIdentifier != mutableProcessingBlockState.currentBlockIdentifier) {

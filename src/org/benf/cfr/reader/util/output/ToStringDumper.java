@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 
@@ -139,7 +140,7 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
-    public void addSummaryError(String s) {
+    public void addSummaryError(Method method, String s) {
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.Method;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,7 +16,7 @@ public class NopSummaryDumper implements SummaryDumper {
     }
 
     @Override
-    public void notifyError(JavaTypeInstance controllingType, String error) {
+    public void notifyError(JavaTypeInstance controllingType, Method method, String error) {
     }
 
     @Override

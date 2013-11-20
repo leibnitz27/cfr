@@ -353,6 +353,14 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     public void dumpComments(Dumper d) {
         if (comments != null) {
             comments.dump(d);
+
+            List<DecompilerComment> commentList = comments.getCommentList();
+            for (DecompilerComment decompilerComment : commentList) {
+                String string = decompilerComment.getSummaryMessage();
+                if (string != null) {
+                    d.addSummaryError(this, string);
+                }
+            }
         }
     }
 

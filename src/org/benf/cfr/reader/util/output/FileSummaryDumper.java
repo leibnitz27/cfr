@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
 import java.io.*;
@@ -15,6 +16,7 @@ public class FileSummaryDumper implements SummaryDumper {
     private final BufferedWriter writer;
 
     private transient JavaTypeInstance lastControllingType = null;
+    private transient Method lastMethod = null;
 
     public FileSummaryDumper(String dir) {
         String fileName = dir + File.separator + "summary.txt";
@@ -40,13 +42,18 @@ public class FileSummaryDumper implements SummaryDumper {
     }
 
     @Override
-    public void notifyError(JavaTypeInstance controllingType, String error) {
+    public void notifyError(JavaTypeInstance controllingType, Method method, String error) {
         try {
             if (lastControllingType != controllingType) {
                 lastControllingType = controllingType;
+                lastMethod = null;
                 writer.write("\n\n" + controllingType.getRawName() + "\n----------------------------\n\n");
             }
-            writer.write("ERROR : " + error + "\n");
+            if (method != lastMethod) {
+                writer.write(method.getMethodPrototype().toString() + "\n");
+                lastMethod = method;
+            }
+            writer.write("  " + error + "\n");
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }

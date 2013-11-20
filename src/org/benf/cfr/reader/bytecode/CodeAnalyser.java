@@ -86,6 +86,8 @@ public class CodeAnalyser {
         } catch (RuntimeException e) {
             failed = e;
             coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
+            comments = new DecompilerComments();
+            comments.addComment(new DecompilerComment("Exception decompiling", e));
         }
 
         if (failed != null || !coderes.isFullyStructured()) {
@@ -106,6 +108,8 @@ public class CodeAnalyser {
                 } catch (RuntimeException e) {
                     failed = e;
                     coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
+                    comments = new DecompilerComments();
+                    comments.addComment(new DecompilerComment("Exception decompiling", e));
                 }
             }
         }
