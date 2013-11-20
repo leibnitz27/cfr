@@ -87,6 +87,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statement.setContainer(this);
     }
 
+    public Op03SimpleStatement(Set<BlockIdentifier> containedIn, Statement statement, SSAIdentifiers<LValue> ssaIdentifiers, InstrIndex index) {
+        this.containedStatement = statement;
+        this.isNop = false;
+        this.index = index;
+        this.ssaIdentifiers = new SSAIdentifiers<LValue>(ssaIdentifiers);
+        this.containedInBlocks.addAll(containedIn);
+        statement.setContainer(this);
+    }
+
+
     @Override
     public List<Op03SimpleStatement> getSources() {
         return sources;

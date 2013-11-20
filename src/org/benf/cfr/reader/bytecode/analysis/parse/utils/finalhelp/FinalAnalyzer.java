@@ -306,7 +306,7 @@ public class FinalAnalyzer {
             Set<BlockIdentifier> newblocks = SetFactory.newOrderedSet(old.getBlockIdentifiers());
             newblocks.removeAll(oldStartBlocks);
             newblocks.addAll(extraBlocks);
-            Op03SimpleStatement newOp = new Op03SimpleStatement(newblocks, statement, newIdx);
+            Op03SimpleStatement newOp = new Op03SimpleStatement(newblocks, statement, old.getSSAIdentifiers(), newIdx);
             newFinallyBody.add(newOp);
             newIdx = newIdx.justAfter();
             old2new.put(old, newOp);

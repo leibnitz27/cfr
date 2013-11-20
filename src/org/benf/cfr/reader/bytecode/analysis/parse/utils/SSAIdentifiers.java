@@ -24,6 +24,14 @@ public class SSAIdentifiers<KEYTYPE> {
         knownIdentifiers = MapFactory.newMap();
     }
 
+    public SSAIdentifiers(SSAIdentifiers<KEYTYPE> other) {
+        this.fixedHere = other.fixedHere;
+        this.valFixedHere = other.valFixedHere;
+        this.knownIdentifiers = MapFactory.newMap();
+        knownIdentifiers.putAll(other.knownIdentifiers);
+        this.initialAssign = other.initialAssign;
+    }
+
     public SSAIdentifiers(KEYTYPE lValue, SSAIdentifierFactory<KEYTYPE> ssaIdentifierFactory) {
         SSAIdent id = ssaIdentifierFactory.getIdent(lValue);
         fixedHere = lValue;
