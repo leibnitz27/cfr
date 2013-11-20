@@ -315,7 +315,9 @@ public class OverloadMethodSet {
                     }
                 }
             }
-            return (best.is(actualPrototype));
+            if (best != null) {
+                return (best.is(actualPrototype));
+            }
         }
 
         /*
