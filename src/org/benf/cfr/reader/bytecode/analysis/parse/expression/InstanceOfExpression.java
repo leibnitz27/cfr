@@ -52,7 +52,7 @@ public class InstanceOfExpression extends AbstractExpression {
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print("(").dump(lhs).print(" instanceof " + typeInstance + ")");
+        return d.print("(").dump(lhs).print(" instanceof ").dump(typeInstance).print(")");
     }
 
     @Override
