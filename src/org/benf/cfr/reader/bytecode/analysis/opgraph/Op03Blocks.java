@@ -201,7 +201,8 @@ public class Op03Blocks {
         /*
          * Patch up conditionals.
          */
-        for (int x = 0, len = outStatements.size() - 1; x < len; ++x) {
+        boolean patched = false;
+        for (int x = 0, origLen = outStatements.size() - 1; x < origLen; ++x) {
             Op03SimpleStatement stm = outStatements.get(x);
             if (stm.getStatement().getClass() == IfStatement.class) {
                 List<Op03SimpleStatement> targets = stm.getTargets();
@@ -214,9 +215,21 @@ public class Op03Blocks {
                     targets.set(0, b);
                     targets.set(1, a);
                 } else {
-                    throw new IllegalStateException("Failed topsort - if lost targets");
+                    patched = true;
+                    // Oh great.  Something's got very interesting. We need to add ANOTHER goto.
+                    Op03SimpleStatement extra = new Op03SimpleStatement(stm.getBlockIdentifiers(), new GotoStatement(), stm.getSSAIdentifiers(), stm.getIndex().justAfter());
+                    Op03SimpleStatement target0 = targets.get(0);
+                    extra.addSource(stm);
+                    extra.addTarget(target0);
+                    stm.replaceTarget(target0, extra);
+                    target0.replaceSource(stm, extra);
+                    outStatements.add(extra);
                 }
             }
+        }
+
+        if (patched) {
+            outStatements = Op03SimpleStatement.renumber(outStatements);
         }
 
         return Op03SimpleStatement.removeUnreachableCode(outStatements);
