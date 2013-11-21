@@ -89,6 +89,14 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         return new ExceptionTableEntry(this.bytecode_index_from, later.bytecode_index_to, this.bytecode_index_handler, this.catch_type, this.priority);
     }
 
+    public ExceptionTableEntry aggregateWithLenient(ExceptionTableEntry later) {
+        if (this.bytecode_index_from >= later.bytecode_index_from) {
+            throw new ConfusedCFRException("Can't aggregate exceptionTableEntries");
+        }
+        // TODO : Priority is not quite right here.
+        return new ExceptionTableEntry(this.bytecode_index_from, later.bytecode_index_to, this.bytecode_index_handler, this.catch_type, this.priority);
+    }
+
     public static UnaryFunction<ByteData, ExceptionTableEntry> getBuilder(ConstantPool cp) {
         return new ExceptionTableEntryBuilder(cp);
     }

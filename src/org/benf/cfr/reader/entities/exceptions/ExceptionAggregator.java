@@ -24,6 +24,10 @@ public class ExceptionAggregator {
 
     private final List<ExceptionGroup> exceptionsByRange = ListFactory.newList();
     private final Method method;
+    private final Map<Integer, Integer> lutByOffset;
+    private final Map<Integer, Integer> lutByIdx;
+    private final List<Op01WithProcessedDataAndByteJumps> instrs;
+
 
     private static class CompareExceptionTablesByRange implements Comparator<ExceptionTableEntry> {
         @Override
@@ -34,7 +38,7 @@ public class ExceptionAggregator {
         }
     }
 
-    private static class ByTarget {
+    private class ByTarget {
         private final List<ExceptionTableEntry> entries;
 
         public ByTarget(List<ExceptionTableEntry> entries) {
@@ -59,6 +63,8 @@ public class ExceptionAggregator {
                     } else if (held.getBytecodeIndexFrom() == entry.getBytecodeIndexFrom() &&
                             held.getBytecodeIndexTo() <= entry.getBytecodeIndexTo()) {
                         held = entry;
+                    } else if (canExtendTo(held, entry)) {
+                        held = held.aggregateWithLenient(entry);
                     } else {
                         res.add(held);
                         held = entry;
@@ -68,6 +74,7 @@ public class ExceptionAggregator {
             if (held != null) res.add(held);
             return res;
         }
+
     }
 
     private static class ValidException implements Predicate<ExceptionTableEntry> {
@@ -77,10 +84,38 @@ public class ExceptionAggregator {
         }
     }
 
+    /*
+     * We have a range a[1,4] b[6, 7].
+     *
+     * If a can be extended to cover 1-6, then a & b can be combined.
+     * (remember, exception ranges are half open, 1-4 covers 1 UNTIL 4, not incl).
+     *
+     * Some instructions can be guaranteed not to throw, they can be extended over.
+     */
+    private boolean canExtendTo(ExceptionTableEntry a, ExceptionTableEntry b) {
+        final int startNext = b.getBytecodeIndexFrom();
+        int current = a.getBytecodeIndexTo();
+        if (current > startNext) return false;
+
+        while (current < startNext) {
+            Integer idx = lutByOffset.get(current);
+            if (idx == null) return false;
+            Op01WithProcessedDataAndByteJumps op = instrs.get(idx);
+            JVMInstr instr = op.getJVMInstr();
+            if (instr.isNoThrow()) {
+                current += op.getInstructionLength();
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     private static int canExpandTryBy(int idx, List<Op01WithProcessedDataAndByteJumps> statements) {
         Op01WithProcessedDataAndByteJumps op = statements.get(idx);
         JVMInstr instr = op.getJVMInstr();
+//        if (instr.isNoThrow()) return op.getInstructionLength();
         switch (instr) {
             case GOTO:
             case GOTO_W:
@@ -92,6 +127,7 @@ public class ExceptionAggregator {
             case FRETURN: {
                 return op.getInstructionLength();
             }
+            case ALOAD:
             case ALOAD_0:
             case ALOAD_1:
             case ALOAD_2:
@@ -101,6 +137,11 @@ public class ExceptionAggregator {
                     return op.getInstructionLength() + op2.getInstructionLength();
                 break;
             }
+//            default:
+//                if (instr.isNoThrow()) {
+//                    return op.getInstructionLength();
+//                }
+//                break;
         }
         return 0;
     }
@@ -115,7 +156,11 @@ public class ExceptionAggregator {
                                List<Op01WithProcessedDataAndByteJumps> instrs,
                                final ConstantPool cp,
                                final Method method) {
+
         this.method = method;
+        this.lutByIdx = lutByIdx;
+        this.lutByOffset = lutByOffset;
+        this.instrs = instrs;
 
         rawExceptions = Functional.filter(rawExceptions, new ValidException());
         if (rawExceptions.isEmpty()) return;

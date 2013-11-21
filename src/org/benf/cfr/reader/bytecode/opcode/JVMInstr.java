@@ -28,21 +28,21 @@ public enum JVMInstr {
     AALOAD(0x32, 0, new StackTypes(StackType.REF, StackType.INT), StackType.REF.asList(), RawJavaType.VOID),
     AASTORE(0x53, 0, new StackTypes(StackType.REF, StackType.INT, StackType.REF), StackTypes.EMPTY, RawJavaType.VOID),
     ACONST_NULL(0x01, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.NULL),
-    ALOAD(0x19, 1, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.VOID),
-    ALOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.VOID),
-    ALOAD_0(0x2a, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.REF),
-    ALOAD_1(0x2b, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.REF),
-    ALOAD_2(0x2c, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.REF),
-    ALOAD_3(0x2d, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.REF),
+    ALOAD(0x19, 1, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.VOID, true),
+    ALOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.VOID, true),
+    ALOAD_0(0x2a, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.REF, true),
+    ALOAD_1(0x2b, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.REF, true),
+    ALOAD_2(0x2c, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.REF, true),
+    ALOAD_3(0x2d, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.REF, true),
     ANEWARRAY(0xbd, 2, StackType.INT.asList(), StackType.REF.asList(), null, new OperationFactoryCPEntryW()),
-    ARETURN(0xb0, 0, StackType.REF.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
+    ARETURN(0xb0, 0, StackType.REF.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn(), true),
     ARRAYLENGTH(0xbe, 0, StackType.REF.asList(), StackType.INT.asList(), RawJavaType.INT),
-    ASTORE(0x3a, 1, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ASTORE_WIDE(-1, 3, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ASTORE_0(0x4b, 0, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ASTORE_1(0x4c, 0, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ASTORE_2(0x4d, 0, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ASTORE_3(0x4e, 0, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID),
+    ASTORE(0x3a, 1, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ASTORE_WIDE(-1, 3, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ASTORE_0(0x4b, 0, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ASTORE_1(0x4c, 0, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ASTORE_2(0x4d, 0, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ASTORE_3(0x4e, 0, StackType.RETURNADDRESSORREF.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
     ATHROW(0xbf, 0, StackType.REF.asList(), StackType.REF.asList(), RawJavaType.VOID, new OperationFactoryThrow()),
     BALOAD(0x33, 0, new StackTypes(StackType.REF, StackType.INT), StackType.INT.asList(), null),
     BASTORE(0x54, 0, new StackTypes(StackType.REF, StackType.INT, StackType.INT), StackTypes.EMPTY, RawJavaType.VOID),
@@ -58,25 +58,25 @@ public enum JVMInstr {
     DASTORE(0x52, 0, new StackTypes(StackType.REF, StackType.INT, StackType.DOUBLE), StackTypes.EMPTY, RawJavaType.VOID),
     DCMPG(0x98, 0, new StackTypes(StackType.DOUBLE, StackType.DOUBLE), StackType.INT.asList(), RawJavaType.INT),
     DCMPL(0x97, 0, new StackTypes(StackType.DOUBLE, StackType.DOUBLE), StackType.INT.asList(), RawJavaType.INT),
-    DCONST_0(0xe, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
-    DCONST_1(0xf, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
+    DCONST_0(0xe, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE, true),
+    DCONST_1(0xf, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE, true),
     DDIV(0x6f, 0, new StackTypes(StackType.DOUBLE, StackType.DOUBLE), StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
-    DLOAD(0x18, 1, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
-    DLOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
-    DLOAD_0(0x26, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
-    DLOAD_1(0x27, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
-    DLOAD_2(0x28, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
-    DLOAD_3(0x29, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
+    DLOAD(0x18, 1, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE, true),
+    DLOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE, true),
+    DLOAD_0(0x26, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE, true),
+    DLOAD_1(0x27, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE, true),
+    DLOAD_2(0x28, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE, true),
+    DLOAD_3(0x29, 0, StackTypes.EMPTY, StackType.DOUBLE.asList(), RawJavaType.DOUBLE, true),
     DMUL(0x6b, 0, new StackTypes(StackType.DOUBLE, StackType.DOUBLE), StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
     DNEG(0x77, 0, StackType.DOUBLE.asList(), StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
     DREM(0x73, 0, new StackTypes(StackType.DOUBLE, StackType.DOUBLE), StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
     DRETURN(0xaf, 0, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
-    DSTORE(0x39, 1, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    DSTORE_WIDE(-1, 3, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    DSTORE_0(0x47, 0, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    DSTORE_1(0x48, 0, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    DSTORE_2(0x49, 0, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    DSTORE_3(0x4a, 0, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID),
+    DSTORE(0x39, 1, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    DSTORE_WIDE(-1, 3, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    DSTORE_0(0x47, 0, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    DSTORE_1(0x48, 0, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    DSTORE_2(0x49, 0, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    DSTORE_3(0x4a, 0, StackType.DOUBLE.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
     DSUB(0x67, 0, new StackTypes(StackType.DOUBLE, StackType.DOUBLE), StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
     // DUP operations have behaviour which is dependent on stack content.
     DUP(0x59, 0, null, null, null, new OperationFactoryDup()), // 1 -> 2 (checkType)
@@ -97,27 +97,27 @@ public enum JVMInstr {
     FCONST_1(0xc, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT),
     FCONST_2(0xd, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT),
     FDIV(0x6e, 0, new StackTypes(StackType.FLOAT, StackType.FLOAT), StackType.FLOAT.asList(), RawJavaType.FLOAT),
-    FLOAD(0x17, 1, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT),
-    FLOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT),
-    FLOAD_0(0x22, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT),
-    FLOAD_1(0x23, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT),
-    FLOAD_2(0x24, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT),
-    FLOAD_3(0x25, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT),
+    FLOAD(0x17, 1, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT, true),
+    FLOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT, true),
+    FLOAD_0(0x22, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT, true),
+    FLOAD_1(0x23, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT, true),
+    FLOAD_2(0x24, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT, true),
+    FLOAD_3(0x25, 0, StackTypes.EMPTY, StackType.FLOAT.asList(), RawJavaType.FLOAT, true),
     FMUL(0x6a, 0, new StackTypes(StackType.FLOAT, StackType.FLOAT), StackType.FLOAT.asList(), RawJavaType.FLOAT),
     FNEG(0x76, 0, StackType.FLOAT.asList(), StackType.FLOAT.asList(), RawJavaType.FLOAT),
     FREM(0x72, 0, new StackTypes(StackType.FLOAT, StackType.FLOAT), StackType.FLOAT.asList(), RawJavaType.FLOAT),
-    FRETURN(0xae, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
-    FSTORE(0x38, 1, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    FSTORE_WIDE(-1, 3, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    FSTORE_0(0x43, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    FSTORE_1(0x44, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    FSTORE_2(0x45, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    FSTORE_3(0x46, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
+    FRETURN(0xae, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn(), true),
+    FSTORE(0x38, 1, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    FSTORE_WIDE(-1, 3, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    FSTORE_0(0x43, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    FSTORE_1(0x44, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    FSTORE_2(0x45, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    FSTORE_3(0x46, 0, StackType.FLOAT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
     FSUB(0x66, 0, new StackTypes(StackType.FLOAT, StackType.FLOAT), StackType.FLOAT.asList(), RawJavaType.FLOAT),
     GETFIELD(0xb4, 2, null, null, null, new OperationFactoryGetField()),
     GETSTATIC(0xb2, 2, null, null, null, new OperationFactoryGetStatic()),
-    GOTO(0xa7, 2, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryGoto()),
-    GOTO_W(0xc8, 4, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryGotoW()),
+    GOTO(0xa7, 2, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryGoto(), true),
+    GOTO_W(0xc8, 4, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryGotoW(), true),
     I2B(0x91, 0, StackType.INT.asList(), StackType.INT.asList(), RawJavaType.BYTE),
     I2C(0x92, 0, StackType.INT.asList(), StackType.INT.asList(), RawJavaType.CHAR),
     I2D(0x87, 0, StackType.INT.asList(), StackType.DOUBLE.asList(), RawJavaType.DOUBLE),
@@ -150,16 +150,16 @@ public enum JVMInstr {
     IFGE(0x9c, 2, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryConditionalJump()),
     IFGT(0x9d, 2, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryConditionalJump()),
     IFLE(0x9e, 2, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryConditionalJump()),
-    IFNONNULL(0xc7, 2, StackType.REF.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryConditionalJump()),
-    IFNULL(0xc6, 2, StackType.REF.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryConditionalJump()),
+    IFNONNULL(0xc7, 2, StackType.REF.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryConditionalJump(), true),
+    IFNULL(0xc6, 2, StackType.REF.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryConditionalJump(), true),
     IINC(0x84, 2, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID),
     IINC_WIDE(-1, 5, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID),
-    ILOAD(0x15, 1, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT),
-    ILOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT),
-    ILOAD_0(0x1a, 0, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT),
-    ILOAD_1(0x1b, 0, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT),
-    ILOAD_2(0x1c, 0, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT),
-    ILOAD_3(0x1d, 0, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT),
+    ILOAD(0x15, 1, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT, true),
+    ILOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT, true),
+    ILOAD_0(0x1a, 0, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT, true),
+    ILOAD_1(0x1b, 0, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT, true),
+    ILOAD_2(0x1c, 0, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT, true),
+    ILOAD_3(0x1d, 0, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.INT, true),
     IMUL(0x68, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
     INEG(0x74, 0, StackType.INT.asList(), StackType.INT.asList(), RawJavaType.INT),
     INSTANCEOF(0xc1, 2, StackType.REF.asList(), StackType.INT.asList(), RawJavaType.BOOLEAN, new OperationFactoryCPEntryW()),
@@ -170,15 +170,15 @@ public enum JVMInstr {
     INVOKEVIRTUAL(0xb6, 2, null, null, null, new OperationFactoryInvoke(true)),
     IOR(0x80, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
     IREM(0x70, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
-    IRETURN(0xac, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
+    IRETURN(0xac, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn(), true),
     ISHL(0x78, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
     ISHR(0x7a, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
-    ISTORE(0x36, 1, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ISTORE_WIDE(-1, 3, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ISTORE_0(0x3b, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ISTORE_1(0x3c, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ISTORE_2(0x3d, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    ISTORE_3(0x3e, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID),
+    ISTORE(0x36, 1, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ISTORE_WIDE(-1, 3, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ISTORE_0(0x3b, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ISTORE_1(0x3c, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ISTORE_2(0x3d, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    ISTORE_3(0x3e, 0, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
     ISUB(0x64, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
     IUSHR(0x7c, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
     IXOR(0x82, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
@@ -199,26 +199,26 @@ public enum JVMInstr {
     LDC_W(0x13, 2, null, null, null, new OperationFactoryLDCW()),
     LDC2_W(0x14, 2, null, null, null, new OperationFactoryLDC2W()),
     LDIV(0x6d, 0, new StackTypes(StackType.LONG, StackType.LONG), StackType.LONG.asList(), RawJavaType.LONG),
-    LLOAD(0x16, 1, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG),
-    LLOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG),
-    LLOAD_0(0x1e, 0, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG),
-    LLOAD_1(0x1f, 0, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG),
-    LLOAD_2(0x20, 0, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG),
-    LLOAD_3(0x21, 0, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG),
+    LLOAD(0x16, 1, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG, true),
+    LLOAD_WIDE(-1, 3, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG, true),
+    LLOAD_0(0x1e, 0, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG, true),
+    LLOAD_1(0x1f, 0, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG, true),
+    LLOAD_2(0x20, 0, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG, true),
+    LLOAD_3(0x21, 0, StackTypes.EMPTY, StackType.LONG.asList(), RawJavaType.LONG, true),
     LMUL(0x69, 0, new StackTypes(StackType.LONG, StackType.LONG), StackType.LONG.asList(), RawJavaType.LONG),
     LNEG(0x75, 0, StackType.LONG.asList(), StackType.LONG.asList(), RawJavaType.LONG),
     LOOKUPSWITCH(0xab, -1, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryLookupSwitch()),
     LOR(0x81, 0, new StackTypes(StackType.LONG, StackType.LONG), StackType.LONG.asList(), RawJavaType.LONG),
     LREM(0x71, 0, new StackTypes(StackType.LONG, StackType.LONG), StackType.LONG.asList(), RawJavaType.LONG),
-    LRETURN(0xad, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
+    LRETURN(0xad, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn(), true),
     LSHL(0x79, 0, new StackTypes(StackType.LONG, StackType.INT), StackType.LONG.asList(), RawJavaType.LONG),
     LSHR(0x7b, 0, new StackTypes(StackType.LONG, StackType.INT), StackType.LONG.asList(), RawJavaType.LONG),
-    LSTORE(0x37, 1, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    LSTORE_WIDE(-1, 3, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    LSTORE_0(0x3f, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    LSTORE_1(0x40, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    LSTORE_2(0x41, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID),
-    LSTORE_3(0x42, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID),
+    LSTORE(0x37, 1, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    LSTORE_WIDE(-1, 3, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    LSTORE_0(0x3f, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    LSTORE_1(0x40, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    LSTORE_2(0x41, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
+    LSTORE_3(0x42, 0, StackType.LONG.asList(), StackTypes.EMPTY, RawJavaType.VOID, true),
     LSUB(0x65, 0, new StackTypes(StackType.LONG, StackType.LONG), StackType.LONG.asList(), RawJavaType.LONG),
     LUSHR(0x7d, 0, new StackTypes(StackType.LONG, StackType.INT), StackType.LONG.asList(), RawJavaType.LONG),
     LXOR(0x83, 0, new StackTypes(StackType.LONG, StackType.LONG), StackType.LONG.asList(), RawJavaType.LONG),
@@ -234,7 +234,7 @@ public enum JVMInstr {
     PUTSTATIC(0xb3, 2, null, null, RawJavaType.VOID, new OperationFactoryPutStatic()),
     RET(0xa9, 1, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
     RET_WIDE(-1, 3, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
-    RETURN(0xb1, 0, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn()),
+    RETURN(0xb1, 0, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryReturn(), true),
     SALOAD(0x35, 0, new StackTypes(StackType.REF, StackType.INT), StackType.INT.asList(), RawJavaType.SHORT),
     SASTORE(0x56, 0, new StackTypes(StackType.REF, StackType.INT, StackType.INT), StackTypes.EMPTY, RawJavaType.VOID),
     SIPUSH(0x11, 2, StackTypes.EMPTY, StackType.INT.asList(), RawJavaType.SHORT),
@@ -251,6 +251,7 @@ public enum JVMInstr {
     private final RawJavaType rawJavaType;
     private final String name;
     private final OperationFactory handler;
+    private final boolean noThrow;
 
     private static final Map<Integer, JVMInstr> opcodeLookup = new HashMap<Integer, JVMInstr>();
 
@@ -261,10 +262,18 @@ public enum JVMInstr {
     }
 
     JVMInstr(int opcode, int bytes, StackTypes popped, StackTypes pushed, RawJavaType rawJavaType) {
-        this(opcode, bytes, popped, pushed, rawJavaType, OperationFactoryDefault.Handler.INSTANCE.getHandler());
+        this(opcode, bytes, popped, pushed, rawJavaType, OperationFactoryDefault.Handler.INSTANCE.getHandler(), false);
+    }
+
+    JVMInstr(int opcode, int bytes, StackTypes popped, StackTypes pushed, RawJavaType rawJavaType, boolean noThrow) {
+        this(opcode, bytes, popped, pushed, rawJavaType, OperationFactoryDefault.Handler.INSTANCE.getHandler(), noThrow);
     }
 
     JVMInstr(int opcode, int bytes, StackTypes popped, StackTypes pushed, RawJavaType rawJavaType, OperationFactory handler) {
+        this(opcode, bytes, popped, pushed, rawJavaType, handler, false);
+    }
+
+    JVMInstr(int opcode, int bytes, StackTypes popped, StackTypes pushed, RawJavaType rawJavaType, OperationFactory handler, boolean noThrow) {
         this.opcode = opcode;
         this.bytes = bytes;
         this.stackPopped = popped;
@@ -272,6 +281,7 @@ public enum JVMInstr {
         this.name = super.toString().toLowerCase();
         this.handler = handler;
         this.rawJavaType = rawJavaType;
+        this.noThrow = noThrow;
     }
 
     public int getOpcode() {
@@ -317,5 +327,9 @@ public enum JVMInstr {
 
     public RawJavaType getRawJavaType() {
         return rawJavaType;
+    }
+
+    public boolean isNoThrow() {
+        return noThrow;
     }
 }
