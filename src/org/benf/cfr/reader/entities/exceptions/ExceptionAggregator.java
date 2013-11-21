@@ -112,10 +112,10 @@ public class ExceptionAggregator {
     }
 
 
+    // Note - we deliberately don't use instr.isNoThrow here, that leads to over eager expansion into exception handlers!
     private static int canExpandTryBy(int idx, List<Op01WithProcessedDataAndByteJumps> statements) {
         Op01WithProcessedDataAndByteJumps op = statements.get(idx);
         JVMInstr instr = op.getJVMInstr();
-//        if (instr.isNoThrow()) return op.getInstructionLength();
         switch (instr) {
             case GOTO:
             case GOTO_W:
@@ -137,11 +137,6 @@ public class ExceptionAggregator {
                     return op.getInstructionLength() + op2.getInstructionLength();
                 break;
             }
-//            default:
-//                if (instr.isNoThrow()) {
-//                    return op.getInstructionLength();
-//                }
-//                break;
         }
         return 0;
     }
