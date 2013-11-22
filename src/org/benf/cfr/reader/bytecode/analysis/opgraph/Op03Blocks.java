@@ -5,9 +5,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetUtil;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
@@ -109,15 +111,31 @@ public class Op03Blocks {
          * Heuristic - we don't want to reorder entries which leave known blocks - SO... if a source
          * is in a different blockset, we have to wait until the previous block is emitted.
          */
+        // FIXME : TODO : INEFFICIENT.  Leaving it like this because I may need to revert.
         Block3 linPrev = null;
         for (Block3 block : blocks) {
             Op03SimpleStatement start = block.getStart();
             Set<BlockIdentifier> startIdents = start.getBlockIdentifiers();
             boolean needLinPrev = false;
+            prevtest:
             for (Block3 source : block.sources) {
-                if (!source.getEnd().getBlockIdentifiers().equals(startIdents)) {
-                    needLinPrev = true;
-                    break;
+                Set<BlockIdentifier> endIdents = source.getEnd().getBlockIdentifiers();
+                if (!endIdents.equals(startIdents)) {
+                    // If the only difference is case statements, then we allow, unless it's a direct
+                    // predecessor
+//                    if (source == linPrev) {
+//                        needLinPrev = true;
+//                        break prevtest;
+//                    } else {
+                    {
+                        Set<BlockIdentifier> diffs = SetUtil.difference(endIdents, startIdents);
+                        for (BlockIdentifier blk : diffs) {
+                            if (blk.getBlockType() == BlockType.CASE ||
+                                    blk.getBlockType() == BlockType.SWITCH) continue;
+                            needLinPrev = true;
+                            break prevtest;
+                        }
+                    }
                 }
             }
             if (needLinPrev) {
@@ -265,8 +283,8 @@ public class Op03Blocks {
     private static class Block3 implements Comparable<Block3> {
         InstrIndex startIndex;
         List<Op03SimpleStatement> content = ListFactory.newList();
-        List<Block3> sources = ListFactory.newList();
-        List<Block3> targets = ListFactory.newList();
+        Set<Block3> sources = new LinkedHashSet<Block3>();
+        Set<Block3> targets = new LinkedHashSet<Block3>();
 
 
         public Block3(Op03SimpleStatement s) {
@@ -300,7 +318,8 @@ public class Op03Blocks {
         }
 
         public void setTargets(List<Block3> targets) {
-            this.targets = targets;
+            this.targets.clear();
+            this.targets.addAll(targets);
         }
 
         @Override

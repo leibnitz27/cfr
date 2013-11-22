@@ -74,7 +74,7 @@ public class RawSwitchStatement extends AbstractStatement {
     }
 
     public SwitchStatement getSwitchStatement(BlockIdentifier blockIdentifier) {
-        return new SwitchStatement(switchOn, switchData, blockIdentifier);
+        return new SwitchStatement(switchOn, blockIdentifier);
     }
 
     @Override

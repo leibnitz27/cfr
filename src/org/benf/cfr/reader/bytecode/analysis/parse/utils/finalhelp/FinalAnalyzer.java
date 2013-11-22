@@ -355,7 +355,7 @@ public class FinalAnalyzer {
             for (Op03SimpleStatement tgt : old.getTargets()) {
                 Op03SimpleStatement newTgt = old2new.get(tgt);
                 if (newTgt == null) {
-                    if (Op03SimpleStatement.followNopGotoChain(tgt, false) == cloneThis.getAfterEnd()) {
+                    if (Op03SimpleStatement.followNopGotoChain(tgt, false, false) == cloneThis.getAfterEnd()) {
                         /*
                          * It's not in the block....
                          *

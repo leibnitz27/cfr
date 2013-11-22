@@ -16,4 +16,15 @@ public class SetUtil {
         }
         return false;
     }
+
+    public static <X> Set<X> difference(Set<? extends X> a, Set<? extends X> b) {
+        Set<X> res = SetFactory.newSet();
+        for (X a1 : a) {
+            if (!b.contains(a1)) res.add(a1);
+        }
+        for (X b1 : b) {
+            if (!a.contains(b1)) res.add(b1);
+        }
+        return res;
+    }
 }

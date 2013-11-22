@@ -983,13 +983,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return result;
     }
 
-    private static void replaceReturningIf(Op03SimpleStatement ifStatement) {
+    private static void replaceReturningIf(Op03SimpleStatement ifStatement, boolean aggressive) {
         if (!(ifStatement.containedStatement instanceof IfStatement)) return;
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
         Op03SimpleStatement tgt = ifStatement.getTargets().get(1);
         final Op03SimpleStatement origtgt = tgt;
         do {
-            Op03SimpleStatement next = followNopGoto(tgt, true);
+            Op03SimpleStatement next = followNopGoto(tgt, aggressive ? false : true, aggressive);
             if (next == tgt) break;
             tgt = next;
         } while (true);
@@ -1003,34 +1003,36 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         ifStatement.removeTarget(origtgt);
     }
 
-    public static void replaceReturningIfs(List<Op03SimpleStatement> statements) {
+    public static void replaceReturningIfs(List<Op03SimpleStatement> statements, boolean aggressive) {
         List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
         for (Op03SimpleStatement ifStatement : ifStatements) {
-            replaceReturningIf(ifStatement);
+            replaceReturningIf(ifStatement, aggressive);
         }
     }
 
 
     // Should have a set to make sure we've not looped.
-    private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource) {
+    private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource, boolean skipLabels) {
         if (in == null) {
             return null;
         }
         if (requireJustOneSource && in.sources.size() != 1) return in;
         if (in.targets.size() != 1) return in;
         Statement statement = in.getStatement();
-        if (statement instanceof Nop || statement instanceof GotoStatement) {
+        if (statement instanceof Nop ||
+                statement instanceof GotoStatement ||
+                (skipLabels && statement instanceof CaseStatement)) {
             in = in.targets.get(0);
         }
         return in;
     }
 
-    public static Op03SimpleStatement followNopGotoChain(Op03SimpleStatement in, boolean requireJustOneSource) {
+    public static Op03SimpleStatement followNopGotoChain(Op03SimpleStatement in, boolean requireJustOneSource, boolean skipLabels) {
         if (in == null) return null;
         Set<Op03SimpleStatement> seen = SetFactory.newSet();
         do {
             if (!seen.add(in)) return in;
-            Op03SimpleStatement next = followNopGoto(in, requireJustOneSource);
+            Op03SimpleStatement next = followNopGoto(in, requireJustOneSource, skipLabels);
             if (next == in) return in;
             in = next;
         } while (true);
@@ -1069,9 +1071,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         final Op03SimpleStatement nottaken2Immed = nottaken2;
         if (nottaken2Immed.sources.size() != 1) return false;
         Op03SimpleStatement notTaken2Source = ifStatement2;
-        nottaken2 = followNopGotoChain(nottaken2, true);
+        nottaken2 = followNopGotoChain(nottaken2, true, false);
         do {
-            Op03SimpleStatement nontaken2rewrite = followNopGoto(nottaken2, true);
+            Op03SimpleStatement nontaken2rewrite = followNopGoto(nottaken2, true, false);
             if (nontaken2rewrite == nottaken2) break;
             notTaken2Source = nottaken2;
             nottaken2 = nontaken2rewrite;
@@ -1084,7 +1086,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         final Op03SimpleStatement nottaken3Immed = nottaken3;
         Op03SimpleStatement notTaken3Source = ifStatement3;
         do {
-            Op03SimpleStatement nontaken3rewrite = followNopGoto(nottaken3, true);
+            Op03SimpleStatement nontaken3rewrite = followNopGoto(nottaken3, true, false);
             if (nontaken3rewrite == nottaken3) break;
             notTaken3Source = nottaken3;
             nottaken3 = nontaken3rewrite;
@@ -1517,7 +1519,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         continue;
                 }
                 Op03SimpleStatement target = statement.targets.get(0);
-                Op03SimpleStatement ultimateTarget = followNopGotoChain(target, false);
+                Op03SimpleStatement ultimateTarget = followNopGotoChain(target, false, false);
                 if (target != ultimateTarget) {
                     target.removeSource(statement);
                     statement.replaceTarget(target, ultimateTarget);
@@ -3814,6 +3816,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<DecodedSwitchEntry> entries = switchData.getJumpTargets();
         InferredJavaType caseType = switchStatement.getSwitchOn().getInferredJavaType();
         Map<InstrIndex, Op03SimpleStatement> firstPrev = MapFactory.newMap();
+        Set<BlockIdentifier> caseIdentifiers = SetFactory.newSet();
         for (int x = 0; x < targets.size(); ++x) {
             Op03SimpleStatement target = targets.get(x);
             InstrIndex tindex = target.getIndex();
@@ -3829,14 +3832,22 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     expression.add(new Literal(TypedLiteral.getInt(val)));
                 }
             }
-            Op03SimpleStatement caseStatement = new Op03SimpleStatement(target.getBlockIdentifiers(), new CaseStatement(expression, caseType, blockIdentifier, blockIdentifierFactory.getNextBlockIdentifier(BlockType.CASE)), target.getIndex().justBefore());
+            Set<BlockIdentifier> blocks = SetFactory.newSet(target.getBlockIdentifiers());
+            blocks.add(blockIdentifier);
+            BlockIdentifier caseIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.CASE);
+            Op03SimpleStatement caseStatement = new Op03SimpleStatement(blocks, new CaseStatement(expression, caseType, blockIdentifier, caseIdentifier), target.getIndex().justBefore());
             // Link casestatement in infront of target - all sources of target should point to casestatement instead, and
             // there should be one link going from caseStatement to target. (it's unambiguous).
-            for (Op03SimpleStatement source : target.sources) {
+            Iterator<Op03SimpleStatement> iterator = target.sources.iterator();
+            while (iterator.hasNext()) {
+                Op03SimpleStatement source = iterator.next();
+                if (swatch.getIndex().isBackJumpTo(source)) {
+                    continue;
+                }
                 source.replaceTarget(target, caseStatement);
                 caseStatement.addSource(source);
+                iterator.remove();
             }
-            target.sources.clear();
             target.sources.add(caseStatement);
             caseStatement.addTarget(target);
             in.add(caseStatement);
@@ -3877,6 +3888,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          */
         Map<Op03SimpleStatement, InstrIndex> lastStatementBefore = MapFactory.newMap();
         for (Op03SimpleStatement target : targets) {
+            CaseStatement caseStatement = (CaseStatement) target.getStatement();
+            BlockIdentifier caseBlock = caseStatement.getCaseBlock();
+
             NodeReachable nodeReachable = new NodeReachable(caseTargets, target, swatch);
             GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(target, nodeReachable);
             gv.process();
@@ -3897,10 +3911,27 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
              * Need to cache the last entry, as we might move multiple blocks.
              *
              */
+            boolean contiguous = blockIsContiguous(in, target, nodeReachable.inBlock);
             if (target.getSources().size() != 1) {
+                /*
+                 * Ok, we can't move this above.  But we need to make sure, (if it's the last block) that we've explicitly
+                 * marked the contents as being in this switch, to stop movement.
+                 */
+                if (contiguous) {
+                    for (Op03SimpleStatement reachable : nodeReachable.inBlock) {
+                        reachable.markBlock(blockIdentifier);
+                        // TODO : FIXME : Expensive - can we assume we won't get asked to mark
+                        // members of other cases?
+                        if (!caseTargets.contains(reachable)) {
+                            if (!SetUtil.hasIntersection(reachable.getBlockIdentifiers(), caseIdentifiers)) {
+                                reachable.markBlock(caseBlock);
+                            }
+                        }
+                    }
+                }
                 continue;
             }
-            if (!blockIsContiguous(in, target, nodeReachable.inBlock)) {
+            if (!contiguous) {
                 // Can't handle this.
                 continue;
             }
@@ -3920,6 +3951,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
 
         swatch.replaceStatement(switchStatement.getSwitchStatement(blockIdentifier));
+        /*
+         * And (as it doesn't matter) reorder swatch's targets, for minimal confusion
+         */
+        Collections.sort(swatch.targets, new CompareByIndex());
     }
 
     private static boolean blockIsContiguous(List<Op03SimpleStatement> in, Op03SimpleStatement start, Set<Op03SimpleStatement> blockContent) {
@@ -3996,17 +4031,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             int indexNextCase = statements.indexOf(nextCase);
             InstrIndex nextCaseIndex = nextCase.getIndex();
 
-            CaseStatement caseStatement = (CaseStatement) thisCase.containedStatement;
+            Statement maybeCaseStatement = thisCase.containedStatement;
+            if (!(maybeCaseStatement instanceof CaseStatement)) continue;
+            CaseStatement caseStatement = (CaseStatement) maybeCaseStatement;
             BlockIdentifier caseBlock = caseStatement.getCaseBlock();
 
             int indexLastInThis = getFarthestReachableInRange(statements, indexThisCase, indexNextCase);
             if (indexLastInThis != indexNextCase - 1) {
-                throw new ConfusedCFRException("Case statement doesn't cover expected range.");
+                // Oh dear.  This is going to need some moving around.
+//                throw new ConfusedCFRException("Case statement doesn't cover expected range.");
             }
             indexLastInLastBlock = indexLastInThis;
             for (int y = indexThisCase + 1; y <= indexLastInThis; ++y) {
                 Op03SimpleStatement statement = statements.get(y);
                 statement.markBlock(caseBlock);
+                statement.markBlock(switchBlock);
                 if (statement.getJumpType().isUnknown()) {
                     for (Op03SimpleStatement innerTarget : statement.targets) {
                         if (nextCaseIndex.isBackJumpFrom(innerTarget)) {
@@ -4104,6 +4143,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         switchStatements = Functional.filter(in, new TypeFilter<SwitchStatement>(SwitchStatement.class));
         for (Op03SimpleStatement switchStatement : switchStatements) {
+            // removePointlessSwitchDefault(switchStatement);
             examineSwitchContiguity(switchStatement, in);
         }
 
@@ -4594,7 +4634,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static void removePointlessSwitchDefault(Op03SimpleStatement swtch) {
         SwitchStatement switchStatement = (SwitchStatement) swtch.getStatement();
         BlockIdentifier switchBlock = switchStatement.getSwitchBlock();
-        // If one of the targets is a "default", and it's definitely a target for this switch statement
+        // If one of the targets is a "default", and it's definitely a target for this switch statement...
         // AND it hasn't been marked as belonging to the block, remove it.
         // A default with no code is of course equivalent to no default.
         for (Op03SimpleStatement tgt : swtch.getTargets()) {
@@ -4603,7 +4643,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 CaseStatement caseStatement = (CaseStatement) statement;
                 if (caseStatement.getSwitchBlock() == switchBlock) {
                     if (caseStatement.isDefault()) {
-                        if (tgt.containedInBlocks.contains(switchBlock)) {
+                        if (tgt.targets.size() != 1) return;
+                        Op03SimpleStatement afterTgt = tgt.targets.get(0);
+                        if (afterTgt.containedInBlocks.contains(switchBlock)) {
                             return;
                         } else {
                             // We can remove this.

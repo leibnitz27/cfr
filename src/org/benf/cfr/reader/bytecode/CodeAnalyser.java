@@ -357,7 +357,7 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         if (passoptions.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
-            Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
+            Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
@@ -422,7 +422,7 @@ public class CodeAnalyser {
 
         // Replacing returning ifs early (above, aggressively) interferes with some nice output.
         // Normally we'd do it AFTER loops.
-        Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes);
+        Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, false);
 
         if (showOpsLevel == SHOW_L3_LOOPS1) {
             debugDumper.newln().newln();

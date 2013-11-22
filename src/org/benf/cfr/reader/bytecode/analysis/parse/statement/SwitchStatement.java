@@ -20,12 +20,10 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class SwitchStatement extends AbstractStatement {
     private Expression switchOn;
-    private final DecodedSwitch switchData;
     private final BlockIdentifier switchBlock;
 
-    public SwitchStatement(Expression switchOn, DecodedSwitch switchData, BlockIdentifier switchBlock) {
+    public SwitchStatement(Expression switchOn, BlockIdentifier switchBlock) {
         this.switchOn = switchOn;
-        this.switchData = switchData;
         this.switchBlock = switchBlock;
     }
 
