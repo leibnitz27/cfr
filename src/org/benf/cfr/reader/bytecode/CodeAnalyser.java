@@ -90,7 +90,7 @@ public class CodeAnalyser {
             comments.addComment(new DecompilerComment("Exception decompiling", e));
         }
 
-        if (failed != null || !coderes.isFullyStructured()) {
+        if ((failed != null || !coderes.isFullyStructured()) && options.optionIsSet(OptionsImpl.RECOVER)) {
             // Try to override some options for aggressive behaviour
             MutableOptions mutableOptions = new MutableOptions(options);
             List<DecompilerComment> extraComments = ListFactory.newList();

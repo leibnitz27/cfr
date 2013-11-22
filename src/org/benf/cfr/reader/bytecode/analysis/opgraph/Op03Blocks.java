@@ -164,6 +164,7 @@ public class Op03Blocks {
 
         List<Block3> output = ListFactory.newList(blocks.size());
 
+        Block3 last = null;
         while (!allBlocks.isEmpty()) {
             Block3 next = null;
             if (!ready.isEmpty()) {
@@ -174,10 +175,27 @@ public class Op03Blocks {
                 ready.remove(next);
             } else {
                 /*
-                 * Take first of others.
+                 * If any of the children of the last block haven't been emitted, emit the first.
                  */
-                next = allBlocks.iterator().next();
+                /*
+                if (last != null) {
+                    for (Block3 lastChild : last.targets) {
+                        if (allBlocks.contains(lastChild)) {
+                            next = lastChild;
+                            break;
+                        }
+                    }
+                }
+                */
+
+                if (next == null) {
+                    /*
+                     * Take first of others.
+                     */
+                    next = allBlocks.iterator().next();
+                }
             }
+            last = next;
             // Remove from allblocks so we don't process again.
             allBlocks.remove(next);
             output.add(next);
