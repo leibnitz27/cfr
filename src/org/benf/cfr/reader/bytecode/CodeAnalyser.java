@@ -90,7 +90,7 @@ public class CodeAnalyser {
             comments.addComment(new DecompilerComment("Exception decompiling", e));
         }
 
-        if ((failed != null || !coderes.isFullyStructured()) && options.optionIsSet(OptionsImpl.RECOVER)) {
+        if ((failed != null || !coderes.isFullyStructured()) && options.getOption(OptionsImpl.RECOVER)) {
             // Try to override some options for aggressive behaviour
             MutableOptions mutableOptions = new MutableOptions(options);
             List<DecompilerComment> extraComments = ListFactory.newList();
@@ -415,6 +415,8 @@ public class CodeAnalyser {
         // If we have been asked to, topologically sort graph.
         // We won't do this unless there's been a problem with normal decompilation strategy.
         //
+
+        Op03SimpleStatement.eclipseLoopPass(op03SimpleParseNodes);
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
