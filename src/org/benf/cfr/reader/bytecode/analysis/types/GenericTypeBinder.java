@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.SetFactory;
@@ -184,7 +185,15 @@ public class GenericTypeBinder {
                 }
                 if (t2.implicitlyCastsTo(t1)) {
                     res.put(key, t1);
+                    continue;
                 }
+                /*
+                 * Nope.  Ok, find a common BASE of t1 and t2.
+                 */
+                InferredJavaType clash = InferredJavaType.mkClash(t1, t2);
+                clash.collapseTypeClash();
+                res.put(key, clash.getJavaTypeInstance());
+                continue;
             }
             return null;
         }

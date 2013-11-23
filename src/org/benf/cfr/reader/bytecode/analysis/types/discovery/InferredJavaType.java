@@ -432,6 +432,18 @@ public class InferredJavaType {
         value = new IJTInternal_Impl(type, source, locked);
     }
 
+    private InferredJavaType(IJTInternal_Clash clash) {
+        value = clash;
+    }
+
+    public static InferredJavaType mkClash(JavaTypeInstance... types) {
+        List<IJTInternal> ints = ListFactory.newList();
+        for (JavaTypeInstance type : types) {
+            ints.add(new IJTInternal_Impl(type, Source.UNKNOWN, false));
+        }
+        return new InferredJavaType(new IJTInternal_Clash(ints));
+    }
+
     public Source getSource() {
         return value.getSource();
     }

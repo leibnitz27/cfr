@@ -413,6 +413,9 @@ public class MethodPrototype implements TypeUsageCollectable {
         return true;
     }
 
+    /*
+     * These are the /exact/ types of the arguments, not the possible supers.
+     */
     public GenericTypeBinder getTypeBinderForTypes(List<JavaTypeInstance> invokingArgTypes) {
         if (classFile == null) {
             return null;

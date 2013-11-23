@@ -4857,7 +4857,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             }
         }
-        Map<Integer, List<MemberFunctionInvokation>> byTypKey = MapFactory.newIdentityMap();
+        Map<Integer, List<MemberFunctionInvokation>> byTypKey = MapFactory.newTreeMap();
         Functional.groupToMapBy(memberFunctionInvokations, byTypKey, new UnaryFunction<MemberFunctionInvokation, Integer>() {
             @Override
             public Integer invoke(MemberFunctionInvokation arg) {
@@ -4866,7 +4866,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         });
 
         invokationGroup:
-        for (List<MemberFunctionInvokation> invokations : byTypKey.values()) {
+        for (Map.Entry<Integer, List<MemberFunctionInvokation>> entry : byTypKey.entrySet()) {
+            Integer key = entry.getKey();
+            List<MemberFunctionInvokation> invokations = entry.getValue();
             if (invokations.isEmpty()) continue;
 
             Expression obj0 = invokations.get(0).getObject();
@@ -4880,7 +4882,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             for (int x = 1, len = invokations.size(); x < len; ++x) {
                 GenericTypeBinder gtb = getGtb(invokations.get(x));
                 gtb0 = gtb0.mergeWith(gtb, true);
-                if (gtb0 == null) continue invokationGroup;
+                if (gtb0 == null) {
+                    continue invokationGroup;
+                }
             }
             obj0.getInferredJavaType().deGenerify(gtb0.getBindingFor(obj0.getInferredJavaType().getJavaTypeInstance()));
         }

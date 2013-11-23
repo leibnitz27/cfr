@@ -416,7 +416,9 @@ public class CodeAnalyser {
         // We won't do this unless there's been a problem with normal decompilation strategy.
         //
 
-        Op03SimpleStatement.eclipseLoopPass(op03SimpleParseNodes);
+        if (options.getOption(OptionsImpl.ECLIPSE)) {
+            Op03SimpleStatement.eclipseLoopPass(op03SimpleParseNodes);
+        }
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
