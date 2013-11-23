@@ -166,6 +166,8 @@ public class OptionsImpl implements Options {
             "silent", defaultFalseBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> RECOVER = new PermittedOptionProvider.Argument<Boolean>(
             "recover", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> ECLIPSE = new PermittedOptionProvider.Argument<Boolean>(
+            "eclipse", defaultTrueBooleanDecoder);
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -218,7 +220,7 @@ public class OptionsImpl implements Options {
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT, DUMP_CLASS_PATH,
                     DECOMPILER_COMMENTS, ALLOW_WHOLE_FAILURE, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
-                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER);
+                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE);
         }
 
         @Override
