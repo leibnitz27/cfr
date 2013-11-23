@@ -2116,6 +2116,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * replace (b) with an unconditional jump to a.
      */
     public static void eclipseLoopPass(List<Op03SimpleStatement> statements) {
+        boolean effect = false;
         for (int x = 0, len = statements.size() - 1; x < len; ++x) {
             Op03SimpleStatement statement = statements.get(x);
             Statement inr = statement.getStatement();
@@ -2156,11 +2157,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             bodyStart.removeSource(target);
             statement.addSource(target);
 
-//            Op03SimpleStatement.removeUnreachableCode(statements);
+            effect = true;
+        }
 
-
-            int i = 1;
-
+        if (effect) {
+            Op03SimpleStatement.removePointlessJumps(statements);
         }
     }
 
