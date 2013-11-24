@@ -374,7 +374,7 @@ public class CodeAnalyser {
         boolean reloop = false;
         do {
             logger.info("collapseAssignmentsIntoConditionals");
-            Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes);
+            Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options);
 
             // Collapse conditionals into || / &&
             logger.info("condenseConditionals");

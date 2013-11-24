@@ -1218,7 +1218,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     // if (b==a)
     //
     // --> if ((b=x)==(a=y))
-    private static void collapseAssignmentsIntoConditional(Op03SimpleStatement ifStatement) {
+    private static void collapseAssignmentsIntoConditional(Op03SimpleStatement ifStatement, boolean testEclipse) {
 
         WildcardMatch wcm = new WildcardMatch();
 
@@ -1243,34 +1243,42 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          *
          * which is (a) ugly, and (b) screws with final analysis.
          */
-        Op03SimpleStatement statement = ifStatement;
-        Set<Op03SimpleStatement> visited = SetFactory.newSet();
-        verify:
-        do {
-            if (statement.sources.size() > 1) {
-                // Progress if we're a backjump target.
-                // Otherwise, we'll cause problems with assignments inside
-                // while conditionals.
-                InstrIndex statementIndex = statement.index;
-                for (Op03SimpleStatement source : statement.sources) {
-                    if (statementIndex.isBackJumpFrom(source)) {
-                        break verify;
+        /*
+         * HOWEVER - eclipse (of course) generates code which looks like
+         *
+         *
+         */
+        boolean eclipseHeuristic = testEclipse && ifStatement.getTargets().get(1).getIndex().isBackJumpFrom(ifStatement);
+        if (!eclipseHeuristic) {
+            Op03SimpleStatement statement = ifStatement;
+            Set<Op03SimpleStatement> visited = SetFactory.newSet();
+            verify:
+            do {
+                if (statement.sources.size() > 1) {
+                    // Progress if we're a backjump target.
+                    // Otherwise, we'll cause problems with assignments inside
+                    // while conditionals.
+                    InstrIndex statementIndex = statement.index;
+                    for (Op03SimpleStatement source : statement.sources) {
+                        if (statementIndex.isBackJumpFrom(source)) {
+                            break verify;
+                        }
                     }
                 }
-            }
-            if (statement.sources.isEmpty()) {
+                if (statement.sources.isEmpty()) {
+                    return;
+                }
+                statement = statement.sources.get(0);
+                if (!visited.add(statement)) {
+                    return;
+                }
+                Statement opStatement = statement.getStatement();
+                if (opStatement instanceof IfStatement) break;
+                if (opStatement instanceof Nop) continue;
+                if (opStatement instanceof AbstractAssignment) continue;
                 return;
-            }
-            statement = statement.sources.get(0);
-            if (!visited.add(statement)) {
-                return;
-            }
-            Statement opStatement = statement.getStatement();
-            if (opStatement instanceof IfStatement) break;
-            if (opStatement instanceof Nop) continue;
-            if (opStatement instanceof AbstractAssignment) continue;
-            return;
-        } while (true);
+            } while (true);
+        }
 
         /* where possible, collapse any single parent assignments into this. */
         Op03SimpleStatement previousSource = null;
@@ -1347,11 +1355,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * We will always have the former, but (ONLY!) just after a backjump, (with only conditionals and assignments, and
      * single parents), we will want to run them together.
      */
-    public static void collapseAssignmentsIntoConditionals(List<Op03SimpleStatement> statements) {
+    public static void collapseAssignmentsIntoConditionals(List<Op03SimpleStatement> statements, Options options) {
         // find all conditionals.
         List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
+        boolean testEclipse = options.getOption(OptionsImpl.ECLIPSE);
         for (Op03SimpleStatement statement : ifStatements) {
-            collapseAssignmentsIntoConditional(statement);
+            collapseAssignmentsIntoConditional(statement, testEclipse);
         }
     }
 
