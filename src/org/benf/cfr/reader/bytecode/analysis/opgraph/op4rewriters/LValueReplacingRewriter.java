@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -18,32 +19,11 @@ import java.util.Map;
  * Date: 01/07/2013
  * Time: 18:08
  */
-public class LValueReplacingRewriter implements ExpressionRewriter {
+public class LValueReplacingRewriter extends AbstractExpressionRewriter {
     private final Map<LValue, LValue> replacements;
 
     public LValueReplacingRewriter(Map<LValue, LValue> replacements) {
         this.replacements = replacements;
-    }
-
-    @Override
-    public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-    }
-
-    @Override
-    public void handleStatement(StatementContainer statementContainer) {
-    }
-
-    @Override
-    public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        return (ConditionalExpression) res;
-    }
-
-    @Override
-    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        return (AbstractAssignmentExpression) res;
     }
 
     @Override
@@ -55,8 +35,4 @@ public class LValueReplacingRewriter implements ExpressionRewriter {
         return lValue.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
 
-    @Override
-    public StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        return lValue;
-    }
 }

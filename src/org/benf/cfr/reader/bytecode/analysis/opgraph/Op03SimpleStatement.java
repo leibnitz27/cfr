@@ -1,6 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NOPSearchingExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -1298,16 +1302,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // These two are horrible hacks to stop iterator loops being rewritten.
             // (Otherwise, if they're rolled up, the first statement inside the loop is the comparison instead
             // of the assignment.
-            Expression e1 = wcm.getMemberFunction("tst", "next", wcm.getExpressionWildCard("e"));
-            Expression e2 = new ArrayIndex(wcm.getExpressionWildCard("a"), new LValueExpression(wcm.getLValueWildCard("i")));
-            if (assignment instanceof AssignmentSimple) {
-                AssignmentSimple assignmentSimple = (AssignmentSimple) assignment;
-                if (assignmentSimple.isInitialAssign()) {
-                    Expression rV = assignment.getRValue();
-                    if (e1.equals(rV)) return;
-                    if (e2.equals(rV)) return;
-                }
-            }
+//            Expression e1 = wcm.getMemberFunction("tst", "next", wcm.getExpressionWildCard("e"));
+//            Expression e2 = new ArrayIndex(wcm.getExpressionWildCard("a"), new LValueExpression(wcm.getLValueWildCard("i")));
+//            if (assignment instanceof AssignmentSimple) {
+//                AssignmentSimple assignmentSimple = (AssignmentSimple) assignment;
+//                if (assignmentSimple.isInitialAssign()) {
+//                    Expression rV = assignment.getRValue();
+//                    if (e1.equals(rV)) return;
+//                    if (e2.equals(rV)) return;
+//                }
+//            }
             // This stops us rolling up finals, but at the cost of un-finalling them...
 //            if (lValue instanceof LocalVariable) {
 //                LocalVariable localVariable = (LocalVariable)lValue;
@@ -4281,6 +4285,22 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+
+    private static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue) {
+        AssignmentExpression needle = new AssignmentExpression(lValue, rValue, true);
+        NOPSearchingExpressionRewriter finder = new NOPSearchingExpressionRewriter(needle);
+
+        statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
+        return finder.isFound();
+    }
+
+    private static void replaceHiddenIter(Statement statement, LValue lValue, Expression rValue) {
+        AssignmentExpression needle = new AssignmentExpression(lValue, rValue, true);
+        ExpressionReplacingRewriter finder = new ExpressionReplacingRewriter(needle, new LValueExpression(lValue));
+
+        statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
+    }
+
     /* Given a for loop
      *
      * array
@@ -4355,12 +4375,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement loopStart = loop.getTargets().get(0);
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
+        WildcardMatch.LValueWildcard sugariterWC = wildcardMatch.getLValueWildCard("sugariter");
+        Expression arrIndex = new ArrayIndex(new LValueExpression(originalArray), new LValueExpression(originalLoopVariable));
+        boolean hiddenIter = false;
         if (!wildcardMatch.match(
-                new AssignmentSimple(wildcardMatch.getLValueWildCard("sugariter"),
-                        new ArrayIndex(new LValueExpression(originalArray), new LValueExpression(originalLoopVariable))),
-                loopStart.containedStatement)) return false;
+                new AssignmentSimple(sugariterWC, arrIndex),
+                loopStart.containedStatement)) {
+            // If the assignment's been pushed down into a conditional, we could have
+            // if ((i = a[x]) > 3).  This is why we've avoided pushing that down. :(
+            if (!findHiddenIter(loopStart.containedStatement, sugariterWC, arrIndex)) {
+                return false;
+            }
+            hiddenIter = true;
+        }
 
-        LValue sugarIter = wildcardMatch.getLValueWildCard("sugariter").getMatch();
+        LValue sugarIter = sugariterWC.getMatch();
 
         // It's probably valid.  We just have to make sure that array and index aren't assigned to anywhere in the loop
         // body.
@@ -4436,7 +4465,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
 
         loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, arrayStatement));
-        loopStart.nopOut();
+        if (hiddenIter) {
+            replaceHiddenIter(loopStart.containedStatement, sugariterWC.getMatch(), arrIndex);
+        } else {
+            loopStart.nopOut();
+        }
         preceeding.nopOut();
         if (prepreceeding != null) {
             prepreceeding.nopOut();
@@ -4482,18 +4515,24 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
         boolean isCastExpression = false;
+        boolean hiddenIter = false;
+        WildcardMatch.LValueWildcard sugariterWC = wildcardMatch.getLValueWildCard("sugariter");
+        Expression nextCall = wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")));
         if (wildcardMatch.match(
-                new AssignmentSimple(wildcardMatch.getLValueWildCard("sugariter"),
-                        wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")))),
+                new AssignmentSimple(sugariterWC, nextCall),
                 loopStart.containedStatement)) {
         } else if (wildcardMatch.match(
-                new AssignmentSimple(wildcardMatch.getLValueWildCard("sugariter"),
-                        wildcardMatch.getCastExpressionWildcard("cast", wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable"))))),
+                new AssignmentSimple(sugariterWC,
+                        wildcardMatch.getCastExpressionWildcard("cast", nextCall)),
                 loopStart.containedStatement)) {
             // It's a cast expression - so we know that there's a type we might be able to push back up.
             isCastExpression = true;
         } else {
-            return;
+            // Try seeing if it's a hidden iter, which has been pushed inside a conditional
+            if (!findHiddenIter(loopStart.containedStatement, sugariterWC, nextCall)) {
+                return;
+            }
+            hiddenIter = true;
         }
 
         LValue sugarIter = wildcardMatch.getLValueWildCard("sugariter").getMatch();
@@ -4595,7 +4634,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 //        }
 
         loop.replaceStatement(new ForIterStatement(blockIdentifier, sugarIter, iterSource));
-        loopStart.nopOut();
+        if (hiddenIter) {
+            replaceHiddenIter(loopStart.containedStatement, sugariterWC.getMatch(), nextCall);
+        } else {
+            loopStart.nopOut();
+        }
         preceeding.nopOut();
     }
 
