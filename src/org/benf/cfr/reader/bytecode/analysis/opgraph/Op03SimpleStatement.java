@@ -1283,9 +1283,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         /* where possible, collapse any single parent assignments into this. */
         Op03SimpleStatement previousSource = null;
         while (ifStatement.sources.size() == 1) {
-            Expression e1 = wcm.getMemberFunction("tst", "next", wcm.getExpressionWildCard("e"));
-            Expression e2 = new ArrayIndex(wcm.getExpressionWildCard("a"), new LValueExpression(wcm.getLValueWildCard("i")));
-
             Op03SimpleStatement source = ifStatement.sources.get(0);
             if (source == previousSource) return;
             previousSource = source;
@@ -1298,14 +1295,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (!lvc.isUsed(lValue)) return;
             AbstractAssignment assignment = (AbstractAssignment) (source.containedStatement);
 
-            /*
-             * HACK ALERT.  Don't roll up /next/.
-             */
+            // These two are horrible hacks to stop iterator loops being rewritten.
+            // (Otherwise, if they're rolled up, the first statement inside the loop is the comparison instead
+            // of the assignment.
+            Expression e1 = wcm.getMemberFunction("tst", "next", wcm.getExpressionWildCard("e"));
+            Expression e2 = new ArrayIndex(wcm.getExpressionWildCard("a"), new LValueExpression(wcm.getLValueWildCard("i")));
             if (assignment instanceof AssignmentSimple) {
                 AssignmentSimple assignmentSimple = (AssignmentSimple) assignment;
                 if (assignmentSimple.isInitialAssign()) {
                     Expression rV = assignment.getRValue();
-                    if (e1.equals(rV) || e2.equals(rV)) return;
+                    if (e1.equals(rV)) return;
+                    if (e2.equals(rV)) return;
                 }
             }
             // This stops us rolling up finals, but at the cost of un-finalling them...
