@@ -1521,14 +1521,45 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 Op03SimpleStatement target = statement.targets.get(0);
                 Op03SimpleStatement ultimateTarget = followNopGotoChain(target, false, false);
                 if (target != ultimateTarget) {
+                    ultimateTarget = maybeMoveTarget(ultimateTarget, statement, statements);
                     target.removeSource(statement);
                     statement.replaceTarget(target, ultimateTarget);
                     ultimateTarget.addSource(statement);
                 }
+            } else if (innerStatement.getClass() == IfStatement.class) {
+                IfStatement ifStatement = (IfStatement) innerStatement;
+                Op03SimpleStatement target = statement.targets.get(1);
+                Op03SimpleStatement ultimateTarget = followNopGotoChain(target, false, false);
+                if (target != ultimateTarget) {
+                    ultimateTarget = maybeMoveTarget(ultimateTarget, statement, statements);
+                    target.removeSource(statement);
+                    statement.replaceTarget(target, ultimateTarget);
+                    ultimateTarget.addSource(statement);
+                }
+
             }
+
         }
+        int x = 1;
     }
 
+    /*
+     * If we're jumping into an instruction just after a try block, (or multiple try blocks), we move the jump to the try
+     * block, IF we're jumping from outside the try block.
+     */
+    private static Op03SimpleStatement maybeMoveTarget(Op03SimpleStatement expectedRetarget, Op03SimpleStatement source, List<Op03SimpleStatement> statements) {
+        if (expectedRetarget.getBlockIdentifiers().equals(source.getBlockIdentifiers())) return expectedRetarget;
+
+        final int startIdx = statements.indexOf(expectedRetarget);
+        int idx = startIdx;
+        Op03SimpleStatement maybe = null;
+        while (idx > 0 && statements.get(--idx).getStatement() instanceof TryStatement) {
+            maybe = statements.get(idx);
+            if (maybe.getBlockIdentifiers().equals(source.getBlockIdentifiers())) break;
+        }
+        if (maybe == null) return expectedRetarget;
+        return maybe;
+    }
 
     /*
      * Rewrite

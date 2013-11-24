@@ -435,6 +435,7 @@ public class CodeAnalyser {
         }
 
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
 
         if (showOpsLevel == SHOW_L3_EXCEPTION_BLOCKS) {
             debugDumper.newln().newln();
