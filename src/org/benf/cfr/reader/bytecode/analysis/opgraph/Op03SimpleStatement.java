@@ -4913,6 +4913,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (gtb0 == null) continue invokationGroup;
             for (int x = 1, len = invokations.size(); x < len; ++x) {
                 GenericTypeBinder gtb = getGtb(invokations.get(x));
+                if (gtb == null) {
+                    continue invokationGroup;
+                }
                 gtb0 = gtb0.mergeWith(gtb, true);
                 if (gtb0 == null) {
                     continue invokationGroup;
