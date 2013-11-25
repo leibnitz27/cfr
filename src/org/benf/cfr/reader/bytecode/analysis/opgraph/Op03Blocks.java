@@ -5,10 +5,12 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.SetUtil;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
@@ -23,7 +25,149 @@ import java.util.*;
  * Time: 06:39
  */
 public class Op03Blocks {
-    public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements) {
+
+    private static List<Block3> doTopSort(List<Block3> in) {
+        /*
+         * Topological sort, preferring earlier.
+         *
+         * We can't do a naive 'emit with 0 parents because of loops.
+         */
+        LinkedHashSet<Block3> allBlocks = new LinkedHashSet<Block3>();
+        allBlocks.addAll(in);
+
+
+        /* in a simple top sort, you take a node with 0 parents, emit it, remove it as parent from all
+         * its children, rinse and repeat.  We can't do that immediately, because we have cycles.
+         *
+         * v1 - try simple top sort, but when we have no candidates, emit next candidate with only existing
+         * later parents.
+         */
+        Set<Block3> ready = new TreeSet<Block3>();
+        ready.add(in.get(0));
+
+        List<Block3> output = ListFactory.newList(in.size());
+
+        Block3 last = null;
+        while (!allBlocks.isEmpty()) {
+            Block3 next = null;
+            if (!ready.isEmpty()) {
+                /*
+                 * Take first known ready
+                 */
+                next = ready.iterator().next();
+                ready.remove(next);
+            } else {
+                /*
+                 * If any of the children of the last block haven't been emitted, emit the first.
+                 */
+                /*
+                if (last != null) {
+                    for (Block3 lastChild : last.targets) {
+                        if (allBlocks.contains(lastChild)) {
+                            next = lastChild;
+                            break;
+                        }
+                    }
+                }
+                */
+
+                if (next == null) {
+                    /*
+                     * Take first of others.
+                     */
+                    next = allBlocks.iterator().next();
+                }
+            }
+            last = next;
+            // Remove from allblocks so we don't process again.
+            allBlocks.remove(next);
+            output.add(next);
+            for (Block3 child : next.targets) {
+                child.sources.remove(next);
+                if (child.sources.isEmpty()) {
+                    if (allBlocks.contains(child)) {
+                        ready.add(child);
+                    }
+                }
+            }
+        }
+        return output;
+    }
+
+    private static void apply0TargetBlockHeuristic(List<Block3> blocks) {
+        /*
+         * If a block has no targets, but multiple sources, make sure it appears AFTER its last source
+         * in the sorted blocks.
+         */
+        for (int idx = blocks.size() - 1; idx >= 0; idx--) {
+            Block3 block = blocks.get(idx);
+            if (block.targets.isEmpty()) {
+                boolean move = false;
+                Block3 lastSource = block;
+                for (Block3 source : block.sources) {
+                    if (lastSource.compareTo(source) < 0) {
+                        move = true;
+                        lastSource = source;
+                    }
+                }
+                if (move) {
+                    block.startIndex = lastSource.startIndex.justAfter();
+                    blocks.add(blocks.indexOf(lastSource) + 1, block);
+                    blocks.remove(idx);
+                }
+            }
+        }
+    }
+
+//    private static void applyLastBlockHeuristic(List<Block3> blocks) {
+//        int last = blocks.size()-1;
+//        if (last < 1) return;
+//        Block3 lastBlock = blocks.get(last);
+//        if (lastBlock.targets.isEmpty()) {
+//            lastBlock.addSource(blocks.get(last-1));
+//        }
+//    }
+
+    private static void applyKnownBlocksHeuristic(List<Block3> blocks) {
+        /*
+         * Heuristic - we don't want to reorder entries which leave known blocks - SO... if a source
+         * is in a different blockset, we have to wait until the previous block is emitted.
+         */
+        // FIXME : TODO : INEFFICIENT.  Leaving it like this because I may need to revert.
+        Block3 linPrev = null;
+        for (Block3 block : blocks) {
+            Op03SimpleStatement start = block.getStart();
+            Set<BlockIdentifier> startIdents = start.getBlockIdentifiers();
+            boolean needLinPrev = false;
+            prevtest:
+            for (Block3 source : block.sources) {
+                Set<BlockIdentifier> endIdents = source.getEnd().getBlockIdentifiers();
+                if (!endIdents.equals(startIdents)) {
+                    // If the only difference is case statements, then we allow, unless it's a direct
+                    // predecessor
+//                    if (source == linPrev) {
+//                        needLinPrev = true;
+//                        break prevtest;
+//                    } else {
+                    {
+                        Set<BlockIdentifier> diffs = SetUtil.difference(endIdents, startIdents);
+                        for (BlockIdentifier blk : diffs) {
+                            if (blk.getBlockType() == BlockType.CASE ||
+                                    blk.getBlockType() == BlockType.SWITCH) continue;
+                            needLinPrev = true;
+                            break prevtest;
+                        }
+                    }
+                }
+            }
+            if (needLinPrev) {
+                block.addSource(linPrev);
+            }
+            linPrev = block;
+        }
+    }
+
+    private static List<Block3> buildBasicBlocks(final List<Op03SimpleStatement> statements) {
         /*
          *
          */
@@ -83,149 +227,118 @@ public class Op03Blocks {
                 }
             }
         }
+        return blocks;
+    }
 
-        /*
-         * If a block has no targets, but multiple sources, make sure it appears AFTER its last source
-         * in the sorted blocks.
-         */
-        for (int idx = blocks.size() - 1; idx >= 0; idx--) {
-            Block3 block = blocks.get(idx);
-            if (block.targets.isEmpty()) {
-                boolean move = false;
-                Block3 lastSource = block;
-                for (Block3 source : block.sources) {
-                    if (lastSource.compareTo(source) < 0) {
-                        move = true;
-                        lastSource = source;
-                    }
+    /*
+     * Very cheap version of loop detection, to see if we've moved something out incorrectly.
+     */
+    private static boolean detectMoves(List<Block3> blocks) {
+        Map<Block3, Integer> idxLut = MapFactory.newIdentityMap();
+        for (int i = 0, len = blocks.size(); i < len; ++i) {
+            idxLut.put(blocks.get(i), i);
+        }
+
+        BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
+        List<Set<BlockIdentifier>> blockMembers = ListFactory.newList();
+        for (int i = 0, len = blocks.size(); i < len; ++i) {
+            blockMembers.add(SetFactory.<BlockIdentifier>newSet());
+        }
+        Map<BlockIdentifier, Block3> firstByBlock = MapFactory.newMap();
+        Map<BlockIdentifier, Block3> lastByBlock = MapFactory.newMap();
+        for (int i = 0, len = blocks.size(); i < len; ++i) {
+            Block3 block = blocks.get(i);
+            Block3 lastBackJump = block.getLastUnconditionalBackjumpToHere(idxLut);
+            if (lastBackJump != null) {
+                BlockIdentifier bid = blockIdentifierFactory.getNextBlockIdentifier(BlockType.DOLOOP);
+                for (int x = i + 1, last = idxLut.get(lastBackJump); x <= last; ++x) {
+                    blockMembers.get(x).add(bid);
                 }
-                if (move) {
-                    block.startIndex = lastSource.startIndex.justAfter();
-                    blocks.add(blocks.indexOf(lastSource) + 1, block);
-                    blocks.remove(idx);
+                firstByBlock.put(bid, block);
+                lastByBlock.put(bid, lastBackJump);
+            }
+        }
+        /*
+         * Now, identify blocks which are the target of a forward jump into the middle of a DOLoop,
+         * from before that loop started.
+         * Make these blocks depend (spuriously) on the lastByBlock for that DOLoop.
+         */
+        boolean effect = false;
+        outer:
+        for (int i = 0, len = blocks.size(); i < len; ++i) {
+            Block3 block = blocks.get(i);
+            if (!block.targets.isEmpty()) continue;
+            Set<BlockIdentifier> inThese = blockMembers.get(i);
+            if (inThese.isEmpty()) continue;
+            for (Block3 source : block.originalSources) {
+                int j = idxLut.get(source);
+                if (j < i) {
+                    Set<BlockIdentifier> sourceInThese = blockMembers.get(j);
+                    if (!sourceInThese.containsAll(inThese)) {
+                        // Unless block is the BEGINNING of the missing one, make block depend on the END
+                        // of the loops which have been jumped into.
+                        Set<BlockIdentifier> tmp = SetFactory.newSet(inThese);
+                        tmp.removeAll(sourceInThese);
+                        List<Block3> newSources = ListFactory.newList();
+                        for (BlockIdentifier jumpedInto : tmp) {
+                            if (firstByBlock.get(jumpedInto) != block) {
+                                newSources.add(lastByBlock.get(jumpedInto));
+                            }
+                        }
+                        if (!newSources.isEmpty()) {
+                            block.addSources(newSources);
+                            effect = true;
+                            continue outer;
+                        }
+                    }
                 }
             }
         }
+        if (!effect) return false;
 
-        /*
-         * Heuristic - we don't want to reorder entries which leave known blocks - SO... if a source
-         * is in a different blockset, we have to wait until the previous block is emitted.
-         */
-        // FIXME : TODO : INEFFICIENT.  Leaving it like this because I may need to revert.
-        Block3 linPrev = null;
         for (Block3 block : blocks) {
-            Op03SimpleStatement start = block.getStart();
-            Set<BlockIdentifier> startIdents = start.getBlockIdentifiers();
-            boolean needLinPrev = false;
-            prevtest:
-            for (Block3 source : block.sources) {
-                Set<BlockIdentifier> endIdents = source.getEnd().getBlockIdentifiers();
-                if (!endIdents.equals(startIdents)) {
-                    // If the only difference is case statements, then we allow, unless it's a direct
-                    // predecessor
-//                    if (source == linPrev) {
-//                        needLinPrev = true;
-//                        break prevtest;
-//                    } else {
-                    {
-                        Set<BlockIdentifier> diffs = SetUtil.difference(endIdents, startIdents);
-                        for (BlockIdentifier blk : diffs) {
-                            if (blk.getBlockType() == BlockType.CASE ||
-                                    blk.getBlockType() == BlockType.SWITCH) continue;
-                            needLinPrev = true;
-                            break prevtest;
-                        }
-                    }
-                }
-            }
-            if (needLinPrev) {
-                block.addSource(linPrev);
-            }
-            linPrev = block;
+            block.copySources();
         }
+        return true;
+    }
+
+    public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements) {
+
+        List<Block3> blocks = buildBasicBlocks(statements);
+
+        apply0TargetBlockHeuristic(blocks);
+
+        applyKnownBlocksHeuristic(blocks);
+
+        blocks = doTopSort(blocks);
 
         /*
-         * Topological sort, preferring earlier.
-         *
-         * We can't do a naive 'emit with 0 parents because of loops.
+         * A (very) cheap version of location based loop discovery, where we find blocks which appear to have
+         * been moved out of order.  I'm SURE this isn't the right way to do it, however it stops us pessimising
+         * some very odd cases.  :(
          */
-        LinkedHashSet<Block3> allBlocks = new LinkedHashSet<Block3>();
-        allBlocks.addAll(blocks);
-
-
-        /* in a simple top sort, you take a node with 0 parents, emit it, remove it as parent from all
-         * its children, rinse and repeat.  We can't do that immediately, because we have cycles.
-         *
-         * v1 - try simple top sort, but when we have no candidates, emit next candidate with only existing
-         * later parents.
-         */
-        Set<Block3> ready = new TreeSet<Block3>();
-        ready.add(blocks.get(0));
-
-        List<Block3> output = ListFactory.newList(blocks.size());
-
-        Block3 last = null;
-        while (!allBlocks.isEmpty()) {
-            Block3 next = null;
-            if (!ready.isEmpty()) {
-                /*
-                 * Take first known ready
-                 */
-                next = ready.iterator().next();
-                ready.remove(next);
-            } else {
-                /*
-                 * If any of the children of the last block haven't been emitted, emit the first.
-                 */
-                /*
-                if (last != null) {
-                    for (Block3 lastChild : last.targets) {
-                        if (allBlocks.contains(lastChild)) {
-                            next = lastChild;
-                            break;
-                        }
-                    }
-                }
-                */
-
-                if (next == null) {
-                    /*
-                     * Take first of others.
-                     */
-                    next = allBlocks.iterator().next();
-                }
-            }
-            last = next;
-            // Remove from allblocks so we don't process again.
-            allBlocks.remove(next);
-            output.add(next);
-            for (Block3 child : next.targets) {
-                child.sources.remove(next);
-                if (child.sources.isEmpty()) {
-                    if (allBlocks.contains(child)) {
-                        ready.add(child);
-                    }
-                }
-            }
+        if (detectMoves(blocks)) {
+            Collections.sort(blocks);
+            blocks = doTopSort(blocks);
         }
 
         /*
          * Now, we have to patch up with gotos anywhere that we've changed the original ordering.
          * NB. This is the first destructive change.
          */
-        for (int i = 0, len = output.size(); i < len - 1; ++i) {
-            Block3 thisBlock = output.get(i);
-            Block3 nextBlock = output.get(i + 1);
+        for (int i = 0, len = blocks.size(); i < len - 1; ++i) {
+            Block3 thisBlock = blocks.get(i);
+            Block3 nextBlock = blocks.get(i + 1);
             patch(thisBlock, nextBlock);
         }
         // And a final patch on the last block if it ends in a non goto back jump
-        patch(output.get(output.size() - 1), null);
+        patch(blocks.get(blocks.size() - 1), null);
 
         /*
          * Now go through, and emit the content, in order.
          */
         List<Op03SimpleStatement> outStatements = ListFactory.newList();
-        for (Block3 outBlock : output) {
+        for (Block3 outBlock : blocks) {
             outStatements.addAll(outBlock.getContent());
         }
 
@@ -302,6 +415,7 @@ public class Op03Blocks {
         InstrIndex startIndex;
         List<Op03SimpleStatement> content = ListFactory.newList();
         Set<Block3> sources = new LinkedHashSet<Block3>();
+        Set<Block3> originalSources = new LinkedHashSet<Block3>();
         Set<Block3> targets = new LinkedHashSet<Block3>();
 
 
@@ -329,10 +443,12 @@ public class Op03Blocks {
                 }
             }
             this.sources.addAll(sources);
+            this.originalSources.addAll(sources);
         }
 
         public void addSource(Block3 source) {
             this.sources.add(source);
+            this.originalSources.add(source);
         }
 
         public void setTargets(List<Block3> targets) {
@@ -347,11 +463,32 @@ public class Op03Blocks {
 
         @Override
         public String toString() {
-            return getStart().toString();
+            return "(" + content.size() + ")[" + sources.size() + "/" + originalSources.size() + "," + targets.size() + "] " + getStart().toString();
         }
 
         private List<Op03SimpleStatement> getContent() {
             return content;
+        }
+
+        public void copySources() {
+            sources.clear();
+            sources.addAll(originalSources);
+        }
+
+        public Block3 getLastUnconditionalBackjumpToHere(Map<Block3, Integer> idxLut) {
+            int thisIdx = idxLut.get(this);
+            int best = -1;
+            Block3 bestSource = null;
+            for (Block3 source : originalSources) {
+                if (source.getEnd().getStatement().getClass() == GotoStatement.class) {
+                    int idxSource = idxLut.get(source);
+                    if (idxSource > best && idxSource > thisIdx) {
+                        bestSource = source;
+                        best = idxSource;
+                    }
+                }
+            }
+            return bestSource;
         }
     }
 
