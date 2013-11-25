@@ -3279,6 +3279,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         do {
             success = false;
             List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
+            Collections.reverse(forwardIfs);
             for (Op03SimpleStatement forwardIf : forwardIfs) {
                 if (considerAsTrivialIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
                         considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
@@ -4983,7 +4984,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public String toString() {
-        return "Op03SimpleStatement - " + index + " : " + containedStatement;
+        return "" + index + " : " + containedStatement;
     }
 
 }
