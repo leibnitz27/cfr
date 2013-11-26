@@ -988,12 +988,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private static void replaceReturningIf(Op03SimpleStatement ifStatement, boolean aggressive) {
-        if (!(ifStatement.containedStatement instanceof IfStatement)) return;
+        if (!(ifStatement.containedStatement.getClass() == IfStatement.class)) return;
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
         Op03SimpleStatement tgt = ifStatement.getTargets().get(1);
         final Op03SimpleStatement origtgt = tgt;
+        boolean requireJustOneSource = !aggressive;
         do {
-            Op03SimpleStatement next = followNopGoto(tgt, aggressive ? false : true, aggressive);
+            Op03SimpleStatement next = followNopGoto(tgt, requireJustOneSource, aggressive);
             if (next == tgt) break;
             tgt = next;
         } while (true);
@@ -1007,6 +1008,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         ifStatement.removeTarget(origtgt);
     }
 
+    private static void replaceReturningGoto(Op03SimpleStatement gotoStatement, boolean aggressive) {
+        if (!(gotoStatement.containedStatement.getClass() == GotoStatement.class)) return;
+        Op03SimpleStatement tgt = gotoStatement.getTargets().get(0);
+        final Op03SimpleStatement origtgt = tgt;
+        boolean requireJustOneSource = !aggressive;
+        do {
+            Op03SimpleStatement next = followNopGoto(tgt, requireJustOneSource, aggressive);
+            if (next == tgt) break;
+            tgt = next;
+        } while (true);
+        Statement tgtStatement = tgt.containedStatement;
+        if (tgtStatement instanceof ReturnStatement) {
+            gotoStatement.replaceStatement(tgtStatement);
+        } else {
+            return;
+        }
+        origtgt.removeSource(gotoStatement);
+        gotoStatement.removeTarget(origtgt);
+    }
+
     public static void replaceReturningIfs(List<Op03SimpleStatement> statements, boolean aggressive) {
         List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
         for (Op03SimpleStatement ifStatement : ifStatements) {
@@ -1014,9 +1035,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    public static void replaceReturningGotos(List<Op03SimpleStatement> statements, boolean aggressive) {
+        List<Op03SimpleStatement> gotoStatements = Functional.filter(statements, new TypeFilter<GotoStatement>(GotoStatement.class));
+        for (Op03SimpleStatement gotoStatement : gotoStatements) {
+            replaceReturningGoto(gotoStatement, aggressive);
+        }
+    }
+
 
     // Should have a set to make sure we've not looped.
-    private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource, boolean skipLabels) {
+    private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource, boolean aggressive) {
         if (in == null) {
             return null;
         }
@@ -1025,7 +1053,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Statement statement = in.getStatement();
         if (statement instanceof Nop ||
                 statement instanceof GotoStatement ||
-                (skipLabels && statement instanceof CaseStatement)) {
+                (aggressive && statement instanceof CaseStatement) ||
+                (aggressive && statement instanceof MonitorExitStatement)) {
+
             in = in.targets.get(0);
         }
         return in;
@@ -4984,7 +5014,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public String toString() {
-        return "" + index + " : " + containedStatement;
+        Set<Integer> blockIds = SetFactory.newSet();
+        for (BlockIdentifier b : containedInBlocks) {
+            blockIds.add(b.getIndex());
+        }
+        return "" + blockIds + " " + index + " : " + containedStatement;
     }
 
 }
