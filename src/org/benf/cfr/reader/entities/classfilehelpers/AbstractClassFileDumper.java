@@ -78,6 +78,12 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
             }
         }
         d.print(" */").newln();
+        String packageName = classFile.getThisClassConstpoolEntry().getPackageName();
+        if (packageName.isEmpty()) {
+            // d.print("// no package name").newln();
+        } else {
+            d.print("package ").print(packageName).endCodeln().newln();
+        }
     }
 
     protected static void getFormalParametersText(ClassSignature signature, Dumper d) {

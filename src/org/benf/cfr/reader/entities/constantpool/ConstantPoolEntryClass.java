@@ -52,7 +52,7 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
     public String getPackageName() {
         String full = ClassNameUtils.convertFromPath(getCp().getUTF8Entry(nameIndex).getValue());
         int idx = full.lastIndexOf('.');
-        if (idx == -1) return full;
+        if (idx == -1) return "";
         return full.substring(0, idx);
     }
 
