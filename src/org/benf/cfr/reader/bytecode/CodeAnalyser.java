@@ -192,7 +192,7 @@ public class CodeAnalyser {
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
 
         // These are 'processed' exceptions, which we can use to lay out code.
-        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp, method);
+        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, options, cp, method);
 
 //        RawCombinedExceptions rawCombinedExceptions = new RawCombinedExceptions(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
 
@@ -358,6 +358,7 @@ public class CodeAnalyser {
 
         if (passoptions.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
+//            Op03SimpleStatement.replaceReturningGotos(op03SimpleParseNodes, true);
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);

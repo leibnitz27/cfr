@@ -10,6 +10,8 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.*;
 
@@ -27,6 +29,8 @@ public class ExceptionAggregator {
     private final Map<Integer, Integer> lutByOffset;
     private final Map<Integer, Integer> lutByIdx;
     private final List<Op01WithProcessedDataAndByteJumps> instrs;
+    private final Options options;
+    private final boolean aggressive;
 
 
     private static class CompareExceptionTablesByRange implements Comparator<ExceptionTableEntry> {
@@ -104,6 +108,16 @@ public class ExceptionAggregator {
             JVMInstr instr = op.getJVMInstr();
             if (instr.isNoThrow()) {
                 current += op.getInstructionLength();
+            } else if (aggressive) {
+                switch (instr) {
+                    // Getstatic CAN throw, but some code will separate exception blocks around it, just to be
+                    // awkward.
+                    case GETSTATIC:
+                        current += op.getInstructionLength();
+                        break;
+                    default:
+                        return false;
+                }
             } else {
                 return false;
             }
@@ -149,6 +163,7 @@ public class ExceptionAggregator {
                                final Map<Integer, Integer> lutByOffset,
                                final Map<Integer, Integer> lutByIdx,
                                List<Op01WithProcessedDataAndByteJumps> instrs,
+                               final Options options,
                                final ConstantPool cp,
                                final Method method) {
 
@@ -156,6 +171,8 @@ public class ExceptionAggregator {
         this.lutByIdx = lutByIdx;
         this.lutByOffset = lutByOffset;
         this.instrs = instrs;
+        this.options = options;
+        this.aggressive = options.getOption(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE;
 
         rawExceptions = Functional.filter(rawExceptions, new ValidException());
         if (rawExceptions.isEmpty()) return;
@@ -381,11 +398,22 @@ public class ExceptionAggregator {
                                            final Map<Integer, Integer> lutByIdx,
                                            List<Op01WithProcessedDataAndByteJumps> instrs) {
         Iterator<ExceptionGroup> groupIterator = exceptionsByRange.iterator();
+        ExceptionGroup prev = null;
         while (groupIterator.hasNext()) {
             ExceptionGroup group = groupIterator.next();
+            boolean prevSame = false;
+            if (prev != null) {
+                List<ExceptionGroup.Entry> groupEntries = group.getEntries();
+                List<ExceptionGroup.Entry> prevEntries = prev.getEntries();
+                if (groupEntries.equals(prevEntries)) {
+                    prevSame = true;
+                }
+            }
             group.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
             if (group.getEntries().isEmpty()) {
                 groupIterator.remove();
+            } else {
+                prev = group;
             }
         }
     }
