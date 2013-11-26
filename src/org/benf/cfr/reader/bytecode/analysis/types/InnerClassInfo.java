@@ -23,7 +23,7 @@ public interface InnerClassInfo {
      */
     void markMethodScoped(boolean isAnonymous);
 
-    boolean isAnoynmousClass();
+    boolean isAnonymousClass();
 
     boolean isMethodScopedClass();
 
@@ -36,7 +36,7 @@ public interface InnerClassInfo {
         }
 
         @Override
-        public boolean isAnoynmousClass() {
+        public boolean isAnonymousClass() {
             return false;
         }
 

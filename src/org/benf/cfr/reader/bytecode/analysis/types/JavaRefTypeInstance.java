@@ -249,7 +249,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         }
 
         @Override
-        public boolean isAnoynmousClass() {
+        public boolean isAnonymousClass() {
             return isAnonymous;
         }
 

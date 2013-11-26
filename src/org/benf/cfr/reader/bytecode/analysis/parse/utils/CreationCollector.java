@@ -146,11 +146,11 @@ public class CreationCollector {
             AbstractConstructorInvokation constructorInvokation = null;
             InnerClassInfo innerClassInfo = lValueType.getInnerClassHereInfo();
 
-            if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnoynmousClass()) {
+            if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnonymousClass()) {
                 method.markUsedLocalClassType(lValueType);
             }
 
-            if (innerClassInfo.isAnoynmousClass()) {
+            if (innerClassInfo.isAnonymousClass()) {
                 /* anonymous inner class - so we need to match the arguments we're deliberately passing
                  * (i.e. the ones which are being passed into the constructor for the base of the anonymous
                  * class), vs ones which are being bound without being passed in.
