@@ -640,7 +640,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassEntry : innerClassesByTypeInfo.values()) {
             // catchy!
             InnerClassInfo innerClassInfo = innerClassEntry.getFirst().getInnerClassInfo().getInnerClassHereInfo();
-            if (innerClassInfo.isAnoynmousInnerClass()) {
+            if (innerClassInfo.isMethodScopedClass()) {
                 continue;
             }
             ClassFile classFile = innerClassEntry.getSecond();

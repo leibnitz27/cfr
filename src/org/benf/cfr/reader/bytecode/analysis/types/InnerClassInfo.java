@@ -21,9 +21,11 @@ public interface InnerClassInfo {
      * I'd rather not have this in the interface, but at the point when we're creating the class, we only
      * know its name, not if it has a 'legit outer'.
      */
-    void markAnonymous();
+    void markMethodScoped(boolean isAnonymous);
 
-    boolean isAnoynmousInnerClass();
+    boolean isAnoynmousClass();
+
+    boolean isMethodScopedClass();
 
     JavaRefTypeInstance getOuterClass();
 
@@ -34,12 +36,17 @@ public interface InnerClassInfo {
         }
 
         @Override
-        public boolean isAnoynmousInnerClass() {
+        public boolean isAnoynmousClass() {
             return false;
         }
 
         @Override
-        public void markAnonymous() {
+        public boolean isMethodScopedClass() {
+            return false;
+        }
+
+        @Override
+        public void markMethodScoped(boolean isAnonymous) {
             throw new UnsupportedOperationException();
         }
 

@@ -905,12 +905,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *
      * a1 = new foo(x,y,z)
      */
-    public static void condenseConstruction(DCCommonState state, List<Op03SimpleStatement> statements) {
+    public static void condenseConstruction(DCCommonState state, Method method, List<Op03SimpleStatement> statements) {
         CreationCollector creationCollector = new CreationCollector();
         for (Op03SimpleStatement statement : statements) {
             statement.findCreation(creationCollector);
         }
-        creationCollector.condenseConstructions(state);
+        creationCollector.condenseConstructions(method, state);
     }
 
     /*
@@ -1583,7 +1583,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
 
         }
-        int x = 1;
     }
 
     /*

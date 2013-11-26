@@ -26,7 +26,8 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         initialiseFrom(usedRefTypes);
     }
 
-    private String generateInnerClassShortName(JavaRefTypeInstance clazz) {
+    @Override
+    public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
         InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
         String clazzRawName = clazz.getRawName();
         /* Local inner class.  We want the smallest postfix

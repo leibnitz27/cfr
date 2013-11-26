@@ -18,4 +18,6 @@ public interface TypeUsageInformation {
     public Set<JavaRefTypeInstance> getUsedClassTypes();
 
     public String getName(JavaTypeInstance type);
+
+    public String generateInnerClassShortName(JavaRefTypeInstance clazz);
 }

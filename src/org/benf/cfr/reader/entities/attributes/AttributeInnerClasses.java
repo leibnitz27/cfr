@@ -61,7 +61,10 @@ public class AttributeInnerClasses extends Attribute {
             // MarkAnonymous feels like a bit of a hack, but otherwise we need to propagate this information
             // the whole way down the type creation path, and this is the only place we care about it.
             // May add that in later.
-            if (outerClassType == null) innerClassType.getInnerClassHereInfo().markAnonymous();
+            // if (outerClassType == null) {
+            if (outerClassType == null) {
+                innerClassType.getInnerClassHereInfo().markMethodScoped(innerNameIdx == 0);
+            }
             innerClassAttributeInfoList.add(new InnerClassAttributeInfo(
                     innerClassType,
                     outerClassType,

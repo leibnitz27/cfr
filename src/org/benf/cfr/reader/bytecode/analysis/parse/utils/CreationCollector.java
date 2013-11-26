@@ -9,8 +9,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -112,7 +114,7 @@ public class CreationCollector {
     /*
     *
     */
-    public void condenseConstructions(DCCommonState dcCommonState) {
+    public void condenseConstructions(Method method, DCCommonState dcCommonState) {
 
         for (Triple construction : collectedConstructions) {
             LValue lValue = construction.getlValue();
@@ -142,7 +144,13 @@ public class CreationCollector {
 
 
             AbstractConstructorInvokation constructorInvokation = null;
-            if (lValueType.getInnerClassHereInfo().isAnoynmousInnerClass()) {
+            InnerClassInfo innerClassInfo = lValueType.getInnerClassHereInfo();
+
+            if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnoynmousClass()) {
+                method.markUsedLocalClassType(lValueType);
+            }
+
+            if (innerClassInfo.isAnoynmousClass()) {
                 /* anonymous inner class - so we need to match the arguments we're deliberately passing
                  * (i.e. the ones which are being passed into the constructor for the base of the anonymous
                  * class), vs ones which are being bound without being passed in.

@@ -22,4 +22,9 @@ public class TypeUsageInformationEmpty implements TypeUsageInformation {
     public String getName(JavaTypeInstance type) {
         return type.getRawName();
     }
+
+    @Override
+    public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
+        return clazz.getRawName();
+    }
 }

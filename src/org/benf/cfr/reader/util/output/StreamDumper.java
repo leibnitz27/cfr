@@ -134,10 +134,8 @@ public abstract class StreamDumper implements Dumper {
     @Override
     public Dumper dump(Dumpable d) {
         if (d == null) {
-            write("null");
-            return this;
+            return print("null");
         }
-        d.dump(this);
-        return this;
+        return d.dump(this);
     }
 }

@@ -321,7 +321,7 @@ public class CodeAnalyser {
         //      Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
 
         // Rewrite new / constructor pairs.
-        Op03SimpleStatement.condenseConstruction(dcCommonState, op03SimpleParseNodes);
+        Op03SimpleStatement.condenseConstruction(dcCommonState, method, op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
 

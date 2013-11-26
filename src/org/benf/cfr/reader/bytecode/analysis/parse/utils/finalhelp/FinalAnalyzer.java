@@ -114,8 +114,10 @@ public class FinalAnalyzer {
 
         peerTries.add(in);
         Set<Result> results = SetFactory.newOrderedSet();
+        Set<Op03SimpleStatement> peerTrySeen = SetFactory.newSet();
         while (peerTries.hasNext()) {
             Op03SimpleStatement tryS = peerTries.removeNext();
+            if (!peerTrySeen.add(tryS)) continue;
             if (!identifyFinally2(tryS, allStatements, peerTries, finallyGraphHelper, results)) {
                 return false;
             }

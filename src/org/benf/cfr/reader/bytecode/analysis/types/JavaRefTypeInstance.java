@@ -236,6 +236,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     private static class RefTypeInnerClassInfo implements InnerClassInfo {
         private final JavaRefTypeInstance outerClass;
         private boolean isAnonymous = false;
+        private boolean isMethodScoped = false;
         private boolean hideSyntheticThis = false;
 
         private RefTypeInnerClassInfo(JavaRefTypeInstance outerClass) {
@@ -248,13 +249,19 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         }
 
         @Override
-        public boolean isAnoynmousInnerClass() {
+        public boolean isAnoynmousClass() {
             return isAnonymous;
         }
 
         @Override
-        public void markAnonymous() {
-            isAnonymous = true;
+        public boolean isMethodScopedClass() {
+            return isMethodScoped;
+        }
+
+        @Override
+        public void markMethodScoped(boolean isAnonymous) {
+            this.isAnonymous = isAnonymous;
+            this.isMethodScoped = true;
         }
 
         @Override

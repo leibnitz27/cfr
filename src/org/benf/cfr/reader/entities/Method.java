@@ -21,6 +21,7 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.LocalClassAwareDumper;
 
 import java.util.*;
 
@@ -74,6 +75,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final ClassFile classFile;
     private boolean hidden;
     private DecompilerComments comments;
+    private final Set<JavaRefTypeInstance> localClasses = SetFactory.newOrderedSet();
 
     public Method(ByteData raw, ClassFile classFile, final ConstantPool cp, final DCCommonState dcCommonState) {
         Options options = dcCommonState.getOptions();
@@ -140,6 +142,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         if (codeAttribute != null) {
             codeAttribute.analyse().collectTypeUsages(collector);
         }
+        collector.collect(localClasses);
         collector.collectFrom(getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME));
     }
 
@@ -254,6 +257,13 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
     public MethodPrototype getMethodPrototype() {
         return methodPrototype;
+    }
+
+    public void markUsedLocalClassType(JavaTypeInstance javaTypeInstance) {
+        javaTypeInstance = javaTypeInstance.getDeGenerifiedType();
+        if (!(javaTypeInstance instanceof JavaRefTypeInstance))
+            throw new IllegalStateException("Bad local class Type " + javaTypeInstance.getRawName());
+        localClasses.add((JavaRefTypeInstance) javaTypeInstance);
     }
 
     private void dumpMethodAnnotations(Dumper d) {
@@ -382,6 +392,12 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             }
             d.endCodeln();
         } else {
+            /*
+             * Override the dumper with a proxy which makes sure that local classes defined here are 'better'.
+             */
+            if (!localClasses.isEmpty()) {
+                d = new LocalClassAwareDumper(d, localClasses);
+            }
             d.print(' ').dump(codeAttribute);
         }
     }
