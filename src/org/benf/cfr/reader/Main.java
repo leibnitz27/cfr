@@ -71,8 +71,11 @@ public class Main {
             for (Object x : e.getStackTrace()) {
                 System.err.println(x);
             }
+        } catch (CannotLoadClassException e) {
+            System.out.println("Can't load the class specified:");
+            System.out.println(e.toString());
         } catch (RuntimeException e) {
-            System.err.print(e.toString());
+            System.err.println(e.toString());
         } finally {
             d.close();
         }
