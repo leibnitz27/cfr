@@ -6,7 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
@@ -89,21 +89,21 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void markCreator(LocalVariable localVariable) {
+    public void markCreator(LValue scopedEntity) {
         // we're always creator.  But we could verify additionally.
         creator = true;
     }
 
     @Override
-    public boolean alwaysDefines(LocalVariable localVariable) {
+    public boolean alwaysDefines(LValue scopedEntity) {
         // Could check!
         return true;
     }
 
     @Override
-    public List<LocalVariable> findCreatedHere() {
+    public List<LValue> findCreatedHere() {
         if (!(iterator instanceof LocalVariable)) return null;
-        return ListFactory.newList((LocalVariable) iterator);
+        return ListFactory.newList(iterator);
     }
 
 

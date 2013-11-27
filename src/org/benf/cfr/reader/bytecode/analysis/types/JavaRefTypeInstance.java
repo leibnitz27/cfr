@@ -23,6 +23,7 @@ import java.util.Map;
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
     private final String shortName; // may not be unique
+    private transient String suggestedVarName;
     private final InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
     //    private final Options options;
     private final DCCommonState dcCommonState; // Shouldn't need this here...
@@ -44,11 +45,21 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public String suggestVarName() {
+        if (suggestedVarName != null) return suggestedVarName;
+
         String displayName = this.shortName;
         if (displayName.isEmpty()) return null;
         char[] chars = displayName.toCharArray();
-        chars[0] = Character.toLowerCase(chars[0]);
-        displayName = new String(chars);
+        int x = 0;
+        int len = chars.length;
+        for (x = 0; x < len; ++x) {
+            char c = chars[x];
+            if (c >= '0' && c <= '9') continue;
+            break;
+        }
+        if (x >= len) return null;
+        chars[x] = Character.toLowerCase(chars[x]);
+        displayName = new String(chars, x, len - x);
         return displayName;
     }
 

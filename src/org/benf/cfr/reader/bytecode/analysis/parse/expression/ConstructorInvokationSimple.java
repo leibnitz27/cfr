@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.FunctionProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -69,6 +70,19 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
 
         return super.equals(o);
     }
+
+    @Override
+    public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        JavaTypeInstance lValueType = constructorInvokation.getClassTypeInstance();
+        InnerClassInfo innerClassInfo = lValueType.getInnerClassHereInfo();
+
+        if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnonymousClass()) {
+            lValueUsageCollector.collect(new SentinelLocalClassLValue(lValueType));
+        }
+
+        super.collectUsedLValues(lValueUsageCollector);
+    }
+
 
     @Override
     public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {

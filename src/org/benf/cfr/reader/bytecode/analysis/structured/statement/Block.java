@@ -3,10 +3,11 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
@@ -326,12 +327,12 @@ public class Block extends AbstractStructuredStatement {
      * This variable has been defined in an ENCLOSED scope, but used at this level.
      */
     @Override
-    public void markCreator(LocalVariable localVariable) {
-        containedStatements.addFirst(new Op04StructuredStatement(new StructuredDefinition(localVariable)));
+    public void markCreator(LValue scopedEntity) {
+        containedStatements.addFirst(new Op04StructuredStatement(new StructuredDefinition(scopedEntity)));
     }
 
     @Override
-    public boolean alwaysDefines(LocalVariable localVariable) {
+    public boolean alwaysDefines(LValue scopedEntity) {
         return false;
     }
 
@@ -365,6 +366,10 @@ public class Block extends AbstractStructuredStatement {
 
     public boolean isIndenting() {
         return indenting;
+    }
+
+    public void setIndenting(boolean indenting) {
+        this.indenting = indenting;
     }
 
     @Override

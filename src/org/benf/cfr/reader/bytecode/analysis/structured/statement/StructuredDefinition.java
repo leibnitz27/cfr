@@ -4,11 +4,15 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -23,20 +27,32 @@ import java.util.List;
  */
 public class StructuredDefinition extends AbstractStructuredStatement {
 
-    private LocalVariable lvalue;
+    private LValue scopedEntity;
 
-    public StructuredDefinition(LocalVariable lvalue) {
-        this.lvalue = lvalue;
+    public StructuredDefinition(LValue scopedEntity) {
+        this.scopedEntity = scopedEntity;
     }
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
-        lvalue.collectTypeUsages(collector);
+        scopedEntity.collectTypeUsages(collector);
     }
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.dump(lvalue.getInferredJavaType().getJavaTypeInstance()).print(" ").dump(lvalue).endCodeln();
+        Class<?> clazz = scopedEntity.getClass();
+        if (clazz == LocalVariable.class) {
+            return dumper.dump(scopedEntity.getInferredJavaType().getJavaTypeInstance()).print(" ").dump(scopedEntity).endCodeln();
+        } else if (clazz == SentinelLocalClassLValue.class) {
+            JavaTypeInstance type = ((SentinelLocalClassLValue) scopedEntity).getLocalClassType().getDeGenerifiedType();
+            if (type instanceof JavaRefTypeInstance) {
+                ClassFile classFile = ((JavaRefTypeInstance) type).getClassFile();
+                if (classFile != null) {
+                    return classFile.dumpAsInnerClass(dumper);
+                }
+            }
+        }
+        return dumper;
     }
 
     @Override
@@ -54,12 +70,12 @@ public class StructuredDefinition extends AbstractStructuredStatement {
     }
 
     public LValue getLvalue() {
-        return lvalue;
+        return scopedEntity;
     }
 
     @Override
-    public List<LocalVariable> findCreatedHere() {
-        return ListFactory.newList(lvalue);
+    public List<LValue> findCreatedHere() {
+        return ListFactory.newList(scopedEntity);
     }
 
     @Override
@@ -76,7 +92,7 @@ public class StructuredDefinition extends AbstractStructuredStatement {
         if (o == null) return false;
         if (!(o instanceof StructuredDefinition)) return false;
         StructuredDefinition other = (StructuredDefinition) o;
-        if (!lvalue.equals(other.lvalue)) return false;
+        if (!scopedEntity.equals(other.scopedEntity)) return false;
         return true;
     }
 

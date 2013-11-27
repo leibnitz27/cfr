@@ -587,6 +587,9 @@ public class InferredJavaType {
         return CastAction.None;
     }
 
+    /*
+     * Let's be honest, this is a mess of heuristics.
+     */
     public static void compareAsWithoutCasting(InferredJavaType a, InferredJavaType b, boolean aLit, boolean bLit) {
         if (a == InferredJavaType.IGNORE) return;
         if (b == InferredJavaType.IGNORE) return;
@@ -603,18 +606,30 @@ public class InferredJavaType {
                 a.getSource() == InferredJavaType.Source.LITERAL,
                 b.getSource() == InferredJavaType.Source.LITERAL);
         if (whichLit.getCount() != 1) whichLit = BoolPair.get(aLit, bLit);
-        switch (whichLit) {
-            case FIRST:
-                litType = a;
-                betterType = b;
-                break;
-            case SECOND:
-                litType = b;
-                betterType = a;
-                break;
-            case NEITHER:
-            case BOTH:
-                return; // for now.
+        if (art == RawJavaType.BOOLEAN
+                && brt.getStackType() == StackType.INT
+                && brt.compareTypePriorityTo(art) > 0) {
+            litType = a;
+            betterType = b;
+        } else if (brt == RawJavaType.BOOLEAN
+                && art.getStackType() == StackType.INT
+                && art.compareTypePriorityTo(brt) > 0) {
+            litType = b;
+            betterType = a;
+        } else {
+            switch (whichLit) {
+                case FIRST:
+                    litType = a;
+                    betterType = b;
+                    break;
+                case SECOND:
+                    litType = b;
+                    betterType = a;
+                    break;
+                case NEITHER:
+                case BOTH:
+                    return;
+            }
         }
         // If betterType is wider than litType, just use it.  If it's NARROWER than litType,
         // we need to see if litType can support it. (i.e. 34343 can't be cast to a char).

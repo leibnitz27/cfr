@@ -2,10 +2,11 @@ package org.benf.cfr.reader.bytecode.analysis.structured;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -48,9 +49,9 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
 
     void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer);
 
-    void markCreator(LocalVariable localVariable);
+    void markCreator(LValue scopedEntity);
 
-    boolean alwaysDefines(LocalVariable localVariable);
+    boolean alwaysDefines(LValue scopedEntity);
 
     boolean inlineable();
 
@@ -59,7 +60,7 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
     // Is it a comment, or a block containing nothign but comments?
     boolean isEffectivelyNOP();
 
-    List<LocalVariable> findCreatedHere();
+    List<LValue> findCreatedHere();
 
     String suggestName(LocalVariable createdHere, Predicate<String> testNameUsedFn);
 }

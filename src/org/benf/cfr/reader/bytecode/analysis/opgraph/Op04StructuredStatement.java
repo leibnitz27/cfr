@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
@@ -300,7 +301,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     @Override
     public String toString() {
-        return "OP4:" + structuredStatement;
+        return structuredStatement.getClass().getSimpleName().toString();
     }
 
     public void replaceStatementWithNOP(String comment) {

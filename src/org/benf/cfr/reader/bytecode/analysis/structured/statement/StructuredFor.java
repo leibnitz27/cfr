@@ -10,7 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
@@ -105,17 +105,18 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void markCreator(LocalVariable localVariable) {
+    public void markCreator(LValue scopedEntity) {
         this.isCreator = true;
     }
 
     @Override
-    public List<LocalVariable> findCreatedHere() {
+    public List<LValue> findCreatedHere() {
         if (!isCreator) return null;
         if (initial == null) return null;
         LValue created = initial.getCreatedLValue();
         if (!(created instanceof LocalVariable)) return null;
-        return ListFactory.newList((LocalVariable) created);
+
+        return ListFactory.newList(created);
     }
 
     @Override

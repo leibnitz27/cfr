@@ -1,17 +1,24 @@
-package org.benf.cfr.reader.bytecode.analysis.parse.utils;
+package org.benf.cfr.reader.bytecode.analysis.parse.utils.scope;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariableDefault;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.*;
 
@@ -44,7 +51,8 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
         final List<LocalVariable> parameters = prototype.getComputedParameters();
         this.variableFactory = variableFactory;
         for (LocalVariable parameter : parameters) {
-            final ScopeDefinition prototypeScope = new ScopeDefinition(0, null, null, parameter, parameter.getName());
+            JavaTypeInstance type = parameter.getInferredJavaType().getJavaTypeInstance();
+            final ScopeDefinition prototypeScope = new ScopeDefinition(0, null, null, parameter, type, parameter.getName());
             earliestDefinition.put(parameter.getName(), prototypeScope);
         }
     }
@@ -92,7 +100,8 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
         ScopeDefinition previousDef = earliestDefinition.get(name);
         if (previousDef == null) {
             // First use is here.
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, name);
+            JavaTypeInstance type = localVariable.getInferredJavaType().getJavaTypeInstance();
+            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, type, name);
             earliestDefinition.put(name, scopeDefinition);
             earliestDefinitionsByLevel.get(currentDepth).put(name, true);
             discoveredCreations.add(scopeDefinition);
@@ -111,7 +120,8 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
                 name = localVariable.getName();
             }
 
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, name);
+            JavaTypeInstance type = localVariable.getInferredJavaType().getJavaTypeInstance();
+            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, type, name);
             earliestDefinition.put(name, scopeDefinition);
             earliestDefinitionsByLevel.get(currentDepth).put(name, true);
             discoveredCreations.add(scopeDefinition);
@@ -119,10 +129,10 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
     }
 
     private static class ScopeKey {
-        private final LocalVariable lValue;
+        private final LValue lValue;
         private final JavaTypeInstance type;
 
-        private ScopeKey(LocalVariable lValue, JavaTypeInstance type) {
+        private ScopeKey(LValue lValue, JavaTypeInstance type) {
             this.lValue = lValue;
             this.type = type;
         }
@@ -138,6 +148,10 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
             if (!type.equals(scopeKey.type)) return false;
 
             return true;
+        }
+
+        private LValue getlValue() {
+            return lValue;
         }
 
         @Override
@@ -168,9 +182,12 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
 
             List<StatementContainer<StructuredStatement>> commonScope = null;
             ScopeDefinition bestDefn = null;
+            LValue scopedEntity = scopeKey.getlValue();
             for (ScopeDefinition definition : definitions) {
-                if (definition.exactStatement.getStatement().alwaysDefines(scopeKey.lValue)) {
-                    definition.exactStatement.getStatement().markCreator(scopeKey.lValue);
+                StructuredStatement statement = definition.getStatementContainer().getStatement();
+
+                if (statement.alwaysDefines(scopedEntity)) {
+                    statement.markCreator(scopedEntity);
                     continue;
                 }
                 List<StatementContainer<StructuredStatement>> scopeList = definition.getNestedScope();
@@ -193,14 +210,35 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
                 }
             }
             StatementContainer<StructuredStatement> creationContainer = null;
-            if (bestDefn != null) {
-                creationContainer = bestDefn.getStatementContainer();
-            } else if (commonScope != null) {
-                creationContainer = commonScope.get(commonScope.size() - 1);
+            if (scopedEntity instanceof SentinelLocalClassLValue) {
+                List<StatementContainer<StructuredStatement>> scope = null;
+                if (bestDefn != null) {
+                    scope = bestDefn.getNestedScope();
+                } else if (commonScope != null) {
+                    scope = commonScope;
+                }
+
+                if (scope != null) {
+                    for (int i = scope.size() - 1; i >= 0; --i) {
+                        StatementContainer<StructuredStatement> thisItem = scope.get(i);
+                        if (thisItem.getStatement() instanceof Block) {
+                            Block block = (Block) thisItem.getStatement();
+                            block.setIndenting(true);
+                            creationContainer = thisItem;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                if (bestDefn != null) {
+                    creationContainer = bestDefn.getStatementContainer();
+                } else if (commonScope != null) {
+                    creationContainer = commonScope.get(commonScope.size() - 1);
+                }
             }
 
             if (creationContainer != null) {
-                creationContainer.getStatement().markCreator(scopeKey.lValue);
+                creationContainer.getStatement().markCreator(scopedEntity);
             }
         }
     }
@@ -230,38 +268,110 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
 
     @Override
     public void collect(LValue lValue) {
-        if (!(lValue instanceof LocalVariable)) return;
-        LocalVariable localVariable = (LocalVariable) lValue;
-        NamedVariable name = localVariable.getName();
-        if (name.getStringName().equals(MiscConstants.THIS)) return;
+        Class<?> lValueClass = lValue.getClass();
 
-        ScopeDefinition previousDef = earliestDefinition.get(name);
-        // If it's in scope, no problem.
-        if (previousDef != null) return;
+        if (lValueClass == LocalVariable.class) {
+            LocalVariable localVariable = (LocalVariable) lValue;
+            NamedVariable name = localVariable.getName();
+            if (name.getStringName().equals(MiscConstants.THIS)) return;
 
-        // If it's out of scope, we have a variable defined but only assigned in an inner scope, but used in the
-        // outer scope later!
-        ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), localVariable, name);
-        earliestDefinition.put(name, scopeDefinition);
-        earliestDefinitionsByLevel.get(currentDepth).put(name, true);
-        discoveredCreations.add(scopeDefinition);
+            ScopeDefinition previousDef = earliestDefinition.get(name);
+            // If it's in scope, no problem.
+            if (previousDef != null) return;
+
+            // If it's out of scope, we have a variable defined but only assigned in an inner scope, but used in the
+            // outer scope later!
+            JavaTypeInstance type = lValue.getInferredJavaType().getJavaTypeInstance();
+            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, type, name);
+            earliestDefinition.put(name, scopeDefinition);
+            earliestDefinitionsByLevel.get(currentDepth).put(name, true);
+            discoveredCreations.add(scopeDefinition);
+        } else if (lValueClass == SentinelLocalClassLValue.class) {
+            SentinelLocalClassLValue localClassLValue = (SentinelLocalClassLValue) lValue;
+
+            NamedVariable name = new SentinelNV(localClassLValue.getLocalClassType());
+
+            ScopeDefinition previousDef = earliestDefinition.get(name);
+            // If it's in scope, no problem.
+            if (previousDef != null) return;
+
+            JavaTypeInstance type = localClassLValue.getLocalClassType();
+            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, type, name);
+            earliestDefinition.put(name, scopeDefinition);
+            earliestDefinitionsByLevel.get(currentDepth).put(name, true);
+            discoveredCreations.add(scopeDefinition);
+
+        }
     }
 
-    /*
-     *
-     */
+    private static class SentinelNV implements NamedVariable {
+        private final JavaTypeInstance typeInstance;
+
+        private SentinelNV(JavaTypeInstance typeInstance) {
+            this.typeInstance = typeInstance;
+        }
+
+        @Override
+        public void forceName(String name) {
+        }
+
+        @Override
+        public String getStringName() {
+            return typeInstance.getRawName();
+        }
+
+        @Override
+        public boolean isGoodName() {
+            return true;
+        }
+
+        @Override
+        public Dumper dump(Dumper d) {
+            return null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            SentinelNV that = (SentinelNV) o;
+
+            if (typeInstance != null ? !typeInstance.equals(that.typeInstance) : that.typeInstance != null)
+                return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return typeInstance != null ? typeInstance.hashCode() : 0;
+        }
+    }
+
+//    /*
+//     *
+//     */
+//    private interface ScopeDefinition {
+//        public int getDepth();
+//        public StatementContainer<StructuredStatement> getStatementContainer();
+//        public NamedVariable getName();
+//        public ScopeKey getScopeKey();
+//        public List<StatementContainer<StructuredStatement>> getNestedScope();
+//        public JavaTypeInstance getJavaTypeInstance();
+//    }
 
     private static class ScopeDefinition {
         private final int depth;
         // Keeping this nested scope is woefully inefficient.... fixme.
         private final List<StatementContainer<StructuredStatement>> nestedScope;
         private final StatementContainer<StructuredStatement> exactStatement;
-        private final LocalVariable lValue;
+        private final LValue lValue;
         private final JavaTypeInstance lValueType;
         private final NamedVariable name;
         private final ScopeKey scopeKey;
 
-        private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement, LocalVariable lValue, NamedVariable name) {
+        private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement, LValue lValue, JavaTypeInstance type, NamedVariable name) {
             this.depth = depth;
             this.nestedScope = nestedScope == null ? null : ListFactory.newList(nestedScope);
             if (exactStatement == null && depth > 1) {
@@ -269,9 +379,9 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
             }
             this.exactStatement = exactStatement;
             this.lValue = lValue;
-            this.lValueType = lValue.getInferredJavaType().getJavaTypeInstance();
+            this.lValueType = type;
             this.name = name;
-            this.scopeKey = new ScopeKey(lValue, lValue.getInferredJavaType().getJavaTypeInstance());
+            this.scopeKey = new ScopeKey(lValue, type);
         }
 
         public JavaTypeInstance getJavaTypeInstance() {
@@ -282,7 +392,7 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
             return exactStatement;
         }
 
-        public LocalVariable getlValue() {
+        public LValue getlValue() {
             return lValue;
         }
 
@@ -294,11 +404,11 @@ public class LValueScopeDiscoverer implements LValueAssignmentCollector<Structur
             return name;
         }
 
-        private ScopeKey getScopeKey() {
+        public ScopeKey getScopeKey() {
             return scopeKey;
         }
 
-        private List<StatementContainer<StructuredStatement>> getNestedScope() {
+        public List<StatementContainer<StructuredStatement>> getNestedScope() {
             return nestedScope;
         }
     }

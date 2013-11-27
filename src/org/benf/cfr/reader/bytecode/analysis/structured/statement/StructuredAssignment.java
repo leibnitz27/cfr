@@ -7,8 +7,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
@@ -75,21 +76,25 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
     }
 
     @Override
-    public void markCreator(LocalVariable localVariable) {
-        if (!localVariable.equals(lvalue)) {
-            throw new IllegalArgumentException("Being asked to mark creator for wrong variable");
-        }
-        isCreator = true;
-        InferredJavaType inferredJavaType = localVariable.getInferredJavaType();
-        if (inferredJavaType.isClash()) {
-            inferredJavaType.collapseTypeClash();
+    public void markCreator(LValue scopedEntity) {
+
+        if (scopedEntity instanceof LocalVariable) {
+            LocalVariable localVariable = (LocalVariable) scopedEntity;
+            if (!localVariable.equals(lvalue)) {
+                throw new IllegalArgumentException("Being asked to mark creator for wrong variable");
+            }
+            isCreator = true;
+            InferredJavaType inferredJavaType = localVariable.getInferredJavaType();
+            if (inferredJavaType.isClash()) {
+                inferredJavaType.collapseTypeClash();
+            }
         }
     }
 
     @Override
-    public List<LocalVariable> findCreatedHere() {
+    public List<LValue> findCreatedHere() {
         if (isCreator) {
-            return ListFactory.newList((LocalVariable) lvalue);
+            return ListFactory.newList(lvalue);
         } else {
             return null;
         }

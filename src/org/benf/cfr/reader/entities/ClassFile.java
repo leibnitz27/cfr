@@ -657,6 +657,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return dumpHelper.dump(this, false, d);
     }
 
+    public Dumper dumpAsInnerClass(Dumper d) {
+        return dumpHelper.dump(this, true, d);
+    }
+
     public String getFilePath() {
         return thisClass.getFilePath();
     }

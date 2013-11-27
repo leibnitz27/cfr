@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -42,10 +43,12 @@ public class VariableNameTidier implements StructuredStatementTransformer {
     public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
         StructuredScopeWithVars structuredScopeWithVars = (StructuredScopeWithVars) scope;
 
-        List<LocalVariable> definedHere = in.findCreatedHere();
+        List<LValue> definedHere = in.findCreatedHere();
         if (definedHere != null) {
-            for (LocalVariable localVariable : definedHere) {
-                structuredScopeWithVars.defineHere(in, localVariable);
+            for (LValue scopedEntity : definedHere) {
+                if (scopedEntity instanceof LocalVariable) {
+                    structuredScopeWithVars.defineHere(in, (LocalVariable) scopedEntity);
+                }
             }
         }
 
