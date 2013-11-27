@@ -7,6 +7,7 @@ import org.benf.cfr.reader.state.LocalClassAwareTypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -19,7 +20,7 @@ public class LocalClassAwareDumper implements Dumper {
     private final Dumper delegate;
     private final TypeUsageInformation typeUsageInformation;
 
-    public LocalClassAwareDumper(Dumper delegate, Set<JavaRefTypeInstance> localClasses) {
+    public LocalClassAwareDumper(Dumper delegate, Map<JavaRefTypeInstance, String> localClasses) {
         this.delegate = delegate;
         this.typeUsageInformation = new LocalClassAwareTypeUsageInformation(localClasses, delegate.getTypeUsageInformation());
     }

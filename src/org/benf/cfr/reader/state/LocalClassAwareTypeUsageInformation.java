@@ -20,7 +20,7 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
     private final Map<JavaTypeInstance, String> localTypeNames;
     private final Set<String> usedLocalTypeNames;
 
-    public LocalClassAwareTypeUsageInformation(Set<JavaRefTypeInstance> localClassTypes, TypeUsageInformation delegate) {
+    public LocalClassAwareTypeUsageInformation(Map<JavaRefTypeInstance, String> localClassTypes, TypeUsageInformation delegate) {
         this.delegate = delegate;
         Map<String, Integer> lastClassByName = MapFactory.newLazyMap(new UnaryFunction<String, Integer>() {
             @Override
@@ -30,20 +30,27 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
         });
         localTypeNames = MapFactory.newMap();
         usedLocalTypeNames = SetFactory.newSet();
-        for (JavaRefTypeInstance localType : localClassTypes) {
-            String name = delegate.generateInnerClassShortName(localType);
-            /*
-             * But strip all the numerics off the front.
-             */
-            for (int idx = 0, len = name.length(); idx < len; ++idx) {
-                char c = name.charAt(idx);
-                if (c >= '0' && c <= '9') continue;
-                name = name.substring(idx);
-                break;
+        for (Map.Entry<JavaRefTypeInstance, String> entry : localClassTypes.entrySet()) {
+            JavaRefTypeInstance localType = entry.getKey();
+            String suggestedName = entry.getValue();
+            String usedName;
+            if (suggestedName != null) {
+                usedName = suggestedName;
+            } else {
+                String name = delegate.generateInnerClassShortName(localType);
+                /*
+                 * But strip all the numerics off the front.
+                 */
+                for (int idx = 0, len = name.length(); idx < len; ++idx) {
+                    char c = name.charAt(idx);
+                    if (c >= '0' && c <= '9') continue;
+                    name = name.substring(idx);
+                    break;
+                }
+                int x = lastClassByName.get(name);
+                lastClassByName.put(name, x + 1);
+                usedName = name + ((x == 0) ? "" : ("_" + x));
             }
-            int x = lastClassByName.get(name);
-            lastClassByName.put(name, x + 1);
-            String usedName = name + ((x == 0) ? "" : ("_" + x));
             localTypeNames.put(localType, usedName);
             usedLocalTypeNames.add(usedName);
         }

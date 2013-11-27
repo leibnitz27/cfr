@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -28,7 +29,13 @@ import java.util.Set;
  */
 public class VariableNameTidier implements StructuredStatementTransformer {
 
-    public void transform(Method method, Op04StructuredStatement root) {
+    private final Method method;
+
+    public VariableNameTidier(Method method) {
+        this.method = method;
+    }
+
+    public void transform(Op04StructuredStatement root) {
         StructuredScopeWithVars structuredScopeWithVars = new StructuredScopeWithVars();
         structuredScopeWithVars.add(null);
         List<LocalVariable> params = method.getMethodPrototype().getComputedParameters();
@@ -49,6 +56,9 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                 if (scopedEntity instanceof LocalVariable) {
                     structuredScopeWithVars.defineHere(in, (LocalVariable) scopedEntity);
                 }
+                if (scopedEntity instanceof SentinelLocalClassLValue) {
+                    structuredScopeWithVars.defineLocalClassHere(in, (SentinelLocalClassLValue) scopedEntity);
+                }
             }
         }
 
@@ -56,7 +66,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         return in;
     }
 
-    private static class StructuredScopeWithVars extends StructuredScope {
+    private class StructuredScopeWithVars extends StructuredScope {
         private final LinkedList<AtLevel> scope = ListFactory.newLinkedList();
         private final Map<String, Integer> nextPostFixed = MapFactory.newLazyMap(new UnaryFunction<String, Integer>() {
             @Override
@@ -95,6 +105,39 @@ public class VariableNameTidier implements StructuredStatementTransformer {
             JavaTypeInstance type = localVariable.getInferredJavaType().getJavaTypeInstance();
 
             return type.suggestVarName();
+        }
+
+        private String mkLcMojo(String in) {
+            return " class!" + in;
+        }
+
+        public void defineLocalClassHere(StructuredStatement statement, SentinelLocalClassLValue localVariable) {
+            JavaTypeInstance type = localVariable.getLocalClassType();
+            String name = type.suggestVarName(); // But upper case first char.
+            if (name == null) name = type.getRawName().replace('.', '_'); // mad fallback.
+            char[] chars = name.toCharArray();
+            for (int idx = 0, len = chars.length; idx < len; ++idx) {
+                char c = chars[idx];
+                if (c >= '0' && c <= '9') continue;
+                chars[idx] = Character.toUpperCase(chars[idx]);
+                name = new String(chars, idx, chars.length - idx);
+                break;
+            }
+
+
+            String lcMojo = mkLcMojo(name);
+            if (!alreadyDefined(lcMojo)) {
+                scope.getFirst().defineHere(lcMojo);
+                method.markUsedLocalClassType(type, name);
+                return;
+            }
+
+            String postfixedVarName;
+            do {
+                postfixedVarName = getNext(name);
+            } while (alreadyDefined(mkLcMojo(postfixedVarName)));
+            scope.getFirst().defineHere(mkLcMojo(postfixedVarName));
+            method.markUsedLocalClassType(type, postfixedVarName);
         }
 
         public void defineHere(StructuredStatement statement, LocalVariable localVariable) {
@@ -139,7 +182,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
             scope.getFirst().defineHere(postfixedVarName);
         }
 
-        protected static class AtLevel {
+        protected class AtLevel {
             StructuredStatement statement;
             Set<String> definedHere = SetFactory.newSet();
             int next;

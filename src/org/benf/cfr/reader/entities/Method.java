@@ -75,7 +75,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final ClassFile classFile;
     private boolean hidden;
     private DecompilerComments comments;
-    private final Set<JavaRefTypeInstance> localClasses = SetFactory.newOrderedSet();
+    private final Map<JavaRefTypeInstance, String> localClasses = MapFactory.newLinkedMap();
 
     public Method(ByteData raw, ClassFile classFile, final ConstantPool cp, final DCCommonState dcCommonState) {
         Options options = dcCommonState.getOptions();
@@ -142,7 +142,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         if (codeAttribute != null) {
             codeAttribute.analyse().collectTypeUsages(collector);
         }
-        collector.collect(localClasses);
+        collector.collect(localClasses.keySet());
         collector.collectFrom(getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME));
     }
 
@@ -259,11 +259,15 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return methodPrototype;
     }
 
-    public void markUsedLocalClassType(JavaTypeInstance javaTypeInstance) {
+    public void markUsedLocalClassType(JavaTypeInstance javaTypeInstance, String suggestedName) {
         javaTypeInstance = javaTypeInstance.getDeGenerifiedType();
         if (!(javaTypeInstance instanceof JavaRefTypeInstance))
             throw new IllegalStateException("Bad local class Type " + javaTypeInstance.getRawName());
-        localClasses.add((JavaRefTypeInstance) javaTypeInstance);
+        localClasses.put((JavaRefTypeInstance) javaTypeInstance, suggestedName);
+    }
+
+    public void markUsedLocalClassType(JavaTypeInstance javaTypeInstance) {
+        markUsedLocalClassType(javaTypeInstance, null);
     }
 
     private void dumpMethodAnnotations(Dumper d) {

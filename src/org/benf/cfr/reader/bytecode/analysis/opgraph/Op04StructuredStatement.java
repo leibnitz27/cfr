@@ -559,7 +559,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     public static void tidyVariableNames(Method method, Op04StructuredStatement root) {
-        new VariableNameTidier().transform(method, root);
+        new VariableNameTidier(method).transform(root);
     }
 
     public static void removePointlessReturn(Op04StructuredStatement root) {
