@@ -144,10 +144,6 @@ public class OptionsImpl implements Options {
             "decodefinally", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> TIDY_MONITORS = new PermittedOptionProvider.Argument<Boolean>(
             "tidymonitors", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean> ALLOW_PARTIAL_FAILURE = new PermittedOptionProvider.Argument<Boolean>(
-            "allowpartialfailure", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean> ALLOW_WHOLE_FAILURE = new PermittedOptionProvider.Argument<Boolean>(
-            "allowwholefailure", defaultFalseBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> LENIENT = new PermittedOptionProvider.Argument<Boolean>(
             "lenient", defaultFalseBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> DUMP_CLASS_PATH = new PermittedOptionProvider.Argument<Boolean>(
@@ -168,6 +164,8 @@ public class OptionsImpl implements Options {
             "recover", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> ECLIPSE = new PermittedOptionProvider.Argument<Boolean>(
             "eclipse", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> OVERRIDES = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "override", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true));
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -218,9 +216,9 @@ public class OptionsImpl implements Options {
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
-                    DECODE_FINALLY, TIDY_MONITORS, ALLOW_PARTIAL_FAILURE, LENIENT, DUMP_CLASS_PATH,
-                    DECOMPILER_COMMENTS, ALLOW_WHOLE_FAILURE, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
-                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE);
+                    DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
+                    DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
+                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES);
         }
 
         @Override

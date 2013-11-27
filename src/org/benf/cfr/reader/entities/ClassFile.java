@@ -63,6 +63,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private final ClassSignature classSignature;
     private final ClassFileVersion classFileVersion;
     private DecompilerComments decompilerComments;
+    private transient Map<MethodPrototype.ProtoKey, Method> methodsByProtoKey;
 
     private boolean begunAnalysis;
 
@@ -226,6 +227,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private void addComment(String comment) {
         if (decompilerComments == null) decompilerComments = new DecompilerComments();
         decompilerComments.addComment(comment);
+    }
+
+    private void addComment(String comment, Exception e) {
+        if (decompilerComments == null) decompilerComments = new DecompilerComments();
+        decompilerComments.addComment(new DecompilerComment(comment, e));
     }
 
     /* Get the list of constantPools, and that of inner classes */
@@ -396,19 +402,21 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return new OverloadMethodSet(this, prototype, out);
     }
 
-    // We need to make sure we get the 'correct' method...
-    public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
-        List<Method> named = getMethodsWithMatchingName(prototype);
-        Method methodMatch = null;
-        for (Method method : named) {
-            MethodPrototype tgt = method.getMethodPrototype();
-            if (tgt.equalsMatch(prototype)) return method;
-            if (tgt.equalsGeneric(prototype)) {
-                methodMatch = method;
+    private Map<MethodPrototype.ProtoKey, Method> getProtoMap() {
+        if (methodsByProtoKey == null) {
+            methodsByProtoKey = MapFactory.newMap();
+            for (Method method : methods) {
+                methodsByProtoKey.put(method.getMethodPrototype().getProtoKey(), method);
             }
         }
-        if (methodMatch != null) return methodMatch;
-        throw new NoSuchMethodException();
+        return methodsByProtoKey;
+    }
+
+    public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
+        getProtoMap();
+        Method methodMatch = methodsByProtoKey.get(prototype.getProtoKey());
+        if (methodMatch == null) throw new NoSuchMethodException();
+        return methodMatch;
     }
 
     public List<Method> getMethodsByNameOrNull(String name) {
@@ -534,14 +542,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
     private void analysePassOuterFirst(DCCommonState state) {
-        Options options = state.getOptions();
         try {
             CodeAnalyserWholeClass.wholeClassAnalysisPass2(this, state);
         } catch (RuntimeException e) {
-            if (!options.getOption(OptionsImpl.ALLOW_WHOLE_FAILURE)) {
-                throw new RuntimeException("Whole class analysis failure - hide with " + OptionsImpl.ALLOW_WHOLE_FAILURE, e);
-            }
-            addComment("Exception performing whole class analysis ignored - use " + OptionsImpl.ALLOW_WHOLE_FAILURE.getName() + " to show");
+            addComment("Exception performing whole class analysis ignored.", e);
         }
 
         if (innerClassesByTypeInfo == null) return;
@@ -554,6 +558,56 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     public void analyseTop(DCCommonState dcCommonState) {
         analyseMid(dcCommonState);
         analysePassOuterFirst(dcCommonState);
+    }
+
+    private void analyseOverrides() {
+
+        Set<MethodPrototype.ProtoKey> protoKeys = SetFactory.newSet();
+        Set<JavaTypeInstance> visited = SetFactory.newSet();
+        collectAllProtos(visited, protoKeys);
+
+        for (Method method : methods) {
+            method.markOverride(protoKeys);
+        }
+
+    }
+
+    private void collectProto(JavaTypeInstance type, Set<JavaTypeInstance> visited, Set<MethodPrototype.ProtoKey> protoKeys) {
+
+        if (!visited.add(type)) return;
+
+        type = type.getDeGenerifiedType();
+        if (type instanceof JavaRefTypeInstance) {
+            JavaRefTypeInstance refTypeInstance = (JavaRefTypeInstance) type;
+            try {
+                ClassFile classFile = refTypeInstance.getClassFile();
+                if (classFile != null) {
+                    classFile.collectAndRecurseAllProtos(visited, protoKeys);
+                }
+            } catch (CannotLoadClassException e) {
+            }
+        }
+    }
+
+    private void collectAndRecurseAllProtos(Set<JavaTypeInstance> visited, Set<MethodPrototype.ProtoKey> protoKeys) {
+        protoKeys.addAll(getProtoMap().keySet());
+        collectAllProtos(visited, protoKeys);
+    }
+
+    private void collectAllProtos(Set<JavaTypeInstance> visited, Set<MethodPrototype.ProtoKey> protoKeys) {
+
+        JavaTypeInstance superClass = classSignature.getSuperClass();
+        if (superClass != null) {
+            collectProto(superClass, visited, protoKeys);
+        }
+
+        List<JavaTypeInstance> interfaces = classSignature.getInterfaces();
+        if (!interfaces.isEmpty()) {
+            int size = interfaces.size();
+            for (int x = 0; x < size; ++x) {
+                collectProto(interfaces.get(x), visited, protoKeys);
+            }
+        }
     }
 
     public void analyseMid(DCCommonState state) {
@@ -569,28 +623,19 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
             analyseInnerClassesPass1(state);
         }
-        boolean exceptionRecovered = false;
+
         for (Method method : methods) {
-            try {
-                method.analyse();
-            } catch (Exception e) {
-                System.out.println("Exception analysing " + method.getName());
-                System.out.println(e);
-                for (StackTraceElement s : e.getStackTrace()) {
-                    System.out.println(s);
-                }
-                exceptionRecovered = true;
-            }
+            method.analyse();
         }
-        if (exceptionRecovered) throw new ConfusedCFRException("Failed to analyse file");
 
         try {
+            if (options.getOption(OptionsImpl.OVERRIDES, classFileVersion)) {
+                analyseOverrides();
+            }
+
             CodeAnalyserWholeClass.wholeClassAnalysisPass1(this, state);
         } catch (RuntimeException e) {
-            if (!options.getOption(OptionsImpl.ALLOW_WHOLE_FAILURE)) {
-                throw new RuntimeException("Whole class analysis failure - hide with " + OptionsImpl.ALLOW_WHOLE_FAILURE, e);
-            }
-            addComment("Exception performing whole class analysis ignored - use " + OptionsImpl.ALLOW_WHOLE_FAILURE.getName() + " to show");
+            addComment("Exception performing whole class analysis.");
         }
 
     }

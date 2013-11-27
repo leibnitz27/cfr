@@ -71,6 +71,9 @@ public class CodeAnalyser {
         this.method = method;
     }
 
+    /*
+     * This method should not throw.  If it does, something serious has gone wrong.
+     */
     public Op04StructuredStatement getAnalysis(DCCommonState dcCommonState) {
         if (analysed != null) return analysed;
 
@@ -112,10 +115,6 @@ public class CodeAnalyser {
                     comments.addComment(new DecompilerComment("Exception decompiling", e));
                 }
             }
-        }
-
-        if (failed != null && !options.getOption(OptionsImpl.ALLOW_PARTIAL_FAILURE)) {
-            throw failed;
         }
 
         if (comments != null) {

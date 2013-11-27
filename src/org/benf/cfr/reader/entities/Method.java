@@ -76,6 +76,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private boolean hidden;
     private DecompilerComments comments;
     private final Map<JavaRefTypeInstance, String> localClasses = MapFactory.newLinkedMap();
+    private boolean isOverride;
 
     public Method(ByteData raw, ClassFile classFile, final ConstantPool cp, final DCCommonState dcCommonState) {
         Options options = dcCommonState.getOptions();
@@ -259,6 +260,12 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return methodPrototype;
     }
 
+    public void markOverride(Set<MethodPrototype.ProtoKey> protoKeys) {
+        if (protoKeys.contains(methodPrototype.getProtoKey())) {
+            isOverride = true;
+        }
+    }
+
     public void markUsedLocalClassType(JavaTypeInstance javaTypeInstance, String suggestedName) {
         javaTypeInstance = javaTypeInstance.getDeGenerifiedType();
         if (!(javaTypeInstance instanceof JavaRefTypeInstance))
@@ -275,6 +282,9 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
         if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
         if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
+        if (isOverride) {
+            d.print("@Override\n");
+        }
     }
 
     public void dumpSignatureText(boolean asClass, Dumper d) {
