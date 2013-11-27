@@ -37,8 +37,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
     private static void dumpHeader(ClassFile c, Dumper d) {
         d.print(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsEnum));
 
-        d.print("enum ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
-        d.print(" {\n");
+        d.print("enum ").dump(c.getThisClassConstpoolEntry().getTypeInstance()).print(" ");
     }
 
     private static void dumpEntry(Dumper d, Pair<StaticVariable, AbstractConstructorInvokation> entry, boolean last) {
