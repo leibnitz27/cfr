@@ -6,6 +6,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokat
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -38,6 +40,17 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         d.print(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsEnum));
 
         d.print("enum ").dump(c.getThisClassConstpoolEntry().getTypeInstance()).print(" ");
+
+        ClassSignature signature = c.getClassSignature();
+        List<JavaTypeInstance> interfaces = signature.getInterfaces();
+        if (!interfaces.isEmpty()) {
+            d.print("implements ");
+            int size = interfaces.size();
+            for (int x = 0; x < size; ++x) {
+                JavaTypeInstance iface = interfaces.get(x);
+                d.dump(iface).print((x < (size - 1) ? ",\n" : "\n"));
+            }
+        }
     }
 
     private static void dumpEntry(Dumper d, Pair<StaticVariable, AbstractConstructorInvokation> entry, boolean last) {
