@@ -260,10 +260,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return methodPrototype;
     }
 
-    public void markOverride(Set<MethodPrototype.ProtoKey> protoKeys) {
-        if (protoKeys.contains(methodPrototype.getProtoKey())) {
-            isOverride = true;
-        }
+    public void markOverride() {
+        isOverride = true;
     }
 
     public void markUsedLocalClassType(JavaTypeInstance javaTypeInstance, String suggestedName) {

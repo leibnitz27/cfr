@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnoynmousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Triplet;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.classfilehelpers.*;
@@ -63,7 +64,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private final ClassSignature classSignature;
     private final ClassFileVersion classFileVersion;
     private DecompilerComments decompilerComments;
-    private transient Map<MethodPrototype.ProtoKey, Method> methodsByProtoKey;
 
     private boolean begunAnalysis;
 
@@ -402,21 +402,40 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return new OverloadMethodSet(this, prototype, out);
     }
 
-    private Map<MethodPrototype.ProtoKey, Method> getProtoMap() {
-        if (methodsByProtoKey == null) {
-            methodsByProtoKey = MapFactory.newMap();
-            for (Method method : methods) {
-                methodsByProtoKey.put(method.getMethodPrototype().getProtoKey(), method);
+
+    /* We need to make sure we get the 'correct' method...
+     * This requires a pass with a type binder, so that
+     *
+     * x (Double, int ) matches x (T , int) where T is bound to Double.
+     */
+    public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
+        List<Method> named = getMethodsWithMatchingName(prototype);
+        Method methodMatch = null;
+        for (Method method : named) {
+            MethodPrototype tgt = method.getMethodPrototype();
+            if (tgt.equalsMatch(prototype)) return method;
+            if (tgt.equalsGeneric(prototype)) {
+                methodMatch = method;
             }
         }
-        return methodsByProtoKey;
+        if (methodMatch != null) return methodMatch;
+        throw new NoSuchMethodException();
     }
 
-    public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
-        getProtoMap();
-        Method methodMatch = methodsByProtoKey.get(prototype.getProtoKey());
-        if (methodMatch == null) throw new NoSuchMethodException();
-        return methodMatch;
+    public Method getMethodByPrototype(final MethodPrototype prototype, GenericTypeBinder binder) throws NoSuchMethodException {
+        List<Method> named = getMethodsWithMatchingName(prototype);
+        Method methodMatch = null;
+        for (Method method : named) {
+            MethodPrototype tgt = method.getMethodPrototype();
+            if (tgt.equalsMatch(prototype)) return method;
+            if (binder != null) {
+                if (tgt.equalsGeneric(prototype, binder)) {
+                    methodMatch = method;
+                }
+            }
+        }
+        if (methodMatch != null) return methodMatch;
+        throw new NoSuchMethodException();
     }
 
     public List<Method> getMethodsByNameOrNull(String name) {
@@ -561,54 +580,52 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
     private void analyseOverrides() {
-
-        Set<MethodPrototype.ProtoKey> protoKeys = SetFactory.newSet();
-        Set<JavaTypeInstance> visited = SetFactory.newSet();
-        collectAllProtos(visited, protoKeys);
-
-        for (Method method : methods) {
-            method.markOverride(protoKeys);
-        }
-
-    }
-
-    private void collectProto(JavaTypeInstance type, Set<JavaTypeInstance> visited, Set<MethodPrototype.ProtoKey> protoKeys) {
-
-        if (!visited.add(type)) return;
-
-        type = type.getDeGenerifiedType();
-        if (type instanceof JavaRefTypeInstance) {
-            JavaRefTypeInstance refTypeInstance = (JavaRefTypeInstance) type;
-            try {
-                ClassFile classFile = refTypeInstance.getClassFile();
-                if (classFile != null) {
-                    classFile.collectAndRecurseAllProtos(visited, protoKeys);
+        try {
+            BindingSuperContainer bindingSuperContainer = getBindingSupers();
+            Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSupers = bindingSuperContainer.getBoundSuperClasses();
+            List<Triplet<JavaRefTypeInstance, ClassFile, GenericTypeBinder>> bindTesters = ListFactory.newList();
+            for (Map.Entry<JavaRefTypeInstance, JavaGenericRefTypeInstance> entry : boundSupers.entrySet()) {
+                JavaRefTypeInstance superC = entry.getKey();
+                if (superC.equals(getClassType())) continue;
+                ClassFile superClsFile = null;
+                try {
+                    superClsFile = superC.getClassFile();
+                } catch (CannotLoadClassException e) {
                 }
-            } catch (CannotLoadClassException e) {
+                if (superClsFile == null) continue;
+                if (superClsFile == this) continue; // shouldn't happen.
+
+                JavaGenericRefTypeInstance boundSuperC = entry.getValue();
+                GenericTypeBinder binder = null;
+                if (boundSuperC != null) {
+                    binder = superClsFile.getGenericTypeBinder(boundSuperC);
+                }
+
+                bindTesters.add(Triplet.make(superC, superClsFile, binder));
             }
-        }
-    }
 
-    private void collectAndRecurseAllProtos(Set<JavaTypeInstance> visited, Set<MethodPrototype.ProtoKey> protoKeys) {
-        protoKeys.addAll(getProtoMap().keySet());
-        collectAllProtos(visited, protoKeys);
-    }
 
-    private void collectAllProtos(Set<JavaTypeInstance> visited, Set<MethodPrototype.ProtoKey> protoKeys) {
-
-        JavaTypeInstance superClass = classSignature.getSuperClass();
-        if (superClass != null) {
-            collectProto(superClass, visited, protoKeys);
-        }
-
-        List<JavaTypeInstance> interfaces = classSignature.getInterfaces();
-        if (!interfaces.isEmpty()) {
-            int size = interfaces.size();
-            for (int x = 0; x < size; ++x) {
-                collectProto(interfaces.get(x), visited, protoKeys);
+            for (Method method : methods) {
+                if (method.isConstructor()) continue;
+                MethodPrototype prototype = method.getMethodPrototype();
+                Method baseMethod = null;
+                for (Triplet<JavaRefTypeInstance, ClassFile, GenericTypeBinder> bindTester : bindTesters) {
+                    JavaRefTypeInstance refType = bindTester.getFirst();
+                    ClassFile classFile = bindTester.getSecond();
+                    GenericTypeBinder genericTypeBinder = bindTester.getThird();
+                    try {
+                        baseMethod = classFile.getMethodByPrototype(prototype, genericTypeBinder);
+                    } catch (NoSuchMethodException e) {
+                    }
+                    if (baseMethod != null) break;
+                }
+                if (baseMethod != null) method.markOverride();
             }
+        } catch (RuntimeException e) {
+            addComment("Failed to analyse overrides", e);
         }
     }
+
 
     public void analyseMid(DCCommonState state) {
         Options options = state.getOptions();

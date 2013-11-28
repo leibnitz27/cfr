@@ -15,8 +15,8 @@ public class BoundSuperCollector {
 
 
     private final ClassFile classFile;
-    private final Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers;
-    private final Map<JavaTypeInstance, BindingSuperContainer.Route> boundSuperRoute;
+    private final Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSupers;
+    private final Map<JavaRefTypeInstance, BindingSuperContainer.Route> boundSuperRoute;
 
     public BoundSuperCollector(ClassFile classFile) {
         this.classFile = classFile;

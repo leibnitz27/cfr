@@ -108,7 +108,7 @@ public class InferredJavaType {
                 JavaTypeInstance clashType = clash.getJavaTypeInstance();
                 BindingSuperContainer otherSupers = clashType.getBindingSupers();
                 if (otherSupers != null) {
-                    Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
+                    Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
                     matches.putAll(boundSupers);
                 }
             }
@@ -119,7 +119,7 @@ public class InferredJavaType {
                 if (otherSupers == null) {
                     continue;
                 }
-                Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
+                Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
                 Iterator<Map.Entry<JavaTypeInstance, JavaGenericRefTypeInstance>> iterator = matches.entrySet().iterator();
                 while (iterator.hasNext()) {
                     Map.Entry<JavaTypeInstance, JavaGenericRefTypeInstance> entry = iterator.next();
@@ -182,7 +182,7 @@ public class InferredJavaType {
             do {
                 effect = false;
                 for (JavaTypeInstance pos : poss) {
-                    Set<JavaTypeInstance> supers = SetFactory.newSet(pos.getBindingSupers().getBoundSuperClasses().keySet());
+                    Set<JavaRefTypeInstance> supers = SetFactory.newSet(pos.getBindingSupers().getBoundSuperClasses().keySet());
                     // but don't remove the actual type.
                     supers.remove(pos);
                     if (poss.removeAll(supers)) {
@@ -195,7 +195,7 @@ public class InferredJavaType {
              * If we still have >1 left, we have to pick one.  Prefer a base class to an interface?
              */
             JavaTypeInstance oneClash = clashes.get(0).getJavaTypeInstance();
-            Map<JavaTypeInstance, BindingSuperContainer.Route> routes = oneClash.getBindingSupers().getBoundSuperRoute();
+            Map<JavaRefTypeInstance, BindingSuperContainer.Route> routes = oneClash.getBindingSupers().getBoundSuperRoute();
             if (poss.isEmpty()) {
                 // If we ended up with nothing, we've been stupidly aggressive.  Take a guess.
                 poss = ListFactory.newList(matches.keySet());

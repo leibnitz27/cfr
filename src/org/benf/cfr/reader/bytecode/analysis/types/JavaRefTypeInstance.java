@@ -68,8 +68,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         this.dcCommonState = null; // TODO : Wrong.
         this.className = className;
         this.shortName = displayableName;
-        Map<JavaTypeInstance, JavaGenericRefTypeInstance> tmp = MapFactory.newMap();
-        Map<JavaTypeInstance, BindingSuperContainer.Route> routes = MapFactory.newMap();
+        Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> tmp = MapFactory.newMap();
+        Map<JavaRefTypeInstance, BindingSuperContainer.Route> routes = MapFactory.newMap();
         for (JavaRefTypeInstance supr : supers) {
             tmp.put(supr, null);
             routes.put(supr, BindingSuperContainer.Route.EXTENSION);

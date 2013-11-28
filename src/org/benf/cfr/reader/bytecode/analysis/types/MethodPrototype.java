@@ -40,7 +40,6 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final ClassFile classFile;
     private final List<Slot> syntheticArgs = ListFactory.newList();
     private transient List<LocalVariable> parameterLValues = null;
-    private transient ProtoKey protoKey;
 
     public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
         this.formalTypeParameters = formalTypeParameters;
@@ -385,33 +384,36 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     public boolean equalsGeneric(MethodPrototype other) {
+        GenericTypeBinder genericTypeBinder = GenericTypeBinder.createEmpty();
+        // TODO : This needs a bit of work ... (!)
+        // TODO : Will return false positives at the moment.
+        return equalsGeneric(other, genericTypeBinder);
+    }
+
+    public boolean equalsGeneric(MethodPrototype other, GenericTypeBinder genericTypeBinder) {
         List<FormalTypeParameter> otherTypeParameters = other.formalTypeParameters;
         List<JavaTypeInstance> otherArgs = other.args;
 
         if (otherArgs.size() != args.size()) {
             return false;
         }
-        // TODO : This needs a bit of work ... (!)
-        // TODO : Will return false positives at the moment.
 
         // TODO : Actually, really dislike tryFindBinding, replace.
-//        GenericTypeBinder genericTypeBinder = GenericTypeBinder.createEmpty();
         for (int x = 0; x < args.size(); ++x) {
             JavaTypeInstance lhs = args.get(x);
             JavaTypeInstance rhs = otherArgs.get(x);
             JavaTypeInstance deGenerifiedLhs = lhs.getDeGenerifiedType();
             JavaTypeInstance deGenerifiedRhs = rhs.getDeGenerifiedType();
             if (!deGenerifiedLhs.equals(deGenerifiedRhs)) {
-                int a = 1;
-                return false;
-//                if (lhs instanceof JavaGenericBaseInstance) {
-//                    if (!((JavaGenericBaseInstance) lhs).tryFindBinding(rhs, genericTypeBinder)) {
-//                        return false;
-//                    }
-//                    a = 1;
-//                } else {
-//                    return false;
-//                }
+                // TODO : This doesn't feel like it's right.  Rethink.
+                // This will match if it COULD bind, not if it does.
+                if (lhs instanceof JavaGenericBaseInstance) {
+                    if (!((JavaGenericBaseInstance) lhs).tryFindBinding(rhs, genericTypeBinder)) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
             }
         }
         return true;
@@ -472,61 +474,14 @@ public class MethodPrototype implements TypeUsageCollectable {
     /*
      * I don't want this to be complete equality, so let's not call it that.
      */
-    public ProtoKey getProtoKey() {
-        if (protoKey == null) protoKey = new ProtoKey();
-        return protoKey;
+    public boolean equalsMatch(MethodPrototype other) {
+        if (other == this) return true;
+        if (other == null) return false;
+        if (!name.equals(other.name)) return false;
+        List<JavaTypeInstance> otherArgs = other.getArgs();
+        if (!args.equals(otherArgs)) return false;
+        return true;
     }
 
-    public class ProtoKey {
-        private final int hashCode;
-
-        public ProtoKey() {
-            hashCode = mkhash();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o == this) return true;
-            if (o == null) return false;
-            if (o.getClass() != ProtoKey.class) return false;
-            ProtoKey other = (ProtoKey) o;
-            if (!name.equals(other.getName())) return false;
-            List<JavaTypeInstance> otherArgs = other.getArgs();
-            if (args.size() != otherArgs.size()) return false;
-            for (int x = 0, len = args.size(); x < len; ++x) {
-                JavaTypeInstance lhs = args.get(x);
-                JavaTypeInstance rhs = otherArgs.get(x);
-                JavaTypeInstance deGenerifiedLhs = lhs.getDeGenerifiedType();
-                JavaTypeInstance deGenerifiedRhs = rhs.getDeGenerifiedType();
-                if (!deGenerifiedLhs.equals(deGenerifiedRhs)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private String getName() {
-            return name;
-        }
-
-        private List<JavaTypeInstance> getArgs() {
-            return MethodPrototype.this.getArgs();
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        private int mkhash() {
-            int hashCode = name.hashCode();
-            for (int x = 0; x < args.size(); ++x) {
-                JavaTypeInstance lhs = args.get(x);
-                JavaTypeInstance deGenerifiedLhs = lhs.getDeGenerifiedType();
-                hashCode = (31 * hashCode) + deGenerifiedLhs.hashCode();
-            }
-            return hashCode;
-        }
-    }
 
 }

@@ -21,11 +21,11 @@ public class BindingSuperContainer {
     public static BindingSuperContainer POISON = new BindingSuperContainer(null, null, null);
 
     private final ClassFile thisClass;
-    private final Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses;
-    private final Map<JavaTypeInstance, Route> boundSuperRoute;
+    private final Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses;
+    private final Map<JavaRefTypeInstance, Route> boundSuperRoute;
 
-    public BindingSuperContainer(ClassFile thisClass, Map<JavaTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses,
-                                 Map<JavaTypeInstance, Route> boundSuperRoute) {
+    public BindingSuperContainer(ClassFile thisClass, Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses,
+                                 Map<JavaRefTypeInstance, Route> boundSuperRoute) {
         this.thisClass = thisClass;
         this.boundSuperClasses = boundSuperClasses;
         this.boundSuperRoute = boundSuperRoute;
@@ -50,18 +50,20 @@ public class BindingSuperContainer {
     }
 
     public boolean containsBase(JavaTypeInstance possBase) {
+        if (!(possBase instanceof JavaRefTypeInstance)) return false;
         return boundSuperClasses.containsKey(possBase);
     }
 
-    public Map<JavaTypeInstance, JavaGenericRefTypeInstance> getBoundSuperClasses() {
+    public Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> getBoundSuperClasses() {
         return boundSuperClasses;
     }
 
     public JavaGenericRefTypeInstance getBoundSuperForBase(JavaTypeInstance possBase) {
+        if (!(possBase instanceof JavaRefTypeInstance)) return null;
         return boundSuperClasses.get(possBase);
     }
 
-    public Map<JavaTypeInstance, Route> getBoundSuperRoute() {
+    public Map<JavaRefTypeInstance, Route> getBoundSuperRoute() {
         return boundSuperRoute;
     }
 }
