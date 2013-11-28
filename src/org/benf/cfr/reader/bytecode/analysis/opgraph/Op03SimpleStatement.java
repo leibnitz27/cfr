@@ -2225,12 +2225,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         class IsExceptionBlock implements Predicate<BlockIdentifier> {
             @Override
             public boolean test(BlockIdentifier in) {
-                return in.getBlockType() == BlockType.TRYBLOCK;
+                BlockType blockType = in.getBlockType();
+                switch (blockType) {
+                    case TRYBLOCK:
+                    case SWITCH:
+                    case CATCHBLOCK:
+                    case CASE:
+                        return true;
+                }
+                return false;
             }
         }
         Predicate<BlockIdentifier> exceptionFilter = new IsExceptionBlock();
 
-        Set<BlockIdentifier> exceptionBlocks = SetFactory.newSet(Functional.filter(forwardGoto.getBlockIdentifiers(), exceptionFilter));
+        Set<BlockIdentifier> exceptionBlocks = SetFactory.newSet(Functional.filter(tgt.getBlockIdentifiers(), exceptionFilter));
         int nextCandidateIdx = statements.indexOf(forwardGoto) - 1;
 
         Op03SimpleStatement lastTarget = tgt;
