@@ -359,6 +359,8 @@ public class Op03Blocks {
                 if (targets.get(0) == next) {
                     // Nothing.
                 } else if (targets.get(1) == next) {
+                    IfStatement ifStatement = (IfStatement) stm.getStatement();
+                    ifStatement.setCondition(ifStatement.getCondition().getNegated().simplify());
                     Op03SimpleStatement a = targets.get(0);
                     Op03SimpleStatement b = targets.get(1);
                     targets.set(0, b);
