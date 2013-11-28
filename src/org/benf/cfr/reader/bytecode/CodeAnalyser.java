@@ -422,7 +422,10 @@ public class CodeAnalyser {
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
-        Op03SimpleStatement.identifyLoops1(op03SimpleParseNodes, blockIdentifierFactory);
+        Op03SimpleStatement.identifyLoops1(method, op03SimpleParseNodes, blockIdentifierFactory);
+
+        // After we've identified loops, try to push any instructions through a goto
+        op03SimpleParseNodes = Op03SimpleStatement.pushThroughGoto(method, op03SimpleParseNodes);
 
         // Replacing returning ifs early (above, aggressively) interferes with some nice output.
         // Normally we'd do it AFTER loops.

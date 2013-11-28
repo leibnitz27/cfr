@@ -2073,7 +2073,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     // Identify distinct set of backjumps (b1,b2), which jump back to somewhere (p) which has a forward
     // jump to somewhere which is NOT a /DIRECT/ parent of the backjumps (i.e. has to go through p)
     // p must be a direct parent of all of (b1,b2)
-    public static void identifyLoops1(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+    public static void identifyLoops1(Method method, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
         // Find back references.
         // Verify that they belong to jump instructions (otherwise something has gone wrong)
         // (if, goto).
@@ -2096,7 +2096,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Collections.sort(starts, new CompareByIndex());
 
             for (Op03SimpleStatement start : starts) {
-                if (considerAsWhileLoopStart(start, statements, blockIdentifierFactory, blockEndsCache) ||
+                if (considerAsWhileLoopStart(method, start, statements, blockIdentifierFactory, blockEndsCache) ||
                         considerAsDoLoopStart(start, statements, blockIdentifierFactory, blockEndsCache)) {
                     success = true;   // consider relooping.  Now, don't as it breaks stuff!
                 }
@@ -2156,6 +2156,120 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             visited.add(start);
         } while (start != null);
         return null;
+    }
+
+
+    /*
+     * If we have
+     *
+     * if (.... ) goto x
+     * FFFFFF
+     * goto Y
+     *
+     * and the instruction BEFORE Y does not have Y as its direct predecessor, we can push FFF through.
+     *
+     * Why do we want to do this?  Because if X is directly after Y, we might get to the point where we end up as
+     *
+     * if (..... ) goto x
+     * goto y
+     * X
+     *
+     * Which can be converted into a negative jump.
+     *
+     * We only do this for linear statements, we'd need a structured transform to do something better.
+     * (at op4 stage).
+     */
+    public static List<Op03SimpleStatement> pushThroughGoto(Method method, List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> pathtests = Functional.filter(statements, new ExactTypeFilter<GotoStatement>(GotoStatement.class));
+        boolean success = false;
+        for (Op03SimpleStatement gotostm : pathtests) {
+            if (gotostm.getTargets().get(0).getIndex().isBackJumpTo(gotostm)) {
+                if (pushThroughGoto(method, gotostm, statements)) {
+                    success = true;
+                }
+            }
+        }
+        if (success) {
+            statements = Op03SimpleStatement.renumber(statements);
+            // This is being done twice deliberately.  Should rewrite rewriteNegativeJumps to iterate.
+            // in practice 2ce is fine.
+            // see /com/db4o/internal/btree/BTreeNode.class
+            Op03SimpleStatement.rewriteNegativeJumps(statements);
+            Op03SimpleStatement.rewriteNegativeJumps(statements);
+        }
+        return statements;
+    }
+
+    private static boolean moveable(Statement statement) {
+        Class<?> clazz = statement.getClass();
+        if (clazz == Nop.class) return true;
+        if (clazz == AssignmentSimple.class) return true;
+        if (clazz == CommentStatement.class) return true;
+        if (clazz == ExpressionStatement.class) return true;
+        return false;
+    }
+
+    private static boolean pushThroughGoto(Method method, Op03SimpleStatement forwardGoto, List<Op03SimpleStatement> statements) {
+
+        if (forwardGoto.sources.size() != 1) return false;
+
+        final Op03SimpleStatement tgt = forwardGoto.getTargets().get(0);
+        int idx = statements.indexOf(tgt);
+        if (idx == 0) return false;
+        final Op03SimpleStatement before = statements.get(idx - 1);
+        if (tgt.getSources().contains(before)) return false;
+
+        InstrIndex beforeTgt = tgt.getIndex().justBefore();
+        Op03SimpleStatement last = forwardGoto;
+
+        class IsExceptionBlock implements Predicate<BlockIdentifier> {
+            @Override
+            public boolean test(BlockIdentifier in) {
+                return in.getBlockType() == BlockType.TRYBLOCK;
+            }
+        }
+        Predicate<BlockIdentifier> exceptionFilter = new IsExceptionBlock();
+
+        Set<BlockIdentifier> exceptionBlocks = SetFactory.newSet(Functional.filter(forwardGoto.getBlockIdentifiers(), exceptionFilter));
+        int nextCandidateIdx = statements.indexOf(forwardGoto) - 1;
+
+        Op03SimpleStatement lastTarget = tgt;
+        Set<Op03SimpleStatement> seen = SetFactory.newSet();
+        boolean success = false;
+        while (true) {
+            Op03SimpleStatement tryMoveThis = forwardGoto.sources.get(0);
+
+            if (!moveable(tryMoveThis.getStatement())) return success;
+
+            if (!seen.add(tryMoveThis)) return success;
+
+            if (statements.get(nextCandidateIdx) != tryMoveThis) return success;
+            if (tryMoveThis.targets.size() != 1) return success;
+            if (tryMoveThis.sources.size() != 1) return success;
+            Op03SimpleStatement beforeTryMove = tryMoveThis.sources.get(0);
+            // Is it in the same exception blocks?
+            Set<BlockIdentifier> moveEB = SetFactory.newSet(Functional.filter(forwardGoto.getBlockIdentifiers(), exceptionFilter));
+            if (!moveEB.equals(exceptionBlocks)) return success;
+            /* Move this instruction through the goto
+             */
+            beforeTryMove.replaceTarget(tryMoveThis, forwardGoto);
+            forwardGoto.replaceSource(tryMoveThis, beforeTryMove);
+
+            forwardGoto.replaceTarget(lastTarget, tryMoveThis);
+            tryMoveThis.replaceSource(beforeTryMove, forwardGoto);
+
+            tryMoveThis.replaceTarget(forwardGoto, lastTarget);
+            lastTarget.replaceSource(forwardGoto, tryMoveThis);
+
+            tryMoveThis.index = beforeTgt;
+            beforeTgt = beforeTgt.justBefore();
+
+            tryMoveThis.containedInBlocks.clear();
+            tryMoveThis.containedInBlocks.addAll(lastTarget.containedInBlocks);
+            lastTarget = tryMoveThis;
+            nextCandidateIdx--;
+            success = true;
+        }
     }
 
     /*
@@ -2492,7 +2606,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     * If so we've probably got a for/while loop.....
     * decode both as a while loop, we can convert it into a for later.
     */
-    private static boolean considerAsWhileLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
+    private static boolean considerAsWhileLoopStart(final Method method,
+                                                    final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
                                                     BlockIdentifierFactory blockIdentifierFactory,
                                                     Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
         final InstrIndex startIndex = start.getIndex();
@@ -2627,6 +2742,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
         blockEnd.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, blockEnd);
+        /*
+         * is the end of the while loop jumping to something which is NOT directly after it?  If so, we need to introduce
+         * an intermediate jump.
+         */
+        Op03SimpleStatement afterLastInBlock = (lastIdx + 1) < statements.size() ? statements.get(lastIdx + 1) : null;
+        loopBreak = conditional.getTargets().get(1);
+        if (afterLastInBlock != loopBreak) {
+            Op03SimpleStatement newAfterLast = new Op03SimpleStatement(afterLastInBlock.getBlockIdentifiers(), new GotoStatement(), lastInBlock.getIndex().justAfter());
+            conditional.replaceTarget(loopBreak, newAfterLast);
+            newAfterLast.addSource(conditional);
+            loopBreak.replaceSource(conditional, newAfterLast);
+            newAfterLast.addTarget(loopBreak);
+            statements.add(newAfterLast);
+        }
+
         return true;
     }
 
@@ -2780,6 +2910,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         @Override
         public boolean test(Op03SimpleStatement in) {
             return (positive == clazz.isInstance(in.containedStatement));
+        }
+    }
+
+    public static class ExactTypeFilter<T> implements Predicate<Op03SimpleStatement> {
+        private final Class<T> clazz;
+        private final boolean positive;
+
+        public ExactTypeFilter(Class<T> clazz) {
+            this.clazz = clazz;
+            this.positive = true;
+        }
+
+        public ExactTypeFilter(Class<T> clazz, boolean positive) {
+            this.clazz = clazz;
+            this.positive = positive;
+        }
+
+        @Override
+        public boolean test(Op03SimpleStatement in) {
+            return (positive == (clazz == (in.containedStatement.getClass())));
         }
     }
 
