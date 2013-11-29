@@ -7,7 +7,7 @@ package org.benf.cfr.reader.util;
  * Time: 05:44
  */
 public interface MiscConstants {
-    public static final String CFR_VERSION = "0_53";
+    public static final String CFR_VERSION = "0_54";
     public static final String CFR_HEADER_BRA = "Decompiled with CFR";
 
     public static final String INIT_METHOD = "<init>";
