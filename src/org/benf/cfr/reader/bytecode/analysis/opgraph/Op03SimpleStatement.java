@@ -2274,6 +2274,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
             tryMoveThis.containedInBlocks.clear();
             tryMoveThis.containedInBlocks.addAll(lastTarget.containedInBlocks);
+            tryMoveThis.immediatelyAfterBlocks.clear();
+            tryMoveThis.immediatelyAfterBlocks.addAll(lastTarget.immediatelyAfterBlocks);
+            lastTarget.immediatelyAfterBlocks.clear();
             lastTarget = tryMoveThis;
             nextCandidateIdx--;
             success = true;
