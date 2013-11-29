@@ -2,8 +2,10 @@ package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +20,7 @@ public abstract class StreamDumper implements Dumper {
     private int indent;
     private boolean atStart = true;
     private boolean pendingCR = false;
+    private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
     public StreamDumper(TypeUsageInformation typeUsageInformation) {
         this.typeUsageInformation = typeUsageInformation;
@@ -137,5 +140,10 @@ public abstract class StreamDumper implements Dumper {
             return print("null");
         }
         return d.dump(this);
+    }
+
+    @Override
+    public boolean canEmitClass(JavaTypeInstance type) {
+        return emitted.add(type);
     }
 }

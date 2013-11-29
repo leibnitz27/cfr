@@ -115,4 +115,9 @@ public class LocalClassAwareDumper implements Dumper {
     public void addSummaryError(Method method, String s) {
         delegate.addSummaryError(method, s);
     }
+
+    @Override
+    public boolean canEmitClass(JavaTypeInstance type) {
+        return delegate.canEmitClass(type);
+    }
 }

@@ -4,8 +4,10 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
+import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,6 +22,7 @@ public class ToStringDumper implements Dumper {
     private boolean pendingCR = false;
     private final StringBuilder sb = new StringBuilder();
     private final TypeUsageInformation typeUsageInformation = new TypeUsageInformationEmpty();
+    private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
     public static String toString(Dumpable d) {
         return new ToStringDumper().dump(d).toString();
@@ -145,5 +148,10 @@ public class ToStringDumper implements Dumper {
 
     @Override
     public void close() {
+    }
+
+    @Override
+    public boolean canEmitClass(JavaTypeInstance type) {
+        return emitted.add(type);
     }
 }

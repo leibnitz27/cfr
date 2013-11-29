@@ -51,6 +51,8 @@ public interface Dumper {
 
     void addSummaryError(Method method, String s);
 
+    boolean canEmitClass(JavaTypeInstance type);
+
     public static class CannotCreate extends RuntimeException {
         public CannotCreate(Throwable throwable) {
             super(throwable);
@@ -61,4 +63,5 @@ public interface Dumper {
             return "Cannot create dumper " + super.toString();
         }
     }
+
 }
