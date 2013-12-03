@@ -113,9 +113,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> STRING_SWITCH = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true));
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ARRAY_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true));
+            "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> COLLECTION_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true));
+            "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> REWRITE_LAMBDAS = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodelambdas", new VersionSpecificDefaulter(ClassFileVersion.JAVA_8, true));
     public static final PermittedOptionProvider.Argument<Boolean> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean>(
