@@ -361,6 +361,7 @@ public class CodeAnalyser {
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
+            Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
         }
 
         // At this point, make a first stab at identifying final variables, (or stack values which can't be

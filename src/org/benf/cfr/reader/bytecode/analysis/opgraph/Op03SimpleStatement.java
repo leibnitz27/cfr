@@ -250,6 +250,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return isNop;
     }
 
+    public void replaceBlockIfIn(BlockIdentifier oldB, BlockIdentifier newB) {
+        if (containedInBlocks.remove(oldB)) {
+            containedInBlocks.add(newB);
+        }
+    }
+
     public void replaceTarget(Op03SimpleStatement oldTarget, Op03SimpleStatement newTarget) {
         int index = targets.indexOf(oldTarget);
         if (index == -1) {

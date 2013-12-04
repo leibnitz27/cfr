@@ -1,17 +1,17 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.CatchStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.SetFactory;
-import org.benf.cfr.reader.util.SetUtil;
+import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
@@ -128,11 +128,66 @@ public class Op03Blocks {
 //        }
 //    }
 
-    private static void applyKnownBlocksHeuristic(List<Block3> blocks) {
-        /*
-         * Heuristic - we don't want to reorder entries which leave known blocks - SO... if a source
-         * is in a different blockset, we have to wait until the previous block is emitted.
-         */
+
+    private static void removeAliases(Set<BlockIdentifier> in, Map<BlockIdentifier, BlockIdentifier> aliases) {
+        Set<BlockIdentifier> toRemove = SetFactory.newSet();
+        for (BlockIdentifier i : in) {
+            BlockIdentifier alias = aliases.get(i);
+            if (alias != null) {
+                if (in.contains(alias)) {
+                    toRemove.add(i);
+                    toRemove.add(alias);
+                }
+            }
+        }
+        in.removeAll(toRemove);
+    }
+
+    private static Map<BlockIdentifier, BlockIdentifier> getTryBlockAliases(List<Op03SimpleStatement> statements) {
+        Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = MapFactory.newMap();
+        List<Op03SimpleStatement> catchStatements = Functional.filter(statements, new Op03SimpleStatement.TypeFilter<CatchStatement>(CatchStatement.class));
+        catchlist:
+        for (Op03SimpleStatement catchStatementCtr : catchStatements) {
+            CatchStatement catchStatement = (CatchStatement) catchStatementCtr.getStatement();
+            List<ExceptionGroup.Entry> caught = catchStatement.getExceptions();
+            /*
+             * If all of the types caught are the same, we temporarily alias the try blocks.
+             */
+            if (caught.isEmpty()) continue;
+            ExceptionGroup.Entry first = caught.get(0);
+            JavaRefTypeInstance catchType = first.getCatchType();
+            BlockIdentifier tryBlockMain = first.getTryBlockIdentifier();
+
+            List<BlockIdentifier> possibleAliases = ListFactory.newList();
+            for (int x = 1, len = caught.size(); x < len; ++x) {
+                ExceptionGroup.Entry entry = caught.get(x);
+                if (!entry.getCatchType().equals(catchType)) continue catchlist;
+                BlockIdentifier tryBlockIdent = entry.getTryBlockIdentifier();
+                possibleAliases.add(tryBlockIdent);
+            }
+
+            for (Op03SimpleStatement source : catchStatementCtr.getSources()) {
+                if (source.getBlockIdentifiers().contains(tryBlockMain)) continue catchlist;
+            }
+
+            for (BlockIdentifier alias : possibleAliases) {
+                BlockIdentifier last = tryBlockAliases.put(alias, tryBlockMain);
+                if (last != null && last != tryBlockMain) {
+                    // We're going to have problems....
+                    int a = 1;
+                }
+            }
+        }
+        return tryBlockAliases;
+    }
+
+    /*
+     * Heuristic - we don't want to reorder entries which leave known blocks - SO... if a source
+     * is in a different blockset, we have to wait until the previous block is emitted.
+     */
+    private static void applyKnownBlocksHeuristic(List<Block3> blocks, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
+
+
         // FIXME : TODO : INEFFICIENT.  Leaving it like this because I may need to revert.
         Block3 linPrev = null;
         for (Block3 block : blocks) {
@@ -151,9 +206,21 @@ public class Op03Blocks {
 //                    } else {
                     {
                         Set<BlockIdentifier> diffs = SetUtil.difference(endIdents, startIdents);
+                        // Remove aliases from consideration.
+
+                        // If we've just jumped INTO a try block, consider us as being in that too.
+                        BlockIdentifier newTryBlock = null;
+                        if (block.getStart().getStatement() instanceof TryStatement) {
+                            newTryBlock = ((TryStatement) block.getStart().getStatement()).getBlockIdentifier();
+                            if (!diffs.add(newTryBlock)) newTryBlock = null;
+                        }
+
+                        removeAliases(diffs, tryBlockAliases);
+
                         for (BlockIdentifier blk : diffs) {
                             if (blk.getBlockType() == BlockType.CASE ||
                                     blk.getBlockType() == BlockType.SWITCH) continue;
+                            if (blk == newTryBlock) continue;
                             needLinPrev = true;
                             break prevtest;
                         }
@@ -302,13 +369,59 @@ public class Op03Blocks {
         return true;
     }
 
+    private static void stripTryBlockAliases(List<Op03SimpleStatement> out, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
+
+        List<Op03SimpleStatement> remove = ListFactory.newList();
+
+        for (int x = 1, len = out.size(); x < len; ++x) {
+            Op03SimpleStatement s = out.get(x);
+            if (s.getStatement().getClass() != TryStatement.class) continue;
+            /*
+             * Has this been moved directly after a member of an alias?  If so, we can remove the statement, and relabel
+             * anything that belonged to it.
+             */
+            TryStatement tryStatement = (TryStatement) s.getStatement();
+            BlockIdentifier tryBlock = tryStatement.getBlockIdentifier();
+            Op03SimpleStatement prev = out.get(x - 1);
+            BlockIdentifier alias = tryBlockAliases.get(tryBlock);
+            if (alias == null) continue;
+
+            if (prev.getBlockIdentifiers().contains(alias)) remove.add(s);
+
+        }
+        if (remove.isEmpty()) return;
+        for (Op03SimpleStatement removeThis : remove) {
+            TryStatement removeTry = (TryStatement) removeThis.getStatement();
+            BlockIdentifier blockIdentifier = removeTry.getBlockIdentifier();
+            BlockIdentifier alias = tryBlockAliases.get(blockIdentifier);
+
+            /*
+             * Unlink, and replace all occurences of blockIdentifier with alias.
+             */
+            List<Op03SimpleStatement> targets = removeThis.getTargets();
+            Op03SimpleStatement naturalTarget = targets.get(0);
+            for (Op03SimpleStatement target : targets) {
+                target.removeSource(removeThis);
+            }
+            for (Op03SimpleStatement source : removeThis.getSources()) {
+                source.replaceTarget(removeThis, naturalTarget);
+                naturalTarget.addSource(source);
+            }
+            removeThis.clear();
+            for (Op03SimpleStatement statement : out) {
+                statement.replaceBlockIfIn(blockIdentifier, alias);
+            }
+        }
+    }
+
     public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements) {
 
         List<Block3> blocks = buildBasicBlocks(statements);
 
         apply0TargetBlockHeuristic(blocks);
 
-        applyKnownBlocksHeuristic(blocks);
+        Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = getTryBlockAliases(statements);
+        applyKnownBlocksHeuristic(blocks, tryBlockAliases);
 
         blocks = doTopSort(blocks);
 
@@ -382,6 +495,8 @@ public class Op03Blocks {
         if (patched) {
             outStatements = Op03SimpleStatement.renumber(outStatements);
         }
+
+        stripTryBlockAliases(outStatements, tryBlockAliases);
 
         return Op03SimpleStatement.removeUnreachableCode(outStatements);
     }
