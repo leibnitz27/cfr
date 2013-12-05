@@ -1404,7 +1404,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static List<Op03SimpleStatement> removeUnreachableCode(final List<Op03SimpleStatement> statements) {
+    public static List<Op03SimpleStatement> removeUnreachableCode(final List<Op03SimpleStatement> statements, final boolean checkBackJumps) {
         final Set<Op03SimpleStatement> reachable = SetFactory.newSet();
         reachable.add(statements.get(0));
         GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(0), new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
@@ -1426,9 +1426,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 for (Op03SimpleStatement test : arg1.getTargets()) {
                     // Also, check for backjump targets on non jumps.
                     Statement argContained = arg1.getStatement();
-                    if (!(argContained instanceof JumpingStatement || argContained instanceof WhileStatement)) {
-                        if (test.getIndex().isBackJumpFrom(arg1)) {
-                            throw new IllegalStateException("Backjump on non jumping statement " + arg1);
+                    if (checkBackJumps) {
+                        if (!(argContained instanceof JumpingStatement || argContained instanceof WhileStatement)) {
+                            if (test.getIndex().isBackJumpFrom(arg1)) {
+                                throw new IllegalStateException("Backjump on non jumping statement " + arg1);
+                            }
                         }
                     }
                     if (!test.getSources().contains(arg1)) {

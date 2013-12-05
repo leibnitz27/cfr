@@ -417,7 +417,7 @@ public class Op03Blocks {
     public static List<Op03SimpleStatement> combineTryBlocks(final Method method, final List<Op03SimpleStatement> statements) {
         Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = getTryBlockAliases(statements);
         stripTryBlockAliases(statements, tryBlockAliases);
-        return Op03SimpleStatement.removeUnreachableCode(statements);
+        return Op03SimpleStatement.removeUnreachableCode(statements, true);
     }
 
     public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements) {
@@ -504,7 +504,7 @@ public class Op03Blocks {
 
         stripTryBlockAliases(outStatements, tryBlockAliases);
 
-        return Op03SimpleStatement.removeUnreachableCode(outStatements);
+        return Op03SimpleStatement.removeUnreachableCode(outStatements, true);
     }
 
     private static void patch(Block3 a, Block3 b) {

@@ -23,10 +23,19 @@ public class MutableOptions implements Options {
         this.delegate = delegate;
     }
 
-    public boolean override(PermittedOptionProvider.ArgumentParam<Troolean, Void> argument, boolean value) {
+    public boolean override(PermittedOptionProvider.ArgumentParam<Troolean, Void> argument, Troolean value) {
         Troolean originalValue = delegate.getOption(argument);
         if (originalValue == Troolean.NEITHER) {
-            overrides.put(argument.getName(), Troolean.get(value).toString());
+            overrides.put(argument.getName(), value.toString());
+            return true;
+        }
+        return false;
+    }
+
+    public boolean override(PermittedOptionProvider.ArgumentParam<Boolean, Void> argument, boolean value) {
+        Boolean originalValue = delegate.getOption(argument);
+        if (originalValue != value) {
+            overrides.put(argument.getName(), Boolean.toString(value));
             return true;
         }
         return false;

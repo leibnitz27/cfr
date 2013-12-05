@@ -98,10 +98,13 @@ public class CodeAnalyser {
             // Try to override some options for aggressive behaviour
             MutableOptions mutableOptions = new MutableOptions(options);
             List<DecompilerComment> extraComments = ListFactory.newList();
-            if (mutableOptions.override(OptionsImpl.FORCE_TOPSORT, true))
+            if (mutableOptions.override(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE)) {
                 extraComments.add(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
-            if (mutableOptions.override(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, true))
+            }
+            if (mutableOptions.override(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE)) {
                 extraComments.add(DecompilerComment.PRUNE_EXCEPTIONS);
+            }
+            mutableOptions.override(OptionsImpl.LENIENT, true);
             if (!extraComments.isEmpty()) {
                 try {
                     Pair<DecompilerComments, Op04StructuredStatement> res = getAnalysisInner(dcCommonState, mutableOptions);
@@ -131,7 +134,8 @@ public class CodeAnalyser {
      */
     private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(DCCommonState dcCommonState, Options passoptions) {
 
-        Options options = dcCommonState.getOptions();
+        Options options = passoptions;
+        boolean willSort = passoptions.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE;
 
         int showOpsLevel = options.getOption(OptionsImpl.SHOWOPS);
 
@@ -217,7 +221,7 @@ public class CodeAnalyser {
             exceptions.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
         }
 
-        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, dcCommonState);
+        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, dcCommonState, options);
         lutByOffset = null; // No longer valid.
 
 
@@ -327,7 +331,7 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
 
-        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, !willSort);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
         /*
@@ -339,7 +343,7 @@ public class CodeAnalyser {
 
         // Remove LValues which are on their own as expressionstatements.
         Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
-        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, !willSort);
 
         // Now we've done our first stage condensation, we want to transform assignments which are
         // self updates into preChanges, if we can.  I.e. x = x | 3  ->  x |= 3,  x = x + 1 -> x+=1 (===++x).
@@ -358,7 +362,7 @@ public class CodeAnalyser {
 
         if (passoptions.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
-            op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
+            op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, false);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
@@ -394,7 +398,7 @@ public class CodeAnalyser {
             // hard to work out later.  This isn't going to get everything, but may help!
             reloop = Op03SimpleStatement.condenseConditionals2(op03SimpleParseNodes);
 
-            op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
+            op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, true);
         } while (reloop);
 
         logger.info("simplifyConditionals");
@@ -449,7 +453,7 @@ public class CodeAnalyser {
         }
 
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
-        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, true);
 
         if (showOpsLevel == SHOW_L3_EXCEPTION_BLOCKS) {
             debugDumper.newln().newln();
@@ -531,7 +535,7 @@ public class CodeAnalyser {
             debugDumper.print("Final Op3 statements:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
-        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, true);
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 

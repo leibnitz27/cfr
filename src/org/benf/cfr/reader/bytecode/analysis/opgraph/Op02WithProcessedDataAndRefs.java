@@ -1944,9 +1944,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             Map<Integer, Integer> lutByOffset,
             ConstantPool cp,
             long codeLength,
-            DCCommonState dcCommonState
+            DCCommonState dcCommonState,
+            Options options
     ) {
-        Options options = dcCommonState.getOptions();
         int originalInstrCount = op2list.size();
 
         if (exceptions.getExceptionsGroups().isEmpty()) return op2list;
