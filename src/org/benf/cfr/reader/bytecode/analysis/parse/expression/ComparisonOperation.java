@@ -12,10 +12,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
-import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Set;
@@ -264,6 +264,11 @@ public class ComparisonOperation extends AbstractExpression implements Condition
         return op == other.op &&
                 lhs.equals(other.lhs) &&
                 rhs.equals(other.rhs);
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return lhs.canThrow(caught) || rhs.canThrow(caught);
     }
 
     @Override

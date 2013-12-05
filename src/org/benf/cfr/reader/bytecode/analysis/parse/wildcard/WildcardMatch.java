@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.wildcard;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -15,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -362,6 +362,11 @@ public class WildcardMatch {
         }
 
         @Override
+        public boolean canThrow(ExceptionCheck caught) {
+            return true;
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (!(o instanceof LValue)) {
                 return false;
@@ -476,6 +481,11 @@ public class WildcardMatch {
 
         @Override
         public void collectTypeUsages(TypeUsageCollector collector) {
+        }
+
+        @Override
+        public boolean canThrow(ExceptionCheck caught) {
+            return true;
         }
     }
 

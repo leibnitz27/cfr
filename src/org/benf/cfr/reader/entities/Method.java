@@ -77,6 +77,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private DecompilerComments comments;
     private final Map<JavaRefTypeInstance, String> localClasses = MapFactory.newLinkedMap();
     private boolean isOverride;
+    private transient Set<JavaTypeInstance> thrownTypes = null;
 
     public Method(ByteData raw, ClassFile classFile, final ConstantPool cp, final DCCommonState dcCommonState) {
         Options options = dcCommonState.getOptions();
@@ -285,6 +286,21 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         }
     }
 
+    public Set<JavaTypeInstance> getThrownTypes() {
+        if (thrownTypes == null) {
+            thrownTypes = SetFactory.newOrderedSet();
+            AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
+            if (exceptionsAttribute != null) {
+                List<ConstantPoolEntryClass> exceptionClasses = exceptionsAttribute.getExceptionClassList();
+                for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
+                    JavaTypeInstance typeInstance = exceptionClass.getTypeInstance();
+                    thrownTypes.add(typeInstance);
+                }
+            }
+        }
+        return thrownTypes;
+    }
+
     public void dumpSignatureText(boolean asClass, Dumper d) {
 
         dumpMethodAnnotations(d);
@@ -320,10 +336,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         if (exceptionsAttribute != null) {
             d.print(" throws ");
             boolean first = true;
-            List<ConstantPoolEntryClass> exceptionClasses = exceptionsAttribute.getExceptionClassList();
-            for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
+            for (JavaTypeInstance typeInstance : getThrownTypes()) {
                 first = CommaHelp.comma(first, d);
-                JavaTypeInstance typeInstance = exceptionClass.getTypeInstance();
                 d.dump(typeInstance);
             }
         }

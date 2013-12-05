@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.Op04Checker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
@@ -756,6 +757,16 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         for (StructuredStatement statement : statements) {
             statement.rewriteExpressions(syntheticOuterRefRewriter);
         }
+
+    }
+
+    /*
+     * there /should/ never be any loose catch statements.
+     */
+    public static void applyChecker(Op04Checker checker, Op04StructuredStatement root, DecompilerComments comments) {
+        StructuredScope structuredScope = new StructuredScope();
+        root.transform(checker, structuredScope);
+        checker.commentInto(comments);
 
     }
 }

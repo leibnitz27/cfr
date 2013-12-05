@@ -4,9 +4,12 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumpable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -62,4 +65,6 @@ public interface Statement extends Dumpable, ComparableUnderEC {
     boolean equivalentUnder(Object o, EquivalenceConstraint constraint);
 
     boolean fallsToNext();
+
+    boolean canThrow(ExceptionCheck caught);
 }

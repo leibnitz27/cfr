@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -68,6 +69,11 @@ public class LocalVariable extends AbstractLValue {
 
     public NamedVariable getName() {
         return name;
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return false;
     }
 
     @Override

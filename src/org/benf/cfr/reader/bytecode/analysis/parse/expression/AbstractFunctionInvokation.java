@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 
 import java.util.List;
@@ -184,6 +185,16 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
             args.set(x, arg);
         }
         return false;
+    }
+
+    /*
+     * We can be SLIGHTLY clever here.  If only checked exceptions are being caught, we
+     * can see if our target is declared as throwing one of these.  Otherwise, if non-checked
+     * are being caught, we should always consider as throwing.
+     */
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return caught.checkAgainst(this);
     }
 
     @Override

@@ -414,6 +414,12 @@ public class Op03Blocks {
         }
     }
 
+    public static List<Op03SimpleStatement> combineTryBlocks(final Method method, final List<Op03SimpleStatement> statements) {
+        Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = getTryBlockAliases(statements);
+        stripTryBlockAliases(statements, tryBlockAliases);
+        return Op03SimpleStatement.removeUnreachableCode(statements);
+    }
+
     public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements) {
 
         List<Block3> blocks = buildBasicBlocks(statements);

@@ -32,6 +32,11 @@ public class StructuredScope {
         }
     }
 
+    public StructuredStatement getInnermost() {
+        if (scope.isEmpty()) return null;
+        return scope.getFirst().statement;
+    }
+
     public void setNextAtThisLevel(StructuredStatement statement, int next) {
         AtLevel atLevel = scope.getFirst();
         if (atLevel.statement != statement) {

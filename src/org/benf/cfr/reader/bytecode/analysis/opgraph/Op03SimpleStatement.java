@@ -3,8 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NOPSearchingExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -22,7 +20,9 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
@@ -2530,6 +2530,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             int lastPostBlock = postBlockIdx;
             innerShutLoop:
             do {
+                if (lastPostBlock + 1 >= statements.size()) break innerShutLoop;
 
                 int currentIdx = lastPostBlock + 1;
                 Op03SimpleStatement stm = statements.get(lastPostBlock);
@@ -2544,7 +2545,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     }
                 });
                 if (!internalTryBlocks.containsAll(tryBlocks)) break innerShutLoop;
-                while (currentIdx < statements.size() && statements.get(currentIdx).getBlockIdentifiers().contains(catchBlockIdent)) {
+                while (currentIdx < statements.size() - 1 && statements.get(currentIdx).getBlockIdentifiers().contains(catchBlockIdent)) {
                     currentIdx++;
                 }
                 lastPostBlock = currentIdx;
@@ -3618,6 +3619,35 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     }
 
+    private static void rewriteTryBackJump(Op03SimpleStatement stm) {
+        InstrIndex idx = stm.getIndex();
+        TryStatement tryStatement = (TryStatement) stm.getStatement();
+        Op03SimpleStatement firstbody = stm.getTargets().get(0);
+        BlockIdentifier blockIdentifier = tryStatement.getBlockIdentifier();
+        Iterator<Op03SimpleStatement> sourceIter = stm.sources.iterator();
+        while (sourceIter.hasNext()) {
+            Op03SimpleStatement source = sourceIter.next();
+            if (idx.isBackJumpFrom(source)) {
+                if (source.getBlockIdentifiers().contains(blockIdentifier)) {
+                    source.replaceTarget(stm, firstbody);
+                    firstbody.addSource(source);
+                    sourceIter.remove(); // remove source inline.
+                }
+            }
+        }
+    }
+
+    /*
+     * If there's a backjump INSIDE a try block which points to the beginning of the try block, move it to the next
+     * instruction.
+     */
+    public static void rewriteTryBackJumps(List<Op03SimpleStatement> in) {
+        List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
+        for (Op03SimpleStatement trystm : tries) {
+            rewriteTryBackJump(trystm);
+        }
+    }
+
     public static void combineTryCatchEnds(List<Op03SimpleStatement> in) {
         List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
         for (Op03SimpleStatement tryStatement : tries) {
@@ -3827,7 +3857,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     /*
      * This is a terrible order cheat.
      */
-    private static void extendTryBlock(Op03SimpleStatement tryStatement, List<Op03SimpleStatement> in) {
+    private static void extendTryBlock(Op03SimpleStatement tryStatement, List<Op03SimpleStatement> in, DCCommonState dcCommonState) {
         TryStatement tryStatementInner = (TryStatement) tryStatement.getStatement();
         BlockIdentifier tryBlockIdent = tryStatementInner.getBlockIdentifier();
 
@@ -3835,48 +3865,78 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         int x = in.indexOf(currentStatement);
 
         while (currentStatement.getBlockIdentifiers().contains(tryBlockIdent)) {
+            ++x;
             if (x >= in.size()) {
                 return;
             }
-            ++x;
             currentStatement = in.get(x);
         }
 
-        Set<BlockIdentifier> validBlocks = SetFactory.newSet();
-        validBlocks.add(tryBlockIdent);
-        for (int i = 1, len = tryStatement.targets.size(); i < len; ++i) {
-            Op03SimpleStatement tgt = tryStatement.targets.get(i);
-            Statement tgtStatement = tgt.getStatement();
-            if (tgtStatement instanceof CatchStatement) {
-                validBlocks.add(((CatchStatement) tgtStatement).getCatchBlockIdent());
-            } else if (tgtStatement instanceof FinallyStatement) {
-                validBlocks.add(((FinallyStatement) tgtStatement).getFinallyBlockIdent());
-            } else {
-                return;
+        /*
+         * Get the types of all caught expressions.  Anything we can't understand resolves to runtime expression
+         * This allows us to extend exception blocks if they're catching checked exceptions, and we can tell that no
+         * checked exceptions could be thrown.
+         */
+        Set<JavaRefTypeInstance> caught = SetFactory.newSet();
+        List<Op03SimpleStatement> targets = tryStatement.targets;
+        for (int i = 1, len = targets.size(); i < len; ++i) {
+            Statement statement = targets.get(i).getStatement();
+            if (!(statement instanceof CatchStatement)) continue;
+            CatchStatement catchStatement = (CatchStatement) statement;
+            List<ExceptionGroup.Entry> exceptions = catchStatement.getExceptions();
+            for (ExceptionGroup.Entry entry : exceptions) {
+                caught.add(entry.getCatchType());
             }
         }
 
-        boolean foundSource = false;
-        for (Op03SimpleStatement source : currentStatement.sources) {
-            if (!SetUtil.hasIntersection(validBlocks, source.getBlockIdentifiers())) return;
-            if (source.getBlockIdentifiers().contains(tryBlockIdent)) foundSource = true;
-        }
+        ExceptionCheck exceptionCheck = new ExceptionCheck(dcCommonState, caught);
 
-        if (!foundSource) return;
-        /*
-         * If this statement is a return statement, in the same blocks as JUST THE try (i.e. it hasn't fallen
-         * into a catch etc), we can assume it belonged in the try.
-         */
-        Statement currentContent = currentStatement.getStatement();
-        if (currentContent instanceof ReturnStatement) {
+        mainloop:
+        while (!currentStatement.getStatement().canThrow(exceptionCheck)) {
+            Set<BlockIdentifier> validBlocks = SetFactory.newSet();
+            validBlocks.add(tryBlockIdent);
+            for (int i = 1, len = tryStatement.targets.size(); i < len; ++i) {
+                Op03SimpleStatement tgt = tryStatement.targets.get(i);
+                Statement tgtStatement = tgt.getStatement();
+                if (tgtStatement instanceof CatchStatement) {
+                    validBlocks.add(((CatchStatement) tgtStatement).getCatchBlockIdent());
+                } else if (tgtStatement instanceof FinallyStatement) {
+                    validBlocks.add(((FinallyStatement) tgtStatement).getFinallyBlockIdent());
+                } else {
+                    return;
+                }
+            }
+
+            boolean foundSource = false;
+            for (Op03SimpleStatement source : currentStatement.sources) {
+                if (!SetUtil.hasIntersection(validBlocks, source.getBlockIdentifiers())) return;
+                if (source.getBlockIdentifiers().contains(tryBlockIdent)) foundSource = true;
+            }
+
+            if (!foundSource) return;
+            /*
+             * If this statement is a return statement, in the same blocks as JUST THE try (i.e. it hasn't fallen
+             * into a catch etc), we can assume it belonged in the try.
+             */
             currentStatement.getBlockIdentifiers().add(tryBlockIdent);
+
+            x++;
+            if (x >= in.size()) break;
+            Op03SimpleStatement nextStatement = in.get(x);
+            if (!currentStatement.getTargets().contains(nextStatement)) {
+                // Then ALL of nextStatements sources must ALREADY be in the block.
+                for (Op03SimpleStatement source : nextStatement.getSources()) {
+                    if (!source.getBlockIdentifiers().contains(tryBlockIdent)) break mainloop;
+                }
+            }
+            currentStatement = nextStatement;
         }
     }
 
-    public static void extendTryBlocks(List<Op03SimpleStatement> in) {
+    public static void extendTryBlocks(DCCommonState dcCommonState, List<Op03SimpleStatement> in) {
         List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
         for (Op03SimpleStatement tryStatement : tries) {
-            extendTryBlock(tryStatement, in);
+            extendTryBlock(tryStatement, in, dcCommonState);
         }
 
     }
@@ -4991,6 +5051,45 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    /*
+     * This is a dangerous tidy-up operation.  Should only do it if we're falling back.
+     */
+    public static void rejoinBlocks(List<Op03SimpleStatement> statements) {
+        Set<BlockIdentifier> lastBlocks = SetFactory.newSet();
+        Set<BlockIdentifier> haveLeft = SetFactory.newSet();
+        // We blacklist blocks we can't POSSIBLY be in - i.e. after a catch block has started, we can't POSSIBLY
+        // be in its try block.
+        Set<BlockIdentifier> blackListed = SetFactory.newSet();
+
+        for (int x = 0, len = statements.size(); x < len; ++x) {
+            Op03SimpleStatement stm = statements.get(x);
+            Statement stmInner = stm.getStatement();
+            if (stmInner instanceof CatchStatement) {
+                CatchStatement catchStatement = (CatchStatement) stmInner;
+                for (ExceptionGroup.Entry entry : catchStatement.getExceptions()) {
+                    blackListed.add(entry.getTryBlockIdentifier());
+                }
+            }
+            // If we're in any blocks which we have left, then we need to backfill.
+            Set<BlockIdentifier> blocks = stm.getBlockIdentifiers();
+            blocks.removeAll(blackListed);
+
+            for (BlockIdentifier ident : blocks) {
+                if (haveLeft.contains(ident)) {
+                    // Backfill, remove from haveLeft.
+                    for (int y = x - 1; y >= 0; --y) {
+                        Op03SimpleStatement backFill = statements.get(y);
+                        if (!backFill.getBlockIdentifiers().add(ident)) break;
+                    }
+                }
+            }
+            for (BlockIdentifier wasIn : lastBlocks) {
+                if (!blocks.contains(wasIn)) haveLeft.add(wasIn);
+            }
+            lastBlocks = blocks;
+        }
+    }
+
     private static void removePointlessSwitchDefault(Op03SimpleStatement swtch) {
         SwitchStatement switchStatement = (SwitchStatement) swtch.getStatement();
         BlockIdentifier switchBlock = switchStatement.getSwitchBlock();
@@ -5039,10 +5138,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * If it's not a literal size, ignore.
          */
         LValue arrayLValue = start.getLValueWildCard("array").getMatch();
-        if (!(arrayLValue instanceof StackSSALabel)) {
+        if (!(arrayLValue instanceof StackSSALabel || arrayLValue instanceof LocalVariable)) {
             return false;
         }
-        StackSSALabel array = (StackSSALabel) arrayLValue;
+        LValue array = arrayLValue;
         AbstractNewArray arrayDef = start.getNewArrayWildCard("def").getMatch();
         Expression dimSize0 = arrayDef.getDimSize(0);
         if (!(dimSize0 instanceof Literal)) return false;
@@ -5053,6 +5152,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement next = newArray;
         List<Expression> anon = ListFactory.newList();
         List<Op03SimpleStatement> anonAssigns = ListFactory.newList();
+        Expression arrayExpression = null;
+        if (array instanceof StackSSALabel) {
+            arrayExpression = new StackValue((StackSSALabel) array);
+        } else {
+            arrayExpression = new LValueExpression(array);
+        }
         for (int x = 0; x < bound; ++x) {
             if (next.targets.size() != 1) {
                 return false;
@@ -5062,7 +5167,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Literal idx = new Literal(TypedLiteral.getInt(x));
             if (!testAnon.match(
                     new AssignmentSimple(
-                            new ArrayVariable(new ArrayIndex(new StackValue(array), idx)),
+                            new ArrayVariable(new ArrayIndex(arrayExpression, idx)),
                             testAnon.getExpressionWildCard("val")),
                     next.containedStatement)) {
                 return false;
@@ -5072,9 +5177,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         AssignmentSimple replacement = new AssignmentSimple(arrayLValue.getInferredJavaType(), assignmentSimple.getCreatedLValue(), new NewAnonymousArray(arrayDef.getInferredJavaType(), arrayDef.getNumDims(), anon, false));
         newArray.replaceStatement(replacement);
-        StackEntry arrayStackEntry = array.getStackEntry();
+        if (array instanceof StackSSALabel) {
+            StackEntry arrayStackEntry = ((StackSSALabel) array).getStackEntry();
+            for (Op03SimpleStatement create : anonAssigns) {
+                arrayStackEntry.decrementUsage();
+            }
+        }
         for (Op03SimpleStatement create : anonAssigns) {
-            arrayStackEntry.decrementUsage();
             create.nopOut();
         }
         return true;

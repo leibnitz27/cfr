@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -124,6 +125,11 @@ public class AssignmentPreMutation extends AbstractAssignment {
     @Override
     public StructuredStatement getStructuredStatement() {
         return new StructuredExpressionStatement(rvalue, false);
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return rvalue.canThrow(caught);
     }
 
     @Override

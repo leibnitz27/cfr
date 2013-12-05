@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -78,4 +79,8 @@ public class ReturnValueStatement extends ReturnStatement {
         return true;
     }
 
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return rvalue.canThrow(caught);
+    }
 }

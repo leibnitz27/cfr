@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -75,6 +76,11 @@ public class NewObject extends AbstractExpression {
         NewObject other = (NewObject) o;
         if (!getTypeInstance().equals(other.getTypeInstance())) return false;
         return true;
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return false;
     }
 
     @Override

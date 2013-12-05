@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -52,10 +53,15 @@ public class StackSSALabel extends AbstractLValue {
         return this;
     }
 
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return false;
+    }
+
     /*
-         * Can any use of this be replaced with the RHS instead?
-         * (Assuming that values in the RHS are not mutated)
-         */
+             * Can any use of this be replaced with the RHS instead?
+             * (Assuming that values in the RHS are not mutated)
+             */
     @Override
     public <Statement> void collectLValueAssignments(Expression rhsAssigned, StatementContainer<Statement> statementContainer, LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
         if (getNumberOfCreators() == 1) {

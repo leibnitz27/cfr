@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredThrow;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -56,6 +57,14 @@ public class ThrowStatement extends ReturnStatement {
         if (!(o instanceof ThrowStatement)) return false;
         ThrowStatement other = (ThrowStatement) o;
         return rvalue.equals(other.rvalue);
+    }
+
+    // HAHAHAHAH
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        // Oh good grief.  this is going to be a massive pain.  What could this type be throwing?
+        // For now, let's handle the simple case where it's throwing a new exception.
+        return caught.checkAgainstException(rvalue);
     }
 
     @Override

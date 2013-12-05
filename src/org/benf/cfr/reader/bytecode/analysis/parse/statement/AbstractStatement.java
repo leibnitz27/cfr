@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
@@ -89,6 +90,11 @@ public abstract class AbstractStatement implements Statement {
 
     @Override
     public boolean fallsToNext() {
+        return true;
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
         return true;
     }
 }

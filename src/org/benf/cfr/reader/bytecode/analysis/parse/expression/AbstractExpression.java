@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -66,6 +67,11 @@ public abstract class AbstractExpression implements Expression {
     @Override
     public final String toString() {
         return ToStringDumper.toString(this);
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return true;
     }
 
     public abstract boolean equals(Object o);

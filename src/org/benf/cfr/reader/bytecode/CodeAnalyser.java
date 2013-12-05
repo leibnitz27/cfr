@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -93,7 +94,7 @@ public class CodeAnalyser {
             comments.addComment(new DecompilerComment("Exception decompiling", e));
         }
 
-        if ((failed != null || !coderes.isFullyStructured()) && options.getOption(OptionsImpl.RECOVER)) {
+        if ((failed != null || comments.hasErrorComment()) && options.getOption(OptionsImpl.RECOVER)) {
             // Try to override some options for aggressive behaviour
             MutableOptions mutableOptions = new MutableOptions(options);
             List<DecompilerComment> extraComments = ListFactory.newList();
@@ -333,7 +334,7 @@ public class CodeAnalyser {
          * See if try blocks can be extended with simple returns here.  This is an extra pass, because we might have
          * missed backjumps from catches earlier.
          */
-        Op03SimpleStatement.extendTryBlocks(op03SimpleParseNodes);
+        Op03SimpleStatement.extendTryBlocks(dcCommonState, op03SimpleParseNodes);
         Op03SimpleStatement.combineTryCatchEnds(op03SimpleParseNodes);
 
         // Remove LValues which are on their own as expressionstatements.
@@ -357,10 +358,19 @@ public class CodeAnalyser {
 
         if (passoptions.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
-//            Op03SimpleStatement.replaceReturningGotos(op03SimpleParseNodes, true);
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
+
+            /*
+             * This set of operations is /very/ aggressive.
+             */
+            // This is not neccessarily a sensible thing to do, but we're being aggressive...
+            Op03SimpleStatement.rejoinBlocks(op03SimpleParseNodes);
+            Op03SimpleStatement.extendTryBlocks(dcCommonState, op03SimpleParseNodes);
+            op03SimpleParseNodes = Op03Blocks.combineTryBlocks(method, op03SimpleParseNodes);
+            Op03SimpleStatement.combineTryCatchEnds(op03SimpleParseNodes);
+            Op03SimpleStatement.rewriteTryBackJumps(op03SimpleParseNodes);
             Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
         }
 
@@ -573,6 +583,11 @@ public class CodeAnalyser {
         Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
         // Tidy variable names
         Op04StructuredStatement.tidyVariableNames(method, block);
+
+        /*
+         * Now finally run some extra checks to spot wierdness.
+         */
+        Op04StructuredStatement.applyChecker(new LooseCatchChecker(), block, comments);
 
         return Pair.make(comments, block);
     }

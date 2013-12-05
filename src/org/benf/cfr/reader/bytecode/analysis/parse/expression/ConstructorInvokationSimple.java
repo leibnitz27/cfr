@@ -18,6 +18,7 @@ import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -91,6 +92,10 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
         return true;
     }
 
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return caught.checkAgainst(constructorInvokation);
+    }
 
     @Override
     public void rewriteVarArgs(VarArgsRewriter varArgsRewriter) {

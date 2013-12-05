@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -132,6 +133,11 @@ public class AssignmentSimple extends AbstractAssignment {
     @Override
     public StructuredStatement getStructuredStatement() {
         return new StructuredAssignment(lvalue, rvalue);
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return lvalue.canThrow(caught) || rvalue.canThrow(caught);
     }
 
     @Override

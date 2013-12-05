@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -60,6 +61,10 @@ public class ExpressionStatement extends AbstractStatement {
         return expression.equals(other.expression);
     }
 
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return expression.canThrow(caught);
+    }
 
     @Override
     public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {

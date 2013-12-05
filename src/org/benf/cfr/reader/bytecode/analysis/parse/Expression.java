@@ -5,10 +5,14 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,4 +38,6 @@ public interface Expression extends Dumpable, DeepCloneable<Expression>, Compara
     InferredJavaType getInferredJavaType();
 
     boolean equivalentUnder(Object o, EquivalenceConstraint constraint);
+
+    boolean canThrow(ExceptionCheck caught);
 }

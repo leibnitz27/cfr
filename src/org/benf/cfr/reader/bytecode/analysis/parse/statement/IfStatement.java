@@ -15,6 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredBreak;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredContinue;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredIf;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -136,6 +137,10 @@ public class IfStatement extends GotoStatement {
         return true;
     }
 
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return condition.canThrow(caught);
+    }
 
     @Override
     public StructuredStatement getStructuredStatement() {

@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComm
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredBreak;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredContinue;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredGoto;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -67,6 +68,10 @@ public class GotoStatement extends JumpingStatement {
         return false;
     }
 
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return false;
+    }
 
     protected BlockIdentifier getTargetStartBlock() {
         Statement statement = getJumpTarget();
