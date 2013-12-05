@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -17,6 +18,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created:
@@ -27,11 +29,13 @@ public class StructuredCatch extends AbstractStructuredStatement {
     private final List<JavaRefTypeInstance> catchTypes;
     private final Op04StructuredStatement catchBlock;
     private final LValue catching;
+    private final Set<BlockIdentifier> possibleTryBlocks;
 
-    public StructuredCatch(Collection<JavaRefTypeInstance> catchTypes, Op04StructuredStatement catchBlock, LValue catching) {
+    public StructuredCatch(Collection<JavaRefTypeInstance> catchTypes, Op04StructuredStatement catchBlock, LValue catching, Set<BlockIdentifier> possibleTryBlocks) {
         this.catchTypes = catchTypes == null ? null : ListFactory.newList(catchTypes);
         this.catchBlock = catchBlock;
         this.catching = catching;
+        this.possibleTryBlocks = possibleTryBlocks;
     }
 
     @Override
@@ -98,6 +102,10 @@ public class StructuredCatch extends AbstractStructuredStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
+    }
+
+    public Set<BlockIdentifier> getPossibleTryBlocks() {
+        return possibleTryBlocks;
     }
 
     @Override

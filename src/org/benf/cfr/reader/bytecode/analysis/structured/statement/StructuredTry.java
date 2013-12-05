@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -25,11 +26,13 @@ public class StructuredTry extends AbstractStructuredStatement {
     private Op04StructuredStatement tryBlock;
     private List<Op04StructuredStatement> catchBlocks = ListFactory.newList();
     private Op04StructuredStatement finallyBlock;
+    private final BlockIdentifier tryBlockIdentifier;
 
-    public StructuredTry(ExceptionGroup exceptionGroup, Op04StructuredStatement tryBlock) {
+    public StructuredTry(ExceptionGroup exceptionGroup, Op04StructuredStatement tryBlock, BlockIdentifier tryBlockIdentifier) {
         this.exceptionGroup = exceptionGroup;
         this.tryBlock = tryBlock;
         this.finallyBlock = null;
+        this.tryBlockIdentifier = tryBlockIdentifier;
     }
 
     @Override
@@ -160,9 +163,13 @@ public class StructuredTry extends AbstractStructuredStatement {
 
     @Override
     public boolean inlineable() {
-        return false;
-//        return isPointlessTry() ||
-//                isJustTryCatchThrow();
+//        return false;
+        return isPointlessTry() ||
+                isJustTryCatchThrow();
+    }
+
+    public BlockIdentifier getTryBlockIdentifier() {
+        return tryBlockIdentifier;
     }
 
     @Override

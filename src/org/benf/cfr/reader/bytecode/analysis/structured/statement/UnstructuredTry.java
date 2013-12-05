@@ -33,7 +33,7 @@ public class UnstructuredTry extends AbstractUnStructuredStatement {
     @Override
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == exceptionGroup.getTryBlockIdentifier()) {
-            return new StructuredTry(exceptionGroup, innerBlock);
+            return new StructuredTry(exceptionGroup, innerBlock, blockIdentifier);
         } else {
             return null;
         }

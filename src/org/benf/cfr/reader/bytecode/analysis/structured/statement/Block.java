@@ -211,17 +211,45 @@ public class Block extends AbstractStructuredStatement {
             Op04StructuredStatement statement = containedStatements.get(x);
             if (statement.getStatement() instanceof StructuredTry) {
                 StructuredTry structuredTry = (StructuredTry) statement.getStatement();
+                BlockIdentifier tryBlockIdent = structuredTry.getTryBlockIdentifier();
                 ++x;
                 Op04StructuredStatement next = x < size ? containedStatements.get(x) : null;
-                while (x < size && next != null &&
-                        (next.getStatement() instanceof StructuredCatch ||
-                                next.getStatement() instanceof StructuredComment ||
-                                next.getStatement() instanceof StructuredFinally)) {
+
+                /*
+                 * If the next statement's NOT a catch, we've got a dangling catch.
+                 * Fast forward to the next catch, IF it's one for this block.
+                 */
+
+                if (next != null) {
+                    StructuredStatement nextStatement = next.getStatement();
+                    if (!(nextStatement instanceof StructuredCatch ||
+                            nextStatement instanceof StructuredFinally)) {
+                        for (int y = x + 1; y < size; ++y) {
+                            StructuredStatement test = containedStatements.get(y).getStatement();
+                            if (test instanceof StructuredCatch) {
+                                Set<BlockIdentifier> blocks = ((StructuredCatch) test).getPossibleTryBlocks();
+                                if (blocks.contains(tryBlockIdent)) {
+                                    x = y;
+                                    next = containedStatements.get(y);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                while (x < size && next != null) {
                     ++x;
-                    if (next.getStatement() instanceof StructuredComment) {
+                    StructuredStatement nextStatement = next.getStatement();
+                    if (nextStatement instanceof StructuredComment) {
                         next.nopThisAndReplace(); // pointless.
                         // Nothing.
-                    } else if (next.getStatement() instanceof StructuredCatch) {
+                    } else if (nextStatement instanceof StructuredCatch) {
+                        Set<BlockIdentifier> blocks = ((StructuredCatch) nextStatement).getPossibleTryBlocks();
+                        if (!blocks.contains(tryBlockIdent)) {
+                            --x;
+                            break;
+                        }
                         structuredTry.addCatch(next.nopThisAndReplace());
                         if (x < size) {
                             next = containedStatements.get(x);
@@ -239,6 +267,9 @@ public class Block extends AbstractStructuredStatement {
                             next = null;
                             finished = true;
                         }
+                    } else {
+                        --x;
+                        break;
                     }
                 }
                 --x;

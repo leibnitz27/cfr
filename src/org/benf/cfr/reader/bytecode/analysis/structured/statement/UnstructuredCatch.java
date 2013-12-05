@@ -50,11 +50,13 @@ public class UnstructuredCatch extends AbstractUnStructuredStatement {
          * Get the unique set of exception types.
          */
         Map<String, JavaRefTypeInstance> catchTypes = MapFactory.newTreeMap();
+        Set<BlockIdentifier> possibleTryBlocks = SetFactory.newSet();
         for (ExceptionGroup.Entry entry : exceptions) {
             JavaRefTypeInstance typ = entry.getCatchType();
             catchTypes.put(typ.getRawName(), typ);
+            possibleTryBlocks.add(entry.getTryBlockIdentifier());
         }
-        return new StructuredCatch(catchTypes.values(), innerBlock, catching);
+        return new StructuredCatch(catchTypes.values(), innerBlock, catching, possibleTryBlocks);
     }
 
     public StructuredStatement getCatchForEmpty() {

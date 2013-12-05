@@ -174,7 +174,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                                 RawJavaType.INT)),
                         new KleenePlus(new ResetAfterTest(wcm2,
                                 new MatchSequence(
-                                        new StructuredTry(null, null),
+                                        new StructuredTry(null, null, null),
                                         new BeginBlock(null),
                                         new StructuredAssignment(
                                                 new ArrayVariable(
@@ -190,7 +190,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                                                 wcm2.getExpressionWildCard("literal")
                                         ),
                                         new EndBlock(null),
-                                        new StructuredCatch(null, null, null),
+                                        new StructuredCatch(null, null, null, null),
                                         new BeginBlock(null),
                                         new EndBlock(null)
                                 )
