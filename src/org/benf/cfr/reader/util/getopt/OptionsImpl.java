@@ -154,6 +154,8 @@ public class OptionsImpl implements Options {
             "forcetopsort", defaultNeitherTrooleanDecoder);
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean>(
             "forceexceptionprune", defaultNeitherTrooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Troolean> FORCE_AGGRESSIVE_EXCEPTION_AGG = new PermittedOptionProvider.Argument<Troolean>(
+            "aexagg", defaultNeitherTrooleanDecoder);
     public static final PermittedOptionProvider.Argument<String> OUTPUT_DIR = new PermittedOptionProvider.Argument<String>(
             "outputdir", defaultNullStringDecoder);
     public static final PermittedOptionProvider.Argument<Integer> SHOWOPS = new PermittedOptionProvider.Argument<Integer>(
@@ -218,7 +220,7 @@ public class OptionsImpl implements Options {
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
-                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES);
+                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES, FORCE_AGGRESSIVE_EXCEPTION_AGG);
         }
 
         @Override

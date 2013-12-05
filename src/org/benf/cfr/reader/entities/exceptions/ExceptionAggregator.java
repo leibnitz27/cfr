@@ -4,7 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByt
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
@@ -30,7 +29,8 @@ public class ExceptionAggregator {
     private final Map<Integer, Integer> lutByIdx;
     private final List<Op01WithProcessedDataAndByteJumps> instrs;
     private final Options options;
-    private final boolean aggressive;
+    private final boolean aggressivePrune;
+    private final boolean aggressiveAggregate;
 
 
     private static class CompareExceptionTablesByRange implements Comparator<ExceptionTableEntry> {
@@ -67,7 +67,7 @@ public class ExceptionAggregator {
                     } else if (held.getBytecodeIndexFrom() == entry.getBytecodeIndexFrom() &&
                             held.getBytecodeIndexTo() <= entry.getBytecodeIndexTo()) {
                         held = entry;
-                    } else if (canExtendTo(held, entry)) {
+                    } else if (aggressiveAggregate && canExtendTo(held, entry)) {
                         held = held.aggregateWithLenient(entry);
                     } else {
                         res.add(held);
@@ -108,7 +108,7 @@ public class ExceptionAggregator {
             JVMInstr instr = op.getJVMInstr();
             if (instr.isNoThrow()) {
                 current += op.getInstructionLength();
-            } else if (aggressive) {
+            } else if (aggressivePrune) {
                 switch (instr) {
                     // Getstatic CAN throw, but some code will separate exception blocks around it, just to be
                     // awkward.
@@ -172,7 +172,8 @@ public class ExceptionAggregator {
         this.lutByOffset = lutByOffset;
         this.instrs = instrs;
         this.options = options;
-        this.aggressive = options.getOption(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE;
+        this.aggressivePrune = options.getOption(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE;
+        this.aggressiveAggregate = options.getOption(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG) == Troolean.TRUE;
 
         rawExceptions = Functional.filter(rawExceptions, new ValidException());
         if (rawExceptions.isEmpty()) return;

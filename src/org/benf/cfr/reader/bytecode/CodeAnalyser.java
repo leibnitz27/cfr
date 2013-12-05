@@ -99,12 +99,13 @@ public class CodeAnalyser {
             MutableOptions mutableOptions = new MutableOptions(options);
             List<DecompilerComment> extraComments = ListFactory.newList();
             if (mutableOptions.override(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE)) {
+                mutableOptions.override(OptionsImpl.LENIENT, true);
                 extraComments.add(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
             }
             if (mutableOptions.override(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE)) {
+                mutableOptions.override(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE);
                 extraComments.add(DecompilerComment.PRUNE_EXCEPTIONS);
             }
-            mutableOptions.override(OptionsImpl.LENIENT, true);
             if (!extraComments.isEmpty()) {
                 try {
                     Pair<DecompilerComments, Op04StructuredStatement> res = getAnalysisInner(dcCommonState, mutableOptions);
