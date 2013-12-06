@@ -67,6 +67,10 @@ public class ExceptionAggregator {
                     } else if (held.getBytecodeIndexFrom() == entry.getBytecodeIndexFrom() &&
                             held.getBytecodeIndexTo() <= entry.getBytecodeIndexTo()) {
                         held = entry;
+                    } else if (held.getBytecodeIndexFrom() < entry.getBytecodeIndexFrom() &&
+                            entry.getBytecodeIndexFrom() < held.getBytecodeIndexTo() &&
+                            entry.getBytecodeIndexTo() > held.getBytecodeIndexTo()) {
+                        held = held.aggregateWithLenient(entry);
                     } else if (aggressiveAggregate && canExtendTo(held, entry)) {
                         held = held.aggregateWithLenient(entry);
                     } else {
