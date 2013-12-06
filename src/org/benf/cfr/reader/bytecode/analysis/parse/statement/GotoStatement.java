@@ -98,10 +98,10 @@ public class GotoStatement extends JumpingStatement {
     public StructuredStatement getStructuredStatement() {
         switch (jumpType) {
             case END_BLOCK:
+            case GOTO_OUT_OF_TRY:
                 return new StructuredComment("");
             case GOTO:
             case GOTO_OUT_OF_IF:
-            case GOTO_OUT_OF_TRY:
                 return new UnstructuredGoto();
             case CONTINUE:
                 return new UnstructuredContinue(getTargetStartBlock());
