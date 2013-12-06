@@ -17,6 +17,22 @@ public class SetUtil {
         return false;
     }
 
+    public static <X> Set<X> intersectionOrNull(Set<? extends X> a, Set<? extends X> b) {
+        if (b.size() < a.size()) {
+            Set<? extends X> tmp = a;
+            a = b;
+            b = tmp;
+        }
+        Set<X> res = null;
+        for (X x : a) {
+            if (b.contains(x)) {
+                if (res == null) res = SetFactory.newSet();
+                res.add(x);
+            }
+        }
+        return res;
+    }
+
     public static <X> Set<X> difference(Set<? extends X> a, Set<? extends X> b) {
         Set<X> res = SetFactory.newSet();
         for (X a1 : a) {

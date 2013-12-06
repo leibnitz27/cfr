@@ -497,6 +497,14 @@ public class CodeAnalyser {
         logger.info("rewriteBreakStatements");
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
 
+        // See if we can classify any more gotos - i.e. the last statement in a try block
+        // which jumps to immediately after the catch block.
+        //
+        // While it seems perverse to have another pass at this here, it seems to yield the best results.
+        //
+        Op03SimpleStatement.classifyGotos(op03SimpleParseNodes);
+        Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+
         // Introduce java 6 style for (x : array)
         logger.info("rewriteArrayForLoops");
         if (options.getOption(OptionsImpl.ARRAY_ITERATOR, classFileVersion)) {

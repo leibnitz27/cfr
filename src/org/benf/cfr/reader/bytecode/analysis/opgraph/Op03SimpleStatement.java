@@ -235,6 +235,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return firstStatementInThisBlock;
     }
 
+    /*
+     * TODO : I think this is probably redundant (and not accurate)
+     */
     @Override
     public Set<BlockIdentifier> getBlocksEnded() {
         return immediatelyAfterBlocks;
@@ -2059,6 +2062,92 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             }
         }
+    }
+
+
+    private static boolean classifyTryLeaveGoto(Op03SimpleStatement gotoStm, int idx, Set<BlockIdentifier> tryBlockIdents, Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock, Map<BlockIdentifier, List<BlockIdentifier>> catchStatementByBlock, List<Op03SimpleStatement> in) {
+        if (idx >= in.size() - 1) return false;
+        Set<BlockIdentifier> blocks = gotoStm.getBlockIdentifiers();
+
+        GotoStatement gotoStatement = (GotoStatement) gotoStm.getStatement();
+
+        Set<BlockIdentifier> tryBlocks = SetUtil.intersectionOrNull(blocks, tryBlockIdents);
+        if (tryBlocks == null) return false;
+
+
+        Op03SimpleStatement after = in.get(idx + 1);
+        Set<BlockIdentifier> afterBlocks = SetUtil.intersectionOrNull(after.getBlockIdentifiers(), tryBlockIdents);
+
+        if (afterBlocks != null) tryBlocks.removeAll(afterBlocks);
+        if (tryBlocks.size() != 1) return false;
+        BlockIdentifier left = tryBlocks.iterator().next();
+
+        // Ok, so we've jumped out of exactly one try block.  But where have we jumped to?  Is it to directly after
+        // a catch block for that try block?
+        Op03SimpleStatement tryStatement = tryStatementsByBlock.get(left);
+        if (tryStatement == null) return false;
+
+        List<BlockIdentifier> catchForThis = catchStatementByBlock.get(left);
+        if (catchForThis == null) return false;
+
+        /*
+         * We require that gotoStm's one target is
+         * /not in 'left'/
+         * just after a catch block.
+         * Not in any of the catch blocks.
+         */
+        Op03SimpleStatement gotoTgt = gotoStm.getTargets().get(0);
+        Set<BlockIdentifier> gotoTgtIdents = gotoTgt.getBlockIdentifiers();
+        if (SetUtil.hasIntersection(gotoTgtIdents, catchForThis)) return false;
+        int idxtgt = in.indexOf(gotoTgt);
+        if (idxtgt == 0) return false;
+        Op03SimpleStatement prev = in.get(idxtgt - 1);
+        if (!SetUtil.hasIntersection(prev.getBlockIdentifiers(), catchForThis)) return false;
+        // YAY!
+        gotoStatement.setJumpType(JumpType.GOTO_OUT_OF_TRY);
+        return true;
+    }
+
+    public static boolean classifyGotos(List<Op03SimpleStatement> in) {
+        boolean result = false;
+        List<Pair<Op03SimpleStatement, Integer>> gotos = ListFactory.newList();
+        Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock = MapFactory.newMap();
+        Map<BlockIdentifier, List<BlockIdentifier>> catchStatementsByBlock = MapFactory.newMap();
+        for (int x = 0, len = in.size(); x < len; ++x) {
+            Op03SimpleStatement stm = in.get(x);
+            Statement statement = stm.getStatement();
+            Class<?> clz = statement.getClass();
+            if (clz == TryStatement.class) {
+                TryStatement tryStatement = (TryStatement) statement;
+                tryStatementsByBlock.put(tryStatement.getBlockIdentifier(), stm);
+                List<Op03SimpleStatement> targets = stm.getTargets();
+                List<BlockIdentifier> catchBlocks = ListFactory.newList();
+                catchStatementsByBlock.put(tryStatement.getBlockIdentifier(), catchBlocks);
+                for (int y = 1, len2 = targets.size(); y < len2; ++y) {
+                    Statement statement2 = targets.get(y).getStatement();
+                    if (statement2.getClass() == CatchStatement.class) {
+                        catchBlocks.add(((CatchStatement) statement2).getCatchBlockIdent());
+                    }
+                }
+            } else if (clz == GotoStatement.class) {
+                GotoStatement gotoStatement = (GotoStatement) statement;
+                if (gotoStatement.getJumpType().isUnknown()) {
+                    gotos.add(Pair.make(stm, x));
+                }
+            }
+        }
+        /*
+         * Pass over try statements.  If there aren't any, don't bother.
+         */
+        if (!tryStatementsByBlock.isEmpty()) {
+            for (Pair<Op03SimpleStatement, Integer> goto_ : gotos) {
+                Op03SimpleStatement stm = goto_.getFirst();
+                int idx = goto_.getSecond();
+                result |= classifyTryLeaveGoto(stm, idx, tryStatementsByBlock.keySet(), tryStatementsByBlock, catchStatementsByBlock, in);
+            }
+        }
+
+        return result;
     }
 
     public static Op04StructuredStatement createInitialStructuredBlock(List<Op03SimpleStatement> statements) {
