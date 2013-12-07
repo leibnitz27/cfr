@@ -4534,6 +4534,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement lastCase = targets.get(targets.size() - 1);
         int indexLastCase = statements.indexOf(lastCase);
         int breakTarget = -1;
+        BlockIdentifier caseBlock = null;
+        int indexLastInThis = 0;
+        if (!forwardTargets.isEmpty()) {
+            List<Op03SimpleStatement> lstFwdTargets = ListFactory.newList(forwardTargets);
+            Collections.sort(lstFwdTargets, new CompareByIndex());
+            Op03SimpleStatement afterCaseGuess = lstFwdTargets.get(0);
+            int indexAfterCase = statements.indexOf(afterCaseGuess);
+
+            CaseStatement caseStatement = (CaseStatement) lastCase.containedStatement;
+            caseBlock = caseStatement.getCaseBlock();
+
+            indexLastInThis = getFarthestReachableInRange(statements, indexLastCase, indexAfterCase);
+            if (indexLastInThis != indexAfterCase - 1) {
+                // throw new ConfusedCFRException("Final statement in case doesn't meet smallest exit.");
+                forwardTargets.clear();
+            }
+        }
         if (forwardTargets.isEmpty()) {
             for (int y = idxFirstCase; y <= indexLastInLastBlock; ++y) {
                 Op03SimpleStatement statement = statements.get(y);
@@ -4545,18 +4562,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             lastCase.markBlock(switchBlock);
             breakTarget = indexLastCase + 1;
         } else {
-            List<Op03SimpleStatement> lstFwdTargets = ListFactory.newList(forwardTargets);
-            Collections.sort(lstFwdTargets, new CompareByIndex());
-            Op03SimpleStatement afterCaseGuess = lstFwdTargets.get(0);
-            int indexAfterCase = statements.indexOf(afterCaseGuess);
-
-            CaseStatement caseStatement = (CaseStatement) lastCase.containedStatement;
-            BlockIdentifier caseBlock = caseStatement.getCaseBlock();
-
-            int indexLastInThis = getFarthestReachableInRange(statements, indexLastCase, indexAfterCase);
-            if (indexLastInThis != indexAfterCase - 1) {
-                throw new ConfusedCFRException("Final statement in case doesn't meet smallest exit.");
-            }
             for (int y = indexLastCase + 1; y <= indexLastInThis; ++y) {
                 Op03SimpleStatement statement = statements.get(y);
                 statement.markBlock(caseBlock);
