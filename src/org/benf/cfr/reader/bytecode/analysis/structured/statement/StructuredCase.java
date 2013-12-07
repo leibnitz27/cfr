@@ -76,17 +76,20 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
         if (values.isEmpty()) {
             dumper.print("default: ");
         } else {
-            for (Expression value : values) {
+            for (int x = 0, len = values.size(), last = len - 1; x < len; ++x) {
+                Expression value = values.get(x);
                 if (enumSwitch) {
                     // value should be an lvalue expression containing a static enum value.
                     // don't show the case part of that.
                     StaticVariable enumStatic = getEnumStatic(value);
                     if (enumStatic != null) {
                         dumper.print("case " + enumStatic.getVarName() + ": ");
+                        if (x != last) dumper.newln();
                         continue;
                     }
                 }
                 dumper.print("case ").dump(value).print(": ");
+                if (x != last) dumper.newln();
             }
         }
         getBody().dump(dumper);
