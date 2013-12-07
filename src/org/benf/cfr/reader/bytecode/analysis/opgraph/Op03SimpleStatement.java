@@ -4520,6 +4520,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 statement.markBlock(switchBlock);
                 if (statement.getJumpType().isUnknown()) {
                     for (Op03SimpleStatement innerTarget : statement.targets) {
+                        innerTarget = followNopGoto(innerTarget, false, false);
                         if (nextCaseIndex.isBackJumpFrom(innerTarget)) {
                             forwardTargets.add(innerTarget);
                         }
