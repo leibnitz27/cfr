@@ -3065,6 +3065,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         Op03SimpleStatement s1 = ifBranch.get(0);
         Op03SimpleStatement s2 = elseBranch.get(0);
+        if (s2.sources.size() != 1) return null;
         LValue l1 = s1.containedStatement.getCreatedLValue();
         LValue l2 = s2.containedStatement.getCreatedLValue();
         if (l1 == null || l2 == null) {
@@ -3362,13 +3363,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         // TODO: CheckForDuff As below.
                         //if (statementIsReachableFrom(statementCurrent, ifStatement)) return false;
                         Op03SimpleStatement newJump = new Op03SimpleStatement(ifStatement.containedInBlocks, new GotoStatement(), statementCurrent.getIndex().justBefore());
-                        Op03SimpleStatement oldTarget = ifStatement.targets.get(1);
-                        newJump.addTarget(oldTarget);
-                        newJump.addSource(ifStatement);
-                        ifStatement.replaceTarget(oldTarget, newJump);
-                        oldTarget.replaceSource(ifStatement, newJump);
-                        statements.add(idxCurrent, newJump);
-                        return true;
+                        if (statementCurrent != ifStatement.targets.get(0)) {
+                            Op03SimpleStatement oldTarget = ifStatement.targets.get(1);
+                            newJump.addTarget(oldTarget);
+                            newJump.addSource(ifStatement);
+                            ifStatement.replaceTarget(oldTarget, newJump);
+                            oldTarget.replaceSource(ifStatement, newJump);
+                            statements.add(idxCurrent, newJump);
+                            return true;
+                        }
                     }
                 }
             }
