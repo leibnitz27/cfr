@@ -503,6 +503,12 @@ public class CodeAnalyser {
         // While it seems perverse to have another pass at this here, it seems to yield the best results.
         //
         Op03SimpleStatement.classifyGotos(op03SimpleParseNodes);
+        //
+        // By this point, we've tried to classify ternaries.  We could try pushing some literals
+        // very aggressively. (i.e. a=1, if (a) b=1 else b =0; return b. ) -> return 1;
+        //
+//        Op03SimpleStatement.replaceAssignReturns(op03SimpleParseNodes);
+        //
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         // Introduce java 6 style for (x : array)
