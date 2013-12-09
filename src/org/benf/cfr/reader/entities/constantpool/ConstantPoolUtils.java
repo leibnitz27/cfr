@@ -254,18 +254,13 @@ public class ConstantPoolUtils {
             while (sig.charAt(curridx) != '>') {
                 String formalTypeTok = getNextFormalTypeTok(sig, curridx);
                 FormalTypeParameter formalTypeParameter = decodeFormalTypeTok(formalTypeTok, cp, 0);
-                formalTypeParameters.add(formalTypeParameter);
+                // Handle odd scala case where we get a blank type parameter.
+                if (!formalTypeParameter.getName().equals("")) {
+                    formalTypeParameters.add(formalTypeParameter);
+                }
                 curridx += formalTypeTok.length();
             }
             curridx++;
-            // Handle odd scala case where we get a blank type parameter.
-            if (!formalTypeParameters.isEmpty()) {
-                int last = formalTypeParameters.size() - 1;
-                FormalTypeParameter formalTypeParameter = formalTypeParameters.get(last);
-                if (formalTypeParameter.getName().equals("")) {
-                    formalTypeParameters.remove(last);
-                }
-            }
         }
         /*
          * Superclass signature.
