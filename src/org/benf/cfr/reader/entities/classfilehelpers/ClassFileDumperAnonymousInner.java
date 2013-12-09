@@ -28,11 +28,13 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
 
     @Override
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
-        if (!d.canEmitClass(classFile.getClassType())) return d;
         return dumpWithArgs(classFile, null, ListFactory.<Expression>newList(), false, d);
     }
 
     public Dumper dumpWithArgs(ClassFile classFile, MethodPrototype usedMethod, List<Expression> args, boolean isEnum, Dumper d) {
+        if (!d.canEmitClass(classFile.getClassType())) {
+            return d;
+        }
 
         ConstantPool cp = classFile.getConstantPool();
 
