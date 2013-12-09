@@ -100,7 +100,14 @@ public class ExceptionGroup {
             if (idx + 1 >= instrs.size()) return false;
             Op01WithProcessedDataAndByteJumps load = instrs.get(idx);
             Integer loadIdx = load.getALoadIdx();
-            if (loadIdx == null) break;
+            if (loadIdx == null) {
+                // One alternative - ldc.
+                JVMInstr instr = load.getJVMInstr();
+                if (instr == JVMInstr.LDC) {
+                } else {
+                    break;
+                }
+            }
             Op01WithProcessedDataAndByteJumps next = instrs.get(idx + 1);
             if (next.getJVMInstr() != JVMInstr.MONITOREXIT) break;
             nUnlocks++;
