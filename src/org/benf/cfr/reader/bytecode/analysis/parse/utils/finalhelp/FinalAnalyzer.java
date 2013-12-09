@@ -117,7 +117,9 @@ public class FinalAnalyzer {
         Set<Op03SimpleStatement> peerTrySeen = SetFactory.newSet();
         while (peerTries.hasNext()) {
             Op03SimpleStatement tryS = peerTries.removeNext();
-            if (!peerTrySeen.add(tryS)) continue;
+            if (!peerTrySeen.add(tryS)) {
+                continue;
+            }
             if (!identifyFinally2(tryS, allStatements, peerTries, finallyGraphHelper, results)) {
                 return false;
             }
@@ -152,6 +154,8 @@ public class FinalAnalyzer {
         List<PeerTries.PeerTrySet> triesByLevel = peerTries.getPeerTryGroups();
 
         Set<Op03SimpleStatement> catchBlocksToNop = SetFactory.newOrderedSet();
+
+        Set<BlockIdentifier> blocksToRemoveCompletely = SetFactory.newSet();
         /*
          * We need to pick an exemplar for the finally body, and insert it after the final, outermost catch.
          */
@@ -261,6 +265,8 @@ public class FinalAnalyzer {
                     }
                 });
                 gvpeer.process();
+
+                blocksToRemoveCompletely.add(oldBlockIdent);
 
             }
         }
@@ -547,8 +553,11 @@ public class FinalAnalyzer {
 
 
         /*
-         * Remove any dead catch blocks.
+         * Remove any dead block references.
          */
+        for (Op03SimpleStatement stm : allStatements) {
+            stm.getBlockIdentifiers().removeAll(blocksToRemoveCompletely);
+        }
 
 
 
@@ -573,11 +582,13 @@ public class FinalAnalyzer {
 
 
         /*
-         * We only need worry about try statements which have a 'Throwable' handler.
+         * We only need worry about try statements which have a 'Throwable' handler...
+         * ... except if they immediately jump into try blocks.
          */
         List<Op03SimpleStatement> targets = in.getTargets();
         List<Op03SimpleStatement> catchStarts = Functional.filter(targets, new Op03SimpleStatement.TypeFilter<CatchStatement>(CatchStatement.class));
         Set<Op03SimpleStatement> possibleCatches = SetFactory.newOrderedSet();
+        Set<Op03SimpleStatement> recTries = SetFactory.newSet();
         for (Op03SimpleStatement catchS : catchStarts) {
             CatchStatement catchStatement = (CatchStatement) catchS.getStatement();
             List<ExceptionGroup.Entry> exceptions = catchStatement.getExceptions();
@@ -586,12 +597,22 @@ public class FinalAnalyzer {
                     JavaRefTypeInstance catchType = exception.getCatchType();
                     if (TypeConstants.throwableName.equals(catchType.getRawName())) {
                         possibleCatches.add(catchS);
+                    } else {
+                        //
+                        Op03SimpleStatement catchTgt = catchS.getTargets().get(0);
+                        if (catchTgt.getStatement().getClass() == TryStatement.class) {
+                            recTries.add(catchTgt);
+                        }
                     }
                 }
             }
         }
         if (possibleCatches.isEmpty()) {
             return false;
+        }
+        boolean result = false;
+        for (Op03SimpleStatement recTry : recTries) {
+            result |= identifyFinally2(recTry, allStatements, peerTries, finallyGraphHelper, results);
         }
 
         /*
@@ -627,7 +648,7 @@ public class FinalAnalyzer {
         for (Op03SimpleStatement legitExitStart : exitPaths) {
             Result legitExitResult = finallyGraphHelper.match(legitExitStart);
             if (legitExitResult.isFail()) {
-                return false;
+                return result;
             }
             results.add(legitExitResult);
         }
@@ -640,7 +661,7 @@ public class FinalAnalyzer {
                 /*
                  * It's not this finally. :P
                  */
-                return false;
+                return result;
             }
         }
 
