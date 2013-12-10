@@ -2319,6 +2319,29 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         InstrIndex beforeTgt = tgt.getIndex().justBefore();
         Op03SimpleStatement last = forwardGoto;
 
+        /*
+         * We can't push through a goto if TGT is the first instruction after a loop body.
+         */
+        class IsLoopBlock implements Predicate<BlockIdentifier> {
+            @Override
+            public boolean test(BlockIdentifier in) {
+                BlockType blockType = in.getBlockType();
+                switch (blockType) {
+                    case WHILELOOP:
+                    case DOLOOP:
+                        return true;
+                }
+                return false;
+            }
+        }
+        IsLoopBlock isLoopBlock = new IsLoopBlock();
+        Set<BlockIdentifier> beforeLoopBlocks = SetFactory.newSet(Functional.filter(before.getBlockIdentifiers(), isLoopBlock));
+        Set<BlockIdentifier> tgtLoopBlocks = SetFactory.newSet(Functional.filter(tgt.getBlockIdentifiers(), isLoopBlock));
+        if (!beforeLoopBlocks.equals(tgtLoopBlocks)) return false;
+
+
+        before.getBlockIdentifiers();
+
         class IsExceptionBlock implements Predicate<BlockIdentifier> {
             @Override
             public boolean test(BlockIdentifier in) {
