@@ -30,10 +30,7 @@ public class PluginRunner {
 
     public void addJarPaths(String[] jarPaths) {
         for (String jarPath : jarPaths) {
-            try {
-                dcCommonState.explicitlyLoadJar(jarPath);
-            } catch (Exception e) {
-            }
+            addJarPath(jarPath);
         }
     }
 
