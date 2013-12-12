@@ -377,6 +377,7 @@ public class CodeAnalyser {
             Op03SimpleStatement.combineTryCatchEnds(op03SimpleParseNodes);
             Op03SimpleStatement.rewriteTryBackJumps(op03SimpleParseNodes);
             Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
+            Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
         }
 
         // At this point, make a first stab at identifying final variables, (or stack values which can't be
