@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -16,6 +17,11 @@ import org.benf.cfr.reader.util.output.Dumper;
  */
 public class ReturnNothingStatement extends ReturnStatement {
     public ReturnNothingStatement() {
+    }
+
+    @Override
+    public ReturnStatement deepClone(CloneHelper cloneHelper) {
+        return new ReturnNothingStatement();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
@@ -24,6 +25,11 @@ public class ThrowStatement extends ReturnStatement {
 
     public ThrowStatement(Expression rvalue) {
         this.rvalue = rvalue;
+    }
+
+    @Override
+    public ReturnStatement deepClone(CloneHelper cloneHelper) {
+        return new ThrowStatement(cloneHelper.replaceOrClone(rvalue));
     }
 
     @Override

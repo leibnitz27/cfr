@@ -490,6 +490,9 @@ public class CodeAnalyser {
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
         // Condense again, now we've simplified conditionals, ternaries, etc.
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
+        if (passoptions.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
+            Op03SimpleStatement.propagateToReturn2(method, op03SimpleParseNodes);
+        }
 
         logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);

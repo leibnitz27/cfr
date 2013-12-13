@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NOPSearchingExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -1045,29 +1046,87 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     /*
-     * This pass helps with scala and dex2jar style output - find a remaining assignment of a LITERAL to a stack
-     * variable (or POSSIBLY a local), and follow it through.  If nothing intervenes, and we hit a return, we can
-     * simply replace the entry point.
+     * VERY aggressive options for simplifying control flow, at the cost of changing the appearance.
+     *
      */
     public static void propagateToReturn(Method method, List<Op03SimpleStatement> statements) {
         boolean success = false;
         for (Op03SimpleStatement stm : statements) {
             Statement inner = stm.getStatement();
-            if (inner.getClass() != AssignmentSimple.class) continue;
-            if (stm.getTargets().size() != 1)
-                continue; // shouldn't be possible to be other, but a pruning might have removed.
-            AssignmentSimple assignmentSimple = (AssignmentSimple) inner;
-            LValue lValue = assignmentSimple.getCreatedLValue();
-            Expression rValue = assignmentSimple.getRValue();
-            if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) continue;
-            Map<LValue, Literal> display = MapFactory.newMap();
-            if (rValue instanceof Literal) {
-                display.put(lValue, (Literal) rValue);
+            if (inner.getClass() == AssignmentSimple.class) {
+                /*
+                 * This pass helps with scala and dex2jar style output - find a remaining assignment to a stack
+                 * variable (or POSSIBLY a local), and follow it through.  If nothing intervenes, and we hit a return, we can
+                 * simply replace the entry point.
+                 *
+                 * We agressively attempt to follow through computable literals.
+                 */
+                if (stm.getTargets().size() != 1)
+                    continue; // shouldn't be possible to be other, but a pruning might have removed.
+                AssignmentSimple assignmentSimple = (AssignmentSimple) inner;
+                LValue lValue = assignmentSimple.getCreatedLValue();
+                Expression rValue = assignmentSimple.getRValue();
+                if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) continue;
+                Map<LValue, Literal> display = MapFactory.newMap();
+                if (rValue instanceof Literal) {
+                    display.put(lValue, (Literal) rValue);
+                }
+                success |= propagateLiteral(method, stm, stm.getTargets().get(0), lValue, rValue, display);
+                // Note - we can't have another go with return back yet, as it would break ternary discovery.
             }
-            success |= propagateLiteral(method, stm, stm.getTargets().get(0), lValue, rValue, display);
         }
 
-        Op03SimpleStatement.replaceReturningIfs(statements, true);
+
+        if (success) Op03SimpleStatement.replaceReturningIfs(statements, true);
+    }
+
+    public static void propagateToReturn2(Method method, List<Op03SimpleStatement> statements) {
+        boolean success = false;
+        for (Op03SimpleStatement stm : statements) {
+            Statement inner = stm.getStatement();
+
+            if (inner instanceof ReturnStatement) {
+                /*
+                 * Another very aggressive operation - find any goto which directly jumps to a return, and
+                 * place a copy of the return in the goto.
+                 *
+                 * This will interfere with returning a ternary, however because it's an aggressive option, it
+                 * won't be used unless needed.
+                 *
+                 * We look for returns rather than gotos, as returns are less common.
+                 */
+                success |= pushReturnBack(method, stm);
+            }
+        }
+        if (success) Op03SimpleStatement.replaceReturningIfs(statements, true);
+    }
+
+    private static boolean pushReturnBack(Method method, Op03SimpleStatement stm) {
+
+        ReturnStatement returnStatement = (ReturnStatement) stm.getStatement();
+
+        List<Op03SimpleStatement> toRemove = null;
+        for (Op03SimpleStatement src : stm.getSources()) {
+            if (src.getStatement().getClass() == GotoStatement.class) {
+                if (toRemove == null) toRemove = ListFactory.newList();
+                toRemove.add(src);
+            }
+        }
+
+        if (toRemove == null) return false;
+
+        CloneHelper cloneHelper = new CloneHelper();
+        for (Op03SimpleStatement remove : toRemove) {
+            remove.replaceStatement(returnStatement.deepClone(cloneHelper));
+            remove.removeTarget(stm);
+            stm.removeSource(remove);
+        }
+
+        for (Op03SimpleStatement remove : toRemove) {
+            pushReturnBack(method, remove);
+        }
+
+        return true;
     }
 
     /*
@@ -1170,6 +1229,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 if (!(ret instanceof LValueExpression)) return false;
                 LValue retLValue = ((LValueExpression) ret).getLValue();
                 if (!retLValue.equals(originalLValue)) return false;
+                // NB : we don't have to clone rValue, as we're replacing the statement it came from.
                 original.replaceStatement(new ReturnValueStatement(originalRValue, returnValueStatement.getFnReturnType()));
             }
             orignext.removeSource(original);

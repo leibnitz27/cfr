@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -24,6 +25,11 @@ public class ReturnValueStatement extends ReturnStatement {
     public ReturnValueStatement(Expression rvalue, JavaTypeInstance fnReturnType) {
         this.rvalue = rvalue;
         this.fnReturnType = fnReturnType;
+    }
+
+    @Override
+    public ReturnStatement deepClone(CloneHelper cloneHelper) {
+        return new ReturnValueStatement(cloneHelper.replaceOrClone(rvalue), fnReturnType);
     }
 
     @Override

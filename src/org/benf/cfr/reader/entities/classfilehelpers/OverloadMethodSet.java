@@ -116,6 +116,7 @@ public class OverloadMethodSet {
 
     public OverloadMethodSet specialiseTo(JavaGenericRefTypeInstance type) {
         final GenericTypeBinder genericTypeBinder = classFile.getGenericTypeBinder(type);
+        if (genericTypeBinder == null) return null;
         UnaryFunction<MethodData, MethodData> mk = new UnaryFunction<MethodData, MethodData>() {
             @Override
             public MethodData invoke(MethodData arg) {
