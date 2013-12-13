@@ -487,6 +487,11 @@ public class WildcardMatch {
         public boolean canThrow(ExceptionCheck caught) {
             return true;
         }
+
+        @Override
+        public Literal getComputedLiteral(Map<LValue, Literal> display) {
+            return null;
+        }
     }
 
     public class ExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {

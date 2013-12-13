@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -10,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -109,4 +111,13 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
         return true;
     }
 
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        Literal lv = inner.getComputedLiteral(display);
+        if (lv == null) return null;
+        TypedLiteral typedLiteral = lv.getValue();
+        Boolean boolVal = typedLiteral.getMaybeBoolValue();
+        if (boolVal == null) return null;
+        return boolVal ? Literal.TRUE : Literal.FALSE;
+    }
 }

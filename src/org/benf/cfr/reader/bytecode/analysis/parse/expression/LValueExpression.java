@@ -11,6 +11,8 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -113,4 +115,8 @@ public class LValueExpression extends AbstractExpression {
         return true;
     }
 
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        return display.get(lValue);
+    }
 }

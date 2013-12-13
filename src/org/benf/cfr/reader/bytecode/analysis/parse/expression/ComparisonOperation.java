@@ -18,6 +18,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -283,4 +284,21 @@ public class ComparisonOperation extends AbstractExpression implements Condition
         return true;
     }
 
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        Literal lV = lhs.getComputedLiteral(display);
+        Literal rV = rhs.getComputedLiteral(display);
+        if (lV == null || rV == null) return null;
+        TypedLiteral l = lV.getValue();
+        TypedLiteral r = rV.getValue();
+        switch (op) {
+            case EQ:
+                return l.equals(r) ? Literal.TRUE : Literal.FALSE;
+            case NE:
+                return l.equals(r) ? Literal.FALSE : Literal.TRUE;
+            default:
+                // Can't handle yet.
+                return null;
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -12,6 +13,7 @@ import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,4 +42,7 @@ public interface Expression extends Dumpable, DeepCloneable<Expression>, Compara
     boolean equivalentUnder(Object o, EquivalenceConstraint constraint);
 
     boolean canThrow(ExceptionCheck caught);
+
+    // If this expression has any side effects, other than updating stackVar/locals it MUST return null, regardless.
+    Literal getComputedLiteral(Map<LValue, Literal> display);
 }

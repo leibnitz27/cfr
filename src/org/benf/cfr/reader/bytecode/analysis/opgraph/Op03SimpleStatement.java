@@ -1044,13 +1044,140 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static void replaceReturningGotos(List<Op03SimpleStatement> statements, boolean aggressive) {
-        List<Op03SimpleStatement> gotoStatements = Functional.filter(statements, new TypeFilter<GotoStatement>(GotoStatement.class));
-        for (Op03SimpleStatement gotoStatement : gotoStatements) {
-            replaceReturningGoto(gotoStatement, aggressive);
+    /*
+     * This pass helps with scala and dex2jar style output - find a remaining assignment of a LITERAL to a stack
+     * variable (or POSSIBLY a local), and follow it through.  If nothing intervenes, and we hit a return, we can
+     * simply replace the entry point.
+     */
+    public static void propagateToReturn(Method method, List<Op03SimpleStatement> statements) {
+        boolean success = false;
+        for (Op03SimpleStatement stm : statements) {
+            Statement inner = stm.getStatement();
+            if (inner.getClass() != AssignmentSimple.class) continue;
+            if (stm.getTargets().size() != 1)
+                continue; // shouldn't be possible to be other, but a pruning might have removed.
+            AssignmentSimple assignmentSimple = (AssignmentSimple) inner;
+            LValue lValue = assignmentSimple.getCreatedLValue();
+            Expression rValue = assignmentSimple.getRValue();
+            if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) continue;
+            Map<LValue, Literal> display = MapFactory.newMap();
+            if (rValue instanceof Literal) {
+                display.put(lValue, (Literal) rValue);
+            }
+            success |= propagateLiteral(method, stm, stm.getTargets().get(0), lValue, rValue, display);
         }
+
+        Op03SimpleStatement.replaceReturningIfs(statements, true);
     }
 
+    /*
+     * We require a straight through route, with no chances that any side effects have occured.
+     * (i.e. call any methods, change members).
+     * However, we can cope with further LITERAL assignments to locals and stackvars, and even
+     * conditionals on them (if literal).
+     *
+     * This allows us to cope with the disgusting scala pattern.
+     *
+     * if (temp1) {
+     *   ALSO JUMP HERE FROM ELSEWHERE
+     *   temp2 = true;
+     * } else {
+     *   temp2 = false;
+     * }
+     * if (temp2) {
+     *   temp3 = true;
+     * } else {
+     *   temp3 = false;
+     * }
+     * return temp3;
+     *
+     */
+    private static boolean propagateLiteral(Method method, Op03SimpleStatement original, final Op03SimpleStatement orignext, final LValue originalLValue, final Expression originalRValue, Map<LValue, Literal> display) {
+        Op03SimpleStatement current = orignext;
+        Set<Op03SimpleStatement> seen = SetFactory.newSet();
+        do {
+            if (!seen.add(current)) return false;
+            Class<?> cls = current.getStatement().getClass();
+            List<Op03SimpleStatement> curTargets = current.getTargets();
+            int nTargets = curTargets.size();
+            if (cls == Nop.class) {
+                if (nTargets != 1) return false;
+                current = curTargets.get(0);
+                continue;
+            }
+            if (cls == ReturnNothingStatement.class) break;
+            if (cls == ReturnValueStatement.class) break;
+            if (cls == GotoStatement.class ||
+                    cls == MonitorExitStatement.class) {
+                if (nTargets != 1) return false;
+                current = curTargets.get(0);
+                continue;
+            }
+            if (cls == AssignmentSimple.class) {
+                AssignmentSimple assignmentSimple = (AssignmentSimple) current.getStatement();
+                LValue lValue = assignmentSimple.getCreatedLValue();
+                if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) return false;
+                Literal literal = assignmentSimple.getRValue().getComputedLiteral(display);
+                if (literal == null) return false;
+                display.put(lValue, literal);
+                current = curTargets.get(0);
+                continue;
+            }
+
+            // We /CAN/ actually cope with a conditional, if we're 100% sure of where we're going!
+            if (cls == IfStatement.class) {
+                IfStatement ifStatement = (IfStatement) current.getStatement();
+                Literal literal = ifStatement.getCondition().getComputedLiteral(display);
+                if (literal == null) return false;
+                Boolean bool = literal.getValue().getMaybeBoolValue();
+                if (bool == null) return false;
+                if (bool) {
+                    current = curTargets.get(1);
+                } else {
+                    current = curTargets.get(0);
+                }
+                continue;
+            }
+            return false;
+        } while (true);
+
+        Class<?> cls = current.getStatement().getClass();
+        /*
+         * If the original rValue is a literal, we can replace.  If not, we can't.
+         */
+        if (cls == ReturnNothingStatement.class) {
+            if (!(originalRValue instanceof Literal)) return false;
+            original.replaceStatement(new ReturnNothingStatement());
+            orignext.removeSource(original);
+            original.removeTarget(orignext);
+            return true;
+        }
+        /*
+         * Heuristic of doom.  If the ORIGINAL rvalue is a literal (i.e. side effect free), we can
+         * ignore it, and replace the original assignment with the computed literal.
+         *
+         * If the original rvalue is NOT a literal, AND we are returning the original lValue, we can
+         * return the original rValue.
+         */
+        if (cls == ReturnValueStatement.class) {
+            ReturnValueStatement returnValueStatement = (ReturnValueStatement) current.getStatement();
+            if (originalRValue instanceof Literal) {
+                Expression e = returnValueStatement.getReturnValue().getComputedLiteral(display);
+                if (e == null) return false;
+                original.replaceStatement(new ReturnValueStatement(e, returnValueStatement.getFnReturnType()));
+            } else {
+                Expression ret = returnValueStatement.getReturnValue();
+                if (!(ret instanceof LValueExpression)) return false;
+                LValue retLValue = ((LValueExpression) ret).getLValue();
+                if (!retLValue.equals(originalLValue)) return false;
+                original.replaceStatement(new ReturnValueStatement(originalRValue, returnValueStatement.getFnReturnType()));
+            }
+            orignext.removeSource(original);
+            original.removeTarget(orignext);
+            return true;
+        }
+        return false;
+    }
 
     // Should have a set to make sure we've not looped.
     private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource, boolean aggressive) {

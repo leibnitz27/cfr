@@ -69,6 +69,12 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return (i != 0);
     }
 
+    public Boolean getMaybeBoolValue() {
+        if (type != LiteralType.Integer) return null;
+        Integer i = (Integer) value;
+        return (i == 0) ? Boolean.FALSE : Boolean.TRUE;
+    }
+
     private static String charName(Object o) {
         if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting char-as-int");
         int i = (Integer) o;

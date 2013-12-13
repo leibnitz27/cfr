@@ -26,7 +26,6 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 import org.benf.cfr.reader.util.output.StdIODumper;
-import org.benf.cfr.reader.util.output.StreamDumper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -101,6 +100,7 @@ public class CodeAnalyser {
             if (mutableOptions.override(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE)) {
                 mutableOptions.override(OptionsImpl.LENIENT, true);
                 extraComments.add(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
+                mutableOptions.override(OptionsImpl.FORCE_RET_PROPAGATE, Troolean.TRUE);
             }
             if (mutableOptions.override(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE)) {
                 mutableOptions.override(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE);
@@ -378,6 +378,10 @@ public class CodeAnalyser {
             Op03SimpleStatement.rewriteTryBackJumps(op03SimpleParseNodes);
             Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
+        }
+
+        if (passoptions.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
+            Op03SimpleStatement.propagateToReturn(method, op03SimpleParseNodes);
         }
 
         // At this point, make a first stab at identifying final variables, (or stack values which can't be

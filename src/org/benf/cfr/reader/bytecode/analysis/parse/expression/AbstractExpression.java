@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
@@ -8,6 +9,8 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
+
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -75,4 +78,9 @@ public abstract class AbstractExpression implements Expression {
     }
 
     public abstract boolean equals(Object o);
+
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        return null;
+    }
 }

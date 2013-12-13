@@ -3,12 +3,16 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -106,5 +110,12 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
         return true;
     }
 
-
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) return null;
+        Literal literal = rValue.getComputedLiteral(display);
+        if (literal == null) return null;
+        display.put(lValue, literal);
+        return literal;
+    }
 }

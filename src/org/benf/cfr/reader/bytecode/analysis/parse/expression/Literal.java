@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -11,6 +12,8 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lee
@@ -18,7 +21,11 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 17:44
  */
 public class Literal extends AbstractExpression {
+    public static final Literal FALSE = new Literal(TypedLiteral.getBoolean(0));
+    public static final Literal TRUE = new Literal(TypedLiteral.getBoolean(1));
+
     private final TypedLiteral value;
+
 
     public Literal(TypedLiteral value) {
         super(value.getInferredJavaType());
@@ -86,4 +93,8 @@ public class Literal extends AbstractExpression {
         return true;
     }
 
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        return this;
+    }
 }

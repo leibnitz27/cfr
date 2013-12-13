@@ -13,6 +13,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -135,4 +136,33 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
         return true;
     }
 
+    private static Boolean getComputed(Expression e, Map<LValue, Literal> display) {
+        Literal lv = e.getComputedLiteral(display);
+        if (lv == null) return null;
+        return lv.getValue().getMaybeBoolValue();
+    }
+
+    /*
+     * Be careful to short circuit the computation correctly.
+     */
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        Boolean lb = getComputed(lhs, display);
+        if (lb == null) return null;
+        switch (op) {
+            case AND: {
+                Boolean rb = getComputed(rhs, display);
+                if (rb == null) return null;
+                return (lb && rb) ? Literal.TRUE : Literal.FALSE;
+            }
+            case OR: {
+                if (lb) return Literal.TRUE;
+                Boolean rb = getComputed(rhs, display);
+                if (rb == null) return null;
+                return (rb) ? Literal.TRUE : Literal.FALSE;
+            }
+            default:
+                return null;
+        }
+    }
 }

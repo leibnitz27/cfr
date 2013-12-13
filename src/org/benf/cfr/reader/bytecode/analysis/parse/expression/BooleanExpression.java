@@ -13,6 +13,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -116,5 +117,10 @@ public class BooleanExpression extends AbstractExpression implements Conditional
         BooleanExpression other = (BooleanExpression) o;
         if (!constraint.equivalent(inner, other.inner)) return false;
         return true;
+    }
+
+    @Override
+    public Literal getComputedLiteral(Map<LValue, Literal> display) {
+        return inner.getComputedLiteral(display);
     }
 }
