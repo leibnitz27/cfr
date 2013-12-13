@@ -246,8 +246,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public void copyBlockInformationFrom(StatementContainer other) {
+        Op03SimpleStatement other3 = (Op03SimpleStatement) other;
         this.immediatelyAfterBlocks.addAll(other.getBlocksEnded());
         this.containedInBlocks.addAll(other.getBlockIdentifiers());
+        //
+        // This is annoying, we only have space for one first in block.  TBH, this is a weak bit of
+        // metadata, we should lose it.
+        if (this.firstStatementInThisBlock == null) this.firstStatementInThisBlock = other3.firstStatementInThisBlock;
     }
 
     private boolean isNop() {
