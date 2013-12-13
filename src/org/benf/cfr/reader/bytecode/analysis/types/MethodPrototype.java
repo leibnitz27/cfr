@@ -460,6 +460,9 @@ public class MethodPrototype implements TypeUsageCollectable {
          * instance?
          */
         GenericTypeBinder genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classFile.getClassSignature(), args, boundInstance, invokingTypes);
+        if (genericTypeBinder == null) {
+            return result;
+        }
 
         JavaGenericBaseInstance genericResult = (JavaGenericBaseInstance) result;
         return genericResult.getBoundInstance(genericTypeBinder);

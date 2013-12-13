@@ -121,7 +121,8 @@ public class GenericTypeBinder {
         JavaGenericBaseInstance bound = (JavaGenericBaseInstance) maybeBound;
         List<JavaTypeInstance> boundTypeParameters = bound.getGenericTypes();
         if (typeParameters.size() != boundTypeParameters.size()) {
-            throw new IllegalStateException("Generic info mismatch");
+            return;
+//            throw new IllegalStateException("Generic info mismatch");
         }
 
         for (int x = 0, len = typeParameters.size(); x < len; ++x) {

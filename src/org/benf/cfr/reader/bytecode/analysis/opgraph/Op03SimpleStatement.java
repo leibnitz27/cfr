@@ -3638,9 +3638,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     for (int x = 0; x < targets.size(); ++x) {
                         Op03SimpleStatement target = targets.get(x);
                         if (target == eventualTarget && target != stmtLastBlockRewrite) {
+                            // Equivalent to
+                            // statementCurrent.replaceTarget(eventualTarget, stmtLastBlockRewrite);
                             targets.set(x, stmtLastBlockRewrite);
                             stmtLastBlockRewrite.addSource(statementCurrent);
-                            eventualTarget.replaceSource(statementCurrent, stmtLastBlockRewrite);
+                            // Todo : I don't believe the latter branch will EVER happen.
+                            if (eventualTarget.sources.contains(stmtLastBlockRewrite)) {
+                                eventualTarget.removeSource(statementCurrent);
+                            } else {
+                                eventualTarget.replaceSource(statementCurrent, stmtLastBlockRewrite);
+                            }
 
                             found = true;
                         }

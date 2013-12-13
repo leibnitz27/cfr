@@ -842,7 +842,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         /*
          * And recurse.
          */
-        ClassFile classFile = genericBase.getDeGenerifiedType().getClassFile();
+        ClassFile classFile = null;
+        try {
+            classFile = genericBase.getDeGenerifiedType().getClassFile();
+        } catch (CannotLoadClassException e) {
+        }
         if (classFile == null) {
             return;
         }
