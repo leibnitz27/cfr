@@ -41,7 +41,9 @@ public class GenericTypeBinder {
             if (boundParameters.size() != unboundParameters.size()) {
                 // I suspect this will happen all the time, but on the face of it I can't see why it should
                 // be valid right now.
-                throw new UnsupportedOperationException();
+
+                // SCALA causes a lot of this.
+                return null;
             }
 
             for (int x = 0; x < boundParameters.size(); ++x) {
