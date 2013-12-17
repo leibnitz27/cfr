@@ -4541,6 +4541,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 if (swatch.getIndex().isBackJumpTo(source)) {
                     continue;
                 }
+                if (source.getIndex().isBackJumpTo(target)) {
+                    continue;
+                }
                 source.replaceTarget(target, caseStatement);
                 caseStatement.addSource(source);
                 iterator.remove();
