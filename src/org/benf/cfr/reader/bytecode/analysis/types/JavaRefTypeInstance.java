@@ -170,11 +170,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     @Override
     public JavaTypeInstance removeAnArrayIndirection() {
-//        if (GlobalArgs.lenient) {
-//            return this;
-//        } else {
-        throw new UnsupportedOperationException("Trying to remove an array indirection on a ref type");
-//        }
+        /*
+         * We could end up with this if we have accidental false slot sharing.
+         * Don't fail because of it.
+         */
+        return this;
     }
 
     @Override
