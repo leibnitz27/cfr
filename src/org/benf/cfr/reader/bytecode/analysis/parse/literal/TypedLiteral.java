@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.literal;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
@@ -75,13 +76,14 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return (i == 0) ? Boolean.FALSE : Boolean.TRUE;
     }
 
+    // fixme - move into QuotingUtils.
     private static String charName(Object o) {
         if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting char-as-int");
         int i = (Integer) o;
         if (i < 32 || i >= 254) {
             // perversely, java will allow you to compare non-char values to chars
             // happily..... (also pretty print for out of range.)
-            return Integer.toString(i);
+            return "'\\u" + String.format("%04x", i) + "\'";
         } else {
             char c = (char) i;
             switch (c) {
@@ -93,6 +95,14 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
                     return "'\\n'";
                 case '\t':
                     return "'\\t'";
+                case '\b':
+                    return "'\\b'";
+                case '\f':
+                    return "'\\r'";
+                case '\\':
+                    return "'\\\\'";
+                case '\'':
+                    return "'\\\''";
                 default:
                     return "'" + c + "'";
             }
@@ -162,7 +172,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
     public Dumper dump(Dumper d) {
         switch (type) {
             case String:
-                return d.print(enQuote((String) value));
+                return d.print(((String) value));
             case NullObject:
                 return d.print("null");
             case Integer:
@@ -238,15 +248,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodType);
     }
 
-    // Todo - uuencode?
-    private static String enQuote(String in) {
-        in = in.replace("\\", "\\\\");
-        in = in.replace("\"", "\\\"");
-        return '\"' + in + '\"';
-    }
-
-    public static TypedLiteral getConstantPoolEntryUTF8(ConstantPool cp, ConstantPoolEntryUTF8 cpe) {
-        return getString(cpe.getValue());
+    public static TypedLiteral getConstantPoolEntryUTF8(ConstantPoolEntryUTF8 cpe) {
+        return getString(QuotingUtils.enquoteString(cpe.getRawValue()));
     }
 
     public static TypedLiteral getConstantPoolEntry(ConstantPool cp, ConstantPoolEntry cpe) {

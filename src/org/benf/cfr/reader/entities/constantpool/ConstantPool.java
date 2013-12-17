@@ -25,7 +25,7 @@ public class ConstantPool {
 
     private final long length;
     private final List<ConstantPoolEntry> entries;
-    //    private final Options options;
+    private final Options options;
     private final DCCommonState dcCommonState;
     private final ClassCache classCache;
     private final ClassFile classFile;
@@ -36,7 +36,7 @@ public class ConstantPool {
 
     public ConstantPool(ClassFile classFile, DCCommonState dcCommonState, ByteData raw, short count) {
         this.classFile = classFile;
-//        this.options = options;
+        this.options = dcCommonState.getOptions();
         ArrayList<ConstantPoolEntry> res = new ArrayList<ConstantPoolEntry>();
         count--;
         res.ensureCapacity(count);
@@ -94,7 +94,7 @@ public class ConstantPool {
                     cpe = new ConstantPoolEntryInteger(this, data);
                     break;
                 case CPT_UTF8:
-                    cpe = new ConstantPoolEntryUTF8(this, data);
+                    cpe = new ConstantPoolEntryUTF8(this, data, options);
                     break;
                 case CPT_MethodHandle:
                     cpe = new ConstantPoolEntryMethodHandle(this, data);

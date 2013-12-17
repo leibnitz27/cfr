@@ -120,6 +120,10 @@ public class OptionsImpl implements Options {
             "decodelambdas", new VersionSpecificDefaulter(ClassFileVersion.JAVA_8, true));
     public static final PermittedOptionProvider.Argument<Boolean> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean>(
             "innerclasses", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> HIDE_UTF8 = new PermittedOptionProvider.Argument<Boolean>(
+            "hideutf", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> HIDE_LONGSTRINGS = new PermittedOptionProvider.Argument<Boolean>(
+            "hidelongstrings", defaultFalseBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_BOILERPLATE = new PermittedOptionProvider.Argument<Boolean>(
             "removeboilerplate", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_INNER_CLASS_SYNTHETICS = new PermittedOptionProvider.Argument<Boolean>(
@@ -223,7 +227,7 @@ public class OptionsImpl implements Options {
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
-                    FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE);
+                    FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS);
         }
 
         @Override

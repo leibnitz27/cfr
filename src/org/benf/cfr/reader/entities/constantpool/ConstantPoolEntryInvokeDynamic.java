@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.entities.constantpool;
 
-import org.benf.cfr.reader.config.GlobalArgs;
 import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;

@@ -136,7 +136,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
 
         JavaTypeInstance lastType = revList.get(revList.size() - 1).getInferredJavaType().getJavaTypeInstance();
         if (lastType instanceof RawJavaType) {
-            revList.add(new Literal(TypedLiteral.getString("")));
+            revList.add(new Literal(TypedLiteral.getString("\"\"")));
         }
 
         int x = revList.size() - 1;

@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.entities.constantpool;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -16,6 +18,7 @@ public class ConstantPoolEntryString extends AbstractConstantPoolEntry implement
     private final long OFFSET_OF_STRING_INDEX = 1;
 
     private final long stringIndex;
+    private transient String string;
 
     public ConstantPoolEntryString(ConstantPool cp, ByteData data) {
         super(cp);
@@ -29,12 +32,14 @@ public class ConstantPoolEntryString extends AbstractConstantPoolEntry implement
 
     @Override
     public void dump(Dumper d) {
-        ConstantPool cp = getCp();
-        d.print("String " + cp.getUTF8Entry((int) stringIndex).getValue());
+        d.print("String " + getValue());
     }
 
     public String getValue() {
-        return getCp().getUTF8Entry((int) stringIndex).getValue();
+        if (string == null) {
+            string = QuotingUtils.enquoteString(getCp().getUTF8Entry((int) stringIndex).getRawValue());
+        }
+        return string;
     }
 
     @Override
