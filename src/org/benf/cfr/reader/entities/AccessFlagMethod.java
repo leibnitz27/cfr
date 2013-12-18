@@ -15,7 +15,7 @@ public enum AccessFlagMethod {
     ACC_PROTECTED("protected"),
     ACC_STATIC("static"),
     ACC_FINAL("final"),
-    ACC_SYNCHRONISED("synchronised"),
+    ACC_SYNCHRONISED("synchronized"),
     ACC_BRIDGE("/* bridge */"),
     ACC_VARARGS("/* varargs */"),
     ACC_NATIVE("native"),
