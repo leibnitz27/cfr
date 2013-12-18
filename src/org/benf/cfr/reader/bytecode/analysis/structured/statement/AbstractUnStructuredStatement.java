@@ -36,7 +36,7 @@ public abstract class AbstractUnStructuredStatement extends AbstractStructuredSt
 
     @Override
     public void linearizeInto(List<StructuredStatement> out) {
-        throw new UnsupportedOperationException("Can't linarise an unstructured statement");
+        throw new UnsupportedOperationException("Can't linearise an unstructured statement");
     }
 
     /*
