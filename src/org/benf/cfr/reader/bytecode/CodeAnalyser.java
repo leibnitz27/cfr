@@ -368,6 +368,10 @@ public class CodeAnalyser {
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
             /*
+             * Now we've sorted, we need to rebuild switch blocks.....
+             */
+            Op03SimpleStatement.rebuildSwitches(op03SimpleParseNodes);
+            /*
              * This set of operations is /very/ aggressive.
              */
             // This is not neccessarily a sensible thing to do, but we're being aggressive...
