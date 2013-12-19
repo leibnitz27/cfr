@@ -21,7 +21,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
-import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
@@ -4484,7 +4483,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> targets = swatch.targets;
         RawSwitchStatement switchStatement = (RawSwitchStatement) swatch.containedStatement;
         DecodedSwitch switchData = switchStatement.getSwitchData();
-        BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SWITCH);
+        BlockIdentifier switchBlockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SWITCH);
         /*
          * If all of the targets /INCLUDING DEFAULT/ point at the same place, replace the switch with a goto, and
          * leave it at that.
@@ -4513,7 +4512,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<DecodedSwitchEntry> entries = switchData.getJumpTargets();
         InferredJavaType caseType = switchStatement.getSwitchOn().getInferredJavaType();
         Map<InstrIndex, Op03SimpleStatement> firstPrev = MapFactory.newMap();
-        Set<BlockIdentifier> caseIdentifiers = SetFactory.newSet();
         for (int x = 0; x < targets.size(); ++x) {
             Op03SimpleStatement target = targets.get(x);
             InstrIndex tindex = target.getIndex();
@@ -4530,9 +4528,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             }
             Set<BlockIdentifier> blocks = SetFactory.newSet(target.getBlockIdentifiers());
-            blocks.add(blockIdentifier);
+            blocks.add(switchBlockIdentifier);
             BlockIdentifier caseIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.CASE);
-            Op03SimpleStatement caseStatement = new Op03SimpleStatement(blocks, new CaseStatement(expression, caseType, blockIdentifier, caseIdentifier), target.getIndex().justBefore());
+            Op03SimpleStatement caseStatement = new Op03SimpleStatement(blocks, new CaseStatement(expression, caseType, switchBlockIdentifier, caseIdentifier), target.getIndex().justBefore());
             // Link casestatement in infront of target - all sources of target should point to casestatement instead, and
             // there should be one link going from caseStatement to target. (it's unambiguous).
             Iterator<Op03SimpleStatement> iterator = target.sources.iterator();
@@ -4573,6 +4571,44 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * ...
          * goto a
          */
+        buildSwitchCases(swatch, targets, switchBlockIdentifier, in);
+
+        swatch.replaceStatement(switchStatement.getSwitchStatement(switchBlockIdentifier));
+        /*
+         * And (as it doesn't matter) reorder swatch's targets, for minimal confusion
+         */
+        Collections.sort(swatch.targets, new CompareByIndex());
+    }
+
+    public static void rebuildSwitches(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> switchStatements = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
+        /*
+         * Get the block identifiers for all switch statements and their cases.
+         */
+        for (Op03SimpleStatement switchStatement : switchStatements) {
+            SwitchStatement switchStatementInr = (SwitchStatement) switchStatement.getStatement();
+            Set<BlockIdentifier> allBlocks = SetFactory.newSet();
+            allBlocks.add(switchStatementInr.getSwitchBlock());
+            for (Op03SimpleStatement target : switchStatement.targets) {
+                Statement stmTgt = target.getStatement();
+                if (stmTgt instanceof CaseStatement) {
+                    allBlocks.add(((CaseStatement) stmTgt).getCaseBlock());
+                }
+            }
+            for (Op03SimpleStatement stm : statements) {
+                stm.getBlockIdentifiers().removeAll(allBlocks);
+            }
+            buildSwitchCases(switchStatement, switchStatement.getTargets(), switchStatementInr.getSwitchBlock(), statements);
+        }
+        for (Op03SimpleStatement switchStatement : switchStatements) {
+            // removePointlessSwitchDefault(switchStatement);
+            examineSwitchContiguity(switchStatement, statements);
+        }
+
+    }
+
+    private static void buildSwitchCases(Op03SimpleStatement swatch, List<Op03SimpleStatement> targets, BlockIdentifier switchBlockIdentifier, List<Op03SimpleStatement> in) {
+        Set<BlockIdentifier> caseIdentifiers = SetFactory.newSet();
         /*
          * For each of the case statements - find which is reachable from the others WITHOUT going through
          * the switch again.  Then we might have to move a whole block... (!).
@@ -4619,7 +4655,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                  */
                 if (contiguous) {
                     for (Op03SimpleStatement reachable : nodeReachable.inBlock) {
-                        reachable.markBlock(blockIdentifier);
+                        reachable.markBlock(switchBlockIdentifier);
                         // TODO : FIXME : Expensive - can we assume we won't get asked to mark
                         // members of other cases?
                         if (!caseTargets.contains(reachable)) {
@@ -4649,12 +4685,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             lastStatementBefore.put(backTarget, prev);
 //            throw new IllegalStateException("Backjump fallthrough");
         }
-
-        swatch.replaceStatement(switchStatement.getSwitchStatement(blockIdentifier));
-        /*
-         * And (as it doesn't matter) reorder swatch's targets, for minimal confusion
-         */
-        Collections.sort(swatch.targets, new CompareByIndex());
     }
 
     private static boolean blockIsContiguous(List<Op03SimpleStatement> in, Op03SimpleStatement start, Set<Op03SimpleStatement> blockContent) {
@@ -4773,7 +4803,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             CaseStatement caseStatement = (CaseStatement) lastCase.containedStatement;
             caseBlock = caseStatement.getCaseBlock();
 
-            indexLastInThis = getFarthestReachableInRange(statements, indexLastCase, indexAfterCase);
+            try {
+                indexLastInThis = getFarthestReachableInRange(statements, indexLastCase, indexAfterCase);
+            } catch (CannotPerformDecode e) {
+                forwardTargets.clear();
+            }
             if (indexLastInThis != indexAfterCase - 1) {
                 // throw new ConfusedCFRException("Final statement in case doesn't meet smallest exit.");
                 forwardTargets.clear();
@@ -5400,6 +5434,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             blocks.removeAll(blackListed);
 
             for (BlockIdentifier ident : blocks) {
+//                if (ident.getBlockType() == BlockType.CASE ||
+//                    ident.getBlockType() == BlockType.SWITCH) {
+//                    blackListed.add(ident);
+//                    continue;
+//                }
                 if (haveLeft.contains(ident)) {
                     // Backfill, remove from haveLeft.
                     for (int y = x - 1; y >= 0; --y) {
