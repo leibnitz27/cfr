@@ -30,6 +30,10 @@ public class UnstructuredTry extends AbstractUnStructuredStatement {
     public void collectTypeUsages(TypeUsageCollector collector) {
     }
 
+    public StructuredStatement getEmptyTry() {
+        return new StructuredTry(exceptionGroup, new Op04StructuredStatement(Block.getEmptyBlock(true)), exceptionGroup.getTryBlockIdentifier());
+    }
+
     @Override
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == exceptionGroup.getTryBlockIdentifier()) {

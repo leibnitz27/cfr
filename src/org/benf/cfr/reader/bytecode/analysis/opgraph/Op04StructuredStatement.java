@@ -51,6 +51,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     private StructuredStatement structuredStatement;
 
     private Set<BlockIdentifier> blockMembership;
+//    private static int id = 0;
+//    private final int idx = id++;
 
     private static final Set<BlockIdentifier> EMPTY_BLOCKSET = SetFactory.newSet();
 
@@ -82,8 +84,15 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public Op04StructuredStatement nopThisAndReplace() {
         Op04StructuredStatement replacement = new Op04StructuredStatement(instrIndex, blockMembership, structuredStatement);
         replaceStatementWithNOP("");
+        Op04StructuredStatement.replaceInSources(this, replacement);
+        Op04StructuredStatement.replaceInTargets(this, replacement);
         return replacement;
     }
+
+    public void nopThis() {
+        replaceStatementWithNOP("");
+    }
+
 
     @Override
     public StructuredStatement getStatement() {

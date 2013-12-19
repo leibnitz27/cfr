@@ -178,7 +178,6 @@ public class Block extends AbstractStructuredStatement {
         for (Op04StructuredStatement in : containedStatements) {
             StructuredStatement s = in.getStatement();
             if (s.inlineable()) {
-                s.getContainer().getSources();
                 Op04StructuredStatement inlinedOp = s.getInline();
                 StructuredStatement inlined = inlinedOp.getStatement();
                 if (inlined instanceof Block) {
@@ -209,8 +208,27 @@ public class Block extends AbstractStructuredStatement {
         boolean finished = false;
         for (int x = 0; x < size && !finished; ++x) {
             Op04StructuredStatement statement = containedStatements.get(x);
-            if (statement.getStatement() instanceof StructuredTry) {
-                StructuredTry structuredTry = (StructuredTry) statement.getStatement();
+            StructuredStatement innerStatement = statement.getStatement();
+            // If we've got a try statement which has no body (!), we will be left with
+            // an unstructured try.  As such, if the NEXT statement is a catch or finally
+            // for THIS unstructured try, structure it here.
+            if (innerStatement instanceof UnstructuredTry) {
+                UnstructuredTry unstructuredTry = (UnstructuredTry) innerStatement;
+                if (x < (size - 1)) {
+                    StructuredStatement nextStatement = containedStatements.get(x + 1).getStatement();
+                    if (nextStatement instanceof StructuredCatch ||
+                            nextStatement instanceof StructuredFinally) {
+                        Op04StructuredStatement replacement = new Op04StructuredStatement(unstructuredTry.getEmptyTry());
+                        Op04StructuredStatement.replaceInTargets(statement, replacement);
+                        Op04StructuredStatement.replaceInSources(statement, replacement);
+                        statement = replacement;
+                        containedStatements.set(x, statement);
+                        innerStatement = statement.getStatement();
+                    }
+                }
+            }
+            if (innerStatement instanceof StructuredTry) {
+                StructuredTry structuredTry = (StructuredTry) innerStatement;
                 BlockIdentifier tryBlockIdent = structuredTry.getTryBlockIdentifier();
                 ++x;
                 Op04StructuredStatement next = x < size ? containedStatements.get(x) : null;
@@ -242,7 +260,7 @@ public class Block extends AbstractStructuredStatement {
                     ++x;
                     StructuredStatement nextStatement = next.getStatement();
                     if (nextStatement instanceof StructuredComment) {
-                        next.nopThisAndReplace(); // pointless.
+                        next.nopThis(); // pointless.
                         // Nothing.
                     } else if (nextStatement instanceof StructuredCatch) {
                         Set<BlockIdentifier> blocks = ((StructuredCatch) nextStatement).getPossibleTryBlocks();
