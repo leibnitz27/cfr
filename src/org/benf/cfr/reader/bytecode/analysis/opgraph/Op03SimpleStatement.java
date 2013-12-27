@@ -2375,7 +2375,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         classifyCatchLeaveGoto(stm, idx, tryStatementsByBlock.keySet(), tryStatementsByBlock, catchStatementsByBlock, catchToTries, in)) {
                     result = true;
                 }
-                ;
             }
         }
 
