@@ -330,6 +330,8 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
 
+        //op03SimpleParseNodes = Op03SimpleStatement.removeRedundantTries(op03SimpleParseNodes);
+
         Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
 
         op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, !willSort);

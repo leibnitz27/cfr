@@ -2256,9 +2256,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
 
-    private static boolean classifyTryLeaveGoto(Op03SimpleStatement gotoStm, int idx, Set<BlockIdentifier> tryBlockIdents, Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock, Map<BlockIdentifier, List<BlockIdentifier>> catchStatementByBlock, List<Op03SimpleStatement> in) {
+    /*
+     * Attempt to determine if a goto is jumping over catch blocks - if it is, we can mark it as a GOTO_OUT_OF_TRY
+     * (the same holds for a goto inside a catch, we use the same marker).
+     */
+    private static boolean classifyTryCatchLeaveGoto(Op03SimpleStatement gotoStm, Set<BlockIdentifier> blocks, int idx, Set<BlockIdentifier> tryBlockIdents, Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock, Map<BlockIdentifier, List<BlockIdentifier>> catchStatementByBlock, List<Op03SimpleStatement> in) {
         if (idx >= in.size() - 1) return false;
-        Set<BlockIdentifier> blocks = gotoStm.getBlockIdentifiers();
 
         GotoStatement gotoStatement = (GotoStatement) gotoStm.getStatement();
 
@@ -2299,25 +2302,59 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return true;
     }
 
+    private static boolean classifyTryLeaveGoto(Op03SimpleStatement gotoStm, int idx, Set<BlockIdentifier> tryBlockIdents, Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock, Map<BlockIdentifier, List<BlockIdentifier>> catchStatementByBlock, List<Op03SimpleStatement> in) {
+        Set<BlockIdentifier> blocks = gotoStm.getBlockIdentifiers();
+        return classifyTryCatchLeaveGoto(gotoStm, blocks, idx, tryBlockIdents, tryStatementsByBlock, catchStatementByBlock, in);
+    }
+
+    private static boolean classifyCatchLeaveGoto(Op03SimpleStatement gotoStm, int idx, Set<BlockIdentifier> tryBlockIdents, Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock, Map<BlockIdentifier, List<BlockIdentifier>> catchStatementByBlock, Map<BlockIdentifier, Set<BlockIdentifier>> catchBlockToTryBlocks, List<Op03SimpleStatement> in) {
+        Set<BlockIdentifier> inBlocks = gotoStm.getBlockIdentifiers();
+
+        /*
+         * Map blocks to the union of the TRY blocks we're in catch blocks of.
+         */
+        Set<BlockIdentifier> blocks = SetFactory.newOrderedSet();
+        for (BlockIdentifier block : inBlocks) {
+            //
+            // In case it's a lazy map, 2 stage lookup and fetch.
+            if (catchBlockToTryBlocks.containsKey(block)) {
+                Set<BlockIdentifier> catchToTries = catchBlockToTryBlocks.get(block);
+                blocks.addAll(catchToTries);
+            }
+        }
+
+        return classifyTryCatchLeaveGoto(gotoStm, blocks, idx, tryBlockIdents, tryStatementsByBlock, catchStatementByBlock, in);
+    }
+
+
     public static boolean classifyGotos(List<Op03SimpleStatement> in) {
         boolean result = false;
         List<Pair<Op03SimpleStatement, Integer>> gotos = ListFactory.newList();
         Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock = MapFactory.newMap();
         Map<BlockIdentifier, List<BlockIdentifier>> catchStatementsByBlock = MapFactory.newMap();
+        Map<BlockIdentifier, Set<BlockIdentifier>> catchToTries = MapFactory.newLazyMap(new UnaryFunction<BlockIdentifier, Set<BlockIdentifier>>() {
+            @Override
+            public Set<BlockIdentifier> invoke(BlockIdentifier arg) {
+                return SetFactory.newOrderedSet();
+            }
+        });
         for (int x = 0, len = in.size(); x < len; ++x) {
             Op03SimpleStatement stm = in.get(x);
             Statement statement = stm.getStatement();
             Class<?> clz = statement.getClass();
             if (clz == TryStatement.class) {
                 TryStatement tryStatement = (TryStatement) statement;
-                tryStatementsByBlock.put(tryStatement.getBlockIdentifier(), stm);
+                BlockIdentifier tryBlockIdent = tryStatement.getBlockIdentifier();
+                tryStatementsByBlock.put(tryBlockIdent, stm);
                 List<Op03SimpleStatement> targets = stm.getTargets();
                 List<BlockIdentifier> catchBlocks = ListFactory.newList();
                 catchStatementsByBlock.put(tryStatement.getBlockIdentifier(), catchBlocks);
                 for (int y = 1, len2 = targets.size(); y < len2; ++y) {
                     Statement statement2 = targets.get(y).getStatement();
                     if (statement2.getClass() == CatchStatement.class) {
-                        catchBlocks.add(((CatchStatement) statement2).getCatchBlockIdent());
+                        BlockIdentifier catchBlockIdent = ((CatchStatement) statement2).getCatchBlockIdent();
+                        catchBlocks.add(catchBlockIdent);
+                        catchToTries.get(catchBlockIdent).add(tryBlockIdent);
                     }
                 }
             } else if (clz == GotoStatement.class) {
@@ -2334,7 +2371,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             for (Pair<Op03SimpleStatement, Integer> goto_ : gotos) {
                 Op03SimpleStatement stm = goto_.getFirst();
                 int idx = goto_.getSecond();
-                result |= classifyTryLeaveGoto(stm, idx, tryStatementsByBlock.keySet(), tryStatementsByBlock, catchStatementsByBlock, in);
+                if (classifyTryLeaveGoto(stm, idx, tryStatementsByBlock.keySet(), tryStatementsByBlock, catchStatementsByBlock, in) ||
+                        classifyCatchLeaveGoto(stm, idx, tryStatementsByBlock.keySet(), tryStatementsByBlock, catchStatementsByBlock, catchToTries, in)) {
+                    result = true;
+                }
+                ;
             }
         }
 
@@ -4281,6 +4322,48 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
              */
             continueLoop = (!tryStarts.isEmpty());
         } while (continueLoop);
+    }
+
+    public static List<Op03SimpleStatement> removeRedundantTries(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> tryStarts = Functional.filter(statements, new TypeFilter<TryStatement>(TryStatement.class));
+        /*
+         * If the try doesn't point at a member of the try, it's been made redundant.
+         * Verify that no other references to its' block exist, and remove it.
+         * (Verification should be unneccesary)
+         */
+        boolean effect = false;
+        Collections.reverse(tryStarts);
+        LinkedList<Op03SimpleStatement> starts = ListFactory.newLinkedList();
+        starts.addAll(tryStarts);
+        while (!starts.isEmpty()) {
+            Op03SimpleStatement trys = starts.removeFirst();
+            Statement stm = trys.getStatement();
+            if (!(stm instanceof TryStatement)) continue;
+            TryStatement tryStatement = (TryStatement) stm;
+            BlockIdentifier tryBlock = tryStatement.getBlockIdentifier();
+            if (trys.targets.isEmpty() || !trys.targets.get(0).getBlockIdentifiers().contains(tryBlock)) {
+                // Remove this try.
+                Op03SimpleStatement codeTarget = trys.targets.get(0);
+
+                for (Op03SimpleStatement target : trys.targets) {
+                    target.removeSource(trys);
+                }
+                trys.targets.clear();
+                for (Op03SimpleStatement source : trys.sources) {
+                    source.replaceTarget(trys, codeTarget);
+                    codeTarget.addSource(source);
+                }
+                trys.sources.clear();
+                effect = true;
+            }
+        }
+
+        if (effect) {
+            statements = Op03SimpleStatement.removeUnreachableCode(statements, false);
+            statements = renumber(statements);
+        }
+
+        return statements;
     }
 
     private static boolean verifyLinearBlock(Op03SimpleStatement current, BlockIdentifier block, int num) {
