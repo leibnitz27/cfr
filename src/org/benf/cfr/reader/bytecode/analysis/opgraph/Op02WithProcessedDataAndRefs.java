@@ -186,7 +186,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return sources;
     }
 
-    public void populateStackInfo(StackSim stackSim, Method method) {
+    public void populateStackInfo(StackSim stackSim, Method method, LinkedList<Pair<StackSim, Op02WithProcessedDataAndRefs>> next) {
         StackDelta stackDelta = instr.getStackDelta(rawData, cpEntries, stackSim, method);
         if (stackDepthBeforeExecution != -1) {
             /* Catch instructions are funny, as we know we'll get here with 1 thing on the stack. */
@@ -244,8 +244,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 this.unconsumedJoinedStack = newStackSim;
             }
 
-            for (Op02WithProcessedDataAndRefs target : targets) {
-                target.populateStackInfo(newStackSim, method);
+            /*
+             * Behave like a DFS, but we can't afford to blow stack, so queue.
+             */
+            for (int i = targets.size() - 1; i >= 0; --i) {
+                next.addFirst(Pair.make(newStackSim, targets.get(i)));
             }
         }
     }
@@ -1296,9 +1299,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
 
         // This dump block only exists because we're debugging bad stack size calcuations.
-        Op02WithProcessedDataAndRefs o2start = op2list.get(0);
+        LinkedList<Pair<StackSim, Op02WithProcessedDataAndRefs>> toProcess = ListFactory.newLinkedList();
+        toProcess.add(Pair.make(new StackSim(), op2list.get(0)));
         try {
-            o2start.populateStackInfo(new StackSim(), method);
+            while (!toProcess.isEmpty()) {
+                Pair<StackSim, Op02WithProcessedDataAndRefs> next = toProcess.removeFirst();
+                Op02WithProcessedDataAndRefs o2 = next.getSecond();
+                StackSim stackSim = next.getFirst();
+                o2.populateStackInfo(stackSim, method, toProcess);
+            }
         } catch (ConfusedCFRException e) {
             Dumper dmp = new ToStringDumper();
             dmp.print("----[known stack info]------------\n\n");
