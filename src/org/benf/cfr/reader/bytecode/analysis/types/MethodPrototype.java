@@ -160,7 +160,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         }
         for (Slot synthetic : syntheticArgs) {
             if (offset != synthetic.getIdx()) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Synthetic arg - offset is " + offset + ", but got " + synthetic.getIdx());
             }
             res.put(synthetic, ssaIdentifierFactory.getIdent(synthetic));
             offset += synthetic.getJavaTypeInstance().getStackType().getComputationCategory();
