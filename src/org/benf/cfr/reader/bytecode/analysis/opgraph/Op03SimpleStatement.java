@@ -2038,6 +2038,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return;
             }
         }
+        if (mutatedPossibilities == null || mutatedPossibilities.isEmpty()) {
+            logger.info("No invariant intersection\n");
+            return;
+        }
         loopVariablePossibilities.retainAll(mutatedPossibilities);
         // Intersection between incremented / tested.
         if (loopVariablePossibilities.isEmpty()) {
