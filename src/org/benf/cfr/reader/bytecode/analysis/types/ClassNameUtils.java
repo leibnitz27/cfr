@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lee
@@ -14,5 +16,12 @@ public class ClassNameUtils {
 
     public static String convertToPath(String from) {
         return from.replace('.', '/');
+    }
+
+    public static Pair<String, String> getPackageAndClassNames(String rawName) {
+        String full = ClassNameUtils.convertFromPath(rawName);
+        int idx = full.lastIndexOf('.');
+        if (idx == -1) return Pair.make("", rawName);
+        return Pair.make(full.substring(0, idx), full.substring(idx + 1));
     }
 }

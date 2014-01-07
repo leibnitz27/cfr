@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -17,13 +19,45 @@ public class FileDumper extends StreamDumper {
     private final SummaryDumper summaryDumper;
     private final BufferedWriter writer;
 
+    private static final int MAX_FILE_LEN_MINUS_EXT = 249;
+    private static final int TRUNC_PREFIX_LEN = 150;
+
+    private File mkFilename(String dir, Pair<String, String> names) {
+        String packageName = names.getFirst();
+        String outDir = dir;
+        if (!packageName.isEmpty()) {
+            outDir = outDir + File.separator + packageName.replace(".", File.separator);
+        }
+        String className = names.getSecond();
+        if (className.length() > MAX_FILE_LEN_MINUS_EXT) {
+            /*
+             * Have to try to find a replacement name.
+             */
+            File outDirFile = new File(outDir);
+            if (!outDirFile.exists() && !outDirFile.mkdirs()) {
+                throw new IllegalStateException("Can't create output dir for temp file");
+            }
+            className = className.substring(0, TRUNC_PREFIX_LEN);
+            try {
+                File temp = File.createTempFile(className, ".java", outDirFile);
+                summaryDumper.notify("Had to truncate class name " + names.getSecond());
+                return temp;
+            } catch (IOException e) {
+                throw new IllegalStateException("Error creating truncated temp file");
+            }
+        }
+        return new File(dir + File.separator + packageName.replace(".", File.separator) +
+                ((packageName.length() == 0) ? "" : File.separator) +
+                className + ".java");
+    }
+
     public FileDumper(String dir, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation) {
         super(typeUsageInformation);
         this.type = type;
         this.summaryDumper = summaryDumper;
-        String fileName = dir + File.separator + type.getRawName().replace(".", File.separator) + ".java";
+        Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(type.getRawName());
         try {
-            File file = new File(fileName);
+            File file = mkFilename(dir, names);
             File parent = file.getParentFile();
             if (!parent.exists() && !parent.mkdirs()) {
                 throw new IllegalStateException("Couldn't create dir: " + parent);
