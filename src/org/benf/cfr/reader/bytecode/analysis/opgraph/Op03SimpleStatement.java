@@ -3134,7 +3134,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             instrToIdx.put(statement, x);
         }
 
-        Set<Integer> reachableNodes = SetFactory.newSet();
+        Set<Integer> reachableNodes = SetFactory.newSortedSet();
         GraphVisitorReachableInThese graphVisitorCallee = new GraphVisitorReachableInThese(reachableNodes, instrToIdx);
         GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(start), graphVisitorCallee);
         visitor.process();
@@ -3146,6 +3146,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (int x = first; x < afterEnd; ++x) {
             if (reachableNodes.contains(x) || statements.get(x).isNop()) {
                 if (foundLast) {
+//                    return afterEnd - 1;
                     throw new CannotPerformDecode("reachable test BLOCK was exited and re-entered.");
                 }
             } else {

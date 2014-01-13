@@ -14,6 +14,10 @@ public class SetFactory {
         return new HashSet<X>();
     }
 
+    public static <X extends Object> Set<X> newSortedSet() {
+        return new TreeSet<X>();
+    }
+
     public static <X extends Enum<X>> EnumSet<X> newSet(EnumSet<X> content) {
         return EnumSet.copyOf(content);
     }

@@ -311,7 +311,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     @Override
     public String toString() {
-        return structuredStatement.getClass().getSimpleName().toString();
+        return structuredStatement.toString();
+//        return structuredStatement.getClass().getSimpleName().toString();
     }
 
     public void replaceStatementWithNOP(String comment) {
