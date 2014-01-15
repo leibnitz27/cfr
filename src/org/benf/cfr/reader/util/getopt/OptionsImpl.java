@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.util.getopt;
 
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.functors.BinaryFunction;
 
 import java.util.*;
 
@@ -148,6 +147,8 @@ public class OptionsImpl implements Options {
             "decodefinally", defaultTrueBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> TIDY_MONITORS = new PermittedOptionProvider.Argument<Boolean>(
             "tidymonitors", defaultTrueBooleanDecoder);
+    public static final PermittedOptionProvider.Argument<Boolean> COMMENT_MONITORS = new PermittedOptionProvider.Argument<Boolean>(
+            "commentmonitors", defaultFalseBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> LENIENT = new PermittedOptionProvider.Argument<Boolean>(
             "lenient", defaultFalseBooleanDecoder);
     public static final PermittedOptionProvider.Argument<Boolean> DUMP_CLASS_PATH = new PermittedOptionProvider.Argument<Boolean>(
@@ -227,7 +228,7 @@ public class OptionsImpl implements Options {
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
-                    FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS);
+                    FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS);
         }
 
         @Override

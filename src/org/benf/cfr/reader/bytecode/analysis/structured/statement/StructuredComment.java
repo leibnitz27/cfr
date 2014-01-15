@@ -1,5 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
@@ -16,10 +19,14 @@ import java.util.List;
  * Date: 15/05/2012
  */
 public class StructuredComment extends AbstractStructuredStatement {
-    private String comment;
+    private Expression expression;
 
-    public StructuredComment(String comment) {
-        this.comment = comment;
+    public StructuredComment(Expression expression) {
+        this.expression = expression;
+    }
+
+    public StructuredComment(String text) {
+        this.expression = new Literal(TypedLiteral.getString(text));
     }
 
     @Override
@@ -28,6 +35,7 @@ public class StructuredComment extends AbstractStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
+        String comment = expression.toString();
         if (comment.length() > 0) {
             dumper.print("// ");
             dumper.print(comment + "\n");

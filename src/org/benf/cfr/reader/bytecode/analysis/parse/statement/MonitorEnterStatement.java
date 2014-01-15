@@ -15,7 +15,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 18:08
  * To change this template use File | Settings | File Templates.
  */
-public class MonitorEnterStatement extends AbstractStatement {
+public class MonitorEnterStatement extends MonitorStatement {
     private Expression monitor;
     private final BlockIdentifier blockIdentifier;
 
@@ -26,7 +26,7 @@ public class MonitorEnterStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("MONITORENTER : ").dump(monitor).print(" [" + blockIdentifier + "]\n");
+        return dumper.print("MONITORENTER : ").dump(monitor);
     }
 
     @Override

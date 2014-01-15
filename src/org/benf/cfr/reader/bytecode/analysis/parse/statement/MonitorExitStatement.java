@@ -18,7 +18,7 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 18:08
  * To change this template use File | Settings | File Templates.
  */
-public class MonitorExitStatement extends AbstractStatement {
+public class MonitorExitStatement extends MonitorStatement {
     private Expression monitor;
 
     public MonitorExitStatement(Expression monitor) {
@@ -27,7 +27,7 @@ public class MonitorExitStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("MONITOREXIT : ").dump(monitor).newln();
+        return dumper.print("MONITOREXIT : ").dump(monitor);
     }
 
     @Override

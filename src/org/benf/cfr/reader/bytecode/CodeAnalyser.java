@@ -105,6 +105,9 @@ public class CodeAnalyser {
             if (mutableOptions.override(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE)) {
                 mutableOptions.override(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE);
                 extraComments.add(DecompilerComment.PRUNE_EXCEPTIONS);
+//                // TODO : This option should only be enabled if there are monitors, AND
+//                // only on a hyper aggressive 3rd pass.
+//                mutableOptions.override(OptionsImpl.AGGRESS_MONITORS, true);
             }
             if (!extraComments.isEmpty()) {
                 try {
@@ -315,6 +318,10 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
 
+        if (options.getOption(OptionsImpl.COMMENT_MONITORS)) {
+            Op03SimpleStatement.commentMonitors(op03SimpleParseNodes);
+        }
+
 
         if (showOpsLevel == SHOW_L3_CAUGHT) {
             debugDumper.newln().newln();
@@ -331,6 +338,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
 
         //op03SimpleParseNodes = Op03SimpleStatement.removeRedundantTries(op03SimpleParseNodes);
+
 
         Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
 
