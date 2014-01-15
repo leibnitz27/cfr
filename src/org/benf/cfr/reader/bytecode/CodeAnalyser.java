@@ -71,6 +71,36 @@ public class CodeAnalyser {
         this.method = method;
     }
 
+    private static class AnalysisResult {
+        public DecompilerComments comments;
+        public Op04StructuredStatement code;
+        public boolean failed;
+
+        private AnalysisResult(DecompilerComments comments, Op04StructuredStatement code, boolean failed) {
+            this.comments = comments;
+            this.code = code;
+            this.failed = failed;
+        }
+
+        public boolean hasErrorComment() {
+            return comments.hasErrorComment();
+        }
+    }
+
+    private static final RecoveryOptions recover1 = new RecoveryOptions(
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
+            new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RET_PROPAGATE, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, DecompilerComment.PRUNE_EXCEPTIONS),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE)
+    );
+
+    private static final RecoveryOptions recover2 = new RecoveryOptions(recover1,
+            new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, DecompilerComment.COMMENT_MONITORS)
+    );
+
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover1, recover2};
+
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
      */
@@ -79,67 +109,46 @@ public class CodeAnalyser {
 
         Options options = dcCommonState.getOptions();
 
-        DecompilerComments comments = null;
-        Op04StructuredStatement coderes = null;
-        RuntimeException failed = null;
-        try {
-            Pair<DecompilerComments, Op04StructuredStatement> res = getAnalysisInner(dcCommonState, options);
-            coderes = res.getSecond();
-            comments = res.getFirst();
-        } catch (RuntimeException e) {
-            failed = e;
-            coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
-            comments = new DecompilerComments();
-            comments.addComment(new DecompilerComment("Exception decompiling", e));
-        }
+        AnalysisResult res = getAnalysisOrWrapFail(dcCommonState, options, null);
 
-        if ((failed != null || comments.hasErrorComment()) && options.getOption(OptionsImpl.RECOVER)) {
-            // Try to override some options for aggressive behaviour
-            MutableOptions mutableOptions = new MutableOptions(options);
-            List<DecompilerComment> extraComments = ListFactory.newList();
-            if (mutableOptions.override(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE)) {
-                mutableOptions.override(OptionsImpl.LENIENT, true);
-                extraComments.add(DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT);
-                mutableOptions.override(OptionsImpl.FORCE_RET_PROPAGATE, Troolean.TRUE);
-            }
-            if (mutableOptions.override(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE)) {
-                mutableOptions.override(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE);
-                extraComments.add(DecompilerComment.PRUNE_EXCEPTIONS);
-//                // TODO : This option should only be enabled if there are monitors, AND
-//                // only on a hyper aggressive 3rd pass.
-//                mutableOptions.override(OptionsImpl.AGGRESS_MONITORS, true);
-            }
-            if (!extraComments.isEmpty()) {
-                try {
-                    Pair<DecompilerComments, Op04StructuredStatement> res = getAnalysisInner(dcCommonState, mutableOptions);
-                    coderes = res.getSecond();
-                    comments = res.getFirst();
-                    comments.addComments(extraComments);
-                    failed = null;
-                } catch (RuntimeException e) {
-                    failed = e;
-                    coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
-                    comments = new DecompilerComments();
-                    comments.addComment(new DecompilerComment("Exception decompiling", e));
-                }
+        if ((res.failed || res.hasErrorComment()) && options.getOption(OptionsImpl.RECOVER)) {
+            for (RecoveryOptions recoveryOptions : recoveryOptionsArr) {
+                RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options);
+                if (!applied.valid) continue;
+                AnalysisResult nextRes = getAnalysisOrWrapFail(dcCommonState, applied.options, applied.comments);
+                if (nextRes != null) res = nextRes;
+                if (res.failed || res.hasErrorComment()) continue;
+                break;
             }
         }
 
-        if (comments != null) {
-            method.setComments(comments);
+        if (res.comments != null) {
+            method.setComments(res.comments);
         }
 
-        analysed = coderes;
+        analysed = res.code;
         return analysed;
+    }
+
+    private AnalysisResult getAnalysisOrWrapFail(DCCommonState commonState, Options options, List<DecompilerComment> extraComments) {
+        try {
+            AnalysisResult res = getAnalysisInner(commonState, options);
+            if (extraComments != null) res.comments.addComments(extraComments);
+            return res;
+        } catch (RuntimeException e) {
+            Op04StructuredStatement coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
+            DecompilerComments comments = new DecompilerComments();
+            comments.addComment(new DecompilerComment("Exception decompiling", e));
+            return new AnalysisResult(comments, coderes, true);
+        }
     }
 
     /*
      * Note that the options passed in here only apply to this function - don't pass around.
      */
-    private Pair<DecompilerComments, Op04StructuredStatement> getAnalysisInner(DCCommonState dcCommonState, Options passoptions) {
+    private AnalysisResult getAnalysisInner(DCCommonState dcCommonState, Options options) {
 
-        Options options = passoptions;
-        boolean willSort = passoptions.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE;
+        boolean willSort = options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE;
 
         int showOpsLevel = options.getOption(OptionsImpl.SHOWOPS);
 
@@ -213,7 +222,7 @@ public class CodeAnalyser {
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
         //
-        if (passoptions.getOption(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE) {
+        if (options.getOption(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE) {
             /*
              * Aggressive exception pruning.  try { x } catch (e) { throw e } , when NOT covered by another exception handler,
              * is a pointless construct.  It also leads to some very badly structured code.
@@ -371,7 +380,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
-        if (passoptions.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
+        if (options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, false);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
@@ -394,7 +403,7 @@ public class CodeAnalyser {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
         }
 
-        if (passoptions.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
+        if (options.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
             Op03SimpleStatement.propagateToReturn(method, op03SimpleParseNodes);
         }
 
@@ -504,7 +513,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
         // Condense again, now we've simplified conditionals, ternaries, etc.
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
-        if (passoptions.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
+        if (options.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
             Op03SimpleStatement.propagateToReturn2(method, op03SimpleParseNodes);
         }
 
@@ -590,7 +599,7 @@ public class CodeAnalyser {
          */
         if (!block.isFullyStructured()) {
             comments.addComment(DecompilerComment.UNABLE_TO_STRUCTURE);
-            return Pair.make(comments, block);
+            return new AnalysisResult(comments, block, false);
         }
         Op04StructuredStatement.tidyTypedBooleans(block);
         Op04StructuredStatement.prettifyBadLoops(block);
@@ -630,7 +639,7 @@ public class CodeAnalyser {
          */
         Op04StructuredStatement.applyChecker(new LooseCatchChecker(), block, comments);
 
-        return Pair.make(comments, block);
+        return new AnalysisResult(comments, block, false);
     }
 
 
