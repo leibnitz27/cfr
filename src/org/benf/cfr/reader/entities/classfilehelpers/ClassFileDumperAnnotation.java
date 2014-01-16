@@ -48,6 +48,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
         }
 
         boolean first = true;
+        dumpAnnotations(classFile, d);
         dumpHeader(classFile, d);
         d.print("{\n");
         d.indent(1);

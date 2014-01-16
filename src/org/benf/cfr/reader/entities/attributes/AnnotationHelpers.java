@@ -72,7 +72,7 @@ public class AnnotationHelpers {
             case 'e': {
                 ConstantPoolEntryUTF8 enumClassName = cp.getUTF8Entry(raw.getS2At(offset));
                 ConstantPoolEntryUTF8 enumEntryName = cp.getUTF8Entry(raw.getS2At(offset + 2));
-                return new Pair<Long, ElementValue>(offset + 4, new ElementValueEnum(enumClassName.getValue(), enumEntryName.getValue()));
+                return new Pair<Long, ElementValue>(offset + 4, new ElementValueEnum(ConstantPoolUtils.decodeTypeTok(enumClassName.getValue(), cp), enumEntryName.getValue()));
             }
             case 'c': {
                 ConstantPoolEntryUTF8 className = cp.getUTF8Entry(raw.getS2At(offset));

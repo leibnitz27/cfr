@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.annotations;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -11,20 +12,21 @@ import org.benf.cfr.reader.util.output.Dumper;
  * Time: 19:24
  */
 public class ElementValueEnum implements ElementValue {
-    private final String className;
+    private final JavaTypeInstance type;
     private final String valueName;
 
-    public ElementValueEnum(String className, String valueName) {
-        this.className = className;
+    public ElementValueEnum(JavaTypeInstance type, String valueName) {
+        this.type = type;
         this.valueName = valueName;
     }
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print(className).print('.').print(valueName);
+        return d.dump(type).print('.').print(valueName);
     }
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(type);
     }
 }
