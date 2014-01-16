@@ -24,7 +24,7 @@ public class FileDumper extends StreamDumper {
     private static final int TRUNC_PREFIX_LEN = 150;
     private static int truncCount = 0;
 
-    private File mkFilename(String dir, Pair<String, String> names) {
+    private File mkFilename(String dir, Pair<String, String> names, JavaTypeInstance type, SummaryDumper summaryDumper) {
         String packageName = names.getFirst();
         String outDir = dir;
         if (!packageName.isEmpty()) {
@@ -35,11 +35,8 @@ public class FileDumper extends StreamDumper {
             /*
              * Have to try to find a replacement name.
              */
-            File outDirFile = new File(outDir);
-            if (!outDirFile.exists() && !outDirFile.mkdirs()) {
-                throw new IllegalStateException("Can't create output dir for temp file");
-            }
             className = className.substring(0, TRUNC_PREFIX_LEN) + "_cfr_" + (truncCount++);
+            summaryDumper.notify("Class name " + names.getSecond() + " was shortened to " + className + " due to filesystem limitations.");
         }
         return new File(dir + File.separator + packageName.replace(".", File.separator) +
                 ((packageName.length() == 0) ? "" : File.separator) +
@@ -52,7 +49,7 @@ public class FileDumper extends StreamDumper {
         this.summaryDumper = summaryDumper;
         Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(type.getRawName());
         try {
-            File file = mkFilename(dir, names);
+            File file = mkFilename(dir, names, type, summaryDumper);
             File parent = file.getParentFile();
             if (!parent.exists() && !parent.mkdirs()) {
                 throw new IllegalStateException("Couldn't create dir: " + parent);
