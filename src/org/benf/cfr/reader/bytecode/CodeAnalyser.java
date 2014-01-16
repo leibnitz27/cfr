@@ -186,14 +186,14 @@ public class CodeAnalyser {
         Map<Integer, Integer> lutByIdx = new HashMap<Integer, Integer>();
         int idx2 = 0;
         int offset2 = -1;
-        lutByIdx.put(0, -1);
-        lutByOffset.put(-1, 0);
         for (Op01WithProcessedDataAndByteJumps op : instrs) {
-            idx2++;
-            offset2 += op.getInstructionLength();
             lutByOffset.put(offset2, idx2);
             lutByIdx.put(idx2, offset2);
+            offset2 += op.getInstructionLength();
+            idx2++;
         }
+        lutByIdx.put(0, -1);
+        lutByOffset.put(-1, 0);
 
         List<Op01WithProcessedDataAndByteJumps> op1list = ListFactory.newList();
         List<Op02WithProcessedDataAndRefs> op2list = ListFactory.newList();
