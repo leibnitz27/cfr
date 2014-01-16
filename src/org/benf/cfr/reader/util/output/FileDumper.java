@@ -19,8 +19,10 @@ public class FileDumper extends StreamDumper {
     private final SummaryDumper summaryDumper;
     private final BufferedWriter writer;
 
+
     private static final int MAX_FILE_LEN_MINUS_EXT = 249;
     private static final int TRUNC_PREFIX_LEN = 150;
+    private static int truncCount = 0;
 
     private File mkFilename(String dir, Pair<String, String> names) {
         String packageName = names.getFirst();
@@ -37,14 +39,7 @@ public class FileDumper extends StreamDumper {
             if (!outDirFile.exists() && !outDirFile.mkdirs()) {
                 throw new IllegalStateException("Can't create output dir for temp file");
             }
-            className = className.substring(0, TRUNC_PREFIX_LEN);
-            try {
-                File temp = File.createTempFile(className, ".java", outDirFile);
-                summaryDumper.notify("Had to truncate class name " + names.getSecond());
-                return temp;
-            } catch (IOException e) {
-                throw new IllegalStateException("Error creating truncated temp file");
-            }
+            className = className.substring(0, TRUNC_PREFIX_LEN) + "_cfr_" + (truncCount++);
         }
         return new File(dir + File.separator + packageName.replace(".", File.separator) +
                 ((packageName.length() == 0) ? "" : File.separator) +
