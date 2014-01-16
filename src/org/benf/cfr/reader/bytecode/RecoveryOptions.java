@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.MutableOptions;
 import org.benf.cfr.reader.util.getopt.Options;
 
@@ -40,12 +41,12 @@ public class RecoveryOptions {
         }
     }
 
-    public Applied apply(DCCommonState commonState, Options originalOptions) {
+    public Applied apply(DCCommonState commonState, Options originalOptions, BytecodeMeta bytecodeMeta) {
         MutableOptions mutableOptions = new MutableOptions(originalOptions);
         List<DecompilerComment> appliedComments = ListFactory.newList();
         boolean hadEffect = false;
         for (RecoveryOption<?> option : recoveryOptions) {
-            if (option.apply(mutableOptions, appliedComments)) hadEffect = true;
+            if (option.apply(mutableOptions, appliedComments, bytecodeMeta)) hadEffect = true;
         }
         return new Applied(mutableOptions, appliedComments, hadEffect);
     }

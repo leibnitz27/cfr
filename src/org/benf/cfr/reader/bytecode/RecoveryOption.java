@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode;
 
+import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.Troolean;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.MutableOptions;
 import org.benf.cfr.reader.util.getopt.PermittedOptionProvider;
 
@@ -15,20 +17,16 @@ import java.util.List;
  */
 public abstract class RecoveryOption<T> {
 
+    protected final UnaryFunction<BytecodeMeta, Boolean> canhelp;
     protected final PermittedOptionProvider.Argument<T> arg;
     protected final T value;
     protected final DecompilerComment decompilerComment;
 
-    public RecoveryOption(PermittedOptionProvider.Argument<T> arg, T value) {
-        this.arg = arg;
-        this.value = value;
-        this.decompilerComment = null;
-    }
-
-    public RecoveryOption(PermittedOptionProvider.Argument<T> arg, T value, DecompilerComment comment) {
+    public RecoveryOption(PermittedOptionProvider.Argument<T> arg, T value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
         this.arg = arg;
         this.value = value;
         this.decompilerComment = comment;
+        this.canhelp = canHelp;
     }
 
     protected boolean applyComment(boolean applied, List<DecompilerComment> commentList) {
@@ -38,32 +36,48 @@ public abstract class RecoveryOption<T> {
         return true;
     }
 
-    public abstract boolean apply(MutableOptions mutableOptions, List<DecompilerComment> commentList);
+    public abstract boolean apply(MutableOptions mutableOptions, List<DecompilerComment> commentList, BytecodeMeta bytecodeMeta);
 
     public static class TrooleanRO extends RecoveryOption<Troolean> {
         public TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value) {
-            super(arg, value);
+            super(arg, value, null, null);
         }
 
         public TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value, DecompilerComment comment) {
-            super(arg, value, comment);
+            super(arg, value, null, comment);
         }
 
-        public boolean apply(MutableOptions mutableOptions, List<DecompilerComment> commentList) {
+        public TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value, UnaryFunction<BytecodeMeta, Boolean> canHelp) {
+            super(arg, value, canHelp, null);
+        }
+
+        public TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
+            super(arg, value, canHelp, comment);
+        }
+
+        @Override
+        public boolean apply(MutableOptions mutableOptions, List<DecompilerComment> commentList, BytecodeMeta bytecodeMeta) {
+            if (canhelp != null && !canhelp.invoke(bytecodeMeta)) return false;
             return applyComment(mutableOptions.override(arg, value), commentList);
         }
     }
 
     public static class BooleanRO extends RecoveryOption<Boolean> {
         public BooleanRO(PermittedOptionProvider.Argument<Boolean> arg, boolean value) {
-            super(arg, value);
+            super(arg, value, null, null);
         }
 
         public BooleanRO(PermittedOptionProvider.Argument<Boolean> arg, boolean value, DecompilerComment comment) {
-            super(arg, value, comment);
+            super(arg, value, null, comment);
         }
 
-        public boolean apply(MutableOptions mutableOptions, List<DecompilerComment> commentList) {
+        public BooleanRO(PermittedOptionProvider.Argument<Boolean> arg, boolean value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
+            super(arg, value, canHelp, comment);
+        }
+
+        @Override
+        public boolean apply(MutableOptions mutableOptions, List<DecompilerComment> commentList, BytecodeMeta bytecodeMeta) {
+            if (canhelp != null && !canhelp.invoke(bytecodeMeta)) return false;
             return applyComment(mutableOptions.override(arg, value), commentList);
         }
     }

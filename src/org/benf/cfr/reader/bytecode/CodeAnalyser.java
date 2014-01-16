@@ -6,7 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRe
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredFakeDecompFailure;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
@@ -20,7 +19,6 @@ import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
-import org.benf.cfr.reader.util.getopt.MutableOptions;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -91,12 +89,12 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RET_PROPAGATE, Troolean.TRUE),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, DecompilerComment.PRUNE_EXCEPTIONS),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE)
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
     );
 
     private static final RecoveryOptions recover2 = new RecoveryOptions(recover1,
-            new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, DecompilerComment.COMMENT_MONITORS)
+            new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS)
     );
 
     private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover1, recover2};
@@ -109,13 +107,15 @@ public class CodeAnalyser {
 
         Options options = dcCommonState.getOptions();
 
-        AnalysisResult res = getAnalysisOrWrapFail(dcCommonState, options, null);
+        List<Op01WithProcessedDataAndByteJumps> instrs = getInstrs();
+        AnalysisResult res = getAnalysisOrWrapFail(instrs, dcCommonState, options, null);
 
         if ((res.failed || res.hasErrorComment()) && options.getOption(OptionsImpl.RECOVER)) {
+            BytecodeMeta bytecodeMeta = new BytecodeMeta(instrs, originalCodeAttribute);
             for (RecoveryOptions recoveryOptions : recoveryOptionsArr) {
-                RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options);
+                RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
                 if (!applied.valid) continue;
-                AnalysisResult nextRes = getAnalysisOrWrapFail(dcCommonState, applied.options, applied.comments);
+                AnalysisResult nextRes = getAnalysisOrWrapFail(instrs, dcCommonState, applied.options, applied.comments);
                 if (nextRes != null) res = nextRes;
                 if (res.failed || res.hasErrorComment()) continue;
                 break;
@@ -130,9 +130,33 @@ public class CodeAnalyser {
         return analysed;
     }
 
-    private AnalysisResult getAnalysisOrWrapFail(DCCommonState commonState, Options options, List<DecompilerComment> extraComments) {
+    /*
+     * This list isn't going to change with recovery passes, so avoid recomputing.
+     */
+    private List<Op01WithProcessedDataAndByteJumps> getInstrs() {
+        ByteData rawCode = originalCodeAttribute.getRawData();
+        long codeLength = originalCodeAttribute.getCodeLength();
+        ArrayList<Op01WithProcessedDataAndByteJumps> instrs = new ArrayList<Op01WithProcessedDataAndByteJumps>();
+        OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(0);
+        int offset = 0;
+
+        // We insert a fake NOP right at the start, so that we always know that each operation has a valid
+        // parent.  This sentinel assumption is used when inserting try { catch blocks.
+        instrs.add(JVMInstr.NOP.createOperation(null, cp, -1));
+        do {
+            JVMInstr instr = JVMInstr.find(bdCode.getS1At(0));
+            Op01WithProcessedDataAndByteJumps oc = instr.createOperation(bdCode, cp, offset);
+            int length = oc.getInstructionLength();
+            instrs.add(oc);
+            offset += length;
+            bdCode.advance(length);
+        } while (offset < codeLength);
+        return instrs;
+    }
+
+    private AnalysisResult getAnalysisOrWrapFail(List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState commonState, Options options, List<DecompilerComment> extraComments) {
         try {
-            AnalysisResult res = getAnalysisInner(commonState, options);
+            AnalysisResult res = getAnalysisInner(instrs, commonState, options);
             if (extraComments != null) res.comments.addComments(extraComments);
             return res;
         } catch (RuntimeException e) {
@@ -146,7 +170,8 @@ public class CodeAnalyser {
     /*
      * Note that the options passed in here only apply to this function - don't pass around.
      */
-    private AnalysisResult getAnalysisInner(DCCommonState dcCommonState, Options options) {
+    private AnalysisResult getAnalysisInner(List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState dcCommonState, Options options) {
+
 
         boolean willSort = options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE;
 
@@ -155,33 +180,20 @@ public class CodeAnalyser {
         ClassFile classFile = method.getClassFile();
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
-        ByteData rawCode = originalCodeAttribute.getRawData();
-        long codeLength = originalCodeAttribute.getCodeLength();
-        ArrayList<Op01WithProcessedDataAndByteJumps> instrs = new ArrayList<Op01WithProcessedDataAndByteJumps>();
-        Map<Integer, Integer> lutByOffset = new HashMap<Integer, Integer>();
-        Map<Integer, Integer> lutByIdx = new HashMap<Integer, Integer>();
-        OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(0);
-        int idx = 1;
-        int offset = 0;
         DecompilerComments comments = new DecompilerComments();
         Dumper debugDumper = new StdIODumper(new TypeUsageInformationEmpty());
-
-        // We insert a fake NOP right at the start, so that we always know that each operation has a valid
-        // parent.  This sentinel assumption is used when inserting try { catch blocks.
-        instrs.add(JVMInstr.NOP.createOperation(null, cp, -1));
+        Map<Integer, Integer> lutByOffset = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> lutByIdx = new HashMap<Integer, Integer>();
+        int idx2 = 0;
+        int offset2 = -1;
         lutByIdx.put(0, -1);
         lutByOffset.put(-1, 0);
-        do {
-            JVMInstr instr = JVMInstr.find(bdCode.getS1At(0));
-            Op01WithProcessedDataAndByteJumps oc = instr.createOperation(bdCode, cp, offset);
-            int length = oc.getInstructionLength();
-            lutByOffset.put(offset, idx);
-            lutByIdx.put(idx, offset);
-            instrs.add(oc);
-            offset += length;
-            bdCode.advance(length);
-            idx++;
-        } while (offset < codeLength);
+        for (Op01WithProcessedDataAndByteJumps op : instrs) {
+            idx2++;
+            offset2 += op.getInstructionLength();
+            lutByOffset.put(offset2, idx2);
+            lutByIdx.put(idx2, offset2);
+        }
 
         List<Op01WithProcessedDataAndByteJumps> op1list = ListFactory.newList();
         List<Op02WithProcessedDataAndRefs> op2list = ListFactory.newList();
@@ -234,6 +246,7 @@ public class CodeAnalyser {
             exceptions.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
         }
 
+        long codeLength = originalCodeAttribute.getCodeLength();
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, dcCommonState, options);
         lutByOffset = null; // No longer valid.
 
