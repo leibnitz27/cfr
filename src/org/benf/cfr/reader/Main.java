@@ -143,6 +143,11 @@ public class Main {
             System.exit(1);
         }
 
+        if (options.optionIsSet(OptionsImpl.HELP) || options.getFileName() == null) {
+            getOptParser.showHelp(OptionsImpl.getFactory(), options, OptionsImpl.HELP);
+            return;
+        }
+
         DCCommonState dcCommonState = new DCCommonState(options);
         String path = options.getFileName();
         if (dcCommonState.isJar(path)) {

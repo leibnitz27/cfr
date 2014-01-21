@@ -29,6 +29,11 @@ public class OptionsImpl implements Options {
         public String getRangeDescription() {
             return "int >= 0";
         }
+
+        @Override
+        public String getDefaultValue() {
+            return "0";
+        }
     };
     private static final OptionDecoder<Troolean> defaultNeitherTrooleanDecoder = new OptionDecoder<Troolean>() {
         @Override
@@ -40,6 +45,11 @@ public class OptionsImpl implements Options {
         @Override
         public String getRangeDescription() {
             return "boolean";
+        }
+
+        @Override
+        public String getDefaultValue() {
+            return null;
         }
     };
     private static final OptionDecoder<Boolean> defaultTrueBooleanDecoder = new OptionDecoder<Boolean>() {
@@ -53,6 +63,11 @@ public class OptionsImpl implements Options {
         public String getRangeDescription() {
             return "boolean";
         }
+
+        @Override
+        public String getDefaultValue() {
+            return "true";
+        }
     };
     private static final OptionDecoder<Boolean> defaultFalseBooleanDecoder = new OptionDecoder<Boolean>() {
         @Override
@@ -65,6 +80,11 @@ public class OptionsImpl implements Options {
         public String getRangeDescription() {
             return "boolean";
         }
+
+        @Override
+        public String getDefaultValue() {
+            return "false";
+        }
     };
     private static final OptionDecoder<String> defaultNullStringDecoder = new OptionDecoder<String>() {
         @Override
@@ -74,8 +94,14 @@ public class OptionsImpl implements Options {
 
         @Override
         public String getRangeDescription() {
-            return "";
+            return null;
         }
+
+        @Override
+        public String getDefaultValue() {
+            return null;
+        }
+
     };
 
     private static class VersionSpecificDefaulter implements OptionDecoderParam<Boolean, ClassFileVersion> {
@@ -99,82 +125,128 @@ public class OptionsImpl implements Options {
         public String getRangeDescription() {
             return "boolean";
         }
+
+        @Override
+        public String getDefaultValue() {
+            return "" + resultIfGreaterThanOrEqual + " if class file from version " + versionGreaterThanOrEqual + " or greater";
+        }
+
     }
 
+    private static final String CFR_WEBSITE = "http://www.benf.org/other/cfr/";
+
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGBUFFER = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "stringbuffer", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, false));
+            "stringbuffer", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, false),
+            "Convert new Stringbuffer().add.add.add to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGBUILDER = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "stringbuilder", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
+            "stringbuilder", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
+            "Convert new Stringbuilder().add.add.add to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ENUM_SWITCH = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "decodeenumswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
+            "decodeenumswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
+            "Re-sugar switch on enum - see " + CFR_WEBSITE + "switch-on-enum.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ENUM_SUGAR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "sugarenums", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
+            "sugarenums", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
+            "Re-sugar enums - see " + CFR_WEBSITE + "how-are-enums-implemented.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> STRING_SWITCH = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true));
+            "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true),
+            "Re-sugar switch on String - see " + CFR_WEBSITE + "java7switchonstring.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ARRAY_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
+            "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
+            "Re-sugar array based iteration.");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> COLLECTION_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true));
+            "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
+            "Re-sugar collection based iteration");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> REWRITE_LAMBDAS = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "decodelambdas", new VersionSpecificDefaulter(ClassFileVersion.JAVA_8, true));
+            "decodelambdas", new VersionSpecificDefaulter(ClassFileVersion.JAVA_8, true),
+            "Re-build lambda functions");
     public static final PermittedOptionProvider.Argument<Boolean> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean>(
-            "innerclasses", defaultTrueBooleanDecoder);
+            "innerclasses", defaultTrueBooleanDecoder,
+            "Decompile innter classes");
     public static final PermittedOptionProvider.Argument<Boolean> HIDE_UTF8 = new PermittedOptionProvider.Argument<Boolean>(
-            "hideutf", defaultTrueBooleanDecoder);
+            "hideutf", defaultTrueBooleanDecoder,
+            "Hide UTF8 characters - quote them instead of showing the raw characters");
     public static final PermittedOptionProvider.Argument<Boolean> HIDE_LONGSTRINGS = new PermittedOptionProvider.Argument<Boolean>(
-            "hidelongstrings", defaultFalseBooleanDecoder);
+            "hidelongstrings", defaultFalseBooleanDecoder,
+            "Hide very long strings - useful if obfuscators have placed fake code in strings");
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_BOILERPLATE = new PermittedOptionProvider.Argument<Boolean>(
-            "removeboilerplate", defaultTrueBooleanDecoder);
+            "removeboilerplate", defaultTrueBooleanDecoder,
+            "Remove boilderplate functions - constructor boilerplate, lambda deserialisation etc");
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_INNER_CLASS_SYNTHETICS = new PermittedOptionProvider.Argument<Boolean>(
-            "removeinnerclasssynthetics", defaultTrueBooleanDecoder);
+            "removeinnerclasssynthetics", defaultTrueBooleanDecoder,
+            "Remove (where possible) implicit outer class references in inner classes");
     public static final PermittedOptionProvider.Argument<Boolean> HIDE_BRIDGE_METHODS = new PermittedOptionProvider.Argument<Boolean>(
-            "hidebridgemethods", defaultTrueBooleanDecoder);
+            "hidebridgemethods", defaultTrueBooleanDecoder,
+            "Hide bridge methods");
     public static final PermittedOptionProvider.Argument<Boolean> LIFT_CONSTRUCTOR_INIT = new PermittedOptionProvider.Argument<Boolean>(
-            "liftconstructorinit", defaultTrueBooleanDecoder);
+            "liftconstructorinit", defaultTrueBooleanDecoder,
+            "Lift initialisation code common to all constructors into member initialisation");
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_DEAD_METHODS = new PermittedOptionProvider.Argument<Boolean>(
-            "removedeadmethods", defaultTrueBooleanDecoder);
+            "removedeadmethods", defaultTrueBooleanDecoder,
+            "Remove pointless methods - default constructor etc");
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_BAD_GENERICS = new PermittedOptionProvider.Argument<Boolean>(
-            "removebadgenerics", defaultTrueBooleanDecoder);
+            "removebadgenerics", defaultTrueBooleanDecoder,
+            "Hide generics where we've obviously got it wrong, and fallback to non-generic");
     public static final PermittedOptionProvider.Argument<Boolean> SUGAR_ASSERTS = new PermittedOptionProvider.Argument<Boolean>(
-            "sugarasserts", defaultTrueBooleanDecoder);
+            "sugarasserts", defaultTrueBooleanDecoder,
+            "Re-sugar assert calls");
     public static final PermittedOptionProvider.Argument<Boolean> SUGAR_BOXING = new PermittedOptionProvider.Argument<Boolean>(
-            "sugarboxing", defaultTrueBooleanDecoder);
+            "sugarboxing", defaultTrueBooleanDecoder,
+            "Where possible, remove pointless boxing wrappers");
     public static final PermittedOptionProvider.Argument<Boolean> SHOW_CFR_VERSION = new PermittedOptionProvider.Argument<Boolean>(
-            "showversion", defaultTrueBooleanDecoder);
-    public static final PermittedOptionProvider.Argument<Boolean> HIDE_CASTS = new PermittedOptionProvider.Argument<Boolean>(
-            "hidecasts", defaultTrueBooleanDecoder);
+            "showversion", defaultTrueBooleanDecoder,
+            "Show CFR version used in header (handy to turn off when regression testing)");
     public static final PermittedOptionProvider.Argument<Boolean> DECODE_FINALLY = new PermittedOptionProvider.Argument<Boolean>(
-            "decodefinally", defaultTrueBooleanDecoder);
+            "decodefinally", defaultTrueBooleanDecoder,
+            "Re-sugar finally statements");
     public static final PermittedOptionProvider.Argument<Boolean> TIDY_MONITORS = new PermittedOptionProvider.Argument<Boolean>(
-            "tidymonitors", defaultTrueBooleanDecoder);
+            "tidymonitors", defaultTrueBooleanDecoder,
+            "Remove support code for monitors - eg catch blocks just to exit a monitor");
     public static final PermittedOptionProvider.Argument<Boolean> COMMENT_MONITORS = new PermittedOptionProvider.Argument<Boolean>(
-            "commentmonitors", defaultFalseBooleanDecoder);
+            "commentmonitors", defaultFalseBooleanDecoder,
+            "Replace monitors with comments - useful if we're completely confused");
     public static final PermittedOptionProvider.Argument<Boolean> LENIENT = new PermittedOptionProvider.Argument<Boolean>(
-            "lenient", defaultFalseBooleanDecoder);
+            "lenient", defaultFalseBooleanDecoder,
+            "Be a bit more lenient in situations where we'd normally throw an exception"
+    );
     public static final PermittedOptionProvider.Argument<Boolean> DUMP_CLASS_PATH = new PermittedOptionProvider.Argument<Boolean>(
-            "dumpclasspath", defaultFalseBooleanDecoder);
+            "dumpclasspath", defaultFalseBooleanDecoder,
+            "Dump class path for debugging purposes");
     public static final PermittedOptionProvider.Argument<Boolean> DECOMPILER_COMMENTS = new PermittedOptionProvider.Argument<Boolean>(
-            "comments", defaultTrueBooleanDecoder);
+            "comments", defaultTrueBooleanDecoder,
+            "Output comments describing decompiler status, fallback flags etc");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Troolean>(
-            "forcetopsort", defaultNeitherTrooleanDecoder);
+            "forcetopsort", defaultNeitherTrooleanDecoder,
+            "Force basic block sorting.  Usually not necessary for code emitted directly from javac, but required in the case of obfuscation (or dex2jar!).  Will be enabled in recovery.");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_RET_PROPAGATE = new PermittedOptionProvider.Argument<Troolean>(
-            "forceretpropagate", defaultNeitherTrooleanDecoder);
+            "forceretpropagate", defaultNeitherTrooleanDecoder,
+            "Force returns to be emitted as early as possible, at site which jumps to them");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean>(
-            "forceexceptionprune", defaultNeitherTrooleanDecoder);
+            "forceexceptionprune", defaultNeitherTrooleanDecoder,
+            "Try to extend and merge exceptions more aggressively");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_AGGRESSIVE_EXCEPTION_AGG = new PermittedOptionProvider.Argument<Troolean>(
-            "aexagg", defaultNeitherTrooleanDecoder);
+            "aexagg", defaultNeitherTrooleanDecoder,
+            "Remove nested exception handlers if they don't change semantics");
     public static final PermittedOptionProvider.Argument<String> OUTPUT_DIR = new PermittedOptionProvider.Argument<String>(
-            "outputdir", defaultNullStringDecoder);
+            "outputdir", defaultNullStringDecoder,
+            "Decompile to files in [directory]");
     public static final PermittedOptionProvider.Argument<Integer> SHOWOPS = new PermittedOptionProvider.Argument<Integer>(
-            "showops", default0intDecoder);
+            "showops", default0intDecoder,
+            "Show some (cryptic!) debug");
     public static final PermittedOptionProvider.Argument<Boolean> SILENT = new PermittedOptionProvider.Argument<Boolean>(
-            "silent", defaultFalseBooleanDecoder);
+            "silent", defaultFalseBooleanDecoder,
+            "Don't display state while decompiling");
     public static final PermittedOptionProvider.Argument<Boolean> RECOVER = new PermittedOptionProvider.Argument<Boolean>(
-            "recover", defaultTrueBooleanDecoder);
+            "recover", defaultTrueBooleanDecoder,
+            "Allow more and more aggressive options to be set if decompilation fails");
     public static final PermittedOptionProvider.Argument<Boolean> ECLIPSE = new PermittedOptionProvider.Argument<Boolean>(
-            "eclipse", defaultTrueBooleanDecoder);
+            "eclipse", defaultTrueBooleanDecoder,
+            "Enable transformations to handle eclipse code better");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> OVERRIDES = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "override", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true));
+            "override", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true),
+            "Generate @Override annotations (if method is seen to implement interface method, or override a base class method)");
+    public static final PermittedOptionProvider.Argument<String> HELP = new PermittedOptionProvider.Argument<String>(
+            "help", defaultNullStringDecoder,
+            "Show help for a given parameter");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -224,20 +296,20 @@ public class OptionsImpl implements Options {
             return ListFactory.newList(SHOWOPS, ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
-                    REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, HIDE_CASTS, SHOW_CFR_VERSION,
+                    REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
-                    FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS);
+                    FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS, HELP);
         }
 
         @Override
         public Options create(List<String> args, Map<String, String> opts) {
-            String fname;
+            String fname = null;
             String methodName = null;
             switch (args.size()) {
                 case 0:
-                    throw new BadParametersException("Insufficient parameters", this);
+                    break;
                 case 1:
                     fname = args.get(0);
                     break;

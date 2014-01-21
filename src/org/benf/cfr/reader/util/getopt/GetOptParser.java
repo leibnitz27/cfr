@@ -2,6 +2,7 @@ package org.benf.cfr.reader.util.getopt;
 
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 
 import java.util.Arrays;
 import java.util.List;
@@ -79,6 +80,20 @@ public class GetOptParser {
 
         Map<String, String> processed = process(Arrays.copyOfRange(args, start, args.length), getOptSinkFactory);
         return getOptSinkFactory.create(unFlagged, processed);
+    }
+
+    public <T> void showHelp(PermittedOptionProvider permittedOptionProvider, Options options, PermittedOptionProvider.ArgumentParam<String, Void> helpArg) {
+        System.err.println("CFR " + MiscConstants.CFR_VERSION + "\n");
+        String relevantOption = options.getOption(helpArg);
+        List<? extends PermittedOptionProvider.ArgumentParam<?, ?>> possible = permittedOptionProvider.getArguments();
+        for (PermittedOptionProvider.ArgumentParam<?, ?> opt : possible) {
+            if (opt.getName().equals(relevantOption)) {
+                System.err.println(opt.describe());
+                return;
+            }
+        }
+        System.err.println(getHelp(permittedOptionProvider));
+        System.err.println("No such argument '" + relevantOption + "'");
     }
 
     private Map<String, String> process(String[] in, PermittedOptionProvider optionProvider) {

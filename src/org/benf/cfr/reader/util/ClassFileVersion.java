@@ -9,10 +9,16 @@ package org.benf.cfr.reader.util;
 public class ClassFileVersion {
     private final int major;
     private final int minor;
+    private final String name;
 
     public ClassFileVersion(int major, int minor) {
+        this(major, minor, null);
+    }
+
+    public ClassFileVersion(int major, int minor, String name) {
         this.major = major;
         this.minor = minor;
+        this.name = name;
     }
 
     public boolean equalOrLater(ClassFileVersion other) {
@@ -28,12 +34,14 @@ public class ClassFileVersion {
 
     @Override
     public String toString() {
-        return "" + major + "." + minor;
+        return "" + major + "." + minor + (name == null ? "" : (" (Java " + name + ")"));
     }
 
-    public static ClassFileVersion JAVA_1_4 = new ClassFileVersion(48, 0); // 48->49
-    public static ClassFileVersion JAVA_5 = new ClassFileVersion(49, 0); // 48->49
-    public static ClassFileVersion JAVA_6 = new ClassFileVersion(50, 0); // 48->49
-    public static ClassFileVersion JAVA_7 = new ClassFileVersion(51, 0); // 48->49
-    public static ClassFileVersion JAVA_8 = new ClassFileVersion(51, 0); // 48->49
+    public static ClassFileVersion JAVA_1_2 = new ClassFileVersion(46, 0, "1.2");
+    public static ClassFileVersion JAVA_1_3 = new ClassFileVersion(47, 0, "1.3");
+    public static ClassFileVersion JAVA_1_4 = new ClassFileVersion(48, 0, "1.4");
+    public static ClassFileVersion JAVA_5 = new ClassFileVersion(49, 0, "5");
+    public static ClassFileVersion JAVA_6 = new ClassFileVersion(50, 0, "6");
+    public static ClassFileVersion JAVA_7 = new ClassFileVersion(51, 0, "7");
+    public static ClassFileVersion JAVA_8 = new ClassFileVersion(52, 0, "8");
 }
