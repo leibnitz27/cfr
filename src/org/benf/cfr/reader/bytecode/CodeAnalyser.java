@@ -283,11 +283,12 @@ public class CodeAnalyser {
         // expect all parents of opcodes to have been processed in a DFS.
         Op02WithProcessedDataAndRefs.unlinkUnreachable(op2list);
 
-        // Create a non final version...
-        final VariableFactory variableFactory = new VariableFactory(method);
 
         // Discover slot re-use, infer invisible constructor parameters, etc.
-        Op02WithProcessedDataAndRefs.discoverStorageLiveness(method, op2list);
+        Op02WithProcessedDataAndRefs.discoverStorageLiveness(method, comments, op2list);
+
+        // Create a non final version...
+        final VariableFactory variableFactory = new VariableFactory(method);
 
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState);
 

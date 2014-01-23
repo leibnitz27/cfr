@@ -38,6 +38,8 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final boolean varargs;
     private final String name;
     private final ClassFile classFile;
+    // Synthetic args are arguments which are not VISIBLY present in the method prototype at all, but
+    // are nonetheless used by the method body.
     private final List<Slot> syntheticArgs = ListFactory.newList();
     private transient List<LocalVariable> parameterLValues = null;
 
@@ -93,7 +95,6 @@ public class MethodPrototype implements TypeUsageCollectable {
         }
         d.print(methName).print("(");
         /* We don't get a vararg type to change itself, as it's a function of the method, not the type
-         *
          */
 
         List<LocalVariable> parameterLValues = getComputedParameters();
@@ -128,12 +129,52 @@ public class MethodPrototype implements TypeUsageCollectable {
         return parameterLValues;
     }
 
-    public void setSyntheticConstructorParameters(Map<Integer, JavaTypeInstance> synthetics) {
+    public void setSyntheticConstructorParameters(Method.MethodConstructor constructorFlag, DecompilerComments comments, Map<Integer, JavaTypeInstance> synthetics) {
         syntheticArgs.clear();
+
+        int offset = 0;
+        switch (constructorFlag) {
+            case ENUM_CONSTRUCTOR: {
+                offset = 3;
+                break;
+            }
+            default: {
+                if (isInstanceMethod()) offset = 1;
+            }
+        }
+
+        List<Slot> tmp = ListFactory.newList();
         for (Map.Entry<Integer, JavaTypeInstance> entry : synthetics.entrySet()) {
-            syntheticArgs.add(new Slot(entry.getValue(), entry.getKey()));
+            tmp.add(new Slot(entry.getValue(), entry.getKey()));
+        }
+
+        if (!tmp.isEmpty()) {
+            Slot test = tmp.get(0);
+            if (offset != test.getIdx()) {
+                /*
+                 * Synthetics have come through out of location - we have to realign.
+                 *
+                 * The problem here is that we have a constructor signature which does not match
+                 * the usages of the parameters.  See PluginRunner (in CFR!) for an example.
+                 */
+                List<Slot> replacements = ListFactory.newList();
+                for (Slot synthetic : tmp) {
+                    JavaTypeInstance type = synthetic.getJavaTypeInstance();
+                    Slot replacement = new Slot(type, offset);
+                    offset += type.getStackType().getComputationCategory();
+                    replacements.add(replacement);
+                }
+                syntheticArgs.addAll(replacements);
+                comments.addComment(DecompilerComment.PARAMETER_CORRUPTION);
+            } else {
+                syntheticArgs.addAll(tmp);
+            }
         }
     }
+
+//    public List<Slot> getSyntheticArgs() {
+//        return syntheticArgs;
+//    }
 
     public Map<Slot, SSAIdent> collectInitialSlotUsage(Method.MethodConstructor constructorFlag, SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
         Map<Slot, SSAIdent> res = MapFactory.newLinkedMap();
@@ -153,17 +194,19 @@ public class MethodPrototype implements TypeUsageCollectable {
                 if (instanceMethod) {
                     Slot tgt = new Slot(classFile.getClassType(), 0);
                     res.put(tgt, ssaIdentifierFactory.getIdent(tgt));
+                    offset = 1;
                 }
-                offset = instanceMethod ? 1 : 0;
                 break;
             }
         }
-        for (Slot synthetic : syntheticArgs) {
-            if (offset != synthetic.getIdx()) {
-                throw new IllegalStateException("Synthetic arg - offset is " + offset + ", but got " + synthetic.getIdx());
+        if (!syntheticArgs.isEmpty()) {
+            for (Slot synthetic : syntheticArgs) {
+                if (offset != synthetic.getIdx()) {
+                    throw new IllegalStateException("Synthetic arg - offset is " + offset + ", but got " + synthetic.getIdx());
+                }
+                res.put(synthetic, ssaIdentifierFactory.getIdent(synthetic));
+                offset += synthetic.getJavaTypeInstance().getStackType().getComputationCategory();
             }
-            res.put(synthetic, ssaIdentifierFactory.getIdent(synthetic));
-            offset += synthetic.getJavaTypeInstance().getStackType().getComputationCategory();
         }
         for (JavaTypeInstance arg : args) {
             Slot tgt = new Slot(arg, offset);
@@ -187,6 +230,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (constructorFlag == Method.MethodConstructor.ENUM_CONSTRUCTOR) {
             offset += 2;
         } else {
+            // TODO : It's not a valid assumption that synthetic args are at the front!
             for (Slot synthetic : syntheticArgs) {
                 JavaTypeInstance typeInstance = synthetic.getJavaTypeInstance();
                 parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true), false));

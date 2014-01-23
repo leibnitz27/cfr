@@ -1363,7 +1363,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return;
     }
 
-    public static void assignSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements) {
+    private static void assignSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> statements) {
         assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements);
 
         /*
@@ -1392,7 +1392,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          * The (now known) missing arguments should be in the first available slots.
          * Add them to the method prototype, and re-scan.
          */
-        method.getMethodPrototype().setSyntheticConstructorParameters(missing);
+        method.getMethodPrototype().setSyntheticConstructorParameters(method.getConstructorFlag(), comments, missing);
 
         assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements);
     }
@@ -1401,6 +1401,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         /*
          * before we do anything, we need to generate identifiers for the parameters.
+         *
+         * The problem is if we have actual parameters, AND hidden synthetics - in this case
+         * we will mark our actual parameters as eliding our synthetics
          */
         Map<Slot, SSAIdent> idents = method.getMethodPrototype().collectInitialSlotUsage(method.getConstructorFlag(), ssaIdentifierFactory);
 
@@ -1570,10 +1573,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
-    public static void discoverStorageLiveness(Method method, List<Op02WithProcessedDataAndRefs> op2list) {
+    public static void discoverStorageLiveness(Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> op2list) {
         SSAIdentifierFactory<Slot> ssaIdentifierFactory = new SSAIdentifierFactory<Slot>();
 
-        assignSSAIdentifiers(ssaIdentifierFactory, method, op2list);
+        assignSSAIdentifiers(ssaIdentifierFactory, method, comments, op2list);
 
         removeUnusedSSAIdentifiers(ssaIdentifierFactory, method, op2list);
         // Now we've assigned SSA identifiers, we want to find, for each ident, the 'most encompassing'
