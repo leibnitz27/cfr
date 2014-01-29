@@ -5078,8 +5078,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement breakStatementTarget = statements.get(breakTarget);
         breakStatementTarget.markPostBlock(switchBlock);
         for (Op03SimpleStatement breakSource : breakStatementTarget.sources) {
-            if (breakSource.getJumpType().isUnknown()) {
-                ((JumpingStatement) breakSource.containedStatement).setJumpType(JumpType.BREAK);
+            if (breakSource.getBlockIdentifiers().contains(switchBlock)) {
+                if (breakSource.getJumpType().isUnknown()) {
+                    ((JumpingStatement) breakSource.containedStatement).setJumpType(JumpType.BREAK);
+                }
             }
         }
 
