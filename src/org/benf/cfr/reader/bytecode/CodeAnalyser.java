@@ -360,7 +360,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
 
-        //op03SimpleParseNodes = Op03SimpleStatement.removeRedundantTries(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.removeRedundantTries(op03SimpleParseNodes);
 
 
         Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
@@ -522,6 +522,13 @@ public class CodeAnalyser {
         // We need another pass of this to remove jumps which are next to each other except for nops
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
+        // BUT....
+        // After we've removed pointless jumps, let's possibly re-add them, so that the structure of
+        // try blocks doesn't end up with confusing jumps.  See ExceptionTest11.
+        // (this removal and re-adding may seem daft, (and it often is), but we normalise code
+        // and handle more cases by doing it).
+        Op03SimpleStatement.extractExceptionJumps(op03SimpleParseNodes);
+
         // Identify simple (nested) conditionals - note that this also generates ternary expressions,
         // if the conditional is simple enough.
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);

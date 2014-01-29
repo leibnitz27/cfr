@@ -273,7 +273,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private void replaceSingleSourceWith(Op03SimpleStatement oldSource, List<Op03SimpleStatement> newSources) {
-        if (!sources.remove(oldSource)) throw new ConfusedCFRException("Invalid source");
+        if (!sources.remove(oldSource)) {
+            throw new ConfusedCFRException("Invalid source");
+        }
         sources.addAll(newSources);
     }
 
@@ -1784,6 +1786,121 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
             }
 
+        }
+    }
+
+    /*
+     * Convert:
+     *
+     * try {
+     *   ...
+     *   goto x
+     * } catch (...) {
+     *   // either block ending in goto x, or returning block.
+     *   // essentially, either no forward exits, or last instruction is a forward exit to x.
+     * }
+     *
+     * to
+     * try {
+     *   ...
+     *   goto r; // (goto-out-of-try)
+     * } catch (...) {
+     *   ///
+     * }
+     * r:
+     * goto x << REDIRECT
+     *
+     *
+     */
+    private static void extractExceptionJumps(Op03SimpleStatement tryi, List<Op03SimpleStatement> in) {
+        List<Op03SimpleStatement> tryTargets = tryi.getTargets();
+        /*
+         * Require that at least one block ends in a forward jump to the same block depth as tryi,
+         * and that all others are either the same, or do not have a terminal forward jump.
+         */
+        Op03SimpleStatement uniqueForwardTarget = null;
+        Set<BlockIdentifier> relevantBlocks = SetFactory.newSet();
+        Op03SimpleStatement lastEnd = null;
+        int lpidx = 0;
+        for (Op03SimpleStatement tgt : tryTargets) {
+            BlockIdentifier block = getBlockStart(((lpidx++ == 0) ? tryi : tgt).getStatement());
+            if (block == null) return;
+            relevantBlocks.add(block);
+            Op03SimpleStatement lastStatement = getLastContiguousBlockStatement(block, in, tgt);
+            if (lastStatement == null) return;
+            if (lastStatement.getStatement().getClass() == GotoStatement.class) {
+                Op03SimpleStatement lastTgt = lastStatement.getTargets().get(0);
+                if (uniqueForwardTarget == null) {
+                    uniqueForwardTarget = lastTgt;
+                } else if (uniqueForwardTarget != lastTgt) return;
+            }
+            lastEnd = lastStatement;
+        }
+        if (uniqueForwardTarget == null) return;
+        /*
+         * We require that uniqueForwardTarget is in the same blocks as the original try
+         * instruction.
+         */
+        if (!uniqueForwardTarget.getBlockIdentifiers().equals(tryi.getBlockIdentifiers())) return;
+
+        /*
+         * Find the instruction linearly after the final block.
+         * If this is == uniqueForwardTarget, fine, mark those jumps as jumps out of try, and leave.
+         * Otherwise, make sure this doesn't have any sources IN relevantBlocks, and place REDIRECT here.
+         */
+        int idx = in.indexOf(lastEnd);
+        if (idx >= in.size() - 1) return;
+        Op03SimpleStatement next = in.get(idx + 1);
+        if (next == uniqueForwardTarget) {
+            return;
+            // handle.
+        }
+        for (Op03SimpleStatement source : next.getSources()) {
+            if (SetUtil.hasIntersection(source.getBlockIdentifiers(), relevantBlocks)) {
+                // Can't handle.
+                return;
+            }
+        }
+        List<Op03SimpleStatement> blockSources = ListFactory.newLinkedList();
+        for (Op03SimpleStatement source : uniqueForwardTarget.getSources()) {
+            if (SetUtil.hasIntersection(source.getBlockIdentifiers(), relevantBlocks)) {
+                blockSources.add(source);
+            }
+        }
+        Op03SimpleStatement indirect = new Op03SimpleStatement(next.getBlockIdentifiers(), new GotoStatement(), next.getIndex().justBefore());
+        for (Op03SimpleStatement source : blockSources) {
+            Statement srcStatement = source.getStatement();
+            if (srcStatement instanceof GotoStatement) {
+                ((GotoStatement) srcStatement).setJumpType(JumpType.GOTO_OUT_OF_TRY);
+            }
+            uniqueForwardTarget.removeSource(source);
+            source.replaceTarget(uniqueForwardTarget, indirect);
+            indirect.addSource(source);
+        }
+        indirect.addTarget(uniqueForwardTarget);
+        uniqueForwardTarget.addSource(indirect);
+        in.add(idx + 1, indirect);
+    }
+
+    private static BlockIdentifier getBlockStart(Statement statement) {
+        Class<?> clazz = statement.getClass();
+        if (clazz == TryStatement.class) {
+            TryStatement tryStatement = (TryStatement) statement;
+            return tryStatement.getBlockIdentifier();
+        } else if (clazz == CatchStatement.class) {
+            CatchStatement catchStatement = (CatchStatement) statement;
+            return catchStatement.getCatchBlockIdent();
+        } else if (clazz == FinallyStatement.class) {
+            FinallyStatement finallyStatement = (FinallyStatement) statement;
+            return finallyStatement.getFinallyBlockIdent();
+        }
+        return null;
+    }
+
+    public static void extractExceptionJumps(List<Op03SimpleStatement> in) {
+        List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
+        for (Op03SimpleStatement tryi : tries) {
+            extractExceptionJumps(tryi, in);
         }
     }
 
