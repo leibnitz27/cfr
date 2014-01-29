@@ -152,7 +152,19 @@ public class AssertRewriter {
                                         new BooleanOperation(
                                                 new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))),
                                                 wcm1.getConditionalExpressionWildcard("condition"),
-                                                BoolOp.AND), null),
+                                                BoolOp.AND), null
+                                ),
+                                new BeginBlock(null),
+                                new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
+                                new EndBlock(null)
+                        )),
+                        new CollectMatch("ass1b", new MatchSequence(
+                                new StructuredIf(
+                                        new NotOperation(
+                                                new BooleanOperation(new BooleanExpression(new LValueExpression(assertionStatic)),
+                                                        wcm1.getConditionalExpressionWildcard("condition"),
+                                                        BoolOp.OR)), null
+                                ),
                                 new BeginBlock(null),
                                 new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
                                 new EndBlock(null)
@@ -216,10 +228,11 @@ public class AssertRewriter {
 
         @Override
         public void collectStatement(String name, StructuredStatement statement) {
-            if (name.equals("ass1")) {
+            if (name.equals("ass1") || name.equals("ass1b")) {
                 StructuredIf ifStatement = (StructuredIf) statement;
                 ConditionalExpression condition = wcm.getConditionalExpressionWildcard("condition").getMatch();
-                condition = new NotOperation(condition).simplify();
+                if (name.equals("ass1")) condition = new NotOperation(condition);
+                condition = condition.simplify();
                 StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(condition));
                 ifStatement.getContainer().replaceContainedStatement(structuredAssert);
             } else if (name.equals("ass2")) {
