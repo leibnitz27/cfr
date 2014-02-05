@@ -315,6 +315,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.index = index;
     }
 
+    /*
+     * TODO : This is gross.
+     */
     private void markBlockStatement(BlockIdentifier blockIdentifier, Op03SimpleStatement lastInBlock, Op03SimpleStatement blockEnd, List<Op03SimpleStatement> statements) {
         if (thisComparisonBlock != null) {
             throw new ConfusedCFRException("Statement marked as the start of multiple blocks");
@@ -1006,6 +1009,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static void replaceReturningIf(Op03SimpleStatement ifStatement, boolean aggressive) {
         if (!(ifStatement.containedStatement.getClass() == IfStatement.class)) return;
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
+        if (ifStatement.getTargets().size() != 2) {
+            int x = 1;
+        }
         Op03SimpleStatement tgt = ifStatement.getTargets().get(1);
         final Op03SimpleStatement origtgt = tgt;
         boolean requireJustOneSource = !aggressive;
@@ -2349,11 +2355,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     Statement targetInnerStatement = jumpingStatement.getJumpTarget();
                     Op03SimpleStatement targetStatement = (Op03SimpleStatement) targetInnerStatement.getContainer();
                     // TODO : Should we be checking if this is a 'breakable' block?
-                    if (targetStatement.thisComparisonBlock != null) {  // Jumps to the comparison test of a WHILE
-                        // Continue loopBlock, IF this statement is INSIDE that block.
-                        if (BlockIdentifier.blockIsOneOf(targetStatement.thisComparisonBlock, statement.containedInBlocks)) {
-                            jumpingStatement.setJumpType(JumpType.CONTINUE);
-                            continue test;
+                    if (targetStatement.thisComparisonBlock != null) {
+                        BlockType blockType = targetStatement.thisComparisonBlock.getBlockType();
+                        switch (blockType) {
+                            default: // hack, figuring out.
+                                // Jumps to the comparison test of a WHILE
+                                // Continue loopBlock, IF this statement is INSIDE that block.
+                                if (BlockIdentifier.blockIsOneOf(targetStatement.thisComparisonBlock, statement.containedInBlocks)) {
+                                    jumpingStatement.setJumpType(JumpType.CONTINUE);
+                                    continue test;
+                                }
+                                ;
                         }
                     }
                     if (targetStatement.getBlockStarted() != null &&
@@ -2532,25 +2544,161 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             considerAsPathologicalLoop(start, statements);
         }
 
-        boolean success = false;
-        do {
-            success = false;
-            List<Op03SimpleStatement> backjumps = Functional.filter(statements, new HasBackJump());
-            List<Op03SimpleStatement> starts = Functional.uniqAll(Functional.map(backjumps, new GetBackJump()));
-            /* Each of starts is the target of a back jump.
-             * Consider each of these seperately, and for each of these verify
-             * that it contains a forward jump to something which is not a parent except through p.
-             */
-            Map<BlockIdentifier, Op03SimpleStatement> blockEndsCache = MapFactory.newMap();
-            Collections.sort(starts, new CompareByIndex());
+        List<Op03SimpleStatement> backjumps = Functional.filter(statements, new HasBackJump());
+        List<Op03SimpleStatement> starts = Functional.uniqAll(Functional.map(backjumps, new GetBackJump()));
+        /* Each of starts is the target of a back jump.
+         * Consider each of these seperately, and for each of these verify
+         * that it contains a forward jump to something which is not a parent except through p.
+         */
+        Map<BlockIdentifier, Op03SimpleStatement> blockEndsCache = MapFactory.newMap();
+        Collections.sort(starts, new CompareByIndex());
 
-            for (Op03SimpleStatement start : starts) {
-                if (considerAsWhileLoopStart(method, start, statements, blockIdentifierFactory, blockEndsCache) ||
-                        considerAsDoLoopStart(start, statements, blockIdentifierFactory, blockEndsCache)) {
-                    success = true;   // consider relooping.  Now, don't as it breaks stuff!
+        List<LoopResult> loopResults = ListFactory.newList();
+        Set<BlockIdentifier> relevantBlocks = SetFactory.newSet();
+        for (Op03SimpleStatement start : starts) {
+            BlockIdentifier blockIdentifier = considerAsWhileLoopStart(method, start, statements, blockIdentifierFactory, blockEndsCache);
+            if (blockIdentifier == null) {
+                blockIdentifier = considerAsDoLoopStart(start, statements, blockIdentifierFactory, blockEndsCache);
+            }
+            if (blockIdentifier != null) {
+                loopResults.add(new LoopResult(blockIdentifier, start));
+                relevantBlocks.add(blockIdentifier);
+            }
+        }
+
+        if (loopResults.isEmpty()) return;
+        Collections.reverse(loopResults);
+        /*
+         * If we have any overlapping but not nested loops, that's because the earlier one(s)
+         * are not properly exited, just continued over (see LoopTest48).
+         *
+         * Need to extend loop bodies and transform whiles into continues.
+         */
+        fixLoopOverlaps(statements, loopResults, relevantBlocks);
+    }
+
+    /* For each block, if the start is inside other blocks, but the last backjump is
+     * NOT, then we need to convert the last backjump into a continue / conditional continue,
+     * and add a while (true). :P
+     */
+    private static void fixLoopOverlaps(List<Op03SimpleStatement> statements, List<LoopResult> loopResults, Set<BlockIdentifier> relevantBlocks) {
+
+        Map<BlockIdentifier, List<BlockIdentifier>> requiredExtents = MapFactory.newLazyMap(new UnaryFunction<BlockIdentifier, List<BlockIdentifier>>() {
+            @Override
+            public List<BlockIdentifier> invoke(BlockIdentifier arg) {
+                return ListFactory.newList();
+            }
+        });
+
+        Map<BlockIdentifier, Op03SimpleStatement> lastForBlock = MapFactory.newMap();
+
+        for (LoopResult loopResult : loopResults) {
+            final Op03SimpleStatement start = loopResult.blockStart;
+            final BlockIdentifier testBlockIdentifier = loopResult.blockIdentifier;
+
+            Set<BlockIdentifier> startIn = SetUtil.intersectionOrNull(start.getBlockIdentifiers(), relevantBlocks);
+            List<Op03SimpleStatement> backSources = Functional.filter(start.sources, new Predicate<Op03SimpleStatement>() {
+                @Override
+                public boolean test(Op03SimpleStatement in) {
+                    return in.getBlockIdentifiers().contains(testBlockIdentifier) &&
+                            in.getIndex().isBackJumpTo(start);
+                }
+            });
+
+            if (backSources.isEmpty()) continue;
+            Collections.sort(backSources, new CompareByIndex());
+            Op03SimpleStatement lastBackSource = backSources.get(backSources.size() - 1);
+            /*
+             * If start is in a relevantBlock that an end isn't, then THAT BLOCK needs to be extended to at least the end
+             * of testBlockIdentifier.
+             */
+            lastForBlock.put(testBlockIdentifier, lastBackSource);
+            if (startIn == null) continue;
+
+            Set<BlockIdentifier> backIn = SetUtil.intersectionOrNull(lastBackSource.getBlockIdentifiers(), relevantBlocks);
+            if (backIn == null) continue;
+            if (!backIn.containsAll(startIn)) {
+                // NB Not ordered - will this bite me?  Shouldn't.
+                Set<BlockIdentifier> startMissing = SetFactory.newSet(startIn);
+                startMissing.removeAll(backIn);
+                for (BlockIdentifier missing : startMissing) {
+                    requiredExtents.get(missing).add(testBlockIdentifier);
                 }
             }
-        } while (false);
+        }
+
+        if (requiredExtents.isEmpty()) return;
+
+        // RequiredExtents[key] should be extended to the last of VALUE.
+        List<BlockIdentifier> extendBlocks = ListFactory.newList(requiredExtents.keySet());
+        Collections.sort(extendBlocks, new Comparator<BlockIdentifier>() {
+            @Override
+            public int compare(BlockIdentifier blockIdentifier, BlockIdentifier blockIdentifier2) {
+                return blockIdentifier.getIndex() - blockIdentifier2.getIndex();  // reverse order.
+            }
+        });
+
+        Comparator<Op03SimpleStatement> comparator = new CompareByIndex();
+
+        // NB : we're deliberately not using key ordering.
+        for (BlockIdentifier extendThis : extendBlocks) {
+            List<BlockIdentifier> possibleEnds = requiredExtents.get(extendThis);
+            if (possibleEnds.isEmpty()) continue;
+            // Find last block.
+            // We re-fetch because we might have updated the possibleEndOps.
+            List<Op03SimpleStatement> possibleEndOps = ListFactory.newList();
+            for (BlockIdentifier end : possibleEnds) {
+                possibleEndOps.add(lastForBlock.get(end));
+            }
+            Collections.sort(possibleEndOps, comparator);
+
+            Op03SimpleStatement extendTo = possibleEndOps.get(possibleEndOps.size() - 1);
+            /*
+             * Need to extend block 'extendThis' to 'extendTo'.
+             * We also need to rewrite any terminal backjumps as continues, and
+             * add a 'while true' (or block to that effect).
+             */
+            Op03SimpleStatement oldEnd = lastForBlock.get(extendThis);
+
+            int start = statements.indexOf(oldEnd);
+            int end = statements.indexOf(extendTo);
+
+            for (int x = start; x <= end; ++x) {
+                statements.get(x).getBlockIdentifiers().add(extendThis);
+            }
+            // Rewrite oldEnd appropriately.  Leave end of block dangling, we will fix it later.
+            rewriteEndLoopOverlapStatement(oldEnd, extendThis);
+        }
+    }
+
+    private static void rewriteEndLoopOverlapStatement(Op03SimpleStatement oldEnd, BlockIdentifier loopBlock) {
+        Statement statement = oldEnd.getStatement();
+        Class<?> clazz = statement.getClass();
+        if (clazz == WhileStatement.class) {
+            WhileStatement whileStatement = (WhileStatement) statement;
+            ConditionalExpression condition = whileStatement.getCondition();
+            if (oldEnd.targets.size() == 2) {
+                IfStatement repl = new IfStatement(condition);
+                repl.setKnownBlocks(loopBlock, null);
+                repl.setJumpType(JumpType.CONTINUE);
+                oldEnd.replaceStatement(repl);
+                if (oldEnd.thisComparisonBlock == loopBlock) {
+                    oldEnd.thisComparisonBlock = null;
+                }
+                return;
+            } else if (oldEnd.targets.size() == 1 && condition == null) {
+                GotoStatement repl = new GotoStatement();
+                repl.setJumpType(JumpType.CONTINUE);
+                oldEnd.replaceStatement(repl);
+                if (oldEnd.thisComparisonBlock == loopBlock) {
+                    oldEnd.thisComparisonBlock = null;
+                }
+                return;
+            }
+
+        } else {
+            int x = 1;
+        }
     }
 
     private static class HasBackJump implements Predicate<Op03SimpleStatement> {
@@ -2872,9 +3020,19 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return true;
     }
 
-    private static boolean considerAsDoLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
-                                                 BlockIdentifierFactory blockIdentifierFactory,
-                                                 Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
+    private static class LoopResult {
+        final BlockIdentifier blockIdentifier;
+        final Op03SimpleStatement blockStart;
+
+        private LoopResult(BlockIdentifier blockIdentifier, Op03SimpleStatement blockStart) {
+            this.blockIdentifier = blockIdentifier;
+            this.blockStart = blockStart;
+        }
+    }
+
+    private static BlockIdentifier considerAsDoLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
+                                                         BlockIdentifierFactory blockIdentifierFactory,
+                                                         Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
 
         final InstrIndex startIndex = start.getIndex();
         List<Op03SimpleStatement> backJumpSources = start.getSources();
@@ -2897,7 +3055,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             conditional = true;
             IfStatement ifStatement = (IfStatement) lastJump.containedStatement;
             if (ifStatement.getJumpTarget().getContainer() != start) {
-                return false;
+                return null;
             }
         }
 //        if (!conditional) return false;
@@ -2905,7 +3063,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         int startIdx = statements.indexOf(start);
         int endIdx = statements.indexOf(lastJump);
 
-        if (startIdx >= endIdx) return false;
+        if (startIdx >= endIdx) return null;
 
         BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(conditional ? BlockType.DOLOOP : BlockType.UNCONDITIONALDOLOOP);
 
@@ -2917,7 +3075,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             validateAndAssignLoopIdentifier(statements, startIdx, endIdx + 1, blockIdentifier, start);
         } catch (CannotPerformDecode e) {
             // Can't perform this optimisation.
-            return false;
+            return null;
         }
 
 
@@ -3062,8 +3220,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         postBlock.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, postBlock);
 
-        return true;
-
+        return blockIdentifier;
     }
 
     private static BlockIdentifier findOuterBlock(BlockIdentifier b1, BlockIdentifier b2, List<Op03SimpleStatement> statements) {
@@ -3090,10 +3247,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     * If so we've probably got a for/while loop.....
     * decode both as a while loop, we can convert it into a for later.
     */
-    private static boolean considerAsWhileLoopStart(final Method method,
-                                                    final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
-                                                    BlockIdentifierFactory blockIdentifierFactory,
-                                                    Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
+    private static BlockIdentifier considerAsWhileLoopStart(final Method method,
+                                                            final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
+                                                            BlockIdentifierFactory blockIdentifierFactory,
+                                                            Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
         final InstrIndex startIndex = start.getIndex();
         List<Op03SimpleStatement> backJumpSources = start.getSources();
         backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
@@ -3107,7 +3264,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (conditional == null) {
             // No conditional before we have a branch?  Probably a do { } while. 
             logger.info("Can't find a conditional");
-            return false;
+            return null;
         }
         // Now we've found our first conditional before a branch - is the target AFTER the last backJump?
         // Requires Debuggered conditionals.
@@ -3118,7 +3275,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          */
         List<Op03SimpleStatement> conditionalTargets = conditional.getTargets();
         /*
-         * This could be broken by a decompiler easily.  We need a transform state which
+         * This could be broken by an obfuscator easily.  We need a transform state which
          * normalises the code so the jump out is the explicit jump.
          * TODO : Could do this by finding which one of the targets of the condition is NOT reachable
          * TODO : by going back from each of the backJumpSources to conditional
@@ -3155,13 +3312,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // The conditional doesn't take us to after the last back jump, i.e. it's not a while {} loop.
             // ... unless it's an inner while loop continuing to a prior loop.
             if (loopBreak.getIndex().compareTo(startIndex) >= 0) {
-                return false;
+                return null;
             }
         }
 
         if (start != conditional) {
             // We'll have problems - there are actions taken inside the conditional.
-            return false;
+            return null;
         }
         int idxConditional = statements.indexOf(start);
 
@@ -3190,7 +3347,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Op03SimpleStatement startOfOuterLoop = statements.get(idxAfterEnd);
             if (startOfOuterLoop.thisComparisonBlock == null) {
                 // Boned.
-                return false;
+                return null;
             }
             // Find the END of this block.
             Op03SimpleStatement endOfOuter = postBlockCache.get(startOfOuterLoop.thisComparisonBlock);
@@ -3204,7 +3361,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // Mark instructions in the list between start and maybeEndLoop as being in this block.
         if (idxConditional >= idxAfterEnd) {
 //            throw new ConfusedCFRException("Can't decode block");
-            return false;
+            return null;
         }
         BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.WHILELOOP);
 
@@ -3216,7 +3373,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         try {
             lastIdx = validateAndAssignLoopIdentifier(statements, idxConditional + 1, idxAfterEnd, blockIdentifier, start);
         } catch (CannotPerformDecode e) {
-            return false;
+            return null;
         }
 
         Op03SimpleStatement lastInBlock = statements.get(lastIdx);
@@ -3241,7 +3398,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             statements.add(newAfterLast);
         }
 
-        return true;
+        return blockIdentifier;
     }
 
     private static int getFarthestReachableInRange(List<Op03SimpleStatement> statements, int start, int afterEnd) {

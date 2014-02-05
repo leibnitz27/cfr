@@ -86,11 +86,15 @@ public class GotoStatement extends JumpingStatement {
             return forStatement.getBlockIdentifier();
         } else {
             BlockIdentifier blockStarted = statement.getContainer().getBlockStarted();
-            if (blockStarted != null && blockStarted.getBlockType() == BlockType.UNCONDITIONALDOLOOP) {
-                return blockStarted;
-            } else {
-                throw new ConfusedCFRException("CONTINUE without a while " + statement.getClass());
+            if (blockStarted != null) {
+                switch (blockStarted.getBlockType()) {
+                    case UNCONDITIONALDOLOOP:
+                        return blockStarted;
+                    case DOLOOP:
+                        return blockStarted;
+                }
             }
+            throw new ConfusedCFRException("CONTINUE without a while " + statement.getClass());
         }
     }
 
