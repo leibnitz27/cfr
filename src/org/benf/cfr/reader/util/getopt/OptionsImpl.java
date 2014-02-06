@@ -247,6 +247,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<String> HELP = new PermittedOptionProvider.Argument<String>(
             "help", defaultNullStringDecoder,
             "Show help for a given parameter");
+    public static final PermittedOptionProvider.Argument<Boolean> ALLOW_CORRECTING = new PermittedOptionProvider.Argument<Boolean>(
+            "allowcorrecting", defaultTrueBooleanDecoder,
+            "Allow transformations which correct errors, potentially at the cost of altering emitted code behaviour.  An example would be removing impossible (in java!) exception handling - if this has any effect, a warning will be emitted.");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -300,7 +303,8 @@ public class OptionsImpl implements Options {
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
-                    FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS, HELP);
+                    FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
+                    ALLOW_CORRECTING, HELP);
         }
 
         @Override

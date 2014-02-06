@@ -13,6 +13,8 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
@@ -420,7 +422,7 @@ public class Op03Blocks {
         return Op03SimpleStatement.removeUnreachableCode(statements, true);
     }
 
-    public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements) {
+    public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements, final DecompilerComments comments, final Options options) {
 
         List<Block3> blocks = buildBasicBlocks(statements);
 
@@ -504,7 +506,44 @@ public class Op03Blocks {
 
         stripTryBlockAliases(outStatements, tryBlockAliases);
 
+        /*
+         * Strip illegal try backjumps - note that if this has effect, it may change the semantics of the outputted code
+         * so we must warn.
+         */
+        if (options.getOption(OptionsImpl.ALLOW_CORRECTING)) {
+            if (stripBackExceptions(outStatements)) {
+                comments.addComment(DecompilerComment.TRY_BACKEDGE_REMOVED);
+            }
+        }
+
         return Op03SimpleStatement.removeUnreachableCode(outStatements, true);
+    }
+
+    private static boolean stripBackExceptions(List<Op03SimpleStatement> statements) {
+        boolean res = false;
+        List<Op03SimpleStatement> tryStatements = Functional.filter(statements, new Op03SimpleStatement.ExactTypeFilter<TryStatement>(TryStatement.class));
+        for (Op03SimpleStatement statement : tryStatements) {
+            if (statement.getTargets().isEmpty()) continue;
+            Op03SimpleStatement fallThrough = statement.getTargets().get(0);
+            List<Op03SimpleStatement> backTargets = Functional.filter(statement.getTargets(), new Op03SimpleStatement.IsForwardJumpTo(statement.getIndex()));
+            boolean thisRes = false;
+            for (Op03SimpleStatement backTarget : backTargets) {
+                backTarget.removeSource(statement);
+                statement.removeTarget(backTarget);
+                thisRes = true;
+            }
+            /*
+             * Remove the try statement completely if all
+             */
+            if (thisRes) {
+                res = true;
+                List<Op03SimpleStatement> remainingTargets = statement.getTargets();
+                if (remainingTargets.size() == 1 && remainingTargets.get(0) == fallThrough) {
+                    statement.nopOut();
+                }
+            }
+        }
+        return res;
     }
 
     private static void patch(Block3 a, Block3 b) {

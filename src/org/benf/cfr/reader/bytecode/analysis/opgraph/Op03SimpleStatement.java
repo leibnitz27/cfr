@@ -2019,10 +2019,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return hitParent;
     }
 
-    private static class IsBackJumpTo implements Predicate<Op03SimpleStatement> {
+    public static class IsBackJumpTo implements Predicate<Op03SimpleStatement> {
         private final InstrIndex thisIndex;
 
-        private IsBackJumpTo(InstrIndex thisIndex) {
+        public IsBackJumpTo(InstrIndex thisIndex) {
             this.thisIndex = thisIndex;
         }
 
@@ -2032,10 +2032,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    private static class IsForwardJumpTo implements Predicate<Op03SimpleStatement> {
+    public static class IsForwardJumpTo implements Predicate<Op03SimpleStatement> {
         private final InstrIndex thisIndex;
 
-        private IsForwardJumpTo(InstrIndex thisIndex) {
+        public IsForwardJumpTo(InstrIndex thisIndex) {
             this.thisIndex = thisIndex;
         }
 

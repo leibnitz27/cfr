@@ -16,6 +16,7 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment PRUNE_EXCEPTIONS = new DecompilerComment("Enabled unnecessary exception pruning");
     public static DecompilerComment COMMENT_MONITORS = new DecompilerComment("Converted monitor instructions to comments");
     public static DecompilerComment PARAMETER_CORRUPTION = new DecompilerComment("WARNING - Possible parameter corruption");
+    public static DecompilerComment TRY_BACKEDGE_REMOVED = new DecompilerComment("WARNING - Removed back jump from a try to a catch block - possible behaviour change.");
 
     private final String comment;
     private final String summaryMessage;

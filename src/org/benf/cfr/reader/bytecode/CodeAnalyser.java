@@ -397,7 +397,7 @@ public class CodeAnalyser {
         if (options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, false);
-            op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes);
+            op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes, comments, options);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
             /*
