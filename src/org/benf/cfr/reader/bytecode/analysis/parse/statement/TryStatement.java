@@ -9,6 +9,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -62,7 +63,10 @@ public class TryStatement extends AbstractStatement {
         return exceptionGroup.getTryBlockIdentifier();
     }
 
-    @Override
+    public List<ExceptionGroup.Entry> getEntries() {
+        return exceptionGroup.getEntries();
+    }
+
     public boolean equivalentUnder(Object other, EquivalenceConstraint constraint) {
         return this.getClass() == other.getClass();
     }

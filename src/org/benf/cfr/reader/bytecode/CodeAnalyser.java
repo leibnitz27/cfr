@@ -108,14 +108,15 @@ public class CodeAnalyser {
         Options options = dcCommonState.getOptions();
 
         List<Op01WithProcessedDataAndByteJumps> instrs = getInstrs();
-        AnalysisResult res = getAnalysisOrWrapFail(instrs, dcCommonState, options, null);
+        AnalysisResult res = getAnalysisOrWrapFail(0, instrs, dcCommonState, options, null);
 
         if ((res.failed || res.hasErrorComment()) && options.getOption(OptionsImpl.RECOVER)) {
+            int passIdx = 1;
             BytecodeMeta bytecodeMeta = new BytecodeMeta(instrs, originalCodeAttribute);
             for (RecoveryOptions recoveryOptions : recoveryOptionsArr) {
                 RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
                 if (!applied.valid) continue;
-                AnalysisResult nextRes = getAnalysisOrWrapFail(instrs, dcCommonState, applied.options, applied.comments);
+                AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments);
                 if (nextRes != null) res = nextRes;
                 if (res.failed || res.hasErrorComment()) continue;
                 break;
@@ -154,9 +155,9 @@ public class CodeAnalyser {
         return instrs;
     }
 
-    private AnalysisResult getAnalysisOrWrapFail(List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState commonState, Options options, List<DecompilerComment> extraComments) {
+    private AnalysisResult getAnalysisOrWrapFail(int passIdx, List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState commonState, Options options, List<DecompilerComment> extraComments) {
         try {
-            AnalysisResult res = getAnalysisInner(instrs, commonState, options);
+            AnalysisResult res = getAnalysisInner(instrs, commonState, options, passIdx);
             if (extraComments != null) res.comments.addComments(extraComments);
             return res;
         } catch (RuntimeException e) {
@@ -169,8 +170,10 @@ public class CodeAnalyser {
 
     /*
      * Note that the options passed in here only apply to this function - don't pass around.
+     *
+     * passIdx is only useful for breakpointing.
      */
-    private AnalysisResult getAnalysisInner(List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState dcCommonState, Options options) {
+    private AnalysisResult getAnalysisInner(List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState dcCommonState, Options options, int passIdx) {
 
 
         boolean willSort = options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE;

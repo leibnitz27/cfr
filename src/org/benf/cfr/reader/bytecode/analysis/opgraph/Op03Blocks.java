@@ -523,14 +523,21 @@ public class Op03Blocks {
         boolean res = false;
         List<Op03SimpleStatement> tryStatements = Functional.filter(statements, new Op03SimpleStatement.ExactTypeFilter<TryStatement>(TryStatement.class));
         for (Op03SimpleStatement statement : tryStatements) {
+            TryStatement tryStatement = (TryStatement) statement.getStatement();
+
             if (statement.getTargets().isEmpty()) continue;
             Op03SimpleStatement fallThrough = statement.getTargets().get(0);
             List<Op03SimpleStatement> backTargets = Functional.filter(statement.getTargets(), new Op03SimpleStatement.IsForwardJumpTo(statement.getIndex()));
             boolean thisRes = false;
             for (Op03SimpleStatement backTarget : backTargets) {
-                backTarget.removeSource(statement);
-                statement.removeTarget(backTarget);
-                thisRes = true;
+                Statement backTargetStatement = backTarget.getStatement();
+                if (backTargetStatement.getClass() == CatchStatement.class) {
+                    CatchStatement catchStatement = (CatchStatement) backTargetStatement;
+                    catchStatement.getExceptions().removeAll(tryStatement.getEntries());
+                    backTarget.removeSource(statement);
+                    statement.removeTarget(backTarget);
+                    thisRes = true;
+                }
             }
             /*
              * Remove the try statement completely if all

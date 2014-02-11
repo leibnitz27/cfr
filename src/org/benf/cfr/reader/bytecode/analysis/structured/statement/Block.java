@@ -204,8 +204,15 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public void combineTryCatch() {
+
+        Set<Class<?>> skipThese = SetFactory.<Class<?>>newSet(StructuredCatch.class,
+                StructuredFinally.class,
+                StructuredTry.class,
+                UnstructuredTry.class);
+
         int size = containedStatements.size();
         boolean finished = false;
+        mainloop:
         for (int x = 0; x < size && !finished; ++x) {
             Op04StructuredStatement statement = containedStatements.get(x);
             StructuredStatement innerStatement = statement.getStatement();
@@ -237,13 +244,15 @@ public class Block extends AbstractStructuredStatement {
                  * If the next statement's NOT a catch, we've got a dangling catch.
                  * Fast forward to the next catch, IF it's one for this block.
                  */
-
                 if (next != null) {
                     StructuredStatement nextStatement = next.getStatement();
-                    if (!(nextStatement instanceof StructuredCatch ||
-                            nextStatement instanceof StructuredFinally)) {
+                    if (!skipThese.contains(nextStatement.getClass())) {
                         for (int y = x + 1; y < size; ++y) {
                             StructuredStatement test = containedStatements.get(y).getStatement();
+                            if (test instanceof StructuredTry ||
+                                    test instanceof UnstructuredTry) {
+                                continue mainloop;
+                            }
                             if (test instanceof StructuredCatch) {
                                 Set<BlockIdentifier> blocks = ((StructuredCatch) test).getPossibleTryBlocks();
                                 if (blocks.contains(tryBlockIdent)) {
