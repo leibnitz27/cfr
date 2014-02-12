@@ -44,7 +44,12 @@ public class StructuredFinally extends AbstractStructuredStatement {
 
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
-        catchBlock.transform(transformer, scope);
+        scope.add(this);
+        try {
+            catchBlock.transform(transformer, scope);
+        } finally {
+            scope.remove(this);
+        }
     }
 
     @Override
@@ -75,6 +80,7 @@ public class StructuredFinally extends AbstractStructuredStatement {
 
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+        catchBlock.traceLocalVariableScope(scopeDiscoverer);
     }
 
 

@@ -78,10 +78,10 @@ public class StructuredTry extends AbstractStructuredStatement {
         try {
             tryBlock.transform(transformer, scope);
             for (Op04StructuredStatement catchBlock : catchBlocks) {
-                catchBlock.transform(transformer, scope);
+                catchBlock.getStatement().transformStructuredChildren(transformer, scope);
             }
             if (finallyBlock != null) {
-                finallyBlock.transform(transformer, scope);
+                finallyBlock.getStatement().transformStructuredChildren(transformer, scope);
             }
         } finally {
             scope.remove(this);

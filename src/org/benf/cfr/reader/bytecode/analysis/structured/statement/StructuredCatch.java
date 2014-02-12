@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
@@ -66,7 +67,12 @@ public class StructuredCatch extends AbstractStructuredStatement {
 
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
-        catchBlock.transform(transformer, scope);
+        scope.add(this);
+        try {
+            catchBlock.transform(transformer, scope);
+        } finally {
+            scope.remove(this);
+        }
     }
 
     @Override
@@ -97,8 +103,20 @@ public class StructuredCatch extends AbstractStructuredStatement {
 
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+        if (catching instanceof LocalVariable) {
+            scopeDiscoverer.collectLocalVariableAssignment((LocalVariable) catching, this.getContainer(), null);
+        }
+        catchBlock.traceLocalVariableScope(scopeDiscoverer);
     }
 
+    @Override
+    public List<LValue> findCreatedHere() {
+        return ListFactory.newList(catching);
+    }
+
+    @Override
+    public void markCreator(LValue scopedEntity) {
+    }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
