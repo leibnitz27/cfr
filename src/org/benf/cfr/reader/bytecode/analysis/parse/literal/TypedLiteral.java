@@ -27,6 +27,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         Integer,
         Long,
         Double,
+        Float,
         String,
         NullObject,
         Class,
@@ -192,6 +193,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
                 return d.print(methodHandleName(value));
             case Class:
                 return d.dump((JavaTypeInstance) value).print(".class");
+            case Float:
+                return d.print(value.toString()).print("f");
             default:
                 return d.print(value.toString());
         }
@@ -222,7 +225,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
     }
 
     public static TypedLiteral getFloat(float v) {
-        return new TypedLiteral(LiteralType.Double, new InferredJavaType(RawJavaType.FLOAT, InferredJavaType.Source.LITERAL), v);
+        return new TypedLiteral(LiteralType.Float, new InferredJavaType(RawJavaType.FLOAT, InferredJavaType.Source.LITERAL), v);
     }
 
     public static TypedLiteral getClass(JavaTypeInstance v) {
