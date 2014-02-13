@@ -47,7 +47,6 @@ public interface InnerClassInfo {
 
         @Override
         public void markMethodScoped(boolean isAnonymous) {
-            throw new UnsupportedOperationException();
         }
 
         @Override
