@@ -947,13 +947,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case DMUL:
             case FMUL:
             case LMUL:
-            case IAND:
             case LAND:
             case LDIV:
             case LOR:
-            case IOR:
             case LXOR:
-            case IXOR:
             case ISHR:
             case ISHL:
             case LSHL:
@@ -961,6 +958,24 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case IUSHR:
             case LUSHR: {
                 Expression op = new ArithmeticOperation(getStackRValue(1), getStackRValue(0), ArithOp.getOpFor(instr));
+                return new AssignmentSimple(getStackLValue(0), op);
+            }
+            case IOR:
+            case IAND: {
+                Expression lhs = getStackRValue(1);
+                Expression rhs = getStackRValue(0);
+                if (lhs.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN &&
+                        rhs.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN) {
+                    Expression op = new ArithmeticOperation(lhs, rhs, ArithOp.getOpFor(instr));
+                    return new AssignmentSimple(getStackLValue(0), op);
+                }
+            }
+            case IXOR: { // Need to make sure that the result type is known to be an integer.
+                Expression lhs = getStackRValue(1);
+                Expression rhs = getStackRValue(0);
+                ArithOp arithop = ArithOp.getOpFor(instr);
+                InferredJavaType.useInArithOp(lhs.getInferredJavaType(), rhs.getInferredJavaType(), arithop);
+                Expression op = new ArithmeticOperation(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.EXPRESSION, true), lhs, rhs, arithop);
                 return new AssignmentSimple(getStackLValue(0), op);
             }
             case I2B:
