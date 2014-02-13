@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -102,8 +103,14 @@ public class LambdaExpressionFallback extends AbstractExpression {
         return false;
     }
 
+
     @Override
-    public Dumper dump(Dumper d) {
+    public Precedence getPrecedence() {
+        return Precedence.PAREN_SUB_MEMBER;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
         if (colon) {
             if (instance) {
                 d.dump(curriedArgs.get(0)).print("::").print(lambdaFnName);

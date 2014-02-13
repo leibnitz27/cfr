@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
@@ -58,11 +59,6 @@ public abstract class AbstractExpression implements Expression {
     }
 
     @Override
-    public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
-        return dump(d);
-    }
-
-    @Override
     public Expression outerDeepClone(CloneHelper cloneHelper) {
         return cloneHelper.replaceOrClone(this);
     }
@@ -82,5 +78,29 @@ public abstract class AbstractExpression implements Expression {
     @Override
     public Literal getComputedLiteral(Map<LValue, Literal> display) {
         return null;
+    }
+
+    @Override
+    public final Dumper dump(Dumper d) {
+        return dumpWithOuterPrecedence(d, Precedence.WEAKEST);
+    }
+
+    @Override
+    public abstract Precedence getPrecedence();
+
+    public abstract Dumper dumpInner(Dumper d);
+
+    @Override
+    public final Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerP) {
+        Precedence innerP = getPrecedence();
+        int cmp = innerP.compareTo(outerP);
+        if (cmp > 0 || cmp == 0 && !innerP.isLtoR()) {
+            d.print("(");
+            dumpInner(d);
+            d.print(")");
+        } else {
+            dumpInner(d);
+        }
+        return d;
     }
 }

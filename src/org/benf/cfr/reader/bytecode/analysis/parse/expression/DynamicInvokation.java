@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -58,7 +59,12 @@ public class DynamicInvokation extends AbstractExpression {
     }
 
     @Override
-    public Dumper dump(Dumper d) {
+    public Precedence getPrecedence() {
+        return Precedence.PAREN_SUB_MEMBER;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
         d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
         d.dump(innerInvokation);
         d.print("(");

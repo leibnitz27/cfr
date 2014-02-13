@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -35,7 +36,9 @@ public interface Expression extends Dumpable, DeepCloneable<Expression>, Compara
 
     Expression pushDown(Expression toPush, Expression parent);
 
-    Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence);
+    Precedence getPrecedence();
+
+    Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerPrecedence);
 
     InferredJavaType getInferredJavaType();
 
@@ -45,4 +48,7 @@ public interface Expression extends Dumpable, DeepCloneable<Expression>, Compara
 
     // If this expression has any side effects, other than updating stackVar/locals it MUST return null, regardless.
     Literal getComputedLiteral(Map<LValue, Literal> display);
+
+    @Override
+    Dumper dump(Dumper d);
 }

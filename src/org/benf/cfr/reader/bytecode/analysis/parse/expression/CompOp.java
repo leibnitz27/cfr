@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
@@ -11,22 +12,28 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * To change this template use File | Settings | File Templates.
  */
 public enum CompOp {
-    LT("<"),
-    GT(">"),
-    LTE("<="),
-    GTE(">="),
-    EQ("=="),
-    NE("!=");
+    LT("<", Precedence.REL_CMP_INSTANCEOF),
+    GT(">", Precedence.REL_CMP_INSTANCEOF),
+    LTE("<=", Precedence.REL_CMP_INSTANCEOF),
+    GTE(">=", Precedence.REL_CMP_INSTANCEOF),
+    EQ("==", Precedence.REL_EQ),
+    NE("!=", Precedence.REL_EQ);
 
 
     private final String showAs;
+    private final Precedence precedence;
 
-    private CompOp(String showAs) {
+    private CompOp(String showAs, Precedence precedence) {
         this.showAs = showAs;
+        this.precedence = precedence;
     }
 
     public String getShowAs() {
         return showAs;
+    }
+
+    public Precedence getPrecedence() {
+        return precedence;
     }
 
     public CompOp getInverted() {

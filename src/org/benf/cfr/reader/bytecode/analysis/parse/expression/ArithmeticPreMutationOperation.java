@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -38,7 +39,7 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
     }
 
     @Override
-    public Dumper dump(Dumper d) {
+    public Dumper dumpInner(Dumper d) {
         return d.print(op == ArithOp.PLUS ? "++" : "--").dump(mutated);
     }
 
@@ -56,6 +57,11 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
     public boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp) {
         return this.mutated.equals(lValue) &&
                 this.op == arithOp;
+    }
+
+    @Override
+    public Precedence getPrecedence() {
+        return Precedence.UNARY_OTHER;
     }
 
     @Override

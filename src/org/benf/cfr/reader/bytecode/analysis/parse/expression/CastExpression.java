@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -52,15 +53,24 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     }
 
     @Override
-    public Dumper dump(Dumper d) {
+    public Precedence getPrecedence() {
+        return Precedence.UNARY_OTHER;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
         if (child.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN &&
                 !(RawJavaType.BOOLEAN.implicitlyCastsTo(getInferredJavaType().getJavaTypeInstance()))) {
             // This is ugly.  Unfortunately, it's necessary (currently!) as we don't have an extra pass to
             // transform invalid casts like this.
-            return d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")(").dump(child).print(" ? 1 : 0)");
+            d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
+            child.dumpWithOuterPrecedence(d, getPrecedence());
+            d.print(" ? 1 : 0");
         } else {
-            return d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")(").dump(child).print(")");
+            d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
+            child.dumpWithOuterPrecedence(d, getPrecedence());
         }
+        return d;
     }
 
 

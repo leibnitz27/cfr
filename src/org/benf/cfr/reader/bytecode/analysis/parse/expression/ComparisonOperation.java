@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxin
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -85,16 +86,16 @@ public class ComparisonOperation extends AbstractExpression implements Condition
         return 3;
     }
 
-    private Dumper brace(Expression e, Dumper d) {
-        if (e instanceof ComparisonOperation) return d.print("(").dump(e).print(")");
-        return e.dump(d);
+    @Override
+    public Precedence getPrecedence() {
+        return op.getPrecedence();
     }
 
     @Override
-    public Dumper dump(Dumper d) {
-        brace(lhs, d);
+    public Dumper dumpInner(Dumper d) {
+        lhs.dumpWithOuterPrecedence(d, getPrecedence());
         d.print(" " + op.getShowAs() + " ");
-        brace(rhs, d);
+        rhs.dumpWithOuterPrecedence(d, getPrecedence());
         return d;
     }
 

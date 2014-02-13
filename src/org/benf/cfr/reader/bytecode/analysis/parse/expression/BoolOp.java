@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
 /**
@@ -10,17 +11,23 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * To change this template use File | Settings | File Templates.
  */
 public enum BoolOp {
-    OR("||"),
-    AND("&&");
+    OR("||", Precedence.LOG_OR),
+    AND("&&", Precedence.LOG_AND);
 
     private final String showAs;
+    private final Precedence precedence;
 
-    private BoolOp(String showAs) {
+    private BoolOp(String showAs, Precedence precedence) {
         this.showAs = showAs;
+        this.precedence = precedence;
     }
 
     public String getShowAs() {
         return showAs;
+    }
+
+    public Precedence getPrecedence() {
+        return precedence;
     }
 
     public BoolOp getDemorgan() {

@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -470,7 +471,12 @@ public class WildcardMatch {
         }
 
         @Override
-        public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
+        public Precedence getPrecedence() {
+            return Precedence.WEAKEST;
+        }
+
+        @Override
+        public Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerPrecedence) {
             return dump(d);
         }
 

@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHel
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -60,25 +61,17 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
     }
 
     @Override
-    public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
-        int precedence = op.getPrecedence();
-        boolean braceNeeded = true;
-        if (outerPrecedence >= 0 && precedence >= 0) {
-            if (outerPrecedence <= precedence) braceNeeded = false;
-        }
-        if (braceNeeded) d.print("(");
-        lhs.dumpWithOuterPrecedence(d, precedence);
-        d.print(" " + op.getShowAs() + " ");
-        rhs.dumpWithOuterPrecedence(d, precedence);
-        if (braceNeeded) d.print(")");
-        return d;
+    public Precedence getPrecedence() {
+        return op.getPrecedence();
     }
 
     @Override
-    public Dumper dump(Dumper d) {
-        return dumpWithOuterPrecedence(d, -1);
+    public Dumper dumpInner(Dumper d) {
+        lhs.dumpWithOuterPrecedence(d, getPrecedence());
+        d.print(" " + op.getShowAs() + " ");
+        rhs.dumpWithOuterPrecedence(d, getPrecedence());
+        return d;
     }
-
 
     private boolean isLValueExprFor(LValueExpression expression, LValue lValue) {
         LValue contained = expression.getLValue();

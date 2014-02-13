@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -59,8 +60,15 @@ public class StructuredStatementExpression extends AbstractExpression {
         throw new UnsupportedOperationException();
     }
 
+
     @Override
-    public Dumper dump(Dumper d) {
+    public Precedence getPrecedence() {
+        return Precedence.WEAKEST;
+    }
+
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
         return content.dump(d);
     }
 

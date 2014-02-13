@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -42,8 +43,15 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
     }
 
     @Override
-    public Dumper dump(Dumper d) {
-        return d.dump(mutated).print(op.getShowAs() + "=").dump(mutation);
+    public Precedence getPrecedence() {
+        return Precedence.ASSIGNMENT;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
+        d.dump(mutated).print(op.getShowAs() + "=");
+        mutation.dumpWithOuterPrecedence(d, getPrecedence());
+        return d;
     }
 
     @Override

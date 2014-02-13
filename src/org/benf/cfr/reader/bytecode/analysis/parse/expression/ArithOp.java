@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
@@ -11,28 +12,28 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
  * To change this template use File | Settings | File Templates.
  */
 public enum ArithOp {
-    LCMP("LCMP", true, -1),
-    DCMPL("DCMPL", true, -1),
-    DCMPG("DCMPG", true, -1),
-    FCMPL("FCMPL", true, -1),
-    FCMPG("FCMPG", true, -1),
-    PLUS("+", false, 0),
-    MINUS("-", false, 0),
-    MULTIPLY("*", false, 1),
-    DIVIDE("/", false, 2),
-    REM("%", false, -1),
-    OR("|", false, -1),
-    AND("&", false, -1),
-    SHR(">>", false, -1),
-    SHL("<<", false, -1),
-    SHRU(">>>", false, -1),
-    XOR("^", false, -1);
+    LCMP("LCMP", true, Precedence.WEAKEST),
+    DCMPL("DCMPL", true, Precedence.WEAKEST),
+    DCMPG("DCMPG", true, Precedence.WEAKEST),
+    FCMPL("FCMPL", true, Precedence.WEAKEST),
+    FCMPG("FCMPG", true, Precedence.WEAKEST),
+    PLUS("+", false, Precedence.ADD_SUB),
+    MINUS("-", false, Precedence.ADD_SUB),
+    MULTIPLY("*", false, Precedence.MUL_DIV_MOD),
+    DIVIDE("/", false, Precedence.MUL_DIV_MOD),
+    REM("%", false, Precedence.MUL_DIV_MOD),
+    OR("|", false, Precedence.BIT_OR),
+    AND("&", false, Precedence.BIT_AND),
+    SHR(">>", false, Precedence.BITWISE_SHIFT),
+    SHL("<<", false, Precedence.BITWISE_SHIFT),
+    SHRU(">>>", false, Precedence.BITWISE_SHIFT),
+    XOR("^", false, Precedence.BIT_XOR);
 
     private final String showAs;
     private final boolean temporary;
-    private final int precedence;
+    private final Precedence precedence;
 
-    private ArithOp(String showAs, boolean temporary, int precedence) {
+    private ArithOp(String showAs, boolean temporary, Precedence precedence) {
         this.showAs = showAs;
         this.temporary = temporary;
         this.precedence = precedence;
@@ -46,7 +47,7 @@ public enum ArithOp {
         return temporary;
     }
 
-    public int getPrecedence() {
+    public Precedence getPrecedence() {
         return precedence;
     }
 

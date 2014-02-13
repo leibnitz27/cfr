@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -127,7 +128,12 @@ public class CommentStatement extends AbstractStatement {
         }
 
         @Override
-        public Dumper dump(Dumper d) {
+        public Precedence getPrecedence() {
+            return Precedence.WEAKEST;
+        }
+
+        @Override
+        public Dumper dumpInner(Dumper d) {
             return d.dump(statement);
         }
     }

@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -38,8 +39,15 @@ public class ArithmeticMonOperation extends AbstractExpression {
     }
 
     @Override
-    public Dumper dump(Dumper d) {
-        return d.print("(" + op.getShowAs() + " ").dump(lhs).print(")");
+    public Precedence getPrecedence() {
+        return op.getPrecedence();
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
+        d.print(op.getShowAs() + " ");
+        lhs.dumpWithOuterPrecedence(d, getPrecedence());
+        return d;
     }
 
     @Override

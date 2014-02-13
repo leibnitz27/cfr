@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -70,8 +71,16 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     }
 
     @Override
-    public Dumper dump(Dumper d) {
-        return d.print("(").dump(lhs).print(") " + op.getShowAs() + " (").dump(rhs).print(")");
+    public Precedence getPrecedence() {
+        return op.getPrecedence();
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
+        lhs.dumpWithOuterPrecedence(d, getPrecedence());
+        d.print(" ").print(op.getShowAs()).print(" ");
+        rhs.dumpWithOuterPrecedence(d, getPrecedence());
+        return d;
     }
 
     @Override

@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxin
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.VarArgsRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.FunctionProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
@@ -45,7 +46,13 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
     }
 
     @Override
-    public Dumper dump(Dumper d) {
+    public Precedence getPrecedence() {
+        return Precedence.PAREN_SUB_MEMBER;
+    }
+
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
         JavaTypeInstance clazz = super.getTypeInstance();
         InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
         List<Expression> args = getArgs();

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -57,8 +58,18 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
     }
 
     @Override
-    public Dumper dump(Dumper d) {
-        return d.print("(").dump(condition).print(") ? (").dump(lhs).print(") : (").dump(rhs).print(")");
+    public Precedence getPrecedence() {
+        return Precedence.CONDITIONAL;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
+        condition.dumpWithOuterPrecedence(d, getPrecedence());
+        d.print(" ? ");
+        lhs.dumpWithOuterPrecedence(d, getPrecedence());
+        d.print(" : ");
+        rhs.dumpWithOuterPrecedence(d, getPrecedence());
+        return d;
     }
 
     @Override
@@ -84,11 +95,6 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
         condition.collectUsedLValues(lValueUsageCollector);
         lhs.collectUsedLValues(lValueUsageCollector);
         rhs.collectUsedLValues(lValueUsageCollector);
-    }
-
-    @Override
-    public Dumper dumpWithOuterPrecedence(Dumper d, int outerPrecedence) {
-        return d.print("(").dump(this).print(")");
     }
 
     @Override

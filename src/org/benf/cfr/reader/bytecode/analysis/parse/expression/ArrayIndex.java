@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -49,8 +50,15 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
     }
 
     @Override
-    public Dumper dump(Dumper d) {
-        return d.dump(array).print("[").dump(index).print("]");
+    public Precedence getPrecedence() {
+        return Precedence.PAREN_SUB_MEMBER;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
+        array.dumpWithOuterPrecedence(d, getPrecedence());
+        d.print("[").dump(index).print("]");
+        return d;
     }
 
     @Override

@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxin
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.VarArgsRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.FunctionProcessor;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -77,7 +78,12 @@ public class StaticFunctionInvokation extends AbstractExpression implements Func
     }
 
     @Override
-    public Dumper dump(Dumper d) {
+    public Precedence getPrecedence() {
+        return Precedence.PAREN_SUB_MEMBER;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
         d.dump(clazz).print(".");
         ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
         d.print(nameAndType.getName().getValue() + "(");

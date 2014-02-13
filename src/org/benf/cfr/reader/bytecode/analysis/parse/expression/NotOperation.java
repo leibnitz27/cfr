@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -55,9 +56,17 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
         return this;
     }
 
+
     @Override
-    public Dumper dump(Dumper d) {
-        return d.print("!(").dump(inner).print(")");
+    public Precedence getPrecedence() {
+        return Precedence.UNARY_OTHER;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
+        d.print("!");
+        inner.dumpWithOuterPrecedence(d, getPrecedence());
+        return d;
     }
 
     @Override

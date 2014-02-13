@@ -40,6 +40,9 @@ public class TypedBooleanTidier implements StructuredStatementTransformer, Expre
 
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        if (expression instanceof ConditionalExpression) {
+            return rewriteExpression((ConditionalExpression) expression, ssaIdentifiers, statementContainer, flags);
+        }
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
 
