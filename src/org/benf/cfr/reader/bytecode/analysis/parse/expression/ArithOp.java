@@ -27,7 +27,8 @@ public enum ArithOp {
     SHR(">>", false, Precedence.BITWISE_SHIFT),
     SHL("<<", false, Precedence.BITWISE_SHIFT),
     SHRU(">>>", false, Precedence.BITWISE_SHIFT),
-    XOR("^", false, Precedence.BIT_XOR);
+    XOR("^", false, Precedence.BIT_XOR),
+    NEG("~", false, Precedence.UNARY_OTHER);
 
     private final String showAs;
     private final boolean temporary;

@@ -92,6 +92,14 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         return false;
     }
 
+    public boolean isXorM1() {
+        return (op == ArithOp.XOR && rhs.equals(Literal.MINUS_ONE));
+    }
+
+    public Expression getReplacementXorM1() {
+        return new ArithmeticMonOperation(lhs, ArithOp.NEG);
+    }
+
     public boolean isMutationOf(LValue lValue) {
         if (!(lhs instanceof LValueExpression)) return false;
         if (!isLValueExprFor((LValueExpression) lhs, lValue)) return false;

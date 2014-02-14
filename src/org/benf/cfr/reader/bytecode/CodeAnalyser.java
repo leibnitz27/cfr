@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewr
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.XorRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredFakeDecompFailure;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
@@ -596,6 +597,7 @@ public class CodeAnalyser {
 //        }
 
         Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter(options, classFileVersion));
+        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new XorRewriter());
 //        dumper.print("Final Op3 statements:\n");
 //        op03SimpleParseNodes.get(0).dump(dumper);
 
