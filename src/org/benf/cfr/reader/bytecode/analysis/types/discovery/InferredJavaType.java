@@ -678,7 +678,12 @@ public class InferredJavaType {
 
     public static void useInArithOp(InferredJavaType lhs, InferredJavaType rhs, ArithOp op) {
         boolean forbidBool = true;
-        if (op == ArithOp.OR || op == ArithOp.AND) forbidBool = false;
+        if (op == ArithOp.OR || op == ArithOp.AND || op == ArithOp.XOR) {
+            if (lhs.getJavaTypeInstance() == RawJavaType.BOOLEAN &&
+                    rhs.getJavaTypeInstance() == RawJavaType.BOOLEAN) {
+                forbidBool = false;
+            }
+        }
         lhs.useInArithOp(rhs, forbidBool);
         rhs.useInArithOp(lhs, forbidBool);
     }

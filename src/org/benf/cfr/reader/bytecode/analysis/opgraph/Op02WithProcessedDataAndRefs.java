@@ -961,7 +961,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new AssignmentSimple(getStackLValue(0), op);
             }
             case IOR:
-            case IAND: {
+            case IAND:
+            case IXOR: {
                 Expression lhs = getStackRValue(1);
                 Expression rhs = getStackRValue(0);
                 if (lhs.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN &&
@@ -969,10 +970,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     Expression op = new ArithmeticOperation(lhs, rhs, ArithOp.getOpFor(instr));
                     return new AssignmentSimple(getStackLValue(0), op);
                 }
-            }
-            case IXOR: { // Need to make sure that the result type is known to be an integer.
-                Expression lhs = getStackRValue(1);
-                Expression rhs = getStackRValue(0);
                 ArithOp arithop = ArithOp.getOpFor(instr);
                 InferredJavaType.useInArithOp(lhs.getInferredJavaType(), rhs.getInferredJavaType(), arithop);
                 Expression op = new ArithmeticOperation(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.EXPRESSION, true), lhs, rhs, arithop);
