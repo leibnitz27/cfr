@@ -46,6 +46,16 @@ public interface PermittedOptionProvider {
                 sb.append("\nDefault : ").append(defaultVal).append("\n");
             return sb.toString();
         }
+
+        public String shortDescribe() {
+            StringBuilder sb = new StringBuilder();
+            String defaultVal = fn.getDefaultValue();
+            String range = fn.getRangeDescription();
+            if (range != null && !(range.isEmpty())) sb.append(" (").append(range).append(") ");
+            if (defaultVal != null && !(defaultVal.isEmpty()))
+                sb.append(" default: ").append(defaultVal).append("");
+            return sb.toString();
+        }
     }
 
     public static class Argument<X> extends ArgumentParam<X, Void> {

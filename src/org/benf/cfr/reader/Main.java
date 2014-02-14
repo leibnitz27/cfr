@@ -138,6 +138,9 @@ public class Main {
         Options options = null;
         try {
             options = getOptParser.parse(args, OptionsImpl.getFactory());
+        } catch (BadParametersException e) {
+            getOptParser.showHelp(OptionsImpl.getFactory());
+            System.exit(1);
         } catch (Exception e) {
             System.err.print(e);
             System.exit(1);

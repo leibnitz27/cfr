@@ -52,7 +52,7 @@ public class GetOptParser {
             sb.append("   [ --").append(flag).append(" ]\n");
         }
         for (PermittedOptionProvider.ArgumentParam param : permittedOptionProvider.getArguments()) {
-            sb.append("   [ --").append(param.getName()).append(" value ]\n");
+            sb.append("   [ --").append(param.getName()).append(param.shortDescribe()).append(" ]\n");
         }
         return sb.toString();
     }
@@ -80,6 +80,11 @@ public class GetOptParser {
 
         Map<String, String> processed = process(Arrays.copyOfRange(args, start, args.length), getOptSinkFactory);
         return getOptSinkFactory.create(unFlagged, processed);
+    }
+
+    public <T> void showHelp(PermittedOptionProvider permittedOptionProvider) {
+        System.err.println("CFR " + MiscConstants.CFR_VERSION + "\n");
+        System.err.println(getHelp(permittedOptionProvider));
     }
 
     public <T> void showHelp(PermittedOptionProvider permittedOptionProvider, Options options, PermittedOptionProvider.ArgumentParam<String, Void> helpArg) {

@@ -94,7 +94,7 @@ public class OptionsImpl implements Options {
 
         @Override
         public String getRangeDescription() {
-            return null;
+            return "string";
         }
 
         @Override
