@@ -49,10 +49,22 @@ public class GetOptParser {
     public static String getHelp(PermittedOptionProvider permittedOptionProvider) {
         StringBuilder sb = new StringBuilder();
         for (String flag : permittedOptionProvider.getFlags()) {
-            sb.append("   [ --").append(flag).append(" ]\n");
+            sb.append("   --").append(flag).append("\n");
         }
+        int max = 10;
         for (PermittedOptionProvider.ArgumentParam param : permittedOptionProvider.getArguments()) {
-            sb.append("   [ --").append(param.getName()).append(param.shortDescribe()).append(" ]\n");
+            int len = param.getName().length();
+            max = len > max ? len : max;
+        }
+        max += 4;
+        for (PermittedOptionProvider.ArgumentParam param : permittedOptionProvider.getArguments()) {
+            String name = param.getName();
+            int pad = max - name.length();
+            sb.append("   --").append(param.getName());
+            for (int x = 0; x < pad; ++x) { // there really should be a better way to do this.
+                sb.append(' ');
+            }
+            sb.append(param.shortDescribe()).append("\n");
         }
         return sb.toString();
     }
