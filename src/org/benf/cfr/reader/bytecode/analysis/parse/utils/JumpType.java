@@ -11,6 +11,7 @@ public enum JumpType {
     GOTO_OUT_OF_IF("goto_out_of_if", false),
     GOTO_OUT_OF_TRY("goto_out_of_try", false),
     BREAK("break", false),
+    BREAK_ANONYMOUS("break anon", false),
     CONTINUE("continue", false),
     END_BLOCK("// endblock", false);
 

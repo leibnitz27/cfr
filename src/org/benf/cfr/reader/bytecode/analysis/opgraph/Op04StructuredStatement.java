@@ -126,7 +126,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     @Override
     public void replaceStatement(StructuredStatement newTarget) {
-        throw new UnsupportedOperationException();
+        structuredStatement = newTarget;
     }
 
     @Override
@@ -141,7 +141,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     @Override
     public Set<BlockIdentifier> getBlockIdentifiers() {
-        throw new UnsupportedOperationException();
+        return blockMembership;
     }
 
     @Override
@@ -485,6 +485,17 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     }
 
+    private static class AnonymousBlockExtractor implements StructuredStatementTransformer {
+        @Override
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            if (in instanceof Block) {
+                Block block = (Block) in;
+                block.extractAnonymousBlocks();
+            }
+            in.transformStructuredChildren(this, scope);
+            return in;
+        }
+    }
 
     private static class EmptyCatchTidier implements StructuredStatementTransformer {
         @Override
@@ -522,12 +533,29 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    public static StructuredStatement transformWithScope(StructuredScope scope, StructuredStatement stm) {
+        Set<Op04StructuredStatement> nextFallThrough = scope.getNextFallThrough(stm);
+        Op04StructuredStatement target = stm.getContainer().getTargets().get(0);
+        if (nextFallThrough.contains(target)) {
+            // Ok, fell through.  If we're the last statement of the current scope,
+            // and the current scope has fallthrough, we can be removed.  Otherwise we
+            // need to be translated to a break.
+            if (scope.statementIsLast(stm)) {
+                return new StructuredComment("");
+            } else {
+                return stm;
+            }
+        }
+        return stm;
+    }
+
     private static class StructuredGotoRemover implements StructuredStatementTransformer {
         @Override
         public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
             in.transformStructuredChildren(this, scope);
-            if (in instanceof UnstructuredGoto) {
-                in = ((UnstructuredGoto) in).transformWithScope(scope);
+            if (in instanceof UnstructuredGoto ||
+                    in instanceof UnstructuredAnonymousBreak) {
+                in = transformWithScope(scope, in);
             }
             return in;
         }
@@ -553,10 +581,16 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     /*
+     * If we have any UnstructuredAnonBreakTargets in a block, starting at the last one, pull them into sub-blocks.
+     */
+    public static void insertAnonymousBlocks(Op04StructuredStatement root) {
+        root.transform(new AnonymousBlockExtractor(), new StructuredScope());
+    }
+
+    /*
      * mutually exclusive blocks may have trailling gotos after them.  It's hard to remove them prior to here, but now we have
      * structure, we can find them more easily.
      */
-
     public static void tidyEmptyCatch(Op04StructuredStatement root) {
         root.transform(new EmptyCatchTidier(), new StructuredScope());
     }

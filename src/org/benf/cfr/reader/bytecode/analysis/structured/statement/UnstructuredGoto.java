@@ -27,20 +27,4 @@ public class UnstructuredGoto extends AbstractUnStructuredStatement {
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
     }
-
-    public StructuredStatement transformWithScope(StructuredScope scope) {
-        Set<Op04StructuredStatement> nextFallThrough = scope.getNextFallThrough(this);
-        Op04StructuredStatement target = getContainer().getTargets().get(0);
-        if (nextFallThrough.contains(target)) {
-            // Ok, fell through.  If we're the last statement of the current scope,
-            // and the current scope has fallthrough, we can be removed.  Otherwise we
-            // need to be translated to a break.
-            if (scope.statementIsLast(this)) {
-                return new StructuredComment("");
-            } else {
-                return this;
-            }
-        }
-        return this;
-    }
 }

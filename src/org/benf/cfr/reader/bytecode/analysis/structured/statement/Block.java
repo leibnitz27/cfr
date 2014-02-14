@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -18,6 +19,7 @@ import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -32,12 +34,18 @@ import java.util.Set;
 public class Block extends AbstractStructuredStatement {
     private LinkedList<Op04StructuredStatement> containedStatements;
     private boolean indenting;
+    private BlockIdentifier blockIdentifier;
 
     private final static LinkedList<Op04StructuredStatement> emptyBlockStatements = ListFactory.newLinkedList();
 
     public Block(LinkedList<Op04StructuredStatement> containedStatements, boolean indenting) {
+        this(containedStatements, indenting, null);
+    }
+
+    public Block(LinkedList<Op04StructuredStatement> containedStatements, boolean indenting, BlockIdentifier blockIdentifier) {
         this.containedStatements = containedStatements;
         this.indenting = indenting;
+        this.blockIdentifier = blockIdentifier;
     }
 
     public static Block getEmptyBlock() {
@@ -201,6 +209,53 @@ public class Block extends AbstractStructuredStatement {
             newS.addSource(src);
         }
         newS.getSources().remove(oldS);
+    }
+
+    public void extractAnonymousBlocks() {
+        Iterator<Op04StructuredStatement> iterator = containedStatements.descendingIterator();
+        while (iterator.hasNext()) {
+            Op04StructuredStatement stm = iterator.next();
+            StructuredStatement statement = stm.getStatement();
+            if (statement.getClass() == UnstructuredAnonBreakTarget.class) {
+                UnstructuredAnonBreakTarget breakTarget = (UnstructuredAnonBreakTarget) statement;
+                BlockIdentifier blockIdentifier = breakTarget.getBlockIdentifier();
+                /*
+                 *
+                 */
+                LinkedList<Op04StructuredStatement> inner = ListFactory.newLinkedList();
+                iterator.remove();
+                while (iterator.hasNext()) {
+                    inner.addFirst(iterator.next());
+                    iterator.remove();
+                }
+                Block nested = new Block(inner, true, blockIdentifier);
+                Set<BlockIdentifier> outerIdents = getContainer().getBlockIdentifiers();
+                Set<BlockIdentifier> innerIdents = SetFactory.newSet(outerIdents);
+                innerIdents.add(blockIdentifier);
+                InstrIndex newIdx = getContainer().getIndex().justAfter();
+                Op04StructuredStatement newStm = new Op04StructuredStatement(
+                        newIdx,
+                        innerIdents,
+                        nested
+                );
+                containedStatements.addFirst(newStm);
+
+                List<Op04StructuredStatement> sources = stm.getSources();
+                /*
+                 * Any source which is an unstructured break to this block, replace with a structured labelled break.
+                 */
+                for (Op04StructuredStatement source : sources) {
+                    StructuredStatement maybeBreak = source.getStatement();
+                    if (maybeBreak.getClass() == UnstructuredAnonymousBreak.class) {
+                        UnstructuredAnonymousBreak unstructuredBreak = (UnstructuredAnonymousBreak) maybeBreak;
+                        source.replaceStatement(unstructuredBreak.tryExplicitlyPlaceInBlock(blockIdentifier));
+                    }
+                }
+                // It's not fatal if we've messed up here, we'll leave some extra block labels in...
+                // But be paranoid.
+                stm.replaceStatement(new StructuredComment(""));
+            }
+        }
     }
 
     public void combineTryCatch() {
@@ -396,8 +451,17 @@ public class Block extends AbstractStructuredStatement {
 
     @Override
     public Dumper dump(Dumper d) {
+        boolean isIndenting = isIndenting();
+        if (blockIdentifier != null) {
+            if (blockIdentifier.hasForeignReferences()) {
+                d.print(blockIdentifier.getName() + " : ");
+                isIndenting = true;
+            } else {
+                isIndenting = false;
+            }
+        }
         if (containedStatements.isEmpty()) {
-            if (isIndenting()) {
+            if (isIndenting) {
                 d.print("{}\n");
             } else {
                 d.print("\n");
@@ -405,7 +469,7 @@ public class Block extends AbstractStructuredStatement {
             return d;
         }
         try {
-            if (indenting) {
+            if (isIndenting) {
                 d.print("{\n");
                 d.indent(1);
             }
@@ -413,7 +477,7 @@ public class Block extends AbstractStructuredStatement {
                 structuredBlock.dump(d);
             }
         } finally {
-            if (indenting) {
+            if (isIndenting) {
                 d.indent(-1);
                 d.print("}");
                 d.enqueuePendingCarriageReturn();

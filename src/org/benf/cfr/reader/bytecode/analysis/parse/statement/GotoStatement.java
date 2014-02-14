@@ -1,15 +1,14 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredBreak;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredContinue;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredGoto;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -111,6 +110,15 @@ public class GotoStatement extends JumpingStatement {
                 return new UnstructuredContinue(getTargetStartBlock());
             case BREAK:
                 return new UnstructuredBreak(getJumpTarget().getContainer().getBlocksEnded());
+            case BREAK_ANONYMOUS: {
+                Statement target = getJumpTarget();
+                if (!(target instanceof AnonBreakTarget)) {
+                    throw new IllegalStateException("Target of anonymous break unexpected.");
+                }
+                AnonBreakTarget anonBreakTarget = (AnonBreakTarget) target;
+                BlockIdentifier breakFrom = anonBreakTarget.getBlockIdentifier();
+                return new UnstructuredAnonymousBreak(breakFrom);
+            }
         }
         throw new UnsupportedOperationException();
     }

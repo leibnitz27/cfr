@@ -2511,6 +2511,31 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
+        /*
+         * Now, finally, for each unclassified goto, see if we can mark it as a break out of an anonymous block.
+         */
+        for (Op03SimpleStatement statement : in) {
+            Statement inner = statement.getStatement();
+            if (inner.getClass() == GotoStatement.class) {
+                JumpingStatement jumpingStatement = (JumpingStatement) inner;
+                if (statement.targets.size() != 1) continue;
+                if (jumpingStatement.getJumpType() != JumpType.GOTO) continue;
+                Op03SimpleStatement targetStatement = statement.targets.get(0);
+                boolean isForwardJump = targetStatement.getIndex().isBackJumpTo(statement);
+                if (isForwardJump) {
+                    Set<BlockIdentifier> targetBlocks = targetStatement.getBlockIdentifiers();
+                    Set<BlockIdentifier> srcBlocks = statement.getBlockIdentifiers();
+                    if (targetBlocks.size() < srcBlocks.size() && srcBlocks.containsAll(targetBlocks)) {
+                        /*
+                         * Break out of an anonymous block
+                         */
+                        jumpingStatement.setJumpType(JumpType.BREAK_ANONYMOUS);
+                        result = true;
+                    }
+                }
+            }
+        }
+
         return result;
     }
 
@@ -6110,6 +6135,44 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             }
             obj0.getInferredJavaType().deGenerify(gtb0.getBindingFor(obj0.getInferredJavaType().getJavaTypeInstance()));
+        }
+    }
+
+    public static void labelAnonymousBlocks(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+        List<Op03SimpleStatement> anonBreaks = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                Statement statement = in.getStatement();
+                if (statement.getClass() != GotoStatement.class) return false;
+                JumpType jumpType = ((GotoStatement) statement).getJumpType();
+                return jumpType == JumpType.BREAK_ANONYMOUS;
+            }
+        });
+        if (anonBreaks.isEmpty()) return;
+
+        /*
+         * Collect the unique set of targets for the anonymous breaks.
+         */
+        Set<Op03SimpleStatement> targets = SetFactory.newOrderedSet();
+        for (Op03SimpleStatement anonBreak : anonBreaks) {
+            targets.addAll(anonBreak.getTargets());
+        }
+
+        int idx = 0;
+        for (Op03SimpleStatement target : targets) {
+            BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.ANONYMOUS);
+            Op03SimpleStatement anonTarget = new Op03SimpleStatement(
+                    target.getBlockIdentifiers(), new AnonBreakTarget(blockIdentifier), target.getIndex().justBefore());
+            List<Op03SimpleStatement> sources = target.getSources();
+            for (Op03SimpleStatement source : sources) {
+                source.replaceTarget(target, anonTarget);
+                anonTarget.addSource(source);
+            }
+            target.sources.clear();
+            target.addSource(anonTarget);
+            anonTarget.addTarget(target);
+            int pos = statements.indexOf(target);
+            statements.add(pos, anonTarget);
         }
     }
 

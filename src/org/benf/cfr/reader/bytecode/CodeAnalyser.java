@@ -607,9 +607,10 @@ public class CodeAnalyser {
         }
         op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, true);
 
+        Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
-        logger.info("tidyTryCatch");
         Op04StructuredStatement.tidyEmptyCatch(block);
         Op04StructuredStatement.tidyTryCatch(block);
         Op04StructuredStatement.inlinePossibles(block);
@@ -617,6 +618,7 @@ public class CodeAnalyser {
         Op04StructuredStatement.removePointlessBlocks(block);
         Op04StructuredStatement.removePointlessReturn(block);
         Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
+        Op04StructuredStatement.insertAnonymousBlocks(block);
 
         /*
          * If we can't fully structure the code, we bow out here.

@@ -16,6 +16,7 @@ public enum BlockType {
     CATCHBLOCK(false),
     SWITCH(true),
     CASE(false),
+    ANONYMOUS(true),
     MONITOR(false);
 
     private final boolean breakable;
