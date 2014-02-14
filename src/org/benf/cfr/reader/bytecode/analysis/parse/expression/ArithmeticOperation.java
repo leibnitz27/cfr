@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -102,7 +103,8 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         if (!isMutationOf(lValue)) {
             throw new ConfusedCFRException("Can't get a mutation where none exists");
         }
-        if (rhs.equals(new Literal(TypedLiteral.getInt(1)))) {
+        if (lhs.getInferredJavaType().getJavaTypeInstance() != RawJavaType.BOOLEAN &&
+                rhs.equals(Literal.ONE)) {
             return new ArithmeticPreMutationOperation(lValue, op);
         } else {
             return new ArithmeticMutationOperation(lValue, rhs, op);
