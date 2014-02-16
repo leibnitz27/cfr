@@ -2510,6 +2510,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             }
         }
+        return result;
+    }
+
+    public static boolean classifyAnonymousBlockGotos(List<Op03SimpleStatement> in) {
+        boolean result = false;
 
         /*
          * Now, finally, for each unclassified goto, see if we can mark it as a break out of an anonymous block.
@@ -6161,14 +6166,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         int idx = 0;
         for (Op03SimpleStatement target : targets) {
             BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.ANONYMOUS);
+            InstrIndex targetIndex = target.getIndex();
             Op03SimpleStatement anonTarget = new Op03SimpleStatement(
-                    target.getBlockIdentifiers(), new AnonBreakTarget(blockIdentifier), target.getIndex().justBefore());
-            List<Op03SimpleStatement> sources = target.getSources();
+                    target.getBlockIdentifiers(), new AnonBreakTarget(blockIdentifier), targetIndex.justBefore());
+            List<Op03SimpleStatement> sources = ListFactory.newList(target.getSources());
             for (Op03SimpleStatement source : sources) {
-                source.replaceTarget(target, anonTarget);
-                anonTarget.addSource(source);
+                if (targetIndex.isBackJumpTo(source)) {
+                    target.removeSource(source);
+                    source.replaceTarget(target, anonTarget);
+                    anonTarget.addSource(source);
+                }
             }
-            target.sources.clear();
             target.addSource(anonTarget);
             anonTarget.addTarget(target);
             int pos = statements.indexOf(target);

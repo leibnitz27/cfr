@@ -250,6 +250,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> ALLOW_CORRECTING = new PermittedOptionProvider.Argument<Boolean>(
             "allowcorrecting", defaultTrueBooleanDecoder,
             "Allow transformations which correct errors, potentially at the cost of altering emitted code behaviour.  An example would be removing impossible (in java!) exception handling - if this has any effect, a warning will be emitted.");
+    public static final PermittedOptionProvider.Argument<Boolean> LABELLED_BLOCKS = new PermittedOptionProvider.Argument<Boolean>(
+            "labelledblocks", defaultTrueBooleanDecoder,
+            "Allow code to be emitted which uses labelled blocks, (handling odd forward gotos)");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -304,7 +307,7 @@ public class OptionsImpl implements Options {
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
-                    ALLOW_CORRECTING, HELP);
+                    ALLOW_CORRECTING, LABELLED_BLOCKS, HELP);
         }
 
         @Override

@@ -559,6 +559,9 @@ public class CodeAnalyser {
         // While it seems perverse to have another pass at this here, it seems to yield the best results.
         //
         Op03SimpleStatement.classifyGotos(op03SimpleParseNodes);
+        if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
+            Op03SimpleStatement.classifyAnonymousBlockGotos(op03SimpleParseNodes);
+        }
         //
         // By this point, we've tried to classify ternaries.  We could try pushing some literals
         // very aggressively. (i.e. a=1, if (a) b=1 else b =0; return b. ) -> return 1;
@@ -609,7 +612,9 @@ public class CodeAnalyser {
         }
         op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, true);
 
-        Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+        if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
+            Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+        }
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
@@ -620,7 +625,9 @@ public class CodeAnalyser {
         Op04StructuredStatement.removePointlessBlocks(block);
         Op04StructuredStatement.removePointlessReturn(block);
         Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
-        Op04StructuredStatement.insertAnonymousBlocks(block);
+        if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
+            Op04StructuredStatement.insertAnonymousBlocks(block);
+        }
 
         /*
          * If we can't fully structure the code, we bow out here.
