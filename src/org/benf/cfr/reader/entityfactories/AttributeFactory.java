@@ -57,6 +57,8 @@ public class AttributeFactory {
             return new AttributeLocalVariableTypeTable(raw, cp);
         } else if (AttributeStackMapTable.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeStackMapTable(raw, cp);
+        } else if (AttributeSynthetic.ATTRIBUTE_NAME.equals(attributeName)) {
+            return new AttributeSynthetic(raw, cp);
         } else {
             return new AttributeUnknown(raw, attributeName);
             //throw new IllegalStateException(attributeName);

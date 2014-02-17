@@ -14,15 +14,15 @@ import java.util.List;
  * Time: 19:01
  * To change this template use File | Settings | File Templates.
  */
-public class AttributeStackMapTable extends Attribute {
-    public final static String ATTRIBUTE_NAME = "StackMapTable";
+public class AttributeSynthetic extends Attribute {
+    public final static String ATTRIBUTE_NAME = "Synthetic";
 
     private static final long OFFSET_OF_ATTRIBUTE_LENGTH = 2;
     private static final long OFFSET_OF_REMAINDER = 6;
 
     private final int length;
 
-    public AttributeStackMapTable(ByteData raw, ConstantPool cp) {
+    public AttributeSynthetic(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
     }
 

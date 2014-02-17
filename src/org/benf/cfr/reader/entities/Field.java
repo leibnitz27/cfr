@@ -61,6 +61,7 @@ public class Field implements KnowsRawSize {
                     }
                 });
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
+        AccessFlag.applyAttributes(attributes, accessFlags);
         this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
         short nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;

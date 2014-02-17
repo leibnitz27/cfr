@@ -98,6 +98,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
                     }
                 });
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
+        AccessFlagMethod.applyAttributes(attributes, accessFlags);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
         Attribute codeAttribute = attributes.get(AttributeCode.ATTRIBUTE_NAME);
         if (codeAttribute == null) {

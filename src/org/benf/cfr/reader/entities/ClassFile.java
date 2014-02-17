@@ -168,6 +168,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                     }
                 });
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
+        AccessFlag.applyAttributes(attributes, accessFlags);
 
         short superClassIndex = data.getS2At(OFFSET_OF_SUPER_CLASS);
         if (superClassIndex == 0) {
