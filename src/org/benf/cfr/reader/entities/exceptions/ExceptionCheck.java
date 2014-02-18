@@ -31,14 +31,7 @@ public class ExceptionCheck {
 
     public ExceptionCheck(DCCommonState dcCommonState, Set<JavaRefTypeInstance> caught) {
         this.dcCommonState = dcCommonState;
-        JavaRefTypeInstance lruntimeExceptionType = null;
-        try {
-            ClassFile runtimeException = dcCommonState.getClassFile(TypeConstants.runtimeExceptionPath);
-            lruntimeExceptionType = (JavaRefTypeInstance) runtimeException.getClassType();
-        } catch (CannotLoadClassException e) {
-            lruntimeExceptionType = null;
-        }
-        runtimeExceptionType = lruntimeExceptionType;
+        runtimeExceptionType = dcCommonState.getClassTypeOrNull(TypeConstants.runtimeExceptionPath);
         if (runtimeExceptionType == null) {
             mightUseUnchecked = true;
             missingInfo = true;

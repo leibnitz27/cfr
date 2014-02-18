@@ -439,6 +439,13 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         throw new NoSuchMethodException();
     }
 
+
+    public Method getSingleMethodByNameOrNull(String name) {
+        List<Method> methodList = getMethodsByNameOrNull(name);
+        if (methodList == null || methodList.size() != 1) return null;
+        return methodList.get(0);
+    }
+
     public List<Method> getMethodsByNameOrNull(String name) {
         if (methodsByName == null) {
             methodsByName = MapFactory.newMap();

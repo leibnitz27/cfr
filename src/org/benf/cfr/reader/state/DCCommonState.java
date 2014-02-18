@@ -314,6 +314,15 @@ public class DCCommonState {
         return classFileCache.get(path);
     }
 
+    public JavaRefTypeInstance getClassTypeOrNull(String path) {
+        try {
+            ClassFile classFile = getClassFile(path);
+            return (JavaRefTypeInstance) classFile.getClassType();
+        } catch (CannotLoadClassException e) {
+            return null;
+        }
+    }
+
     public ClassFile getClassFile(JavaTypeInstance classInfo) throws CannotLoadClassException {
         String path = classInfo.getRawName();
         path = ClassNameUtils.convertToPath(path) + ".class";

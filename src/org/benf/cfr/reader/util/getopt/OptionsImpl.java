@@ -253,6 +253,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> LABELLED_BLOCKS = new PermittedOptionProvider.Argument<Boolean>(
             "labelledblocks", defaultTrueBooleanDecoder,
             "Allow code to be emitted which uses labelled blocks, (handling odd forward gotos)");
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> JAVA_4_CLASS_OBJECTS = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "j14classobj", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, false),
+            "Reverse java 1.4 class object construction");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -307,7 +310,7 @@ public class OptionsImpl implements Options {
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
-                    ALLOW_CORRECTING, LABELLED_BLOCKS, HELP);
+                    ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HELP);
         }
 
         @Override

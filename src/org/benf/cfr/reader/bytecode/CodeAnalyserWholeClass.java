@@ -63,6 +63,10 @@ public class CodeAnalyserWholeClass {
             liftNonStaticInitialisers(classFile, options);
         }
 
+        if (options.getOption(OptionsImpl.JAVA_4_CLASS_OBJECTS, classFile.getClassFileVersion())) {
+            resugarJava14classObjects(classFile, state);
+        }
+
         if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
             removeBoilerplateMethods(classFile);
         }
@@ -235,6 +239,10 @@ public class CodeAnalyserWholeClass {
         if (staticInit != null) {
             new AssertRewriter(classFile).sugarAsserts(staticInit);
         }
+    }
+
+    private static void resugarJava14classObjects(ClassFile classFile, DCCommonState state) {
+        new J14ClassObjectRewriter(classFile, state).rewrite();
     }
 
     /*

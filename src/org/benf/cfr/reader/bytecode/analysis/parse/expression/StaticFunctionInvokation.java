@@ -46,11 +46,23 @@ public class StaticFunctionInvokation extends AbstractExpression implements Func
         return new StaticFunctionInvokation(function, cloneHelper.replaceOrClone(args));
     }
 
+
     public StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args) {
         super(getTypeForFunction(function, args));
         this.function = function;
         this.args = args;
         this.clazz = function.getClassEntry().getTypeInstance();
+    }
+
+    private StaticFunctionInvokation(JavaTypeInstance clazz, InferredJavaType res, List<Expression> args) {
+        super(res);
+        this.function = null;
+        this.args = args;
+        this.clazz = clazz;
+    }
+
+    public static StaticFunctionInvokation createMatcher(JavaTypeInstance clazz, InferredJavaType res, List<Expression> args) {
+        return new StaticFunctionInvokation(clazz, res, args);
     }
 
     @Override

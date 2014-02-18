@@ -26,6 +26,7 @@ public class Literal extends AbstractExpression {
     public static final Literal TRUE = new Literal(TypedLiteral.getBoolean(1));
     public static final Literal ONE = new Literal(TypedLiteral.getInt(1));
     public static final Literal MINUS_ONE = new Literal(TypedLiteral.getInt(-1));
+    public static final Literal NULL = new Literal(TypedLiteral.getNull());
 
     private final TypedLiteral value;
 

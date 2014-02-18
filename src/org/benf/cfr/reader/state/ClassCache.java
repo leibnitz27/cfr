@@ -26,6 +26,7 @@ public class ClassCache {
 
     public ClassCache(DCCommonState dcCommonState) {
         this.dcCommonState = dcCommonState;
+        // TODO:  Not sure I need to do this any more.
         refClassTypeCache.put(TypeConstants.ASSERTION_ERROR.getRawName(), TypeConstants.ASSERTION_ERROR);
         refClassTypeCache.put(TypeConstants.OBJECT.getRawName(), TypeConstants.OBJECT);
         refClassTypeCache.put(TypeConstants.STRING.getRawName(), TypeConstants.STRING);

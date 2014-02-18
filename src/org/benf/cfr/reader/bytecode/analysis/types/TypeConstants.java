@@ -27,7 +27,10 @@ public interface TypeConstants {
     public final static String charSequenceName = "java.lang.CharSequence";
     public final static String stringBuilderName = "java.lang.StringBuilder";
     public final static String stringBufferName = "java.lang.StringBuffer";
-    public final static String runtimeExceptionPath = "java/lang/RuntimeException.class";
 
     public final static String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
+
+    // Path, because we actually want to load the class - could we get away with a hardcoded ref type as above?
+    public final static String runtimeExceptionPath = "java/lang/RuntimeException.class";
+
 }
