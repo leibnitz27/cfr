@@ -10,10 +10,7 @@ import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotati
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageInformation;
-import org.benf.cfr.reader.util.CannotLoadClassException;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -110,10 +107,20 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
             }
         });
 
+        Options options = dcCommonState.getOptions();
+
+        if (options.getOption(OptionsImpl.HIDE_LANG_IMPORTS)) {
+            names = Functional.filter(names, new Predicate<String>() {
+                @Override
+                public boolean test(String in) {
+                    return !in.startsWith("java.lang");
+                }
+            });
+        }
+
         if (names.isEmpty()) return;
         Collections.sort(names);
         for (String name : names) {
-
             d.print("import " + name + ";\n");
         }
         d.print("\n");
