@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -148,7 +149,11 @@ public class StringBuilderRewriter implements ExpressionRewriter {
 //        JavaTypeInstance stringType = stringClass.getClassType();
         InferredJavaType inferredJavaType = new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.STRING_TRANSFORM, true);
         for (--x; x >= 0; --x) {
-            head = new ArithmeticOperation(inferredJavaType, head, revList.get(x), ArithOp.PLUS);
+            Expression appendee = revList.get(x);
+            if (appendee instanceof ArithmeticOperation && appendee.getPrecedence().compareTo(Precedence.ADD_SUB) <= 0) {
+                appendee = new ExplicitBraceExpression(appendee);
+            }
+            head = new ArithmeticOperation(inferredJavaType, head, appendee, ArithOp.PLUS);
         }
         return head;
     }
