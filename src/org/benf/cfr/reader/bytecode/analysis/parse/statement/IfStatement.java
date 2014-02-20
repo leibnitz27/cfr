@@ -147,13 +147,14 @@ public class IfStatement extends GotoStatement {
         switch (getJumpType()) {
             case GOTO:
             case GOTO_OUT_OF_IF:
+            case GOTO_OUT_OF_TRY:
                 return new UnstructuredIf(condition, knownIfBlock, knownElseBlock);
             case CONTINUE:
                 return new StructuredIf(condition, new Op04StructuredStatement(new UnstructuredContinue(getTargetStartBlock())));
             case BREAK:
                 return new StructuredIf(condition, new Op04StructuredStatement(new UnstructuredBreak(getJumpTarget().getContainer().getBlocksEnded())));
         }
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Unexpected jump type in if block - " + getJumpType());
     }
 
     public void setKnownBlocks(BlockIdentifier ifBlock, BlockIdentifier elseBlock) {
