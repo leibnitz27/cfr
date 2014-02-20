@@ -64,6 +64,33 @@ public class ExceptionCheck {
         missingInfo = lmissinginfo;
     }
 
+    private boolean checkAgainstInternal(Set<? extends JavaTypeInstance> thrown) {
+        if (thrown.isEmpty()) return false;
+
+        for (JavaTypeInstance thrownType : thrown) {
+            try {
+                ClassFile thrownClassFile = dcCommonState.getClassFile(thrownType);
+                if (thrownClassFile == null) return true;
+                BindingSuperContainer bindingSuperContainer = thrownClassFile.getBindingSupers();
+                if (bindingSuperContainer == null) return true;
+                Map<JavaRefTypeInstance, ?> boundSuperClasses = bindingSuperContainer.getBoundSuperClasses();
+                if (boundSuperClasses == null) return true;
+                if (SetUtil.hasIntersection(caughtChecked, boundSuperClasses.keySet())) return true;
+            } catch (CannotLoadClassException e) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean checkAgainst(Set<? extends JavaTypeInstance> thrown) {
+        try {
+            return checkAgainstInternal(thrown);
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     // Might this throw in a way which means it can't be moved into the exception block?
     public boolean checkAgainst(AbstractFunctionInvokation functionInvokation) {
         if (mightUseUnchecked) return true;
@@ -71,23 +98,7 @@ public class ExceptionCheck {
         try {
             ClassFile classFile = dcCommonState.getClassFile(type);
             Method method = classFile.getMethodByPrototype(functionInvokation.getMethodPrototype());
-            Set<JavaTypeInstance> thrown = method.getThrownTypes();
-            if (thrown.isEmpty()) return false;
-
-            for (JavaTypeInstance thrownType : thrown) {
-                try {
-                    ClassFile thrownClassFile = dcCommonState.getClassFile(thrownType);
-                    if (thrownClassFile == null) return true;
-                    BindingSuperContainer bindingSuperContainer = thrownClassFile.getBindingSupers();
-                    if (bindingSuperContainer == null) return true;
-                    Map<JavaRefTypeInstance, ?> boundSuperClasses = bindingSuperContainer.getBoundSuperClasses();
-                    if (boundSuperClasses == null) return true;
-                    if (SetUtil.hasIntersection(caughtChecked, boundSuperClasses.keySet())) return true;
-                } catch (CannotLoadClassException e) {
-                    return true;
-                }
-            }
-            return false;
+            return checkAgainstInternal(method.getThrownTypes());
         } catch (NoSuchMethodException e) {
             return true;
         } catch (CannotLoadClassException e) {

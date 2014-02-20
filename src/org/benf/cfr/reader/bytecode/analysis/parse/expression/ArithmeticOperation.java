@@ -15,6 +15,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.exceptions.BasicExceptions;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -205,6 +207,11 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
                     throw new IllegalStateException("Unknown enum");
             }
         }
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return caught.checkAgainst(BasicExceptions.instances);
     }
 
     @Override
