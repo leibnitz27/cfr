@@ -199,7 +199,6 @@ public class Op03Blocks {
             prevtest:
             if (block.sources.contains(linPrev)) {
                 Block3 source = linPrev;
-                if (source != linPrev) continue;
                 Set<BlockIdentifier> endIdents = source.getEnd().getBlockIdentifiers();
                 if (!endIdents.equals(startIdents)) {
                     // If the only difference is case statements, then we allow, unless it's a direct
