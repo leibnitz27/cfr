@@ -190,7 +190,6 @@ public class Op03Blocks {
     private static void applyKnownBlocksHeuristic(final Method method, List<Block3> blocks, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
 
 
-        // FIXME : TODO : INEFFICIENT.  Leaving it like this because I may need to revert.
         Block3 linPrev = null;
         for (Block3 block : blocks) {
             Op03SimpleStatement start = block.getStart();
