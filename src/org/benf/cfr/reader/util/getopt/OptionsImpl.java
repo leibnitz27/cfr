@@ -259,6 +259,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> HIDE_LANG_IMPORTS = new PermittedOptionProvider.Argument<Boolean>(
             "hidelangimports", defaultTrueBooleanDecoder,
             "Hide imports from java.lang.");
+    public static final PermittedOptionProvider.Argument<Integer> FORCE_PASS = new PermittedOptionProvider.Argument<Integer>(
+            "recpass", default0intDecoder,
+            "Decompile specifically with recovery options from pass #X. (really only useful for debugging)", true);
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -313,7 +316,7 @@ public class OptionsImpl implements Options {
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_RET_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
-                    ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, HELP);
+                    ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS, HELP);
         }
 
         @Override

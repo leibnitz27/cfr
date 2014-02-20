@@ -107,20 +107,34 @@ public class CodeAnalyser {
         if (analysed != null) return analysed;
 
         Options options = dcCommonState.getOptions();
-
         List<Op01WithProcessedDataAndByteJumps> instrs = getInstrs();
-        AnalysisResult res = getAnalysisOrWrapFail(0, instrs, dcCommonState, options, null);
 
-        if ((res.failed || res.hasErrorComment()) && options.getOption(OptionsImpl.RECOVER)) {
-            int passIdx = 1;
+
+        AnalysisResult res = null;
+
+        if (options.optionIsSet(OptionsImpl.FORCE_PASS)) {
+            int pass = options.getOption(OptionsImpl.FORCE_PASS);
+            if (pass < 0 || pass >= recoveryOptionsArr.length) {
+                throw new IllegalArgumentException("Illegal recovery pass idx");
+            }
             BytecodeMeta bytecodeMeta = new BytecodeMeta(instrs, originalCodeAttribute);
-            for (RecoveryOptions recoveryOptions : recoveryOptionsArr) {
-                RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
-                if (!applied.valid) continue;
-                AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments);
-                if (nextRes != null) res = nextRes;
-                if (res.failed || res.hasErrorComment()) continue;
-                break;
+            RecoveryOptions.Applied applied = recoveryOptionsArr[pass].apply(dcCommonState, options, bytecodeMeta);
+            res = getAnalysisOrWrapFail(pass, instrs, dcCommonState, applied.options, applied.comments);
+        } else {
+
+            res = getAnalysisOrWrapFail(0, instrs, dcCommonState, options, null);
+
+            if ((res.failed || res.hasErrorComment()) && options.getOption(OptionsImpl.RECOVER)) {
+                int passIdx = 1;
+                BytecodeMeta bytecodeMeta = new BytecodeMeta(instrs, originalCodeAttribute);
+                for (RecoveryOptions recoveryOptions : recoveryOptionsArr) {
+                    RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
+                    if (!applied.valid) continue;
+                    AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments);
+                    if (nextRes != null) res = nextRes;
+                    if (res.failed || res.hasErrorComment()) continue;
+                    break;
+                }
             }
         }
 

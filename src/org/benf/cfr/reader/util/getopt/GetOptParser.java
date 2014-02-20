@@ -58,13 +58,15 @@ public class GetOptParser {
         }
         max += 4;
         for (PermittedOptionProvider.ArgumentParam param : permittedOptionProvider.getArguments()) {
-            String name = param.getName();
-            int pad = max - name.length();
-            sb.append("   --").append(param.getName());
-            for (int x = 0; x < pad; ++x) { // there really should be a better way to do this.
-                sb.append(' ');
+            if (!param.isHidden()) {
+                String name = param.getName();
+                int pad = max - name.length();
+                sb.append("   --").append(param.getName());
+                for (int x = 0; x < pad; ++x) { // there really should be a better way to do this.
+                    sb.append(' ');
+                }
+                sb.append(param.shortDescribe()).append("\n");
             }
-            sb.append(param.shortDescribe()).append("\n");
         }
         return sb.toString();
     }

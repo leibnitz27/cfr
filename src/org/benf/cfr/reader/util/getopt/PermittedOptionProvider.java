@@ -20,11 +20,17 @@ public interface PermittedOptionProvider {
         private final String name;
         private final OptionDecoderParam<X, InputType> fn;
         private final String help;
+        private final boolean hidden;
 
         public ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help) {
+            this(name, fn, help, false);
+        }
+
+        public ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help, boolean hidden) {
             this.name = name;
             this.fn = fn;
             this.help = help;
+            this.hidden = hidden;
         }
 
         public String getName() {
@@ -33,6 +39,10 @@ public interface PermittedOptionProvider {
 
         public OptionDecoderParam<X, InputType> getFn() {
             return fn;
+        }
+
+        public boolean isHidden() {
+            return hidden;
         }
 
         public String describe() {
@@ -59,8 +69,12 @@ public interface PermittedOptionProvider {
     }
 
     public static class Argument<X> extends ArgumentParam<X, Void> {
+        public Argument(String name, OptionDecoderParam<X, Void> fn, String help, boolean hidden) {
+            super(name, fn, help, hidden);
+        }
+
         public Argument(String name, OptionDecoderParam<X, Void> fn, String help) {
-            super(name, fn, help);
+            super(name, fn, help, false);
         }
     }
 }
