@@ -187,7 +187,7 @@ public class Op03Blocks {
      * Heuristic - we don't want to reorder entries which leave known blocks - SO... if a source
      * is in a different blockset, we have to wait until the previous block is emitted.
      */
-    private static void applyKnownBlocksHeuristic(List<Block3> blocks, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
+    private static void applyKnownBlocksHeuristic(final Method method, List<Block3> blocks, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
 
 
         // FIXME : TODO : INEFFICIENT.  Leaving it like this because I may need to revert.
@@ -197,7 +197,9 @@ public class Op03Blocks {
             Set<BlockIdentifier> startIdents = start.getBlockIdentifiers();
             boolean needLinPrev = false;
             prevtest:
-            for (Block3 source : block.sources) {
+            if (block.sources.contains(linPrev)) {
+                Block3 source = linPrev;
+                if (source != linPrev) continue;
                 Set<BlockIdentifier> endIdents = source.getEnd().getBlockIdentifiers();
                 if (!endIdents.equals(startIdents)) {
                     // If the only difference is case statements, then we allow, unless it's a direct
@@ -236,7 +238,7 @@ public class Op03Blocks {
         }
     }
 
-    private static List<Block3> buildBasicBlocks(final List<Op03SimpleStatement> statements) {
+    private static List<Block3> buildBasicBlocks(final Method method, final List<Op03SimpleStatement> statements) {
         /*
          *
          */
@@ -286,12 +288,15 @@ public class Op03Blocks {
             }
 
             block.addSources(prevBlocks);
-            block.setTargets(postBlocks);
+            block.addTargets(postBlocks);
 
             if (end.getStatement() instanceof TryStatement) {
                 List<Block3> depends = ListFactory.newList();
                 for (Block3 tgt : postBlocks) {
                     tgt.addSources(depends);
+                    for (Block3 depend : depends) {
+                        depend.addTarget(tgt);
+                    }
                     depends.add(tgt);
                 }
             }
@@ -424,12 +429,12 @@ public class Op03Blocks {
 
     public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements, final DecompilerComments comments, final Options options) {
 
-        List<Block3> blocks = buildBasicBlocks(statements);
+        List<Block3> blocks = buildBasicBlocks(method, statements);
 
         apply0TargetBlockHeuristic(blocks);
 
         Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = getTryBlockAliases(statements);
-        applyKnownBlocksHeuristic(blocks, tryBlockAliases);
+        applyKnownBlocksHeuristic(method, blocks, tryBlockAliases);
 
         blocks = doTopSort(blocks);
 
@@ -623,6 +628,21 @@ public class Op03Blocks {
         public void setTargets(List<Block3> targets) {
             this.targets.clear();
             this.targets.addAll(targets);
+        }
+
+        public void addTargets(List<Block3> targets) {
+            for (Block3 source : targets) {
+                if (source == null) {
+                    throw new IllegalStateException();
+                }
+            }
+            this.targets.addAll(targets);
+//            this.originalSources.addAll(sources);
+        }
+
+        public void addTarget(Block3 source) {
+            this.targets.add(source);
+//            this.originalSources.add(source);
         }
 
         @Override
