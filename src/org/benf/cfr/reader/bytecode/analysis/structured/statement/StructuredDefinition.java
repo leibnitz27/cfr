@@ -66,7 +66,6 @@ public class StructuredDefinition extends AbstractStructuredStatement {
 
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
-        throw new IllegalStateException();
     }
 
     public LValue getLvalue() {

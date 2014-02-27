@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NOPSearchingExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -6141,6 +6142,34 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
             obj0.getInferredJavaType().deGenerify(gtb0.getBindingFor(obj0.getInferredJavaType().getJavaTypeInstance()));
         }
+    }
+
+    public static class LValueTypeClashCheck implements LValueUsageCollector {
+
+        Set<Integer> clashes = SetFactory.newSet();
+
+        public void collect(LValue lValue) {
+            lValue.collectLValueUsage(this);
+            InferredJavaType inferredJavaType = lValue.getInferredJavaType();
+            if (inferredJavaType != null && inferredJavaType.isClash()) {
+                if (lValue instanceof LocalVariable) {
+                    int idx = ((LocalVariable) lValue).getIdx();
+                    if (idx >= 0) clashes.add(idx);
+                }
+            }
+        }
+    }
+
+    public static boolean checkTypeClashes(List<Op03SimpleStatement> statements, BytecodeMeta bytecodeMeta) {
+        LValueTypeClashCheck clashCheck = new LValueTypeClashCheck();
+        for (Op03SimpleStatement statement : statements) {
+            statement.getStatement().collectLValueUsage(clashCheck);
+        }
+        if (!clashCheck.clashes.isEmpty()) {
+            bytecodeMeta.informLivenessClashes(clashCheck.clashes);
+            return true;
+        }
+        return false;
     }
 
     public static void labelAnonymousBlocks(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {

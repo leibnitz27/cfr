@@ -81,4 +81,25 @@ public abstract class RecoveryOption<T> {
             return applyComment(mutableOptions.override(arg, value), commentList);
         }
     }
+
+    public static class ConditionalRO<X, T> extends RecoveryOption<T> {
+        private final RecoveryOption<T> delegate;
+        private final PermittedOptionProvider.ArgumentParam<X, ?> test;
+        private final X required;
+
+        public ConditionalRO(PermittedOptionProvider.ArgumentParam<X, ?> test, X required, RecoveryOption<T> delegate) {
+            super(null, null, null, null);
+            this.delegate = delegate;
+            this.required = required;
+            this.test = test;
+        }
+
+        @Override
+        public boolean apply(MutableOptions mutableOptions, List<DecompilerComment> commentList, BytecodeMeta bytecodeMeta) {
+            if (mutableOptions.getOption(test, null).equals(required)) {
+                return delegate.apply(mutableOptions, commentList, bytecodeMeta);
+            }
+            return false;
+        }
+    }
 }

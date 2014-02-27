@@ -87,7 +87,6 @@ public class LambdaExpression extends AbstractExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
@@ -1375,8 +1376,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return;
     }
 
-    private static void assignSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> statements) {
-        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements);
+    private static void assignSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, Options options) {
+        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements, bytecodeMeta, options);
 
         /*
          * We can walk all the reads to see if there are any reads of 'uninitialised' slots.
@@ -1406,10 +1407,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          */
         method.getMethodPrototype().setSyntheticConstructorParameters(method.getConstructorFlag(), comments, missing);
 
-        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements);
+        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements, bytecodeMeta, options);
     }
 
-    public static void assignSSAIdentifiersInner(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements) {
+    public static void assignSSAIdentifiersInner(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, Options options) {
 
         /*
          * before we do anything, we need to generate identifiers for the parameters.
@@ -1424,12 +1425,20 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
         statements.get(0).ssaIdentifiers = new SSAIdentifiers<Slot>(idents);
 
+        final Set<Integer> livenessClashes = bytecodeMeta.getLivenessClashes();
+
         final BinaryPredicate<Slot, Slot> testSlot = new BinaryPredicate<Slot, Slot>() {
             @Override
             public boolean test(Slot a, Slot b) {
                 StackType t1 = a.getJavaTypeInstance().getStackType();
                 StackType t2 = b.getJavaTypeInstance().getStackType();
-                if (t1 == t2) return true;
+                if (t1 == t2) {
+                    if (livenessClashes.isEmpty()) return true;
+                    if (livenessClashes.contains(a.getIdx())) {
+                        return false;
+                    }
+                    return true;
+                }
                 return false;
             }
         };
@@ -1585,10 +1594,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
-    public static void discoverStorageLiveness(Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> op2list) {
+    public static void discoverStorageLiveness(Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> op2list, BytecodeMeta bytecodeMeta, Options options) {
         SSAIdentifierFactory<Slot> ssaIdentifierFactory = new SSAIdentifierFactory<Slot>();
 
-        assignSSAIdentifiers(ssaIdentifierFactory, method, comments, op2list);
+        assignSSAIdentifiers(ssaIdentifierFactory, method, comments, op2list, bytecodeMeta, options);
 
         removeUnusedSSAIdentifiers(ssaIdentifierFactory, method, op2list);
         // Now we've assigned SSA identifiers, we want to find, for each ident, the 'most encompassing'
@@ -1610,6 +1619,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     }
                 });
 
+        final Set<Integer> livenessClashes = bytecodeMeta.getLivenessClashes();
+
         for (Op02WithProcessedDataAndRefs op : op2list) {
             SSAIdentifiers<Slot> identifiers = op.ssaIdentifiers;
 
@@ -1625,11 +1636,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             Map<Slot, SSAIdent> identMap = identifiers.getKnownIdentifiers();
             for (Map.Entry<Slot, SSAIdent> entry : identMap.entrySet()) {
                 Slot thisSlot = entry.getKey();
+
                 SSAIdent thisIdents = entry.getValue();
                 Map<SSAIdent, Set<SSAIdent>> map = identChain.get(thisSlot);
                 // Note - because this is a lazy map, this will force us to get a key.
                 // This is needed for later, as we use this to determine the universe of keys.
                 Set<SSAIdent> thisNextSet = map.get(thisIdents);
+
                 for (Op02WithProcessedDataAndRefs tgt : op.getTargets()) {
                     SSAIdent nextIdents = tgt.ssaIdentifiers.getSSAIdent(thisSlot);
                     if (nextIdents != null && nextIdents.isSuperSet(thisIdents)) {
@@ -1664,15 +1677,21 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             // there will disjoint sets.
 
             for (SSAIdent key : keys) {
-                Pair<Slot, SSAIdent> slotkey = Pair.make(slot, key);
+                final Pair<Slot, SSAIdent> slotkey = Pair.make(slot, key);
                 if (combinedMap.containsKey(slotkey)) continue;
                 final Ident thisIdent = identFactory.getNextIdent(slot.getIdx());
                 GraphVisitor<SSAIdent> gv = new GraphVisitorDFS<SSAIdent>(key, new BinaryProcedure<SSAIdent, GraphVisitor<SSAIdent>>() {
                     @Override
                     public void call(SSAIdent arg1, GraphVisitor<SSAIdent> arg2) {
-                        Pair<Slot, SSAIdent> slotkey = Pair.make(slot, arg1);
-                        if (combinedMap.containsKey(slotkey)) return;
-                        combinedMap.put(slotkey, thisIdent);
+                        Pair<Slot, SSAIdent> innerslotkey = Pair.make(slot, arg1);
+                        // this is /definitely/ not right.... but it works.  Revisit.
+                        if (livenessClashes.contains(slot.getIdx())) {
+                            if (!innerslotkey.equals(slotkey)) {
+                                return;
+                            }
+                        }
+                        if (combinedMap.containsKey(innerslotkey)) return;
+                        combinedMap.put(innerslotkey, thisIdent);
                         arg2.enqueue(downMap.get(arg1));
                         arg2.enqueue(upMap.get(arg1));
                     }

@@ -148,6 +148,11 @@ public class FieldVariable extends AbstractLValue {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        object.collectUsedLValues(lValueUsageCollector);
+    }
+
+    @Override
     public LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         object = object.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;

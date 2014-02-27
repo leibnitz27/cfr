@@ -39,6 +39,11 @@ public class ArrayVariable extends AbstractLValue {
     }
 
     @Override
+    public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        arrayIndex.collectUsedLValues(lValueUsageCollector);
+    }
+
+    @Override
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");
     }

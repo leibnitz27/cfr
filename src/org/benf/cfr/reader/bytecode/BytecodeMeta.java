@@ -2,10 +2,12 @@ package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
+import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,15 +18,21 @@ import java.util.List;
 public class BytecodeMeta {
     public enum CodeInfoFlag {
         USES_MONITORS,
-        USES_EXCEPTIONS
+        USES_EXCEPTIONS,
+        LIVENESS_CLASH
     }
 
     private final EnumSet<CodeInfoFlag> flags = EnumSet.noneOf(CodeInfoFlag.class);
 
+    private final Set<Integer> livenessClashes = SetFactory.newSet();
+
+    public BytecodeMeta() {
+    }
+
     /*
      * We could generate op1s from code - but we already had them......
      */
-    public BytecodeMeta(List<Op01WithProcessedDataAndByteJumps> op1s, AttributeCode code) {
+    public void addBasicAnalysis(List<Op01WithProcessedDataAndByteJumps> op1s, AttributeCode code) {
         int flagCount = CodeInfoFlag.values().length;
         if (!code.getExceptionTableEntries().isEmpty()) flags.add(CodeInfoFlag.USES_EXCEPTIONS);
         for (Op01WithProcessedDataAndByteJumps op : op1s) {
@@ -41,6 +49,15 @@ public class BytecodeMeta {
 
     public boolean has(CodeInfoFlag flag) {
         return flags.contains(flag);
+    }
+
+    public void informLivenessClashes(Set<Integer> slots) {
+        flags.add(CodeInfoFlag.LIVENESS_CLASH);
+        livenessClashes.addAll(slots);
+    }
+
+    public Set<Integer> getLivenessClashes() {
+        return livenessClashes;
     }
 
     private static class FlagTest implements UnaryFunction<BytecodeMeta, Boolean> {

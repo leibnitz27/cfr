@@ -80,13 +80,13 @@ public class CodeAnalyser {
             this.code = code;
             this.failed = failed;
         }
-
-        public boolean hasErrorComment() {
-            return comments.hasErrorComment();
-        }
     }
 
-    private static final RecoveryOptions recover1 = new RecoveryOptions(
+    private static final RecoveryOptions recover0 = new RecoveryOptions(
+            new RecoveryOption.TrooleanRO(OptionsImpl.RECOVER_TYPECLASHES, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.LIVENESS_CLASH))
+    );
+
+    private static final RecoveryOptions recover1 = new RecoveryOptions(recover0,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RET_PROPAGATE, Troolean.TRUE),
@@ -98,7 +98,7 @@ public class CodeAnalyser {
             new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover1, recover2};
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover1, recover2};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
@@ -109,30 +109,34 @@ public class CodeAnalyser {
         Options options = dcCommonState.getOptions();
         List<Op01WithProcessedDataAndByteJumps> instrs = getInstrs();
 
-
         AnalysisResult res = null;
 
+        /*
+         * Very quick scan to
+         */
+        BytecodeMeta bytecodeMeta = new BytecodeMeta();
+
         if (options.optionIsSet(OptionsImpl.FORCE_PASS)) {
+            bytecodeMeta.addBasicAnalysis(instrs, originalCodeAttribute);
             int pass = options.getOption(OptionsImpl.FORCE_PASS);
             if (pass < 0 || pass >= recoveryOptionsArr.length) {
                 throw new IllegalArgumentException("Illegal recovery pass idx");
             }
-            BytecodeMeta bytecodeMeta = new BytecodeMeta(instrs, originalCodeAttribute);
             RecoveryOptions.Applied applied = recoveryOptionsArr[pass].apply(dcCommonState, options, bytecodeMeta);
-            res = getAnalysisOrWrapFail(pass, instrs, dcCommonState, applied.options, applied.comments);
+            res = getAnalysisOrWrapFail(pass, instrs, dcCommonState, applied.options, applied.comments, bytecodeMeta);
         } else {
 
-            res = getAnalysisOrWrapFail(0, instrs, dcCommonState, options, null);
+            res = getAnalysisOrWrapFail(0, instrs, dcCommonState, options, null, bytecodeMeta);
 
-            if ((res.failed || res.hasErrorComment()) && options.getOption(OptionsImpl.RECOVER)) {
+            if (res.failed && options.getOption(OptionsImpl.RECOVER)) {
                 int passIdx = 1;
-                BytecodeMeta bytecodeMeta = new BytecodeMeta(instrs, originalCodeAttribute);
+                bytecodeMeta.addBasicAnalysis(instrs, originalCodeAttribute);
                 for (RecoveryOptions recoveryOptions : recoveryOptionsArr) {
                     RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
                     if (!applied.valid) continue;
-                    AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments);
+                    AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments, bytecodeMeta);
                     if (nextRes != null) res = nextRes;
-                    if (res.failed || res.hasErrorComment()) continue;
+                    if (res.failed) continue;
                     break;
                 }
             }
@@ -170,9 +174,9 @@ public class CodeAnalyser {
         return instrs;
     }
 
-    private AnalysisResult getAnalysisOrWrapFail(int passIdx, List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState commonState, Options options, List<DecompilerComment> extraComments) {
+    private AnalysisResult getAnalysisOrWrapFail(int passIdx, List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState commonState, Options options, List<DecompilerComment> extraComments, BytecodeMeta bytecodeMeta) {
         try {
-            AnalysisResult res = getAnalysisInner(instrs, commonState, options, passIdx);
+            AnalysisResult res = getAnalysisInner(instrs, commonState, options, bytecodeMeta, passIdx);
             if (extraComments != null) res.comments.addComments(extraComments);
             return res;
         } catch (RuntimeException e) {
@@ -188,7 +192,7 @@ public class CodeAnalyser {
      *
      * passIdx is only useful for breakpointing.
      */
-    private AnalysisResult getAnalysisInner(List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState dcCommonState, Options options, int passIdx) {
+    private AnalysisResult getAnalysisInner(List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState dcCommonState, Options options, BytecodeMeta bytecodeMeta, int passIdx) {
 
 
         boolean willSort = options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE;
@@ -303,7 +307,7 @@ public class CodeAnalyser {
 
 
         // Discover slot re-use, infer invisible constructor parameters, etc.
-        Op02WithProcessedDataAndRefs.discoverStorageLiveness(method, comments, op2list);
+        Op02WithProcessedDataAndRefs.discoverStorageLiveness(method, comments, op2list, bytecodeMeta, options);
 
         // Create a non final version...
         final VariableFactory variableFactory = new VariableFactory(method);
@@ -630,6 +634,15 @@ public class CodeAnalyser {
             Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         }
 
+        boolean triggerRecovery = false;
+
+//        if (passIdx == 0) {
+//            if (Op03SimpleStatement.checkTypeClashes(op03SimpleParseNodes, bytecodeMeta)) {
+//                comments.addComment(DecompilerComment.TYPE_CLASHES);
+//                triggerRecovery = true;
+//            }
+//        }
+
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         Op04StructuredStatement.tidyEmptyCatch(block);
@@ -646,49 +659,59 @@ public class CodeAnalyser {
         /*
          * If we can't fully structure the code, we bow out here.
          */
+
         if (!block.isFullyStructured()) {
             comments.addComment(DecompilerComment.UNABLE_TO_STRUCTURE);
-            return new AnalysisResult(comments, block, false);
+            triggerRecovery = true;
+        } else {
+            Op04StructuredStatement.tidyTypedBooleans(block);
+            Op04StructuredStatement.prettifyBadLoops(block);
+
+            // Replace with a more generic interface, etc.
+
+            new SwitchStringRewriter(options, classFileVersion).rewrite(block);
+            new SwitchEnumRewriter(dcCommonState, classFileVersion).rewrite(block);
+
+            // These should logically be here, but the current versions are better!!
+            //        new ArrayIterRewriter(cfrState).rewrite(block);
+            //        new LoopIterRewriter(cfrState).rewrite(block);
+
+            // Now we've got everything nicely block structured, we can have an easier time
+            Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory);
+
+            // Done by wholeClass analyser.
+            //        Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);
+
+            //        Op04StructuredStatement.inlineSyntheticAccessors(cfrState, method, block);
+
+            if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
+                if (this.method.isConstructor()) Op04StructuredStatement.removeConstructorBoilerplate(block);
+            }
+
+            Op04StructuredStatement.rewriteLambdas(dcCommonState, method, block);
+
+            // Some misc translations.
+            Op04StructuredStatement.removeUnnecessaryVarargArrays(options, method, block);
+
+            Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
+            // Tidy variable names
+            Op04StructuredStatement.tidyVariableNames(method, block);
+
+            /*
+             * Now finally run some extra checks to spot wierdness.
+             */
+            Op04StructuredStatement.applyChecker(new LooseCatchChecker(), block, comments);
         }
-        Op04StructuredStatement.tidyTypedBooleans(block);
-        Op04StructuredStatement.prettifyBadLoops(block);
 
-        // Replace with a more generic interface, etc.
-
-        new SwitchStringRewriter(options, classFileVersion).rewrite(block);
-        new SwitchEnumRewriter(dcCommonState, classFileVersion).rewrite(block);
-
-        // These should logically be here, but the current versions are better!!
-//        new ArrayIterRewriter(cfrState).rewrite(block);
-//        new LoopIterRewriter(cfrState).rewrite(block);
-
-        // Now we've got everything nicely block structured, we can have an easier time
-        Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory);
-
-        // Done by wholeClass analyser.
-//        Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);
-
-//        Op04StructuredStatement.inlineSyntheticAccessors(cfrState, method, block);
-
-        if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
-            if (this.method.isConstructor()) Op04StructuredStatement.removeConstructorBoilerplate(block);
+        // Only check for type clashes on first pass.
+        if (passIdx == 0) {
+            if (Op04StructuredStatement.checkTypeClashes(block, bytecodeMeta)) {
+                comments.addComment(DecompilerComment.TYPE_CLASHES);
+                triggerRecovery = true;
+            }
         }
 
-        Op04StructuredStatement.rewriteLambdas(dcCommonState, method, block);
-
-        // Some misc translations.
-        Op04StructuredStatement.removeUnnecessaryVarargArrays(options, method, block);
-
-        Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
-        // Tidy variable names
-        Op04StructuredStatement.tidyVariableNames(method, block);
-
-        /*
-         * Now finally run some extra checks to spot wierdness.
-         */
-        Op04StructuredStatement.applyChecker(new LooseCatchChecker(), block, comments);
-
-        return new AnalysisResult(comments, block, false);
+        return new AnalysisResult(comments, block, triggerRecovery);
     }
 
 

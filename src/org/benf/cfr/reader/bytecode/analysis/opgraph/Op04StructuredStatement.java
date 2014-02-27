@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.Op04Checker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.*;
@@ -12,13 +13,16 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokat
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscovererImpl;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -640,10 +644,71 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * in what looks like invalid variable re-use, which we can now convert.
      */
     public static void discoverVariableScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
-        LValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverer(method.getMethodPrototype(), variableFactory);
+        LValueScopeDiscovererImpl scopeDiscoverer = new LValueScopeDiscovererImpl(method.getMethodPrototype(), variableFactory);
         root.traceLocalVariableScope(scopeDiscoverer);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
+    }
+
+    public static class LValueTypeClashCheck implements LValueScopeDiscoverer, StructuredStatementTransformer {
+
+        Set<Integer> clashes = SetFactory.newSet();
+
+        @Override
+        public void enterBlock(StructuredStatement structuredStatement) {
+        }
+
+        @Override
+        public void leaveBlock(StructuredStatement structuredStatement) {
+        }
+
+        @Override
+        public void collect(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
+            collect(lValue);
+        }
+
+        @Override
+        public void collectMultiUse(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
+            collect(lValue);
+        }
+
+        @Override
+        public void collectMutatedLValue(LValue lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
+            collect(lValue);
+        }
+
+        @Override
+        public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value) {
+            collect(localVariable);
+        }
+
+        public void collect(LValue lValue) {
+            lValue.collectLValueUsage(this);
+            InferredJavaType inferredJavaType = lValue.getInferredJavaType();
+            if (inferredJavaType != null && inferredJavaType.isClash()) {
+                if (lValue instanceof LocalVariable) {
+                    int idx = ((LocalVariable) lValue).getIdx();
+                    if (idx >= 0) clashes.add(idx);
+                }
+            }
+        }
+
+        @Override
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            in.traceLocalVariableScope(this);
+            in.transformStructuredChildren(this, scope);
+            return in;
+        }
+    }
+
+    public static boolean checkTypeClashes(Op04StructuredStatement block, BytecodeMeta bytecodeMeta) {
+        LValueTypeClashCheck clashCheck = new LValueTypeClashCheck();
+        block.traceLocalVariableScope(clashCheck);
+        if (!clashCheck.clashes.isEmpty()) {
+            bytecodeMeta.informLivenessClashes(clashCheck.clashes);
+            return true;
+        }
+        return false;
     }
 
     private static LValue removeSyntheticConstructorParams(Method method, Op04StructuredStatement root, boolean isInstance) {

@@ -17,6 +17,7 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment COMMENT_MONITORS = new DecompilerComment("Converted monitor instructions to comments");
     public static DecompilerComment PARAMETER_CORRUPTION = new DecompilerComment("WARNING - Possible parameter corruption");
     public static DecompilerComment TRY_BACKEDGE_REMOVED = new DecompilerComment("WARNING - Removed back jump from a try to a catch block - possible behaviour change.");
+    public static DecompilerComment TYPE_CLASHES = new DecompilerComment("Could not resolve type clashes", true);
 
     private final String comment;
     private final String summaryMessage;

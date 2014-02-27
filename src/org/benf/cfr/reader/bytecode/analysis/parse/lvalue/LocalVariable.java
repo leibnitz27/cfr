@@ -25,11 +25,11 @@ import org.benf.cfr.reader.util.output.Dumper;
 public class LocalVariable extends AbstractLValue {
     private final NamedVariable name;
     // We keep this so we don't confuse two variables with the same name, tricksy.
-    private final long idx;
+    private final int idx;
     private final Ident ident;
     private final boolean guessedFinal;
 
-    public LocalVariable(long index, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType, boolean guessedFinal) {
+    public LocalVariable(int index, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType, boolean guessedFinal) {
         super(inferredJavaType);
         this.name = variableNamer.getName(originalRawOffset, ident, index);
         this.idx = index;
@@ -69,6 +69,10 @@ public class LocalVariable extends AbstractLValue {
 
     public NamedVariable getName() {
         return name;
+    }
+
+    public int getIdx() {
+        return idx;
     }
 
     @Override

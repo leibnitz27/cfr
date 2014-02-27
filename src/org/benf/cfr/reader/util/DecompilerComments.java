@@ -47,10 +47,4 @@ public class DecompilerComments implements Dumpable {
         return commentList;
     }
 
-    public boolean hasErrorComment() {
-        for (DecompilerComment comment : commentList) {
-            if (null != comment.getSummaryMessage()) return true;
-        }
-        return false;
-    }
 }

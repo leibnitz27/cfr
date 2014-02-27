@@ -323,6 +323,10 @@ public class WildcardMatch {
         }
 
         @Override
+        public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        }
+
+        @Override
         public LValue deepClone(CloneHelper cloneHelper) {
             throw new UnsupportedOperationException();
         }

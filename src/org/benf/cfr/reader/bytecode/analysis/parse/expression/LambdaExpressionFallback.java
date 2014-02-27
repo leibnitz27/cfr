@@ -149,7 +149,6 @@ public class LambdaExpressionFallback extends AbstractExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

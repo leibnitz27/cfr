@@ -785,6 +785,9 @@ public class InferredJavaType {
 
         if (thisRaw.getStackType() != otherRaw.getStackType()) {
             // throw new ConfusedCFRException("Can't tighten from " + thisRaw + " to " + otherRaw);
+            if (MiscUtils.xor(thisRaw.getStackType(), otherRaw.getStackType(), StackType.REF)) {
+                this.value = IJTInternal_Clash.mkClash(this.value, other.value);
+            }
             return CastAction.InsertExplicit;
         }
         if (thisRaw == otherRaw && thisRaw.getStackType() != StackType.INT) {

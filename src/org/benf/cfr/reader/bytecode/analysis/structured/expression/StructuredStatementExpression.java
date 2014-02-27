@@ -57,7 +57,6 @@ public class StructuredStatementExpression extends AbstractExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        throw new UnsupportedOperationException();
     }
 
 

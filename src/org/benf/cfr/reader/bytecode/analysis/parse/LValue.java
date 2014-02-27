@@ -25,6 +25,8 @@ public interface LValue extends Dumpable, DeepCloneable<LValue>, TypeUsageCollec
 
     <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector<T> lValueAssigmentCollector);
 
+    void collectLValueUsage(LValueUsageCollector lValueUsageCollector);
+
     SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory);
 
     LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);

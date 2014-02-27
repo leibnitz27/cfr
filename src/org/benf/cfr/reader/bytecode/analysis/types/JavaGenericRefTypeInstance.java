@@ -186,7 +186,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
 
     @Override
     public JavaTypeInstance removeAnArrayIndirection() {
-        throw new UnsupportedOperationException();
+        return this;
     }
 
     @Override
