@@ -19,6 +19,7 @@ import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnonymousInner;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -42,7 +43,12 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
          * As much as I'd rather not tie this to its use, we have to make sure that the target variables etc
          * are available at the time of usage, so we can hide anonymous inner member clones.
          */
-        this.classFile = dcCommonState.getClassFile(constructorInvokation.getMethodPrototype().getReturnType());
+        ClassFile classFile = null;
+        try {
+            classFile = dcCommonState.getClassFile(constructorInvokation.getMethodPrototype().getReturnType());
+        } catch (CannotLoadClassException e) {
+        }
+        this.classFile = classFile;
         if (classFile != null) {
             classFile.noteAnonymousUse(this);
         }
