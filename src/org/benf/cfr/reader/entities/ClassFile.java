@@ -219,6 +219,32 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         this.classFileVersion = classFileVersion;
 
+        /*
+         * If the type instance for this class has decided that it's an inner class, but the class meta data does not
+         * believe so, correct the type instance!
+         */
+        AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
+        JavaRefTypeInstance typeInstance = (JavaRefTypeInstance) thisClass.getTypeInstance();
+        if (typeInstance.getInnerClassHereInfo().isInnerClass()) {
+            checkInnerClassAssumption(attributeInnerClasses, typeInstance);
+        }
+    }
+
+    /*
+     * We might have to correct this, if an assumption has been made based on type name.
+     */
+    private static void checkInnerClassAssumption(AttributeInnerClasses attributeInnerClasses, JavaRefTypeInstance typeInstance) {
+        if (attributeInnerClasses != null) {
+            for (InnerClassAttributeInfo innerClassAttributeInfo : attributeInnerClasses.getInnerClassAttributeInfoList()) {
+                if (innerClassAttributeInfo.getInnerClassInfo().equals(typeInstance)) {
+                    return;
+                }
+            }
+        }
+        /*
+         * No - we are NOT an inner class, regardless of what the guessed information says.
+         */
+        typeInstance.markNotInner();
     }
 
     public String getUsePath() {

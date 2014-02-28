@@ -102,8 +102,11 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         List<String> names = Functional.map(types, new UnaryFunction<JavaRefTypeInstance, String>() {
             @Override
             public String invoke(JavaRefTypeInstance arg) {
-                String name = arg.getRawName();
-                return name.replace('$', '.');
+                if (arg.getInnerClassHereInfo().isInnerClass()) {
+                    String name = arg.getRawName();
+                    return name.replace(MiscConstants.INNER_CLASS_SEP_CHAR, '.');
+                }
+                return arg.getRawName();
             }
         });
 

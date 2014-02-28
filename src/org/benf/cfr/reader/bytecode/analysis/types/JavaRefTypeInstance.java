@@ -8,6 +8,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
@@ -22,25 +23,32 @@ import java.util.Map;
  */
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
-    private final String shortName; // may not be unique
+    private transient String shortName; // may not be unique
     private transient String suggestedVarName;
-    private final InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
+    private transient InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
     //    private final Options options;
     private final DCCommonState dcCommonState; // Shouldn't need this here...
     private BindingSuperContainer cachedBindingSupers = BindingSuperContainer.POISON;
 
     private JavaRefTypeInstance(String className, DCCommonState dcCommonState) {
-        InnerClassInfo innerClassInfo = InnerClassInfo.NOT;
-        // We should be careful to ONLY check for "$" here, as we'll eliminate it elsewhere.
+        this.innerClassInfo = InnerClassInfo.NOT;
         this.dcCommonState = dcCommonState;
-        if (className.contains("$")) {
-            String outer = className.substring(0, className.lastIndexOf('$'));
+        /*
+         * This /MAY/ be a red herring.  It's possible for a class name to contain a dollar
+         * without it being an inner class.
+         */
+        if (className.contains(MiscConstants.INNER_CLASS_SEP_STR)) {
+            String outer = className.substring(0, className.lastIndexOf(MiscConstants.INNER_CLASS_SEP_CHAR));
             JavaRefTypeInstance outerClassTmp = dcCommonState.getClassCache().getRefClassFor(outer);
             innerClassInfo = new RefTypeInnerClassInfo(outerClassTmp);
         }
         this.className = className;
-        this.shortName = getShortName(className);
-        this.innerClassInfo = innerClassInfo;
+        this.shortName = getShortName(className, innerClassInfo);
+    }
+
+    public void markNotInner() {
+        this.innerClassInfo = InnerClassInfo.NOT;
+        this.shortName = getShortName(className, innerClassInfo);
     }
 
     @Override
@@ -232,8 +240,10 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         return classFile;
     }
 
-    private static String getShortName(String fullClassName) {
-        fullClassName = fullClassName.replace('$', '.');
+    private static String getShortName(String fullClassName, InnerClassInfo innerClassInfo) {
+        if (innerClassInfo.isInnerClass()) {
+            fullClassName = fullClassName.replace(MiscConstants.INNER_CLASS_SEP_CHAR, '.');
+        }
         int idxlast = fullClassName.lastIndexOf('.');
         String partname = idxlast == -1 ? fullClassName : fullClassName.substring(idxlast + 1);
         return partname;

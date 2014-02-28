@@ -76,7 +76,13 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
         // We need the inner classes on the anonymous class (!)
         ConstantPool cp = constructorInvokation.getCp();
 
-        ClassFile anonymousClassFile = cp.getDCCommonState().getClassFile(getTypeInstance());
+        ClassFile anonymousClassFile = null;
+        JavaTypeInstance typeInstance = getTypeInstance();
+        try {
+            anonymousClassFile = cp.getDCCommonState().getClassFile(typeInstance);
+        } catch (CannotLoadClassException e) {
+            anonymousClassFile = classFile;
+        }
         if (anonymousClassFile != classFile) {
             throw new IllegalStateException("Inner class got unexpected class file - revert this change");
         }

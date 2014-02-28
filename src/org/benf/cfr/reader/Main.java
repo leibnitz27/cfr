@@ -94,13 +94,18 @@ public class Main {
             if (!silent) {
                 System.err.println("Processing " + path + " (use " + OptionsImpl.SILENT.getName() + " to silence)");
             }
+            int fatal = 0;
+            int succeded = 0;
             for (JavaTypeInstance type : types) {
-                if (!silent) {
-                    System.err.println("Processing " + type.getRawName());
-                }
                 Dumper d = new ToStringDumper();  // Sentinel dumper.
                 try {
                     ClassFile c = dcCommonState.getClassFile(type);
+                    // Don't explicitly dump inner classes.  But make sure we ask the CLASS if it's
+                    // an inner class, rather than using the name, as scala tends to abuse '$'.
+                    if (c.isInnerClass()) continue;
+                    if (!silent) {
+                        System.err.println("Processing " + type.getRawName());
+                    }
                     if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
                         c.loadInnerClasses(dcCommonState);
                     }
@@ -112,10 +117,12 @@ public class Main {
                     d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation());
 
                     c.dump(d);
+                    succeded++;
                     d.print("\n\n");
                 } catch (Dumper.CannotCreate e) {
                     throw e;
                 } catch (RuntimeException e) {
+                    fatal++;
                     d.print(e.toString()).print("\n\n\n");
                 } finally {
                     d.close();

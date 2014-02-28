@@ -263,7 +263,6 @@ public class DCCommonState {
             String classPath = entry.getKey();
             if (classPath.toLowerCase().endsWith(".class")) {
                 classToPathMap.put(classPath, entry.getValue());
-                if (classPath.contains("$")) continue;
                 output.add(classCache.getRefClassFor(classPath.substring(0, classPath.length() - 6)));
             }
         }
