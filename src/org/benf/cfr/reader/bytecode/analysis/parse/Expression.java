@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumpable;
+import org.benf.cfr.reader.util.output.DumpableWithPrecedence;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
@@ -22,7 +23,7 @@ import java.util.Set;
  * User: lee
  * Date: 15/03/2012
  */
-public interface Expression extends Dumpable, DeepCloneable<Expression>, ComparableUnderEC, TypeUsageCollectable {
+public interface Expression extends DumpableWithPrecedence, DeepCloneable<Expression>, ComparableUnderEC, TypeUsageCollectable {
     // Can /PROBABLY/ replace LValueRewriter with expression rewriter.
     Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
 
@@ -35,10 +36,6 @@ public interface Expression extends Dumpable, DeepCloneable<Expression>, Compara
     boolean canPushDownInto();
 
     Expression pushDown(Expression toPush, Expression parent);
-
-    Precedence getPrecedence();
-
-    Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerPrecedence);
 
     InferredJavaType getInferredJavaType();
 

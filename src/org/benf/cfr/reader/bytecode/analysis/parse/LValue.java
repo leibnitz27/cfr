@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -10,6 +11,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumpable;
+import org.benf.cfr.reader.util.output.DumpableWithPrecedence;
+import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Set;
 
@@ -20,7 +23,7 @@ import java.util.Set;
  * Time: 18:04
  * To change this template use File | Settings | File Templates.
  */
-public interface LValue extends Dumpable, DeepCloneable<LValue>, TypeUsageCollectable {
+public interface LValue extends DumpableWithPrecedence, DeepCloneable<LValue>, TypeUsageCollectable {
     int getNumberOfCreators();
 
     <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector<T> lValueAssigmentCollector);
@@ -36,4 +39,5 @@ public interface LValue extends Dumpable, DeepCloneable<LValue>, TypeUsageCollec
     InferredJavaType getInferredJavaType();
 
     boolean canThrow(ExceptionCheck caught);
+
 }

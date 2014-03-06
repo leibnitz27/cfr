@@ -82,7 +82,7 @@ public class LValueExpression extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        return lValue.dump(d);
+        return lValue.dumpWithOuterPrecedence(d, getPrecedence());
     }
 
     public LValue getLValue() {

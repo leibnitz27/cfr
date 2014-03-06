@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -130,11 +131,17 @@ public class FieldVariable extends AbstractLValue {
     }
 
     @Override
-    public Dumper dump(Dumper d) {
+    public Precedence getPrecedence() {
+        return Precedence.PAREN_SUB_MEMBER;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
         if (isOuterRef() && objectIsThis()) {
             return d.print(getFieldName());
         } else {
-            return object.dump(d).print(".").print(getFieldName());
+            object.dumpWithOuterPrecedence(d, getPrecedence());
+            return d.print(".").print(getFieldName());
         }
     }
 

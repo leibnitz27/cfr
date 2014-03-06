@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariableDefault;
@@ -63,7 +64,12 @@ public class LocalVariable extends AbstractLValue {
     }
 
     @Override
-    public Dumper dump(Dumper d) {
+    public Precedence getPrecedence() {
+        return Precedence.HIGHEST;
+    }
+
+    @Override
+    public Dumper dumpInner(Dumper d) {
         return name.dump(d).print(typeToString());
     }
 

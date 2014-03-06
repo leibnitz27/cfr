@@ -367,6 +367,16 @@ public class WildcardMatch {
         }
 
         @Override
+        public Precedence getPrecedence() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerPrecedence) {
+            return d;
+        }
+
+        @Override
         public boolean canThrow(ExceptionCheck caught) {
             return true;
         }
