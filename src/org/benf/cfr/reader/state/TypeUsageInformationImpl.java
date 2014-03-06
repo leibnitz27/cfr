@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.output.CommaHelp;
 
 import java.util.*;
 
@@ -18,6 +19,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
 
     private final JavaRefTypeInstance analysisType;
     private final Set<JavaRefTypeInstance> usedRefTypes = SetFactory.newOrderedSet();
+    private final Set<JavaRefTypeInstance> usedLocalInnerTypes = SetFactory.newOrderedSet();
     private final Map<JavaRefTypeInstance, String> displayName = MapFactory.newMap();
     private final Set<String> shortNames = SetFactory.newSet();
 
@@ -28,22 +30,8 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
 
     @Override
     public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
-        InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
-        String clazzRawName = clazz.getRawName();
-        /* Local inner class.  We want the smallest postfix
-         */
-        JavaRefTypeInstance parent = innerClassInfo.getOuterClass();
-        if (parent == null) return clazzRawName;
-
-        if (clazz.getRawName().startsWith(analysisType.getRawName())) {
-            return clazzRawName.substring(parent.getRawName().length() + 1);
-        }
-        /*
-         * Foreign inner class.  Take the existing determined shortname, and replace $ with '.'.
-         */
-        return getName(parent) + "." + clazz.getRawShortName();
+        return TypeUsageUtils.generateInnerClassShortName(clazz, analysisType);
     }
-
 
     private void initialiseFrom(Set<JavaRefTypeInstance> usedRefTypes) {
         List<JavaRefTypeInstance> usedRefs = ListFactory.newList(usedRefTypes);
@@ -62,6 +50,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
             }
         });
         addDisplayNames(types.getFirst());
+        this.usedLocalInnerTypes.addAll(types.getFirst());
         addDisplayNames(types.getSecond());
     }
 
@@ -89,7 +78,12 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
 
     @Override
     public Set<JavaRefTypeInstance> getUsedClassTypes() {
-        return SetFactory.newOrderedSet(usedRefTypes);
+        return usedRefTypes;
+    }
+
+    @Override
+    public Set<JavaRefTypeInstance> getUsedInnerClassTypes() {
+        return usedLocalInnerTypes;
     }
 
     @Override

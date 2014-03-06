@@ -14,7 +14,9 @@ import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.InnerClassTypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -22,6 +24,7 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.TypeOverridingDumper;
 
 import java.util.*;
 
@@ -743,7 +746,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             if (classFile.hiddenInnerClass) {
                 continue;
             }
-            classFile.dumpHelper.dump(classFile, true, d);
+            TypeUsageInformation typeUsageInformation = d.getTypeUsageInformation();
+            TypeUsageInformation innerclassTypeUsageInformation = new InnerClassTypeUsageInformation(typeUsageInformation, (JavaRefTypeInstance) classFile.getClassType());
+            Dumper d2 = new TypeOverridingDumper(d, innerclassTypeUsageInformation);
+
+            classFile.dumpHelper.dump(classFile, true, d2);
             d.newln();
         }
     }

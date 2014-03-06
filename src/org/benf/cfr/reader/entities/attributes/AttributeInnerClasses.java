@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.entities.attributes;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -43,6 +45,17 @@ public class AttributeInnerClasses extends Attribute {
         return cp.getUTF8Entry(idx).getValue();
     }
 
+    private static Pair<JavaTypeInstance, JavaTypeInstance> getInnerOuter(int idxinner, int idxouter, ConstantPool cp) {
+        if (idxinner == 0 || idxouter == 0) {
+            return Pair.make(getOptClass(idxinner, cp), getOptClass(idxouter, cp));
+        }
+        ConstantPoolEntryClass cpecInner = cp.getClassEntry(idxinner);
+        ConstantPoolEntryClass cpecOuter = cp.getClassEntry(idxouter);
+        JavaTypeInstance innerType = cpecInner.getTypeInstanceKnownOuter(cpecOuter);
+        JavaTypeInstance outerType = cpecInner.getTypeInstanceKnownInner(cpecOuter);
+        return Pair.make(innerType, outerType);
+    }
+
     public AttributeInnerClasses(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
         int numberInnerClasses = raw.getS2At(OFFSET_OF_NUMBER_OF_CLASSES);
@@ -56,14 +69,16 @@ public class AttributeInnerClasses extends Attribute {
             offset += 2;
             int innerAccessFlags = raw.getS2At(offset);
             offset += 2;
-            JavaTypeInstance innerClassType = getOptClass(innerClassInfoIdx, cp);
-            JavaTypeInstance outerClassType = getOptClass(outerClassInfoIdx, cp);
+            Pair<JavaTypeInstance, JavaTypeInstance> innerOuter = getInnerOuter(innerClassInfoIdx, outerClassInfoIdx, cp);
+            JavaTypeInstance innerClassType = innerOuter.getFirst();
+            JavaTypeInstance outerClassType = innerOuter.getSecond();
             // MarkAnonymous feels like a bit of a hack, but otherwise we need to propagate this information
             // the whole way down the type creation path, and this is the only place we care about it.
             // May add that in later.
             // if (outerClassType == null) {
             if (outerClassType == null) {
-                innerClassType.getInnerClassHereInfo().markMethodScoped(innerNameIdx == 0);
+                boolean methodScoped = innerNameIdx == 0;
+                innerClassType.getInnerClassHereInfo().markMethodScoped(methodScoped);
             }
             innerClassAttributeInfoList.add(new InnerClassAttributeInfo(
                     innerClassType,

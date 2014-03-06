@@ -1,9 +1,6 @@
 package org.benf.cfr.reader.entities.classfilehelpers;
 
-import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
-import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
@@ -99,6 +96,20 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         List<JavaTypeInstance> classTypes = classFile.getAllClassTypes();
         Set<JavaRefTypeInstance> types = d.getTypeUsageInformation().getUsedClassTypes();
         types.removeAll(classTypes);
+        /*
+         * Now - for all inner class types, remove them, but make sure the base class of the inner class is imported.
+         */
+        List<JavaRefTypeInstance> inners = Functional.filter(types, new Predicate<JavaRefTypeInstance>() {
+            @Override
+            public boolean test(JavaRefTypeInstance in) {
+                return in.getInnerClassHereInfo().isInnerClass();
+            }
+        });
+        types.removeAll(inners);
+        for (JavaRefTypeInstance inner : inners) {
+            types.add(InnerClassInfoUtils.getTransitiveOuterClass(inner));
+        }
+
         List<String> names = Functional.map(types, new UnaryFunction<JavaRefTypeInstance, String>() {
             @Override
             public String invoke(JavaRefTypeInstance arg) {

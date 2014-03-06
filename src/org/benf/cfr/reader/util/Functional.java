@@ -35,7 +35,7 @@ public class Functional {
         return true;
     }
 
-    public static <X> Pair<List<X>, List<X>> partition(List<X> input, Predicate<X> predicate) {
+    public static <X> Pair<List<X>, List<X>> partition(Collection<X> input, Predicate<X> predicate) {
         List<X> lTrue = ListFactory.newList();
         List<X> lFalse = ListFactory.newList();
         for (X item : input) {

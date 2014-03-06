@@ -13,7 +13,9 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.LocalClassAwareTypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -21,7 +23,7 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.LocalClassAwareDumper;
+import org.benf.cfr.reader.util.output.TypeOverridingDumper;
 
 import java.util.*;
 
@@ -423,7 +425,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
              * Override the dumper with a proxy which makes sure that local classes defined here are 'better'.
              */
             if (!localClasses.isEmpty()) {
-                d = new LocalClassAwareDumper(d, localClasses);
+                TypeUsageInformation overrides = new LocalClassAwareTypeUsageInformation(localClasses, d.getTypeUsageInformation());
+                d = new TypeOverridingDumper(d, overrides);
             }
             d.print(' ').dump(codeAttribute);
         }

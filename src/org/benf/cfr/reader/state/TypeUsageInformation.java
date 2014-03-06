@@ -17,6 +17,8 @@ import java.util.Set;
 public interface TypeUsageInformation {
     public Set<JavaRefTypeInstance> getUsedClassTypes();
 
+    public Set<JavaRefTypeInstance> getUsedInnerClassTypes();
+
     public String getName(JavaTypeInstance type);
 
     public String generateInnerClassShortName(JavaRefTypeInstance clazz);

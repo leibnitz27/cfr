@@ -16,13 +16,13 @@ import java.util.Set;
  * Date: 26/11/2013
  * Time: 17:34
  */
-public class LocalClassAwareDumper implements Dumper {
+public class TypeOverridingDumper implements Dumper {
     private final Dumper delegate;
     private final TypeUsageInformation typeUsageInformation;
 
-    public LocalClassAwareDumper(Dumper delegate, Map<JavaRefTypeInstance, String> localClasses) {
+    public TypeOverridingDumper(Dumper delegate, TypeUsageInformation typeUsageInformation) {
         this.delegate = delegate;
-        this.typeUsageInformation = new LocalClassAwareTypeUsageInformation(localClasses, delegate.getTypeUsageInformation());
+        this.typeUsageInformation = typeUsageInformation;
     }
 
     @Override

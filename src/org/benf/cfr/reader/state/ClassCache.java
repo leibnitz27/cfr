@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.state;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -43,4 +44,22 @@ public class ClassCache {
         return typeInstance;
     }
 
+    public Pair<JavaRefTypeInstance, JavaRefTypeInstance> getRefClassForInnerOuterPair(String rawInnerName, String rawOuterName) {
+        String innerName = ClassNameUtils.convertFromPath(rawInnerName);
+        String outerName = ClassNameUtils.convertFromPath(rawOuterName);
+        JavaRefTypeInstance inner = refClassTypeCache.get(innerName);
+        JavaRefTypeInstance outer = refClassTypeCache.get(outerName);
+        if (inner != null && outer != null) return Pair.make(inner, outer);
+        Pair<JavaRefTypeInstance, JavaRefTypeInstance> pair = JavaRefTypeInstance.createKnownInnerOuter(innerName, outerName, outer, dcCommonState);
+        if (inner == null) {
+            refClassTypeCache.put(innerName, pair.getFirst());
+            inner = pair.getFirst();
+        }
+        if (outer == null) {
+            refClassTypeCache.put(outerName, pair.getSecond());
+            outer = pair.getSecond();
+        }
+        return Pair.make(inner, outer);
+
+    }
 }

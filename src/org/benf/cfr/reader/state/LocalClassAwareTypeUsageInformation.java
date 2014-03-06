@@ -62,6 +62,11 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
     }
 
     @Override
+    public Set<JavaRefTypeInstance> getUsedInnerClassTypes() {
+        return delegate.getUsedInnerClassTypes();
+    }
+
+    @Override
     public String getName(JavaTypeInstance type) {
         String local = localTypeNames.get(type);
         if (local != null) return local;

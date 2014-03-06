@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
@@ -30,7 +31,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     private final DCCommonState dcCommonState; // Shouldn't need this here...
     private BindingSuperContainer cachedBindingSupers = BindingSuperContainer.POISON;
 
-    private JavaRefTypeInstance(String className, DCCommonState dcCommonState) {
+    private JavaRefTypeInstance(final String className, DCCommonState dcCommonState) {
         this.innerClassInfo = InnerClassInfo.NOT;
         this.dcCommonState = dcCommonState;
         /*
@@ -44,6 +45,22 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         }
         this.className = className;
         this.shortName = getShortName(className, innerClassInfo);
+    }
+
+    private JavaRefTypeInstance(final String className, final JavaRefTypeInstance knownOuter, DCCommonState dcCommonState) {
+        this.className = className;
+        this.dcCommonState = dcCommonState;
+        String innerSub = className.substring(knownOuter.className.length());
+        /*
+         * Now, we have to make an assumption at this point that if the first character of innerSub is a $ (Sep)
+         * that we should replace it.  This isn't mandated by anything, so we could create illegals again here. :P
+         *
+         */
+        if (innerSub.charAt(0) == MiscConstants.INNER_CLASS_SEP_CHAR) {
+            innerSub = innerSub.substring(1);
+        }
+        this.innerClassInfo = new RefTypeInnerClassInfo(knownOuter);
+        this.shortName = innerSub;
     }
 
     public void markNotInner() {
@@ -91,6 +108,18 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
      */
     public static JavaRefTypeInstance create(String rawClassName, DCCommonState dcCommonState) {
         return new JavaRefTypeInstance(rawClassName, dcCommonState);
+    }
+
+    public static Pair<JavaRefTypeInstance, JavaRefTypeInstance> createKnownInnerOuter(String inner, String outer, JavaRefTypeInstance outerType, DCCommonState dcCommonState) {
+        if (outerType == null) outerType = new JavaRefTypeInstance(outer, dcCommonState);
+        JavaRefTypeInstance innerType;
+        if (!inner.startsWith(outer)) {
+            // Handle the illegal inner/outer combo.
+            innerType = new JavaRefTypeInstance(inner, dcCommonState);
+        } else {
+            innerType = new JavaRefTypeInstance(inner, outerType, dcCommonState);
+        }
+        return Pair.make(innerType, outerType);
     }
 
     /*
@@ -297,7 +326,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             if (possibleParent.equals(outerClass)) return true;
             InnerClassInfo upper = outerClass.getInnerClassHereInfo();
             if (!upper.isInnerClass()) return false;
-            return upper.isInnerClassOf(possibleParent);
+            return upper.isTransitiveInnerClassOf(possibleParent);
         }
 
         @Override

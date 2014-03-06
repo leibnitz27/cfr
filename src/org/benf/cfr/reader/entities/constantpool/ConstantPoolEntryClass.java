@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities.constantpool;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -69,6 +70,28 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
             String rawType = getCp().getUTF8Entry(nameIndex).getValue();
             javaTypeInstance = convertFromString(rawType);
         }
+        return javaTypeInstance;
+    }
+
+    public JavaTypeInstance getTypeInstanceKnownOuter(ConstantPoolEntryClass outer) {
+        if (javaTypeInstance != null) {
+            return javaTypeInstance;
+        }
+        String thisInnerType = getCp().getUTF8Entry(nameIndex).getValue();
+        String thisOuterType = getCp().getUTF8Entry(outer.nameIndex).getValue();
+        Pair<JavaRefTypeInstance, JavaRefTypeInstance> pair = getCp().getClassCache().getRefClassForInnerOuterPair(thisInnerType, thisOuterType);
+        javaTypeInstance = pair.getFirst();
+        return javaTypeInstance;
+    }
+
+    public JavaTypeInstance getTypeInstanceKnownInner(ConstantPoolEntryClass inner) {
+        if (javaTypeInstance != null) {
+            return javaTypeInstance;
+        }
+        String thisInnerType = getCp().getUTF8Entry(inner.nameIndex).getValue();
+        String thisOuterType = getCp().getUTF8Entry(nameIndex).getValue();
+        Pair<JavaRefTypeInstance, JavaRefTypeInstance> pair = getCp().getClassCache().getRefClassForInnerOuterPair(thisInnerType, thisOuterType);
+        javaTypeInstance = pair.getSecond();
         return javaTypeInstance;
     }
 
