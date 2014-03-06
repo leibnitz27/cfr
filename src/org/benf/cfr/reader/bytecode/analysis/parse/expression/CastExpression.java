@@ -135,6 +135,10 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     }
 
     @Override
+    public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+    }
+
+    @Override
     public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
         if (o == null) return false;
         if (o == this) return true;

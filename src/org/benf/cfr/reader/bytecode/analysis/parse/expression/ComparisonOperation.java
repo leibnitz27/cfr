@@ -259,6 +259,10 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     }
 
     @Override
+    public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof ComparisonOperation)) return false;

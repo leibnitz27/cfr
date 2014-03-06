@@ -161,7 +161,12 @@ public class StaticFunctionInvokation extends AbstractExpression implements Func
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
             args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet));
         }
-        return false;
+        return true;
+    }
+
+    @Override
+    public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+
     }
 
     @Override

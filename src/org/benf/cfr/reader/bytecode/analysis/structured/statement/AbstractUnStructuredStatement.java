@@ -39,14 +39,8 @@ public abstract class AbstractUnStructuredStatement extends AbstractStructuredSt
         throw new UnsupportedOperationException("Can't linearise an unstructured statement");
     }
 
-    /*
-     * We can't handle this.
-     *
-     * If the block hasn't been converted properly, op4 processing shouldn't be proceeding.
-     */
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

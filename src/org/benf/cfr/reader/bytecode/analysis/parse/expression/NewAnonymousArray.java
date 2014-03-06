@@ -67,6 +67,9 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
         return false;
     }
 
+    @Override
+    public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+    }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {

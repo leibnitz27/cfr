@@ -193,7 +193,10 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
             arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet);
             args.set(x, arg);
         }
-        return false;
+        return true;
     }
 
+    @Override
+    public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+    }
 }

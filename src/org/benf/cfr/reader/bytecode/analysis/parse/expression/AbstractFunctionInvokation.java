@@ -184,8 +184,15 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
             arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet);
             args.set(x, arg);
         }
-        return false;
+
+        return true;
     }
+
+    @Override
+    public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        object = expressionRewriter.rewriteExpression(object, ssaIdentifiers, statementContainer, flags);
+    }
+
 
     /*
      * We can be SLIGHTLY clever here.  If only checked exceptions are being caught, we
@@ -218,4 +225,6 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         if (!constraint.equivalent(args, other.args)) return false;
         return true;
     }
+
+
 }

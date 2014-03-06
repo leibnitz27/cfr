@@ -113,4 +113,9 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
         index = boxingRewriter.sugarUnboxing(index);
         return false;
     }
+
+    @Override
+    public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+    }
+
 }

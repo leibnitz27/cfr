@@ -61,7 +61,11 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (expression instanceof BoxingProcessor) {
-            ((BoxingProcessor) expression).rewriteBoxing(this);
+            BoxingProcessor boxingProcessor = (BoxingProcessor) expression;
+            if (boxingProcessor.rewriteBoxing(this)) {
+                boxingProcessor.applyNonArgExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+                return expression;
+            }
         }
         expression = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         return expression;
@@ -70,7 +74,11 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
     @Override
     public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (expression instanceof BoxingProcessor) {
-            ((BoxingProcessor) expression).rewriteBoxing(this);
+            BoxingProcessor boxingProcessor = (BoxingProcessor) expression;
+            if (boxingProcessor.rewriteBoxing(this)) {
+                boxingProcessor.applyNonArgExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+                return expression;
+            }
         }
         Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         return (ConditionalExpression) res;

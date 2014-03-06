@@ -231,6 +231,10 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         return false;
     }
 
+    @Override
+    public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+    }
+
     /*
      * parent is (x LCMP y) > 0
      * (this is (x LCMP y)).
