@@ -85,7 +85,8 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<Statement> statementContainer, Expression value) {
     }
 
-    @Override
+    Map<Expression, Expression> cache = MapFactory.newMap();
+
     public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> lvSc) {
         if (!(lValue instanceof StackSSALabel)) return null;
 
@@ -134,10 +135,18 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             found.put(stackSSALabel, new ExpressionStatement(aliasReplacements.get(stackSSALabel), null));
             aliasReplacements.remove(stackSSALabel);
         }
+
         do {
             prev = res;
+            if (cache.containsKey(res)) {
+                res = cache.get(res);
+                prev = res;
+            }
             res = res.replaceSingleUsageLValues(this, ssaIdentifiers, lvSc);
         } while (res != null && res != prev);
+
+        cache.put(new StackValue(stackSSALabel), prev);
+
         return prev;
     }
 
