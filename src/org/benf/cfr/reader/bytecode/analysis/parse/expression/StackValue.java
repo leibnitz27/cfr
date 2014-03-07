@@ -88,6 +88,11 @@ public class StackValue extends AbstractExpression {
     }
 
     @Override
+    public int hashCode() {
+        return stackValue.hashCode();
+    }
+
+    @Override
     public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
         if (o == this) return true;
         if (!(o instanceof StackValue)) return false;
