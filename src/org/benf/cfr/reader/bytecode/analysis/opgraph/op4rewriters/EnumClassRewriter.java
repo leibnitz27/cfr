@@ -113,6 +113,8 @@ public class EnumClassRewriter {
         Map<StaticVariable, CollectedEnumData<? extends AbstractConstructorInvokation>> entryMap = initMatchCollector.getEntryMap();
         CollectedEnumData<NewAnonymousArray> matchedArray = initMatchCollector.getMatchedArray();
 
+        // Note that nopping out this code means that we're no longer referencing the code other than
+        // in the dumper! :(
         for (CollectedEnumData<?> entry : entryMap.values()) {
             entry.getContainer().nopOut();
         }

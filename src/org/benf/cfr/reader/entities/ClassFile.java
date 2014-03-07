@@ -302,6 +302,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             ClassFile innerClassFile = innerClassByTypeInfo.getValue().getSecond();
             innerClassFile.collectTypeUsages(collector);
         }
+        collector.collectFrom(dumpHelper);
         collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
         collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
     }

@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.CommaHelp;
@@ -82,5 +83,10 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         d.print("}\n");
 
         return d;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+
     }
 }
