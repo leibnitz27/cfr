@@ -38,15 +38,29 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final boolean varargs;
     private final String name;
     private final ClassFile classFile;
+    private final Method.MethodConstructor constructorFlag;
     // Synthetic args are arguments which are not VISIBLY present in the method prototype at all, but
     // are nonetheless used by the method body.
     private final List<Slot> syntheticArgs = ListFactory.newList();
     private transient List<LocalVariable> parameterLValues = null;
 
-    public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
+    public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
+        this.constructorFlag = constructorFlag;
+        if (constructorFlag.equals(Method.MethodConstructor.ENUM_CONSTRUCTOR)) {
+            List<JavaTypeInstance> args2 = ListFactory.newList();
+            args2.add(TypeConstants.STRING);
+            args2.add(RawJavaType.INT);
+            args2.addAll(args);
+            hide(0);
+            hide(1);
+
+            args = args2;
+        }
+
         this.args = args;
+
         JavaTypeInstance resultType;
         if (MiscConstants.INIT_METHOD.equals(name)) {
             if (classFile == null) {
@@ -180,16 +194,16 @@ public class MethodPrototype implements TypeUsageCollectable {
         Map<Slot, SSAIdent> res = MapFactory.newLinkedMap();
         int offset = 0;
         switch (constructorFlag) {
-            case ENUM_CONSTRUCTOR: {
-                Slot tgt0 = new Slot(classFile.getClassType(), 0);
-                res.put(tgt0, ssaIdentifierFactory.getIdent(tgt0));
-                Slot tgt1 = new Slot(RawJavaType.REF, 1);
-                res.put(tgt1, ssaIdentifierFactory.getIdent(tgt1));
-                Slot tgt2 = new Slot(RawJavaType.INT, 2);
-                res.put(tgt2, ssaIdentifierFactory.getIdent(tgt2));
-                offset = 3;
-                break;
-            }
+//            case ENUM_CONSTRUCTOR: {
+////                Slot tgt0 = new Slot(classFile.getClassType(), 0);
+////                res.put(tgt0, ssaIdentifierFactory.getIdent(tgt0));
+////                Slot tgt1 = new Slot(RawJavaType.REF, 1);
+////                res.put(tgt1, ssaIdentifierFactory.getIdent(tgt1));
+////                Slot tgt2 = new Slot(RawJavaType.INT, 2);
+////                res.put(tgt2, ssaIdentifierFactory.getIdent(tgt2));
+////                offset = 3;
+//                break;
+//            }
             default: {
                 if (instanceMethod) {
                     Slot tgt = new Slot(classFile.getClassType(), 0);
@@ -228,7 +242,12 @@ public class MethodPrototype implements TypeUsageCollectable {
             offset = 1;
         }
         if (constructorFlag == Method.MethodConstructor.ENUM_CONSTRUCTOR) {
-            offset += 2;
+//            parameterLValues.add(new LocalVariable(offset, new Ident(offset, 0), variableNamer, offset, new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.UNKNOWN, true), false));
+//            offset++;
+//            hide(0);
+//            parameterLValues.add(new LocalVariable(offset, new Ident(offset, 0), variableNamer, offset, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.UNKNOWN, true), false));
+//            offset++;
+//            hide(1);
         } else {
             // TODO : It's not a valid assumption that synthetic args are at the front!
             for (Slot synthetic : syntheticArgs) {

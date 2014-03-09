@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
@@ -51,7 +52,7 @@ public class LambdaUtils {
             case MethodType: {
                 ConstantPoolEntryMethodType targetFnType = getType(arg);
                 ConstantPoolEntryUTF8 descriptor = targetFnType.getDescriptor();
-                return ConstantPoolUtils.parseJavaMethodPrototype(null, null, null, false, descriptor, targetFnType.getCp(), false, null);
+                return ConstantPoolUtils.parseJavaMethodPrototype(null, null, null, false, Method.MethodConstructor.NOT, descriptor, targetFnType.getCp(), false, null);
             }
             default:
                 throw new ConfusedCFRException("Can't understand this lambda - disable lambdas.");

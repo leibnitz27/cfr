@@ -15,6 +15,7 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -64,15 +65,16 @@ public class MemberFunctionInvokation extends AbstractFunctionInvokation {
         String comment = null;
         getObject().dumpWithOuterPrecedence(d, getPrecedence());
 
+        MethodPrototype methodPrototype = getMethodPrototype();
         if (!isInitMethod) d.print("." + name);
         d.print("(");
         List<Expression> args = getArgs();
         boolean first = true;
         for (int x = 0; x < args.size(); ++x) {
+            if (methodPrototype.isHiddenArg(x)) continue;
             Expression arg = args.get(x);
-            if (!first) d.print(", ");
-            first = false;
-            getMethodPrototype().dumpAppropriatelyCastedArgumentString(arg, x, d);
+            first = CommaHelp.comma(first, d);
+            methodPrototype.dumpAppropriatelyCastedArgumentString(arg, x, d);
         }
         d.print(")");
         if (comment != null) d.print(comment);

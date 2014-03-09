@@ -102,18 +102,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         AccessFlagMethod.applyAttributes(attributes, accessFlags);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
-        Attribute codeAttribute = attributes.get(AttributeCode.ATTRIBUTE_NAME);
-        if (codeAttribute == null) {
-            // Because we don't have a code attribute, we don't have a local variable table.
-            this.variableNamer = VariableNamerFactory.getNamer(null, cp);
-            this.codeAttribute = null;
-        } else {
-            this.codeAttribute = (AttributeCode) codeAttribute;
-            // This rigamarole is neccessary because we don't provide the factory for the code attribute enough information
-            // get get the Method (this).
-            this.variableNamer = VariableNamerFactory.getNamer(this.codeAttribute.getLocalVariableTable(), cp);
-            this.codeAttribute.setMethod(this);
-        }
+
 
         this.name = cp.getUTF8Entry(nameIndex).getValue();
         MethodConstructor methodConstructor = MethodConstructor.NOT;
@@ -127,6 +116,19 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         if (isConstructor() && accessFlags.contains(AccessFlagMethod.ACC_STRICT)) {
             accessFlags.remove(AccessFlagMethod.ACC_STRICT);
             classFile.getAccessFlags().add(AccessFlag.ACC_STRICT);
+        }
+
+        Attribute codeAttribute = attributes.get(AttributeCode.ATTRIBUTE_NAME);
+        if (codeAttribute == null) {
+            // Because we don't have a code attribute, we don't have a local variable table.
+            this.variableNamer = VariableNamerFactory.getNamer(null, cp);
+            this.codeAttribute = null;
+        } else {
+            this.codeAttribute = (AttributeCode) codeAttribute;
+            // This rigamarole is neccessary because we don't provide the factory for the code attribute enough information
+            // get get the Method (this).
+            this.variableNamer = VariableNamerFactory.getNamer(this.codeAttribute.getLocalVariableTable(), cp);
+            this.codeAttribute.setMethod(this);
         }
 
         this.methodPrototype = generateMethodPrototype();
@@ -221,7 +223,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
-        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), getName(), isInstance, prototype, cp, isVarargs, variableNamer);
+        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), getName(), isInstance, getConstructorFlag(), prototype, cp, isVarargs, variableNamer);
         /*
          * Work around bug in inner class signatures.
          *
@@ -229,7 +231,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
          */
         if (classFile.isInnerClass()) {
             if (signature != null) {
-                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), getName(), isInstance, descriptor, cp, isVarargs, variableNamer);
+                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), getName(), isInstance, getConstructorFlag(), descriptor, cp, isVarargs, variableNamer);
                 if (descriptorProto.getArgs().size() != res.getArgs().size()) {
                     // error due to inner class sig bug.
                     res = fixupInnerClassSignature(descriptorProto, res);

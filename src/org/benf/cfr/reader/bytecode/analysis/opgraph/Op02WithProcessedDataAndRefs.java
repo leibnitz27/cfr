@@ -362,7 +362,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
         // Todo : Not happy about hardcoding if this is an instance function.
         // also - we have a descriptor, but NOT a signature here.  Is that right?
-        MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, null, "", false, descriptor, cp, false, new VariableNamerDefault());
+        MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, null, "", false, Method.MethodConstructor.NOT, descriptor, cp, false, new VariableNamerDefault());
 
         int idx = invokeDynamic.getBootstrapMethodAttrIndex();
 
