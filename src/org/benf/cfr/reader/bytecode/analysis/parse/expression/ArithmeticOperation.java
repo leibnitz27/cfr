@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.BasicExceptions;
@@ -60,7 +61,21 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
 
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b, ArithOp op) {
         InferredJavaType.useInArithOp(a, b, op);
-        return new InferredJavaType(a.getRawType(), InferredJavaType.Source.OPERATION);
+        RawJavaType rawJavaType = a.getRawType();
+        // We have to value convert.
+
+        if (rawJavaType.getStackType().equals(StackType.INT)) {
+            switch (op) {
+                case AND:
+                case OR:
+                case XOR:
+                    if (rawJavaType.equals(RawJavaType.BOOLEAN)) break;
+                default:
+                    rawJavaType = RawJavaType.INT;
+                    break;
+            }
+        }
+        return new InferredJavaType(rawJavaType, InferredJavaType.Source.OPERATION);
     }
 
     @Override
