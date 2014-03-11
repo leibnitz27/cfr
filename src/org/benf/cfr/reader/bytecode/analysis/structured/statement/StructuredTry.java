@@ -60,6 +60,11 @@ public class StructuredTry extends AbstractStructuredStatement {
         return true;
     }
 
+    @Override
+    public boolean fallsNopToNext() {
+        return true;
+    }
+
     public void addCatch(Op04StructuredStatement catchStatement) {
         catchBlocks.add(catchStatement);
     }

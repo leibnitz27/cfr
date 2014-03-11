@@ -60,6 +60,8 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
     // Is it a comment, or a block containing nothign but comments?
     boolean isEffectivelyNOP();
 
+    boolean fallsNopToNext();
+
     List<LValue> findCreatedHere();
 
     String suggestName(LocalVariable createdHere, Predicate<String> testNameUsedFn);

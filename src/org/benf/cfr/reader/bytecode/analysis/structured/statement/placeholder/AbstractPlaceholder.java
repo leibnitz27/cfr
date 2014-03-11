@@ -43,6 +43,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
+    public boolean fallsNopToNext() {
+        return false;
+    }
+
+    @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
         throw new UnsupportedOperationException();
     }

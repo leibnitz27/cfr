@@ -95,4 +95,9 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     public boolean isEffectivelyNOP() {
         return false;
     }
+
+    @Override
+    public boolean fallsNopToNext() {
+        return false;
+    }
 }

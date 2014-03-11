@@ -49,6 +49,11 @@ public class StructuredSynchronized extends AbstractStructuredBlockStatement {
     }
 
     @Override
+    public boolean fallsNopToNext() {
+        return true;
+    }
+
+    @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
         scope.add(this);
         try {

@@ -58,13 +58,7 @@ public class StructuredScope {
                     continue;
                 }
                 break;
-            } else if (atLevel.statement instanceof StructuredTry) {
-                current = atLevel.statement.getContainer();
-                continue;
-            } else if (atLevel.statement instanceof StructuredSynchronized) {
-                current = atLevel.statement.getContainer();
-                continue;
-            } else if (atLevel.statement instanceof StructuredIf) {
+            } else if (atLevel.statement.fallsNopToNext()) {
                 current = atLevel.statement.getContainer();
                 continue;
             }
