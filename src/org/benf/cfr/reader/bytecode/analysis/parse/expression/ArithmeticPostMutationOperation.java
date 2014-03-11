@@ -12,11 +12,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * <p/>
- * (eg) x >>= 3,  ++x
+ * (eg) x >>= 3,  x++
  */
 public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentExpression {
     private LValue mutated;

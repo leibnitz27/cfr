@@ -729,33 +729,72 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    /*
+     * vX = ?
+     * ? = vX + 1
+     *
+     * -->
+     *
+     * vX = ?++
+     */
+    private static void replacePostChangeAssignment(Op03SimpleStatement statement) {
+        AssignmentSimple assignmentSimple = (AssignmentSimple) statement.containedStatement;
+        LValue postIncLValue = assignmentSimple.getCreatedLValue();
+
+        if (statement.sources.size() != 1) return;
+
+        Op03SimpleStatement prior = statement.sources.get(0);
+        Statement statementPrior = prior.getStatement();
+        if (!(statementPrior instanceof AssignmentSimple)) return;
+
+        AssignmentSimple assignmentSimplePrior = (AssignmentSimple) statementPrior;
+        LValue tmp = assignmentSimplePrior.getCreatedLValue();
+        if (!(tmp instanceof StackSSALabel)) return;
+
+        if (!assignmentSimplePrior.getRValue().equals(new LValueExpression(postIncLValue))) return;
+
+        StackSSALabel tmpStackVar = (StackSSALabel) tmp;
+        Expression stackValue = new StackValue(tmpStackVar);
+        Expression incrRValue = assignmentSimple.getRValue();
+
+        ArithmeticOperation test1 = new ArithmeticOperation(stackValue, Literal.ONE, ArithOp.PLUS);
+        ArithmeticOperation test2 = new ArithmeticOperation(Literal.ONE, stackValue, ArithOp.PLUS);
+        if (!(incrRValue.equals(test1) || incrRValue.equals(test2))) return;
+
+        ArithmeticPostMutationOperation postMutationOperation = new ArithmeticPostMutationOperation(postIncLValue, ArithOp.PLUS);
+        prior.replaceStatement(new AssignmentSimple(tmp, postMutationOperation));
+        statement.nopOut();
+    }
+
     /* We're searching for something a bit too fiddly to use wildcards on,
      * so lots of test casting :(
      */
-    private static void replacePreChangeAssignment(Op03SimpleStatement statement) {
+    private static boolean replacePreChangeAssignment(Op03SimpleStatement statement) {
         AssignmentSimple assignmentSimple = (AssignmentSimple) statement.containedStatement;
 
         LValue lValue = assignmentSimple.getCreatedLValue();
 
         // Is it an arithop
         Expression rValue = assignmentSimple.getRValue();
-        if (!(rValue instanceof ArithmeticOperation)) return;
+        if (!(rValue instanceof ArithmeticOperation)) return false;
 
         // Which is a mutation
         ArithmeticOperation arithmeticOperation = (ArithmeticOperation) rValue;
-        if (!arithmeticOperation.isMutationOf(lValue)) return;
+        if (!arithmeticOperation.isMutationOf(lValue)) return false;
 
         // Create an assignment prechange with the mutation
         AbstractMutatingAssignmentExpression mutationOperation = arithmeticOperation.getMutationOf(lValue);
 
         AssignmentPreMutation res = new AssignmentPreMutation(lValue, mutationOperation);
         statement.replaceStatement(res);
+        return true;
     }
 
-    public static void replacePreChangeAssignments(List<Op03SimpleStatement> statements) {
+    public static void replacePrePostChangeAssignments(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
         for (Op03SimpleStatement assignment : assignments) {
-            replacePreChangeAssignment(assignment);
+            if (replacePreChangeAssignment(assignment)) continue;
+            replacePostChangeAssignment(assignment);
         }
     }
 
@@ -911,6 +950,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement assignment : assignments) {
             pushPreChangeBack(assignment);
         }
+
     }
 
     /*

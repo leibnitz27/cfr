@@ -203,6 +203,9 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                 new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
                         ),
                         new ResetAfterTest(wcm, POST_INC,
+                                new StructuredReturn(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), null)
+                        ),
+                        new ResetAfterTest(wcm, POST_INC,
                                 new MatchSequence(
                                         new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), false),
                                         new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
@@ -223,6 +226,9 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                         new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), false),
                                         new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                                 )
+                        ),
+                        new ResetAfterTest(wcm, POST_DEC,
+                                new StructuredReturn(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
                         )
                 ),
                 new EndBlock(null)
