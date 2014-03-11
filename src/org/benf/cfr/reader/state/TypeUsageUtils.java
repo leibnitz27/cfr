@@ -3,6 +3,7 @@ package org.benf.cfr.reader.state;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.CommaHelp;
 
 import java.util.LinkedList;
@@ -14,7 +15,7 @@ import java.util.LinkedList;
  * Time: 06:10
  */
 public class TypeUsageUtils {
-    public static String generateInnerClassShortName(JavaRefTypeInstance clazz, JavaRefTypeInstance analysisType) {
+    public static String generateInnerClassShortName(final JavaRefTypeInstance clazz, JavaRefTypeInstance analysisType) {
         LinkedList<JavaRefTypeInstance> classStack = ListFactory.newLinkedList();
 
         boolean analysisTypeFound = false;
@@ -52,6 +53,19 @@ public class TypeUsageUtils {
         } else {
             // string approximation.
             String clazzRawName = clazz.getRawName();
+            // Cheat using $.
+            String analysisTypeRawName = analysisType.getRawName();
+
+            if (clazzRawName.equals(analysisTypeRawName)) {
+                int idx = clazzRawName.lastIndexOf('.');
+                if (idx >= 1 && idx < (clazzRawName.length() - 1)) {
+                    return clazzRawName.substring(idx + 1);
+                }
+            }
+
+            if (analysisTypeRawName.length() >= (clazzRawName.length() - 1)) {
+                return clazzRawName;
+            }
             return clazzRawName.substring(analysisType.getRawName().length() + 1);
         }
     }
