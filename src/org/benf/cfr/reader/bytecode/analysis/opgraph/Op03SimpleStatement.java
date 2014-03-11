@@ -4272,16 +4272,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         proxy.addTarget(target);
         target.addSource(proxy);
 
+        // Handle duplicates - is there a neater way? (Avoiding filter pass).
+        Set<Op03SimpleStatement> seen = SetFactory.newSet();
         for (Op03SimpleStatement last : lastStatements) {
+            if (!seen.add(last)) continue;
             GotoStatement gotoStatement = (GotoStatement) last.containedStatement;
             gotoStatement.setJumpType(JumpType.END_BLOCK);
             last.replaceTarget(target, proxy);
             target.removeSource(last);
             proxy.addSource(last);
         }
-
-        int x = 1;
-
     }
 
     private static void rewriteTryBackJump(Op03SimpleStatement stm) {
