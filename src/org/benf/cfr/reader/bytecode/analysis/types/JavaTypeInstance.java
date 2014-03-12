@@ -30,7 +30,20 @@ public interface JavaTypeInstance {
 
     public JavaTypeInstance getArrayStrippedType();
 
+    /*
+     * This will return a type stripped of ALL generic information
+     *
+     * i.e. Set<Set<?>> -> Set
+     */
     public JavaTypeInstance getDeGenerifiedType();
+
+    /*
+     * This will return a 'minimally' degenerified type - i.e. just enough to
+     * remove bad generic info
+     *
+     * i.e. Set<Set<?>> -> Set<Set>
+     */
+//    public JavaTypeInstance getMinimallyDeGenerifiedType();
 
     public int getNumArrayDimensions();
 

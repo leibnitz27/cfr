@@ -36,7 +36,8 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
     private void maybeRewriteExpressionType(InferredJavaType inferredJavaType) {
         JavaTypeInstance javaTypeInstance = inferredJavaType.getJavaTypeInstance();
         if (hasIllegalGenerics(javaTypeInstance)) {
-            inferredJavaType.deGenerify(javaTypeInstance.getDeGenerifiedType());
+            JavaTypeInstance deGenerified = javaTypeInstance.getDeGenerifiedType();
+            inferredJavaType.deGenerify(deGenerified);
         }
     }
 
