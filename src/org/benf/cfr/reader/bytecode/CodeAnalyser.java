@@ -228,14 +228,16 @@ public class CodeAnalyser {
         }
 
 
-        for (int x = 0; x < instrs.size(); ++x) {
+        for (int x = 0, len = instrs.size(); x < len; ++x) {
             int offsetOfThisInstruction = lutByIdx.get(x);
             int[] targetIdxs = op1list.get(x).getAbsoluteIndexJumps(offsetOfThisInstruction, lutByOffset);
             Op02WithProcessedDataAndRefs source = op2list.get(x);
             for (int targetIdx : targetIdxs) {
-                Op02WithProcessedDataAndRefs target = op2list.get(targetIdx);
-                source.addTarget(target);
-                target.addSource(source);
+                if (targetIdx < len) {
+                    Op02WithProcessedDataAndRefs target = op2list.get(targetIdx);
+                    source.addTarget(target);
+                    target.addSource(source);
+                }
             }
         }
 
