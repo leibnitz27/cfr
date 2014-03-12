@@ -129,7 +129,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
             throw new ConfusedCFRException("Can't get a mutation where none exists");
         }
         if (lhs.getInferredJavaType().getJavaTypeInstance() != RawJavaType.BOOLEAN &&
-                rhs.equals(Literal.ONE)) {
+                Literal.equalsAnyOne(rhs)) {
             return new ArithmeticPreMutationOperation(lValue, op);
         } else {
             return new ArithmeticMutationOperation(lValue, rhs, op);
@@ -250,10 +250,22 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
     public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
     }
 
+    public Expression getLhs() {
+        return lhs;
+    }
+
+    public Expression getRhs() {
+        return rhs;
+    }
+
+    public ArithOp getOp() {
+        return op;
+    }
+
     /*
-     * parent is (x LCMP y) > 0
-     * (this is (x LCMP y)).
-     */
+         * parent is (x LCMP y) > 0
+         * (this is (x LCMP y)).
+         */
     @Override
     public Expression pushDown(Expression toPush, Expression parent) {
         if (!(parent instanceof ComparisonOperation)) return null;

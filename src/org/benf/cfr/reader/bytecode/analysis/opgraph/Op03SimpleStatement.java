@@ -757,11 +757,23 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Expression stackValue = new StackValue(tmpStackVar);
         Expression incrRValue = assignmentSimple.getRValue();
 
-        ArithmeticOperation test1 = new ArithmeticOperation(stackValue, Literal.ONE, ArithOp.PLUS);
-        ArithmeticOperation test2 = new ArithmeticOperation(Literal.ONE, stackValue, ArithOp.PLUS);
-        if (!(incrRValue.equals(test1) || incrRValue.equals(test2))) return;
+        if (!(incrRValue instanceof ArithmeticOperation)) return;
+        ArithmeticOperation arithOp = (ArithmeticOperation) incrRValue;
+        ArithOp op = arithOp.getOp();
+        if (!(op.equals(ArithOp.PLUS) || op.equals(ArithOp.MINUS))) return;
 
-        ArithmeticPostMutationOperation postMutationOperation = new ArithmeticPostMutationOperation(postIncLValue, ArithOp.PLUS);
+        Expression lhs = arithOp.getLhs();
+        Expression rhs = arithOp.getRhs();
+        if (stackValue.equals(lhs)) {
+            if (!Literal.equalsAnyOne(rhs)) return;
+        } else if (stackValue.equals(rhs)) {
+            if (!Literal.equalsAnyOne(lhs)) return;
+            if (op.equals(ArithOp.MINUS)) return;
+        } else {
+            return;
+        }
+
+        ArithmeticPostMutationOperation postMutationOperation = new ArithmeticPostMutationOperation(postIncLValue, op);
         prior.replaceStatement(new AssignmentSimple(tmp, postMutationOperation));
         statement.nopOut();
     }

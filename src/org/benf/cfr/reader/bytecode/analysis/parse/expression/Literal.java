@@ -24,9 +24,11 @@ import java.util.Map;
 public class Literal extends AbstractExpression {
     public static final Literal FALSE = new Literal(TypedLiteral.getBoolean(0));
     public static final Literal TRUE = new Literal(TypedLiteral.getBoolean(1));
-    public static final Literal ONE = new Literal(TypedLiteral.getInt(1));
     public static final Literal MINUS_ONE = new Literal(TypedLiteral.getInt(-1));
     public static final Literal NULL = new Literal(TypedLiteral.getNull());
+    // Avoid using directly, as you'll probably end up accidentally implementing equalsAnyOne
+    private static final Literal INT_ONE = new Literal(TypedLiteral.getInt(1));
+    private static final Literal LONG_ONE = new Literal(TypedLiteral.getLong(1));
 
     private final TypedLiteral value;
 
@@ -105,5 +107,9 @@ public class Literal extends AbstractExpression {
     @Override
     public Literal getComputedLiteral(Map<LValue, Literal> display) {
         return this;
+    }
+
+    public static boolean equalsAnyOne(Expression expression) {
+        return expression.equals(Literal.INT_ONE) || expression.equals(Literal.LONG_ONE);
     }
 }

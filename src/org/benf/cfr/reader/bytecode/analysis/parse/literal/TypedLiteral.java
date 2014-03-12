@@ -295,4 +295,5 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         TypedLiteral other = (TypedLiteral) o;
         return type == other.type && (value == null ? other.value == null : value.equals(other.value));
     }
+
 }
