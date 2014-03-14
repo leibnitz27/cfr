@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionRepl
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NOPSearchingExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StackVarToLocalRewriter;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -6262,6 +6263,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             anonTarget.addTarget(target);
             int pos = statements.indexOf(target);
             statements.add(pos, anonTarget);
+        }
+    }
+
+    public static void replaceStackVarsWithLocals(List<Op03SimpleStatement> statements) {
+        StackVarToLocalRewriter rewriter = new StackVarToLocalRewriter();
+        for (Op03SimpleStatement statement : statements) {
+            statement.rewrite(rewriter);
         }
     }
 
