@@ -508,6 +508,18 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     private JavaTypeInstance getResultBoundAccordingly(JavaTypeInstance result, JavaGenericRefTypeInstance boundInstance, List<Expression> invokingArgs) {
+        if (result instanceof JavaArrayTypeInstance) {
+            JavaArrayTypeInstance arrayTypeInstance = (JavaArrayTypeInstance) result;
+            JavaTypeInstance stripped = result.getArrayStrippedType();
+            JavaTypeInstance tmp = getResultBoundAccordinglyInner(stripped, boundInstance, invokingArgs);
+            if (tmp == stripped) return result;
+            return new JavaArrayTypeInstance(arrayTypeInstance.getNumArrayDimensions(), tmp);
+        } else {
+            return getResultBoundAccordinglyInner(result, boundInstance, invokingArgs);
+        }
+    }
+
+    private JavaTypeInstance getResultBoundAccordinglyInner(JavaTypeInstance result, JavaGenericRefTypeInstance boundInstance, List<Expression> invokingArgs) {
         if (!(result instanceof JavaGenericBaseInstance)) {
             // Don't care - (i.e. iterator<E> hasNext)
             return result;

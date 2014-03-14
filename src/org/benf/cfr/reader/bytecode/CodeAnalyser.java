@@ -644,6 +644,13 @@ public class CodeAnalyser {
 //            }
 //        }
 
+        /*
+         * At this point, if we have any remaining stack variables, then we're either looking
+         * at some form of obfuscation, or non java.  Either way, replace StackValues with locals
+         * (albeit locals which known that they don't have a valid lookup).
+         */
+        Op03SimpleStatement.replaceStackVarsWithLocals(op03SimpleParseNodes);
+
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         Op04StructuredStatement.tidyEmptyCatch(block);
