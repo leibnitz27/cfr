@@ -296,7 +296,6 @@ public class MethodPrototype implements TypeUsageCollectable {
             JavaGenericRefTypeInstance genericRefTypeInstance = null;
             if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
                 genericRefTypeInstance = (JavaGenericRefTypeInstance) thisTypeInstance;
-                thisTypeInstance = genericRefTypeInstance.getDeGenerifiedType();
             }
 
             /*
