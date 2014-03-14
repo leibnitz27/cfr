@@ -25,6 +25,7 @@ import java.util.Map;
 public class StackVarToLocalRewriter implements ExpressionRewriter {
 
     private final Map<StackSSALabel, LocalVariable> replacements = MapFactory.newMap();
+    private int idx = 0;
 
     public void handleStatement(StatementContainer statementContainer) {
 
@@ -69,7 +70,7 @@ public class StackVarToLocalRewriter implements ExpressionRewriter {
     private LocalVariable getReplacement(StackSSALabel stackSSALabel) {
         LocalVariable res = replacements.get(stackSSALabel);
         if (res != null) return res;
-        res = new LocalVariable("?", stackSSALabel.getInferredJavaType());
+        res = new LocalVariable("v" + idx++, stackSSALabel.getInferredJavaType());
         replacements.put(stackSSALabel, res);
         return res;
     }
