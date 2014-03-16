@@ -9,6 +9,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.List;
@@ -83,7 +84,7 @@ public class ConstantPoolUtils {
         JavaTypeInstance javaTypeInstance = null;
         switch (c) {
             case '*': // wildcard
-                javaTypeInstance = new JavaGenericPlaceholderTypeInstance("?", cp);
+                javaTypeInstance = new JavaGenericPlaceholderTypeInstance(MiscConstants.UNBOUND_GENERIC, cp);
                 break;
             case 'L':   // object
                 javaTypeInstance = parseRefType(tok.substring(idx + 1, tok.length() - 1), cp, false);

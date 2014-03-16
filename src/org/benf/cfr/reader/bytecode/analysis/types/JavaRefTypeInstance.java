@@ -1,16 +1,14 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.MiscConstants;
-import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
@@ -225,7 +223,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+    public boolean implicitlyCastsTo(JavaTypeInstance other, @Nullable GenericTypeBinder gtb) {
         if (this.equals(other)) return true;
         if (other instanceof RawJavaType) {
             /*
@@ -233,8 +231,17 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
              */
             RawJavaType thisAsRaw = RawJavaType.getUnboxedTypeFor(this);
             if (thisAsRaw != null) {
-                return thisAsRaw.implicitlyCastsTo(other);
+                return thisAsRaw.implicitlyCastsTo(other, gtb);
             }
+        }
+        if (gtb != null && other instanceof JavaGenericPlaceholderTypeInstance) {
+            other = gtb.getBindingFor(other);
+            if (!(other instanceof JavaGenericPlaceholderTypeInstance)) {
+                return implicitlyCastsTo(other, gtb);
+            }
+        }
+        if (other instanceof JavaGenericPlaceholderTypeInstance) {
+            return false;
         }
         JavaTypeInstance otherRaw = other.getDeGenerifiedType();
         BindingSuperContainer thisBindingSuper = this.getBindingSupers();
@@ -248,7 +255,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
      * Fixme - shouldn't this use binding supercontainer?
      */
     @Override
-    public boolean canCastTo(JavaTypeInstance other) {
+    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         if (other instanceof RawJavaType) {
             /*
              * If this is boxed, we can unbox, and cast up.

@@ -161,7 +161,7 @@ public enum RawJavaType implements JavaTypeInstance {
 
     /* Obey the exact specficiation from 5.1.2 JLS */
     @Override
-    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+    public boolean implicitlyCastsTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         if (other instanceof RawJavaType) {
             return implicitlyCastsTo((RawJavaType) other);
         }
@@ -194,7 +194,7 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
     @Override
-    public boolean canCastTo(JavaTypeInstance other) {
+    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         if (this.boxedName != null && other instanceof JavaRefTypeInstance) {
             RawJavaType tgt = getUnboxedTypeFor((JavaRefTypeInstance) other);
             if (tgt == null) {

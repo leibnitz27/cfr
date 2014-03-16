@@ -182,11 +182,11 @@ public class GenericTypeBinder {
              * If completely incompatible, return null.
              */
             if (mergeToCommonClass) {
-                if (t1.implicitlyCastsTo(t2)) {
+                if (t1.implicitlyCastsTo(t2, other)) {
                     res.put(key, t2);
                     continue;
                 }
-                if (t2.implicitlyCastsTo(t1)) {
+                if (t2.implicitlyCastsTo(t1, other)) {
                     res.put(key, t1);
                     continue;
                 }

@@ -54,7 +54,7 @@ public class BoxingHelper {
         Pair<String, String> testPair = Pair.make(rawTypeName, name);
         if (boxing.contains(testPair)) {
             JavaTypeInstance argType = arg1.getInferredJavaType().getJavaTypeInstance();
-            if (argType.implicitlyCastsTo(type)) {
+            if (argType.implicitlyCastsTo(type, null)) {
                 return staticFunctionInvokation.getArgs().get(0);
             }
         }

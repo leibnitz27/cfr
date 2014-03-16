@@ -507,36 +507,42 @@ public class InferredJavaType {
         JavaTypeInstance thisTypeInstance = this.value.getJavaTypeInstance();
         JavaTypeInstance otherTypeInstance = other.value.getJavaTypeInstance();
 
-        /*
-         * Can't chain if this isn't a simple, or a supertype of other.
-         */
-        boolean basecast = false;
-        if (thisTypeInstance.isComplexType() && otherTypeInstance.isComplexType()) {
-            if (!checkBaseCompatibility(other.getJavaTypeInstance())) {
-                // Break the chain here, mark this delegate as bad.
-                this.value = IJTInternal_Clash.mkClash(this.value, other.value);
-                // this.value.markTypeClash();
+        if (thisTypeInstance != RawJavaType.VOID) {
+            /*
+             * Can't chain if this isn't a simple, or a supertype of other.
+             */
+            boolean basecast = false;
+            if (thisTypeInstance.isComplexType() && otherTypeInstance.isComplexType()) {
+                if (!checkBaseCompatibility(other.getJavaTypeInstance())) {
+                    // Break the chain here, mark this delegate as bad.
+                    this.value = IJTInternal_Clash.mkClash(this.value, other.value);
+                    // this.value.markTypeClash();
+                    return CastAction.None;
+                } else if (this.value.getClashState() == ClashState.Resolved) {
+                    return CastAction.None;
+                } else if (thisTypeInstance.getClass() == otherTypeInstance.getClass()) {
+                    basecast = true;
+                }
+            }
+
+            /*
+             * Push extra generic info back into RHS if it helps.
+             */
+            if (otherTypeInstance instanceof JavaGenericRefTypeInstance) {
+                if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
+                    other.mergeGenericInfo((JavaGenericRefTypeInstance) thisTypeInstance);
+                }
+            }
+
+            if (basecast) {
                 return CastAction.None;
-            } else if (this.value.getClashState() == ClashState.Resolved) {
-                return CastAction.None;
-            } else if (thisTypeInstance.getClass() == otherTypeInstance.getClass()) {
-                basecast = true;
+            }
+
+            if (otherTypeInstance instanceof JavaGenericPlaceholderTypeInstance ^ thisTypeInstance instanceof JavaGenericPlaceholderTypeInstance) {
+                return CastAction.InsertExplicit;
             }
         }
 
-
-        /*
-         * Push extra generic info back into RHS if it helps.
-         */
-        if (otherTypeInstance instanceof JavaGenericRefTypeInstance) {
-            if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
-                other.mergeGenericInfo((JavaGenericRefTypeInstance) thisTypeInstance);
-            }
-        }
-
-        if (basecast) {
-            return CastAction.None;
-        }
         mkDelegate(this.value, other.value);
         if (!other.value.isLocked()) {
             this.value = other.value; // new IJTDelegate(other);

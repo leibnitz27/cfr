@@ -125,18 +125,18 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+    public boolean implicitlyCastsTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         if (other == TypeConstants.OBJECT) return true;
         if (other instanceof JavaArrayTypeInstance) {
             JavaArrayTypeInstance arrayOther = (JavaArrayTypeInstance) other;
             if (getNumArrayDimensions() != arrayOther.getNumArrayDimensions()) return false;
-            return getArrayStrippedType().implicitlyCastsTo(arrayOther.getArrayStrippedType());
+            return getArrayStrippedType().implicitlyCastsTo(arrayOther.getArrayStrippedType(), gtb);
         }
         return false;
     }
 
     @Override
-    public boolean canCastTo(JavaTypeInstance other) {
+    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         return true;
     }
 

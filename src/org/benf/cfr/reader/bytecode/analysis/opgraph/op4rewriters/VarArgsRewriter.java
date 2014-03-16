@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.util.ListFactory;
@@ -84,7 +85,7 @@ public class VarArgsRewriter implements Op04Rewriter, ExpressionRewriter {
         return lValue;
     }
 
-    public void rewriteVarArgsArg(OverloadMethodSet overloadMethodSet, MethodPrototype methodPrototype, List<Expression> args) {
+    public void rewriteVarArgsArg(OverloadMethodSet overloadMethodSet, MethodPrototype methodPrototype, List<Expression> args, GenericTypeBinder gtb) {
         if (!methodPrototype.isVarArgs()) return;
         if (args.size() != methodPrototype.getArgs().size()) return;
         int last = args.size() - 1;
@@ -104,7 +105,7 @@ public class VarArgsRewriter implements Op04Rewriter, ExpressionRewriter {
         }
 
         args2.addAll(newAnonymousArray.getValues());
-        boolean correct = overloadMethodSet.callsCorrectEntireMethod(args2);
+        boolean correct = overloadMethodSet.callsCorrectEntireMethod(args2, gtb);
         if (correct) {
             args.clear();
             args.addAll(args2);

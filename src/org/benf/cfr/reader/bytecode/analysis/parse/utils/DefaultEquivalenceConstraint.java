@@ -13,6 +13,8 @@ import java.util.Iterator;
  */
 public class DefaultEquivalenceConstraint implements EquivalenceConstraint {
 
+    public static final EquivalenceConstraint INSTANCE = new DefaultEquivalenceConstraint();
+
     @Override
     public boolean equivalent(Object o1, Object o2) {
         if (o1 == null) return o2 == null;

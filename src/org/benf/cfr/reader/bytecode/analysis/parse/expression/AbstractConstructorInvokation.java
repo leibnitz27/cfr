@@ -166,7 +166,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
              * we only need to shove a cast to the exact type on it if our current argument
              * doesn't call the 'correct' method.
              */
-            if (!overloadMethodSet.callsCorrectMethod(arg, x)) {
+            if (!overloadMethodSet.callsCorrectMethod(arg, x, null)) {
                 /*
                  * If arg isn't the right type, shove an extra cast on the front now.
                  * Then we will forcibly remove it if we don't need it.
@@ -190,7 +190,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
             }
 
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet);
+            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, null);
             args.set(x, arg);
         }
         return true;

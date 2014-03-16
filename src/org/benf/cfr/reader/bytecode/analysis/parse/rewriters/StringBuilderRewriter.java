@@ -85,7 +85,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                     Expression e = memberFunctionInvokation.getAppropriatelyCastArgument(0);
                     if (e instanceof CastExpression) {
                         Expression ce = ((CastExpression) e).getChild();
-                        if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance())) {
+                        if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance(), null)) {
                             e = ce;
                         }
                     }
@@ -110,7 +110,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                                 // Could also do it for type sequences, but .....
                                 if (e instanceof CastExpression) {
                                     Expression ce = ((CastExpression) e).getChild();
-                                    if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance())) {
+                                    if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance(), null)) {
                                         e = ce;
                                     }
                                 }

@@ -465,7 +465,7 @@ public class FinalAnalyzer {
                                 AssignmentSimple sourceAssignment = (AssignmentSimple) sourceStatement;
                                 LValue lValue = sourceAssignment.getCreatedLValue();
                                 JavaTypeInstance lValueType = lValue.getInferredJavaType().getJavaTypeInstance();
-                                if (lValueType.implicitlyCastsTo(lValueType)) {
+                                if (lValueType.implicitlyCastsTo(lValueType, null)) {
                                     Op03SimpleStatement afterSource = new Op03SimpleStatement(source.getBlockIdentifiers(), new ReturnValueStatement(new LValueExpression(lValue), returnType), source.getIndex().justAfter());
                                     source.replaceTarget(start, afterSource);
                                     afterSource.addSource(source);

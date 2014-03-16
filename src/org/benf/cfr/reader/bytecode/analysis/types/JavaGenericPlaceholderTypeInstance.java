@@ -140,14 +140,14 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     @Override
-    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+    public boolean implicitlyCastsTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         if (other == TypeConstants.OBJECT) return true;
         if (other.equals(this)) return true;
         return false;
     }
 
     @Override
-    public boolean canCastTo(JavaTypeInstance other) {
+    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         return true;
     }
 

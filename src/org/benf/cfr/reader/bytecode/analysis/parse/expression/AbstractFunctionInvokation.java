@@ -127,7 +127,8 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
         if (!methodPrototype.isVarArgs()) return;
         OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
         if (overloadMethodSet == null) return;
-        varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, args);
+        GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(args);
+        varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, args, gtb);
     }
 
     @Override
@@ -143,7 +144,10 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
             return false;
         }
 
-        boolean callsCorrectEntireMethod = overloadMethodSet.callsCorrectEntireMethod(args);
+        BindingSuperContainer bindingSuperContainer = object.getInferredJavaType().getJavaTypeInstance().getBindingSupers();
+        GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(args);
+
+        boolean callsCorrectEntireMethod = overloadMethodSet.callsCorrectEntireMethod(args, gtb);
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -
@@ -157,7 +161,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
              * we only need to shove a cast to the exact type on it if our current argument
              * doesn't call the 'correct' method.
              */
-            if (!callsCorrectEntireMethod && !overloadMethodSet.callsCorrectMethod(arg, x)) {
+            if (!callsCorrectEntireMethod && !overloadMethodSet.callsCorrectMethod(arg, x, gtb)) {
                 /*
                  * If arg isn't the right type, shove an extra cast on the front now.
                  * Then we will forcibly remove it if we don't need it.
@@ -181,7 +185,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
             }
 
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet);
+            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, gtb);
             args.set(x, arg);
         }
 

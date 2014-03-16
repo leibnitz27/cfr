@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -35,15 +36,15 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         return new CastExpression(getInferredJavaType(), cloneHelper.replaceOrClone(child));
     }
 
-    public boolean couldBeImplicit() {
+    public boolean couldBeImplicit(GenericTypeBinder gtb) {
         JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
         JavaTypeInstance tgtType = getInferredJavaType().getJavaTypeInstance();
-        return childType.implicitlyCastsTo(tgtType);
+        return childType.implicitlyCastsTo(tgtType, gtb);
     }
 
-    public boolean couldBeImplicit(JavaTypeInstance tgtType) {
+    public boolean couldBeImplicit(JavaTypeInstance tgtType, GenericTypeBinder gtb) {
         JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
-        return childType.implicitlyCastsTo(tgtType);
+        return childType.implicitlyCastsTo(tgtType, gtb);
     }
 
     @Override
@@ -60,7 +61,7 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     @Override
     public Dumper dumpInner(Dumper d) {
         if (child.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN &&
-                !(RawJavaType.BOOLEAN.implicitlyCastsTo(getInferredJavaType().getJavaTypeInstance()))) {
+                !(RawJavaType.BOOLEAN.implicitlyCastsTo(getInferredJavaType().getJavaTypeInstance(), null))) {
             // This is ugly.  Unfortunately, it's necessary (currently!) as we don't have an extra pass to
             // transform invalid casts like this.
             d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
@@ -115,11 +116,11 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
 //            } else {
 //                break;
 //            }
-            if (grandChildType.implicitlyCastsTo(childType) && childType.implicitlyCastsTo(thisType)) {
+            if (grandChildType.implicitlyCastsTo(childType, null) && childType.implicitlyCastsTo(thisType, null)) {
                 child = childCast.child;
             } else {
                 if (grandChildType instanceof RawJavaType && childType instanceof RawJavaType && thisType instanceof RawJavaType) {
-                    if (!grandChildType.implicitlyCastsTo(childType) && !childType.implicitlyCastsTo(thisType)) {
+                    if (!grandChildType.implicitlyCastsTo(childType, null) && !childType.implicitlyCastsTo(thisType, null)) {
                         child = childCast.child;
                         continue;
                     }
@@ -128,7 +129,7 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
             }
         }
         Expression newchild = boxingRewriter.sugarNonParameterBoxing(child, getInferredJavaType().getJavaTypeInstance());
-        if (newchild.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(child.getInferredJavaType().getJavaTypeInstance())) {
+        if (newchild.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(child.getInferredJavaType().getJavaTypeInstance(), null)) {
             child = newchild;
         }
         return false;
@@ -151,17 +152,17 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     }
 
     public static Expression removeImplicit(Expression e) {
-        while (e instanceof CastExpression && ((CastExpression) e).couldBeImplicit()) {
+        while (e instanceof CastExpression && ((CastExpression) e).couldBeImplicit(null)) {
             e = ((CastExpression) e).getChild();
         }
         return e;
     }
 
-    public static Expression removeImplicitOuterType(Expression e) {
+    public static Expression removeImplicitOuterType(Expression e, GenericTypeBinder gtb) {
         final JavaTypeInstance t = e.getInferredJavaType().getJavaTypeInstance();
         while (e instanceof CastExpression
-                && ((CastExpression) e).couldBeImplicit()
-                && ((CastExpression) e).couldBeImplicit(t)) {
+                && ((CastExpression) e).couldBeImplicit(gtb)
+                && ((CastExpression) e).couldBeImplicit(t, gtb)) {
             e = ((CastExpression) e).getChild();
         }
         return e;

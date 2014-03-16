@@ -110,7 +110,8 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
         if (!methodPrototype.isVarArgs()) return;
         OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
         if (overloadMethodSet == null) return;
-        varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, getArgs());
+        GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(getArgs());
+        varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, getArgs(), gtb);
     }
 
 

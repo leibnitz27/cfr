@@ -55,9 +55,9 @@ public interface JavaTypeInstance {
 
     public BindingSuperContainer getBindingSupers();
 
-    public boolean implicitlyCastsTo(JavaTypeInstance other);
+    public boolean implicitlyCastsTo(JavaTypeInstance other, GenericTypeBinder gtb);
 
-    public boolean canCastTo(JavaTypeInstance other);
+    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb);
 
     public String suggestVarName();
 

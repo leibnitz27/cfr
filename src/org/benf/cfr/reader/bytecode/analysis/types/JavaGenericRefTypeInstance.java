@@ -1,9 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ComparableUnderEC;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.DefaultEquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
@@ -16,7 +20,9 @@ import java.util.List;
  * Date: 13/07/2012
  * Time: 08:01
  */
-public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
+public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, ComparableUnderEC {
+    private static final WildcardConstraint WILDCARD_CONSTRAINT = new WildcardConstraint();
+
     private final JavaRefTypeInstance typeInstance;
     private final List<JavaTypeInstance> genericTypes;
     private final boolean hasUnbound;
@@ -161,18 +167,22 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
         return typeInstance.getBindingSupers();
     }
 
+
     @Override
     public boolean equals(Object o) {
+        return equivalentUnder(o, DefaultEquivalenceConstraint.INSTANCE);
+    }
+
+    @Override
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
         if (o == this) return true;
         if (!(o instanceof JavaGenericRefTypeInstance)) return false;
         JavaGenericRefTypeInstance other = (JavaGenericRefTypeInstance) o;
-        if (!typeInstance.equals(other.typeInstance)) return false;
-        if (genericTypes.size() != other.genericTypes.size()) return false;
-        for (int x = 0, len = genericTypes.size(); x < len; ++x) {
-            if (!genericTypes.get(x).equals(other.genericTypes.get(x))) return false;
-        }
+        if (!constraint.equivalent(typeInstance, other.typeInstance)) return false;
+        if (!constraint.equivalent(genericTypes, other.genericTypes)) return false;
         return true;
     }
+
 
     @Override
     public boolean isComplexType() {
@@ -195,9 +205,9 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public boolean implicitlyCastsTo(JavaTypeInstance other) {
+    public boolean implicitlyCastsTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         if (other == TypeConstants.OBJECT) return true;
-        if (this.equals(other)) return true;
+        if (this.equivalentUnder(other, WILDCARD_CONSTRAINT)) return true;
         BindingSuperContainer bindingSuperContainer = getBindingSupers();
         if (bindingSuperContainer == null) return false;
         JavaTypeInstance degenerifiedOther = other.getDeGenerifiedType();
@@ -212,12 +222,26 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public boolean canCastTo(JavaTypeInstance other) {
+    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         return true;
     }
 
     @Override
     public String suggestVarName() {
         return typeInstance.suggestVarName();
+    }
+
+    /*
+     * Note we test o_2_!
+     */
+    public static class WildcardConstraint extends DefaultEquivalenceConstraint {
+        @Override
+        public boolean equivalent(Object o1, Object o2) {
+            if (o2 instanceof JavaGenericPlaceholderTypeInstance) {
+                if (((JavaGenericPlaceholderTypeInstance) o2).getRawName().equals(MiscConstants.UNBOUND_GENERIC))
+                    return true;
+            }
+            return super.equivalent(o1, o2);
+        }
     }
 }

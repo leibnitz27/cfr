@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -140,7 +141,8 @@ public class StaticFunctionInvokation extends AbstractExpression implements Func
         if (!methodPrototype.isVarArgs()) return;
         OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
         if (overloadMethodSet == null) return;
-        varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, getArgs());
+        GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(args);
+        varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, getArgs(), gtb);
     }
 
 
@@ -159,7 +161,7 @@ public class StaticFunctionInvokation extends AbstractExpression implements Func
              */
             Expression arg = args.get(x);
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet));
+            args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, null));
         }
         return true;
     }

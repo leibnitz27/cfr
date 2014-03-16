@@ -493,6 +493,10 @@ public class MethodPrototype implements TypeUsageCollectable {
          * For each of the formal type parameters of the class signature, what has it been bound to in the
          * instance?
          */
+        if (invokingArgTypes.size() != args.size()) {
+            return null;
+        }
+
         GenericTypeBinder genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classFile.getClassSignature(), args, null, invokingArgTypes);
         return genericTypeBinder;
     }
