@@ -153,6 +153,6 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
 
     @Override
     public String suggestVarName() {
-        return null;
+        return className;
     }
 }
