@@ -27,6 +27,7 @@ public interface TypeConstants {
     public final static String charSequenceName = "java.lang.CharSequence";
     public final static String stringBuilderName = "java.lang.StringBuilder";
     public final static String stringBufferName = "java.lang.StringBuffer";
+    public final static String className = "java.lang.Class";
 
     public final static String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
 

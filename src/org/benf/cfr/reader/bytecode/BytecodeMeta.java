@@ -19,20 +19,15 @@ public class BytecodeMeta {
     public enum CodeInfoFlag {
         USES_MONITORS,
         USES_EXCEPTIONS,
-        LIVENESS_CLASH
+        USES_INVOKEDYNAMIC,
+        LIVENESS_CLASH,
     }
 
     private final EnumSet<CodeInfoFlag> flags = EnumSet.noneOf(CodeInfoFlag.class);
 
     private final Set<Integer> livenessClashes = SetFactory.newSet();
 
-    public BytecodeMeta() {
-    }
-
-    /*
-     * We could generate op1s from code - but we already had them......
-     */
-    public void addBasicAnalysis(List<Op01WithProcessedDataAndByteJumps> op1s, AttributeCode code) {
+    public BytecodeMeta(List<Op01WithProcessedDataAndByteJumps> op1s, AttributeCode code) {
         int flagCount = CodeInfoFlag.values().length;
         if (!code.getExceptionTableEntries().isEmpty()) flags.add(CodeInfoFlag.USES_EXCEPTIONS);
         for (Op01WithProcessedDataAndByteJumps op : op1s) {
@@ -40,6 +35,9 @@ public class BytecodeMeta {
                 case MONITOREXIT:
                 case MONITORENTER:
                     flags.add(CodeInfoFlag.USES_MONITORS);
+                    break;
+                case INVOKEDYNAMIC:
+                    flags.add(CodeInfoFlag.USES_INVOKEDYNAMIC);
                     break;
             }
             // Don't bother processing any longer if we've found all the flags!

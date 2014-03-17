@@ -17,4 +17,5 @@ public interface MiscConstants {
     public static final String INNER_CLASS_SEP_STR = "$";
 
     public static final String DESERIALISE_LAMBDA_METHOD = "$deserializeLambda$";
+    public static final String GET_CLASS_NAME = "getClass";
 }

@@ -187,6 +187,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return sources;
     }
 
+    public ConstantPoolEntry[] getCpEntries() {
+        return cpEntries;
+    }
+
     public void populateStackInfo(StackSim stackSim, Method method, LinkedList<Pair<StackSim, Op02WithProcessedDataAndRefs>> next) {
         StackDelta stackDelta = instr.getStackDelta(rawData, cpEntries, stackSim, method);
         if (stackDepthBeforeExecution != -1) {
@@ -1363,6 +1367,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 op.targets.clear();
             }
         }
+    }
+
+    public void nop() {
+        this.instr = JVMInstr.NOP;
     }
 
     private void collectLocallyMutatedVariables(SSAIdentifierFactory<Slot> ssaIdentifierFactory) {

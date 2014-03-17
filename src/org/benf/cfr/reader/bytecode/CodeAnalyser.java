@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.Op02LambdaRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
@@ -112,12 +113,11 @@ public class CodeAnalyser {
         AnalysisResult res = null;
 
         /*
-         * Very quick scan to
+         * Very quick scan to check for presence of certain instructions.
          */
-        BytecodeMeta bytecodeMeta = new BytecodeMeta();
+        BytecodeMeta bytecodeMeta = new BytecodeMeta(instrs, originalCodeAttribute);
 
         if (options.optionIsSet(OptionsImpl.FORCE_PASS)) {
-            bytecodeMeta.addBasicAnalysis(instrs, originalCodeAttribute);
             int pass = options.getOption(OptionsImpl.FORCE_PASS);
             if (pass < 0 || pass >= recoveryOptionsArr.length) {
                 throw new IllegalArgumentException("Illegal recovery pass idx");
@@ -130,7 +130,6 @@ public class CodeAnalyser {
 
             if (res.failed && options.getOption(OptionsImpl.RECOVER)) {
                 int passIdx = 1;
-                bytecodeMeta.addBasicAnalysis(instrs, originalCodeAttribute);
                 for (RecoveryOptions recoveryOptions : recoveryOptionsArr) {
                     RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
                     if (!applied.valid) continue;
@@ -268,6 +267,17 @@ public class CodeAnalyser {
              * This one's less safe, but...
              */
             exceptions.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
+        }
+
+        /*
+         * If we're dealing with lambdas, remove class file getter.
+         *
+         * We need to nop out relevant instructions ASAP, so as not to introduce pointless
+         * temporaries.
+         */
+        if (options.getOption(OptionsImpl.REWRITE_LAMBDAS, classFileVersion) &&
+                bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.USES_INVOKEDYNAMIC)) {
+            Op02LambdaRewriter.removeInvokeGetClass(classFile, op2list);
         }
 
         long codeLength = originalCodeAttribute.getCodeLength();
