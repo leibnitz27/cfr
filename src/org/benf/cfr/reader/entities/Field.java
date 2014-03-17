@@ -127,10 +127,6 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         collector.collect(getJavaTypeInstance());
         collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
         collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(getAttributeByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
-
     }
 
     public void dump(Dumper d, String name) {
