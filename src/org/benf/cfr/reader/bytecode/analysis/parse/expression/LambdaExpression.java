@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -60,13 +61,6 @@ public class LambdaExpression extends AbstractExpression {
         return this;
     }
 
-    private boolean comma(boolean first, Dumper d) {
-        if (!first) {
-            d.print(", ");
-        }
-        return false;
-    }
-
     @Override
     public Precedence getPrecedence() {
         return Precedence.PAREN_SUB_MEMBER;
@@ -78,7 +72,7 @@ public class LambdaExpression extends AbstractExpression {
         boolean first = true;
         if (multi) d.print("(");
         for (LValue lValue : args) {
-            first = comma(first, d);
+            first = CommaHelp.comma(first, d);
             d.dump(lValue);
         }
         if (multi) d.print(")");
@@ -87,6 +81,10 @@ public class LambdaExpression extends AbstractExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+    }
+
+    public List<LValue> getArgs() {
+        return args;
     }
 
     @Override

@@ -1,12 +1,22 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.Keywords;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.entities.Method;
@@ -61,9 +71,62 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                 }
             }
         }
+        /*
+         * We have to search expression tree as well, for lambdas.
+         */
+        ExpressionRewriter expressionRewriter = new ExpressionNameTidier(structuredScopeWithVars);
+//        in.rewriteExpressions(expressionRewriter);
 
         in.transformStructuredChildren(this, scope);
         return in;
+    }
+
+    private class ExpressionNameTidier implements ExpressionRewriter {
+        private final StructuredScopeWithVars currentScope;
+
+        private ExpressionNameTidier(StructuredScopeWithVars currentScope) {
+            this.currentScope = currentScope;
+        }
+
+        @Override
+        public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            if (expression instanceof LambdaExpression) {
+                currentScope.add(null);
+                List<LValue> lValues = ((LambdaExpression) expression).getArgs();
+                for (LValue lValue : lValues) {
+                    if (lValue instanceof LocalVariable) {
+                        currentScope.defineHere((LocalVariable) lValue);
+                    }
+                }
+                currentScope.remove(null);
+            }
+            return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        }
+
+        @Override
+        public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            return (ConditionalExpression) expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        }
+
+        @Override
+        public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            return (AbstractAssignmentExpression) expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        }
+
+        @Override
+        public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            return lValue.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        }
+
+        @Override
+        public StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            return lValue; // shouldn't happen.
+        }
+
+        @Override
+        public void handleStatement(StatementContainer statementContainer) {
+
+        }
     }
 
     private class StructuredScopeWithVars extends StructuredScope {
@@ -103,7 +166,11 @@ public class VariableNameTidier implements StructuredStatementTransformer {
 
         private String suggestByType(LocalVariable localVariable) {
             JavaTypeInstance type = localVariable.getInferredJavaType().getJavaTypeInstance();
-
+            /*
+             * If this type is boxed, we can suggest a better name with its unboxed counterpart
+             */
+            RawJavaType raw = RawJavaType.getUnboxedTypeFor(type);
+            if (raw != null) type = raw;
             return type.suggestVarName();
         }
 
@@ -162,10 +229,16 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                 namedVariable.forceName(namedVariable.getStringName() + "_");
             }
 
+            defineHere(localVariable);
+        }
+
+
+        public void defineHere(LocalVariable localVariable) {
 
             /* Check if it's already defined
              *
              */
+            NamedVariable namedVariable = localVariable.getName();
             final String base = namedVariable.getStringName();
             if (!alreadyDefined(base)) {
                 scope.getFirst().defineHere(base);

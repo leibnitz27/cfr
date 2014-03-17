@@ -55,7 +55,7 @@ public enum RawJavaType implements JavaTypeInstance {
         }
     }
 
-    public static RawJavaType getUnboxedTypeFor(JavaRefTypeInstance type) {
+    public static RawJavaType getUnboxedTypeFor(JavaTypeInstance type) {
         String rawName = type.getRawName();
         RawJavaType tgt = boxingTypes.get(rawName);
         return tgt;

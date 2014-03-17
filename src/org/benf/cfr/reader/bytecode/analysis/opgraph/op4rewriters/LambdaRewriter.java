@@ -218,12 +218,15 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                     replacementParameters.add(getLocalVariable(curriedArgs.get(n)));
                 }
                 List<LValue> anonymousLambdaArgs = ListFactory.newList();
+                List<LocalVariable> originalParameters = lambdaMethod.getMethodPrototype().getComputedParameters();
+                int offset = replacementParameters.size();
                 for (int n = 0; n < nLambdaArgs; ++n) {
-                    LocalVariable tmp = new LocalVariable("arg_" + n, new InferredJavaType(targetFnArgTypes.get(n), InferredJavaType.Source.EXPRESSION));
+                    LocalVariable original = originalParameters.get(n + offset);
+                    String name = original.getName().getStringName();
+                    LocalVariable tmp = new LocalVariable(name, new InferredJavaType(targetFnArgTypes.get(n), InferredJavaType.Source.EXPRESSION));
                     anonymousLambdaArgs.add(tmp);
                     replacementParameters.add(tmp);
                 }
-                List<LocalVariable> originalParameters = lambdaMethod.getMethodPrototype().getComputedParameters();
                 // getParameters(lambdaMethod.getConstructorFlag());
 
                 /*
