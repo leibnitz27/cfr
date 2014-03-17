@@ -58,7 +58,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
     @Override
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
         if (!d.canEmitClass(classFile.getClassType())) return d;
-        ConstantPool cp = classFile.getConstantPool();
+
         if (!innerClass) {
             dumpTopHeader(classFile, d);
             dumpImports(d, classFile);
@@ -73,7 +73,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
             if (!field.shouldNotDisplay()) {
-                field.dump(d, cp);
+                field.dump(d);
                 first = false;
             }
         }

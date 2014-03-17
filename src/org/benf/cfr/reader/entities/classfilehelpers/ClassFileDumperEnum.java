@@ -83,7 +83,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
 
     @Override
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
-        ConstantPool cp = classFile.getConstantPool();
+
         if (!innerClass) {
             dumpTopHeader(classFile, d);
             dumpImports(d, classFile);
@@ -102,7 +102,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
             if (field.shouldNotDisplay()) continue;
-            field.dump(d, cp);
+            field.dump(d);
         }
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {

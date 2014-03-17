@@ -37,8 +37,6 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
             return d;
         }
 
-        ConstantPool cp = classFile.getConstantPool();
-
         if (!isEnum) {
             ClassSignature signature = classFile.getClassSignature();
             if (signature.getInterfaces().isEmpty()) {
@@ -66,7 +64,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
 
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
-            if (!field.shouldNotDisplay()) field.dump(d, cp);
+            if (!field.shouldNotDisplay()) field.dump(d);
         }
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {

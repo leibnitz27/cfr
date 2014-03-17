@@ -69,8 +69,8 @@ public class ClassFileField {
         return field.getFieldName();
     }
 
-    public void dump(Dumper d, ConstantPool cp) {
-        field.dump(d, getFieldName(), cp);
+    public void dump(Dumper d) {
+        field.dump(d, getFieldName());
         if (initialValue != null) {
             d.print(" = ").dump(initialValue);
         }

@@ -2,16 +2,16 @@ package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.entities.attributes.Attribute;
-import org.benf.cfr.reader.entities.attributes.AttributeConstantValue;
-import org.benf.cfr.reader.entities.attributes.AttributeSignature;
+import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.CollectionUtils;
 import org.benf.cfr.reader.util.KnowsRawSize;
+import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -33,13 +33,14 @@ import java.util.Set;
  * Too much in common with method - refactor.
  */
 
-public class Field implements KnowsRawSize {
+public class Field implements KnowsRawSize, TypeUsageCollectable {
     private static final long OFFSET_OF_ACCESS_FLAGS = 0;
     private static final long OFFSET_OF_NAME_INDEX = 2;
     private static final long OFFSET_OF_DESCRIPTOR_INDEX = 4;
     private static final long OFFSET_OF_ATTRIBUTES_COUNT = 6;
     private static final long OFFSET_OF_ATTRIBUTES = 8;
 
+    private final ConstantPool cp;
     private final long length;
     private final short descriptorIndex;
     private final Set<AccessFlag> accessFlags;
@@ -49,6 +50,7 @@ public class Field implements KnowsRawSize {
     private transient JavaTypeInstance cachedDecodedType;
 
     public Field(ByteData raw, final ConstantPool cp) {
+        this.cp = cp;
         this.accessFlags = AccessFlag.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
         short attributes_count = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
@@ -81,7 +83,7 @@ public class Field implements KnowsRawSize {
         return (AttributeSignature) attribute;
     }
 
-    public JavaTypeInstance getJavaTypeInstance(ConstantPool cp) {
+    public JavaTypeInstance getJavaTypeInstance() {
         if (cachedDecodedType == null) {
             AttributeSignature sig = getSignatureAttribute();
             ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
@@ -112,12 +114,35 @@ public class Field implements KnowsRawSize {
         return constantValue;
     }
 
-    public void dump(Dumper d, String name, ConstantPool cp) {
+    private <T extends Attribute> T getAttributeByName(String name) {
+        Attribute attribute = attributes.get(name);
+        if (attribute == null) return null;
+        @SuppressWarnings("unchecked")
+        T tmp = (T) attribute;
+        return tmp;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        collector.collect(getJavaTypeInstance());
+        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(getAttributeByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
+
+    }
+
+    public void dump(Dumper d, String name) {
+        AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
+        AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
+        if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
+        if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
         String prefix = CollectionUtils.join(accessFlags, " ");
         if (!prefix.isEmpty()) {
             d.print(prefix).print(' ');
         }
-        JavaTypeInstance type = getJavaTypeInstance(cp);
+        JavaTypeInstance type = getJavaTypeInstance();
         d.dump(type).print(' ').print(name);
     }
 }

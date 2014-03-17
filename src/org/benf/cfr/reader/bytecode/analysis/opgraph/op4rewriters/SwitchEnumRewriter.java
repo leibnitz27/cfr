@@ -139,7 +139,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         } catch (NoSuchFieldException e) {
             return;
         }
-        JavaTypeInstance fieldType = lut.getJavaTypeInstance(classConstantPool);
+        JavaTypeInstance fieldType = lut.getJavaTypeInstance();
         if (!fieldType.equals(expectedLUTType)) return;
 
         Method lutStaticInit;

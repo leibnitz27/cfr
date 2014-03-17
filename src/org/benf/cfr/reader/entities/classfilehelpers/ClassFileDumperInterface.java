@@ -51,7 +51,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
 
     @Override
     public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
-        ConstantPool cp = classFile.getConstantPool();
+
         if (!innerClass) {
             dumpTopHeader(classFile, d);
             dumpImports(d, classFile);
@@ -65,7 +65,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
         // Horrid, but an interface can have fields....
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
-            field.dump(d, cp);
+            field.dump(d);
             first = false;
         }
         List<Method> methods = classFile.getMethods();

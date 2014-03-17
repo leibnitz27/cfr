@@ -81,7 +81,7 @@ public class FieldVariable extends AbstractLValue {
             ClassFile classFile = ref.getClassFile();
             if (classFile != null) {
                 Field field = classFile.getFieldByName(name).getField();
-                return new InferredJavaType(field.getJavaTypeInstance(classFile.getConstantPool()), InferredJavaType.Source.FIELD);
+                return new InferredJavaType(field.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
             }
         } catch (CannotLoadClassException e) {
         } catch (NoSuchFieldException ignore) {

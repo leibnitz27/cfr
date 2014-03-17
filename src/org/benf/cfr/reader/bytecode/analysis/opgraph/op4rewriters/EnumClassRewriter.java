@@ -256,7 +256,7 @@ public class EnumClassRewriter {
             ConstantPool cp = classFile.getConstantPool();
             for (ClassFileField classFileField : fields) {
                 Field field = classFileField.getField();
-                JavaTypeInstance fieldType = field.getJavaTypeInstance(cp);
+                JavaTypeInstance fieldType = field.getJavaTypeInstance();
                 boolean isStatic = field.testAccessFlag(AccessFlag.ACC_STATIC);
                 boolean isEnum = field.testAccessFlag(AccessFlag.ACC_ENUM);
                 boolean expected = (isStatic && isEnum && fieldType.equals(classType));

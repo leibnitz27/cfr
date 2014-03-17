@@ -292,7 +292,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         collector.collectFrom(classSignature);
         // Collect all fields.
         for (ClassFileField field : fields) {
-            collector.collect(field.getField().getJavaTypeInstance(constantPool));
+            collector.collectFrom(field.getField());
             collector.collectFrom(field.getInitialValue());
         }
         collector.collectFrom(methods);
