@@ -11,8 +11,22 @@ import java.util.*;
  * Date: 27/04/2012
  */
 public class Functional {
+
+    public static <X> List<X> filterColl(Collection<X> input, Predicate<X> predicate) {
+        return filter(input, predicate);
+    }
+
     public static <X> List<X> filter(Collection<X> input, Predicate<X> predicate) {
         List<X> result = ListFactory.newList();
+        for (X item : input) {
+            if (predicate.test(item)) result.add(item);
+        }
+        return result;
+    }
+
+
+    public static <X> Set<X> filterSet(Collection<X> input, Predicate<X> predicate) {
+        Set<X> result = SetFactory.newSet();
         for (X item : input) {
             if (predicate.test(item)) result.add(item);
         }
