@@ -43,6 +43,7 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
 
     @Override
     public Dumper dump(Dumper dumper) {
+        if (blockIdentifier.hasForeignReferences()) dumper.print(blockIdentifier.getName() + " : ");
         dumper.print("switch (").dump(switchOn).print(") ");
         getBody().dump(dumper);
         return dumper;
