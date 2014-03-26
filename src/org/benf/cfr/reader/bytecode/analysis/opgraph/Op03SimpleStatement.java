@@ -25,6 +25,7 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheckImpl;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
@@ -4631,7 +4632,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
-        ExceptionCheck exceptionCheck = new ExceptionCheck(dcCommonState, caught);
+        ExceptionCheck exceptionCheck = new ExceptionCheckImpl(dcCommonState, caught);
 
         mainloop:
         while (!currentStatement.getStatement().canThrow(exceptionCheck)) {
