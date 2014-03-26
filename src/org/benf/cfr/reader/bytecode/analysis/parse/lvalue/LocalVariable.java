@@ -30,10 +30,10 @@ public class LocalVariable extends AbstractLValue {
     private final Ident ident;
     private final boolean guessedFinal;
 
-    public LocalVariable(int index, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType, boolean guessedFinal) {
+    public LocalVariable(int stackPosition, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType, boolean guessedFinal) {
         super(inferredJavaType);
-        this.name = variableNamer.getName(originalRawOffset, ident, index);
-        this.idx = index;
+        this.name = variableNamer.getName(originalRawOffset, ident, stackPosition);
+        this.idx = stackPosition;
         this.ident = ident;
         this.guessedFinal = guessedFinal;
     }

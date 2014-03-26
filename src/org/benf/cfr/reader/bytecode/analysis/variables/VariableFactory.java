@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class VariableFactory {
     private final VariableNamer variableNamer;
-    private final List<InferredJavaType> typedArgs;
+    private final Map<Integer, InferredJavaType> typedArgs;
     private final Method method;
 
     private final Map<LValue, LValue> cache = MapFactory.newMap();
@@ -35,13 +35,15 @@ public class VariableFactory {
         }
         MethodPrototype methodPrototype = method.getMethodPrototype();
         List<JavaTypeInstance> args = methodPrototype.getArgs();
-        this.typedArgs = ListFactory.newList();
+        this.typedArgs = MapFactory.newMap();
+        int offset = 0;
         if (methodPrototype.isInstanceMethod()) {
             JavaTypeInstance thisType = method.getClassFile().getClassType();
-            typedArgs.add(new InferredJavaType(thisType, InferredJavaType.Source.UNKNOWN, true));
+            typedArgs.put(offset++, new InferredJavaType(thisType, InferredJavaType.Source.UNKNOWN, true));
         }
         for (JavaTypeInstance arg : args) {
-            typedArgs.add(new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN, true));
+            typedArgs.put(offset, new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN, true));
+            offset += arg.getStackType().getComputationCategory();
         }
         this.method = method;
     }
@@ -50,17 +52,19 @@ public class VariableFactory {
         return method.getMethodPrototype().getReturnType();
     }
 
-    public LValue localVariable(int idx, Ident ident, int origRawOffset, boolean guessedFinal) {
+    /*
+     * NB: idx is slot, i.e. offset.
+     */
+    public LValue localVariable(int stackPosition, Ident ident, int origCodeRawOffset, boolean guessedFinal) {
         if (ident == null) {
             throw new IllegalStateException();
         }
-        InferredJavaType varType;
-        if (idx < typedArgs.size()) {
-            varType = typedArgs.get(idx);
-        } else {
+        InferredJavaType varType = typedArgs.get(stackPosition);
+        if (varType == null) {
+            // Shouldn't happen, but protect.
             varType = new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.UNKNOWN);
         }
-        LValue tmp = new LocalVariable(idx, ident, variableNamer, origRawOffset, varType, guessedFinal);
+        LValue tmp = new LocalVariable(stackPosition, ident, variableNamer, origCodeRawOffset, varType, guessedFinal);
         LValue val = cache.get(tmp);
         if (val == null) {
             cache.put(tmp, tmp);
