@@ -18,23 +18,28 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment PARAMETER_CORRUPTION = new DecompilerComment("WARNING - Possible parameter corruption");
     public static DecompilerComment TRY_BACKEDGE_REMOVED = new DecompilerComment("WARNING - Removed back jump from a try to a catch block - possible behaviour change.");
     public static DecompilerComment TYPE_CLASHES = new DecompilerComment("Could not resolve type clashes", true);
+    public static DecompilerComment LOOSE_CATCH_BLOCK = new DecompilerComment("Loose catch block", true);
 
     private final String comment;
     private final String summaryMessage;
+    private final boolean failed;
 
     public DecompilerComment(String comment) {
         this.comment = comment;
         this.summaryMessage = null;
+        this.failed = false;
     }
 
-    public DecompilerComment(String comment, boolean ignore) {
+    public DecompilerComment(String comment, boolean failed) {
         this.comment = comment;
         this.summaryMessage = comment;
+        this.failed = failed;
     }
 
     public DecompilerComment(String comment, Exception e) {
         this.comment = comment;
         this.summaryMessage = "Exception : " + e.toString();
+        this.failed = true;
     }
 
     @Override
@@ -44,6 +49,10 @@ public class DecompilerComment implements Dumpable {
 
     public String getSummaryMessage() {
         return summaryMessage;
+    }
+
+    public boolean isFailed() {
+        return failed;
     }
 
     @Override

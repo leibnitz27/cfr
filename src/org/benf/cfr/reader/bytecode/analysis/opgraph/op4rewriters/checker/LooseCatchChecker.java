@@ -15,7 +15,6 @@ import org.benf.cfr.reader.util.DecompilerComments;
  * Time: 15:24
  */
 public class LooseCatchChecker implements Op04Checker {
-    private static DecompilerComment looseCatchComment = new DecompilerComment("Loose catch block", true);
     private boolean looseCatch = false;
 
     @Override
@@ -36,7 +35,7 @@ public class LooseCatchChecker implements Op04Checker {
     @Override
     public void commentInto(DecompilerComments comments) {
         if (looseCatch) {
-            comments.addComment(looseCatchComment);
+            comments.addComment(DecompilerComment.LOOSE_CATCH_BLOCK);
         }
     }
 }

@@ -11,10 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredBreak;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredContinue;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredIf;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -153,6 +150,16 @@ public class IfStatement extends GotoStatement {
                 return new StructuredIf(condition, new Op04StructuredStatement(new UnstructuredContinue(getTargetStartBlock())));
             case BREAK:
                 return new StructuredIf(condition, new Op04StructuredStatement(new UnstructuredBreak(getJumpTarget().getContainer().getBlocksEnded())));
+            case BREAK_ANONYMOUS: {
+                Statement target = getJumpTarget();
+                if (!(target instanceof AnonBreakTarget)) {
+                    throw new IllegalStateException("Target of anonymous break unexpected.");
+                }
+                AnonBreakTarget anonBreakTarget = (AnonBreakTarget) target;
+                BlockIdentifier breakFrom = anonBreakTarget.getBlockIdentifier();
+                Op04StructuredStatement unstructuredBreak = new Op04StructuredStatement(new UnstructuredAnonymousBreak(breakFrom));
+                return new StructuredIf(condition, unstructuredBreak);
+            }
         }
         throw new UnsupportedOperationException("Unexpected jump type in if block - " + getJumpType());
     }

@@ -54,6 +54,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     private final List<Op03SimpleStatement> sources = ListFactory.newList();
     private final List<Op03SimpleStatement> targets = ListFactory.newList();
+
+    private Op03SimpleStatement linearlyPrevious;
+    private Op03SimpleStatement linearlyNext;
+
     private boolean isNop;
     private InstrIndex index;
     private Statement containedStatement;
@@ -70,10 +74,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     // This statement is CONTAINED in the following blocks.
     //
     private final Set<BlockIdentifier> containedInBlocks = SetFactory.newSet();
-    //
-    // blocks ended just before this.  (used to resolve break statements).
-    //
-    private final Set<BlockIdentifier> immediatelyAfterBlocks = SetFactory.newSet();
 
     public Op03SimpleStatement(Op02WithProcessedDataAndRefs original, Statement statement) {
         this.containedStatement = statement;
@@ -174,9 +174,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         target.replaceSingleSourceWith(this, sources);
         sources.clear();
         targets.clear();
-        // And, take all the blocks which were ending here, and add them to the blocksEnding in target
-        target.immediatelyAfterBlocks.addAll(immediatelyAfterBlocks);
-        immediatelyAfterBlocks.clear();
     }
 
     /*
@@ -242,13 +239,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      */
     @Override
     public Set<BlockIdentifier> getBlocksEnded() {
-        return immediatelyAfterBlocks;
+        if (linearlyPrevious == null) return SetFactory.newSet();
+        Set<BlockIdentifier> in = SetFactory.newSet(linearlyPrevious.getBlockIdentifiers());
+        in.removeAll(getBlockIdentifiers());
+        Iterator<BlockIdentifier> iterator = in.iterator();
+        while (iterator.hasNext()) {
+            BlockIdentifier blockIdentifier = iterator.next();
+            if (!blockIdentifier.getBlockType().isBreakable()) iterator.remove();
+        }
+        return in;
     }
 
     @Override
     public void copyBlockInformationFrom(StatementContainer other) {
         Op03SimpleStatement other3 = (Op03SimpleStatement) other;
-        this.immediatelyAfterBlocks.addAll(other.getBlocksEnded());
         this.containedInBlocks.addAll(other.getBlockIdentifiers());
         //
         // This is annoying, we only have space for one first in block.  TBH, this is a weak bit of
@@ -385,10 +389,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             throw new ConfusedCFRException("Statement already marked as first in another block");
         }
         this.firstStatementInThisBlock = blockIdentifier;
-    }
-
-    private void markPostBlock(BlockIdentifier blockIdentifier) {
-        this.immediatelyAfterBlocks.add(blockIdentifier);
     }
 
     private void markBlock(BlockIdentifier blockIdentifier) {
@@ -1719,7 +1719,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     * Filter out nops (where appropriate) and renumber.  For display purposes.
     */
     public static List<Op03SimpleStatement> renumber(List<Op03SimpleStatement> statements) {
-        int newIndex = 0;
         boolean nonNopSeen = false;
         List<Op03SimpleStatement> result = ListFactory.newList();
         for (Op03SimpleStatement statement : statements) {
@@ -1729,26 +1728,25 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
         // Sort result by existing index.
-        Collections.sort(result, new CompareByIndex());
-        for (Op03SimpleStatement statement : result) {
-            statement.setIndex(new InstrIndex(newIndex++));
-        }
+        renumberInPlace(result);
         return result;
     }
 
     public static void renumberInPlace(List<Op03SimpleStatement> statements) {
-        int newIndex = 0;
         // Sort result by existing index.
         Collections.sort(statements, new CompareByIndex());
-        for (Op03SimpleStatement statement : statements) {
-            statement.setIndex(new InstrIndex(newIndex++));
-        }
+        reindexInPlace(statements);
     }
 
     public static void reindexInPlace(List<Op03SimpleStatement> statements) {
         int newIndex = 0;
+        Op03SimpleStatement prev = null;
         for (Op03SimpleStatement statement : statements) {
+            statement.linearlyPrevious = prev;
+            statement.linearlyNext = null;
+            if (prev != null) prev.linearlyNext = statement;
             statement.setIndex(new InstrIndex(newIndex++));
+            prev = statement;
         }
     }
 
@@ -2355,7 +2353,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             endGoto.setJumpType(JumpType.CONTINUE);
             end.replaceStatement(endGoto);
             Op03SimpleStatement after = new Op03SimpleStatement(doStart.getBlockIdentifiers(), exitStatement, end.getIndex().justAfter());
-            statements.add(statements.indexOf(end) + 1, after);
+
+            int endIdx = statements.indexOf(end);
+            if (endIdx < statements.size() - 2) {
+                Op03SimpleStatement shuffled = statements.get(endIdx + 1);
+                for (Op03SimpleStatement shuffledSource : shuffled.sources) {
+                    if (shuffledSource.getStatement() instanceof JumpingStatement) {
+                        JumpingStatement jumpingStatement = (JumpingStatement) shuffledSource.getStatement();
+                        if (jumpingStatement.getJumpType() == JumpType.BREAK) {
+                            jumpingStatement.setJumpType(JumpType.GOTO);
+                        }
+                    }
+                }
+            }
+            statements.add(endIdx + 1, after);
+            // Any break statements which were targetting end+1 are now invalid.....
             doStart.addTarget(after);
             after.addSource(doStart);
             doStart.replaceStatement(replacementWhile);
@@ -2396,6 +2408,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public static void rewriteBreakStatements(List<Op03SimpleStatement> statements) {
+        Op03SimpleStatement.reindexInPlace(statements);
         test:
         for (Op03SimpleStatement statement : statements) {
             Statement innerStatement = statement.getStatement();
@@ -2429,8 +2442,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                             continue test;
                         }
                     }
-                    if (!targetStatement.immediatelyAfterBlocks.isEmpty()) {
-                        BlockIdentifier outermostContainedIn = BlockIdentifier.getOutermostContainedIn(targetStatement.immediatelyAfterBlocks, statement.containedInBlocks);
+                    Set<BlockIdentifier> blocksEnded = targetStatement.getBlocksEnded();
+                    if (!blocksEnded.isEmpty()) {
+                        BlockIdentifier outermostContainedIn = BlockIdentifier.getOutermostContainedIn(blocksEnded, statement.containedInBlocks);
                         // Break to the outermost block.
                         if (outermostContainedIn != null) {
                             jumpingStatement.setJumpType(JumpType.BREAK);
@@ -2575,21 +2589,36 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          */
         for (Op03SimpleStatement statement : in) {
             Statement inner = statement.getStatement();
-            if (inner.getClass() == GotoStatement.class) {
+            if (inner instanceof JumpingStatement) {
                 JumpingStatement jumpingStatement = (JumpingStatement) inner;
-                if (statement.targets.size() != 1) continue;
-                if (jumpingStatement.getJumpType() != JumpType.GOTO) continue;
-                Op03SimpleStatement targetStatement = statement.targets.get(0);
+                JumpType jumpType = jumpingStatement.getJumpType();
+                if (!(jumpType == JumpType.GOTO // || jumpType == JumpType.GOTO_OUT_OF_IF
+                )) continue;
+                Op03SimpleStatement targetStatement = (Op03SimpleStatement) jumpingStatement.getJumpTarget().getContainer();
                 boolean isForwardJump = targetStatement.getIndex().isBackJumpTo(statement);
                 if (isForwardJump) {
                     Set<BlockIdentifier> targetBlocks = targetStatement.getBlockIdentifiers();
                     Set<BlockIdentifier> srcBlocks = statement.getBlockIdentifiers();
                     if (targetBlocks.size() < srcBlocks.size() && srcBlocks.containsAll(targetBlocks)) {
                         /*
-                         * Break out of an anonymous block
+                         * Remove all the switch blocks from srcBlocks.
                          */
-                        jumpingStatement.setJumpType(JumpType.BREAK_ANONYMOUS);
-                        result = true;
+                        srcBlocks = Functional.filterSet(srcBlocks, new Predicate<BlockIdentifier>() {
+                            @Override
+                            public boolean test(BlockIdentifier in) {
+                                BlockType blockType = in.getBlockType();
+                                if (blockType == BlockType.CASE) return false;
+                                if (blockType == BlockType.SWITCH) return false;
+                                return true;
+                            }
+                        });
+                        if (targetBlocks.size() < srcBlocks.size() && srcBlocks.containsAll(targetBlocks)) {
+                            /*
+                             * Break out of an anonymous block
+                             */
+                            jumpingStatement.setJumpType(JumpType.BREAK_ANONYMOUS);
+                            result = true;
+                        }
                     }
                 }
             }
@@ -2919,8 +2948,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
         IsLoopBlock isLoopBlock = new IsLoopBlock();
-        Set<BlockIdentifier> beforeLoopBlocks = SetFactory.newSet(Functional.filter(before.getBlockIdentifiers(), isLoopBlock));
-        Set<BlockIdentifier> tgtLoopBlocks = SetFactory.newSet(Functional.filter(tgt.getBlockIdentifiers(), isLoopBlock));
+        Set<BlockIdentifier> beforeLoopBlocks = SetFactory.newSet(Functional.filterSet(before.getBlockIdentifiers(), isLoopBlock));
+        Set<BlockIdentifier> tgtLoopBlocks = SetFactory.newSet(Functional.filterSet(tgt.getBlockIdentifiers(), isLoopBlock));
         if (!beforeLoopBlocks.equals(tgtLoopBlocks)) return false;
 
 
@@ -2942,7 +2971,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         Predicate<BlockIdentifier> exceptionFilter = new IsExceptionBlock();
 
-        Set<BlockIdentifier> exceptionBlocks = SetFactory.newSet(Functional.filter(tgt.getBlockIdentifiers(), exceptionFilter));
+        Set<BlockIdentifier> exceptionBlocks = SetFactory.newSet(Functional.filterSet(tgt.getBlockIdentifiers(), exceptionFilter));
         int nextCandidateIdx = statements.indexOf(forwardGoto) - 1;
 
         Op03SimpleStatement lastTarget = tgt;
@@ -2960,7 +2989,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (tryMoveThis.sources.size() != 1) return success;
             Op03SimpleStatement beforeTryMove = tryMoveThis.sources.get(0);
             // Is it in the same exception blocks?
-            Set<BlockIdentifier> moveEB = SetFactory.newSet(Functional.filter(forwardGoto.getBlockIdentifiers(), exceptionFilter));
+            Set<BlockIdentifier> moveEB = SetFactory.newSet(Functional.filterSet(forwardGoto.getBlockIdentifiers(), exceptionFilter));
             if (!moveEB.equals(exceptionBlocks)) return success;
             /* Move this instruction through the goto
              */
@@ -2978,9 +3007,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
             tryMoveThis.containedInBlocks.clear();
             tryMoveThis.containedInBlocks.addAll(lastTarget.containedInBlocks);
-            tryMoveThis.immediatelyAfterBlocks.clear();
-            tryMoveThis.immediatelyAfterBlocks.addAll(lastTarget.immediatelyAfterBlocks);
-            lastTarget.immediatelyAfterBlocks.clear();
             lastTarget = tryMoveThis;
             nextCandidateIdx--;
             success = true;
@@ -3225,7 +3251,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (!conditional) {
             Set<BlockIdentifier> lastContent = SetFactory.newSet(lastJump.getBlockIdentifiers());
             lastContent.removeAll(start.getBlockIdentifiers());
-            Set<BlockIdentifier> internalTryBlocks = SetFactory.newOrderedSet(Functional.filter(lastContent, new Predicate<BlockIdentifier>() {
+            Set<BlockIdentifier> internalTryBlocks = SetFactory.newOrderedSet(Functional.filterSet(lastContent, new Predicate<BlockIdentifier>() {
                 @Override
                 public boolean test(BlockIdentifier in) {
                     return in.getBlockType() == BlockType.TRYBLOCK;
@@ -3301,7 +3327,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         start.markFirstStatementInBlock(blockIdentifier);
 
 
-        postBlock.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, postBlock);
 
         return blockIdentifier;
@@ -3465,7 +3490,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         //
         start.markBlockStatement(blockIdentifier, lastInBlock, blockEnd, statements);
         statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
-        blockEnd.markPostBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, blockEnd);
         /*
          * is the end of the while loop jumping to something which is NOT directly after it?  If so, we need to introduce
@@ -3530,7 +3554,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement discoveredLast = statements.get(last);
         Set<BlockIdentifier> lastBlocks = SetFactory.newSet(discoveredLast.containedInBlocks);
         lastBlocks.removeAll(start.getBlockIdentifiers());
-        Set<BlockIdentifier> catches = SetFactory.newSet(Functional.filter(lastBlocks, new Predicate<BlockIdentifier>() {
+        Set<BlockIdentifier> catches = SetFactory.newSet(Functional.filterSet(lastBlocks, new Predicate<BlockIdentifier>() {
             @Override
             public boolean test(BlockIdentifier in) {
                 return (in.getBlockType() == BlockType.CATCHBLOCK);
@@ -5081,6 +5105,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement switchStatement : switchStatements) {
             // removePointlessSwitchDefault(switchStatement);
             examineSwitchContiguity(switchStatement, statements);
+            moveJumpsToTerminalIfEmpty(switchStatement, statements);
         }
 
     }
@@ -5214,6 +5239,64 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    /*
+     * If we end up in a situation like this
+     *
+     * switch (x) {
+     *   case a:
+     *   case b:
+     *   case c:
+     *   lbl : case d: [or default]
+     * }
+     *
+     * where lbl has no body, then forward jumps to lbl from inside that switch are equivalent to jumping to the
+     * following statement.
+     *
+     * This is related to (but not identical to) removePointlessSwitchDefaults.
+     */
+    private static void moveJumpsToTerminalIfEmpty(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
+        SwitchStatement swatch = (SwitchStatement) switchStatement.getStatement();
+        Op03SimpleStatement lastTgt = switchStatement.targets.get(switchStatement.targets.size() - 1);
+        BlockIdentifier switchBlock = swatch.getSwitchBlock();
+        if (!lastTgt.getBlockIdentifiers().contains(switchBlock)) return; // paranoia.
+        if (lastTgt.targets.size() != 1) return;
+        if (lastTgt.sources.size() == 1) return;
+        Op03SimpleStatement following = lastTgt.targets.get(0);
+        // Does following directly follow on from lastTgt, and is follwing NOT in the switch?
+        if (following.getBlockIdentifiers().contains(switchBlock)) return;
+
+        // Check that lastTgt has multiple FOWARD JUMPING sources.
+        List<Op03SimpleStatement> forwardJumpSources = Functional.filter(lastTgt.sources, new IsForwardJumpTo(lastTgt.getIndex()));
+        if (forwardJumpSources.size() <= 1) return;
+
+        int idx = statements.indexOf(lastTgt);
+        if (idx == 0) return;
+        Op03SimpleStatement justBefore = statements.get(idx - 1);
+        if (idx >= statements.size() - 1) return;
+        if (statements.get(idx + 1) != following) return;
+
+        // For any sources which were pointing to the last target, (other than the switch statement itself),
+        // we can re-point them at the instruction after it.
+        for (Op03SimpleStatement forwardJumpSource : forwardJumpSources) {
+            if (forwardJumpSource == switchStatement ||
+                    forwardJumpSource == justBefore) continue;
+            forwardJumpSource.replaceTarget(lastTgt, following);
+            lastTgt.removeSource(forwardJumpSource);
+            following.addSource(forwardJumpSource);
+
+            /*
+             * If the forward jumpsource was a goto, we now know it's actually a break!
+             */
+            Statement forwardJump = forwardJumpSource.getStatement();
+            if (forwardJump instanceof JumpingStatement) {
+                JumpingStatement jumpingStatement = (JumpingStatement) forwardJump;
+                JumpType jumpType = jumpingStatement.getJumpType();
+                if (jumpType.isUnknown()) {
+                    jumpingStatement.setJumpType(JumpType.BREAK);
+                }
+            }
+        }
+    }
 
     private static boolean examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
         Set<Op03SimpleStatement> forwardTargets = SetFactory.newSet();
@@ -5272,6 +5355,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         int breakTarget = -1;
         BlockIdentifier caseBlock = null;
         int indexLastInThis = 0;
+        boolean retieEnd = false;
         if (!forwardTargets.isEmpty()) {
             List<Op03SimpleStatement> lstFwdTargets = ListFactory.newList(forwardTargets);
             Collections.sort(lstFwdTargets, new CompareByIndex());
@@ -5287,8 +5371,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 forwardTargets.clear();
             }
             if (indexLastInThis != indexAfterCase - 1) {
-                // throw new ConfusedCFRException("Final statement in case doesn't meet smallest exit.");
-                forwardTargets.clear();
+                retieEnd = true;
             }
         }
         if (forwardTargets.isEmpty()) {
@@ -5312,12 +5395,40 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
             breakTarget = indexLastInThis + 1;
         }
+        Op03SimpleStatement breakStatementTarget = statements.get(breakTarget);
+
+        if (retieEnd) {
+            Op03SimpleStatement lastInThis = statements.get(indexLastInThis);
+            if (lastInThis.getStatement().getClass() == GotoStatement.class) {
+                // Add another goto, after lastIn this.  Last in this becomes a break to that.
+                Set<BlockIdentifier> blockIdentifiers = SetFactory.newSet(lastInThis.getBlockIdentifiers());
+                blockIdentifiers.remove(caseBlock);
+                blockIdentifiers.remove(switchBlock);
+                Op03SimpleStatement retie = new Op03SimpleStatement(blockIdentifiers, new GotoStatement(), lastInThis.getIndex().justAfter());
+                Op03SimpleStatement target = lastInThis.targets.get(0);
+                Iterator<Op03SimpleStatement> iterator = target.sources.iterator();
+                while (iterator.hasNext()) {
+                    Op03SimpleStatement source = iterator.next();
+                    if (source.getBlockIdentifiers().contains(switchBlock)) {
+                        iterator.remove();
+                        retie.addSource(source);
+                        source.replaceTarget(target, retie);
+                    }
+                }
+                if (!retie.sources.isEmpty()) {
+                    retie.targets.add(target);
+                    target.addSource(retie);
+                    statements.add(breakTarget, retie);
+                    breakStatementTarget = retie;
+                }
+
+
+            }
+        }
 
         /* Given the assumption that the statement after the switch block is the break target, can we rewrite any
          * of the exits from the switch statement to be breaks?
          */
-        Op03SimpleStatement breakStatementTarget = statements.get(breakTarget);
-        breakStatementTarget.markPostBlock(switchBlock);
         for (Op03SimpleStatement breakSource : breakStatementTarget.sources) {
             if (breakSource.getBlockIdentifiers().contains(switchBlock)) {
                 if (breakSource.getJumpType().isUnknown()) {
@@ -5365,6 +5476,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement switchStatement : switchStatements) {
             // removePointlessSwitchDefault(switchStatement);
             examineSwitchContiguity(switchStatement, in);
+            moveJumpsToTerminalIfEmpty(switchStatement, in);
         }
 
     }
@@ -6230,8 +6342,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             @Override
             public boolean test(Op03SimpleStatement in) {
                 Statement statement = in.getStatement();
-                if (statement.getClass() != GotoStatement.class) return false;
-                JumpType jumpType = ((GotoStatement) statement).getJumpType();
+                if (!(statement instanceof JumpingStatement)) return false;
+                JumpType jumpType = ((JumpingStatement) statement).getJumpType();
                 return jumpType == JumpType.BREAK_ANONYMOUS;
             }
         });
@@ -6242,7 +6354,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          */
         Set<Op03SimpleStatement> targets = SetFactory.newOrderedSet();
         for (Op03SimpleStatement anonBreak : anonBreaks) {
-            targets.addAll(anonBreak.getTargets());
+            JumpingStatement jumpingStatement = (JumpingStatement) anonBreak.getStatement();
+            targets.add((Op03SimpleStatement) jumpingStatement.getJumpTarget().getContainer());
         }
 
         int idx = 0;

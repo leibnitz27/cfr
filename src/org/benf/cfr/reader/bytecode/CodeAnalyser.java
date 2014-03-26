@@ -76,9 +76,16 @@ public class CodeAnalyser {
         public Op04StructuredStatement code;
         public boolean failed;
 
-        private AnalysisResult(DecompilerComments comments, Op04StructuredStatement code, boolean failed) {
+        private AnalysisResult(DecompilerComments comments, Op04StructuredStatement code) {
             this.comments = comments;
             this.code = code;
+            boolean failed = false;
+            for (DecompilerComment comment : comments.getCommentList()) {
+                if (comment.isFailed()) {
+                    failed = true;
+                    break;
+                }
+            }
             this.failed = failed;
         }
     }
@@ -182,7 +189,7 @@ public class CodeAnalyser {
             Op04StructuredStatement coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
             DecompilerComments comments = new DecompilerComments();
             comments.addComment(new DecompilerComment("Exception decompiling", e));
-            return new AnalysisResult(comments, coderes, true);
+            return new AnalysisResult(comments, coderes);
         }
     }
 
@@ -645,8 +652,6 @@ public class CodeAnalyser {
             Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         }
 
-        boolean triggerRecovery = false;
-
 //        if (passIdx == 0) {
 //            if (Op03SimpleStatement.checkTypeClashes(op03SimpleParseNodes, bytecodeMeta)) {
 //                comments.addComment(DecompilerComment.TYPE_CLASHES);
@@ -661,6 +666,7 @@ public class CodeAnalyser {
          */
         Op03SimpleStatement.replaceStackVarsWithLocals(op03SimpleParseNodes);
 
+        Op03SimpleStatement.reindexInPlace(op03SimpleParseNodes);
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         Op04StructuredStatement.tidyEmptyCatch(block);
@@ -680,7 +686,6 @@ public class CodeAnalyser {
 
         if (!block.isFullyStructured()) {
             comments.addComment(DecompilerComment.UNABLE_TO_STRUCTURE);
-            triggerRecovery = true;
         } else {
             Op04StructuredStatement.tidyTypedBooleans(block);
             Op04StructuredStatement.prettifyBadLoops(block);
@@ -725,11 +730,10 @@ public class CodeAnalyser {
         if (passIdx == 0) {
             if (Op04StructuredStatement.checkTypeClashes(block, bytecodeMeta)) {
                 comments.addComment(DecompilerComment.TYPE_CLASHES);
-                triggerRecovery = true;
             }
         }
 
-        return new AnalysisResult(comments, block, triggerRecovery);
+        return new AnalysisResult(comments, block);
     }
 
 

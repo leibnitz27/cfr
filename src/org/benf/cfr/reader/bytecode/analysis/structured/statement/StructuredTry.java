@@ -166,11 +166,15 @@ public class StructuredTry extends AbstractStructuredStatement {
         return structuredCatch.isRethrow();
     }
 
+
     @Override
     public boolean inlineable() {
-//        return false;
-        return isPointlessTry() ||
-                isJustTryCatchThrow();
+        // split out for breakpointing.
+        if (isPointlessTry() || isJustTryCatchThrow()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public BlockIdentifier getTryBlockIdentifier() {

@@ -245,6 +245,13 @@ public class Block extends AbstractStructuredStatement {
                  */
                 for (Op04StructuredStatement source : sources) {
                     StructuredStatement maybeBreak = source.getStatement();
+                    // TODO : FIXME.
+                    if (maybeBreak.getClass() == StructuredIf.class) {
+                        // TODO:  This is due to us having originally had an ifExiting - should have rewritten.
+                        StructuredIf structuredIf = (StructuredIf) maybeBreak;
+                        source = structuredIf.getIfTaken();
+                        maybeBreak = source.getStatement();
+                    }
                     if (maybeBreak.getClass() == UnstructuredAnonymousBreak.class) {
                         UnstructuredAnonymousBreak unstructuredBreak = (UnstructuredAnonymousBreak) maybeBreak;
                         source.replaceStatement(unstructuredBreak.tryExplicitlyPlaceInBlock(blockIdentifier));

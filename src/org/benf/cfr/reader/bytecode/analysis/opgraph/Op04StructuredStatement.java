@@ -537,9 +537,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
-    public static StructuredStatement transformWithScope(StructuredScope scope, StructuredStatement stm) {
+    public static StructuredStatement transformStructuredGotoWithScope(StructuredScope scope, StructuredStatement stm) {
         Set<Op04StructuredStatement> nextFallThrough = scope.getNextFallThrough(stm);
-        Op04StructuredStatement target = stm.getContainer().getTargets().get(0);
+        List<Op04StructuredStatement> targets = stm.getContainer().getTargets();
+        // Targets is an invalid concept for op04 really, should get rid of it.
+        Op04StructuredStatement target = targets.isEmpty() ? null : targets.get(0);
         if (nextFallThrough.contains(target)) {
             // Ok, fell through.  If we're the last statement of the current scope,
             // and the current scope has fallthrough, we can be removed.  Otherwise we
@@ -559,7 +561,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             in.transformStructuredChildren(this, scope);
             if (in instanceof UnstructuredGoto ||
                     in instanceof UnstructuredAnonymousBreak) {
-                in = transformWithScope(scope, in);
+                in = transformStructuredGotoWithScope(scope, in);
             }
             return in;
         }

@@ -57,10 +57,10 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
          * } while (true);
          */
         /*
-         * Can't do this
-         * TODO : Fails controlflowtest7
+         * But - if the inner statement is simply a single statement, and not a break FROM this block,
+         * (or a continue of it), we can just drop the loop completely.
          */
-//        if (this.getContainer().getSources().size() > 1) {
+
         StructuredStatement inner = innerBlock.getStatement();
         if (!(inner instanceof Block)) {
             LinkedList<Op04StructuredStatement> blockContent = ListFactory.newLinkedList();
@@ -69,6 +69,23 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
             innerBlock.replaceContainedStatement(inner);
         }
         Block block = (Block) inner;
+        if (block.isJustOneStatement()) {
+            Op04StructuredStatement singleStatement = block.getSingleStatement();
+            StructuredStatement stm = singleStatement.getStatement();
+            boolean canRemove = true;
+            if (stm instanceof StructuredBreak) {
+                StructuredBreak brk = (StructuredBreak) stm;
+                if (brk.getBreakBlock().equals(blockIdentifier)) canRemove = false;
+            } else if (stm instanceof StructuredContinue) {
+                StructuredContinue cnt = (StructuredContinue) stm;
+                if (cnt.getContinueTgt().equals(blockIdentifier)) canRemove = false;
+            } else {
+                canRemove = false;
+            }
+            if (canRemove) {
+                return stm;
+            }
+        }
         block.getBlockStatements().add(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
 //        }
         return new StructuredDo(null, innerBlock, blockIdentifier);
