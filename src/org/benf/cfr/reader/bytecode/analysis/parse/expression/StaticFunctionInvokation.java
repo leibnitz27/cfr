@@ -161,7 +161,7 @@ public class StaticFunctionInvokation extends AbstractExpression implements Func
              */
             Expression arg = args.get(x);
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, null));
+            args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, null, function.getMethodPrototype()));
         }
         return true;
     }

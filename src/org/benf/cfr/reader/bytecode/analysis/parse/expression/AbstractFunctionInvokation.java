@@ -185,7 +185,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression impl
             }
 
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, gtb);
+            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, gtb, methodPrototype);
             args.set(x, arg);
         }
 

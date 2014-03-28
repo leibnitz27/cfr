@@ -190,7 +190,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
             }
 
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, null);
+            arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, null, methodPrototype);
             args.set(x, arg);
         }
         return true;

@@ -13,9 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 
@@ -101,13 +99,20 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
 
     // Strip out boxing and casting - but if it changes the function being called, or no longer matches, then
     // ignore the change.
-    public Expression sugarParameterBoxing(Expression in, int argIdx, OverloadMethodSet possibleMethods, GenericTypeBinder gtb) {
+    public Expression sugarParameterBoxing(Expression in, int argIdx, OverloadMethodSet possibleMethods, GenericTypeBinder gtb, MethodPrototype methodPrototype) {
         Expression res = in;
         InferredJavaType outerCastType = null;
         Expression res1 = null;
         if (in instanceof CastExpression) {
+            boolean wasRaw = true;
+            if (methodPrototype != null) {
+                List<JavaTypeInstance> argTypes = methodPrototype.getArgs();
+                if (argIdx <= argTypes.size() - 1) {
+                    wasRaw = argTypes.get(argIdx) instanceof RawJavaType;
+                }
+            }
             outerCastType = in.getInferredJavaType();
-            res = CastExpression.removeImplicitOuterType(res, gtb);
+            res = CastExpression.removeImplicitOuterType(res, gtb, wasRaw);
             res1 = res;
         }
 
@@ -152,12 +157,14 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
         return in;
     }
 
-    public Expression sugarNonParameterBoxing(Expression in, JavaTypeInstance tgtType) {
+    public Expression sugarNonParameterBoxing(final Expression in, JavaTypeInstance tgtType) {
         boolean expectingPrim = tgtType instanceof RawJavaType;
         Expression res = in;
+        boolean recast = false;
         if (in instanceof CastExpression && ((CastExpression) in).couldBeImplicit((GenericTypeBinder) null)) {
             // We can strip this IF it is a cast that could be implicit.
             res = ((CastExpression) in).getChild();
+            recast = !(tgtType instanceof RawJavaType);
         } else if (in instanceof MemberFunctionInvokation) {
             res = BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);
         } else if (in instanceof StaticFunctionInvokation) {
@@ -178,7 +185,17 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
          * (Integer)(double)d .
          */
         if (!res.getInferredJavaType().getJavaTypeInstance().canCastTo(tgtType, null)) return in;
-        return sugarNonParameterBoxing(res, tgtType);
+        res = sugarNonParameterBoxing(res, tgtType);
+        if (recast) {
+            CastExpression cast = (CastExpression) in;
+            if (cast.getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType) {
+                if (res.getInferredJavaType().getJavaTypeInstance() instanceof JavaRefTypeInstance) {
+                    // hmm - we've stripped this cast.
+                    res = new CastExpression(cast.getInferredJavaType(), res);
+                }
+            }
+        }
+        return res;
     }
 
     public Expression sugarUnboxing(Expression in) {

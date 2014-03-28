@@ -58,7 +58,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         if (initial != null) {
             // It's a big grotty to have creator here, but no worse that pushing it into Assignmentsimple
             if (isCreator) {
-                dumper.print(initial.getCreatedLValue().getInferredJavaType().getJavaTypeInstance().toString() + " ");
+                dumper.dump(initial.getCreatedLValue().getInferredJavaType().getJavaTypeInstance()).print(" ");
             }
             dumper.dump(initial);
             dumper.removePendingCarriageReturn();

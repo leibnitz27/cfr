@@ -328,6 +328,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         AbstractFunctionInvokation funcCall = isSuper ?
                 new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
                 new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
+
+        if (object.getInferredJavaType().getJavaTypeInstance() == RawJavaType.NULL) {
+            JavaTypeInstance type = methodPrototype.getClassType();
+            if (type != null) {
+                object.getInferredJavaType().chain(new InferredJavaType(type, InferredJavaType.Source.FUNCTION));
+            }
+        }
         /*
          * And, while we're at it, does this give us better information about the object?
          * ... But - this guess could be too specific.  If we have an untyped map, eg, this will bind

@@ -276,6 +276,11 @@ public class MethodPrototype implements TypeUsageCollectable {
         return formalTypeParameters != null && !formalTypeParameters.isEmpty();
     }
 
+    public JavaTypeInstance getClassType() {
+        if (classFile == null) return null;
+        return classFile.getClassType();
+    }
+
     public JavaTypeInstance getReturnType(JavaTypeInstance thisTypeInstance, List<Expression> invokingArgs) {
         if (classFile == null) {
             return result;

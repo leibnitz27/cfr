@@ -60,15 +60,18 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
 
     @Override
     public Dumper dumpInner(Dumper d) {
+        JavaTypeInstance castType = getInferredJavaType().getJavaTypeInstance();
         if (child.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN &&
-                !(RawJavaType.BOOLEAN.implicitlyCastsTo(getInferredJavaType().getJavaTypeInstance(), null))) {
+                !(RawJavaType.BOOLEAN.implicitlyCastsTo(castType, null))) {
             // This is ugly.  Unfortunately, it's necessary (currently!) as we don't have an extra pass to
             // transform invalid casts like this.
-            d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
+            d.print("(").dump(castType).print(")");
             child.dumpWithOuterPrecedence(d, getPrecedence());
             d.print(" ? 1 : 0");
+        } else if (castType == RawJavaType.NULL) {
+            child.dumpWithOuterPrecedence(d, getPrecedence());
         } else {
-            d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
+            d.print("(").dump(castType).print(")");
             child.dumpWithOuterPrecedence(d, getPrecedence());
         }
         return d;
@@ -158,12 +161,20 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         return e;
     }
 
-    public static Expression removeImplicitOuterType(Expression e, GenericTypeBinder gtb) {
+    public static Expression removeImplicitOuterType(Expression e, GenericTypeBinder gtb, boolean rawArg) {
         final JavaTypeInstance t = e.getInferredJavaType().getJavaTypeInstance();
         while (e instanceof CastExpression
                 && ((CastExpression) e).couldBeImplicit(gtb)
                 && ((CastExpression) e).couldBeImplicit(t, gtb)) {
-            e = ((CastExpression) e).getChild();
+            Expression newE = ((CastExpression) e).getChild();
+            if (!rawArg) {
+                boolean wasRaw = e.getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType;
+                boolean isRaw = newE.getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType;
+                if (wasRaw && wasRaw != isRaw) {
+                    break;
+                }
+            }
+            e = newE;
         }
         return e;
     }

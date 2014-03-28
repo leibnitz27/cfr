@@ -221,6 +221,10 @@ public enum RawJavaType implements JavaTypeInstance {
 
     @Override
     public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+        if (this == NULL) {
+            TypeConstants.OBJECT.dumpInto(d, typeUsageInformation);
+            return;
+        }
         d.print(toString());
     }
 
