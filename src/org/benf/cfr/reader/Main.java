@@ -76,6 +76,9 @@ public class Main {
             System.out.println(e.toString());
         } catch (RuntimeException e) {
             System.err.println(e.toString());
+            for (Object x : e.getStackTrace()) {
+                System.err.println(x);
+            }
         } finally {
             d.close();
         }

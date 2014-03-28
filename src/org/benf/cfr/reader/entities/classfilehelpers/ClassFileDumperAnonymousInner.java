@@ -33,6 +33,12 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
     }
 
     public Dumper dumpWithArgs(ClassFile classFile, MethodPrototype usedMethod, List<Expression> args, boolean isEnum, Dumper d) {
+
+        if (classFile == null) {
+            d.print("/* Unavailable Anonymous Inner Class!! */");
+            return d;
+        }
+
         if (!d.canEmitClass(classFile.getClassType())) {
             return d;
         }
