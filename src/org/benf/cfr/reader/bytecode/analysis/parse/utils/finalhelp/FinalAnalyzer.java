@@ -68,26 +68,6 @@ public class FinalAnalyzer {
         }
 
         /*
-         * Find all the LEGITIMATE paths out of this finally block.
-         * If there's a direct return and we haven't left the finally block, then we don't need to
-         * worry about a finally etc.
-         *
-         * A JSR counts :(
-         */
-        final Set<Op03SimpleStatement> exitPaths = SetFactory.newOrderedSet();
-        GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(in.getTargets().get(0), new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
-            @Override
-            public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                if (arg1.getBlockIdentifiers().contains(tryBlockIdentifier)) {
-                    arg2.enqueue(arg1.getTargets());
-                } else {
-                    exitPaths.add(arg1);
-                }
-            }
-        });
-        gv.process();
-
-        /*
          * We have to cheat, and assume the 'furthest' throwable on the chain from our exception handlers
          * is the throwable.
          */
