@@ -36,6 +36,7 @@ public class GraphVisitorDFS<T> implements GraphVisitor<T> {
 
     @Override
     public void enqueue(T next) {
+        if (next == null) return;
         // These will be enqueued in the order they should be visited...
         enqueued.add(next);
     }

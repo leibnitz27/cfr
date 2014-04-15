@@ -251,6 +251,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return in;
     }
 
+    public Op03SimpleStatement getLinearlyNext() {
+        return linearlyNext;
+    }
+
     @Override
     public void copyBlockInformationFrom(StatementContainer other) {
         Op03SimpleStatement other3 = (Op03SimpleStatement) other;

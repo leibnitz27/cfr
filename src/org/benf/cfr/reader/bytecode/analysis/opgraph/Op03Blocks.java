@@ -1,10 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.CatchStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
@@ -60,25 +57,9 @@ public class Op03Blocks {
                 ready.remove(next);
             } else {
                 /*
-                 * If any of the children of the last block haven't been emitted, emit the first.
+                 * Take first of others.
                  */
-                /*
-                if (last != null) {
-                    for (Block3 lastChild : last.targets) {
-                        if (allBlocks.contains(lastChild)) {
-                            next = lastChild;
-                            break;
-                        }
-                    }
-                }
-                */
-
-                if (next == null) {
-                    /*
-                     * Take first of others.
-                     */
-                    next = allBlocks.iterator().next();
-                }
+                next = allBlocks.iterator().next();
             }
             last = next;
             // Remove from allblocks so we don't process again.
@@ -189,6 +170,13 @@ public class Op03Blocks {
      */
     private static void applyKnownBlocksHeuristic(final Method method, List<Block3> blocks, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
 
+        /* Find last statement in each block */
+        Map<BlockIdentifier, Block3> lastByBlock = MapFactory.newMap();
+        for (Block3 block : blocks) {
+            for (BlockIdentifier blockIdentifier : block.getStart().getBlockIdentifiers()) {
+                lastByBlock.put(blockIdentifier, block);
+            }
+        }
 
         Block3 linPrev = null;
         for (Block3 block : blocks) {
@@ -231,6 +219,22 @@ public class Op03Blocks {
             }
             if (needLinPrev) {
                 block.addSource(linPrev);
+            } else {
+                Op03SimpleStatement blockStart = block.getStart();
+                Statement statement = blockStart.getStatement();
+                // Should do this for catch as well...
+                if (statement instanceof FinallyStatement) {
+                    for (Block3 source : ListFactory.newList(block.sources)) {
+                        Statement last = source.getEnd().getStatement();
+                        if (last instanceof TryStatement) {
+                            TryStatement tryStatement = (TryStatement) last;
+                            Block3 lastDep = lastByBlock.get(tryStatement.getBlockIdentifier());
+                            if (lastDep != null) {
+                                block.addSource(lastDep);
+                            }
+                        }
+                    }
+                }
             }
             linPrev = block;
         }

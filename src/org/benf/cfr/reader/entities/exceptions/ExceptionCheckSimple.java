@@ -13,6 +13,11 @@ import java.util.Set;
  * Time: 17:27
  */
 public class ExceptionCheckSimple implements ExceptionCheck {
+    public static final ExceptionCheck INSTANCE = new ExceptionCheckSimple();
+
+    private ExceptionCheckSimple() {
+    }
+
     @Override
     public boolean checkAgainst(Set<? extends JavaTypeInstance> thrown) {
         return true;

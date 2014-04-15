@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.SetFactory;
@@ -53,6 +55,13 @@ public class PeerTries {
     private final LinkedList<Op03SimpleStatement> toProcess = ListFactory.newLinkedList();
     private int nextIdx;
 
+    /*
+     * Best guess using reverse information from the catch block.
+     */
+    Set<BlockIdentifier> guessPeerTryBlocks = SetFactory.newSet();
+    Map<BlockIdentifier, Op03SimpleStatement> guessPeerTryMap = MapFactory.newMap();
+    Set<Op03SimpleStatement> guessPeerTryStarts = SetFactory.newSet();
+
     private final Map<CompositeBlockIdentifierKey, PeerTrySet> triesByLevel = MapFactory.newLazyMap(
             new TreeMap<CompositeBlockIdentifierKey, PeerTrySet>(),
             new UnaryFunction<CompositeBlockIdentifierKey, PeerTrySet>() {
@@ -65,10 +74,33 @@ public class PeerTries {
     public PeerTries(FinallyGraphHelper finallyGraphHelper, Op03SimpleStatement possibleFinallyCatch) {
         this.finallyGraphHelper = finallyGraphHelper;
         this.possibleFinallyCatch = possibleFinallyCatch;
+
+        for (Op03SimpleStatement source : possibleFinallyCatch.getSources()) {
+            Statement statement = source.getStatement();
+            if (statement instanceof TryStatement) {
+                TryStatement tryStatement = (TryStatement) statement;
+                BlockIdentifier blockIdentifier = tryStatement.getBlockIdentifier();
+                guessPeerTryBlocks.add(blockIdentifier);
+                guessPeerTryMap.put(blockIdentifier, source);
+                guessPeerTryStarts.add(source);
+            }
+        }
     }
 
     public Op03SimpleStatement getOriginalFinally() {
         return possibleFinallyCatch;
+    }
+
+    public Set<BlockIdentifier> getGuessPeerTryBlocks() {
+        return guessPeerTryBlocks;
+    }
+
+    public Map<BlockIdentifier, Op03SimpleStatement> getGuessPeerTryMap() {
+        return guessPeerTryMap;
+    }
+
+    public Set<Op03SimpleStatement> getGuessPeerTryStarts() {
+        return guessPeerTryStarts;
     }
 
     public void add(Op03SimpleStatement tryStatement) {

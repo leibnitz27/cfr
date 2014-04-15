@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheckSimple;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -241,6 +242,7 @@ public class FinalAnalyzer {
                                 blockIdentifiers.add(tryBlockIdentifier);
                             }
                             arg2.enqueue(arg1.getTargets());
+                            arg2.enqueue(arg1.getLinearlyNext());
                         }
                     }
                 });
@@ -423,16 +425,25 @@ public class FinalAnalyzer {
                             source.replaceStatement(new Nop());
                             source.removeTarget(start);
                         } else if (sourceStatement.getClass() == IfStatement.class) {
-                            /* If which peters out into finally body.
-                             * We need our if to jump /somewhere/, so swap the targets around,
-                             * reverse the condition, and insert a nop just before the old fall through
+                            /*
+                             * Introduce a new nop statement just before the finally body, in the same blocks as
+                             * the if statement.
                              */
-                            IfStatement ifStatement = (IfStatement) sourceStatement;
-                            boolean flip = (ifStatement.getJumpTarget().getContainer() == start);
-                            if (!flip) throw new IllegalStateException("If jumping OVER finally body.");
-
-                            source.replaceTarget(start, endRewrite);
-                            endRewrite.addSource(source);
+                            Op03SimpleStatement tgtNop = new Op03SimpleStatement(source.getBlockIdentifiers(), new Nop(), start.getIndex().justBefore());
+                            source.replaceTarget(start, tgtNop);
+                            tgtNop.addSource(source);
+                            allStatements.add(tgtNop);
+//
+//                            /* If which peters out into finally body.
+//                             * We need our if to jump /somewhere/, so swap the targets around,
+//                             * reverse the condition, and insert a nop just before the old fall through
+//                             */
+//                            IfStatement ifStatement = (IfStatement) sourceStatement;
+//                            boolean flip = (ifStatement.getJumpTarget().getContainer() == start);
+//                            if (!flip) throw new IllegalStateException("If jumping OVER finally body.");
+//
+//                            source.replaceTarget(start, endRewrite);
+//                            endRewrite.addSource(source);
                         } else {
                             /*
                              *
@@ -508,9 +519,22 @@ public class FinalAnalyzer {
                 public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
                     if (arg1.getBlockIdentifiers().contains(topTryIdent)) {
                         arg2.enqueue(arg1.getTargets());
-                    } else {
-                        peerTryExits.add(arg1);
+                        return;
                     }
+                    /*
+                     * Else, if this block cannot throw, and all of its targets are in the block, it's ok.
+                     */
+                    exitTest:
+                    if (!arg1.getTargets().isEmpty() && !arg1.getStatement().canThrow(ExceptionCheckSimple.INSTANCE)) {
+                        for (Op03SimpleStatement tgt : arg1.getTargets()) {
+                            if (!tgt.getBlockIdentifiers().contains(topTryIdent)) break exitTest;
+                        }
+                        arg1.getBlockIdentifiers().add(topTryIdent);
+                        arg2.enqueue(arg1.getTargets());
+                        return;
+                    }
+
+                    peerTryExits.add(arg1);
                 }
             });
             gv2.process();
@@ -608,6 +632,11 @@ public class FinalAnalyzer {
             public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
                 if (arg1.getBlockIdentifiers().contains(tryBlockIdentifier)) {
                     arg2.enqueue(arg1.getTargets());
+                    // This seems like an awful hack, but allows us to handle try blocks which jump between each other
+                    Op03SimpleStatement linNext = arg1.getLinearlyNext();
+                    if (linNext != null) {
+                        if (linNext.getBlockIdentifiers().contains(tryBlockIdentifier)) arg2.enqueue(linNext);
+                    }
                 } else {
                     exitPaths.add(arg1);
                 }
@@ -618,23 +647,80 @@ public class FinalAnalyzer {
         /*
          * See if this block jumps into any peerTries, in which case we add them to peerTries.
          */
-        filterPeerTries(exitPaths, peerTries); // , possibleCatches);
+        addPeerTries(exitPaths, peerTries); // , possibleCatches);
 
         /*
          * Regardless of mechanism, we have a possible body for the finally.
          * Now, we need to recursively validate every catch body that this try block has, and make sure that
          * every way out of it ends up in an identical block.
          */
+        Set<BlockIdentifier> guessPeerTryBlocks = peerTries.getGuessPeerTryBlocks();
+        Set<Op03SimpleStatement> guessPeerTryStarts = peerTries.getGuessPeerTryStarts();
+
         for (Op03SimpleStatement legitExitStart : exitPaths) {
             Result legitExitResult = finallyGraphHelper.match(legitExitStart);
             if (legitExitResult.isFail()) {
+                /*
+                 * There's one reason we could fail, which is if we have a conditional jump to alternate
+                 * peer tries at this point.  If that's the case, then we can allow this exit, and it should
+                 * be added to the try body.  Unfortunately, we don't know the peer tries at this point ;)
+                 * But we can use the sources of possibleFinallyCatch as a proxy.
+                 */
+
+                /* If we've jumped directly into the middle of a peer try....
+                 *
+                 */
+                Set<BlockIdentifier> exitBlocks = legitExitStart.getBlockIdentifiers();
+                /*
+                 * If this set contains a DIFFERENT peer try, it's an ok jump.
+                 */
+                Set<BlockIdentifier> exitStartPeerBlocks = SetUtil.intersectionOrNull(guessPeerTryBlocks, exitBlocks);
+                if (exitStartPeerBlocks != null && exitStartPeerBlocks.size() == 1) {
+                    // Should we add this try block to results?
+                    Map<BlockIdentifier, Op03SimpleStatement> guessPeerTryMap = peerTries.getGuessPeerTryMap();
+                    Op03SimpleStatement tryStart = guessPeerTryMap.get(exitStartPeerBlocks.iterator().next());
+                    if (tryStart != null) {
+                        peerTries.add(tryStart);
+                        continue;
+                    }
+                }
+
+                boolean ok = false;
+                boolean allowDirect = !legitExitStart.getStatement().canThrow(ExceptionCheckSimple.INSTANCE);
+                Set<Op03SimpleStatement> addPeerTries = SetFactory.newSet();
+                if (allowDirect) {
+                    ok = true;
+                    for (Op03SimpleStatement target : legitExitStart.getTargets()) {
+                        if (guessPeerTryStarts.contains(target)) {
+                            addPeerTries.add(target);
+                            continue;
+                        }
+                        exitStartPeerBlocks = SetUtil.intersectionOrNull(guessPeerTryBlocks, target.getBlockIdentifiers());
+                        if (exitStartPeerBlocks != null && exitStartPeerBlocks.size() == 1) {
+                            // Should we add this try block to results?
+                            Map<BlockIdentifier, Op03SimpleStatement> guessPeerTryMap = peerTries.getGuessPeerTryMap();
+                            Op03SimpleStatement tryStart = guessPeerTryMap.get(exitStartPeerBlocks.iterator().next());
+                            if (tryStart != null) {
+                                peerTries.add(tryStart);
+                                continue;
+                            }
+                        }
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok) {
+                    for (Op03SimpleStatement addPeerTry : addPeerTries) {
+                        peerTries.add(addPeerTry);
+                    }
+                    continue;
+                }
                 return result;
             }
             results.add(legitExitResult);
         }
 
         List<Op03SimpleStatement> tryTargets = in.getTargets();
-        Set<Op03SimpleStatement> seen = SetFactory.newOrderedSet();
         for (int x = 1, len = tryTargets.size(); x < len; ++x) {
             Op03SimpleStatement tryCatch = tryTargets.get(x);
             if (!verifyCatchFinally(tryCatch, finallyGraphHelper, peerTries, results)) {
@@ -651,7 +737,7 @@ public class FinalAnalyzer {
         return true;
     }
 
-    private static void filterPeerTries(Collection<Op03SimpleStatement> possibleFinally, PeerTries peerTries) { // , Set<Op03SimpleStatement> possibleCatches) {
+    private static void addPeerTries(Collection<Op03SimpleStatement> possibleFinally, PeerTries peerTries) { // , Set<Op03SimpleStatement> possibleCatches) {
         Set<Op03SimpleStatement> res = SetFactory.newOrderedSet();
         for (Op03SimpleStatement possible : possibleFinally) {
             if (possible.getStatement() instanceof TryStatement) {
@@ -783,7 +869,7 @@ public class FinalAnalyzer {
          * as the ORIGINAL outer try, we expect them to have a Result after them.
          */
         List<Op03SimpleStatement> tryStatements = Functional.filter(statementsInCatch, new Op03SimpleStatement.TypeFilter<TryStatement>(TryStatement.class));
-        filterPeerTries(tryStatements, peerTries);
+        addPeerTries(tryStatements, peerTries);
 
         List<Result> matchedFinallyClones = ListFactory.newList();
         /*

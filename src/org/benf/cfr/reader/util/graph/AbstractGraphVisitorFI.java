@@ -30,6 +30,7 @@ public abstract class AbstractGraphVisitorFI<T> implements GraphVisitor<T> {
     protected abstract void internalAdd(T next);
 
     private void add(T next) {
+        if (next == null) return;
         if (!visited.contains(next)) {
             toVisit.add(next);
             visited.add(next);
