@@ -89,6 +89,14 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
         rValue.collectUsedLValues(lValueUsageCollector);
     }
 
+    public LValue getlValue() {
+        return lValue;
+    }
+
+    public Expression getrValue() {
+        return rValue;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

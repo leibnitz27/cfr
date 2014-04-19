@@ -101,7 +101,13 @@ public class SSAIdentifiers<KEYTYPE> {
         SSAIdent otherVersion = other.knownIdentifiers.get(lValue);
         if (thisVersion == null && otherVersion == null) return true;
         if (thisVersion == null || otherVersion == null) return false;
-        return thisVersion.equals(otherVersion);
+        boolean res = thisVersion.equals(otherVersion);
+        if (res) return true;
+        /*
+         * Last chance, is otherVersion a subset of thisVersion.
+         */
+        if (thisVersion.isSuperSet(otherVersion)) return true;
+        return false;
     }
 
     public SSAIdent getSSAIdent(KEYTYPE lValue) {

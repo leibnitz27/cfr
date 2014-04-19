@@ -5,10 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArrayIndex;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
@@ -87,6 +84,20 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
 
     Map<Expression, Expression> cache = MapFactory.newMap();
 
+    Set<LValue> findAssignees(Statement s) {
+        if (!(s instanceof AssignmentSimple)) return null;
+        AssignmentSimple assignmentSimple = (AssignmentSimple) s;
+        Set<LValue> res = SetFactory.newSet();
+        res.add(assignmentSimple.getCreatedLValue());
+        Expression rvalue = assignmentSimple.getRValue();
+        while (rvalue instanceof AssignmentExpression) {
+            AssignmentExpression assignmentExpression = (AssignmentExpression) rvalue;
+            res.add(assignmentExpression.getlValue());
+            rvalue = assignmentExpression.getrValue();
+        }
+        return res;
+    }
+
     public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> lvSc) {
         if (!(lValue instanceof StackSSALabel)) return null;
 
@@ -102,30 +113,60 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         // This is only valid if res has a single possible value in ssaIdentifiers, and it's the same as in replacementIdentifiers.
         Expression res = pair.expression;
         Expression prev = null;
-        if (res instanceof LValueExpression && replacementIdentifiers != null) {
-            LValue resLValue = ((LValueExpression) res).getLValue();
-            replaceTest:
-            if (!ssaIdentifiers.isValidReplacement(resLValue, replacementIdentifiers)) {
-                /* Second chance - self assignment
-                 */
-                Statement lvStm = lvSc.getStatement();
-                if (lvStm instanceof AssignmentSimple) {
-                    if (lvStm.getCreatedLValue().equals(resLValue)) {
-                        Op03SimpleStatement lv03 = (Op03SimpleStatement) lvSc;
-                        for (Op03SimpleStatement source : lv03.getSources()) {
-                            if (!source.getSSAIdentifiers().isValidReplacement(resLValue, replacementIdentifiers)) {
-                                return null;
+
+        if (replacementIdentifiers != null) {
+            LValueUsageCollectorSimple lvc = new LValueUsageCollectorSimple();
+            res.collectUsedLValues(lvc);
+
+            for (LValue resLValue : lvc.getUsedLValues()) {
+                replaceTest:
+                if (!ssaIdentifiers.isValidReplacement(resLValue, replacementIdentifiers)) {
+                    /* Second chance - self assignment in the source.
+                    */
+                    Set<LValue> assignees = findAssignees(lvSc.getStatement());
+                    if (assignees != null) {
+                        if (assignees.contains(resLValue)) {
+                            Op03SimpleStatement lv03 = (Op03SimpleStatement) lvSc;
+                            for (Op03SimpleStatement source : lv03.getSources()) {
+                                if (!source.getSSAIdentifiers().isValidReplacement(resLValue, replacementIdentifiers)) {
+                                    return null;
+                                }
                             }
-                        }
                         /*
                          * Ok, we can get away with it.
                          */
-                        break replaceTest;
+                            break replaceTest;
+                        }
                     }
+                    return null;
                 }
-                return null;
             }
         }
+
+//        if (res instanceof LValueExpression && replacementIdentifiers != null) {
+//            LValue resLValue = ((LValueExpression) res).getLValue();
+//            replaceTest:
+//            if (!ssaIdentifiers.isValidReplacement(resLValue, replacementIdentifiers)) {
+//                /* Second chance - self assignment
+//                 */
+//                Statement lvStm = lvSc.getStatement();
+//                if (lvStm instanceof AssignmentSimple) {
+//                    if (lvStm.getCreatedLValue().equals(resLValue)) {
+//                        Op03SimpleStatement lv03 = (Op03SimpleStatement) lvSc;
+//                        for (Op03SimpleStatement source : lv03.getSources()) {
+//                            if (!source.getSSAIdentifiers().isValidReplacement(resLValue, replacementIdentifiers)) {
+//                                return null;
+//                            }
+//                        }
+//                        /*
+//                         * Ok, we can get away with it.
+//                         */
+//                        break replaceTest;
+//                    }
+//                }
+//                return null;
+//            }
+//        }
         if (statementContainer != null) {
             lvSc.copyBlockInformationFrom(statementContainer);
             statementContainer.nopOut();
