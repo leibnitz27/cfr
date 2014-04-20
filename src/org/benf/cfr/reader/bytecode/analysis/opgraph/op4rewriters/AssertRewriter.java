@@ -187,6 +187,14 @@ public class AssertRewriter {
                                 ),
                                 new EndBlock(wcm1.getBlockWildcard("condBlock")),
                                 new CollectMatch("ass2throw", new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception2", TypeConstants.ASSERTION_ERROR)))
+                        )),
+                        new CollectMatch("assonly", new MatchSequence(
+                                new StructuredIf(
+                                        new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))), null
+                                ),
+                                new BeginBlock(null),
+                                new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
+                                new EndBlock(null)
                         ))
                 )
         );
@@ -249,6 +257,10 @@ public class AssertRewriter {
                 ass2throw.getContainer().replaceContainedStatement(ifStatement.getIfTaken().getStatement());
             } else if (name.equals("ass2throw")) {
                 ass2throw = statement;
+            } else if (name.equals("assonly")) {
+                StructuredIf ifStatement = (StructuredIf) statement;
+                StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(new BooleanExpression(Literal.FALSE)));
+                ifStatement.getContainer().replaceContainedStatement(structuredAssert);
             }
         }
     }
