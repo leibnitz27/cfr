@@ -1,12 +1,12 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util;
 
-import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.annotation.Nullable;
 
 import java.util.List;
 
@@ -35,8 +35,7 @@ public class MiscStatementTools {
         return true;
     }
 
-    public static
-    @Nullable
+    public static @Nullable
     List<StructuredStatement> linearise(Op04StructuredStatement root) {
         List<StructuredStatement> structuredStatements = ListFactory.newList();
         try {

@@ -1,13 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
-import com.sun.tools.hat.internal.util.Misc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.entities.AccessFlag;
@@ -15,7 +12,6 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.Predicate;
 
 import java.util.Iterator;

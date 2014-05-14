@@ -4,7 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByt
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Created by IntelliJ IDEA.

@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode;
 
-import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.functors.UnaryFunction;

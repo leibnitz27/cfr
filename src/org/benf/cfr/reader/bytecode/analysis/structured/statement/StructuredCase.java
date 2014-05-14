@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
-import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
@@ -19,6 +18,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.S
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.annotation.Nullable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;

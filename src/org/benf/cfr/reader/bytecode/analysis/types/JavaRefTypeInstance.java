@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
-import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -9,6 +8,7 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.annotation.Nullable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 

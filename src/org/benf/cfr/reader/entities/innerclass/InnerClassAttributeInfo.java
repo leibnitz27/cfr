@@ -1,8 +1,8 @@
 package org.benf.cfr.reader.entities.innerclass;
 
-import com.sun.istack.internal.Nullable;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
+import org.benf.cfr.reader.util.annotation.Nullable;
 
 import java.util.Set;
 

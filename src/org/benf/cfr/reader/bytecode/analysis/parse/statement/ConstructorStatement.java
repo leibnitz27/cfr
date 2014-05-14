@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
-import com.sun.tools.hat.internal.util.Misc;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -8,7 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
