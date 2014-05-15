@@ -16,12 +16,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 17/09/2012
- * Time: 06:43
- */
 public class StackVarToLocalRewriter implements ExpressionRewriter {
 
     private final Map<StackSSALabel, LocalVariable> replacements = MapFactory.newMap();

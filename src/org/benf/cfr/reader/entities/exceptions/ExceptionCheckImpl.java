@@ -15,12 +15,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 05/12/2013
- * Time: 11:02
- */
 public class ExceptionCheckImpl implements ExceptionCheck {
     private final Set<JavaRefTypeInstance> caughtChecked = SetFactory.newSet();
     private final Set<JavaRefTypeInstance> caughtUnchecked = SetFactory.newSet();

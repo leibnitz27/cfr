@@ -6,18 +6,15 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 18:08
- * To change this template use File | Settings | File Templates.
- */
 public class JSRCallStatement extends AbstractStatement {
 
     public JSRCallStatement() {
     }
 
+    /*
+     * Obviously, we don't want to be emitting this in any language - these should have been transformed away before
+     * the final output.
+     */
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print("CALL " + getTargetStatement(0).getContainer().getLabel() + ";\n");

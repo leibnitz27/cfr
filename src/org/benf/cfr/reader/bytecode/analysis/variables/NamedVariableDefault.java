@@ -2,12 +2,6 @@ package org.benf.cfr.reader.bytecode.analysis.variables;
 
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 21/08/2013
- * Time: 18:23
- */
 public class NamedVariableDefault implements NamedVariable {
     private String name;
     private boolean isGoodName = false;

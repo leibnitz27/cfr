@@ -14,12 +14,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 28/05/2013
- * Time: 08:57
- */
 public class IllegalGenericRewriter implements ExpressionRewriter {
     private final ConstantPool cp;
 

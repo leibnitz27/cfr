@@ -2,13 +2,6 @@ package org.benf.cfr.reader.bytecode.analysis.stack;
 
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 09/03/2012
- * Time: 18:30
- * To change this template use File | Settings | File Templates.
- */
 public class StackEntryHolder {
     private StackEntry stackEntry;
 

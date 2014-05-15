@@ -16,11 +16,6 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 26/11/2013
- * Time: 20:44
- * <p/>
  * This is NOT an lvalue, however the definition of a local class follows the same scoping rules
  */
 public class SentinelLocalClassLValue extends AbstractLValue {

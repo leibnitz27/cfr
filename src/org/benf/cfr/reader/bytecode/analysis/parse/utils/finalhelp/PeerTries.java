@@ -12,11 +12,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import java.util.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/08/2013
- * Time: 06:01
- * <p/>
  * These are the tries we've identified as being connected via a finally.
  * <p/>
  * So

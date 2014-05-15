@@ -16,12 +16,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 17/04/2013
- * Time: 06:53
- */
 public class StructuredStatementExpression extends AbstractExpression {
 
     private StructuredStatement content;

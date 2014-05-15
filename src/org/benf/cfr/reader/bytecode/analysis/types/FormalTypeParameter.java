@@ -5,12 +5,6 @@ import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 15/08/2012
- * Time: 06:16
- */
 public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
     String name;
     JavaTypeInstance classBound;

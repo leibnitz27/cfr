@@ -8,11 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 17/04/2011
- */
 public enum AccessFlagMethod {
     ACC_PUBLIC("public"),
     ACC_PRIVATE("private"),

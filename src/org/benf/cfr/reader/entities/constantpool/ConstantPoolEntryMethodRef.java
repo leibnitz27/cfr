@@ -13,16 +13,9 @@ import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 20:37
- * To change this template use File | Settings | File Templates.
- */
 public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
-    private final long OFFSET_OF_CLASS_INDEX = 1;
-    private final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
+    private static final long OFFSET_OF_CLASS_INDEX = 1;
+    private static final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
     private final boolean interfaceMethod;
     private static final VariableNamer fakeNamer = new VariableNamerDefault();
     private MethodPrototype methodPrototype = null;

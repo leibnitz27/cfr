@@ -12,11 +12,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class UnstructuredFinally extends AbstractUnStructuredStatement {
     private final BlockIdentifier blockIdentifier;
 

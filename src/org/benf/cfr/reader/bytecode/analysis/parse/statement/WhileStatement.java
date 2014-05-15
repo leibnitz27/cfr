@@ -11,13 +11,6 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWh
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 18:05
- * To change this template use File | Settings | File Templates.
- */
 public class WhileStatement extends AbstractStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;

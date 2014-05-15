@@ -5,12 +5,6 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/07/2012
- * Time: 08:01
- */
 public class JavaArrayTypeInstance implements JavaTypeInstance {
     private final int dimensions;
     private final JavaTypeInstance underlyingType;

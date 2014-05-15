@@ -4,12 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 28/01/2013
- * Time: 17:34
- */
 public class MatchIterator<T> {
     private final List<T> data;
     private int idx;

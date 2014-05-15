@@ -3,12 +3,6 @@ package org.benf.cfr.reader.util;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/09/2013
- * Time: 18:31
- */
 public class DecompilerComment implements Dumpable {
 
     public static DecompilerComment UNABLE_TO_STRUCTURE = new DecompilerComment("Unable to fully structure code", true);

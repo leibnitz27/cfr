@@ -10,11 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 05/04/2012
- */
 public class DecodedTableSwitch implements DecodedSwitch {
     private static final int OFFSET_OF_DEFAULT = 0;
     private static final int OFFSET_OF_LOWBYTE = 4;

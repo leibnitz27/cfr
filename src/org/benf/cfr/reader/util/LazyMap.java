@@ -6,12 +6,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 23/06/2012
- * Time: 10:32
- */
 public class LazyMap<X, Y> implements Map<X, Y> {
     private final Map<X, Y> inner;
     private final UnaryFunction<X, Y> factory;

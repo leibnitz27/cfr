@@ -14,12 +14,6 @@ import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/07/2012
- * Time: 08:01
- */
 public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, ComparableUnderEC {
     private static final WildcardConstraint WILDCARD_CONSTRAINT = new WildcardConstraint();
 

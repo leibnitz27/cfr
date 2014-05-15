@@ -19,12 +19,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/04/2013
- * Time: 23:47
- * <p/>
- * <p/>
  * Needs some work here to unify LambdaExpression and LambdaExpressionFallback.
  */
 public class LambdaExpressionFallback extends AbstractExpression {

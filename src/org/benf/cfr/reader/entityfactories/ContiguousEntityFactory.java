@@ -9,13 +9,6 @@ import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/04/2011
- * Time: 15:00
- * To change this template use File | Settings | File Templates.
- */
 public class ContiguousEntityFactory {
 
     public static<X extends KnowsRawSize> long build(final ByteData raw, short count, List<X> tgt, UnaryFunction<ByteData, X> func)

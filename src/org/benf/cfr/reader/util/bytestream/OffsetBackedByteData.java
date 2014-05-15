@@ -3,13 +3,6 @@ package org.benf.cfr.reader.util.bytestream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 19:25
- * To change this template use File | Settings | File Templates.
- */
 public class OffsetBackedByteData extends AbstractBackedByteData {
     final int offset;
     final byte[] data;

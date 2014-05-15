@@ -1,14 +1,5 @@
 package org.benf.cfr.reader.util.bytestream;
 
-import org.benf.cfr.reader.util.ConfusedCFRException;
-
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 18:28
- * To change this template use File | Settings | File Templates.
- */
 public interface ByteData {
     byte getS1At(long offset);
 

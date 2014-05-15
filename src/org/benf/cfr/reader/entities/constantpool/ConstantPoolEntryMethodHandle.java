@@ -5,13 +5,6 @@ import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 20:38
- * To change this template use File | Settings | File Templates.
- */
 public class ConstantPoolEntryMethodHandle extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_REFERENCE_KIND = 1;
     private static final long OFFSET_OF_REFERENCE_INDEX = 2;

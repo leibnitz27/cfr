@@ -1,18 +1,11 @@
 package org.benf.cfr.reader.util;
 
-import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/09/2013
- * Time: 18:30
- */
 public class DecompilerComments implements Dumpable {
     List<DecompilerComment> commentList = ListFactory.newList();
 

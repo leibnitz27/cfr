@@ -4,12 +4,6 @@ import org.benf.cfr.reader.util.*;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 01/02/2013
- * Time: 16:29
- */
 public class OptionsImpl implements Options {
     private final String fileName;    // Ugly because we confuse parameters and state.
     private final String methodName;  // Ugly because we confuse parameters and state.

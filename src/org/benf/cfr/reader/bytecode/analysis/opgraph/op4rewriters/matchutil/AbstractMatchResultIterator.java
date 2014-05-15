@@ -3,12 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 30/08/2013
- * Time: 08:15
- */
 public class AbstractMatchResultIterator implements MatchResultCollector {
     @Override
     public void clear() {

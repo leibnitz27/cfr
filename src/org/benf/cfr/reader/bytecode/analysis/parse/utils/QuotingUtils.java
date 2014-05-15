@@ -1,11 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 16/12/2013
- * Time: 22:48
- */
 public class QuotingUtils {
     public static String enquoteString(String s) {
         char[] raw = s.toCharArray();

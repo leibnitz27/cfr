@@ -15,11 +15,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import java.util.List;
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 14/05/2012
- */
 public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Matcher<StructuredStatement> {
 
     Op04StructuredStatement getContainer();

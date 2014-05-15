@@ -11,10 +11,6 @@ import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * <p/>
  * This is a temporary statement - it should be replaced with an Assignment of a ConstructorInvokation
  * However, it can force the type of the constructed object, which NEW is not capable of doing....
  */

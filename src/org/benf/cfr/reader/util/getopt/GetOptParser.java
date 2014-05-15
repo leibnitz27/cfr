@@ -8,12 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 01/02/2013
- * Time: 16:27
- */
 public class GetOptParser {
 
     private static class OptData {

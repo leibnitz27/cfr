@@ -7,12 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 10/07/2013
- * Time: 17:41
- */
 public interface BoxingProcessor {
     // return true if boxing finished.
     boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter);

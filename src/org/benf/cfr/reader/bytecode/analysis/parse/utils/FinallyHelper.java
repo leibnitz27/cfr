@@ -11,12 +11,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 05/08/2013
- * Time: 06:36
- */
 public class FinallyHelper {
     private final Op03SimpleStatement finallyStart;
     private final List<Op03SimpleStatement> inFinallyBlock;

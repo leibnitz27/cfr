@@ -18,11 +18,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/03/2012
- */
 public interface Expression extends DumpableWithPrecedence, DeepCloneable<Expression>, ComparableUnderEC, TypeUsageCollectable {
     // Can /PROBABLY/ replace LValueRewriter with expression rewriter.
     Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);

@@ -9,11 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created:
- * User: lee
- * Date: 01/05/2012
- */
 public class BlockIdentifier implements Comparable<BlockIdentifier> {
     private final int index;
     private BlockType blockType;

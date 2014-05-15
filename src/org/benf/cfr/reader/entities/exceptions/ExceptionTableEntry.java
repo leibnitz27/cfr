@@ -7,13 +7,6 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 30/03/2012
- * Time: 06:32
- * To change this template use File | Settings | File Templates.
- */
 public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
     private static final int OFFSET_INDEX_FROM = 0;
     private static final int OFFSET_INDEX_TO = 2;

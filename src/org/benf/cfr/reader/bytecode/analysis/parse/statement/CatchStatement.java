@@ -16,13 +16,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 18:08
- * To change this template use File | Settings | File Templates.
- */
 public class CatchStatement extends AbstractStatement {
     private final List<ExceptionGroup.Entry> exceptions;
     private BlockIdentifier catchBlockIdent;

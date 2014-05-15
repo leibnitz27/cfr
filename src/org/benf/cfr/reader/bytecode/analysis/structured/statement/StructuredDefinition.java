@@ -19,12 +19,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-
-/**
- * Created:
- * User: lee
- * Date: 14/05/2012
- */
 public class StructuredDefinition extends AbstractStructuredStatement {
 
     private LValue scopedEntity;

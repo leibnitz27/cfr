@@ -11,12 +11,6 @@ import org.benf.cfr.reader.util.SetFactory;
 import java.util.LinkedList;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 07/08/2013
- * Time: 05:54
- */
 public class StructuredScope {
 
     private final LinkedList<AtLevel> scope = ListFactory.newLinkedList();

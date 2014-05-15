@@ -11,11 +11,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class StructuredContinue extends AbstractStructuredContinue {
 
     private final BlockIdentifier continueTgt;

@@ -9,13 +9,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 13/03/2012
- * Time: 06:10
- * To change this template use File | Settings | File Templates.
- */
 public abstract class AbstractGraphVisitorFI<T> implements GraphVisitor<T> {
     protected final LinkedList<T> toVisit = ListFactory.newLinkedList();
     private final Set<T> visited = SetFactory.newSet();

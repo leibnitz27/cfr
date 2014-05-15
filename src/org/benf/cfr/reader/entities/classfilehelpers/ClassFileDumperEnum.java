@@ -18,11 +18,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 09/05/2013
- * Time: 05:50
- * <p/>
  * This isn't static - we populate it from the decoded enum information.
  */
 public class ClassFileDumperEnum extends AbstractClassFileDumper {

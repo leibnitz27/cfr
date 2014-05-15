@@ -21,13 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 21:50
- * To change this template use File | Settings | File Templates.
- */
 
 /*
  * Too much in common with method - refactor.

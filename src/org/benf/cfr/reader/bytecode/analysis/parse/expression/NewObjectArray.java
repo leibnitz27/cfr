@@ -16,12 +16,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 17:44
- */
 public class NewObjectArray extends AbstractNewArray {
     private List<Expression> dimSizes;
     private final JavaTypeInstance allocatedType;

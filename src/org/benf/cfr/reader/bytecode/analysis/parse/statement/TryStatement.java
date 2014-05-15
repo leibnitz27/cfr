@@ -12,13 +12,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 18:08
- * To change this template use File | Settings | File Templates.
- */
 public class TryStatement extends AbstractStatement {
     private final ExceptionGroup exceptionGroup;
     // This is a hack. :(

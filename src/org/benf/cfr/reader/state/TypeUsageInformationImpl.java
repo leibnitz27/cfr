@@ -9,12 +9,6 @@ import org.benf.cfr.reader.util.output.CommaHelp;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 06/11/2013
- * Time: 08:04
- */
 public class TypeUsageInformationImpl implements TypeUsageInformation {
 
     private final JavaRefTypeInstance analysisType;

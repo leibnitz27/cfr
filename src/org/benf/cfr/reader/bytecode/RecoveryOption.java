@@ -8,12 +8,6 @@ import org.benf.cfr.reader.util.getopt.PermittedOptionProvider;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 15/01/2014
- * Time: 16:48
- */
 public abstract class RecoveryOption<T> {
 
     protected final UnaryFunction<BytecodeMeta, Boolean> canhelp;

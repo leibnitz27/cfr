@@ -4,12 +4,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 08/02/2013
- * Time: 05:55
- */
 public class LazyExceptionRetainingMap<X, Y> extends LazyMap<X, Y> {
     private final Map<X, RuntimeException> exceptionMap = MapFactory.newMap();
 

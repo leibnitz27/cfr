@@ -17,11 +17,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/07/2012
- */
 public class BooleanExpression extends AbstractExpression implements ConditionalExpression {
     private Expression inner;
 

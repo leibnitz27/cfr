@@ -6,11 +6,6 @@ import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.Map;
 
-/**
- * Created:
- * User: lee
- * Date: 24/04/2012
- */
 public class SSAIdentifiers<KEYTYPE> {
 
     private final KEYTYPE fixedHere;

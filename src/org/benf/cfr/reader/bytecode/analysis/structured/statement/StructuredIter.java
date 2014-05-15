@@ -17,11 +17,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class StructuredIter extends AbstractStructuredBlockStatement {
     private final BlockIdentifier block;
     private LValue iterator;

@@ -12,11 +12,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class UnstructuredCase extends AbstractUnStructuredStatement {
     private final List<Expression> values;
     private final BlockIdentifier blockIdentifier;

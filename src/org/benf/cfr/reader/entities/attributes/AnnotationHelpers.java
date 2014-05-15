@@ -17,12 +17,6 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 22/03/2013
- * Time: 06:43
- */
 public class AnnotationHelpers {
 
     public static Pair<Long, AnnotationTableEntry> getAnnotation(ByteData raw, long offset, ConstantPool cp) {

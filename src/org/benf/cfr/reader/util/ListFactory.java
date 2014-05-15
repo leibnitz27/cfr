@@ -2,13 +2,6 @@ package org.benf.cfr.reader.util;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 09/03/2012
- * Time: 17:51
- * To change this template use File | Settings | File Templates.
- */
 public class ListFactory {
     public static <X extends Object> List<X> newList() {
         return new ArrayList<X>();

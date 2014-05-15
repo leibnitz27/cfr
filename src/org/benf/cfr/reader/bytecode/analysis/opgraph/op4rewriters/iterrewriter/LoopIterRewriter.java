@@ -21,12 +21,6 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 07/02/2013
- * Time: 05:49
- */
 public class LoopIterRewriter implements Op04Rewriter {
     private final Options options;
     private final ClassFileVersion classFileVersion;

@@ -21,11 +21,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class StructuredCatch extends AbstractStructuredStatement {
     private final List<JavaRefTypeInstance> catchTypes;
     private final Op04StructuredStatement catchBlock;

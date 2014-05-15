@@ -13,11 +13,6 @@ import org.benf.cfr.reader.util.output.ToStringDumper;
 import java.util.List;
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public abstract class AbstractStructuredStatement implements StructuredStatement {
     Op04StructuredStatement container;
 

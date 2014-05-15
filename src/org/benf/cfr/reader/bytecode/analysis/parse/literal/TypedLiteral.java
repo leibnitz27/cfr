@@ -14,13 +14,6 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 28/03/2012
- * Time: 05:42
- * To change this template use File | Settings | File Templates.
- */
 public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     public enum LiteralType {

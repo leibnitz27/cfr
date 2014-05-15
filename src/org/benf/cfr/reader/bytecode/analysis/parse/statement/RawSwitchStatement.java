@@ -12,11 +12,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 18:08
- * <p/>
  * A 'raw' switch contains the original bytecode information about the switch.  We split this up into
  * SwitchStatements and CaseStatements.  Case statements are really no more than glorified comments,
  * as they perform no function other than to serve as labels.  However, we can embed useful information in

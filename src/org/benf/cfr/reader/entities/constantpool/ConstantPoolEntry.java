@@ -3,13 +3,6 @@ package org.benf.cfr.reader.entities.constantpool;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 19:17
- * To change this template use File | Settings | File Templates.
- */
 public interface ConstantPoolEntry {
 
     long getRawByteLength();

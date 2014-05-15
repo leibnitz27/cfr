@@ -24,10 +24,6 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created:
- * User: lee
- * Date: 14/05/2012
- * <p/>
  * TODO : Block implements way more functionality than it should - move into callers.
  */
 public class Block extends AbstractStructuredStatement {

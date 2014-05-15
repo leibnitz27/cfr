@@ -5,12 +5,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 18/06/2013
- * Time: 06:15
- */
 public class IntervalOverlapper {
 
 

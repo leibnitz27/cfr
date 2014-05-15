@@ -17,12 +17,6 @@ import org.benf.cfr.reader.entities.Field;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 28/03/2013
- * Time: 17:56
- */
 public class InnerClassConstructorRewriter implements Op04Rewriter {
     private final ClassFile classFile;
     private final LocalVariable outerArg;

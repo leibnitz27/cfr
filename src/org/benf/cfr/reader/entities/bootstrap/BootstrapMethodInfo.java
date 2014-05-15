@@ -5,12 +5,6 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodHandle;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 12/04/2013
- * Time: 18:58
- */
 public class BootstrapMethodInfo {
     /*
      * 4.4.8 jvm spec.

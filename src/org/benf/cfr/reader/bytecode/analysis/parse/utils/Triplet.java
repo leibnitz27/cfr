@@ -1,10 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 04/04/2012
- */
 public class Triplet<X, Y, Z> {
     private final X x;
     private final Y y;

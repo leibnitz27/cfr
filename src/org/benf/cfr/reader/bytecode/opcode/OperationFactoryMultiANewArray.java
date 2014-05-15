@@ -15,13 +15,6 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 21/04/2011
- * Time: 08:10
- * To change this template use File | Settings | File Templates.
- */
 public class OperationFactoryMultiANewArray extends OperationFactoryDefault {
     private static final int LENGTH_OF_DATA = 3;
     public static final int OFFSET_OF_DIMS = 2;

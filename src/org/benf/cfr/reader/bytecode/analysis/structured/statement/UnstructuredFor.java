@@ -11,11 +11,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class UnstructuredFor extends AbstractUnStructuredStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;

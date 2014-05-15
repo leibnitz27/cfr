@@ -9,12 +9,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollect
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 27/02/2014
- * Time: 17:23
- */
 public interface LValueScopeDiscoverer extends LValueUsageCollector, LValueAssignmentCollector<StructuredStatement> {
     void enterBlock(StructuredStatement structuredStatement);
 

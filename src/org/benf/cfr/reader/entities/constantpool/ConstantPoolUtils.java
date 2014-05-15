@@ -15,13 +15,6 @@ import org.benf.cfr.reader.util.output.LoggerFactory;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 17:09
- * To change this template use File | Settings | File Templates.
- */
 public class ConstantPoolUtils {
 
     private static final Logger logger = LoggerFactory.create(ConstantPoolUtils.class);

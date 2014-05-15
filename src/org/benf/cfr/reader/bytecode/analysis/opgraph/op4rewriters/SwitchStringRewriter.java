@@ -25,58 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 24/01/2013
- * Time: 06:17
- */
-/*
-    unnamed_local_s_2 = s;
-    unnamed_local_s_3 = -1;
-    switch (unnamed_local_s_2.hashCode()) {
-        case 2166379: {
-            if (!(unnamed_local_s_2.equals("FRED"))) break;
-            unnamed_local_s_3 = 1;
-            break;
-        }
-        case 73454: {
-            if (!(unnamed_local_s_2.equals("JIM"))) break;
-            unnamed_local_s_3 = 2;
-            break;
-        }
-        case 2112: {
-            if (unnamed_local_s_2.equals("Aa")) {
-                unnamed_local_s_3 = 4;
-                break;
-            }
-            if (!(unnamed_local_s_2.equals("BB"))) break;
-            unnamed_local_s_3 = 3;
-        }
-    }
-    switch (unnamed_local_s_3) {
-        default: {
-            System.out.println("Test");
-            break;
-        }
-        case 1: {
-            return 1;
-        }
-        case 2: {
-            return 2;
-        }
-        case 3: {
-            return 12;
-        }
-        case 4: {
-            return 13;
-        }
-    }
-    System.out.println("Here");
-    return 0;
-}
-
- */
 public class SwitchStringRewriter implements Op04Rewriter {
     private final Options options;
     private final ClassFileVersion classFileVersion;

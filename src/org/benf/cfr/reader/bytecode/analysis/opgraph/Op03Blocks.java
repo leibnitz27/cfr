@@ -17,12 +17,6 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 04/10/2013
- * Time: 06:39
- */
 public class Op03Blocks {
 
     private static List<Block3> doTopSort(List<Block3> in) {

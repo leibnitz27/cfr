@@ -20,13 +20,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 18:08
- * To change this template use File | Settings | File Templates.
- */
 public class CommentStatement extends AbstractStatement {
     private final Expression text;
 

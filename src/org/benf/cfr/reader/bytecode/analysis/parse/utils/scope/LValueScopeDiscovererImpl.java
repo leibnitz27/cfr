@@ -18,12 +18,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 06/03/2013
- * Time: 06:09
- */
 public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
 
     /*

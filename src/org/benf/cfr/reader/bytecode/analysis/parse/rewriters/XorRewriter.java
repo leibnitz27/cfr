@@ -18,12 +18,6 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 17/09/2012
- * Time: 06:43
- */
 public class XorRewriter implements ExpressionRewriter {
 
     public XorRewriter() {

@@ -16,12 +16,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/03/2012
- * Time: 17:57
- */
 public class AssignmentSimple extends AbstractAssignment {
     private LValue lvalue;
     private Expression rvalue;

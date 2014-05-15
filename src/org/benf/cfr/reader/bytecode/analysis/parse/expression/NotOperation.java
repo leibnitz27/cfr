@@ -15,13 +15,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 22/03/2012
- * Time: 06:45
- * To change this template use File | Settings | File Templates.
- */
 public class NotOperation extends AbstractExpression implements ConditionalExpression {
     private ConditionalExpression inner;
 

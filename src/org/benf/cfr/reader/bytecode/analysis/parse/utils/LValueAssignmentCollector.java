@@ -6,12 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 06/03/2013
- * Time: 05:55
- */
 public interface LValueAssignmentCollector<T> {
     // TODO : Should these be StackSSALabels?  Seems they should be lvalues.
     void collect(StackSSALabel lValue, StatementContainer<T> statementContainer, Expression value);

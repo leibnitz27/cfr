@@ -17,12 +17,6 @@ import org.benf.cfr.reader.util.Predicate;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 28/03/2013
- * Time: 17:56
- */
 public class RedundantSuperRewriter implements Op04Rewriter {
 
     public RedundantSuperRewriter() {

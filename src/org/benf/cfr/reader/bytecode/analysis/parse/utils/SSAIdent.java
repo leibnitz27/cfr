@@ -2,12 +2,6 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 import java.util.BitSet;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 26/06/2012
- * Time: 06:41
- */
 public class SSAIdent {
     private final BitSet val;
 

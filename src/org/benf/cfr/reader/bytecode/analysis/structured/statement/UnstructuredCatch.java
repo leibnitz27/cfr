@@ -16,11 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class UnstructuredCatch extends AbstractUnStructuredStatement {
     private final List<ExceptionGroup.Entry> exceptions;
     private final BlockIdentifier blockIdentifier;

@@ -15,13 +15,6 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 21/04/2011
- * Time: 06:08
- * To change this template use File | Settings | File Templates.
- */
 public enum JVMInstr {
     /* opcode, numimmed, numpopped, numpushed, num targets */
     /* numimmed is length (-1 if variable) of arguments immediately following opcode */
@@ -241,6 +234,7 @@ public enum JVMInstr {
     SWAP(0x5f, 0, null, null, null, new OperationFactorySwap()),
     TABLESWITCH(0xaa, -1, StackType.INT.asList(), StackTypes.EMPTY, RawJavaType.VOID, new OperationFactoryTableSwitch()),
     WIDE(0xc4, -1, null, null, null, new OperationFactoryWide()),
+    // Obviously there's no such thing as a try/catch opcode, but it's helpful to have pseudo instructions
     FAKE_TRY(-1, 0, StackTypes.EMPTY, StackTypes.EMPTY, RawJavaType.VOID),
     FAKE_CATCH(-1, 0, StackTypes.EMPTY, StackType.REF.asList(), RawJavaType.REF, new OperationFactoryFakeCatch());
 

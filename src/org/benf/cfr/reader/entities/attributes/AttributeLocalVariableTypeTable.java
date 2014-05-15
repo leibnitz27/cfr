@@ -7,13 +7,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 18/04/2011
- * Time: 19:01
- * To change this template use File | Settings | File Templates.
- */
 public class AttributeLocalVariableTypeTable extends Attribute {
     public final static String ATTRIBUTE_NAME = "LocalVariableTypeTable";
 

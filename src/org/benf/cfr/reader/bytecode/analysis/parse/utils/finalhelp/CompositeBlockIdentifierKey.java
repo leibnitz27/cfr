@@ -8,12 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 05/08/2013
- * Time: 05:56
- */
 public class CompositeBlockIdentifierKey implements Comparable<CompositeBlockIdentifierKey> {
     private final String key;
 

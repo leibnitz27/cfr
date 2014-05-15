@@ -1,10 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
-/**
- * Created:
- * User: lee
- * Date: 02/05/2012
- */
 public enum JumpType {
     NONE("none", false),
     GOTO("goto", true),

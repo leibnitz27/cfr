@@ -13,13 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 19:20
- * To change this template use File | Settings | File Templates.
- */
 public class ConstantPool {
     private static final Logger logger = LoggerFactory.create(ConstantPool.class);
 
@@ -133,12 +126,6 @@ public class ConstantPool {
         // NB: Constant pool entries are 1 based.
         return entries.get(index - 1);
     }
-//
-//    private void setEntry(int index, ConstantPoolEntry constantPoolEntry) {
-//        if (index == 0) throw new ConfusedCFRException("Attempt to set element 0 in constant pool");
-//        // NB: Constant pool entries are 1 based.
-//        entries.set(index - 1, constantPoolEntry);
-//    }
 
     public ConstantPoolEntryUTF8 getUTF8Entry(int index) {
         return (ConstantPoolEntryUTF8) getEntry(index);

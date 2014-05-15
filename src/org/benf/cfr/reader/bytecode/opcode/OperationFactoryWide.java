@@ -5,13 +5,6 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 21/04/2011
- * Time: 08:19
- * To change this template use File | Settings | File Templates.
- */
 public class OperationFactoryWide extends OperationFactoryDefault {
 
     private static JVMInstr getWideInstrVersion(JVMInstr instr) {

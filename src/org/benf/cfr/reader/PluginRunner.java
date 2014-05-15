@@ -1,6 +1,5 @@
 package org.benf.cfr.reader;
 
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -10,15 +9,6 @@ import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.*;
 
-import java.util.List;
-import java.util.zip.ZipFile;
-
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 11/12/2013
- * Time: 06:58
- */
 public class PluginRunner {
     private DCCommonState dcCommonState = initDCState();
 

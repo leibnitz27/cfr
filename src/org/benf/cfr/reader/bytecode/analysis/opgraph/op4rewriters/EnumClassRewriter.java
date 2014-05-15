@@ -28,12 +28,6 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 07/05/2013
- * Time: 05:47
- */
 public class EnumClassRewriter {
 
     public static void rewriteEnumClass(ClassFile classFile, DCCommonState state) {

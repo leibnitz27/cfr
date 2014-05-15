@@ -28,13 +28,6 @@ import org.benf.cfr.reader.util.output.TypeOverridingDumper;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 18:25
- * To change this template use File | Settings | File Templates.
- */
 public class ClassFile implements Dumpable, TypeUsageCollectable {
     // Constants
     private final long OFFSET_OF_MAGIC = 0;

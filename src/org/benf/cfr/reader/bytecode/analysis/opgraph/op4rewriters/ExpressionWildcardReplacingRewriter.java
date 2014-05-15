@@ -8,12 +8,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.util.functors.NonaryFunction;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 01/07/2013
- * Time: 18:08
- */
 public class ExpressionWildcardReplacingRewriter extends AbstractExpressionRewriter {
     private final WildcardMatch wildcardMatch;
     private final Expression search;

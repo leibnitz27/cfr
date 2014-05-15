@@ -17,12 +17,6 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 22/03/2012
- * Time: 18:28
- */
 public class LocalVariable extends AbstractLValue {
     private final NamedVariable name;
     // We keep this so we don't confuse two variables with the same name, tricksy.

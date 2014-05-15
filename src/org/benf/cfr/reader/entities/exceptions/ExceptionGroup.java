@@ -15,11 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created:
- * User: lee
- * Date: 21/05/2012
- */
 public class ExceptionGroup {
 
     private short bytecodeIndexFrom;        // [ a

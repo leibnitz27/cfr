@@ -8,12 +8,6 @@ import org.benf.cfr.reader.util.MapFactory;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 04/07/2013
- * Time: 17:12
- */
 public class CloneHelper {
     private final Map<Expression, Expression> expressionMap;
     private final Map<LValue, LValue> lValueMap;

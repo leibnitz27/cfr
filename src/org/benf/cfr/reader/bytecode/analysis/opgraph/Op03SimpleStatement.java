@@ -43,13 +43,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 19/03/2012
- * Time: 06:52
- * To change this template use File | Settings | File Templates.
- */
 public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, Dumpable, StatementContainer<Statement>, IndexedStatement {
     private static final Logger logger = LoggerFactory.create(Op03SimpleStatement.class);
 

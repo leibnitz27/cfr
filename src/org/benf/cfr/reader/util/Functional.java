@@ -5,11 +5,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
 
-/**
- * Created:
- * User: lee
- * Date: 27/04/2012
- */
 public class Functional {
 
     public static <X> List<X> filterColl(Collection<X> input, Predicate<X> predicate) {

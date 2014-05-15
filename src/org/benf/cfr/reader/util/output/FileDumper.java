@@ -8,12 +8,6 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 
 import java.io.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 15/11/2013
- * Time: 07:24
- */
 public class FileDumper extends StreamDumper {
     private final JavaTypeInstance type;
     private final SummaryDumper summaryDumper;

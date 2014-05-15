@@ -6,11 +6,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 04/08/2013
- * Time: 00:26
- * <p/>
  * Sanitised version of Exception table entry, where we use instruction idx, rather than opcode,
  * and the exceptions are CLOSED, rather than half open.
  * <p/>

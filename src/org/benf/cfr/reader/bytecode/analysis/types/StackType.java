@@ -1,10 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 /**
- * Created:
- * User: lee
- * Date: 10/04/2012
- * <p/>
  * See table 3.3 in JVM spec.
  */
 public enum StackType {

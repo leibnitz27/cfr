@@ -1,10 +1,5 @@
 package org.benf.cfr.reader.entities.attributes;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 02/04/2012
- */
 public class LocalVariableEntry {
     private final short startPc;
     private final short length;

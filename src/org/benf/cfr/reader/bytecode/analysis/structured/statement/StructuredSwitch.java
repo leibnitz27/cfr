@@ -20,11 +20,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class StructuredSwitch extends AbstractStructuredBlockStatement implements BoxingProcessor {
     private Expression switchOn;
     private final BlockIdentifier blockIdentifier;

@@ -24,12 +24,6 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 04/11/2013
- * Time: 17:11
- */
 public class DCCommonState {
 
     private final ClassCache classCache = new ClassCache(this);

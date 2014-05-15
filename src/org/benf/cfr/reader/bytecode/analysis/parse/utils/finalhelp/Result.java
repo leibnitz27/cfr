@@ -4,12 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 12/08/2013
- * Time: 21:51
- */
 public class Result {
     public static Result FAIL = new Result();
 

@@ -1,11 +1,5 @@
 package org.benf.cfr.reader.entities.bootstrap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/04/2013
- * Time: 09:28
- */
 public enum MethodHandleBehaviour {
     GET_FIELD,
     GET_STATIC,

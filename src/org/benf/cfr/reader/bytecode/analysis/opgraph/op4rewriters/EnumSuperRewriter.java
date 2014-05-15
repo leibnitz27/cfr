@@ -12,12 +12,6 @@ import org.benf.cfr.reader.util.SetFactory;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 09/05/2013
- * Time: 18:01
- */
 public class EnumSuperRewriter extends RedundantSuperRewriter {
     @Override
     protected List<Expression> getSuperArgs(WildcardMatch wcm) {

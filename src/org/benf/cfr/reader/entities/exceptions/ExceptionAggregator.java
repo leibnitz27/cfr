@@ -14,13 +14,6 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 30/03/2012
- * Time: 06:51
- * To change this template use File | Settings | File Templates.
- */
 public class ExceptionAggregator {
 
     private final List<ExceptionGroup> exceptionsByRange = ListFactory.newList();

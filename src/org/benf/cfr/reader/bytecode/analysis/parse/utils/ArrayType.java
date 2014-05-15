@@ -4,13 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 29/03/2012
- * Time: 13:24
- * To change this template use File | Settings | File Templates.
- */
 public enum ArrayType {
     T_BOOLEAN(4, "boolean", RawJavaType.BOOLEAN),
     T_CHAR(5, "char", RawJavaType.CHAR),

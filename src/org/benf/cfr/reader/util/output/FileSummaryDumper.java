@@ -6,12 +6,6 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 
 import java.io.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 20/11/2013
- * Time: 13:06
- */
 public class FileSummaryDumper implements SummaryDumper {
     private final BufferedWriter writer;
 

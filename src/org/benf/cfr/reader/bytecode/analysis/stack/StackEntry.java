@@ -10,13 +10,6 @@ import org.benf.cfr.reader.util.SetFactory;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 13/03/2012
- * Time: 18:35
- * To change this template use File | Settings | File Templates.
- */
 public class StackEntry {
 
     private static long sid = 0;

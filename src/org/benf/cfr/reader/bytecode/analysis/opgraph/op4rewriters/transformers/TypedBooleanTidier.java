@@ -18,12 +18,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 27/08/2013
- * Time: 06:32
- */
 public class TypedBooleanTidier implements StructuredStatementTransformer, ExpressionRewriter {
 
     public void transform(Op04StructuredStatement root) {

@@ -31,12 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 07/02/2013
- * Time: 05:49
- */
 public class SwitchEnumRewriter implements Op04Rewriter {
     private final DCCommonState dcCommonState;
     private final ClassFileVersion classFileVersion;

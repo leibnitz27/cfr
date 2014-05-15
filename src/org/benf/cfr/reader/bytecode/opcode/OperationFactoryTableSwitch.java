@@ -6,13 +6,6 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 21/04/2011
- * Time: 08:18
- * To change this template use File | Settings | File Templates.
- */
 public class OperationFactoryTableSwitch extends OperationFactoryDefault {
 
     // offsets relative to computed start of default

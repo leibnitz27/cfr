@@ -1,19 +1,10 @@
 package org.benf.cfr.reader.util.getopt;
 
-import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.Troolean;
 
 import java.util.Map;
-import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/11/2013
- * Time: 12:55
- */
 public class MutableOptions implements Options {
     private final Options delegate;
 

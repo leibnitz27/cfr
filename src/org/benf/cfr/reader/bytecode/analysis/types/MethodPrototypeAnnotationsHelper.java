@@ -8,12 +8,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 22/03/2013
- * Time: 17:14
- */
 public class MethodPrototypeAnnotationsHelper {
     private final AttributeRuntimeVisibleParameterAnnotations runtimeVisibleParameterAnnotations;
     private final AttributeRuntimeInvisibleParameterAnnotations runtimeInvisibleParameterAnnotations;

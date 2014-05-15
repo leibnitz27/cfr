@@ -4,12 +4,6 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/07/2012
- * Time: 07:57
- */
 public interface JavaTypeInstance {
     StackType getStackType();
 

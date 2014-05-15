@@ -4,13 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 20/03/2012
- * Time: 06:34
- * To change this template use File | Settings | File Templates.
- */
 public enum CompOp {
     LT("<", Precedence.REL_CMP_INSTANCEOF),
     GT(">", Precedence.REL_CMP_INSTANCEOF),

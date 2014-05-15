@@ -7,12 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 11/07/2012
- * Time: 18:13
- */
 public class LValueAssignmentExpressionRewriter implements LValueRewriter<Statement> {
 
     private final LValue lValue;

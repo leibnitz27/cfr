@@ -11,11 +11,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.LinkedList;
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class UnstructuredDo extends AbstractUnStructuredStatement {
     private BlockIdentifier blockIdentifier;
 

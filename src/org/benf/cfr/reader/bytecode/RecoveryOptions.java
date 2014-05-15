@@ -9,12 +9,6 @@ import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 15/01/2014
- * Time: 17:05
- */
 public class RecoveryOptions {
     private final List<RecoveryOption<?>> recoveryOptions;
 

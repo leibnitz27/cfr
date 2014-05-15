@@ -20,11 +20,6 @@ import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2013
- * Time: 06:26
- * <p/>
  * This seems daft - why do I need to have all this boilerplate?
  * Why not just replace with a cast, and a function pointer.
  */

@@ -24,12 +24,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 17:26
- */
 public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvokation {
     private final MemberFunctionInvokation constructorInvokation;
     private final ClassFile classFile;

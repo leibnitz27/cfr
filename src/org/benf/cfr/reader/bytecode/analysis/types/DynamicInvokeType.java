@@ -1,11 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 25/09/2013
- * Time: 06:47
- */
 public enum DynamicInvokeType {
     UNKNOWN("?"),
     METAFACTORY_1("metaFactory"),

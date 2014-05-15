@@ -13,12 +13,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 12/08/2013
- * Time: 21:59
- */
 public class FinallyCatchBody {
     final Op03SimpleStatement throwOp;
     final boolean isEmpty;

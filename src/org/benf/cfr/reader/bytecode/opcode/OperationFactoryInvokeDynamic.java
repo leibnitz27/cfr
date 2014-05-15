@@ -13,10 +13,6 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryInvokeDynamic;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- */
 public class OperationFactoryInvokeDynamic extends OperationFactoryDefault {
     private static final int LENGTH_OF_FIELD_INDEX = 2;
 

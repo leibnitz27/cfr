@@ -11,15 +11,6 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/03/2012
- * Time: 17:52
- * To change this template use File | Settings | File Templates.
- */
-
-
 /*
  * statement =
  * 

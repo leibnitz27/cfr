@@ -4,12 +4,6 @@ import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 27/08/2013
- * Time: 12:13
- */
 public class Keywords {
     // from http://docs.oracle.com/javase/tutorial/java/nutsandbolts/_keywords.html
     private static final Set<String> keywords = SetFactory.newSet(

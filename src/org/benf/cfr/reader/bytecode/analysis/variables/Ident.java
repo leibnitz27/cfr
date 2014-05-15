@@ -1,11 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.variables;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 23/08/2013
- * Time: 17:47
- */
 public class Ident {
     private final int stackpos;
     private final int idx;

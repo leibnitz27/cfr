@@ -26,11 +26,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 25/07/2012
- * Time: 17:22
- * <p/>
  * This is all horribly messy and needs refactoring.
  */
 public class WildcardMatch {

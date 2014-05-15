@@ -21,12 +21,6 @@ import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 22/03/2012
- * Time: 18:32
- * To change this template use File | Settings | File Templates.
- * <p/>
  * Note - a field variable LValue means an lValue of ANY object.
  */
 public class FieldVariable extends AbstractLValue {

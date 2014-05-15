@@ -10,12 +10,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/07/2012
- * Time: 06:57
- */
 public enum RawJavaType implements JavaTypeInstance {
     BOOLEAN("boolean", "bl", StackType.INT, true, TypeConstants.boxingNameBoolean, false),
     BYTE("byte", "by", StackType.INT, true, TypeConstants.boxingNameByte, true),

@@ -9,13 +9,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.nio.charset.Charset;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 20:38
- * To change this template use File | Settings | File Templates.
- */
 public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 

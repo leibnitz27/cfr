@@ -8,12 +8,6 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 25/09/2013
- * Time: 18:01
- */
 public class LambdaUtils {
 
     private static TypedLiteral.LiteralType getLiteralType(Expression e) {

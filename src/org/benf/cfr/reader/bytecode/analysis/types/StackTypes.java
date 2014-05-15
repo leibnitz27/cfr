@@ -5,9 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created:
- * User: lee
- * <p/>
  * Really List<StackType> but for legibility, shortened.
  */
 public class StackTypes extends ArrayList<StackType> {

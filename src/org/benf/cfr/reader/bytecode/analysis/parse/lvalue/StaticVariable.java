@@ -16,13 +16,6 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 22/03/2012
- * Time: 18:32
- * To change this template use File | Settings | File Templates.
- */
 public class StaticVariable extends AbstractLValue {
 
     private final ConstantPoolEntryFieldRef field;

@@ -23,11 +23,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class StructuredFor extends AbstractStructuredBlockStatement {
     private ConditionalExpression condition;
     private AssignmentSimple initial;

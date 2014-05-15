@@ -1,19 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
-import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 
 import java.util.Map;
-
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 28/04/2011
- * Time: 07:21
- * To change this template use File | Settings | File Templates.
- */
 
 public class Op01WithProcessedDataAndByteJumps {
     private final JVMInstr instruction;

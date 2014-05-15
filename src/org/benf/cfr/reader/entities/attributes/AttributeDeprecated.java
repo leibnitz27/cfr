@@ -5,13 +5,6 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 18/04/2011
- * Time: 19:01
- * To change this template use File | Settings | File Templates.
- */
 public class AttributeDeprecated extends Attribute {
     public static final String ATTRIBUTE_NAME = "Deprecated";
 

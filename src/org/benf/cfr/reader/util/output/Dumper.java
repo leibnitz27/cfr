@@ -7,12 +7,6 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 12/04/2013
- * Time: 08:26
- */
 public interface Dumper {
 
     /*

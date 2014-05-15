@@ -6,12 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 26/03/2014
- * Time: 17:27
- */
 public class ExceptionCheckSimple implements ExceptionCheck {
     public static final ExceptionCheck INSTANCE = new ExceptionCheckSimple();
 

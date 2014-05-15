@@ -13,12 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 02/04/2013
- * Time: 17:54
- */
 public class ClassCache {
 
     private final Map<String, JavaRefTypeInstance> refClassTypeCache = MapFactory.newMap();

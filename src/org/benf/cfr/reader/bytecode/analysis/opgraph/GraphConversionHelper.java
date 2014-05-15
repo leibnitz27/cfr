@@ -5,13 +5,6 @@ import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/03/2012
- * Time: 18:36
- * To change this template use File | Settings | File Templates.
- */
 public class GraphConversionHelper<X extends Graph<X>, Y extends MutableGraph<Y>> {
     private final Map<X, Y> correspondance;
 

@@ -2,11 +2,6 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import java.util.LinkedList;
 
-/**
- * Created:
- * User: lee
- * Date: 27/04/2012
- */
 public class InstrIndex implements Comparable<InstrIndex> {
     private final int index;
     //    private final int subindex; // for renumbering, etc.

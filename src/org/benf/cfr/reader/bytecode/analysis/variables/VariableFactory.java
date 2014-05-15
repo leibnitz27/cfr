@@ -15,12 +15,6 @@ import org.benf.cfr.reader.util.MiscConstants;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 20/07/2012
- * Time: 18:15
- */
 public class VariableFactory {
     private final VariableNamer variableNamer;
     private final Map<Integer, InferredJavaType> typedArgs;

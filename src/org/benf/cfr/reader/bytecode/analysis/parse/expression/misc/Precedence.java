@@ -1,11 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression.misc;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 12/02/2014
- * Time: 06:11
- */
 public enum Precedence {
     HIGHEST(true),
     PAREN_SUB_MEMBER(true),

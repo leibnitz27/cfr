@@ -20,11 +20,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class StructuredIf extends AbstractStructuredStatement implements CanRemovePointlessBlock {
 
     ConditionalExpression conditionalExpression;

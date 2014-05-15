@@ -11,10 +11,6 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryFieldRef;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 
-/**
- * User: lee
- * Date: 21/04/2011
- */
 public class OperationFactoryGetStatic extends OperationFactoryCPEntryW {
 
     @Override

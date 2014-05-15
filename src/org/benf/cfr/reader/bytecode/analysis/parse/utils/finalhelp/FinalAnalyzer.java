@@ -24,12 +24,6 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/08/2013
- * Time: 06:20
- */
 public class FinalAnalyzer {
     /*
  * This is the INITIAL entry point - i.e. we'll call this once for a finally block.

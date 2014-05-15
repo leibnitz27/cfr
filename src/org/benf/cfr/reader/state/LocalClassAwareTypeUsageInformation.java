@@ -9,12 +9,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 26/11/2013
- * Time: 17:42
- */
 public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation {
     private final TypeUsageInformation delegate;
     private final Map<JavaTypeInstance, String> localTypeNames;

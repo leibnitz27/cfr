@@ -10,11 +10,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class UnstructuredIter extends AbstractUnStructuredStatement {
     private BlockIdentifier blockIdentifier;
     private LValue iterator;

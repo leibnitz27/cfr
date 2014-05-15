@@ -7,15 +7,8 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 20:36
- * To change this template use File | Settings | File Templates.
- */
 public class ConstantPoolEntryString extends AbstractConstantPoolEntry implements ConstantPoolEntryLiteral {
-    private final long OFFSET_OF_STRING_INDEX = 1;
+    private static final long OFFSET_OF_STRING_INDEX = 1;
 
     private final long stringIndex;
     private transient String string;

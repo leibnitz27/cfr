@@ -6,12 +6,6 @@ import org.benf.cfr.reader.util.annotation.Nullable;
 
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 22/03/2013
- * Time: 17:56
- */
 public class InnerClassAttributeInfo {
     private final
     @Nullable

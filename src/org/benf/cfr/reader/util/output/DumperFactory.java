@@ -7,12 +7,6 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.io.IOException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/11/2013
- * Time: 18:04
- */
 public class DumperFactory {
     public static Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation) {
         if (!options.optionIsSet(OptionsImpl.OUTPUT_DIR)) return new StdIODumper(typeUsageInformation);

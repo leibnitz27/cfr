@@ -9,11 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 04/03/2014
- * Time: 06:19
- * <p/>
  * Strips the outer class name off anything which preceeds this inner class.
  */
 public class InnerClassTypeUsageInformation implements TypeUsageInformation {

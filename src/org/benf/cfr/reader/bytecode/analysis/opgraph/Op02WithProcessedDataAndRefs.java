@@ -48,13 +48,6 @@ import org.benf.cfr.reader.util.output.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 09/03/2012
- * Time: 17:49
- * To change this template use File | Settings | File Templates.
- */
 public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithProcessedDataAndRefs> {
     private static final Logger logger = LoggerFactory.create(Op02WithProcessedDataAndRefs.class);
 

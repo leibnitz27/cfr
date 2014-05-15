@@ -5,11 +5,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Map;
 
-/**
- * Created:
- * User: lee
- * Date: 24/04/2012
- */
 public class SSAIdentifierFactory<KEYTYPE> {
     private final Map<KEYTYPE, Integer> nextIdentFor = MapFactory.newLazyMap(
             MapFactory.<KEYTYPE, Integer>newLinkedMap(),

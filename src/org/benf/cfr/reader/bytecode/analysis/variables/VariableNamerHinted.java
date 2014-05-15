@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.variables;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.attributes.LocalVariableEntry;
 import org.benf.cfr.reader.util.ListFactory;
@@ -11,11 +10,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 02/04/2012
- */
 public class VariableNamerHinted implements VariableNamer {
 
     private int genIdx = 0;

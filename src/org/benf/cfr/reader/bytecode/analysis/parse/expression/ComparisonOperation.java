@@ -22,11 +22,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- */
 public class ComparisonOperation extends AbstractExpression implements ConditionalExpression, BoxingProcessor {
     private Expression lhs;
     private Expression rhs;
@@ -94,7 +89,7 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     @Override
     public Dumper dumpInner(Dumper d) {
         lhs.dumpWithOuterPrecedence(d, getPrecedence());
-        d.print(" " + op.getShowAs() + " ");
+        d.print(" ").print(op.getShowAs()).print(" ");
         rhs.dumpWithOuterPrecedence(d, getPrecedence());
         return d;
     }

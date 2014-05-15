@@ -6,12 +6,6 @@ import org.benf.cfr.reader.util.SetFactory;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 20/06/2012
- * Time: 06:01
- */
 public class LValueUsageCollectorSimple implements LValueUsageCollector {
     private final Set<LValue> used = SetFactory.newSet();
 

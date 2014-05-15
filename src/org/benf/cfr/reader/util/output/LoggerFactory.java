@@ -3,11 +3,6 @@ package org.benf.cfr.reader.util.output;
 import java.util.logging.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/07/2012
- * Time: 06:11
- * <p/>
  * Small wrapper around the bog standard java logger.
  */
 public class LoggerFactory {

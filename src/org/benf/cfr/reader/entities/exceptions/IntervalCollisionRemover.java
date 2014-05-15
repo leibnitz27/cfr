@@ -7,11 +7,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 03/08/2013
- * Time: 23:56
- * <p/>
  * Unlike the overlapper, which has to generate exceptions from overlapping pairs, this acts only
  * to filter out impossibilities - because
  * <p/>

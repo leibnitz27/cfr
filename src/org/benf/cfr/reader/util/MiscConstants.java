@@ -1,10 +1,5 @@
 package org.benf.cfr.reader.util;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 01/05/2013
- */
 public interface MiscConstants {
     public static final String CFR_VERSION = "0_79";
     public static final String CFR_HEADER_BRA = "Decompiled with CFR";

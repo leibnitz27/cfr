@@ -5,12 +5,6 @@ import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 23/05/2013
- * Time: 17:45
- */
 public class BoundSuperCollector {
 
 

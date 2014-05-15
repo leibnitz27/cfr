@@ -13,12 +13,6 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 17/09/2012
- * Time: 06:43
- */
 public class AccountingRewriter implements ExpressionRewriter {
 
     private final Map<StackSSALabel, Long> count = new LazyMap<StackSSALabel, Long>(

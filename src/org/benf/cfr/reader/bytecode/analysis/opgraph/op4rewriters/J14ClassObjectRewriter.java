@@ -39,11 +39,6 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 17/02/2014
- * Time: 17:51
- * <p/>
  * Java 1.4 will produce
  * <p/>
  * <p/>

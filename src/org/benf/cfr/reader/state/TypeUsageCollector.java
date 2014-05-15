@@ -15,12 +15,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 05/11/2013
- * Time: 17:17
- */
 public class TypeUsageCollector {
     private final JavaRefTypeInstance analysisType;
     private final Set<JavaRefTypeInstance> typeInstanceSet = SetFactory.newSet();

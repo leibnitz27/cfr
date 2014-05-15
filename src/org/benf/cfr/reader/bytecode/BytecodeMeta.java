@@ -9,12 +9,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 16/01/2014
- * Time: 06:40
- */
 public class BytecodeMeta {
     public enum CodeInfoFlag {
         USES_MONITORS,

@@ -10,10 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.TryStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.DefaultEquivalenceConstraint;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -21,12 +18,6 @@ import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 12/08/2013
- * Time: 21:50
- */
 public class FinallyGraphHelper {
     private final FinallyCatchBody finallyCatchBody;
 
@@ -66,21 +57,21 @@ public class FinallyGraphHelper {
         Op03SimpleStatement finalThrow = finallyCatchBody.getThrowOp();
         Map<Op03SimpleStatement, Op03SimpleStatement> matched = new IdentityHashMap<Op03SimpleStatement, Op03SimpleStatement>();
         Set<Op03SimpleStatement> toRemove = SetFactory.newOrderedSet();
-        LinkedList<Pair> pending = ListFactory.newLinkedList();
+        LinkedList<Pair<Op03SimpleStatement, Op03SimpleStatement>> pending = ListFactory.newLinkedList();
         if (finallyCatchBody.isEmpty()) {
             return new Result(toRemove, null, null);
         }
-        Pair start = new Pair(test, finallyCatchBody.getCatchCodeStart());
+        Pair<Op03SimpleStatement, Op03SimpleStatement> start = Pair.make(test, finallyCatchBody.getCatchCodeStart());
         pending.add(start);
-        matched.put(start.b, start.a);
+        matched.put(start.getSecond(), start.getFirst());
 
         final FinallyEquivalenceConstraint equivalenceConstraint = new FinallyEquivalenceConstraint();
 
         Set<Op03SimpleStatement> finalThrowProxySources = SetFactory.newOrderedSet();
         while (!pending.isEmpty()) {
-            Pair p = pending.removeFirst();
-            Op03SimpleStatement a = p.a;
-            Op03SimpleStatement b = p.b;
+            Pair<Op03SimpleStatement, Op03SimpleStatement> p = pending.removeFirst();
+            Op03SimpleStatement a = p.getFirst();
+            Op03SimpleStatement b = p.getSecond();
             Statement sa = a.getStatement();
             Statement sb = b.getStatement();
 

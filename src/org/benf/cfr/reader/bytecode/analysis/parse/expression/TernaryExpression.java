@@ -15,13 +15,6 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 17:51
- * To change this template use File | Settings | File Templates.
- */
 public class TernaryExpression extends AbstractExpression implements BoxingProcessor {
     private ConditionalExpression condition;
     private Expression lhs;

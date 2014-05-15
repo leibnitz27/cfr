@@ -6,12 +6,6 @@ import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/06/2013
- * Time: 05:52
- */
 public class IntervalCount {
     private final TreeMap<Short, Boolean> op = MapFactory.newTreeMap();
 

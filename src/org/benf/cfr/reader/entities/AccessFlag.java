@@ -8,14 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 17/04/2011
- * Time: 21:20
- * To change this template use File | Settings | File Templates.
- */
-
 public enum AccessFlag {
     ACC_PUBLIC("public"),
     ACC_PRIVATE("private"),

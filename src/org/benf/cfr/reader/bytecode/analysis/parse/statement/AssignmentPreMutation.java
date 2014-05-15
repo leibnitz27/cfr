@@ -15,11 +15,6 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/03/2012
- * Time: 17:57
- * <p/>
  * In an assignment prechange, the LHS is by definition equal to the RHS after the statement.
  * I.e. x = ++x;
  * <p/>

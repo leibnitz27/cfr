@@ -18,12 +18,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/05/2013
- * Time: 17:20
- */
 public class StaticLifter {
 
     private final ClassFile classFile;

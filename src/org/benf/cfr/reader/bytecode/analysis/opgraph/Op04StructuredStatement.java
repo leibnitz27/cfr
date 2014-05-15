@@ -38,13 +38,6 @@ import org.benf.cfr.reader.util.output.LoggerFactory;
 import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Created:
- * User: lee
- * Date: 14/05/2012
- * <p/>
- * Structured statements
- */
 public class Op04StructuredStatement implements MutableGraph<Op04StructuredStatement>, Dumpable, StatementContainer<StructuredStatement>, TypeUsageCollectable {
     private static final Logger logger = LoggerFactory.create(Op04StructuredStatement.class);
 
@@ -55,6 +48,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     private StructuredStatement structuredStatement;
 
     private Set<BlockIdentifier> blockMembership;
+    // Handy for really icky breakpointing, oh I wish we had proper conditional compilation.
 //    private static int id = 0;
 //    private final int idx = id++;
 

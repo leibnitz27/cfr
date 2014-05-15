@@ -7,12 +7,6 @@ import org.benf.cfr.reader.util.TypeUsageCollectable;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/02/2013
- * Time: 06:32
- */
 public class ClassSignature implements TypeUsageCollectable {
     private final List<FormalTypeParameter> formalTypeParameters;
     private final JavaTypeInstance superClass;

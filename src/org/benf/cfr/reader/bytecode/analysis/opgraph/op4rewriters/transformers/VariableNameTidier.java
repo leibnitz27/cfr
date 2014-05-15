@@ -31,12 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 27/08/2013
- * Time: 06:32
- */
 public class VariableNameTidier implements StructuredStatementTransformer {
 
     private final Method method;

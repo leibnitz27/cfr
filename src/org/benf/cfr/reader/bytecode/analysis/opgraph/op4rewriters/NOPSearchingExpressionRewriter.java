@@ -6,12 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionR
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 24/11/2013
- * Time: 13:04
- */
 public class NOPSearchingExpressionRewriter extends AbstractExpressionRewriter {
 
     private final Expression needle;

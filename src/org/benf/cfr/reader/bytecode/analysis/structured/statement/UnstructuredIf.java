@@ -14,11 +14,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.LinkedList;
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class UnstructuredIf extends AbstractUnStructuredStatement {
     private ConditionalExpression conditionalExpression;
     private Op04StructuredStatement setIfBlock;

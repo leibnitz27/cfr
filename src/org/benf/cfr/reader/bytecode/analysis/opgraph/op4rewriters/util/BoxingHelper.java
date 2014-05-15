@@ -9,12 +9,6 @@ import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 09/07/2013
- * Time: 06:53
- */
 public class BoxingHelper {
     private static Set<Pair<String, String>> unboxing = SetFactory.newSet(
             Pair.make("java.lang.Integer", "intValue"),

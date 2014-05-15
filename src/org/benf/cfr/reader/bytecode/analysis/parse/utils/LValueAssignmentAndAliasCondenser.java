@@ -22,12 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 20/03/2012
- * Time: 18:06
- */
 public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Statement>, LValueAssignmentCollector<Statement> {
 
     private static final Logger logger = LoggerFactory.create(LValueAssignmentAndAliasCondenser.class);

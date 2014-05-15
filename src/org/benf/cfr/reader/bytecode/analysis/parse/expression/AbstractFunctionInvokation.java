@@ -19,13 +19,6 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 17:26
- * To change this template use File | Settings | File Templates.
- */
 public abstract class AbstractFunctionInvokation extends AbstractExpression implements FunctionProcessor, BoxingProcessor {
     private final ConstantPoolEntryMethodRef function;
     private Expression object;

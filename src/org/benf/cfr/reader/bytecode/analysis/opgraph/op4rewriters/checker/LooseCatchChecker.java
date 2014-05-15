@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredCatch;
@@ -8,12 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredTry;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.DecompilerComments;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 04/12/2013
- * Time: 15:24
- */
 public class LooseCatchChecker implements Op04Checker {
     private boolean looseCatch = false;
 

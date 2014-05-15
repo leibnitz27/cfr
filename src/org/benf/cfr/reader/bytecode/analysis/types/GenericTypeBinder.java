@@ -10,11 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 25/02/2013
- * Time: 10:09
- * <p/>
  * FIXME - this class has multiple ways of implementing the same thing - definitely feels redundant!
  */
 public class GenericTypeBinder {

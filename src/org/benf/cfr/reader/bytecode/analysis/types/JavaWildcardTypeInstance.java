@@ -9,12 +9,6 @@ import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/07/2012
- * Time: 08:01
- */
 public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     private final WildcardType wildcardType;
     private final JavaTypeInstance underlyingType;

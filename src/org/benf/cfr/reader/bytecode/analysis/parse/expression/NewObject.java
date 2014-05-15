@@ -16,13 +16,6 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 17:44
- * To change this template use File | Settings | File Templates.
- */
 public class NewObject extends AbstractExpression {
     private final ConstantPoolEntryClass type;
 

@@ -22,12 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 13/07/2012
- * Time: 07:49
- */
 public class MethodPrototype implements TypeUsageCollectable {
     private final List<FormalTypeParameter> formalTypeParameters;
     private final List<JavaTypeInstance> args;

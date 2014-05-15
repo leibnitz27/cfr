@@ -8,12 +8,6 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/05/2013
- * Time: 17:26
- */
 public class ClassFileField {
     private final Field field;
     /*

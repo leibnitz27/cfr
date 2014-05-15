@@ -8,13 +8,6 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 21/04/2011
- * Time: 08:12
- * To change this template use File | Settings | File Templates.
- */
 public interface OperationFactory {
     /*
      * When an operation is being decoded, it may need to know about the method / class it's in

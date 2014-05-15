@@ -13,12 +13,6 @@ import org.benf.cfr.reader.util.MiscConstants;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 17/03/2014
- * Time: 20:53
- */
 public class Op02LambdaRewriter {
 
     private static Op02WithProcessedDataAndRefs getSinglePrev(Op02WithProcessedDataAndRefs item) {

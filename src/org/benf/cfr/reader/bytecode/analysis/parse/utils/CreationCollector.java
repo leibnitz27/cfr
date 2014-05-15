@@ -22,10 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 03/04/2012
- * <p/>
  * This is all a bit ugly, with the random casting going on. But I think probably it would be worse to use
  * a multiple direction visitor....
  */

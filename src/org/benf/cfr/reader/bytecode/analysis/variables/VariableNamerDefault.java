@@ -9,17 +9,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 02/04/2012
- */
 public class VariableNamerDefault implements VariableNamer {
 
     private Map<Ident, NamedVariable> cached = MapFactory.newMap();
 
     public VariableNamerDefault() {
-        int x = 1;
     }
 
     @Override

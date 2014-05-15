@@ -4,12 +4,6 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 25/02/2013
- * Time: 19:22
- */
 public interface JavaGenericBaseInstance extends JavaTypeInstance {
     public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder);
 

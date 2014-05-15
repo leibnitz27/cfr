@@ -23,12 +23,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 17:26
- */
 public abstract class AbstractConstructorInvokation extends AbstractExpression implements BoxingProcessor {
     private final ConstantPoolEntryMethodRef function;
     private final MethodPrototype methodPrototype;

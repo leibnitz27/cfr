@@ -33,13 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 28/04/2011
- * Time: 07:20
- * To change this template use File | Settings | File Templates.
- */
 public class CodeAnalyser {
 
     private static final int SHOW_L2_RAW = 1;

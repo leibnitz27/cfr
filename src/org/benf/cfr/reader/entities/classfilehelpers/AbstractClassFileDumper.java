@@ -18,12 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 09/05/2013
- * Time: 05:56
- */
 public abstract class AbstractClassFileDumper implements ClassFileDumper {
 
     protected static String getAccessFlagsString(Set<AccessFlag> accessFlags, AccessFlag[] dumpableAccessFlags) {

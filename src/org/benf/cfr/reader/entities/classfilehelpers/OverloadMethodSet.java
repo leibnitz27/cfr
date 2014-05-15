@@ -17,11 +17,6 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 25/07/2013
- * Time: 06:15
- * <p/>
  * These are the possibilities we could be hitting when we call an overloaded method.
  * We must be sure that parameter casting rewrites don't move a call from using one method to
  * using another.

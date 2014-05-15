@@ -12,13 +12,6 @@ import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/03/2012
- * Time: 18:00
- * To change this template use File | Settings | File Templates.
- */
 public abstract class AbstractStatement implements Statement {
     private StatementContainer<Statement> container;
 

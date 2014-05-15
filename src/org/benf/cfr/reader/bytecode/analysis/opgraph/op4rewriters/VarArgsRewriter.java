@@ -20,12 +20,6 @@ import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2013
- * Time: 06:26
- */
 public class VarArgsRewriter implements Op04Rewriter, ExpressionRewriter {
 
     public VarArgsRewriter() {

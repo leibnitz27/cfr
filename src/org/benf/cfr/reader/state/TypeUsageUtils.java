@@ -8,12 +8,6 @@ import org.benf.cfr.reader.util.output.CommaHelp;
 
 import java.util.LinkedList;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 04/03/2014
- * Time: 06:10
- */
 public class TypeUsageUtils {
     public static String generateInnerClassShortName(final JavaRefTypeInstance clazz, JavaRefTypeInstance analysisType) {
         LinkedList<JavaRefTypeInstance> classStack = ListFactory.newLinkedList();

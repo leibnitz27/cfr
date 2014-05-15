@@ -16,13 +16,6 @@ import org.benf.cfr.reader.util.output.*;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 18:15
- * To change this template use File | Settings | File Templates.
- */
 public class Main {
 
     public static void doClass(DCCommonState dcCommonState, String path) {

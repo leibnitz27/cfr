@@ -27,14 +27,6 @@ import org.benf.cfr.reader.util.output.TypeOverridingDumper;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 17/04/2011
- * Time: 21:32
- * To change this template use File | Settings | File Templates.
- */
-
 /* Too much in common with field - refactor.
  *
  */

@@ -5,16 +5,9 @@ import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 20:34
- * To change this template use File | Settings | File Templates.
- */
 public class ConstantPoolEntryNameAndType extends AbstractConstantPoolEntry {
-    private final long OFFSET_OF_NAME_INDEX = 1;
-    private final long OFFSET_OF_DESCRIPTOR_INDEX = 3;
+    private static final long OFFSET_OF_NAME_INDEX = 1;
+    private static final long OFFSET_OF_DESCRIPTOR_INDEX = 3;
 
     private final short nameIndex;
     private final short descriptorIndex;

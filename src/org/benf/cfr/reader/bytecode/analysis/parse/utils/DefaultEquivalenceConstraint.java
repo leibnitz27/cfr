@@ -1,16 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
-
 import java.util.Collection;
 import java.util.Iterator;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 06/08/2013
- * Time: 05:40
- */
 public class DefaultEquivalenceConstraint implements EquivalenceConstraint {
 
     public static final EquivalenceConstraint INSTANCE = new DefaultEquivalenceConstraint();

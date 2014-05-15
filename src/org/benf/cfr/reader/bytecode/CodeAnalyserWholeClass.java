@@ -23,11 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/05/2013
- * Time: 06:22
- * <p/>
  * Analysis which needs to be performed on the whole classfile in one go, once we've
  * performed other basic code analysis.
  * <p/>

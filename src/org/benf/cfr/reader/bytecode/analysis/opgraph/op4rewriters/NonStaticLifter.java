@@ -26,11 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/05/2013
- * Time: 17:20
- * <p/>
  * Similar to the static lifter, however this has to cope with the possibility that EVERY constructor
  * will have had the non static initialisation pushed into it.
  */

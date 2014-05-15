@@ -1,11 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 02/04/2013
- * Time: 17:19
- */
 public interface InnerClassInfo {
     boolean isInnerClass();
 

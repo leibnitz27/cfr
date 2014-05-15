@@ -26,12 +26,6 @@ import org.benf.cfr.reader.util.lambda.LambdaUtils;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2013
- * Time: 06:26
- */
 public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
 
     private final DCCommonState state;

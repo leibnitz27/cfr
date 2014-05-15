@@ -15,18 +15,13 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 17:44
- */
 public class Literal extends AbstractExpression {
     public static final Literal FALSE = new Literal(TypedLiteral.getBoolean(0));
     public static final Literal TRUE = new Literal(TypedLiteral.getBoolean(1));
     public static final Literal MINUS_ONE = new Literal(TypedLiteral.getInt(-1));
     public static final Literal NULL = new Literal(TypedLiteral.getNull());
     // Avoid using directly, as you'll probably end up accidentally implementing equalsAnyOne
+    // (I.e. you want to be using equalsAnyOne).
     private static final Literal INT_ONE = new Literal(TypedLiteral.getInt(1));
     private static final Literal LONG_ONE = new Literal(TypedLiteral.getLong(1));
 

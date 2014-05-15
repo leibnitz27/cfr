@@ -14,11 +14,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 22/03/2012
- */
 /*
  * Wraps a local, a static or an instance field.
  */

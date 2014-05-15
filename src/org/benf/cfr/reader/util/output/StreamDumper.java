@@ -7,13 +7,6 @@ import org.benf.cfr.reader.util.SetFactory;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 18/04/2011
- * Time: 11:24
- * To change this template use File | Settings | File Templates.
- */
 public abstract class StreamDumper implements Dumper {
     private final TypeUsageInformation typeUsageInformation;
 

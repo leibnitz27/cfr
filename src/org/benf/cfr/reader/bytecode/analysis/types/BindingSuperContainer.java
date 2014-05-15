@@ -4,12 +4,6 @@ import org.benf.cfr.reader.entities.ClassFile;
 
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 05/06/2013
- * Time: 06:46
- */
 public class BindingSuperContainer {
 
     public enum Route {

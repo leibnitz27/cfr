@@ -16,12 +16,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 import java.util.Vector;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 24/01/2013
- * Time: 06:05
- */
 public abstract class AbstractPlaceholder implements StructuredStatement {
     @Override
     public void linearizeInto(List<StructuredStatement> out) {

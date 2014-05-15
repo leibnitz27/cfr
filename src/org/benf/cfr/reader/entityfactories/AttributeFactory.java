@@ -6,13 +6,6 @@ import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 18/04/2011
- * Time: 18:48
- * To change this template use File | Settings | File Templates.
- */
 public class AttributeFactory {
     private static final long OFFSET_OF_ATTRIBUTE_NAME_INDEX = 0;
 

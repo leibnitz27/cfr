@@ -7,12 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComm
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 15/05/2013
- * Time: 06:13
- */
 public class DeadMethodRemover {
 
     public static void removeDeadMethod(ClassFile classFile, Method method) {

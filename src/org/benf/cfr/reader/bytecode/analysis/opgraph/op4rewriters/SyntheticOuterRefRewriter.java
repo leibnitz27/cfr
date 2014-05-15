@@ -15,11 +15,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 01/07/2013
- * Time: 18:08
- * <p/>
  * We may have deep inner classes, with references to each other.
  * <p/>
  * So

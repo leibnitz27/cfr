@@ -8,12 +8,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpress
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 24/06/2012
- * Time: 22:03
- */
 public interface ExpressionRewriter {
     Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags);
 

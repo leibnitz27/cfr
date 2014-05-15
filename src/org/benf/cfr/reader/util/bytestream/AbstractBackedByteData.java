@@ -4,13 +4,6 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 
 import java.io.DataInputStream;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 15/04/2011
- * Time: 18:27
- * To change this template use File | Settings | File Templates.
- */
 public abstract class AbstractBackedByteData implements ByteData {
 
     abstract DataInputStream rawDataAsStream(int offset, int length);

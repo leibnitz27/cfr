@@ -8,11 +8,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.Set;
 import java.util.Vector;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public class UnstructuredAnonymousBreak extends AbstractUnStructuredStatement {
 
     private final BlockIdentifier blockEnding;

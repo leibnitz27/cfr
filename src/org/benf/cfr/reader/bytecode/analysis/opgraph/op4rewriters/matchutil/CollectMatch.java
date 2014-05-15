@@ -2,12 +2,6 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil;
 
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 30/01/2013
- * Time: 17:43
- */
 public class CollectMatch implements Matcher<StructuredStatement> {
     private final Matcher<StructuredStatement> inner;
     private final String name;

@@ -1,11 +1,5 @@
 package org.benf.cfr.reader.util;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 11/04/2013
- * Time: 18:19
- */
 public class ClassFileVersion {
     private final int major;
     private final int minor;

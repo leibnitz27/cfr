@@ -6,11 +6,8 @@ import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 20/02/2014
- * Time: 18:15
+/*
+ * This defines the set of exceptions which can be thrown by jvm instructions natively.
  */
 public class BasicExceptions {
     public static Set<? extends JavaTypeInstance> instances = SetFactory.newSet(

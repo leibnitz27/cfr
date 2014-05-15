@@ -9,10 +9,6 @@ import org.benf.cfr.reader.util.*;
 import java.util.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 20/07/2012
- * <p/>
  * Multiple expressions / lvalues will have pointers to a single instance of this - at type changing boundaries,
  * we will explicitly create a new one.
  * <p/>

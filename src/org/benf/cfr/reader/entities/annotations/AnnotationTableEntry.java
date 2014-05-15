@@ -10,12 +10,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.Map;
 import java.util.SortedMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: lee
- * Date: 14/03/2013
- * Time: 06:36
- */
 public class AnnotationTableEntry implements TypeUsageCollectable {
     private final JavaTypeInstance clazz;
     // Sorted map to make ordering predictable.

@@ -13,13 +13,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 18/04/2011
- * Time: 18:56
- * To change this template use File | Settings | File Templates.
- */
 public class AttributeCode extends Attribute {
     public static final String ATTRIBUTE_NAME = "Code";
 

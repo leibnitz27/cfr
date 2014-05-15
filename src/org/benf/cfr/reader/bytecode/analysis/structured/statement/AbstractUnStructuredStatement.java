@@ -13,11 +13,6 @@ import org.benf.cfr.reader.util.Predicate;
 
 import java.util.List;
 
-/**
- * Created:
- * User: lee
- * Date: 15/05/2012
- */
 public abstract class AbstractUnStructuredStatement extends AbstractStructuredStatement {
 
     @Override

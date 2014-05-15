@@ -9,13 +9,6 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 21/04/2011
- * Time: 08:10
- * To change this template use File | Settings | File Templates.
- */
 public class OperationFactoryInvoke extends OperationFactoryDefault {
     private static final int LENGTH_OF_DATA = 2;
     private static final int OFFSET_OF_METHOD_INDEX = 1;

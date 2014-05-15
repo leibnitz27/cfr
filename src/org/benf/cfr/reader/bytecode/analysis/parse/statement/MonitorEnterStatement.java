@@ -8,13 +8,6 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredSynchronized;
 import org.benf.cfr.reader.util.output.Dumper;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lee
- * Date: 16/03/2012
- * Time: 18:08
- * To change this template use File | Settings | File Templates.
- */
 public class MonitorEnterStatement extends MonitorStatement {
     private Expression monitor;
     private final BlockIdentifier blockIdentifier;
