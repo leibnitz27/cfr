@@ -17,23 +17,27 @@ public class DecompilerComment implements Dumpable {
     private final String comment;
     private final String summaryMessage;
     private final boolean failed;
+    private final boolean exception;
 
     public DecompilerComment(String comment) {
         this.comment = comment;
         this.summaryMessage = null;
         this.failed = false;
+        this.exception = false;
     }
 
     public DecompilerComment(String comment, boolean failed) {
         this.comment = comment;
         this.summaryMessage = comment;
         this.failed = failed;
+        this.exception = false;
     }
 
     public DecompilerComment(String comment, Exception e) {
         this.comment = comment;
         this.summaryMessage = "Exception : " + e.toString();
         this.failed = true;
+        this.exception = true;
     }
 
     @Override
@@ -47,6 +51,10 @@ public class DecompilerComment implements Dumpable {
 
     public boolean isFailed() {
         return failed;
+    }
+
+    public boolean isException() {
+        return exception;
     }
 
     @Override

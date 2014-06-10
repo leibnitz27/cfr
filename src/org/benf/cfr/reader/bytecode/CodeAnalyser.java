@@ -68,18 +68,23 @@ public class CodeAnalyser {
         public DecompilerComments comments;
         public Op04StructuredStatement code;
         public boolean failed;
+        public boolean exception;
 
         private AnalysisResult(DecompilerComments comments, Op04StructuredStatement code) {
             this.comments = comments;
             this.code = code;
             boolean failed = false;
+            boolean exception = false;
             for (DecompilerComment comment : comments.getCommentList()) {
                 if (comment.isFailed()) {
                     failed = true;
-                    break;
+                }
+                if (comment.isException()) {
+                    exception = true;
                 }
             }
             this.failed = failed;
+            this.exception = exception;
         }
     }
 
@@ -134,7 +139,15 @@ public class CodeAnalyser {
                     RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
                     if (!applied.valid) continue;
                     AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments, bytecodeMeta);
-                    if (nextRes != null) res = nextRes;
+                    if (nextRes != null) {
+                        if (res.failed && nextRes.failed) {
+                            // If they both failed, only replace if the later failure is not an exception.
+                            // (or if the earlier one is).
+                            if (res.exception || !nextRes.exception) res = nextRes;
+                        } else {
+                            res = nextRes;
+                        }
+                    }
                     if (res.failed) continue;
                     break;
                 }
