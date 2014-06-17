@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.Op02LambdaRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.RemoveDeterministicJumps;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
@@ -92,10 +93,14 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.RECOVER_TYPECLASHES, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.LIVENESS_CLASH))
     );
 
+    private static final RecoveryOptions recover0a = new RecoveryOptions(recover0,
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE, DecompilerComment.COND_PROPAGATE)
+    );
+
     private static final RecoveryOptions recover1 = new RecoveryOptions(recover0,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RET_PROPAGATE, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
     );
@@ -104,7 +109,7 @@ public class CodeAnalyser {
             new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover1, recover2};
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recover1, recover2};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
@@ -440,6 +445,10 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
 
+        if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
+            RemoveDeterministicJumps.apply(method, op03SimpleParseNodes);
+        }
+
         if (options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
             op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, false);
@@ -463,7 +472,11 @@ public class CodeAnalyser {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
         }
 
-        if (options.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
+        /*
+         * Push constants through conditionals to returns ( move the returns back )- i.e. if the value we're
+         * returning is deterministic, return that.
+         */
+        if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
             Op03SimpleStatement.propagateToReturn(method, op03SimpleParseNodes);
         }
 
@@ -580,7 +593,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
         // Condense again, now we've simplified conditionals, ternaries, etc.
         Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
-        if (options.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
+        if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
             Op03SimpleStatement.propagateToReturn2(method, op03SimpleParseNodes);
         }
 

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.TypeFilter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NOPSearchingExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -1061,9 +1062,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static void replaceReturningIf(Op03SimpleStatement ifStatement, boolean aggressive) {
         if (!(ifStatement.containedStatement.getClass() == IfStatement.class)) return;
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
-        if (ifStatement.getTargets().size() != 2) {
-            int x = 1;
-        }
         Op03SimpleStatement tgt = ifStatement.getTargets().get(1);
         final Op03SimpleStatement origtgt = tgt;
         boolean requireJustOneSource = !aggressive;
@@ -1115,29 +1113,34 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      */
     public static void propagateToReturn(Method method, List<Op03SimpleStatement> statements) {
         boolean success = false;
-        for (Op03SimpleStatement stm : statements) {
+
+        List<Op03SimpleStatement> assignmentSimples = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
+
+        for (Op03SimpleStatement stm : assignmentSimples) {
             Statement inner = stm.getStatement();
-            if (inner.getClass() == AssignmentSimple.class) {
-                /*
-                 * This pass helps with scala and dex2jar style output - find a remaining assignment to a stack
-                 * variable (or POSSIBLY a local), and follow it through.  If nothing intervenes, and we hit a return, we can
-                 * simply replace the entry point.
-                 *
-                 * We agressively attempt to follow through computable literals.
-                 */
-                if (stm.getTargets().size() != 1)
-                    continue; // shouldn't be possible to be other, but a pruning might have removed.
-                AssignmentSimple assignmentSimple = (AssignmentSimple) inner;
-                LValue lValue = assignmentSimple.getCreatedLValue();
-                Expression rValue = assignmentSimple.getRValue();
-                if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) continue;
-                Map<LValue, Literal> display = MapFactory.newMap();
-                if (rValue instanceof Literal) {
-                    display.put(lValue, (Literal) rValue);
-                }
-                success |= propagateLiteral(method, stm, stm.getTargets().get(0), lValue, rValue, display);
-                // Note - we can't have another go with return back yet, as it would break ternary discovery.
+            /*
+             * This pass helps with scala and dex2jar style output - find a remaining assignment to a stack
+             * variable (or POSSIBLY a local), and follow it through.  If nothing intervenes, and we hit a return, we can
+             * simply replace the entry point.
+             *
+             * We agressively attempt to follow through computable literals.
+             *
+             * Note that we pull this one out here, because it can handle a non-literal assignment -
+             * inside PLReturn we can only handle subsequent literal assignments.
+             */
+            if (stm.getTargets().size() != 1)
+                continue; // shouldn't be possible to be other, but a pruning might have removed.
+            AssignmentSimple assignmentSimple = (AssignmentSimple) inner;
+            LValue lValue = assignmentSimple.getCreatedLValue();
+            Expression rValue = assignmentSimple.getRValue();
+            if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) continue;
+            Map<LValue, Literal> display = MapFactory.newMap();
+            if (rValue instanceof Literal) {
+                display.put(lValue, (Literal) rValue);
             }
+            Op03SimpleStatement next = stm.getTargets().get(0);
+            success |= propagateLiteralReturn(method, stm, next, lValue, rValue, display);
+            // Note - we can't have another go with return back yet, as it would break ternary discovery.
         }
 
 
@@ -1215,7 +1218,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * return temp3;
      *
      */
-    private static boolean propagateLiteral(Method method, Op03SimpleStatement original, final Op03SimpleStatement orignext, final LValue originalLValue, final Expression originalRValue, Map<LValue, Literal> display) {
+    private static boolean propagateLiteralReturn(Method method, Op03SimpleStatement original, final Op03SimpleStatement orignext, final LValue originalLValue, final Expression originalRValue, Map<LValue, Literal> display) {
         Op03SimpleStatement current = orignext;
         Set<Op03SimpleStatement> seen = SetFactory.newSet();
         do {
@@ -1251,14 +1254,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (cls == IfStatement.class) {
                 IfStatement ifStatement = (IfStatement) current.getStatement();
                 Literal literal = ifStatement.getCondition().getComputedLiteral(display);
-                if (literal == null) return false;
-                Boolean bool = literal.getValue().getMaybeBoolValue();
-                if (bool == null) return false;
-                if (bool) {
-                    current = curTargets.get(1);
-                } else {
-                    current = curTargets.get(0);
+                Boolean bool = literal == null ? null : literal.getValue().getMaybeBoolValue();
+                if (bool == null) {
+                    return false;
                 }
+                current = curTargets.get(bool ? 1 : 0);
                 continue;
             }
             return false;
@@ -1280,7 +1280,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * ignore it, and replace the original assignment with the computed literal.
          *
          * If the original rvalue is NOT a literal, AND we are returning the original lValue, we can
-         * return the original rValue.
+         * return the original rValue. (This is why we can't have side effects during the above).
          */
         if (cls == ReturnValueStatement.class) {
             ReturnValueStatement returnValueStatement = (ReturnValueStatement) current.getStatement();
@@ -1303,7 +1303,77 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return false;
     }
 
-    // Should have a set to make sure we've not looped.
+    /*
+     * Another type of literal propagation
+     *
+     * if (x == false) goto b
+     * a: if (y == false) goto c
+     * return FRED
+     * b:
+     * ..
+     * y = false
+     * if (p) goto a
+     * ..
+     * ..
+     * y = true
+     * if (p) goto a
+     * ..
+     * c:
+     *
+     * Above, both the 'goto a' can be replaced with either 'return FRED' or 'goto c'.
+     *
+     * This has the potential for making normal control flow quite ugly, so should be used
+     * as a fallback mechanism.
+     */
+    private static boolean propagateLiteralBranch(Method method, final Op03SimpleStatement original, final Op03SimpleStatement conditional, IfStatement ifStatement, Map<LValue, Literal> display) {
+        if (method.toString().equals("mpc: mpc(android.content.Context )") && original.getIndex().toString().equals("lbl20")) {
+            int x = 1;
+        }
+
+        Op03SimpleStatement improvement = null;
+        /* We're looking for a conditional which we can rewrite the branch on.
+         * Find the target of the conditional, see if it's conditional on a hardcoded value.
+         */
+
+        Op03SimpleStatement target = conditional.getTargets().get(1);
+        final Op03SimpleStatement originalConditionalTarget = target;
+        /*
+         * At this point, we COULD continue to walk nops, gotos and literal assignments.
+         *
+         * TODO : Should work for an IfExitingStatement too (actually, that needs nuking. :P )
+         */
+        do {
+            Statement tgtStatement = target.getStatement();
+            if (!(tgtStatement instanceof IfStatement)) break;
+            IfStatement ifStatement2 = (IfStatement)tgtStatement;
+            Literal literal = ifStatement2.getCondition().getComputedLiteral(display);
+            Boolean bool = literal == null ? null : literal.getValue().getMaybeBoolValue();
+            if (bool == null) break;
+
+            target = target.getTargets().get(bool ? 1 : 0);
+            improvement = target;
+        } while (true);
+
+        if (improvement == null) return false;
+
+        /*
+         * If the improvement target is a return, we can generate an ifExiting here.
+         */
+        Statement improvementStatement = improvement.getStatement();
+        if (improvementStatement instanceof ReturnStatement) {
+            conditional.removeTarget(originalConditionalTarget);
+            originalConditionalTarget.removeSource(conditional);
+            conditional.replaceStatement(new IfExitingStatement(ifStatement.getCondition(), (ReturnStatement)improvementStatement));
+        } else {
+            conditional.replaceTarget(originalConditionalTarget, improvement);
+            improvement.addSource(conditional);
+            originalConditionalTarget.removeSource(conditional);
+        }
+
+        return true;
+    }
+
+        // Should have a set to make sure we've not looped.
     private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource, boolean aggressive) {
         if (in == null) {
             return null;
@@ -3638,26 +3708,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (isOneOrZeroLiteral(e1) != Troolean.TRUE) return false;
             if (isOneOrZeroLiteral(e2) != Troolean.FALSE) return false;
             return true;
-        }
-    }
-
-    public static class TypeFilter<T> implements Predicate<Op03SimpleStatement> {
-        private final Class<T> clazz;
-        private final boolean positive;
-
-        public TypeFilter(Class<T> clazz) {
-            this.clazz = clazz;
-            this.positive = true;
-        }
-
-        public TypeFilter(Class<T> clazz, boolean positive) {
-            this.clazz = clazz;
-            this.positive = positive;
-        }
-
-        @Override
-        public boolean test(Op03SimpleStatement in) {
-            return (positive == clazz.isInstance(in.containedStatement));
         }
     }
 

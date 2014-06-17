@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.TypeFilter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -122,7 +123,7 @@ public class Op03Blocks {
 
     private static Map<BlockIdentifier, BlockIdentifier> getTryBlockAliases(List<Op03SimpleStatement> statements) {
         Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = MapFactory.newMap();
-        List<Op03SimpleStatement> catchStatements = Functional.filter(statements, new Op03SimpleStatement.TypeFilter<CatchStatement>(CatchStatement.class));
+        List<Op03SimpleStatement> catchStatements = Functional.filter(statements, new TypeFilter<CatchStatement>(CatchStatement.class));
         catchlist:
         for (Op03SimpleStatement catchStatementCtr : catchStatements) {
             CatchStatement catchStatement = (CatchStatement) catchStatementCtr.getStatement();

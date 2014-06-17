@@ -7,6 +7,7 @@ public class DecompilerComment implements Dumpable {
 
     public static DecompilerComment UNABLE_TO_STRUCTURE = new DecompilerComment("Unable to fully structure code", true);
     public static DecompilerComment AGGRESSIVE_TOPOLOGICAL_SORT = new DecompilerComment("Enabled aggressive block sorting");
+    public static DecompilerComment COND_PROPAGATE = new DecompilerComment("Enabled force condition propagation");
     public static DecompilerComment PRUNE_EXCEPTIONS = new DecompilerComment("Enabled unnecessary exception pruning");
     public static DecompilerComment COMMENT_MONITORS = new DecompilerComment("Converted monitor instructions to comments");
     public static DecompilerComment PARAMETER_CORRUPTION = new DecompilerComment("WARNING - Possible parameter corruption");

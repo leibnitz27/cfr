@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.TypeFilter;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
@@ -44,7 +45,7 @@ public class FinalAnalyzer {
          * We only need worry about try statements which have a 'Throwable' handler.
          */
         List<Op03SimpleStatement> targets = in.getTargets();
-        List<Op03SimpleStatement> catchStarts = Functional.filter(targets, new Op03SimpleStatement.TypeFilter<CatchStatement>(CatchStatement.class));
+        List<Op03SimpleStatement> catchStarts = Functional.filter(targets, new TypeFilter<CatchStatement>(CatchStatement.class));
         Set<Op03SimpleStatement> possibleCatches = SetFactory.newOrderedSet();
         for (Op03SimpleStatement catchS : catchStarts) {
             CatchStatement catchStatement = (CatchStatement) catchS.getStatement();
@@ -584,7 +585,7 @@ public class FinalAnalyzer {
          * ... except if they immediately jump into try blocks.
          */
         List<Op03SimpleStatement> targets = in.getTargets();
-        List<Op03SimpleStatement> catchStarts = Functional.filter(targets, new Op03SimpleStatement.TypeFilter<CatchStatement>(CatchStatement.class));
+        List<Op03SimpleStatement> catchStarts = Functional.filter(targets, new TypeFilter<CatchStatement>(CatchStatement.class));
         Set<Op03SimpleStatement> possibleCatches = SetFactory.newOrderedSet();
         Set<Op03SimpleStatement> recTries = SetFactory.newSet();
         for (Op03SimpleStatement catchS : catchStarts) {
@@ -862,7 +863,7 @@ public class FinalAnalyzer {
          * For try blocks which START inside the catch block, and ALSO vector to the same finally
          * as the ORIGINAL outer try, we expect them to have a Result after them.
          */
-        List<Op03SimpleStatement> tryStatements = Functional.filter(statementsInCatch, new Op03SimpleStatement.TypeFilter<TryStatement>(TryStatement.class));
+        List<Op03SimpleStatement> tryStatements = Functional.filter(statementsInCatch, new TypeFilter<TryStatement>(TryStatement.class));
         addPeerTries(tryStatements, peerTries);
 
         List<Result> matchedFinallyClones = ListFactory.newList();
