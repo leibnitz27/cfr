@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Cleaner;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.TypeFilter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
@@ -421,7 +423,7 @@ public class Op03Blocks {
     public static List<Op03SimpleStatement> combineTryBlocks(final Method method, final List<Op03SimpleStatement> statements) {
         Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = getTryBlockAliases(statements);
         stripTryBlockAliases(statements, tryBlockAliases);
-        return Op03SimpleStatement.removeUnreachableCode(statements, true);
+        return Cleaner.removeUnreachableCode(statements, true);
     }
 
     public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements, final DecompilerComments comments, final Options options) {
@@ -503,7 +505,7 @@ public class Op03Blocks {
         }
 
         if (patched) {
-            outStatements = Op03SimpleStatement.renumber(outStatements);
+            outStatements = Cleaner.renumber(outStatements);
         }
 
         stripTryBlockAliases(outStatements, tryBlockAliases);
@@ -518,7 +520,7 @@ public class Op03Blocks {
             }
         }
 
-        return Op03SimpleStatement.removeUnreachableCode(outStatements, true);
+        return Cleaner.removeUnreachableCode(outStatements, true);
     }
 
     private static boolean stripBackExceptions(List<Op03SimpleStatement> statements) {
@@ -529,7 +531,7 @@ public class Op03Blocks {
 
             if (statement.getTargets().isEmpty()) continue;
             Op03SimpleStatement fallThrough = statement.getTargets().get(0);
-            List<Op03SimpleStatement> backTargets = Functional.filter(statement.getTargets(), new Op03SimpleStatement.IsForwardJumpTo(statement.getIndex()));
+            List<Op03SimpleStatement> backTargets = Functional.filter(statement.getTargets(), new Misc.IsForwardJumpTo(statement.getIndex()));
             boolean thisRes = false;
             for (Op03SimpleStatement backTarget : backTargets) {
                 Statement backTargetStatement = backTarget.getStatement();

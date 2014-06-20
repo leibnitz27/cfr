@@ -27,7 +27,7 @@ public class RemoveDeterministicJumps {
             success |= propagateLiteralReturn(method, stm, display);
         }
 
-        if (success) Op03SimpleStatement.removeUnreachableCode(statements, true);
+        if (success) Cleaner.removeUnreachableCode(statements, true);
     }
 
     private static boolean propagateLiteralReturn(Method method, Op03SimpleStatement original, Map<LValue, Literal> display) {

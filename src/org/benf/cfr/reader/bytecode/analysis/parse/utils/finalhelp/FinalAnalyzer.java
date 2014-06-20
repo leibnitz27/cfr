@@ -2,6 +2,8 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.CompareByIndex;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.TypeFilter;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -115,7 +117,7 @@ public class FinalAnalyzer {
          * Looking at the ORIGINAL try block, find the last catch block for it.
          */
         List<Op03SimpleStatement> originalTryTargets = ListFactory.newList(SetFactory.newOrderedSet(in.getTargets()));
-        Collections.sort(originalTryTargets, new Op03SimpleStatement.CompareByIndex());
+        Collections.sort(originalTryTargets, new CompareByIndex());
         Op03SimpleStatement lastCatch = originalTryTargets.get(originalTryTargets.size() - 1);
         if (!(lastCatch.getStatement() instanceof CatchStatement)) {
             // For a try / finally, we'll still have a pointless catch-rethrow.
@@ -267,7 +269,7 @@ public class FinalAnalyzer {
 
         Result cloneThis = results.iterator().next();
         List<Op03SimpleStatement> oldFinallyBody = ListFactory.newList(cloneThis.getToRemove());
-        Collections.sort(oldFinallyBody, new Op03SimpleStatement.CompareByIndex());
+        Collections.sort(oldFinallyBody, new CompareByIndex());
         List<Op03SimpleStatement> newFinallyBody = ListFactory.newList();
         Set<BlockIdentifier> oldStartBlocks = SetFactory.newOrderedSet(oldFinallyBody.get(0).getBlockIdentifiers());
 
@@ -340,7 +342,7 @@ public class FinalAnalyzer {
             for (Op03SimpleStatement tgt : old.getTargets()) {
                 Op03SimpleStatement newTgt = old2new.get(tgt);
                 if (newTgt == null) {
-                    if (Op03SimpleStatement.followNopGotoChain(tgt, false, false) == cloneThis.getAfterEnd()) {
+                    if (Misc.followNopGotoChain(tgt, false, false) == cloneThis.getAfterEnd()) {
                         /*
                          * It's not in the block....
                          *
@@ -922,7 +924,7 @@ public class FinalAnalyzer {
          * This is a hack.
          */
         List<Op03SimpleStatement> tmp = ListFactory.newList(possibleCatches);
-        Collections.sort(tmp, new Op03SimpleStatement.CompareByIndex());
+        Collections.sort(tmp, new CompareByIndex());
         Op03SimpleStatement catchS = tmp.get(tmp.size() - 1);
         return catchS;
     }
