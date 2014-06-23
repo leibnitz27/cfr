@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.Op02LambdaRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
@@ -68,18 +69,23 @@ public class CodeAnalyser {
         public DecompilerComments comments;
         public Op04StructuredStatement code;
         public boolean failed;
+        public boolean exception;
 
         private AnalysisResult(DecompilerComments comments, Op04StructuredStatement code) {
             this.comments = comments;
             this.code = code;
             boolean failed = false;
+            boolean exception = false;
             for (DecompilerComment comment : comments.getCommentList()) {
                 if (comment.isFailed()) {
                     failed = true;
-                    break;
+                }
+                if (comment.isException()) {
+                    exception = true;
                 }
             }
             this.failed = failed;
+            this.exception = exception;
         }
     }
 
@@ -87,10 +93,14 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.RECOVER_TYPECLASHES, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.LIVENESS_CLASH))
     );
 
+    private static final RecoveryOptions recover0a = new RecoveryOptions(recover0,
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE, DecompilerComment.COND_PROPAGATE)
+    );
+
     private static final RecoveryOptions recover1 = new RecoveryOptions(recover0,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RET_PROPAGATE, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
     );
@@ -99,7 +109,7 @@ public class CodeAnalyser {
             new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover1, recover2};
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recover1, recover2};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
@@ -134,7 +144,15 @@ public class CodeAnalyser {
                     RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
                     if (!applied.valid) continue;
                     AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments, bytecodeMeta);
-                    if (nextRes != null) res = nextRes;
+                    if (nextRes != null) {
+                        if (res.failed && nextRes.failed) {
+                            // If they both failed, only replace if the later failure is not an exception.
+                            // (or if the earlier one is).
+                            if (res.exception || !nextRes.exception) res = nextRes;
+                        } else {
+                            res = nextRes;
+                        }
+                    }
                     if (res.failed) continue;
                     break;
                 }
@@ -343,28 +361,28 @@ public class CodeAnalyser {
         }
 
         // Expand any 'multiple' statements (eg from dups)
-        Op03SimpleStatement.flattenCompoundStatements(op03SimpleParseNodes);
+        Misc.flattenCompoundStatements(op03SimpleParseNodes);
 
         // Very early, we make a pass through collecting all the method calls for a given type
         // SPECIFICALLY by type pointer, don't alias identical types.
         // We then see if we can infer information from RHS <- LHS re generics, but make sure that we
         // don't do it over aggressively (see UntypedMapTest);
-        Op03SimpleStatement.inferGenericObjectInfoFromCalls(op03SimpleParseNodes);
+        GenericInferer.inferGenericObjectInfoFromCalls(op03SimpleParseNodes);
 
         // Expand raw switch statements into more useful ones.
-        Op03SimpleStatement.replaceRawSwitches(op03SimpleParseNodes, blockIdentifierFactory);
-        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory);
+        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
 
         // Remove 2nd (+) jumps in pointless jump chains.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
-        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
 
         Op03SimpleStatement.assignSSAIdentifiers(method, op03SimpleParseNodes);
 
         // Condense pointless assignments
-        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
-        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+        LValueProp.condenseLValues(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
 
 
         // Try to eliminate catch temporaries.
@@ -391,7 +409,7 @@ public class CodeAnalyser {
 
         // Rewrite new / constructor pairs.
         Op03SimpleStatement.condenseConstruction(dcCommonState, method, op03SimpleParseNodes);
-        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
+        LValueProp.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
 
         op03SimpleParseNodes = Op03SimpleStatement.removeRedundantTries(op03SimpleParseNodes);
@@ -399,8 +417,8 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
 
-        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, !willSort);
-        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, !willSort);
+        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
 
         /*
          * See if try blocks can be extended with simple returns here.  This is an extra pass, because we might have
@@ -411,7 +429,7 @@ public class CodeAnalyser {
 
         // Remove LValues which are on their own as expressionstatements.
         Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
-        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, !willSort);
+        op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, !willSort);
 
         // Now we've done our first stage condensation, we want to transform assignments which are
         // self updates into preChanges, if we can.  I.e. x = x | 3  ->  x |= 3,  x = x + 1 -> x+=1 (===++x).
@@ -424,19 +442,23 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
 
         // Condense again, now we've simplified constructors.
-        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
-        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+        LValueProp.condenseLValues(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+
+        if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
+            RemoveDeterministicJumps.apply(method, op03SimpleParseNodes);
+        }
 
         if (options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
-            op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, false);
+            op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, false);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes, comments, options);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
             /*
              * Now we've sorted, we need to rebuild switch blocks.....
              */
-            Op03SimpleStatement.rebuildSwitches(op03SimpleParseNodes);
+            SwitchReplacer.rebuildSwitches(op03SimpleParseNodes);
             /*
              * This set of operations is /very/ aggressive.
              */
@@ -450,7 +472,11 @@ public class CodeAnalyser {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
         }
 
-        if (options.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
+        /*
+         * Push constants through conditionals to returns ( move the returns back )- i.e. if the value we're
+         * returning is deterministic, return that.
+         */
+        if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
             Op03SimpleStatement.propagateToReturn(method, op03SimpleParseNodes);
         }
 
@@ -460,7 +486,7 @@ public class CodeAnalyser {
 
 
         logger.info("sugarAnyonymousArrays");
-        Op03SimpleStatement.resugarAnonymousArrays(op03SimpleParseNodes);
+        AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
 
         boolean reloop = false;
         do {
@@ -474,12 +500,12 @@ public class CodeAnalyser {
             // hard to work out later.  This isn't going to get everything, but may help!
             reloop = Op03SimpleStatement.condenseConditionals2(op03SimpleParseNodes);
 
-            op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, true);
+            op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
         } while (reloop);
 
         logger.info("simplifyConditionals");
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes);
-        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
 
         // Rewrite conditionals which jump into an immediate jump (see specifics)
         logger.info("rewriteNegativeJumps");
@@ -513,7 +539,7 @@ public class CodeAnalyser {
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
-        Op03SimpleStatement.identifyLoops1(method, op03SimpleParseNodes, blockIdentifierFactory);
+        LoopIdentifier.identifyLoops1(method, op03SimpleParseNodes, blockIdentifierFactory);
 
         // After we've identified loops, try to push any instructions through a goto
         op03SimpleParseNodes = Op03SimpleStatement.pushThroughGoto(method, op03SimpleParseNodes);
@@ -528,8 +554,8 @@ public class CodeAnalyser {
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
 
-        op03SimpleParseNodes = Op03SimpleStatement.renumber(op03SimpleParseNodes);
-        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, true);
+        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
 
         if (showOpsLevel == SHOW_L3_EXCEPTION_BLOCKS) {
             debugDumper.newln().newln();
@@ -564,10 +590,10 @@ public class CodeAnalyser {
 
         // Identify simple (nested) conditionals - note that this also generates ternary expressions,
         // if the conditional is simple enough.
-        Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
         // Condense again, now we've simplified conditionals, ternaries, etc.
-        Op03SimpleStatement.condenseLValues(op03SimpleParseNodes);
-        if (options.getOption(OptionsImpl.FORCE_RET_PROPAGATE) == Troolean.TRUE) {
+        LValueProp.condenseLValues(op03SimpleParseNodes);
+        if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
             Op03SimpleStatement.propagateToReturn2(method, op03SimpleParseNodes);
         }
 
@@ -597,21 +623,21 @@ public class CodeAnalyser {
         //
 //        Op03SimpleStatement.replaceAssignReturns(op03SimpleParseNodes);
         //
-        Op03SimpleStatement.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+        ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
         // Introduce java 6 style for (x : array)
         logger.info("rewriteArrayForLoops");
         if (options.getOption(OptionsImpl.ARRAY_ITERATOR, classFileVersion)) {
-            Op03SimpleStatement.rewriteArrayForLoops(op03SimpleParseNodes);
+            IterLoopRewriter.rewriteArrayForLoops(op03SimpleParseNodes);
         }
         // and for (x : iterable)
         logger.info("rewriteIteratorWhileLoops");
         if (options.getOption(OptionsImpl.COLLECTION_ITERATOR, classFileVersion)) {
-            Op03SimpleStatement.rewriteIteratorWhileLoops(op03SimpleParseNodes);
+            IterLoopRewriter.rewriteIteratorWhileLoops(op03SimpleParseNodes);
         }
 
         logger.info("findSynchronizedBlocks");
-        Op03SimpleStatement.findSynchronizedBlocks(op03SimpleParseNodes);
+        SynchronizedBlocks.findSynchronizedBlocks(op03SimpleParseNodes);
 
         logger.info("removePointlessSwitchDefaults");
         Op03SimpleStatement.removePointlessSwitchDefaults(op03SimpleParseNodes);
@@ -639,7 +665,7 @@ public class CodeAnalyser {
             debugDumper.print("Final Op3 statements:\n");
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
-        op03SimpleParseNodes = Op03SimpleStatement.removeUnreachableCode(op03SimpleParseNodes, true);
+        op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
 
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
             Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
@@ -659,7 +685,7 @@ public class CodeAnalyser {
          */
         Op03SimpleStatement.replaceStackVarsWithLocals(op03SimpleParseNodes);
 
-        Op03SimpleStatement.reindexInPlace(op03SimpleParseNodes);
+        Cleaner.reindexInPlace(op03SimpleParseNodes);
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         Op04StructuredStatement.tidyEmptyCatch(block);

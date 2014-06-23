@@ -41,7 +41,9 @@ public abstract class AbstractStatement implements Statement {
 
     @Override
     public StatementContainer<Statement> getContainer() {
-        if (container == null) throw new ConfusedCFRException("Null container!");
+//        if (container == null) {
+//            throw new ConfusedCFRException("Null container!");
+//        }
         return container;
     }
 

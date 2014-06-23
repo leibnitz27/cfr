@@ -1,28 +1,19 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
-import org.benf.cfr.reader.bytecode.BytecodeMeta;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NOPSearchingExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StackVarToLocalRewriter;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AccountingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
-import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
-import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheckImpl;
@@ -40,7 +31,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, Dumpable, StatementContainer<Statement>, IndexedStatement {
@@ -105,6 +95,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     @Override
     public List<Op03SimpleStatement> getTargets() {
         return targets;
+    }
+
+    public void setLinearlyNext(Op03SimpleStatement linearlyNext) {
+        this.linearlyNext = linearlyNext;
+    }
+
+    public Op03SimpleStatement getLinearlyPrevious() {
+        return linearlyPrevious;
+    }
+
+    public void setLinearlyPrevious(Op03SimpleStatement linearlyPrevious) {
+        this.linearlyPrevious = linearlyPrevious;
+    }
+
+    public BlockIdentifier getFirstStatementInThisBlock() {
+        return firstStatementInThisBlock;
+    }
+
+    public void setFirstStatementInThisBlock(BlockIdentifier firstStatementInThisBlock) {
+        this.firstStatementInThisBlock = firstStatementInThisBlock;
     }
 
     @Override
@@ -258,7 +268,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (this.firstStatementInThisBlock == null) this.firstStatementInThisBlock = other3.firstStatementInThisBlock;
     }
 
-    private boolean isNop() {
+    public boolean isNop() {
         return isNop;
     }
 
@@ -319,10 +329,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.index = index;
     }
 
+    public BlockIdentifier getThisComparisonBlock() {
+        return thisComparisonBlock;
+    }
+
+    public void clearThisComparisonBlock() {
+        thisComparisonBlock = null;
+    }
     /*
      * TODO : This is gross.
      */
-    private void markBlockStatement(BlockIdentifier blockIdentifier, Op03SimpleStatement lastInBlock, Op03SimpleStatement blockEnd, List<Op03SimpleStatement> statements) {
+    public void markBlockStatement(BlockIdentifier blockIdentifier, Op03SimpleStatement lastInBlock, Op03SimpleStatement blockEnd, List<Op03SimpleStatement> statements) {
         if (thisComparisonBlock != null) {
             throw new ConfusedCFRException("Statement marked as the start of multiple blocks");
         }
@@ -389,19 +406,19 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.firstStatementInThisBlock = blockIdentifier;
     }
 
-    private void markBlock(BlockIdentifier blockIdentifier) {
+    public void markBlock(BlockIdentifier blockIdentifier) {
         containedInBlocks.add(blockIdentifier);
     }
 
-    private void collect(LValueAssignmentAndAliasCondenser lValueAssigmentCollector) {
+    public void collect(LValueAssignmentAndAliasCondenser lValueAssigmentCollector) {
         containedStatement.collectLValueAssignments(lValueAssigmentCollector);
     }
 
-    private void condense(LValueRewriter lValueRewriter) {
+    public void condense(LValueRewriter lValueRewriter) {
         containedStatement.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers);
     }
 
-    private void rewrite(ExpressionRewriter expressionRewriter) {
+    public void rewrite(ExpressionRewriter expressionRewriter) {
         containedStatement.rewriteExpressions(expressionRewriter, ssaIdentifiers);
     }
 
@@ -436,19 +453,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    /*
-     * Op02 and 3 should both implement indexable, so we can share this.
-     */
-    public static class CompareByIndex implements Comparator<Op03SimpleStatement> {
-        @Override
-        public int compare(Op03SimpleStatement a, Op03SimpleStatement b) {
-            int res = a.getIndex().compareTo(b.getIndex());
-            if (res == 0) {
-                throw new ConfusedCFRException("Can't sort instructions:\n" + a + "\n" + b);
-            }
-            return res;
-        }
-    }
+
 
     private boolean needsLabel() {
         if (sources.size() > 1) return true;
@@ -504,11 +509,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 containedStatement.getStructuredStatement());
     }
 
-    private boolean isCompound() {
+    public boolean isCompound() {
         return containedStatement.isCompound();
     }
 
-    private List<Op03SimpleStatement> splitCompound() {
+    public List<Op03SimpleStatement> splitCompound() {
         List<Op03SimpleStatement> result = ListFactory.newList();
         List<Statement> innerStatements = containedStatement.getCompoundParts();
         InstrIndex nextIndex = index.justAfter();
@@ -540,18 +545,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return result;
     }
 
-    public static void flattenCompoundStatements(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> newStatements = ListFactory.newList();
-        for (Op03SimpleStatement statement : statements) {
-            if (statement.isCompound()) {
-                newStatements.addAll(statement.splitCompound());
-            }
-        }
-        statements.addAll(newStatements);
-    }
+
 
     private void collectLocallyMutatedVariables(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
         this.ssaIdentifiers = containedStatement.collectLocallyMutatedVariables(ssaIdentifierFactory);
+    }
+
+    public void forceSSAIdentifiers(SSAIdentifiers<LValue> newIdentifiers) {
+        this.ssaIdentifiers = newIdentifiers;
     }
 
     public static void assignSSAIdentifiers(Method method, List<Op03SimpleStatement> statements) {
@@ -677,56 +678,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     public static void determineFinal(List<Op03SimpleStatement> statements, VariableFactory variableFactory) {
     }
 
-    public static void condenseLValues(List<Op03SimpleStatement> statements) {
-
-        /*
-         * [todo - fix accounting].
-         * Unfortunately, the accounting for stack entries is a bit wrong.  This pass will make
-         * sure it's correct. :P
-         */
-        AccountingRewriter accountingRewriter = new AccountingRewriter();
-        for (Op03SimpleStatement statement : statements) {
-            statement.rewrite(accountingRewriter);
-        }
-        accountingRewriter.flush();
-
-
-        LValueAssignmentAndAliasCondenser lValueAssigmentCollector = new LValueAssignmentAndAliasCondenser();
-        for (Op03SimpleStatement statement : statements) {
-            statement.collect(lValueAssigmentCollector);
-        }
-
-        /*
-         * Can we replace any mutable values?
-         * If we found any on the first pass, we will try to move them here.
-         */
-        LValueAssignmentAndAliasCondenser.MutationRewriterFirstPass firstPassRewriter = lValueAssigmentCollector.getMutationRewriterFirstPass();
-        if (firstPassRewriter != null) {
-            for (Op03SimpleStatement statement : statements) {
-                statement.condense(firstPassRewriter);
-            }
-
-            LValueAssignmentAndAliasCondenser.MutationRewriterSecondPass secondPassRewriter = firstPassRewriter.getSecondPassRewriter();
-            if (secondPassRewriter != null) {
-                for (Op03SimpleStatement statement : statements) {
-                    statement.condense(secondPassRewriter);
-                }
-            }
-        }
-
-        /*
-         * Don't actually rewrite anything, but have an additional pass through to see if there are any aliases we can replace.
-         */
-        LValueAssignmentAndAliasCondenser.AliasRewriter multiRewriter = lValueAssigmentCollector.getAliasRewriter();
-        for (Op03SimpleStatement statement : statements) {
-            statement.condense(multiRewriter);
-        }
-        multiRewriter.inferAliases();
-
-        for (Op03SimpleStatement statement : statements) {
-            statement.condense(lValueAssigmentCollector);
-        }
-    }
 
     /*
      * vX = ?
@@ -985,32 +936,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     /*
-     * lbl: [to which there is a backjump]
-     * a = 3
-     * if (a == 4) foo
-     * ->
-     * lbl:
-     * if ((a=3)==4) foo
-     */
-    private static void rollAssignmentsIntoConditional(Op03SimpleStatement conditional) {
-        /* Generate a list of all the assignments before this statement in a straight line, until there
-         * is a back source.
-         *
-         * For each of these, IF that value is NOT used between its location and 'conditional', AND
-         * the RHS is compatible with the SSAIdentifiers of 'conditional', then it can be inserted
-         * as a mutating expression in 'conditional'.
-         *
-         */
-    }
-
-    public static void rollAssignmentsIntoConditionals(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> conditionals = Functional.filter(statements, new TypeFilter(IfStatement.class));
-        for (Op03SimpleStatement conditional : conditionals) {
-            rollAssignmentsIntoConditional(conditional);
-        }
-    }
-
-    /*
      * We look for related groups of conditionals, such that
      *
      * if (c1) then b
@@ -1061,14 +986,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private static void replaceReturningIf(Op03SimpleStatement ifStatement, boolean aggressive) {
         if (!(ifStatement.containedStatement.getClass() == IfStatement.class)) return;
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
-        if (ifStatement.getTargets().size() != 2) {
-            int x = 1;
-        }
         Op03SimpleStatement tgt = ifStatement.getTargets().get(1);
         final Op03SimpleStatement origtgt = tgt;
         boolean requireJustOneSource = !aggressive;
         do {
-            Op03SimpleStatement next = followNopGoto(tgt, requireJustOneSource, aggressive);
+            Op03SimpleStatement next = Misc.followNopGoto(tgt, requireJustOneSource, aggressive);
             if (next == tgt) break;
             tgt = next;
         } while (true);
@@ -1088,7 +1010,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         final Op03SimpleStatement origtgt = tgt;
         boolean requireJustOneSource = !aggressive;
         do {
-            Op03SimpleStatement next = followNopGoto(tgt, requireJustOneSource, aggressive);
+            Op03SimpleStatement next = Misc.followNopGoto(tgt, requireJustOneSource, aggressive);
             if (next == tgt) break;
             tgt = next;
         } while (true);
@@ -1115,29 +1037,34 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      */
     public static void propagateToReturn(Method method, List<Op03SimpleStatement> statements) {
         boolean success = false;
-        for (Op03SimpleStatement stm : statements) {
+
+        List<Op03SimpleStatement> assignmentSimples = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
+
+        for (Op03SimpleStatement stm : assignmentSimples) {
             Statement inner = stm.getStatement();
-            if (inner.getClass() == AssignmentSimple.class) {
-                /*
-                 * This pass helps with scala and dex2jar style output - find a remaining assignment to a stack
-                 * variable (or POSSIBLY a local), and follow it through.  If nothing intervenes, and we hit a return, we can
-                 * simply replace the entry point.
-                 *
-                 * We agressively attempt to follow through computable literals.
-                 */
-                if (stm.getTargets().size() != 1)
-                    continue; // shouldn't be possible to be other, but a pruning might have removed.
-                AssignmentSimple assignmentSimple = (AssignmentSimple) inner;
-                LValue lValue = assignmentSimple.getCreatedLValue();
-                Expression rValue = assignmentSimple.getRValue();
-                if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) continue;
-                Map<LValue, Literal> display = MapFactory.newMap();
-                if (rValue instanceof Literal) {
-                    display.put(lValue, (Literal) rValue);
-                }
-                success |= propagateLiteral(method, stm, stm.getTargets().get(0), lValue, rValue, display);
-                // Note - we can't have another go with return back yet, as it would break ternary discovery.
+            /*
+             * This pass helps with scala and dex2jar style output - find a remaining assignment to a stack
+             * variable (or POSSIBLY a local), and follow it through.  If nothing intervenes, and we hit a return, we can
+             * simply replace the entry point.
+             *
+             * We agressively attempt to follow through computable literals.
+             *
+             * Note that we pull this one out here, because it can handle a non-literal assignment -
+             * inside PLReturn we can only handle subsequent literal assignments.
+             */
+            if (stm.getTargets().size() != 1)
+                continue; // shouldn't be possible to be other, but a pruning might have removed.
+            AssignmentSimple assignmentSimple = (AssignmentSimple) inner;
+            LValue lValue = assignmentSimple.getCreatedLValue();
+            Expression rValue = assignmentSimple.getRValue();
+            if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) continue;
+            Map<LValue, Literal> display = MapFactory.newMap();
+            if (rValue instanceof Literal) {
+                display.put(lValue, (Literal) rValue);
             }
+            Op03SimpleStatement next = stm.getTargets().get(0);
+            success |= propagateLiteralReturn(method, stm, next, lValue, rValue, display);
+            // Note - we can't have another go with return back yet, as it would break ternary discovery.
         }
 
 
@@ -1215,7 +1142,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * return temp3;
      *
      */
-    private static boolean propagateLiteral(Method method, Op03SimpleStatement original, final Op03SimpleStatement orignext, final LValue originalLValue, final Expression originalRValue, Map<LValue, Literal> display) {
+    private static boolean propagateLiteralReturn(Method method, Op03SimpleStatement original, final Op03SimpleStatement orignext, final LValue originalLValue, final Expression originalRValue, Map<LValue, Literal> display) {
         Op03SimpleStatement current = orignext;
         Set<Op03SimpleStatement> seen = SetFactory.newSet();
         do {
@@ -1251,14 +1178,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (cls == IfStatement.class) {
                 IfStatement ifStatement = (IfStatement) current.getStatement();
                 Literal literal = ifStatement.getCondition().getComputedLiteral(display);
-                if (literal == null) return false;
-                Boolean bool = literal.getValue().getMaybeBoolValue();
-                if (bool == null) return false;
-                if (bool) {
-                    current = curTargets.get(1);
-                } else {
-                    current = curTargets.get(0);
+                Boolean bool = literal == null ? null : literal.getValue().getMaybeBoolValue();
+                if (bool == null) {
+                    return false;
                 }
+                current = curTargets.get(bool ? 1 : 0);
                 continue;
             }
             return false;
@@ -1280,7 +1204,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
          * ignore it, and replace the original assignment with the computed literal.
          *
          * If the original rvalue is NOT a literal, AND we are returning the original lValue, we can
-         * return the original rValue.
+         * return the original rValue. (This is why we can't have side effects during the above).
          */
         if (cls == ReturnValueStatement.class) {
             ReturnValueStatement returnValueStatement = (ReturnValueStatement) current.getStatement();
@@ -1303,34 +1227,76 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return false;
     }
 
-    // Should have a set to make sure we've not looped.
-    private static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource, boolean aggressive) {
-        if (in == null) {
-            return null;
+    /*
+     * Another type of literal propagation
+     *
+     * if (x == false) goto b
+     * a: if (y == false) goto c
+     * return FRED
+     * b:
+     * ..
+     * y = false
+     * if (p) goto a
+     * ..
+     * ..
+     * y = true
+     * if (p) goto a
+     * ..
+     * c:
+     *
+     * Above, both the 'goto a' can be replaced with either 'return FRED' or 'goto c'.
+     *
+     * This has the potential for making normal control flow quite ugly, so should be used
+     * as a fallback mechanism.
+     */
+    private static boolean propagateLiteralBranch(Method method, final Op03SimpleStatement original, final Op03SimpleStatement conditional, IfStatement ifStatement, Map<LValue, Literal> display) {
+        if (method.toString().equals("mpc: mpc(android.content.Context )") && original.getIndex().toString().equals("lbl20")) {
+            int x = 1;
         }
-        if (requireJustOneSource && in.sources.size() != 1) return in;
-        if (in.targets.size() != 1) return in;
-        Statement statement = in.getStatement();
-        if (statement instanceof Nop ||
-                statement instanceof GotoStatement ||
-                (aggressive && statement instanceof CaseStatement) ||
-                (aggressive && statement instanceof MonitorExitStatement)) {
 
-            in = in.targets.get(0);
-        }
-        return in;
-    }
+        Op03SimpleStatement improvement = null;
+        /* We're looking for a conditional which we can rewrite the branch on.
+         * Find the target of the conditional, see if it's conditional on a hardcoded value.
+         */
 
-    public static Op03SimpleStatement followNopGotoChain(Op03SimpleStatement in, boolean requireJustOneSource, boolean skipLabels) {
-        if (in == null) return null;
-        Set<Op03SimpleStatement> seen = SetFactory.newSet();
+        Op03SimpleStatement target = conditional.getTargets().get(1);
+        final Op03SimpleStatement originalConditionalTarget = target;
+        /*
+         * At this point, we COULD continue to walk nops, gotos and literal assignments.
+         *
+         * TODO : Should work for an IfExitingStatement too (actually, that needs nuking. :P )
+         */
         do {
-            if (!seen.add(in)) return in;
-            Op03SimpleStatement next = followNopGoto(in, requireJustOneSource, skipLabels);
-            if (next == in) return in;
-            in = next;
+            Statement tgtStatement = target.getStatement();
+            if (!(tgtStatement instanceof IfStatement)) break;
+            IfStatement ifStatement2 = (IfStatement)tgtStatement;
+            Literal literal = ifStatement2.getCondition().getComputedLiteral(display);
+            Boolean bool = literal == null ? null : literal.getValue().getMaybeBoolValue();
+            if (bool == null) break;
+
+            target = target.getTargets().get(bool ? 1 : 0);
+            improvement = target;
         } while (true);
+
+        if (improvement == null) return false;
+
+        /*
+         * If the improvement target is a return, we can generate an ifExiting here.
+         */
+        Statement improvementStatement = improvement.getStatement();
+        if (improvementStatement instanceof ReturnStatement) {
+            conditional.removeTarget(originalConditionalTarget);
+            originalConditionalTarget.removeSource(conditional);
+            conditional.replaceStatement(new IfExitingStatement(ifStatement.getCondition(), (ReturnStatement)improvementStatement));
+        } else {
+            conditional.replaceTarget(originalConditionalTarget, improvement);
+            improvement.addSource(conditional);
+            originalConditionalTarget.removeSource(conditional);
+        }
+
+        return true;
     }
+
 
     private static boolean condenseConditional2_type2(Op03SimpleStatement ifStatement) {
         return false;
@@ -1365,9 +1331,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         final Op03SimpleStatement nottaken2Immed = nottaken2;
         if (nottaken2Immed.sources.size() != 1) return false;
         Op03SimpleStatement notTaken2Source = ifStatement2;
-        nottaken2 = followNopGotoChain(nottaken2, true, false);
+        nottaken2 = Misc.followNopGotoChain(nottaken2, true, false);
         do {
-            Op03SimpleStatement nontaken2rewrite = followNopGoto(nottaken2, true, false);
+            Op03SimpleStatement nontaken2rewrite = Misc.followNopGoto(nottaken2, true, false);
             if (nontaken2rewrite == nottaken2) break;
             notTaken2Source = nottaken2;
             nottaken2 = nontaken2rewrite;
@@ -1380,7 +1346,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         final Op03SimpleStatement nottaken3Immed = nottaken3;
         Op03SimpleStatement notTaken3Source = ifStatement3;
         do {
-            Op03SimpleStatement nontaken3rewrite = followNopGoto(nottaken3, true, false);
+            Op03SimpleStatement nontaken3rewrite = Misc.followNopGoto(nottaken3, true, false);
             if (nontaken3rewrite == nottaken3) break;
             notTaken3Source = nottaken3;
             nottaken3 = nontaken3rewrite;
@@ -1658,95 +1624,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static List<Op03SimpleStatement> removeUnreachableCode(final List<Op03SimpleStatement> statements, final boolean checkBackJumps) {
-        final Set<Op03SimpleStatement> reachable = SetFactory.newSet();
-        reachable.add(statements.get(0));
-        GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(0), new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
-            @Override
-            public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                reachable.add(arg1);
-//                if (!statements.contains(arg1)) {
-//                    throw new IllegalStateException("Statement missing");
-//                }
-                arg2.enqueue(arg1.getTargets());
-                for (Op03SimpleStatement source : arg1.getSources()) {
-//                    if (!statements.contains(source)) {
-//                        throw new IllegalStateException("Source not in graph!");
-//                    }
-                    if (!source.getTargets().contains(arg1)) {
-                        throw new IllegalStateException("Inconsistent graph " + source + " does not have a target of " + arg1);
-                    }
-                }
-                for (Op03SimpleStatement test : arg1.getTargets()) {
-                    // Also, check for backjump targets on non jumps.
-                    Statement argContained = arg1.getStatement();
-                    if (checkBackJumps) {
-                        if (!(argContained instanceof JumpingStatement || argContained instanceof WhileStatement)) {
-                            if (test.getIndex().isBackJumpFrom(arg1)) {
-                                throw new IllegalStateException("Backjump on non jumping statement " + arg1);
-                            }
-                        }
-                    }
-                    if (!test.getSources().contains(arg1)) {
-                        throw new IllegalStateException("Inconsistent graph " + test + " does not have a source " + arg1);
-                    }
-                }
-            }
-        });
-        gv.process();
-
-        List<Op03SimpleStatement> result = ListFactory.newList();
-        for (Op03SimpleStatement statement : statements) {
-            if (reachable.contains(statement)) {
-                result.add(statement);
-            }
-        }
-        // Too expensive....
-        for (Op03SimpleStatement res1 : result) {
-            List<Op03SimpleStatement> sources = ListFactory.newList(res1.getSources());
-            for (Op03SimpleStatement source : sources) {
-                if (!reachable.contains(source)) {
-                    res1.removeSource(source);
-                }
-            }
-        }
-        return result;
-    }
-
-    /*
-    * Filter out nops (where appropriate) and renumber.  For display purposes.
-    */
-    public static List<Op03SimpleStatement> renumber(List<Op03SimpleStatement> statements) {
-        boolean nonNopSeen = false;
-        List<Op03SimpleStatement> result = ListFactory.newList();
-        for (Op03SimpleStatement statement : statements) {
-            if (!statement.isNop() || !nonNopSeen) {
-                result.add(statement);
-                if (!statement.isNop()) nonNopSeen = true;
-            }
-        }
-        // Sort result by existing index.
-        renumberInPlace(result);
-        return result;
-    }
-
-    public static void renumberInPlace(List<Op03SimpleStatement> statements) {
-        // Sort result by existing index.
-        Collections.sort(statements, new CompareByIndex());
-        reindexInPlace(statements);
-    }
-
-    public static void reindexInPlace(List<Op03SimpleStatement> statements) {
-        int newIndex = 0;
-        Op03SimpleStatement prev = null;
-        for (Op03SimpleStatement statement : statements) {
-            statement.linearlyPrevious = prev;
-            statement.linearlyNext = null;
-            if (prev != null) prev.linearlyNext = statement;
-            statement.setIndex(new InstrIndex(newIndex++));
-            prev = statement;
-        }
-    }
 
 
     /* Remove pointless jumps 
@@ -1822,7 +1699,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         continue;
                 }
                 Op03SimpleStatement target = statement.targets.get(0);
-                Op03SimpleStatement ultimateTarget = followNopGotoChain(target, false, false);
+                Op03SimpleStatement ultimateTarget = Misc.followNopGotoChain(target, false, false);
                 if (target != ultimateTarget) {
                     ultimateTarget = maybeMoveTarget(ultimateTarget, statement, statements);
                     target.removeSource(statement);
@@ -1832,7 +1709,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             } else if (innerStatement.getClass() == IfStatement.class) {
                 IfStatement ifStatement = (IfStatement) innerStatement;
                 Op03SimpleStatement target = statement.targets.get(1);
-                Op03SimpleStatement ultimateTarget = followNopGotoChain(target, false, false);
+                Op03SimpleStatement ultimateTarget = Misc.followNopGotoChain(target, false, false);
                 if (target != ultimateTarget) {
                     ultimateTarget = maybeMoveTarget(ultimateTarget, statement, statements);
                     target.removeSource(statement);
@@ -2069,31 +1946,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return hitParent;
     }
 
-    public static class IsBackJumpTo implements Predicate<Op03SimpleStatement> {
-        private final InstrIndex thisIndex;
 
-        public IsBackJumpTo(InstrIndex thisIndex) {
-            this.thisIndex = thisIndex;
-        }
-
-        @Override
-        public boolean test(Op03SimpleStatement in) {
-            return thisIndex.isBackJumpFrom(in);
-        }
-    }
-
-    public static class IsForwardJumpTo implements Predicate<Op03SimpleStatement> {
-        private final InstrIndex thisIndex;
-
-        public IsForwardJumpTo(InstrIndex thisIndex) {
-            this.thisIndex = thisIndex;
-        }
-
-        @Override
-        public boolean test(Op03SimpleStatement in) {
-            return thisIndex.isBackJumpTo(in);
-        }
-    }
 
     // Todo - could get these out at the same time as below..... would add complexity though...
     private static Op03SimpleStatement getForInvariant(Op03SimpleStatement start, LValue invariant, BlockIdentifier whileLoop) {
@@ -2139,17 +1992,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return res;
     }
 
-    private static Op03SimpleStatement findSingleBackSource(Op03SimpleStatement start) {
-        List<Op03SimpleStatement> startSources = Functional.filter(start.sources, new IsForwardJumpTo(start.index));
-        if (startSources.size() != 1) {
-            logger.info("** Too many back sources");
-            return null;
-        }
-        return startSources.get(0);
-    }
-
-    private static Op03SimpleStatement findMovableAssignment(Op03SimpleStatement start, LValue lValue) {
-        Op03SimpleStatement current = findSingleBackSource(start);
+    public static Op03SimpleStatement findMovableAssignment(Op03SimpleStatement start, LValue lValue) {
+        Op03SimpleStatement current = Misc.findSingleBackSource(start);
         if (current == null) {
             return null;
         }
@@ -2180,7 +2024,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     private static void rewriteWhileAsFor(Op03SimpleStatement statement, List<Op03SimpleStatement> statements) {
         // Find the backwards jumps to this statement
-        List<Op03SimpleStatement> backSources = Functional.filter(statement.sources, new IsBackJumpTo(statement.index));
+        List<Op03SimpleStatement> backSources = Functional.filter(statement.sources, new Misc.IsBackJumpTo(statement.index));
         //
         // Determine what could be the loop invariant.
         //
@@ -2406,7 +2250,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public static void rewriteBreakStatements(List<Op03SimpleStatement> statements) {
-        Op03SimpleStatement.reindexInPlace(statements);
+        Cleaner.reindexInPlace(statements);
         test:
         for (Op03SimpleStatement statement : statements) {
             Statement innerStatement = statement.getStatement();
@@ -2641,231 +2485,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return Op04StructuredStatement.buildNestedBlocks(containers);
     }
 
-    // Find simple loops.
-    // Identify distinct set of backjumps (b1,b2), which jump back to somewhere (p) which has a forward
-    // jump to somewhere which is NOT a /DIRECT/ parent of the backjumps (i.e. has to go through p)
-    // p must be a direct parent of all of (b1,b2)
-    public static void identifyLoops1(Method method, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
-        // Find back references.
-        // Verify that they belong to jump instructions (otherwise something has gone wrong)
-        // (if, goto).
-
-        List<Op03SimpleStatement> pathtests = Functional.filter(statements, new TypeFilter<GotoStatement>(GotoStatement.class));
-        for (Op03SimpleStatement start : pathtests) {
-            considerAsPathologicalLoop(start, statements);
-        }
-
-        List<Op03SimpleStatement> backjumps = Functional.filter(statements, new HasBackJump());
-        List<Op03SimpleStatement> starts = Functional.uniqAll(Functional.map(backjumps, new GetBackJump()));
-        /* Each of starts is the target of a back jump.
-         * Consider each of these seperately, and for each of these verify
-         * that it contains a forward jump to something which is not a parent except through p.
-         */
-        Map<BlockIdentifier, Op03SimpleStatement> blockEndsCache = MapFactory.newMap();
-        Collections.sort(starts, new CompareByIndex());
-
-        List<LoopResult> loopResults = ListFactory.newList();
-        Set<BlockIdentifier> relevantBlocks = SetFactory.newSet();
-        for (Op03SimpleStatement start : starts) {
-            BlockIdentifier blockIdentifier = considerAsWhileLoopStart(method, start, statements, blockIdentifierFactory, blockEndsCache);
-            if (blockIdentifier == null) {
-                blockIdentifier = considerAsDoLoopStart(start, statements, blockIdentifierFactory, blockEndsCache);
-            }
-            if (blockIdentifier != null) {
-                loopResults.add(new LoopResult(blockIdentifier, start));
-                relevantBlocks.add(blockIdentifier);
-            }
-        }
-
-        if (loopResults.isEmpty()) return;
-        Collections.reverse(loopResults);
-        /*
-         * If we have any overlapping but not nested loops, that's because the earlier one(s)
-         * are not properly exited, just continued over (see LoopTest48).
-         *
-         * Need to extend loop bodies and transform whiles into continues.
-         */
-        fixLoopOverlaps(statements, loopResults, relevantBlocks);
-    }
-
-    /* For each block, if the start is inside other blocks, but the last backjump is
-     * NOT, then we need to convert the last backjump into a continue / conditional continue,
-     * and add a while (true). :P
-     */
-    private static void fixLoopOverlaps(List<Op03SimpleStatement> statements, List<LoopResult> loopResults, Set<BlockIdentifier> relevantBlocks) {
-
-        Map<BlockIdentifier, List<BlockIdentifier>> requiredExtents = MapFactory.newLazyMap(new UnaryFunction<BlockIdentifier, List<BlockIdentifier>>() {
-            @Override
-            public List<BlockIdentifier> invoke(BlockIdentifier arg) {
-                return ListFactory.newList();
-            }
-        });
-
-        Map<BlockIdentifier, Op03SimpleStatement> lastForBlock = MapFactory.newMap();
-
-        for (LoopResult loopResult : loopResults) {
-            final Op03SimpleStatement start = loopResult.blockStart;
-            final BlockIdentifier testBlockIdentifier = loopResult.blockIdentifier;
-
-            Set<BlockIdentifier> startIn = SetUtil.intersectionOrNull(start.getBlockIdentifiers(), relevantBlocks);
-            List<Op03SimpleStatement> backSources = Functional.filter(start.sources, new Predicate<Op03SimpleStatement>() {
-                @Override
-                public boolean test(Op03SimpleStatement in) {
-                    return in.getBlockIdentifiers().contains(testBlockIdentifier) &&
-                            in.getIndex().isBackJumpTo(start);
-                }
-            });
-
-            if (backSources.isEmpty()) continue;
-            Collections.sort(backSources, new CompareByIndex());
-            Op03SimpleStatement lastBackSource = backSources.get(backSources.size() - 1);
-            /*
-             * If start is in a relevantBlock that an end isn't, then THAT BLOCK needs to be extended to at least the end
-             * of testBlockIdentifier.
-             */
-            lastForBlock.put(testBlockIdentifier, lastBackSource);
-            if (startIn == null) continue;
-
-            Set<BlockIdentifier> backIn = SetUtil.intersectionOrNull(lastBackSource.getBlockIdentifiers(), relevantBlocks);
-            if (backIn == null) continue;
-            if (!backIn.containsAll(startIn)) {
-                // NB Not ordered - will this bite me?  Shouldn't.
-                Set<BlockIdentifier> startMissing = SetFactory.newSet(startIn);
-                startMissing.removeAll(backIn);
-                for (BlockIdentifier missing : startMissing) {
-                    requiredExtents.get(missing).add(testBlockIdentifier);
-                }
-            }
-        }
-
-        if (requiredExtents.isEmpty()) return;
-
-        // RequiredExtents[key] should be extended to the last of VALUE.
-        List<BlockIdentifier> extendBlocks = ListFactory.newList(requiredExtents.keySet());
-        Collections.sort(extendBlocks, new Comparator<BlockIdentifier>() {
-            @Override
-            public int compare(BlockIdentifier blockIdentifier, BlockIdentifier blockIdentifier2) {
-                return blockIdentifier.getIndex() - blockIdentifier2.getIndex();  // reverse order.
-            }
-        });
-
-        Comparator<Op03SimpleStatement> comparator = new CompareByIndex();
-
-        // NB : we're deliberately not using key ordering.
-        for (BlockIdentifier extendThis : extendBlocks) {
-            List<BlockIdentifier> possibleEnds = requiredExtents.get(extendThis);
-            if (possibleEnds.isEmpty()) continue;
-            // Find last block.
-            // We re-fetch because we might have updated the possibleEndOps.
-            List<Op03SimpleStatement> possibleEndOps = ListFactory.newList();
-            for (BlockIdentifier end : possibleEnds) {
-                possibleEndOps.add(lastForBlock.get(end));
-            }
-            Collections.sort(possibleEndOps, comparator);
-
-            Op03SimpleStatement extendTo = possibleEndOps.get(possibleEndOps.size() - 1);
-            /*
-             * Need to extend block 'extendThis' to 'extendTo'.
-             * We also need to rewrite any terminal backjumps as continues, and
-             * add a 'while true' (or block to that effect).
-             */
-            Op03SimpleStatement oldEnd = lastForBlock.get(extendThis);
-
-            int start = statements.indexOf(oldEnd);
-            int end = statements.indexOf(extendTo);
-
-            for (int x = start; x <= end; ++x) {
-                statements.get(x).getBlockIdentifiers().add(extendThis);
-            }
-            // Rewrite oldEnd appropriately.  Leave end of block dangling, we will fix it later.
-            rewriteEndLoopOverlapStatement(oldEnd, extendThis);
-        }
-    }
-
-    private static void rewriteEndLoopOverlapStatement(Op03SimpleStatement oldEnd, BlockIdentifier loopBlock) {
-        Statement statement = oldEnd.getStatement();
-        Class<?> clazz = statement.getClass();
-        if (clazz == WhileStatement.class) {
-            WhileStatement whileStatement = (WhileStatement) statement;
-            ConditionalExpression condition = whileStatement.getCondition();
-            if (oldEnd.targets.size() == 2) {
-                IfStatement repl = new IfStatement(condition);
-                repl.setKnownBlocks(loopBlock, null);
-                repl.setJumpType(JumpType.CONTINUE);
-                oldEnd.replaceStatement(repl);
-                if (oldEnd.thisComparisonBlock == loopBlock) {
-                    oldEnd.thisComparisonBlock = null;
-                }
-                return;
-            } else if (oldEnd.targets.size() == 1 && condition == null) {
-                GotoStatement repl = new GotoStatement();
-                repl.setJumpType(JumpType.CONTINUE);
-                oldEnd.replaceStatement(repl);
-                if (oldEnd.thisComparisonBlock == loopBlock) {
-                    oldEnd.thisComparisonBlock = null;
-                }
-                return;
-            }
-
-        } else {
-            int x = 1;
-        }
-    }
-
-    private static class HasBackJump implements Predicate<Op03SimpleStatement> {
-        @Override
-        public boolean test(Op03SimpleStatement in) {
-            InstrIndex inIndex = in.getIndex();
-            List<Op03SimpleStatement> targets = in.getTargets();
-            for (Op03SimpleStatement target : targets) {
-                if (target.getIndex().compareTo(inIndex) <= 0) {
-                    if (!(in.containedStatement instanceof JumpingStatement)) {
-                        if (in.containedStatement instanceof JSRRetStatement ||
-                                in.containedStatement instanceof WhileStatement) {
-                            return false;
-                        }
-                        throw new ConfusedCFRException("Invalid back jump on " + in.containedStatement);
-                    } else {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-    }
-
-    private static class GetBackJump implements UnaryFunction<Op03SimpleStatement, Op03SimpleStatement> {
-        @Override
-        public Op03SimpleStatement invoke(Op03SimpleStatement in) {
-            InstrIndex inIndex = in.getIndex();
-            List<Op03SimpleStatement> targets = in.getTargets();
-            for (Op03SimpleStatement target : targets) {
-                if (target.getIndex().compareTo(inIndex) <= 0) {
-                    return target;
-                }
-            }
-            throw new ConfusedCFRException("No back index.");
-        }
-    }
-
-    private static Op03SimpleStatement findFirstConditional(Op03SimpleStatement start) {
-        Set<Op03SimpleStatement> visited = SetFactory.newSet();
-        do {
-            Statement innerStatement = start.getStatement();
-            if (innerStatement instanceof IfStatement) {
-                return start;
-            }
-            List<Op03SimpleStatement> targets = start.getTargets();
-            if (targets.size() != 1) return null;
-            start = targets.get(0);
-            if (visited.contains(start)) {
-                return null;
-            }
-            visited.add(start);
-        } while (start != null);
-        return null;
-    }
-
 
     /*
      * If we have
@@ -2898,7 +2517,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
         if (success) {
-            statements = Op03SimpleStatement.renumber(statements);
+            statements = Cleaner.renumber(statements);
             // This is being done twice deliberately.  Should rewrite rewriteNegativeJumps to iterate.
             // in practice 2ce is fine.
             // see /com/db4o/internal/btree/BTreeNode.class
@@ -3092,574 +2711,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
 
-    private static class GraphVisitorReachableInThese implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
-        private final Set<Integer> reachable;
-        private final Map<Op03SimpleStatement, Integer> instrToIdx;
-
-        public GraphVisitorReachableInThese(Set<Integer> reachable, Map<Op03SimpleStatement, Integer> instrToIdx) {
-            this.reachable = reachable;
-            this.instrToIdx = instrToIdx;
-        }
-
-        @Override
-        public void call(Op03SimpleStatement node, GraphVisitor<Op03SimpleStatement> graphVisitor) {
-            Integer idx = instrToIdx.get(node);
-            if (idx == null) return;
-            reachable.add(idx);
-            for (Op03SimpleStatement target : node.targets) {
-                graphVisitor.enqueue(target);
-            }
-        }
-    }
-
-    /*
-     * To handle special case tricksiness.
-     */
-    private static boolean considerAsPathologicalLoop(final Op03SimpleStatement start, List<Op03SimpleStatement> statements) {
-        if (start.containedStatement.getClass() != GotoStatement.class) return false;
-        if (start.targets.get(0) != start) return false;
-        Op03SimpleStatement next = new Op03SimpleStatement(start.getBlockIdentifiers(), new GotoStatement(), start.getIndex().justAfter());
-        start.replaceStatement(new CommentStatement("Infinite loop"));
-        start.replaceTarget(start, next);
-        start.replaceSource(start, next);
-        next.addSource(start);
-        next.addTarget(start);
-        statements.add(statements.indexOf(start) + 1, next);
-        return true;
-    }
-
-    private static class LoopResult {
-        final BlockIdentifier blockIdentifier;
-        final Op03SimpleStatement blockStart;
-
-        private LoopResult(BlockIdentifier blockIdentifier, Op03SimpleStatement blockStart) {
-            this.blockIdentifier = blockIdentifier;
-            this.blockStart = blockStart;
-        }
-    }
-
-    private static BlockIdentifier considerAsDoLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
-                                                         BlockIdentifierFactory blockIdentifierFactory,
-                                                         Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
-
-        final InstrIndex startIndex = start.getIndex();
-        List<Op03SimpleStatement> backJumpSources = start.getSources();
-        if (backJumpSources.isEmpty()) {
-            throw new ConfusedCFRException("Node doesn't have ANY sources! " + start);
-        }
-        backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
-            @Override
-            public boolean test(Op03SimpleStatement in) {
-                return in.getIndex().compareTo(startIndex) >= 0;
-            }
-        });
-        Collections.sort(backJumpSources, new CompareByIndex());
-        if (backJumpSources.isEmpty()) {
-            throw new ConfusedCFRException("Node should have back jump sources.");
-        }
-        Op03SimpleStatement lastJump = backJumpSources.get(backJumpSources.size() - 1);
-        boolean conditional = false;
-        if (lastJump.containedStatement instanceof IfStatement) {
-            conditional = true;
-            IfStatement ifStatement = (IfStatement) lastJump.containedStatement;
-            if (ifStatement.getJumpTarget().getContainer() != start) {
-                return null;
-            }
-        }
-//        if (!conditional) return false;
-
-        int startIdx = statements.indexOf(start);
-        int endIdx = statements.indexOf(lastJump);
-
-        if (startIdx >= endIdx) return null;
-
-        BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(conditional ? BlockType.DOLOOP : BlockType.UNCONDITIONALDOLOOP);
-
-        /* Given that the potential statements inside this block are idxConditional+1 -> idxAfterEnd-1, [a->b]
-        * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
-        * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
-        */
-        try {
-            validateAndAssignLoopIdentifier(statements, startIdx, endIdx + 1, blockIdentifier, start);
-        } catch (CannotPerformDecode e) {
-            // Can't perform this optimisation.
-            return null;
-        }
-
-
-        // Add a 'do' statement infront of the block (which does not belong to the block)
-        // transform the test to a 'POST_WHILE' statement.
-        Op03SimpleStatement doStatement = new Op03SimpleStatement(start.containedInBlocks, new DoStatement(blockIdentifier), start.index.justBefore());
-        doStatement.containedInBlocks.remove(blockIdentifier);
-        // we need to link the do statement in between all the sources of start WHICH
-        // are NOT in blockIdentifier.
-        List<Op03SimpleStatement> startSources = ListFactory.newList(start.sources);
-        for (Op03SimpleStatement source : startSources) {
-            if (!source.containedInBlocks.contains(blockIdentifier)) {
-                source.replaceTarget(start, doStatement);
-                start.removeSource(source);
-                doStatement.addSource(source);
-            }
-        }
-        doStatement.addTarget(start);
-        start.addSource(doStatement);
-        Op03SimpleStatement postBlock;
-        if (conditional) {
-            postBlock = lastJump.getTargets().get(0);
-        } else {
-            /*
-             * The best we can do is know it's a fall through to whatever WOULD have happened.
-             */
-            int newIdx = statements.indexOf(lastJump) + 1;
-            if (newIdx >= statements.size()) {
-                postBlock = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new ReturnNothingStatement(), lastJump.getIndex().justAfter());
-                statements.add(postBlock);
-
-//                return false;
-//                throw new ConfusedCFRException("Unconditional while with break but no following statement.");
-            } else {
-                postBlock = statements.get(newIdx);
-            }
-        }
-
-        if (start.firstStatementInThisBlock != null) {
-            /* We need to figure out if this new loop is inside or outside block started at start.
-             *
-             */
-            BlockIdentifier outer = findOuterBlock(start.firstStatementInThisBlock, blockIdentifier, statements);
-            if (blockIdentifier == outer) {
-                // Ok, we're the new outer
-                throw new UnsupportedOperationException();
-            } else {
-                // we're the new inner.  We need to change start to be first in US, and make US first of what start was
-                // in.
-                doStatement.firstStatementInThisBlock = start.firstStatementInThisBlock;
-                start.firstStatementInThisBlock = blockIdentifier;
-            }
-        }
-
-        /*
-         * One final very grotty 'optimisation' - if there are any try blocks that began INSIDE the
-         * loop (so present in the last statement, but not in the first), shuffle the lastJump until it
-         * is after them.
-         *
-         * This (seems) to only apply to unconditionals.
-         */
-        shuntLoop:
-        if (!conditional) {
-            Set<BlockIdentifier> lastContent = SetFactory.newSet(lastJump.getBlockIdentifiers());
-            lastContent.removeAll(start.getBlockIdentifiers());
-            Set<BlockIdentifier> internalTryBlocks = SetFactory.newOrderedSet(Functional.filterSet(lastContent, new Predicate<BlockIdentifier>() {
-                @Override
-                public boolean test(BlockIdentifier in) {
-                    return in.getBlockType() == BlockType.TRYBLOCK;
-                }
-            }));
-            // internalTryBlocks represents try blocks which started AFTER the loop did.
-            if (internalTryBlocks.isEmpty()) break shuntLoop;
-
-            final int postBlockIdx = statements.indexOf(postBlock);
-            int lastPostBlock = postBlockIdx;
-            innerShutLoop:
-            do {
-                if (lastPostBlock + 1 >= statements.size()) break innerShutLoop;
-
-                int currentIdx = lastPostBlock + 1;
-                Op03SimpleStatement stm = statements.get(lastPostBlock);
-                if (!(stm.getStatement() instanceof CatchStatement)) break innerShutLoop;
-
-                CatchStatement catchStatement = (CatchStatement) stm.getStatement();
-                BlockIdentifier catchBlockIdent = catchStatement.getCatchBlockIdent();
-                List<BlockIdentifier> tryBlocks = Functional.map(catchStatement.getExceptions(), new UnaryFunction<ExceptionGroup.Entry, BlockIdentifier>() {
-                    @Override
-                    public BlockIdentifier invoke(ExceptionGroup.Entry arg) {
-                        return arg.getTryBlockIdentifier();
-                    }
-                });
-                if (!internalTryBlocks.containsAll(tryBlocks)) break innerShutLoop;
-                while (currentIdx < statements.size() - 1 && statements.get(currentIdx).getBlockIdentifiers().contains(catchBlockIdent)) {
-                    currentIdx++;
-                }
-                lastPostBlock = currentIdx;
-            } while (true);
-            if (lastPostBlock != postBlockIdx) {
-                final Op03SimpleStatement afterNewJump = statements.get(lastPostBlock);
-                // Find after statement.  Insert a jump forward (out) here, and then insert
-                // a synthetic lastJump.  The previous lastJump should now jump to our synthetic
-                // We can insert a BACK jump to lastJump's target
-                //
-                Op03SimpleStatement newBackJump = new Op03SimpleStatement(afterNewJump.getBlockIdentifiers(), new GotoStatement(), afterNewJump.getIndex().justBefore());
-                newBackJump.addTarget(start);
-                newBackJump.addSource(lastJump);
-                lastJump.replaceTarget(start, newBackJump);
-                start.replaceSource(lastJump, newBackJump);
-                /*
-                 * If the instruction we're being placed infront of has a direct precedent, then that needs to get transformed
-                 * into a goto (actually a break, but that will happen later).  Otherwise, it will be fine.
-                 */
-                Op03SimpleStatement preNewJump = statements.get(lastPostBlock - 1);
-                if (afterNewJump.getSources().contains(preNewJump)) {
-                    Op03SimpleStatement interstit = new Op03SimpleStatement(preNewJump.getBlockIdentifiers(), new GotoStatement(), newBackJump.getIndex().justBefore());
-                    preNewJump.replaceTarget(afterNewJump, interstit);
-                    afterNewJump.replaceSource(preNewJump, interstit);
-                    interstit.addSource(preNewJump);
-                    interstit.addTarget(afterNewJump);
-                    statements.add(lastPostBlock, interstit);
-                    lastPostBlock++;
-                }
-
-                statements.add(lastPostBlock, newBackJump);
-                lastJump = newBackJump;
-                postBlock = afterNewJump;
-                /*
-                 * Now mark everything we just walked into the loop body.
-                 */
-                for (int idx = postBlockIdx; idx <= lastPostBlock; ++idx) {
-                    statements.get(idx).markBlock(blockIdentifier);
-                }
-            }
-        }
-
-        statements.add(statements.indexOf(start), doStatement);
-        lastJump.markBlockStatement(blockIdentifier, null, lastJump, statements);
-        start.markFirstStatementInBlock(blockIdentifier);
-
-
-        postBlockCache.put(blockIdentifier, postBlock);
-
-        return blockIdentifier;
-    }
-
-    private static BlockIdentifier findOuterBlock(BlockIdentifier b1, BlockIdentifier b2, List<Op03SimpleStatement> statements) {
-        for (Op03SimpleStatement s : statements) {
-            Set<BlockIdentifier> contained = s.getBlockIdentifiers();
-            if (contained.contains(b1)) {
-                if (!contained.contains(b2)) {
-                    return b1;
-                }
-            } else if (contained.contains(b2)) {
-                return b2;
-            }
-        }
-        /*
-         * Can't decide!  Have to choose outer.  ??
-         */
-        return b1;
-    }
-
-    /* Is the first conditional jump NOT one of the sources of start?
-    * Take the target of the first conditional jump - is it somehwhere which is not reachable from
-    * any of the forward sources of start without going through start?
-    *
-    * If so we've probably got a for/while loop.....
-    * decode both as a while loop, we can convert it into a for later.
-    */
-    private static BlockIdentifier considerAsWhileLoopStart(final Method method,
-                                                            final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
-                                                            BlockIdentifierFactory blockIdentifierFactory,
-                                                            Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
-        final InstrIndex startIndex = start.getIndex();
-        List<Op03SimpleStatement> backJumpSources = start.getSources();
-        backJumpSources = Functional.filter(backJumpSources, new Predicate<Op03SimpleStatement>() {
-            @Override
-            public boolean test(Op03SimpleStatement in) {
-                return in.getIndex().compareTo(startIndex) >= 0;
-            }
-        });
-        Collections.sort(backJumpSources, new CompareByIndex());
-        Op03SimpleStatement conditional = findFirstConditional(start);
-        if (conditional == null) {
-            // No conditional before we have a branch?  Probably a do { } while. 
-            logger.info("Can't find a conditional");
-            return null;
-        }
-        // Now we've found our first conditional before a branch - is the target AFTER the last backJump?
-        // Requires Debuggered conditionals.
-        // TODO : ORDERING
-        Op03SimpleStatement lastJump = backJumpSources.get(backJumpSources.size() - 1);
-        /* Conditional has 2 targets - one of which has to NOT be a parent of 'sources', unless
-         * it involves going through conditional the other way.
-         */
-        List<Op03SimpleStatement> conditionalTargets = conditional.getTargets();
-        /*
-         * This could be broken by an obfuscator easily.  We need a transform state which
-         * normalises the code so the jump out is the explicit jump.
-         * TODO : Could do this by finding which one of the targets of the condition is NOT reachable
-         * TODO : by going back from each of the backJumpSources to conditional
-         *
-         * TODO: This might give us something WAY past the end of the loop, if the next instruction is to
-         * jump past a catch block.....
-         */
-        Op03SimpleStatement loopBreak = conditionalTargets.get(1);
-
-        /*
-         * One very special case here - if the conditional is an EXPLICIT self-loop.
-         * In which case the taken branch isn't the exit, it's the loop.
-         *
-         * Rewrote as
-         * x :  if (cond) goto x+2
-         * x+1 : goto x
-         * x+2
-         *
-         */
-        if (loopBreak == conditional && start == conditional) {
-            Op03SimpleStatement backJump = new Op03SimpleStatement(conditional.getBlockIdentifiers(), new GotoStatement(), conditional.getIndex().justAfter());
-            Op03SimpleStatement notTaken = conditional.targets.get(0);
-            conditional.replaceTarget(notTaken, backJump);
-            conditional.replaceSource(conditional, backJump);
-            conditional.replaceTarget(conditional, notTaken);
-            backJump.addSource(conditional);
-            backJump.addTarget(conditional);
-            statements.add(statements.indexOf(conditional) + 1, backJump);
-            conditionalTargets = conditional.getTargets();
-            loopBreak = notTaken;
-        }
-
-        if (loopBreak.getIndex().compareTo(lastJump.getIndex()) <= 0) {
-            // The conditional doesn't take us to after the last back jump, i.e. it's not a while {} loop.
-            // ... unless it's an inner while loop continuing to a prior loop.
-            if (loopBreak.getIndex().compareTo(startIndex) >= 0) {
-                return null;
-            }
-        }
-
-        if (start != conditional) {
-            // We'll have problems - there are actions taken inside the conditional.
-            return null;
-        }
-        int idxConditional = statements.indexOf(start);
-
-        /* If this loop has a test at the bottom, we may have a continue style exit, i.e. the loopBreak
-         * is not just reachable from the top.  We can find this by seeing if loopBreak is reachable from
-         * any of the backJumpSources, without going through start.
-         *
-         * OR we may just have a do { } while....
-         */
-        /* Take the statement which directly preceeds loopbreak
-         * TODO : ORDERCHEAT
-         * and verify that it's reachable from conditional, WITHOUT going through start.
-         * If so, we guess that it's the end of the loop.
-         */
-        int idxAfterEnd = statements.indexOf(loopBreak);
-        if (idxAfterEnd < idxConditional) {
-            /*
-             * We've got an inner loop which is terminating back to the start of the outer loop.
-             * This means we have to figure out the body of the loop by considering back jumps.
-             * We can't rely on the last statement in the loop being a backjump to the start, as it
-             * may be a continue/break to an outer loop.
-             */
-            /* We probably need a while block between start and the END of the loop which begins at idxEnd.
-             * (if that exists.)
-             */
-            Op03SimpleStatement startOfOuterLoop = statements.get(idxAfterEnd);
-            if (startOfOuterLoop.thisComparisonBlock == null) {
-                // Boned.
-                return null;
-            }
-            // Find the END of this block.
-            Op03SimpleStatement endOfOuter = postBlockCache.get(startOfOuterLoop.thisComparisonBlock);
-            if (endOfOuter == null) {
-                throw new ConfusedCFRException("BlockIdentifier doesn't exist in blockEndsCache");
-            }
-            idxAfterEnd = statements.indexOf(endOfOuter);
-        }
-
-        /* TODO : ORDERCHEAT */
-        // Mark instructions in the list between start and maybeEndLoop as being in this block.
-        if (idxConditional >= idxAfterEnd) {
-//            throw new ConfusedCFRException("Can't decode block");
-            return null;
-        }
-        BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.WHILELOOP);
-
-        /* Given that the potential statements inside this block are idxConditional+1 -> idxAfterEnd-1, [a->b]
-        * there SHOULD be a prefix set (or all) in here which is addressable from idxConditional+1 without leaving the
-        * range [a->b].  Determine this.  If we have reachable entries which aren't in the prefix, we can't cope.
-        */
-        int lastIdx;
-        try {
-            lastIdx = validateAndAssignLoopIdentifier(statements, idxConditional + 1, idxAfterEnd, blockIdentifier, start);
-        } catch (CannotPerformDecode e) {
-            return null;
-        }
-
-        Op03SimpleStatement lastInBlock = statements.get(lastIdx);
-        Op03SimpleStatement blockEnd = statements.get(idxAfterEnd);
-        //
-        start.markBlockStatement(blockIdentifier, lastInBlock, blockEnd, statements);
-        statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
-        postBlockCache.put(blockIdentifier, blockEnd);
-        /*
-         * is the end of the while loop jumping to something which is NOT directly after it?  If so, we need to introduce
-         * an intermediate jump.
-         */
-        Op03SimpleStatement afterLastInBlock = (lastIdx + 1) < statements.size() ? statements.get(lastIdx + 1) : null;
-        loopBreak = conditional.getTargets().get(1);
-        if (afterLastInBlock != loopBreak) {
-            Op03SimpleStatement newAfterLast = new Op03SimpleStatement(afterLastInBlock.getBlockIdentifiers(), new GotoStatement(), lastInBlock.getIndex().justAfter());
-            conditional.replaceTarget(loopBreak, newAfterLast);
-            newAfterLast.addSource(conditional);
-            loopBreak.replaceSource(conditional, newAfterLast);
-            newAfterLast.addTarget(loopBreak);
-            statements.add(newAfterLast);
-        }
-
-        return blockIdentifier;
-    }
-
-    private static int getFarthestReachableInRange(List<Op03SimpleStatement> statements, int start, int afterEnd) {
-        Map<Op03SimpleStatement, Integer> instrToIdx = MapFactory.newMap();
-        for (int x = start; x < afterEnd; ++x) {
-            Op03SimpleStatement statement = statements.get(x);
-            instrToIdx.put(statement, x);
-        }
-
-        Set<Integer> reachableNodes = SetFactory.newSortedSet();
-        GraphVisitorReachableInThese graphVisitorCallee = new GraphVisitorReachableInThese(reachableNodes, instrToIdx);
-        GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(statements.get(start), graphVisitorCallee);
-        visitor.process();
-
-        final int first = start;
-        int last = -1;
-        boolean foundLast = false;
-
-        for (int x = first; x < afterEnd; ++x) {
-            if (reachableNodes.contains(x) || statements.get(x).isNop()) {
-                if (foundLast) {
-//                    return afterEnd - 1;
-                    throw new CannotPerformDecode("reachable test BLOCK was exited and re-entered.");
-                }
-            } else {
-                if (!foundLast) {
-                    last = x - 1;
-                }
-                foundLast = true;
-            }
-        }
-        if (last == -1) last = afterEnd - 1;
-        return last;
-
-    }
-
-    private static int validateAndAssignLoopIdentifier(List<Op03SimpleStatement> statements, int idxTestStart, int idxAfterEnd, BlockIdentifier blockIdentifier, Op03SimpleStatement start) {
-        int last = getFarthestReachableInRange(statements, idxTestStart, idxAfterEnd);
-
-        /*
-         * What if the last back jump was inside a catch statement?  Find catch statements which exist at
-         * last, but not in start - we have to extend the loop to the end of the catch statements....
-         * and change it to a while (false).
-         */
-        Op03SimpleStatement discoveredLast = statements.get(last);
-        Set<BlockIdentifier> lastBlocks = SetFactory.newSet(discoveredLast.containedInBlocks);
-        lastBlocks.removeAll(start.getBlockIdentifiers());
-        Set<BlockIdentifier> catches = SetFactory.newSet(Functional.filterSet(lastBlocks, new Predicate<BlockIdentifier>() {
-            @Override
-            public boolean test(BlockIdentifier in) {
-                return (in.getBlockType() == BlockType.CATCHBLOCK);
-            }
-        }));
-        int newlast = last;
-        while (!catches.isEmpty()) {
-            /*
-             * Need to find the rest of these catch blocks, and add them to the range.
-             */
-            Op03SimpleStatement stm = statements.get(newlast);
-            catches.retainAll(stm.getBlockIdentifiers());
-            if (catches.isEmpty()) {
-                break;
-            }
-            last = newlast;
-            if (newlast < statements.size() - 1) {
-                newlast++;
-            } else {
-                break;
-            }
-        }
-
-
-        for (int x = idxTestStart; x <= last; ++x) {
-            statements.get(x).markBlock(blockIdentifier);
-        }
-        return last;
-    }
-
-    private static class IsForwardIf implements Predicate<Op03SimpleStatement> {
-        @Override
-        public boolean test(Op03SimpleStatement in) {
-            if (!(in.containedStatement instanceof IfStatement)) return false;
-            IfStatement ifStatement = (IfStatement) in.containedStatement;
-            if (!ifStatement.getJumpType().isUnknown()) return false;
-            if (in.targets.get(1).index.compareTo(in.index) <= 0) return false;
-            return true;
-        }
-    }
-
-    private JumpType getJumpType() {
+    public JumpType getJumpType() {
         if (containedStatement instanceof JumpingStatement) {
             return ((JumpingStatement) containedStatement).getJumpType();
         }
         return JumpType.NONE;
     }
 
-    private static void markWholeBlock(List<Op03SimpleStatement> statements, BlockIdentifier blockIdentifier) {
-        Op03SimpleStatement start = statements.get(0);
-        start.markFirstStatementInBlock(blockIdentifier);
-        for (Op03SimpleStatement statement : statements) {
-            statement.markBlock(blockIdentifier);
-        }
-    }
-
-    private static class DiscoveredTernary {
-        LValue lValue;
-        Expression e1;
-        Expression e2;
-
-        private DiscoveredTernary(LValue lValue, Expression e1, Expression e2) {
-            this.lValue = lValue;
-            this.e1 = e1;
-            this.e2 = e2;
-        }
-
-        private static Troolean isOneOrZeroLiteral(Expression e) {
-            if (!(e instanceof Literal)) return Troolean.NEITHER;
-            TypedLiteral typedLiteral = ((Literal) e).getValue();
-            Object value = typedLiteral.getValue();
-            if (!(value instanceof Integer)) return Troolean.NEITHER;
-            int iValue = (Integer) value;
-            if (iValue == 1) return Troolean.TRUE;
-            if (iValue == 0) return Troolean.FALSE;
-            return Troolean.NEITHER;
-        }
-
-        private boolean isPointlessBoolean() {
-            if (!(e1.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN &&
-                    e2.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN)) return false;
-
-            if (isOneOrZeroLiteral(e1) != Troolean.TRUE) return false;
-            if (isOneOrZeroLiteral(e2) != Troolean.FALSE) return false;
-            return true;
-        }
-    }
-
-    public static class TypeFilter<T> implements Predicate<Op03SimpleStatement> {
-        private final Class<T> clazz;
-        private final boolean positive;
-
-        public TypeFilter(Class<T> clazz) {
-            this.clazz = clazz;
-            this.positive = true;
-        }
-
-        public TypeFilter(Class<T> clazz, boolean positive) {
-            this.clazz = clazz;
-            this.positive = positive;
-        }
-
-        @Override
-        public boolean test(Op03SimpleStatement in) {
-            return (positive == clazz.isInstance(in.containedStatement));
-        }
-    }
 
     public static class ExactTypeFilter<T> implements Predicate<Op03SimpleStatement> {
         private final Class<T> clazz;
@@ -3679,552 +2737,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         public boolean test(Op03SimpleStatement in) {
             return (positive == (clazz == (in.containedStatement.getClass())));
         }
-    }
-
-    private static DiscoveredTernary testForTernary(List<Op03SimpleStatement> ifBranch, List<Op03SimpleStatement> elseBranch, Op03SimpleStatement leaveIfBranch) {
-        if (ifBranch == null || elseBranch == null) return null;
-        if (leaveIfBranch == null) return null;
-        TypeFilter<Nop> notNops = new TypeFilter<Nop>(Nop.class, false);
-        ifBranch = Functional.filter(ifBranch, notNops);
-        switch (ifBranch.size()) {
-            case 1:
-                break;
-            case 2:
-                if (ifBranch.get(1) != leaveIfBranch) {
-                    return null;
-                }
-                break;
-            default:
-                return null;
-        }
-        elseBranch = Functional.filter(elseBranch, notNops);
-        if (elseBranch.size() != 1) {
-            return null;
-        }
-
-        Op03SimpleStatement s1 = ifBranch.get(0);
-        Op03SimpleStatement s2 = elseBranch.get(0);
-        if (s2.sources.size() != 1) return null;
-        LValue l1 = s1.containedStatement.getCreatedLValue();
-        LValue l2 = s2.containedStatement.getCreatedLValue();
-        if (l1 == null || l2 == null) {
-            return null;
-        }
-        if (!l2.equals(l1)) {
-            return null;
-        }
-        return new DiscoveredTernary(l1, s1.containedStatement.getRValue(), s2.containedStatement.getRValue());
-    }
-
-
-    private static boolean considerAsTrivialIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps) {
-        Op03SimpleStatement takenTarget = ifStatement.targets.get(1);
-        Op03SimpleStatement notTakenTarget = ifStatement.targets.get(0);
-        int idxTaken = statements.indexOf(takenTarget);
-        int idxNotTaken = statements.indexOf(notTakenTarget);
-        if (idxTaken != idxNotTaken + 1) return false;
-        if (!(takenTarget.getStatement().getClass() == GotoStatement.class &&
-                notTakenTarget.getStatement().getClass() == GotoStatement.class &&
-                takenTarget.targets.get(0) == notTakenTarget.targets.get(0))) {
-            return false;
-        }
-        notTakenTarget.replaceStatement(new CommentStatement("empty if block"));
-        // Replace the not taken target with an 'empty if statement'.
-
-        return false;
-    }
-
-    /*
-     * Spot a rather perverse structure that only happens with DEX2Jar, as far as I can tell.
-     *
-     * if (x) goto b
-     * (a:)
-     * ....[1] [ LINEAR STATEMENTS (* or already discounted) ]
-     * goto c
-     * b:
-     * ....[2] [ LINEAR STATEMENTS (*) ]
-     * goto d
-     * c:
-     * ....[3]
-     *
-     * Can be replaced with
-     *
-     * if (!x) goto a
-     * b:
-     * ...[2]
-     * goto d
-     * a:
-     * ....[1]
-     * c:
-     * ....[3]
-     *
-     * Which, in turn, may allow us to make some more interesting choices later.
-     */
-    private static boolean considerAsDexIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps) {
-        Statement innerStatement = ifStatement.getStatement();
-        if (innerStatement.getClass() != IfStatement.class) {
-            return false;
-        }
-        IfStatement innerIfStatement = (IfStatement) innerStatement;
-
-        int startIdx = statements.indexOf(ifStatement);
-        int bidx = statements.indexOf(ifStatement.getTargets().get(1));
-        if (bidx <= startIdx) return false; // shouldn't happen.
-        InstrIndex startIndex = ifStatement.getIndex();
-        InstrIndex bIndex = ifStatement.getTargets().get(1).getIndex();
-        if (startIndex.compareTo(bIndex) >= 0) {
-            return false; // likewise.  Indicates we need a renumber.
-        }
-
-        int aidx = startIdx + 1;
-
-        int cidx = findOverIdx(bidx, statements);
-        if (cidx == -1) return false;
-
-        int didx = findOverIdx(cidx, statements);
-        if (didx == -1) return false;
-
-        if (didx <= cidx) return false;
-
-        Set<Op03SimpleStatement> permittedSources = SetFactory.newSet(ifStatement);
-        if (!isRangeOnlyReachable(aidx, bidx, cidx, statements, permittedSources)) return false;
-        if (!isRangeOnlyReachable(bidx, cidx, didx, statements, permittedSources)) return false;
-
-        /*
-         * Looks like a legitimate reordering - rewrite statements.  Pick up the entire block, and
-         * move as per above.
-         */
-        List<Op03SimpleStatement> alist = statements.subList(aidx, bidx);
-        List<Op03SimpleStatement> blist = statements.subList(bidx, cidx);
-
-        /*
-         * Nop out the last entry of alist.
-         */
-        alist.get(alist.size() - 1).nopOut();
-
-        List<Op03SimpleStatement> ifTargets = ifStatement.getTargets();
-        // Swap targets.
-        Op03SimpleStatement tgtA = ifTargets.get(0);
-        Op03SimpleStatement tgtB = ifTargets.get(1);
-        ifTargets.set(0, tgtB);
-        ifTargets.set(1, tgtA);
-        innerIfStatement.setCondition(innerIfStatement.getCondition().getNegated().simplify());
-
-        List<Op03SimpleStatement> acopy = ListFactory.newList(alist);
-        blist.addAll(acopy);
-        alist = statements.subList(aidx, bidx);
-        alist.clear();
-
-        reindexInPlace(statements);
-
-        return true;
-    }
-
-    private static int findOverIdx(int startNext, List<Op03SimpleStatement> statements) {
-        /*
-         * Find a forward goto before b.
-         */
-        Op03SimpleStatement next = statements.get(startNext);
-
-        Op03SimpleStatement cStatement = null;
-        for (int gSearch = startNext - 1; gSearch >= 0; gSearch--) {
-            Op03SimpleStatement stm = statements.get(gSearch);
-            Statement s = stm.getStatement();
-            if (s instanceof Nop) continue;
-            if (s.getClass() == GotoStatement.class) {
-                Op03SimpleStatement tgtC = stm.getTargets().get(0);
-                if (tgtC.getIndex().isBackJumpFrom(next)) return -1;
-                cStatement = tgtC;
-                break;
-            }
-            return -1;
-        }
-        if (cStatement == null) return -1;
-        int cidx = statements.indexOf(cStatement);
-        return cidx;
-    }
-
-    /*
-     * Is this structured as
-     *
-     * ..
-     * ..
-     * ..
-     * goto X
-     *
-     * Where the range is self-contained.
-     */
-    private static boolean isRangeOnlyReachable(int startIdx, int endIdx, int tgtIdx, List<Op03SimpleStatement> statements, Set<Op03SimpleStatement> permittedSources) {
-
-        Set<Op03SimpleStatement> reachable = SetFactory.newSet();
-        final Op03SimpleStatement startStatement = statements.get(startIdx);
-        final Op03SimpleStatement endStatement = statements.get(endIdx);
-        final Op03SimpleStatement tgtStatement = statements.get(tgtIdx);
-        InstrIndex startIndex = startStatement.getIndex();
-        InstrIndex endIndex = endStatement.getIndex();
-        InstrIndex finalTgtIndex = tgtStatement.getIndex();
-
-        reachable.add(statements.get(startIdx));
-        boolean foundEnd = false;
-        for (int idx = startIdx; idx < endIdx; ++idx) {
-            Op03SimpleStatement stm = statements.get(idx);
-            if (!reachable.contains(stm)) {
-                return false;
-            }
-            // We don't expect this statement to have sources before startIndex or after bIndex.
-            // We don't expect any raw gotos ( or targets ) after bIndex / beforeStartIndex. (break / continue are ok).
-            for (Op03SimpleStatement source : stm.getSources()) {
-                InstrIndex sourceIndex = source.getIndex();
-                if (sourceIndex.compareTo(startIndex) < 0) {
-                    if (!permittedSources.contains(source)) {
-                        return false;
-                    }
-                }
-                if (sourceIndex.compareTo(endIndex) >= 0) {
-                    return false;
-                }
-            }
-            for (Op03SimpleStatement target : stm.getTargets()) {
-                InstrIndex tgtIndex = target.getIndex();
-                if (tgtIndex.compareTo(startIndex) < 0) {
-                    return false;
-                }
-                if (tgtIndex.compareTo(endIndex) >= 0) {
-                    if (tgtIndex == finalTgtIndex) {
-                        foundEnd = true;
-                    } else {
-                        return false;
-                    }
-                }
-                reachable.add(target);
-            }
-        }
-        return foundEnd;
-    }
-
-    /*
-    * This is an if statement where both targets are forward.
-    *
-    * it's a 'simple' if, if:
-    *
-    * target[0] reaches (incl) the instruction before target[1] without any jumps (other than continue / break).
-    *
-    * note that the instruction before target[1] doesn't have to have target[1] as a target...
-    * (we might have if (foo) return;)
-    *
-    * If it's a SIMPLE if/else, then the last statement of the if block is a goto, which jumps to after the else
-    * block.  We don't want to keep that goto, as we've inferred structure now.
-    *
-    * We trim that GOTO when we move from an UnstructuredIf to a StructuredIf.
-    */
-    private static boolean considerAsSimpleIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps) {
-        Op03SimpleStatement takenTarget = ifStatement.targets.get(1);
-        Op03SimpleStatement notTakenTarget = ifStatement.targets.get(0);
-        int idxTaken = statements.indexOf(takenTarget);
-        int idxNotTaken = statements.indexOf(notTakenTarget);
-        IfStatement innerIfStatement = (IfStatement) ifStatement.containedStatement;
-
-        Set<Op03SimpleStatement> ignoreLocally = SetFactory.newSet();
-
-        boolean takenAction = false;
-
-        int idxCurrent = idxNotTaken;
-        if (idxCurrent > idxTaken) return false;
-
-        int idxEnd = idxTaken;
-        int maybeElseEndIdx = -1;
-        Op03SimpleStatement maybeElseEnd = null;
-        boolean maybeSimpleIfElse = false;
-        boolean extractCommonEnd = false;
-        GotoStatement leaveIfBranchGoto = null;
-        Op03SimpleStatement leaveIfBranchHolder = null;
-        List<Op03SimpleStatement> ifBranch = ListFactory.newList();
-        List<Op03SimpleStatement> elseBranch = null;
-        // Consider the try blocks we're in at this point.  (the ifStatemenet).
-        // If we leave any of them, we've left the if.
-        Set<BlockIdentifier> blocksAtStart = ifStatement.containedInBlocks;
-        if (idxCurrent == idxEnd) {
-            // It's a trivial tautology? We can't nop it out unless it's side effect free.
-            // Instead insert a comment.
-            Op03SimpleStatement taken = new Op03SimpleStatement(blocksAtStart, new CommentStatement("empty if block"), notTakenTarget.index.justBefore());
-            taken.addSource(ifStatement);
-            taken.addTarget(notTakenTarget);
-            Op03SimpleStatement emptyTarget = ifStatement.targets.get(0);
-            if (notTakenTarget != emptyTarget) {
-                notTakenTarget.addSource(taken);
-            }
-            emptyTarget.replaceSource(ifStatement, taken);
-            ifStatement.targets.set(0, taken);
-            statements.add(idxTaken, taken);
-
-            BlockIdentifier ifBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_TAKEN);
-            taken.markFirstStatementInBlock(ifBlockLabel);
-            // O(N) insertion here is annoying, but we need to fix up the list IMMEDIATELY.
-            taken.getBlockIdentifiers().add(ifBlockLabel);
-            innerIfStatement.setKnownBlocks(ifBlockLabel, null);
-            innerIfStatement.setJumpType(JumpType.GOTO_OUT_OF_IF);
-            return true;
-        }
-        Set<Op03SimpleStatement> validForwardParents = SetFactory.newSet();
-        validForwardParents.add(ifStatement);
-        /*
-         * Find the (possible) end of the if block, which is a forward unconditional jump.
-         * If that's the case, cache it and rewrite any jumps we see which go to the same place
-         * as double jumps via this unconditional.
-         */
-        Op03SimpleStatement stmtLastBlock = statements.get(idxTaken - 1);
-        Op03SimpleStatement stmtLastBlockRewrite = null;
-        Statement stmtLastBlockInner = stmtLastBlock.getStatement();
-        if (stmtLastBlockInner.getClass() == GotoStatement.class) {
-            stmtLastBlockRewrite = stmtLastBlock;
-        }
-
-        do {
-            Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
-            /* Consider sources of this which jumped forward to get to it.
-             *
-             */
-            InstrIndex currentIndex = statementCurrent.getIndex();
-            for (Op03SimpleStatement source : statementCurrent.sources) {
-                if (currentIndex.isBackJumpTo(source)) {
-                    if (!validForwardParents.contains(source)) {
-                        // source from outside the block.  This likely means that we've actually left the block.
-                        // eg
-                        // if (foo) goto Z
-                        // ....
-                        // return 1;
-                        // label:
-                        // statement <-- here.
-                        // ...
-                        // Z
-                        //
-                        // (although it might mean some horrid duffs device style compiler output).
-                        // TODO: CheckForDuff As below.
-                        //if (statementIsReachableFrom(statementCurrent, ifStatement)) return false;
-                        Op03SimpleStatement newJump = new Op03SimpleStatement(ifStatement.containedInBlocks, new GotoStatement(), statementCurrent.getIndex().justBefore());
-                        if (statementCurrent != ifStatement.targets.get(0)) {
-                            Op03SimpleStatement oldTarget = ifStatement.targets.get(1);
-                            newJump.addTarget(oldTarget);
-                            newJump.addSource(ifStatement);
-                            ifStatement.replaceTarget(oldTarget, newJump);
-                            oldTarget.replaceSource(ifStatement, newJump);
-                            statements.add(idxCurrent, newJump);
-                            return true;
-                        }
-                    }
-                }
-            }
-            validForwardParents.add(statementCurrent);
-
-            ifBranch.add(statementCurrent);
-            JumpType jumpType = statementCurrent.getJumpType();
-            if (jumpType.isUnknown() && !ignoreTheseJumps.contains(statementCurrent)) {
-                // Todo : Currently we can only cope with hitting
-                // the last jump as an unknown jump.  We ought to be able to rewrite
-                // i.e. if we have
-                /*
-                    if (list != null) goto lbl6;
-                    System.out.println("A");
-                    if (set != null) goto lbl8; <<-----
-                    System.out.println("B");
-                    goto lbl8;
-                    lbl6:
-                    ELSE BLOCK
-                    lbl8:
-                    return true;
-                 */
-                // this is a problem, because the highlighted statement will cause us to abandon processing.
-                if (idxCurrent == idxTaken - 1) {
-                    Statement mGotoStatement = statementCurrent.containedStatement;
-                    if (!(mGotoStatement.getClass() == GotoStatement.class)) return false;
-                    GotoStatement gotoStatement = (GotoStatement) mGotoStatement;
-                    // It's unconditional, and it's a forward jump.
-                    maybeElseEnd = statementCurrent.getTargets().get(0);
-                    maybeElseEndIdx = statements.indexOf(maybeElseEnd);
-                    if (maybeElseEnd.getIndex().compareTo(takenTarget.getIndex()) <= 0) {
-                        return false;
-                    }
-                    leaveIfBranchHolder = statementCurrent;
-                    leaveIfBranchGoto = gotoStatement;
-                    maybeSimpleIfElse = true;
-                } else {
-                    if (stmtLastBlockRewrite == null) {
-                        Op03SimpleStatement tgtContainer = statementCurrent.getTargets().get(0);
-                        if (tgtContainer == takenTarget) {
-                            // We can ignore this statement in future passes.
-                            idxCurrent++;
-                            continue;
-                        }
-
-                        return false;
-                    }
-                    // We can try to rewrite this block to have an indirect jump via the end of the block,
-                    // if that's appropriate.
-                    List<Op03SimpleStatement> targets = statementCurrent.getTargets();
-
-                    Op03SimpleStatement eventualTarget = stmtLastBlockRewrite.getTargets().get(0);
-                    boolean found = false;
-                    for (int x = 0; x < targets.size(); ++x) {
-                        Op03SimpleStatement target = targets.get(x);
-                        if (target == eventualTarget && target != stmtLastBlockRewrite) {
-                            // Equivalent to
-                            // statementCurrent.replaceTarget(eventualTarget, stmtLastBlockRewrite);
-                            targets.set(x, stmtLastBlockRewrite);
-                            stmtLastBlockRewrite.addSource(statementCurrent);
-                            // Todo : I don't believe the latter branch will EVER happen.
-                            if (eventualTarget.sources.contains(stmtLastBlockRewrite)) {
-                                eventualTarget.removeSource(statementCurrent);
-                            } else {
-                                eventualTarget.replaceSource(statementCurrent, stmtLastBlockRewrite);
-                            }
-
-                            found = true;
-                        }
-                    }
-
-                    return found;
-                }
-            }
-            idxCurrent++;
-        } while (idxCurrent != idxEnd);
-        // We've reached the "other" branch of the conditional.
-        // If maybeSimpleIfElse is set, then there was a final jump to
-
-        if (maybeSimpleIfElse) {
-            // If there is a NO JUMP path between takenTarget and maybeElseEnd, then that's the ELSE block
-            elseBranch = ListFactory.newList();
-            idxCurrent = idxTaken;
-            idxEnd = maybeElseEndIdx;
-            do {
-                Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
-                elseBranch.add(statementCurrent);
-                JumpType jumpType = statementCurrent.getJumpType();
-                if (jumpType.isUnknown()) {
-                    /* We allow ONE unconditional forward jump, to maybeElseEnd.  If we find this, we have
-                     * a simple if /else/ block, which we can rewrite as
-                     * if (a) { .. .goto X } else { .... goto X } -->
-                     * if (a) { ... } else { ....} ; goto X
-                     */
-                    Statement mGotoStatement = statementCurrent.containedStatement;
-                    if (!(mGotoStatement.getClass() == GotoStatement.class)) return false;
-                    GotoStatement gotoStatement = (GotoStatement) mGotoStatement;
-                    // It's unconditional, and it's a forward jump.
-                    if (statementCurrent.targets.get(0) == maybeElseEnd) {
-                        idxEnd = idxCurrent;
-                        idxCurrent--;
-
-
-                        // We can do this aggressively, as it doesn't break the graph.
-                        leaveIfBranchHolder.replaceTarget(maybeElseEnd, statementCurrent);
-                        statementCurrent.addSource(leaveIfBranchHolder);
-                        maybeElseEnd.removeSource(leaveIfBranchHolder);
-                        elseBranch.remove(statementCurrent);   // eww.
-                        takenAction = true;
-                    } else {
-                        return false;
-                    }
-                }
-                idxCurrent++;
-            } while (idxCurrent != idxEnd);
-        }
-
-        Op03SimpleStatement realEnd = statements.get(idxEnd);
-        Set<BlockIdentifier> blocksAtEnd = realEnd.containedInBlocks;
-        if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) {
-            return takenAction;
-        }
-
-        // It's an if statement / simple if/else, for sure.  Can we replace it with a ternary?
-        DiscoveredTernary ternary = testForTernary(ifBranch, elseBranch, leaveIfBranchHolder);
-        if (ternary != null) {
-            // We can ditch this whole thing for a ternary expression.
-            for (Op03SimpleStatement statement : ifBranch) statement.nopOut();
-            for (Op03SimpleStatement statement : elseBranch) statement.nopOut();
-            // todo : do I need to do a more complex merge?
-            ifStatement.ssaIdentifiers = leaveIfBranchHolder.ssaIdentifiers;
-
-            // We need to be careful we don't replace x ? 1 : 0 with x here unless we're ABSOLUTELY
-            // sure that the final expression type is boolean.....
-            // this may come back to bite. (at which point we can inject a (? 1 : 0) ternary...
-            ConditionalExpression conditionalExpression = innerIfStatement.getCondition().getNegated().simplify();
-            Expression rhs = ternary.isPointlessBoolean() ?
-                    conditionalExpression :
-                    new TernaryExpression(
-                            conditionalExpression,
-                            ternary.e1, ternary.e2);
-
-            ifStatement.replaceStatement(
-                    new AssignmentSimple(
-                            ternary.lValue,
-                            rhs
-                    )
-            );
-            // Reduce the ternary lValue's created location count, if we can.
-            if (ternary.lValue instanceof StackSSALabel) {
-                StackSSALabel stackSSALabel = (StackSSALabel) ternary.lValue;
-                StackEntry stackEntry = stackSSALabel.getStackEntry();
-                stackEntry.decSourceCount();
-//                List<Long> sources = stackEntry.getSources();
-//                stackEntry.removeSource(sources.get(sources.size() - 1));
-            }
-
-            // If statement now should have only one target.
-            List<Op03SimpleStatement> tmp = ListFactory.uniqueList(ifStatement.targets);
-            ifStatement.targets.clear();
-            ifStatement.targets.addAll(tmp);
-            if (ifStatement.targets.size() != 1) {
-                throw new ConfusedCFRException("If statement should only have one target after dedup");
-            }
-            Op03SimpleStatement joinStatement = ifStatement.targets.get(0);
-            tmp = ListFactory.uniqueList(joinStatement.sources);
-            joinStatement.sources.clear();
-            joinStatement.sources.addAll(tmp);
-
-            /*
-             * And now we need to reapply LValue condensing in the region! :(
-             */
-            condenseLValues(statements);
-
-            return true;
-        }
-
-
-        BlockIdentifier ifBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_TAKEN);
-        markWholeBlock(ifBranch, ifBlockLabel);
-        BlockIdentifier elseBlockLabel = null;
-        if (maybeSimpleIfElse) {
-            elseBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_ELSE);
-            if (elseBranch.isEmpty()) {
-                elseBlockLabel = null;
-                maybeSimpleIfElse = false;
-                //throw new IllegalStateException();
-            } else {
-                markWholeBlock(elseBranch, elseBlockLabel);
-            }
-        }
-
-        if (leaveIfBranchGoto != null) leaveIfBranchGoto.setJumpType(JumpType.GOTO_OUT_OF_IF);
-        innerIfStatement.setJumpType(JumpType.GOTO_OUT_OF_IF);
-        innerIfStatement.setKnownBlocks(ifBlockLabel, elseBlockLabel);
-        ignoreTheseJumps.addAll(ignoreLocally);
-        return true;
-    }
-
-    public static void identifyNonjumpingConditionals(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
-        boolean success = false;
-        Set<Op03SimpleStatement> ignoreTheseJumps = SetFactory.newSet();
-        do {
-            success = false;
-            List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
-            Collections.reverse(forwardIfs);
-            for (Op03SimpleStatement forwardIf : forwardIfs) {
-                if (considerAsTrivialIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
-                        considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
-                        considerAsDexIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps)) {
-                    success = true;
-                }
-            }
-        } while (success);
     }
 
 
@@ -4743,8 +3255,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
 
         if (effect) {
-            statements = Op03SimpleStatement.removeUnreachableCode(statements, false);
-            statements = renumber(statements);
+            statements = Cleaner.removeUnreachableCode(statements, false);
+            statements = Cleaner.renumber(statements);
         }
 
         return statements;
@@ -4979,506 +3491,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static void replaceRawSwitch(Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
-        List<Op03SimpleStatement> targets = swatch.targets;
-        RawSwitchStatement switchStatement = (RawSwitchStatement) swatch.containedStatement;
-        DecodedSwitch switchData = switchStatement.getSwitchData();
-        BlockIdentifier switchBlockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SWITCH);
-        /*
-         * If all of the targets /INCLUDING DEFAULT/ point at the same place, replace the switch with a goto, and
-         * leave it at that.
-         */
-        Op03SimpleStatement oneTarget = targets.get(0);
-        boolean mismatch = false;
-        for (int x = 1; x < targets.size(); ++x) {
-            Op03SimpleStatement target = targets.get(x);
-            if (target != oneTarget) {
-                mismatch = true;
-                break;
-            }
-        }
-        if (!mismatch) {
-            /*
-             * TODO : May have to clear out sources / targets?
-             */
-            swatch.replaceStatement(new GotoStatement());
-            return;
-        }
-
-        // For each of the switch targets, add a 'case' statement
-        // We can add them at the end, as long as we've got a post hoc sort.
-
-        // What happens if there's no default statement?  Not sure java permits?
-        List<DecodedSwitchEntry> entries = switchData.getJumpTargets();
-        InferredJavaType caseType = switchStatement.getSwitchOn().getInferredJavaType();
-        Map<InstrIndex, Op03SimpleStatement> firstPrev = MapFactory.newMap();
-        for (int x = 0; x < targets.size(); ++x) {
-            Op03SimpleStatement target = targets.get(x);
-            InstrIndex tindex = target.getIndex();
-            if (firstPrev.containsKey(tindex)) { // Get previous case statement if already exists, so we stack them.
-                target = firstPrev.get(tindex);
-            }
-            List<Expression> expression = ListFactory.newList();
-            // 0 is default, no values.
-            if (x != 0) {
-                // Otherwise we know that our branches are in the same order as our targets.
-                List<Integer> vals = entries.get(x - 1).getValue();
-                for (int val : vals) {
-                    expression.add(new Literal(TypedLiteral.getInt(val)));
-                }
-            }
-            Set<BlockIdentifier> blocks = SetFactory.newSet(target.getBlockIdentifiers());
-            blocks.add(switchBlockIdentifier);
-            BlockIdentifier caseIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.CASE);
-            Op03SimpleStatement caseStatement = new Op03SimpleStatement(blocks, new CaseStatement(expression, caseType, switchBlockIdentifier, caseIdentifier), target.getIndex().justBefore());
-            // Link casestatement in infront of target - all sources of target should point to casestatement instead, and
-            // there should be one link going from caseStatement to target. (it's unambiguous).
-            Iterator<Op03SimpleStatement> iterator = target.sources.iterator();
-            while (iterator.hasNext()) {
-                Op03SimpleStatement source = iterator.next();
-                if (swatch.getIndex().isBackJumpTo(source)) {
-                    continue;
-                }
-                if (source.getIndex().isBackJumpTo(target)) {
-                    continue;
-                }
-                source.replaceTarget(target, caseStatement);
-                caseStatement.addSource(source);
-                iterator.remove();
-            }
-            target.sources.add(caseStatement);
-            caseStatement.addTarget(target);
-            in.add(caseStatement);
-            firstPrev.put(tindex, caseStatement);
-        }
-
-        renumberInPlace(in);
-        /*
-         * Now, we have one final possible issue - what if a case block is reachable from a LATER block?
-         * i.e.
-         *
-         * case 1:
-         *   goto b
-         * case 2:
-         *   goto a
-         * ...
-         * ...
-         * a:
-         *
-         * return
-         * b:
-         * ...
-         * ...
-         * goto a
-         */
-        buildSwitchCases(swatch, targets, switchBlockIdentifier, in);
-
-        swatch.replaceStatement(switchStatement.getSwitchStatement(switchBlockIdentifier));
-        /*
-         * And (as it doesn't matter) reorder swatch's targets, for minimal confusion
-         */
-        Collections.sort(swatch.targets, new CompareByIndex());
-    }
-
-    public static void rebuildSwitches(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> switchStatements = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
-        /*
-         * Get the block identifiers for all switch statements and their cases.
-         */
-        for (Op03SimpleStatement switchStatement : switchStatements) {
-            SwitchStatement switchStatementInr = (SwitchStatement) switchStatement.getStatement();
-            Set<BlockIdentifier> allBlocks = SetFactory.newSet();
-            allBlocks.add(switchStatementInr.getSwitchBlock());
-            for (Op03SimpleStatement target : switchStatement.targets) {
-                Statement stmTgt = target.getStatement();
-                if (stmTgt instanceof CaseStatement) {
-                    allBlocks.add(((CaseStatement) stmTgt).getCaseBlock());
-                }
-            }
-            for (Op03SimpleStatement stm : statements) {
-                stm.getBlockIdentifiers().removeAll(allBlocks);
-            }
-            buildSwitchCases(switchStatement, switchStatement.getTargets(), switchStatementInr.getSwitchBlock(), statements);
-        }
-        for (Op03SimpleStatement switchStatement : switchStatements) {
-            // removePointlessSwitchDefault(switchStatement);
-            examineSwitchContiguity(switchStatement, statements);
-            moveJumpsToTerminalIfEmpty(switchStatement, statements);
-        }
-
-    }
-
-    private static void buildSwitchCases(Op03SimpleStatement swatch, List<Op03SimpleStatement> targets, BlockIdentifier switchBlockIdentifier, List<Op03SimpleStatement> in) {
-        Set<BlockIdentifier> caseIdentifiers = SetFactory.newSet();
-        /*
-         * For each of the case statements - find which is reachable from the others WITHOUT going through
-         * the switch again.  Then we might have to move a whole block... (!).
-         *
-         * If this is the case, we then figure out which order the switch blocks depend on each other, and perform a code
-         * reordering walk through the case statements in new order (and re-write the order of the targets.
-         */
-        Set<Op03SimpleStatement> caseTargets = SetFactory.newSet(targets);
-        /*
-         * For the START of each block, find if it's reachable from the start of the others, without going through
-         * switch.
-         * // /Users/lee/Downloads/samples/android/support/v4/app/FragmentActivity.class
-         */
-        Map<Op03SimpleStatement, InstrIndex> lastStatementBefore = MapFactory.newMap();
-        for (Op03SimpleStatement target : targets) {
-            CaseStatement caseStatement = (CaseStatement) target.getStatement();
-            BlockIdentifier caseBlock = caseStatement.getCaseBlock();
-
-            NodeReachable nodeReachable = new NodeReachable(caseTargets, target, swatch);
-            GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(target, nodeReachable);
-            gv.process();
-
-            List<Op03SimpleStatement> backReachable = Functional.filter(nodeReachable.reaches, new IsForwardJumpTo(target.getIndex()));
-            if (backReachable.isEmpty()) continue;
-
-            if (backReachable.size() != 1) {
-//                throw new IllegalStateException("Can't handle case statement with multiple reachable back edges to other cases (yet)");
-                continue;
-            }
-
-            Op03SimpleStatement backTarget = backReachable.get(0);
-            /*
-             * If this block is contiguous AND fully contains the found nodes, AND has no other sources, we can re-label
-             * all of the entries, and place it just before backTarget.
-             *
-             * Need to cache the last entry, as we might move multiple blocks.
-             *
-             */
-            boolean contiguous = blockIsContiguous(in, target, nodeReachable.inBlock);
-            if (target.getSources().size() != 1) {
-                /*
-                 * Ok, we can't move this above.  But we need to make sure, (if it's the last block) that we've explicitly
-                 * marked the contents as being in this switch, to stop movement.
-                 */
-                if (contiguous) {
-                    for (Op03SimpleStatement reachable : nodeReachable.inBlock) {
-                        reachable.markBlock(switchBlockIdentifier);
-                        // TODO : FIXME : Expensive - can we assume we won't get asked to mark
-                        // members of other cases?
-                        if (!caseTargets.contains(reachable)) {
-                            if (!SetUtil.hasIntersection(reachable.getBlockIdentifiers(), caseIdentifiers)) {
-                                reachable.markBlock(caseBlock);
-                            }
-                        }
-                    }
-                }
-                continue;
-            }
-            if (!contiguous) {
-                // Can't handle this.
-                continue;
-            }
-            // Yay.  Move (in order) all these statements to before backTarget.
-            // Well, don't really move them.  Relabel them.
-            InstrIndex prev = lastStatementBefore.get(backTarget);
-            if (prev == null) {
-                prev = backTarget.getIndex().justBefore();
-            }
-            int idx = in.indexOf(target) + nodeReachable.inBlock.size() - 1;
-            for (int i = 0, len = nodeReachable.inBlock.size(); i < len; ++i, --idx) {
-                in.get(idx).setIndex(prev);
-                prev = prev.justBefore();
-            }
-            lastStatementBefore.put(backTarget, prev);
-//            throw new IllegalStateException("Backjump fallthrough");
-        }
-    }
-
-    private static boolean blockIsContiguous(List<Op03SimpleStatement> in, Op03SimpleStatement start, Set<Op03SimpleStatement> blockContent) {
-        int idx = in.indexOf(start);
-        int len = blockContent.size();
-        if (idx + blockContent.size() > in.size()) return false;
-        for (int found = 1; found < len; ++found, ++idx) {
-            Op03SimpleStatement next = in.get(idx);
-            if (!blockContent.contains(next)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /* This WILL go too far, as we have no way of knowing when the common code ends....
-     *
-     */
-    private static class NodeReachable implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
-
-        private final Set<Op03SimpleStatement> otherCases;
-        private final Op03SimpleStatement switchStatement;
-
-        private final Op03SimpleStatement start;
-        private final List<Op03SimpleStatement> reaches = ListFactory.newList();
-        private final Set<Op03SimpleStatement> inBlock = SetFactory.newSet();
-
-        private NodeReachable(Set<Op03SimpleStatement> otherCases, Op03SimpleStatement start, Op03SimpleStatement switchStatement) {
-            this.otherCases = otherCases;
-            this.switchStatement = switchStatement;
-            this.start = start;
-        }
-
-        @Override
-        public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-            if (arg1 == switchStatement) {
-                return;
-            }
-            if (arg1.getIndex().isBackJumpFrom(start)) {
-                // If it's a backjump from the switch statement as well, ignore.  Otherwise we have to process.
-                if (arg1.getIndex().isBackJumpFrom(switchStatement)) return;
-            }
-            if (arg1 != start && otherCases.contains(arg1)) {
-                reaches.add(arg1);
-                return;
-            }
-            inBlock.add(arg1);
-            arg2.enqueue(arg1.getTargets());
-        }
-    }
-
-    /*
-     * If we end up in a situation like this
-     *
-     * switch (x) {
-     *   case a:
-     *   case b:
-     *   case c:
-     *   lbl : case d: [or default]
-     * }
-     *
-     * where lbl has no body, then forward jumps to lbl from inside that switch are equivalent to jumping to the
-     * following statement.
-     *
-     * This is related to (but not identical to) removePointlessSwitchDefaults.
-     */
-    private static void moveJumpsToTerminalIfEmpty(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
-        SwitchStatement swatch = (SwitchStatement) switchStatement.getStatement();
-        Op03SimpleStatement lastTgt = switchStatement.targets.get(switchStatement.targets.size() - 1);
-        BlockIdentifier switchBlock = swatch.getSwitchBlock();
-        if (!lastTgt.getBlockIdentifiers().contains(switchBlock)) return; // paranoia.
-        if (lastTgt.targets.size() != 1) return;
-        if (lastTgt.sources.size() == 1) return;
-        Op03SimpleStatement following = lastTgt.targets.get(0);
-        // Does following directly follow on from lastTgt, and is follwing NOT in the switch?
-        if (following.getBlockIdentifiers().contains(switchBlock)) return;
-
-        // Check that lastTgt has multiple FOWARD JUMPING sources.
-        List<Op03SimpleStatement> forwardJumpSources = Functional.filter(lastTgt.sources, new IsForwardJumpTo(lastTgt.getIndex()));
-        if (forwardJumpSources.size() <= 1) return;
-
-        int idx = statements.indexOf(lastTgt);
-        if (idx == 0) return;
-        Op03SimpleStatement justBefore = statements.get(idx - 1);
-        if (idx >= statements.size() - 1) return;
-        if (statements.get(idx + 1) != following) return;
-
-        // For any sources which were pointing to the last target, (other than the switch statement itself),
-        // we can re-point them at the instruction after it.
-        for (Op03SimpleStatement forwardJumpSource : forwardJumpSources) {
-            if (forwardJumpSource == switchStatement ||
-                    forwardJumpSource == justBefore) continue;
-            forwardJumpSource.replaceTarget(lastTgt, following);
-            lastTgt.removeSource(forwardJumpSource);
-            following.addSource(forwardJumpSource);
-
-            /*
-             * If the forward jumpsource was a goto, we now know it's actually a break!
-             */
-            Statement forwardJump = forwardJumpSource.getStatement();
-            if (forwardJump instanceof JumpingStatement) {
-                JumpingStatement jumpingStatement = (JumpingStatement) forwardJump;
-                JumpType jumpType = jumpingStatement.getJumpType();
-                if (jumpType.isUnknown()) {
-                    jumpingStatement.setJumpType(JumpType.BREAK);
-                }
-            }
-        }
-    }
-
-    private static boolean examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
-        Set<Op03SimpleStatement> forwardTargets = SetFactory.newSet();
-
-        // Create a copy of the targets.  We're going to have to copy because we want to sort.
-        List<Op03SimpleStatement> targets = ListFactory.newList(switchStatement.targets);
-        Collections.sort(targets, new CompareByIndex());
-
-        int idxFirstCase = statements.indexOf(targets.get(0));
-
-        if (idxFirstCase != statements.indexOf(switchStatement) + 1) {
-            throw new ConfusedCFRException("First case is not immediately after switch.");
-        }
-
-        BlockIdentifier switchBlock = ((SwitchStatement) switchStatement.containedStatement).getSwitchBlock();
-        int indexLastInLastBlock = 0;
-        // Process all but the last target.  (handle that below, as we may treat it as outside the case block
-        // depending on forward targets.
-        for (int x = 0; x < targets.size() - 1; ++x) {
-            Op03SimpleStatement thisCase = targets.get(x);
-            Op03SimpleStatement nextCase = targets.get(x + 1);
-            int indexThisCase = statements.indexOf(thisCase);
-            int indexNextCase = statements.indexOf(nextCase);
-            InstrIndex nextCaseIndex = nextCase.getIndex();
-
-            Statement maybeCaseStatement = thisCase.containedStatement;
-            if (!(maybeCaseStatement instanceof CaseStatement)) continue;
-            CaseStatement caseStatement = (CaseStatement) maybeCaseStatement;
-            BlockIdentifier caseBlock = caseStatement.getCaseBlock();
-
-            int indexLastInThis = getFarthestReachableInRange(statements, indexThisCase, indexNextCase);
-            if (indexLastInThis != indexNextCase - 1) {
-                // Oh dear.  This is going to need some moving around.
-//                throw new ConfusedCFRException("Case statement doesn't cover expected range.");
-            }
-            indexLastInLastBlock = indexLastInThis;
-            for (int y = indexThisCase + 1; y <= indexLastInThis; ++y) {
-                Op03SimpleStatement statement = statements.get(y);
-                statement.markBlock(caseBlock);
-                statement.markBlock(switchBlock);
-                if (statement.getJumpType().isUnknown()) {
-                    for (Op03SimpleStatement innerTarget : statement.targets) {
-                        innerTarget = followNopGoto(innerTarget, false, false);
-                        if (nextCaseIndex.isBackJumpFrom(innerTarget)) {
-                            forwardTargets.add(innerTarget);
-                        }
-                    }
-                }
-            }
-        }
-        // Either we have zero forwardTargets, in which case we can take the last statement and pull it out,
-        // or we have some forward targets.
-        // If so, we assume (!!) that's the end, and verify reachability from the start of the last case.
-        Op03SimpleStatement lastCase = targets.get(targets.size() - 1);
-        int indexLastCase = statements.indexOf(lastCase);
-        int breakTarget = -1;
-        BlockIdentifier caseBlock = null;
-        int indexLastInThis = 0;
-        boolean retieEnd = false;
-        if (!forwardTargets.isEmpty()) {
-            List<Op03SimpleStatement> lstFwdTargets = ListFactory.newList(forwardTargets);
-            Collections.sort(lstFwdTargets, new CompareByIndex());
-            Op03SimpleStatement afterCaseGuess = lstFwdTargets.get(0);
-            int indexAfterCase = statements.indexOf(afterCaseGuess);
-
-            CaseStatement caseStatement = (CaseStatement) lastCase.containedStatement;
-            caseBlock = caseStatement.getCaseBlock();
-
-            try {
-                indexLastInThis = getFarthestReachableInRange(statements, indexLastCase, indexAfterCase);
-            } catch (CannotPerformDecode e) {
-                forwardTargets.clear();
-            }
-            if (indexLastInThis != indexAfterCase - 1) {
-                retieEnd = true;
-            }
-        }
-        if (forwardTargets.isEmpty()) {
-            for (int y = idxFirstCase; y <= indexLastInLastBlock; ++y) {
-                Op03SimpleStatement statement = statements.get(y);
-                statement.markBlock(switchBlock);
-            }
-            if (indexLastCase != indexLastInLastBlock + 1) {
-                throw new ConfusedCFRException("Extractable last case doesn't follow previous");
-            }
-            lastCase.markBlock(switchBlock);
-            breakTarget = indexLastCase + 1;
-        } else {
-            for (int y = indexLastCase + 1; y <= indexLastInThis; ++y) {
-                Op03SimpleStatement statement = statements.get(y);
-                statement.markBlock(caseBlock);
-            }
-            for (int y = idxFirstCase; y <= indexLastInThis; ++y) {
-                Op03SimpleStatement statement = statements.get(y);
-                statement.markBlock(switchBlock);
-            }
-            breakTarget = indexLastInThis + 1;
-        }
-        Op03SimpleStatement breakStatementTarget = statements.get(breakTarget);
-
-        if (retieEnd) {
-            Op03SimpleStatement lastInThis = statements.get(indexLastInThis);
-            if (lastInThis.getStatement().getClass() == GotoStatement.class) {
-                // Add another goto, after lastIn this.  Last in this becomes a break to that.
-                Set<BlockIdentifier> blockIdentifiers = SetFactory.newSet(lastInThis.getBlockIdentifiers());
-                blockIdentifiers.remove(caseBlock);
-                blockIdentifiers.remove(switchBlock);
-                Op03SimpleStatement retie = new Op03SimpleStatement(blockIdentifiers, new GotoStatement(), lastInThis.getIndex().justAfter());
-                Op03SimpleStatement target = lastInThis.targets.get(0);
-                Iterator<Op03SimpleStatement> iterator = target.sources.iterator();
-                while (iterator.hasNext()) {
-                    Op03SimpleStatement source = iterator.next();
-                    if (source.getBlockIdentifiers().contains(switchBlock)) {
-                        iterator.remove();
-                        retie.addSource(source);
-                        source.replaceTarget(target, retie);
-                    }
-                }
-                if (!retie.sources.isEmpty()) {
-                    retie.targets.add(target);
-                    target.addSource(retie);
-                    statements.add(breakTarget, retie);
-                    breakStatementTarget = retie;
-                }
-
-
-            }
-        }
-
-        /* Given the assumption that the statement after the switch block is the break target, can we rewrite any
-         * of the exits from the switch statement to be breaks?
-         */
-        for (Op03SimpleStatement breakSource : breakStatementTarget.sources) {
-            if (breakSource.getBlockIdentifiers().contains(switchBlock)) {
-                if (breakSource.getJumpType().isUnknown()) {
-                    ((JumpingStatement) breakSource.containedStatement).setJumpType(JumpType.BREAK);
-                }
-            }
-        }
-
-        return true;
-    }
-
-    public static void replaceRawSwitches(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
-        List<Op03SimpleStatement> switchStatements = Functional.filter(in, new TypeFilter<RawSwitchStatement>(RawSwitchStatement.class));
-        // Replace raw switch statements with switches and case statements inline.
-        for (Op03SimpleStatement switchStatement : switchStatements) {
-            replaceRawSwitch(switchStatement, in, blockIdentifierFactory);
-        }
-        // We've injected 'case' statements, sort to get them into the proper place.
-        Collections.sort(in, new CompareByIndex());
-
-//        Dumper d = new Dumper();
-//        for (Op03SimpleStatement statement : in) {
-//            statement.dumpInner(d);
-//        }
-//
-        // For each of the switch statements, can we find a contiguous range which represents it?
-        // (i.e. where the break statement vectors to).
-        // for each case statement, we need to find a common successor, however there may NOT be
-        // one, i.e. where all branches (or all bar one) cause termination (return/throw)
-
-        // While we haven't yet done any analysis on loop bodies etc, we can make some fairly
-        // simple assumptions, (which can be broken by an obfuscator)  - for each case statement
-        // (except the last one) get the set of jumps which are to AFTER the start of the next statement.
-        // Fall through doesn't count.
-        // [These jumps may be legitimate breaks for the switch, or they may be breaks to enclosing statements.]
-        // 1 ) If there are no forward jumps, pull the last case out, and make it fall through. (works for default/non default).
-        // 2 ) If there are forward jumps, then it's possible that they're ALL to past the end of the switch statement
-        //     However, if that's the case, it probable means that we've been obfuscated.  Take the earliest common one.
-        //
-        // Check each case statement for obfuscation - for all but the last case, all statements in the range [X -> [x+1)
-        // without leaving the block.
-
-
-        switchStatements = Functional.filter(in, new TypeFilter<SwitchStatement>(SwitchStatement.class));
-        for (Op03SimpleStatement switchStatement : switchStatements) {
-            // removePointlessSwitchDefault(switchStatement);
-            examineSwitchContiguity(switchStatement, in);
-            moveJumpsToTerminalIfEmpty(switchStatement, in);
-        }
-
-    }
-
     private static void optimiseForTypes(Op03SimpleStatement statement) {
         IfStatement ifStatement = (IfStatement) (statement.containedStatement);
         ifStatement.optimiseForTypes();
@@ -5491,584 +3503,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-
-    private static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue) {
-        AssignmentExpression needle = new AssignmentExpression(lValue, rValue, true);
-        NOPSearchingExpressionRewriter finder = new NOPSearchingExpressionRewriter(needle);
-
-        statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
-        return finder.isFound();
-    }
-
-    private static void replaceHiddenIter(Statement statement, LValue lValue, Expression rValue) {
-        AssignmentExpression needle = new AssignmentExpression(lValue, rValue, true);
-        ExpressionReplacingRewriter finder = new ExpressionReplacingRewriter(needle, new LValueExpression(lValue));
-
-        statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
-    }
-
-    /* Given a for loop
-     *
-     * array
-     * bound = array.length
-     * for ( index ; index < bound ; index++) {
-     *   a = array[index]
-     * }
-     *
-     * rewrite as
-     *
-     * for ( a : array ) {
-     * }
-     *
-     * /however/ - it is only safe to do this if NEITHER index / bound / array are assigned to inside the loop.
-     *
-     * TODO : The tests in here are very rigid (and gross!), and need loosening up when it's working.
-     */
-    private static boolean rewriteArrayForLoop(final Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
-
-        /*
-         * loop should have one back-parent.
-         */
-        Op03SimpleStatement preceeding = findSingleBackSource(loop);
-        if (preceeding == null) return false;
-
-        ForStatement forStatement = (ForStatement) loop.containedStatement;
-
-        WildcardMatch wildcardMatch = new WildcardMatch();
-
-        if (!wildcardMatch.match(
-                new AssignmentSimple(wildcardMatch.getLValueWildCard("iter"), new Literal(TypedLiteral.getInt(0))),
-                forStatement.getInitial())) return false;
-
-        LValue originalLoopVariable = wildcardMatch.getLValueWildCard("iter").getMatch();
-
-        // Assignments are fiddly, as they can be assignmentPreChange or regular Assignment.
-        AbstractAssignmentExpression assignment = forStatement.getAssignment();
-        boolean incrMatch = assignment.isSelfMutatingOp1(originalLoopVariable, ArithOp.PLUS);
-        if (!incrMatch) return false;
-
-        if (!wildcardMatch.match(
-                new ComparisonOperation(
-                        new LValueExpression(originalLoopVariable),
-                        new LValueExpression(wildcardMatch.getLValueWildCard("bound")),
-                        CompOp.LT), forStatement.getCondition())) return false;
-
-        LValue originalLoopBound = wildcardMatch.getLValueWildCard("bound").getMatch();
-
-        // Bound should have been constructed RECENTLY, and should be an array length.
-        // TODO: Let's just check the single backref from the for loop test.
-        if (!wildcardMatch.match(
-                new AssignmentSimple(originalLoopBound, new ArrayLength(new LValueExpression(wildcardMatch.getLValueWildCard("array")))),
-                preceeding.containedStatement)) return false;
-
-        LValue originalArray = wildcardMatch.getLValueWildCard("array").getMatch();
-
-        Expression arrayStatement = new LValueExpression(originalArray);
-        Op03SimpleStatement prepreceeding = null;
-        /*
-         * if we're following the JDK pattern, we'll have something assigned to array.
-         */
-        if (preceeding.sources.size() == 1) {
-            if (wildcardMatch.match(
-                    new AssignmentSimple(originalArray, wildcardMatch.getExpressionWildCard("value")),
-                    preceeding.sources.get(0).containedStatement)) {
-                prepreceeding = preceeding.sources.get(0);
-                arrayStatement = wildcardMatch.getExpressionWildCard("value").getMatch();
-            }
-        }
-
-
-        Op03SimpleStatement loopStart = loop.getTargets().get(0);
-        // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
-        // TODO : This can be pushed into the loop, as long as it's not after a conditional.
-        WildcardMatch.LValueWildcard sugariterWC = wildcardMatch.getLValueWildCard("sugariter");
-        Expression arrIndex = new ArrayIndex(new LValueExpression(originalArray), new LValueExpression(originalLoopVariable));
-        boolean hiddenIter = false;
-        if (!wildcardMatch.match(
-                new AssignmentSimple(sugariterWC, arrIndex),
-                loopStart.containedStatement)) {
-            // If the assignment's been pushed down into a conditional, we could have
-            // if ((i = a[x]) > 3).  This is why we've avoided pushing that down. :(
-            if (!findHiddenIter(loopStart.containedStatement, sugariterWC, arrIndex)) {
-                return false;
-            }
-            hiddenIter = true;
-        }
-
-        LValue sugarIter = sugariterWC.getMatch();
-
-        // It's probably valid.  We just have to make sure that array and index aren't assigned to anywhere in the loop
-        // body.
-        final BlockIdentifier forBlock = forStatement.getBlockIdentifier();
-        List<Op03SimpleStatement> statementsInBlock = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
-            @Override
-            public boolean test(Op03SimpleStatement in) {
-                return in.containedInBlocks.contains(forBlock);
-            }
-        });
-
-        /*
-         * It's not simple enough to check if they're assigned to - we also have to verify that i$ (for example ;) isn't
-         * even USED anywhere else.
-         */
-        LValueUsageCollectorSimple usageCollector = new LValueUsageCollectorSimple();
-        final Set<LValue> cantUpdate = SetFactory.newSet(originalArray, originalLoopBound, originalLoopVariable);
-
-        for (Op03SimpleStatement inBlock : statementsInBlock) {
-            if (inBlock == loopStart) continue;
-            Statement inStatement = inBlock.containedStatement;
-            inStatement.collectLValueUsage(usageCollector);
-            for (LValue cantUse : cantUpdate) {
-                if (usageCollector.isUsed(cantUse)) {
-                    return false;
-                }
-            }
-            LValue updated = inStatement.getCreatedLValue();
-            if (updated == null) continue;
-            if (cantUpdate.contains(updated)) {
-                return false;
-            }
-        }
-
-        /*
-         * We shouldn't have to do this, because we should be doing this at a point where we've discovered
-         * scope better (op04?), but now, verify that no reachable statements (do a dfs from the end point of
-         * the loop with no retry) use either the iterator or the temp value without assigning them first.
-         * (or are marked as being part of the block, as we've already verified them)
-         * (or are the initial assignment statements).
-         */
-        final AtomicBoolean res = new AtomicBoolean();
-        GraphVisitor<Op03SimpleStatement> graphVisitor = new GraphVisitorDFS<Op03SimpleStatement>(loop,
-                new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
-                    @Override
-                    public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                        if (!(loop == arg1 || arg1.getBlockIdentifiers().contains(forBlock))) {
-                            // need to check it.
-                            Statement inStatement = arg1.getStatement();
-
-                            if (inStatement instanceof AssignmentSimple) {
-                                AssignmentSimple assignmentSimple = (AssignmentSimple) inStatement;
-                                if (cantUpdate.contains(assignmentSimple.getCreatedLValue())) return;
-                            }
-                            LValueUsageCollectorSimple usageCollector = new LValueUsageCollectorSimple();
-                            inStatement.collectLValueUsage(usageCollector);
-                            for (LValue cantUse : cantUpdate) {
-                                if (usageCollector.isUsed(cantUse)) {
-                                    res.set(true);
-                                    return;
-                                }
-                            }
-                        }
-                        for (Op03SimpleStatement target : arg1.getTargets()) {
-                            arg2.enqueue(target);
-                        }
-                    }
-                });
-        graphVisitor.process();
-        if (res.get()) {
-            return false;
-        }
-
-
-        loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, arrayStatement));
-        if (hiddenIter) {
-            replaceHiddenIter(loopStart.containedStatement, sugariterWC.getMatch(), arrIndex);
-        } else {
-            loopStart.nopOut();
-        }
-        preceeding.nopOut();
-        if (prepreceeding != null) {
-            prepreceeding.nopOut();
-        }
-
-        return true;
-    }
-
-    public static void rewriteArrayForLoops(List<Op03SimpleStatement> statements) {
-        for (Op03SimpleStatement loop : Functional.filter(statements, new TypeFilter<ForStatement>(ForStatement.class))) {
-            rewriteArrayForLoop(loop, statements);
-        }
-    }
-
-    /*
-     * We're being called /after/ optimiseForTypes, so we expect an expression set of the form
-     *
-     * [x] = [y].iterator()
-     * while ([x].hasNext()) {
-     *   [a] = [x].next();
-     * }
-     */
-    private static void rewriteIteratorWhileLoop(final Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
-        WhileStatement whileStatement = (WhileStatement) loop.containedStatement;
-
-        /*
-         * loop should have one back-parent.
-         */
-        Op03SimpleStatement preceeding = findSingleBackSource(loop);
-        if (preceeding == null) return;
-
-        WildcardMatch wildcardMatch = new WildcardMatch();
-
-        if (!wildcardMatch.match(
-                new BooleanExpression(
-                        wildcardMatch.getMemberFunction("hasnextfn", "hasNext", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")))
-                ),
-                whileStatement.getCondition())) return;
-
-        final LValue iterable = wildcardMatch.getLValueWildCard("iterable").getMatch();
-
-        Op03SimpleStatement loopStart = loop.getTargets().get(0);
-        // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
-        // TODO : This can be pushed into the loop, as long as it's not after a conditional.
-        boolean isCastExpression = false;
-        boolean hiddenIter = false;
-        WildcardMatch.LValueWildcard sugariterWC = wildcardMatch.getLValueWildCard("sugariter");
-        Expression nextCall = wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")));
-        if (wildcardMatch.match(
-                new AssignmentSimple(sugariterWC, nextCall),
-                loopStart.containedStatement)) {
-        } else if (wildcardMatch.match(
-                new AssignmentSimple(sugariterWC,
-                        wildcardMatch.getCastExpressionWildcard("cast", nextCall)),
-                loopStart.containedStatement)) {
-            // It's a cast expression - so we know that there's a type we might be able to push back up.
-            isCastExpression = true;
-        } else {
-            // Try seeing if it's a hidden iter, which has been pushed inside a conditional
-            if (!findHiddenIter(loopStart.containedStatement, sugariterWC, nextCall)) {
-                return;
-            }
-            hiddenIter = true;
-        }
-
-        LValue sugarIter = wildcardMatch.getLValueWildCard("sugariter").getMatch();
-
-        if (!wildcardMatch.match(
-                new AssignmentSimple(wildcardMatch.getLValueWildCard("iterable"),
-                        wildcardMatch.getMemberFunction("iterator", "iterator", wildcardMatch.getExpressionWildCard("iteratorsource"))),
-                preceeding.containedStatement)) return;
-
-        Expression iterSource = wildcardMatch.getExpressionWildCard("iteratorsource").getMatch();
-
-        // It's probably valid.  We just have to make sure that array and index aren't assigned to anywhere in the loop
-        // body.
-        final BlockIdentifier blockIdentifier = whileStatement.getBlockIdentifier();
-        List<Op03SimpleStatement> statementsInBlock = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
-            @Override
-            public boolean test(Op03SimpleStatement in) {
-                return in.containedInBlocks.contains(blockIdentifier);
-            }
-        });
-
-        /*
-         * It's not simple enough to check if they're assigned to - we also have to verify that i$ (for example ;) isn't
-         * even USED anywhere else.
-         */
-        LValueUsageCollectorSimple usageCollector = new LValueUsageCollectorSimple();
-        for (Op03SimpleStatement inBlock : statementsInBlock) {
-            if (inBlock == loopStart) continue;
-            Statement inStatement = inBlock.containedStatement;
-            inStatement.collectLValueUsage(usageCollector);
-            if (usageCollector.isUsed(iterable)) {
-                return;
-            }
-            LValue updated = inStatement.getCreatedLValue();
-            if (updated == null) continue;
-            if (updated.equals(sugarIter) || updated.equals(iterable)) {
-                return;
-            }
-        }
-
-        /*
-         * We shouldn't have to do this, because we should be doing this at a point where we've discovered
-         * scope better (op04?), but now, verify that no reachable statements (do a dfs from the end point of
-         * the loop with no retry) use either the iterator or the temp value without assigning them first.
-         * (or are marked as being part of the block, as we've already verified them)
-         * (or are the initial assignment statements).
-         */
-        final AtomicBoolean res = new AtomicBoolean();
-        GraphVisitor<Op03SimpleStatement> graphVisitor = new GraphVisitorDFS<Op03SimpleStatement>(loop,
-                new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
-                    @Override
-                    public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                        if (!(loop == arg1 || arg1.getBlockIdentifiers().contains(blockIdentifier))) {
-                            // need to check it.
-                            Statement inStatement = arg1.getStatement();
-
-                            if (inStatement instanceof AssignmentSimple) {
-                                AssignmentSimple assignmentSimple = (AssignmentSimple) inStatement;
-                                if (iterable.equals(assignmentSimple.getCreatedLValue())) return;
-                            }
-                            LValueUsageCollectorSimple usageCollector = new LValueUsageCollectorSimple();
-                            inStatement.collectLValueUsage(usageCollector);
-                            if (usageCollector.isUsed(iterable)) {
-                                res.set(true);
-                                return;
-                            }
-                        }
-                        for (Op03SimpleStatement target : arg1.getTargets()) {
-                            arg2.enqueue(target);
-                        }
-                    }
-                });
-        graphVisitor.process();
-        if (res.get()) {
-            return;
-        }
-
-        /*
-         * If it's a cast expression, we can try to push typing information back up.
-         *
-         * Doesn't work right now, as JavaPlaceholder is not referenced via an indirection.
-         */
-//        if (isCastExpression) {
-//            CastExpression castExpression = wildcardMatch.getCastExpressionWildcard("cast").getMatch();
-//            MemberFunctionInvokation iteratorCall = wildcardMatch.getMemberFunction("iterator").getMatch();
-//            // if this is an iterator< placeholder > , we can try to push the type back up.
-//            JavaTypeInstance iteratorType = iteratorCall.getInferredJavaType().getJavaTypeInstance();
-//            if (iteratorType instanceof JavaGenericRefTypeInstance) {
-//                JavaGenericRefTypeInstance genericIteratorType = (JavaGenericRefTypeInstance)iteratorType;
-//                List<JavaTypeInstance> bindings = genericIteratorType.getGenericTypes();
-//                JavaTypeInstance binding = null;
-//                if (bindings.size() == 1 && ((binding = bindings.get(0)) instanceof JavaGenericPlaceholderTypeInstance)) {
-//                    JavaGenericPlaceholderTypeInstance placeholderTypeInstance = (JavaGenericPlaceholderTypeInstance)binding;
-//                    GenericTypeBinder binder = GenericTypeBinder.createEmpty();
-//                    binder.suggestBindingFor(placeholderTypeInstance.getRawName(), castExpression.getInferredJavaType().getJavaTypeInstance());
-//                    iteratorCall.getInferredJavaType().improveGeneric(genericIteratorType.getBoundInstance(binder));
-//                }
-//            }
-//        }
-
-        loop.replaceStatement(new ForIterStatement(blockIdentifier, sugarIter, iterSource));
-        if (hiddenIter) {
-            replaceHiddenIter(loopStart.containedStatement, sugariterWC.getMatch(), nextCall);
-        } else {
-            loopStart.nopOut();
-        }
-        preceeding.nopOut();
-    }
-
-    public static void rewriteIteratorWhileLoops(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> loops = Functional.filter(statements, new TypeFilter<WhileStatement>(WhileStatement.class));
-        for (Op03SimpleStatement loop : loops) {
-            rewriteIteratorWhileLoop(loop, statements);
-        }
-    }
-
-
-    /*
-     * Strictly speaking, this isn't true.....  We should verify elsewhere first that we don't push
-     * operations through a monitorexit, as that will change the semantics.
-     */
-    private static boolean anyOpHasEffect(List<Op03SimpleStatement> ops) {
-        for (Op03SimpleStatement op : ops) {
-            Statement stm = op.getStatement();
-            Class<?> stmcls = stm.getClass();
-            if (stmcls == GotoStatement.class) continue;
-            if (stmcls == ThrowStatement.class) continue;
-            if (stmcls == CommentStatement.class) continue;
-            if (stm instanceof ReturnStatement) continue;
-            return true;
-        }
-        return false;
-    }
-
-    public static void findSynchronizedRange(final Op03SimpleStatement start, final Expression monitor) {
-        final Set<Op03SimpleStatement> addToBlock = SetFactory.newSet();
-
-        final Set<Op03SimpleStatement> foundExits = SetFactory.newSet();
-        final Set<Op03SimpleStatement> extraNodes = SetFactory.newSet();
-        /* Process all the parents until we find the monitorExit.
-         * Note that this does NOT find statements which are 'orphaned', i.e.
-         *
-         * synch(foo) {
-         *   try {
-         *     bob
-         *   } catch (e) {
-         *     throw  <--- not reachable backwards from monitorexit,
-         *   }
-         *   monitorexit.
-         *
-         *   However, there must necessarily be a monitorexit before this throw.
-         * }
-         */
-
-        final Set<BlockIdentifier> leaveExitsMutex = SetFactory.newSet();
-
-        GraphVisitor<Op03SimpleStatement> marker = new GraphVisitorDFS<Op03SimpleStatement>(start.getTargets(),
-                new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
-                    @Override
-                    public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                        //
-                        //
-
-                        Statement statement = arg1.getStatement();
-
-                        if (statement instanceof TryStatement) {
-                            TryStatement tryStatement = (TryStatement) statement;
-                            Set<Expression> tryMonitors = tryStatement.getMonitors();
-                            if (tryMonitors.contains(monitor)) {
-                                leaveExitsMutex.add(tryStatement.getBlockIdentifier());
-                                List<Op03SimpleStatement> tgts = arg1.getTargets();
-                                for (int x = 1, len = tgts.size(); x < len; ++x) {
-                                    Statement innerS = tgts.get(x).getStatement();
-                                    if (innerS instanceof CatchStatement) {
-                                        leaveExitsMutex.add(((CatchStatement) innerS).getCatchBlockIdent());
-                                    } else if (innerS instanceof FinallyStatement) {
-                                        leaveExitsMutex.add(((FinallyStatement) innerS).getFinallyBlockIdent());
-                                    }
-                                }
-                            }
-                        }
-
-                        if (statement instanceof MonitorExitStatement) {
-                            if (monitor.equals(((MonitorExitStatement) statement).getMonitor())) {
-                                foundExits.add(arg1);
-                                addToBlock.add(arg1);
-                                /*
-                                 * If there's a return / throw / goto immediately after this, then we know that the brace
-                                 * is validly moved.
-                                 */
-                                if (arg1.targets.size() == 1) {
-                                    arg1 = arg1.targets.get(0);
-                                    Statement targetStatement = arg1.containedStatement;
-                                    if (targetStatement instanceof ReturnStatement ||
-                                            targetStatement instanceof ThrowStatement ||
-                                            targetStatement instanceof Nop ||
-                                            targetStatement instanceof GotoStatement) {
-                                        // TODO : Should perform a block check on targetStatement.
-                                        extraNodes.add(arg1);
-                                    }
-                                }
-
-                                return;
-                            }
-                        }
-                        addToBlock.add(arg1);
-                        if (SetUtil.hasIntersection(arg1.getBlockIdentifiers(), leaveExitsMutex)) {
-                            for (Op03SimpleStatement tgt : arg1.getTargets()) {
-                                if (SetUtil.hasIntersection(tgt.getBlockIdentifiers(), leaveExitsMutex)) {
-                                    arg2.enqueue(tgt);
-                                }
-                            }
-                        } else {
-                            arg2.enqueue(arg1.getTargets());
-                        }
-                    }
-                }
-        );
-        marker.process();
-
-        /*
-         * An extra pass, wherein we find all blocks which members of addtoblock are in.
-         * (and the initial start is not in.)
-         * This is because we need to handle synchronized blocks which may not fit into the natural
-         * ordering.
-         *
-         * monitorenter
-         * bip
-         * if
-         *   foo
-         *   monitorexit
-         *   bar
-         * else
-         *   bop
-         *   monitorexit
-         *   bam
-         */
-        addToBlock.remove(start);
-        /*
-         * find entries with same-block targets which are NOT in addToBlock, add them.
-         */
-        Set<Op03SimpleStatement> requiredComments = SetFactory.newSet();
-        Iterator<Op03SimpleStatement> foundExitIter = foundExits.iterator();
-        while (foundExitIter.hasNext()) {
-            final Op03SimpleStatement foundExit = foundExitIter.next();
-            final Set<BlockIdentifier> exitBlocks = SetFactory.newSet(foundExit.getBlockIdentifiers());
-            exitBlocks.removeAll(start.getBlockIdentifiers());
-            final List<Op03SimpleStatement> added = ListFactory.newList();
-            GraphVisitor<Op03SimpleStatement> additional = new GraphVisitorDFS<Op03SimpleStatement>(foundExit, new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
-                @Override
-                public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                    if (SetUtil.hasIntersection(exitBlocks, arg1.getBlockIdentifiers())) {
-                        if (arg1 == foundExit) {
-                            arg2.enqueue(arg1.getTargets());
-                        } else if (addToBlock.add(arg1)) {
-                            added.add(arg1);
-                            arg2.enqueue(arg1.getTargets());
-                        }
-                    }
-                }
-            });
-            additional.process();
-            // If we had an effect, then we want to redesignate this monitor exit as a 'required comment'
-            if (anyOpHasEffect(added)) {
-                requiredComments.add(foundExit);
-                foundExitIter.remove();
-            }
-        }
-
-
-        MonitorEnterStatement monitorEnterStatement = (MonitorEnterStatement) (start.containedStatement);
-        BlockIdentifier blockIdentifier = monitorEnterStatement.getBlockIdentifier();
-        for (Op03SimpleStatement contained : addToBlock) {
-            contained.containedInBlocks.add(blockIdentifier);
-        }
-
-        for (Op03SimpleStatement exit : foundExits) {
-            exit.nopOut();
-        }
-
-        for (Op03SimpleStatement exit : requiredComments) {
-            exit.replaceStatement(new CommentStatement("MONITOREXIT " + exit));
-        }
-
-        /* For the extra nodes, if ALL the sources are in the block, we add the extranode
-         * to the block.  This pulls returns/throws into the block, but keeps them out
-         * if they're targets for a conditional outside the block.
-         */
-        for (Op03SimpleStatement extra : extraNodes) {
-            boolean allParents = true;
-            for (Op03SimpleStatement source : extra.sources) {
-                if (!source.containedInBlocks.contains(blockIdentifier)) {
-                    allParents = false;
-                }
-            }
-            if (allParents) {
-                extra.containedInBlocks.add(blockIdentifier);
-            }
-        }
-
-    }
-
-    /*
-    * We make a (dangerous?) assumption here - that the monitor entered is the same one as exited.
-    * Can JVM spec be read to allow
-    *
-    * a = x;
-    * b = x;
-    * enter(a)
-    * exit(b) ?
-    *
-    * Since monitorenter/exit must be paired (it's counted) we don't have to worry (much!) about monitorenter in a loop without
-    * exit.
-    *
-    * (might be a good anti-decompiler technique though!)
-    *
-    * What would be nasty is a switch statement which enters on one branch and exits on another...
-    */
-    public static void findSynchronizedBlocks(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> enters = Functional.filter(statements, new TypeFilter<MonitorEnterStatement>(MonitorEnterStatement.class));
-        // Each exit can be tied to one enter, which is the first one found by
-        // walking code backwards and not passing any other exit/enter for this var.
-        // (Every exit from a synchronised block has to exit, so if there's any possibiliy of an exception... )
-
-        for (Op03SimpleStatement enter : enters) {
-            MonitorEnterStatement monitorExitStatement = (MonitorEnterStatement) enter.containedStatement;
-
-            findSynchronizedRange(enter, monitorExitStatement.getMonitor());
-        }
-    }
 
     /*
      * This is a dangerous tidy-up operation.  Should only do it if we're falling back.
@@ -6149,192 +3583,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    private static boolean resugarAnonymousArray(Op03SimpleStatement newArray, List<Op03SimpleStatement> statements) {
-        AssignmentSimple assignmentSimple = (AssignmentSimple) newArray.containedStatement;
-        WildcardMatch start = new WildcardMatch();
-        if (!start.match(
-                new AssignmentSimple(start.getLValueWildCard("array"), start.getNewArrayWildCard("def")),
-                assignmentSimple
-        )) {
-            throw new ConfusedCFRException("Expecting new array");
-        }
-        /*
-         * If it's not a literal size, ignore.
-         */
-        LValue arrayLValue = start.getLValueWildCard("array").getMatch();
-        if (!(arrayLValue instanceof StackSSALabel || arrayLValue instanceof LocalVariable)) {
-            return false;
-        }
-        LValue array = arrayLValue;
-        AbstractNewArray arrayDef = start.getNewArrayWildCard("def").getMatch();
-        Expression dimSize0 = arrayDef.getDimSize(0);
-        if (!(dimSize0 instanceof Literal)) return false;
-        Literal lit = (Literal) dimSize0;
-        if (lit.getValue().getType() != TypedLiteral.LiteralType.Integer) return false;
-        int bound = (Integer) lit.getValue().getValue();
-
-        Op03SimpleStatement next = newArray;
-        List<Expression> anon = ListFactory.newList();
-        List<Op03SimpleStatement> anonAssigns = ListFactory.newList();
-        Expression arrayExpression = null;
-        if (array instanceof StackSSALabel) {
-            arrayExpression = new StackValue((StackSSALabel) array);
-        } else {
-            arrayExpression = new LValueExpression(array);
-        }
-        for (int x = 0; x < bound; ++x) {
-            if (next.targets.size() != 1) {
-                return false;
-            }
-            next = next.targets.get(0);
-            WildcardMatch testAnon = new WildcardMatch();
-            Literal idx = new Literal(TypedLiteral.getInt(x));
-            if (!testAnon.match(
-                    new AssignmentSimple(
-                            new ArrayVariable(new ArrayIndex(arrayExpression, idx)),
-                            testAnon.getExpressionWildCard("val")),
-                    next.containedStatement)) {
-                return false;
-            }
-            anon.add(testAnon.getExpressionWildCard("val").getMatch());
-            anonAssigns.add(next);
-        }
-        AssignmentSimple replacement = new AssignmentSimple(arrayLValue.getInferredJavaType(), assignmentSimple.getCreatedLValue(), new NewAnonymousArray(arrayDef.getInferredJavaType(), arrayDef.getNumDims(), anon, false));
-        newArray.replaceStatement(replacement);
-        if (array instanceof StackSSALabel) {
-            StackEntry arrayStackEntry = ((StackSSALabel) array).getStackEntry();
-            for (Op03SimpleStatement create : anonAssigns) {
-                arrayStackEntry.decrementUsage();
-            }
-        }
-        for (Op03SimpleStatement create : anonAssigns) {
-            create.nopOut();
-        }
-        return true;
-    }
-
-    /*
-     * Search for
-     *
-     * stk = new X[N];
-     * stk[0] = a
-     * stk[1] = b
-     * ...
-     * stk[N-1] = c
-     *
-     * transform into stk = new X{ a,b, .. c }
-     *
-     * (it's important that stk is a stack label, so we don't allow an RValue to reference it inside the
-     * array definition!)
-     */
-    public static void resugarAnonymousArrays(List<Op03SimpleStatement> statements) {
-        boolean success = false;
-        do {
-            List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
-            // filter for structure now
-            assignments = Functional.filter(assignments, new Predicate<Op03SimpleStatement>() {
-                @Override
-                public boolean test(Op03SimpleStatement in) {
-                    AssignmentSimple assignmentSimple = (AssignmentSimple) in.containedStatement;
-                    WildcardMatch wildcardMatch = new WildcardMatch();
-                    return (wildcardMatch.match(
-                            new AssignmentSimple(wildcardMatch.getLValueWildCard("array"), wildcardMatch.getNewArrayWildCard("def", 1, null)),
-                            assignmentSimple
-                    ));
-                }
-            });
-            success = false;
-            for (Op03SimpleStatement assignment : assignments) {
-                success |= resugarAnonymousArray(assignment, statements);
-            }
-            if (success) {
-                condenseLValues(statements);
-            }
-        }
-        while (success);
-    }
-
-    public static void inferGenericObjectInfoFromCalls(List<Op03SimpleStatement> statements) {
-        // memberFunctionInvokations will either be wrapped in ExpressionStatement or SimpleAssignment.
-        List<MemberFunctionInvokation> memberFunctionInvokations = ListFactory.newList();
-        for (Op03SimpleStatement statement : statements) {
-            Statement contained = statement.getStatement();
-            if (contained instanceof ExpressionStatement) {
-                Expression e = ((ExpressionStatement) contained).getExpression();
-                if (e instanceof MemberFunctionInvokation) {
-                    memberFunctionInvokations.add((MemberFunctionInvokation) e);
-                }
-            } else if (contained instanceof AssignmentSimple) {
-                Expression e = ((AssignmentSimple) contained).getRValue();
-                if (e instanceof MemberFunctionInvokation) {
-                    memberFunctionInvokations.add((MemberFunctionInvokation) e);
-                }
-            }
-        }
-        Map<Integer, List<MemberFunctionInvokation>> byTypKey = MapFactory.newTreeMap();
-        Functional.groupToMapBy(memberFunctionInvokations, byTypKey, new UnaryFunction<MemberFunctionInvokation, Integer>() {
-            @Override
-            public Integer invoke(MemberFunctionInvokation arg) {
-                return arg.getObject().getInferredJavaType().getLocalId();
-            }
-        });
-
-        invokationGroup:
-        for (Map.Entry<Integer, List<MemberFunctionInvokation>> entry : byTypKey.entrySet()) {
-            Integer key = entry.getKey();
-            List<MemberFunctionInvokation> invokations = entry.getValue();
-            if (invokations.isEmpty()) continue;
-
-            Expression obj0 = invokations.get(0).getObject();
-            JavaTypeInstance type = obj0.getInferredJavaType().getJavaTypeInstance();
-            if (!(type instanceof JavaGenericBaseInstance)) continue;
-            JavaGenericBaseInstance genericType = (JavaGenericBaseInstance) type;
-            if (!genericType.hasUnbound()) continue;
-
-            GenericTypeBinder gtb0 = getGtb(invokations.get(0));
-            if (gtb0 == null) continue invokationGroup;
-            for (int x = 1, len = invokations.size(); x < len; ++x) {
-                GenericTypeBinder gtb = getGtb(invokations.get(x));
-                if (gtb == null) {
-                    continue invokationGroup;
-                }
-                gtb0 = gtb0.mergeWith(gtb, true);
-                if (gtb0 == null) {
-                    continue invokationGroup;
-                }
-            }
-            obj0.getInferredJavaType().deGenerify(gtb0.getBindingFor(obj0.getInferredJavaType().getJavaTypeInstance()));
-        }
-    }
-
-    public static class LValueTypeClashCheck implements LValueUsageCollector {
-
-        Set<Integer> clashes = SetFactory.newSet();
-
-        public void collect(LValue lValue) {
-            lValue.collectLValueUsage(this);
-            InferredJavaType inferredJavaType = lValue.getInferredJavaType();
-            if (inferredJavaType != null && inferredJavaType.isClash()) {
-                if (lValue instanceof LocalVariable) {
-                    int idx = ((LocalVariable) lValue).getIdx();
-                    if (idx >= 0) clashes.add(idx);
-                }
-            }
-        }
-    }
-
-    public static boolean checkTypeClashes(List<Op03SimpleStatement> statements, BytecodeMeta bytecodeMeta) {
-        LValueTypeClashCheck clashCheck = new LValueTypeClashCheck();
-        for (Op03SimpleStatement statement : statements) {
-            statement.getStatement().collectLValueUsage(clashCheck);
-        }
-        if (!clashCheck.clashes.isEmpty()) {
-            bytecodeMeta.informLivenessClashes(clashCheck.clashes);
-            return true;
-        }
-        return false;
-    }
-
     public static void labelAnonymousBlocks(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
         List<Op03SimpleStatement> anonBreaks = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
             @Override
@@ -6382,10 +3630,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement statement : statements) {
             statement.rewrite(rewriter);
         }
-    }
-
-    static GenericTypeBinder getGtb(MemberFunctionInvokation m) {
-        return m.getMethodPrototype().getTypeBinderFor(m.getArgs());
     }
 
     @Override

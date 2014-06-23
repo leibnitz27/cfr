@@ -66,9 +66,13 @@ public class StackSim {
             thisSim = thisSim.getParent();
         }
         StackTypes producedStack = delta.getProduced();
+        for (int x=producedStack.size()-1;x>=0;--x) {
+            thisSim = new StackSim(thisSim, producedStack.get(x));
+        }
+        StackSim thatSim = thisSim;
         for (StackType stackType : producedStack) {
-            thisSim = new StackSim(thisSim, stackType);
-            produced.add(thisSim.stackEntryHolder);
+            produced.add(thatSim.stackEntryHolder);
+            thatSim = thatSim.getParent();
         }
         return thisSim;
     }
@@ -78,5 +82,18 @@ public class StackSim {
             throw new ConfusedCFRException("Stack underflow");
         }
         return parent;
+    }
+
+    @Override
+    public String toString() {
+        StackSim next = this;
+        StringBuilder sb = new StringBuilder();
+        while (next != null) {
+            if (next.stackEntryHolder == null) break;
+            StackEntry stackEntry = next.stackEntryHolder.getStackEntry();
+            sb.append(stackEntry).append('[').append(stackEntry.getType()).append("] ");
+            next = next.parent;
+        }
+        return sb.toString();
     }
 }
