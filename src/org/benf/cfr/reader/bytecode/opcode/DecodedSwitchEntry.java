@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.opcode;
 
+import org.benf.cfr.reader.util.output.CommaHelp;
+
 import java.util.List;
 
 public class DecodedSwitchEntry {
@@ -17,5 +19,18 @@ public class DecodedSwitchEntry {
 
     public int getBytecodeTarget() {
         return bytecodeTarget;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        sb.append("case ");
+        for (Integer val : value) {
+            first = CommaHelp.comma(first, sb);
+            sb.append(val);
+        }
+        sb.append(" -> ").append(bytecodeTarget);
+        return sb.toString();
     }
 }

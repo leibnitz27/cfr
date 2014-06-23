@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
@@ -22,11 +23,11 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import java.util.*;
 
 public class SwitchReplacer {
-    public static void replaceRawSwitches(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    public static void replaceRawSwitches(Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
         List<Op03SimpleStatement> switchStatements = Functional.filter(in, new TypeFilter<RawSwitchStatement>(RawSwitchStatement.class));
         // Replace raw switch statements with switches and case statements inline.
         for (Op03SimpleStatement switchStatement : switchStatements) {
-            replaceRawSwitch(switchStatement, in, blockIdentifierFactory);
+            replaceRawSwitch(method, switchStatement, in, blockIdentifierFactory);
         }
         // We've injected 'case' statements, sort to get them into the proper place.
         Collections.sort(in, new CompareByIndex());
@@ -63,7 +64,7 @@ public class SwitchReplacer {
 
     }
 
-    public static void replaceRawSwitch(Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    public static void replaceRawSwitch(Method method, Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
         List<Op03SimpleStatement> targets = swatch.getTargets();
         RawSwitchStatement switchStatement = (RawSwitchStatement) swatch.getStatement();
         DecodedSwitch switchData = switchStatement.getSwitchData();
