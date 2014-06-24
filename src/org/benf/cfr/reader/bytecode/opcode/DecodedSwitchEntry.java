@@ -28,7 +28,7 @@ public class DecodedSwitchEntry {
         sb.append("case ");
         for (Integer val : value) {
             first = CommaHelp.comma(first, sb);
-            sb.append(val);
+            sb.append(val == null ? "default" : val);
         }
         sb.append(" -> ").append(bytecodeTarget);
         return sb.toString();

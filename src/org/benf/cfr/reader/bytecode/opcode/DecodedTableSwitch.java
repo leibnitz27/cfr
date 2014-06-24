@@ -47,6 +47,7 @@ public class DecodedTableSwitch implements DecodedSwitch {
                         return ListFactory.newList();
                     }
                 });
+        uniqueTargets.get(defaultTarget).add(null);
         for (int x = 0; x < numoffsets; ++x) {
             int target = bd.getS4At(offset + OFFSET_OF_OFFSETS + (x * 4));
             if (target != defaultTarget) {
@@ -59,11 +60,6 @@ public class DecodedTableSwitch implements DecodedSwitch {
             jumpTargets.add(new DecodedSwitchEntry(entry.getValue(), entry.getKey()));
         }
 
-    }
-
-    @Override
-    public int getDefaultTarget() {
-        return defaultTarget;
     }
 
     @Override

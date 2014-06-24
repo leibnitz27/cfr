@@ -40,6 +40,7 @@ public class DecodedLookupSwitch implements DecodedSwitch {
                         return ListFactory.newList();
                     }
                 });
+        uniqueTargets.get(defaultTarget).add(null);
         for (int x = 0; x < numpairs; ++x) {
             int value = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8));
             int target = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8) + 4);
@@ -51,11 +52,6 @@ public class DecodedLookupSwitch implements DecodedSwitch {
         for (Map.Entry<Integer, List<Integer>> entry : uniqueTargets.entrySet()) {
             jumpTargets.add(new DecodedSwitchEntry(entry.getValue(), entry.getKey()));
         }
-    }
-
-    @Override
-    public int getDefaultTarget() {
-        return defaultTarget;
     }
 
     @Override

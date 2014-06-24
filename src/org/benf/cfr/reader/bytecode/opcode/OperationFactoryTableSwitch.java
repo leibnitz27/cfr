@@ -28,11 +28,9 @@ public class OperationFactoryTableSwitch extends OperationFactoryDefault {
         byte[] rawData = bd.getBytesAt(size, 1);
 
         DecodedSwitch dts = new DecodedTableSwitch(rawData, offset);
-        int defaultTarget = dts.getDefaultTarget();
         List<DecodedSwitchEntry> targets = dts.getJumpTargets();
-        int[] targetOffsets = new int[targets.size() + 1];
-        targetOffsets[0] = defaultTarget;
-        int out = 1;
+        int[] targetOffsets = new int[targets.size()];
+        int out = 0;
         for (DecodedSwitchEntry target : targets) {
             targetOffsets[out++] = target.getBytecodeTarget();
         }

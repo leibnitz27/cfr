@@ -206,7 +206,7 @@ public class Op03Blocks {
 
                         for (BlockIdentifier blk : diffs) {
                             if (blk.getBlockType() == BlockType.CASE ||
-                                    blk.getBlockType() == BlockType.SWITCH) continue;
+                                blk.getBlockType() == BlockType.SWITCH) continue;
                             if (blk == newTryBlock) continue;
                             needLinPrev = true;
                             break prevtest;

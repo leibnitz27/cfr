@@ -4,8 +4,6 @@ import java.util.List;
 
 public interface DecodedSwitch {
 
-    int getDefaultTarget();
-
     List<DecodedSwitchEntry> getJumpTargets();
 
 }

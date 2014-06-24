@@ -97,18 +97,18 @@ public class SwitchReplacer {
         List<DecodedSwitchEntry> entries = switchData.getJumpTargets();
         InferredJavaType caseType = switchStatement.getSwitchOn().getInferredJavaType();
         Map<InstrIndex, Op03SimpleStatement> firstPrev = MapFactory.newMap();
-        for (int x = 0; x < targets.size(); ++x) {
+        for (int x = 0, len=targets.size(); x < len; ++x) {
             Op03SimpleStatement target = targets.get(x);
             InstrIndex tindex = target.getIndex();
             if (firstPrev.containsKey(tindex)) { // Get previous case statement if already exists, so we stack them.
                 target = firstPrev.get(tindex);
             }
             List<Expression> expression = ListFactory.newList();
-            // 0 is default, no values.
-            if (x != 0) {
-                // Otherwise we know that our branches are in the same order as our targets.
-                List<Integer> vals = entries.get(x - 1).getValue();
-                for (int val : vals) {
+
+            // Otherwise we know that our branches are in the same order as our targets.
+            List<Integer> vals = entries.get(x).getValue();
+            for (Integer val : vals) {
+                if (val != null) {
                     expression.add(new Literal(TypedLiteral.getInt(val)));
                 }
             }
