@@ -153,6 +153,36 @@ public class Misc {
     }
 
 
+
+    public static Set<Op03SimpleStatement> followNopGotoBackwards(Op03SimpleStatement eventualtarget) {
+
+        final Set<Op03SimpleStatement> result = SetFactory.newSet();
+
+        new GraphVisitorDFS<Op03SimpleStatement>(eventualtarget, new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
+            @Override
+            public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+                for (Op03SimpleStatement source : arg1.getSources()) {
+                    Statement statement = source.getStatement();
+                    Class clazz = statement.getClass();
+                    if (clazz == Nop.class ||
+                        clazz == CaseStatement.class) {
+                        arg2.enqueue(source);
+                    } else if (clazz == GotoStatement.class) {
+                        result.add(source);
+                        arg2.enqueue(source);
+                    } else if (clazz == IfStatement.class) {
+                        if (source.getTargets().size() == 2 &&
+                            source.getTargets().get(1) == arg2) {
+                            result.add(source);
+                        }
+                    }
+                }
+            }
+        }).process();
+
+        return result;
+    }
+
     // Should have a set to make sure we've not looped.
     public static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource, boolean aggressive) {
         if (in == null) {

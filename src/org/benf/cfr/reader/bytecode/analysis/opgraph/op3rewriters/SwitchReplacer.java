@@ -57,8 +57,9 @@ public class SwitchReplacer {
 
         switchStatements = Functional.filter(in, new TypeFilter<SwitchStatement>(SwitchStatement.class));
         for (Op03SimpleStatement switchStatement : switchStatements) {
-            // removePointlessSwitchDefault(switchStatement);
+            // (assign switch block).
             examineSwitchContiguity(switchStatement, in);
+            moveJumpsToCaseStatements(switchStatement, in);
             moveJumpsToTerminalIfEmpty(switchStatement, in);
         }
 
@@ -185,6 +186,10 @@ public class SwitchReplacer {
             CaseStatement caseStatement = (CaseStatement) target.getStatement();
             BlockIdentifier caseBlock = caseStatement.getCaseBlock();
 
+            if (!caseStatement.isDefault()) {
+                target.markBlock(switchBlockIdentifier);
+            }
+
             NodeReachable nodeReachable = new NodeReachable(caseTargets, target, swatch);
             GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(target, nodeReachable);
             gv.process();
@@ -246,6 +251,7 @@ public class SwitchReplacer {
     }
 
     public static void rebuildSwitches(List<Op03SimpleStatement> statements) {
+
         List<Op03SimpleStatement> switchStatements = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
         /*
          * Get the block identifiers for all switch statements and their cases.
@@ -263,6 +269,9 @@ public class SwitchReplacer {
             for (Op03SimpleStatement stm : statements) {
                 stm.getBlockIdentifiers().removeAll(allBlocks);
             }
+        }
+        for (Op03SimpleStatement switchStatement : switchStatements) {
+            SwitchStatement switchStatementInr = (SwitchStatement) switchStatement.getStatement();
             buildSwitchCases(switchStatement, switchStatement.getTargets(), switchStatementInr.getSwitchBlock(), statements);
         }
         for (Op03SimpleStatement switchStatement : switchStatements) {
@@ -331,12 +340,15 @@ public class SwitchReplacer {
                     for (Op03SimpleStatement innerTarget : statement.getTargets()) {
                         innerTarget = Misc.followNopGoto(innerTarget, false, false);
                         if (nextCaseIndex.isBackJumpFrom(innerTarget)) {
-                            forwardTargets.add(innerTarget);
+                            if (!innerTarget.getBlockIdentifiers().contains(switchBlock)) {
+                                forwardTargets.add(innerTarget);
+                            }
                         }
                     }
                 }
             }
         }
+
         // Either we have zero forwardTargets, in which case we can take the last statement and pull it out,
         // or we have some forward targets.
         // If so, we assume (!!) that's the end, and verify reachability from the start of the last case.
@@ -416,12 +428,48 @@ public class SwitchReplacer {
             }
         }
 
+        /*
+         * Sanity check:
+         * If we've SOMEHOW decided the break target is inside the switch, we're wrong.
+         */
+        if (breakStatementTarget.getBlockIdentifiers().contains(switchBlock)) return true;
+
+        /*
+         * Follow the graph backwards - anything that's an effective jump to the breakstatementtarget
+         * should be rewritten as such.
+         */
+        Set<Op03SimpleStatement> sources = Misc.followNopGotoBackwards(breakStatementTarget);
+
+
         /* Given the assumption that the statement after the switch block is the break target, can we rewrite any
          * of the exits from the switch statement to be breaks?
          */
-        for (Op03SimpleStatement breakSource : breakStatementTarget.getSources()) {
+        for (Op03SimpleStatement breakSource : sources) {
             if (breakSource.getBlockIdentifiers().contains(switchBlock)) {
                 if (breakSource.getJumpType().isUnknown()) {
+                    /*
+                     * Make sure it's pointing at breakstatementtarget - if not repoint.
+                     */
+                    JumpingStatement jumpingStatement = (JumpingStatement)(breakSource.getStatement());
+                    /*
+                     * Worry with an if statement is if we repoint the wrong target - make sure we only
+                     * repoint the jump. (Should roll this into an interface...)
+                     */
+                    Op03SimpleStatement originalTarget = null;
+                    if (jumpingStatement.getClass() == IfStatement.class) {
+                        if (breakSource.getTargets().size() != 2) continue;
+                        originalTarget = breakSource.getTargets().get(1);
+                    } else {
+                        if (breakSource.getTargets().size() != 1) continue;
+                        originalTarget = breakSource.getTargets().get(0);
+                    }
+                    if (originalTarget != breakStatementTarget) {
+                        // Repoint.
+                        breakSource.replaceTarget(originalTarget, breakStatementTarget);
+                        originalTarget.removeSource(breakSource);
+                        breakStatementTarget.addSource(breakSource);
+                    }
+
                     ((JumpingStatement) breakSource.getStatement()).setJumpType(JumpType.BREAK);
                 }
             }
@@ -429,6 +477,42 @@ public class SwitchReplacer {
 
         return true;
     }
+
+    /*
+     * If we have jumps from DIFFERENT cases into the start of a new case, we need to make sure that they
+     * now refer to the case statement, not the start.
+     */
+    private static void moveJumpsToCaseStatements(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
+
+        SwitchStatement switchStmt = (SwitchStatement)switchStatement.getStatement();
+        BlockIdentifier switchBlock = switchStmt.getSwitchBlock();
+
+        for (Op03SimpleStatement caseStatement : switchStatement.getTargets()) {
+            // Test shouldn't be necessary.
+            if (!(caseStatement.getStatement() instanceof CaseStatement)) continue;
+            CaseStatement caseStmt = (CaseStatement)caseStatement.getStatement();
+            if (switchBlock != caseStmt.getSwitchBlock()) continue;
+            BlockIdentifier caseBlock = caseStmt.getCaseBlock();
+
+            Op03SimpleStatement target = caseStatement.getTargets().get(0);
+
+            Iterator<Op03SimpleStatement> targetSourceIt = target.getSources().iterator();
+            while (targetSourceIt.hasNext()) {
+                Op03SimpleStatement src = targetSourceIt.next();
+                if (src == caseStatement) continue;
+                Set<BlockIdentifier> blockIdentifiers = src.getBlockIdentifiers();
+                if (blockIdentifiers.contains(caseBlock)) continue;
+                if (!blockIdentifiers.contains(switchBlock)) continue;
+
+                // It's a jump to the start of the block, from a different block.  It should jump
+                // to the case statement instead.
+                targetSourceIt.remove();
+                src.replaceTarget(target, caseStatement);
+                caseStatement.addSource(src);
+            }
+        }
+    }
+
 
     /*
 * If we end up in a situation like this

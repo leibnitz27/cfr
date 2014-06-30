@@ -50,7 +50,8 @@ public class RemoveDeterministicJumps {
                 continue;
             }
             if (cls == GotoStatement.class ||
-                    cls == MonitorExitStatement.class) {
+                cls == MonitorExitStatement.class ||
+                cls == CaseStatement.class) {
                 if (nTargets != 1) break;
                 current = curTargets.get(0);
                 continue;

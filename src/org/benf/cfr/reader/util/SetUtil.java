@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public class SetUtil {
@@ -34,6 +35,14 @@ public class SetUtil {
         }
         for (X b1 : b) {
             if (!a.contains(b1)) res.add(b1);
+        }
+        return res;
+    }
+
+    public static <X> List<X> differenceAtakeBtoList(Set<? extends X> a, Set<? extends X> b) {
+        List<X> res = ListFactory.newList();
+        for (X a1 : a) {
+            if (!b.contains(a1)) res.add(a1);
         }
         return res;
     }

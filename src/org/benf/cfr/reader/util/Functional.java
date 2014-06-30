@@ -7,6 +7,13 @@ import java.util.*;
 
 public class Functional {
 
+    public static class NotNull<X> implements Predicate<X> {
+        @Override
+        public boolean test(X in) {
+            return in != null;
+        }
+    }
+
     public static <X> List<X> filterColl(Collection<X> input, Predicate<X> predicate) {
         return filter(input, predicate);
     }

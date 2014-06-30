@@ -426,6 +426,74 @@ public class Op03Blocks {
         return Cleaner.removeUnreachableCode(statements, true);
     }
 
+    private static boolean canCombineBlockSets(Block3 from, Block3 to) {
+
+        Set<BlockIdentifier> fromBlocks = from.getStart().getBlockIdentifiers();
+        Set<BlockIdentifier> toBlocks = to.getStart().getBlockIdentifiers();
+
+        if (fromBlocks.equals(toBlocks)) return true;
+        // If we've moved from a case label to a case block those can be combined.
+
+        fromBlocks = from.getEnd().getBlockIdentifiers();
+        if (fromBlocks.equals(toBlocks)) return true;
+
+        if (fromBlocks.size() == toBlocks.size()-1) {
+            Statement stm = from.getEnd().getStatement();
+            if (stm instanceof CaseStatement) {
+                BlockIdentifier caseBlock = ((CaseStatement) stm).getCaseBlock();
+                List<BlockIdentifier> diff = SetUtil.differenceAtakeBtoList(toBlocks, fromBlocks);
+                if (diff.size() == 1 && diff.get(0) == caseBlock) return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<Block3> combineNeighbouringBlocks(final Method method, final List<Block3> blocks) {
+        Block3 curr = blocks.get(0);
+        int curridx = 0;
+
+        for (int i=1, len=blocks.size(); i<len; ++i) {
+            Block3 next = blocks.get(i);
+            if (next == null) continue;
+            if (next.sources.size() == 1 && next.sources.contains(curr)) {
+                if (canCombineBlockSets(curr,next)) {
+                    // Merge, and repeat.
+                    curr.content.addAll(next.content);
+                    curr.targets.remove(next);
+                    for (Block3 target : next.targets) {
+                        target.sources.remove(next);
+                        target.sources.add(curr);
+                    }
+                    next.sources.clear();
+                    curr.targets.addAll(next.targets);
+                    next.targets.clear();
+                    curr.sources.remove(curr);
+                    curr.targets.remove(curr);
+                    blocks.set(i, null);
+                    // Try to rewind current to the last block before it, as we may be able to merge with predencessor
+                    // now.
+                    for (int j=curridx-1;j>=0;j--) {
+                        Block3 tmp = blocks.get(j);
+                        if (tmp != null) {
+                            curr = tmp;
+                            curridx = j;
+                            i = j;
+                            break;
+                        }
+                    }
+                    continue;
+                }
+            }
+            // couldn't merge, emit and consider.
+            curr = next;
+            curridx = i;
+        }
+        for (Block3 block : blocks) {
+            if (block != null) block.resetSources();
+        }
+        return Functional.filter(blocks, new Functional.NotNull<Block3>());
+    }
+
     public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements, final DecompilerComments comments, final Options options) {
 
         List<Block3> blocks = buildBasicBlocks(method, statements);
@@ -434,6 +502,8 @@ public class Op03Blocks {
 
         Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = getTryBlockAliases(statements);
         applyKnownBlocksHeuristic(method, blocks, tryBlockAliases);
+
+        blocks = combineNeighbouringBlocks(method, blocks);
 
         blocks = doTopSort(blocks);
 
@@ -588,6 +658,7 @@ public class Op03Blocks {
         InstrIndex startIndex;
         List<Op03SimpleStatement> content = ListFactory.newList();
         Set<Block3> sources = new LinkedHashSet<Block3>();
+        // This seems redundant? - verify need.
         Set<Block3> originalSources = new LinkedHashSet<Block3>();
         Set<Block3> targets = new LinkedHashSet<Block3>();
 
@@ -661,6 +732,11 @@ public class Op03Blocks {
         public void copySources() {
             sources.clear();
             sources.addAll(originalSources);
+        }
+
+        public void resetSources() {
+            originalSources.clear();
+            originalSources.addAll(sources);
         }
 
         public Block3 getLastUnconditionalBackjumpToHere(Map<Block3, Integer> idxLut) {
