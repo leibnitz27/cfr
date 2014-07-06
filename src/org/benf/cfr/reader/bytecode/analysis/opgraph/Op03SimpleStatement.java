@@ -2544,7 +2544,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         int idx = statements.indexOf(tgt);
         if (idx == 0) return false;
         final Op03SimpleStatement before = statements.get(idx - 1);
+        // TODO : should be simple to verify that the first test is uneccessary.
         if (tgt.getSources().contains(before)) return false;
+        if (tgt.getSources().size() != 1) return false;
 
         InstrIndex beforeTgt = tgt.getIndex().justBefore();
         Op03SimpleStatement last = forwardGoto;
