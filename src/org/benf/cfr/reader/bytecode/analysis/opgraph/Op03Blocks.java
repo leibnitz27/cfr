@@ -10,6 +10,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheckSimple;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -21,6 +23,10 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import java.util.*;
 
 public class Op03Blocks {
+
+    private static <T> T getSingle(Set<T> in) {
+        return in.iterator().next();
+    }
 
     private static List<Block3> doTopSort(List<Block3> in) {
         /*
@@ -50,23 +56,66 @@ public class Op03Blocks {
                 /*
                  * Take first known ready
                  */
-                next = ready.iterator().next();
+                next = getSingle(ready);
                 ready.remove(next);
             } else {
                 /*
                  * Take first of others.
                  */
-                next = allBlocks.iterator().next();
+                next = getSingle(allBlocks);
             }
             last = next;
             // Remove from allblocks so we don't process again.
             allBlocks.remove(next);
             output.add(next);
+            Set<BlockIdentifier> fromSet = next.getEnd().getBlockIdentifiers();
+            Set<Block3> notReadyInThis = null;
             for (Block3 child : next.targets) {
                 child.sources.remove(next);
                 if (child.sources.isEmpty()) {
                     if (allBlocks.contains(child)) {
                         ready.add(child);
+                    }
+                } else {
+                    if (child.getStart().getBlockIdentifiers().equals(fromSet)) {
+                        if (notReadyInThis == null) notReadyInThis = new TreeSet<Block3>();
+                        notReadyInThis.add(child);
+                    }
+                }
+            }
+            /* If we're /currently/ in a block set, and the next ready element is
+             * NOT in the same blockset, AND WE HAVE CHILDREN IN THE BLOCKSET
+             * mark our earliest child as ready, even if it isn't necessarily so.
+             */
+            if (!ready.isEmpty()) {
+                Block3 probnext = getSingle(ready);
+
+                Set<BlockIdentifier> probNextBlocks = probnext.getStart().getBlockIdentifiers();
+                /*
+                 * If probNextBlocks is a SUBSET of fromset, then try to stay in fromset.
+                 */
+                if (fromSet.containsAll(probNextBlocks) && !probNextBlocks.equals(fromSet)) {
+                    if (notReadyInThis != null && !notReadyInThis.isEmpty()) {
+                        Block3 forceChild = getSingle(notReadyInThis);
+                        if (allBlocks.contains(forceChild)) {
+                            // UNLESS.... (oh god this is awful, dex2jar will have backjumps into monitor
+                            // releases..... ) the child we're about to release has a back jump into it
+                            // which is NOT from the block (!!!).
+                            // [ eg com/db4o/cs/internal/ClientTransactionPool.class ]
+                            boolean canForce = true;
+                            for (Block3 forceSource : forceChild.sources) {
+                                if (forceChild.startIndex.isBackJumpFrom(forceSource.startIndex)) {
+                                    if (!forceSource.getStart().getBlockIdentifiers().containsAll(fromSet)) {
+                                        canForce = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (canForce) {
+                                forceChild.sources.clear();
+                                ready.add(forceChild);
+                            }
+                        }
                     }
                 }
             }
@@ -76,8 +125,8 @@ public class Op03Blocks {
 
     private static void apply0TargetBlockHeuristic(List<Block3> blocks) {
         /*
-         * If a block has no targets, but multiple sources, make sure it appears AFTER its last source
-         * in the sorted blocks.
+         * If a block has no targets, make sure it appears AFTER its last source
+         * in the sorted blocks, [todo : unless that would move it out of a known blockidentifier set.]
          */
         for (int idx = blocks.size() - 1; idx >= 0; idx--) {
             Block3 block = blocks.get(idx);
@@ -91,6 +140,19 @@ public class Op03Blocks {
                     }
                 }
                 if (move) {
+                    /* If one of the source blocks was a fall through target, we need to change that to
+                     * have a goto.
+                     *
+                     */
+                    if (idx > 0) {
+                        Block3 fallThrough = blocks.get(idx-1);
+                        if (block.sources.contains(fallThrough) && lastSource != fallThrough) {
+                            Op03SimpleStatement lastop = fallThrough.getEnd();
+                            if (lastop.getStatement().fallsToNext()) {
+                                continue;
+                            }
+                        }
+                    }
                     block.startIndex = lastSource.startIndex.justAfter();
                     blocks.add(blocks.indexOf(lastSource) + 1, block);
                     blocks.remove(idx);
@@ -448,15 +510,120 @@ public class Op03Blocks {
         return false;
     }
 
-    private static List<Block3> combineNeighbouringBlocks(final Method method, final List<Block3> blocks) {
+    private static List<Block3> combineNeighbouringBlocks(final Method method, List<Block3> blocks) {
+        for (Block3 block : blocks) {
+            block.sources.remove(block);
+            block.targets.remove(block);
+        }
+
+        boolean reloop = false;
+        do {
+            blocks = combineNeighbouringBlocksPass1(method, blocks);
+            reloop = moveSingleOutOrderBlocks(method, blocks);
+        } while (reloop);
+        // Now try to see if we can move single blocks into place.
+        return blocks;
+    }
+
+    /*
+     * Look for a block which has a single source and target, where that source and target are elsewhere, but next to each other.
+     * If the source ends with a fall through to target, source needs to be augmented with a jump to target.
+     *
+     * a (maybe fall to c).
+     * c
+     *
+     * ..
+     * ..
+     *
+     * b (from a, to c).
+     */
+    static boolean moveSingleOutOrderBlocks(final Method method, final List<Block3> blocks) {
+        IdentityHashMap<Block3, Integer> idx = new IdentityHashMap<Block3, Integer>();
+        for (int x = 0, len = blocks.size(); x<len;++x) {
+            idx.put(blocks.get(x), x);
+        }
+
+        boolean effect = false;
+        testOne : for (int x = 0, len = blocks.size(); x<len;++x) {
+            Block3 block = blocks.get(x);
+            if (block.sources.size() == 1 && block.targets.size() == 1) {
+                Block3 source = getSingle(block.sources);
+                Block3 target = getSingle(block.targets);
+                int idxsrc = idx.get(source);
+                int idxtgt = idx.get(target);
+                if (idxsrc == idxtgt-1 && idxtgt < x) {
+
+                    // The jump from source to target has to be the LAST branch in source.
+                    List<Op03SimpleStatement> statements = source.getContent();
+                    // We can iterate in order, as we're specifically looking for a non fall through.
+                    Op03SimpleStatement prev = null;
+                    for (int y=statements.size()-1;y>=0;--y) {
+                        Op03SimpleStatement stm = statements.get(y);
+                        Statement statement = stm.getStatement();
+                        if (!statement.fallsToNext()) {
+                            // If this statement doesn't have two targets of PREV and the start of BLOCK, can't do it.
+                            List<Op03SimpleStatement> stmTargets = stm.getTargets();
+                            if (stmTargets.size() != 2 ||
+                                stmTargets.get(0) != prev ||
+                                stmTargets.get(1) != block.getStart())
+                                continue testOne;
+                            break;
+                        }
+                        prev = stm;
+                    }
+
+                    if (!canCombineBlockSets(source, block)) {
+                        // Extract this block check into a function?
+                        Set<BlockIdentifier> srcBlocks = source.getEnd().getBlockIdentifiers();
+                        Set<BlockIdentifier> midBlocks = block.getStart().getBlockIdentifiers();
+                        if (srcBlocks.size() != midBlocks.size()+1) continue;
+
+                        List<BlockIdentifier> diff = SetUtil.differenceAtakeBtoList(srcBlocks, midBlocks);
+                        if (diff.size() != 1) continue;
+                        BlockIdentifier blk = diff.get(0);
+                        if (blk.getBlockType() != BlockType.TRYBLOCK) continue;
+                        // Ok, is it safe to move this content into the try block?
+                        for (Op03SimpleStatement op : block.getContent()) {
+                            if (op.getStatement().canThrow(ExceptionCheckSimple.INSTANCE)) continue testOne;
+                        }
+                        block.getStart().markBlock(blk);
+                    }
+
+
+                    // It doesn't matter that we are now invalidating the idx map, it will be
+                    // correct relative to local content.
+                    blocks.remove(x);
+                    int curridx = blocks.indexOf(source);
+                    blocks.add(curridx+1, block);
+                    block.startIndex = source.startIndex.justAfter();
+                    patch(source, block);
+
+                    effect = true;
+                }
+            }
+        }
+        return effect;
+    }
+
+    private static List<Block3> combineNeighbouringBlocksPass1(final Method method, final List<Block3> blocks) {
         Block3 curr = blocks.get(0);
         int curridx = 0;
 
         for (int i=1, len=blocks.size(); i<len; ++i) {
             Block3 next = blocks.get(i);
             if (next == null) continue;
-            if (next.sources.size() == 1 && next.sources.contains(curr)) {
+            // This pass is too aggressive - this means we will roll both sides of a conditional together, and
+            // won't be able to reorder them...
+            if (next.sources.size() == 1 && getSingle(next.sources) == curr &&
+                next.getStart().getSources().contains(curr.getEnd())) {
                 if (canCombineBlockSets(curr,next)) {
+                    // If the last of curr is an explicit goto the start of next, cull it.
+                    Op03SimpleStatement lastCurr = curr.getEnd();
+                    Op03SimpleStatement firstNext = next.getStart();
+                    if (lastCurr.getStatement().getClass() == GotoStatement.class && lastCurr.getTargets().get(0) == firstNext) {
+                        lastCurr.nopOut();
+                    }
+
                     // Merge, and repeat.
                     curr.content.addAll(next.content);
                     curr.targets.remove(next);
@@ -504,6 +671,7 @@ public class Op03Blocks {
         applyKnownBlocksHeuristic(method, blocks, tryBlockAliases);
 
         blocks = combineNeighbouringBlocks(method, blocks);
+
 
         blocks = doTopSort(blocks);
 
