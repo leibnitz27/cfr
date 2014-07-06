@@ -262,7 +262,8 @@ public class Block extends AbstractStructuredStatement {
 
     public void combineTryCatch() {
 
-        Set<Class<?>> skipThese = SetFactory.<Class<?>>newSet(StructuredCatch.class,
+        Set<Class<?>> skipThese = SetFactory.<Class<?>>newSet(
+                StructuredCatch.class,
                 StructuredFinally.class,
                 StructuredTry.class,
                 UnstructuredTry.class);
