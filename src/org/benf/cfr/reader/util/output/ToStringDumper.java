@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ToStringDumper implements Dumper {
+    private int outputCount = 0;
     private int indent;
     private boolean atStart = true;
     private boolean pendingCR = false;
@@ -55,8 +56,8 @@ public class ToStringDumper implements Dumper {
         processPendingCR();
         doIndent();
         sb.append(s);
-        atStart = false;
-        if (s.endsWith("\n")) atStart = true;
+        atStart = (s.endsWith("\n"));
+        outputCount++;
         return this;
     }
 
@@ -69,6 +70,7 @@ public class ToStringDumper implements Dumper {
     public Dumper newln() {
         sb.append("\n");
         atStart = true;
+        outputCount++;
         return this;
     }
 
@@ -76,6 +78,7 @@ public class ToStringDumper implements Dumper {
     public Dumper endCodeln() {
         sb.append(";\n");
         atStart = true;
+        outputCount++;
         return this;
     }
 
@@ -84,12 +87,6 @@ public class ToStringDumper implements Dumper {
         String indents = "    ";
         for (int x = 0; x < indent; ++x) sb.append(indents);
         atStart = false;
-    }
-
-    @Override
-    public void line() {
-        sb.append("\n// -------------------\n");
-        atStart = true;
     }
 
     @Override
@@ -146,5 +143,10 @@ public class ToStringDumper implements Dumper {
     @Override
     public boolean canEmitClass(JavaTypeInstance type) {
         return emitted.add(type);
+    }
+
+    @Override
+    public int getOutputCount() {
+        return outputCount;
     }
 }

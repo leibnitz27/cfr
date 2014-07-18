@@ -61,11 +61,6 @@ public class TypeOverridingDumper implements Dumper {
     }
 
     @Override
-    public void line() {
-        delegate.line();
-    }
-
-    @Override
     public int getIndent() {
         return delegate.getIndent();
     }
@@ -109,5 +104,10 @@ public class TypeOverridingDumper implements Dumper {
     @Override
     public boolean canEmitClass(JavaTypeInstance type) {
         return delegate.canEmitClass(type);
+    }
+
+    @Override
+    public int getOutputCount() {
+        return delegate.getOutputCount();
     }
 }

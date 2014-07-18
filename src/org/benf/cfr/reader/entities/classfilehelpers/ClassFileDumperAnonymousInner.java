@@ -60,6 +60,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         }
         d.print("{\n");
         d.indent(1);
+        int outcrs = d.getOutputCount();
 
 
         List<ClassFileField> fields = classFile.getFields();
@@ -78,6 +79,10 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         }
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
+
+        if (d.getOutputCount() == outcrs) {
+            d.removePendingCarriageReturn();
+        }
         d.print("}\n");
 
         return d;

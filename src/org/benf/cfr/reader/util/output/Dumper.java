@@ -29,8 +29,6 @@ public interface Dumper {
 
     Dumper endCodeln();
 
-    void line();
-
     int getIndent();
 
     void indent(int diff);
@@ -57,5 +55,7 @@ public interface Dumper {
             return "Cannot create dumper " + super.toString();
         }
     }
+
+    int getOutputCount();
 
 }
