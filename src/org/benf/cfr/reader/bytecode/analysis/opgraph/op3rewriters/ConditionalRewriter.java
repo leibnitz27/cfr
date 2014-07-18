@@ -238,6 +238,22 @@ public class ConditionalRewriter {
     }
 
 
+    /*
+     * Handle this case
+     *
+     *             ** if (!var7_4.isSuccess() || var7_4.getData() == null || var7_4.getData().size() <= 0) goto lbl-1000
+lbl10: // 1 sources:
+            var9_5 = var7_4.getData().get(0);
+            var8_6 = false;
+            if (var9_5 == null) lbl-1000: // 2 sources:
+            {
+                var8_6 = true;
+            }
+
+     * Here we can see that the earlier conditional jumps into the later one after the comparison - the later one
+     * can be represented as a break out of an anonymous block covering the early one.  It's a bit messy, but Dex2Jar
+     * generates this kind of stuff.
+     */
     private static boolean detectAndRemarkJumpIntoOther(Set<BlockIdentifier> blocksAtStart, Set<BlockIdentifier> blocksAtEnd, Op03SimpleStatement realEnd, Op03SimpleStatement ifStatement) {
         if (blocksAtEnd.size() != blocksAtStart.size() + 1) return false;
 
