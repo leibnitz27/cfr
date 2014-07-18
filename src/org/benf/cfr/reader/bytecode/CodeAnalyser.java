@@ -94,7 +94,8 @@ public class CodeAnalyser {
     );
 
     private static final RecoveryOptions recover0a = new RecoveryOptions(recover0,
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE, DecompilerComment.COND_PROPAGATE)
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE, DecompilerComment.COND_PROPAGATE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
     );
 
     private static final RecoveryOptions recover1 = new RecoveryOptions(recover0,
@@ -106,10 +107,15 @@ public class CodeAnalyser {
     );
 
     private static final RecoveryOptions recover2 = new RecoveryOptions(recover1,
+            new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
+    );
+
+    private static final RecoveryOptions recover3 = new RecoveryOptions(recover2,
             new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recover1, recover2};
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recover1, recover2, recover3};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
@@ -450,7 +456,9 @@ public class CodeAnalyser {
         }
 
         if (options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
-            Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
+            if (options.getOption(OptionsImpl.FORCE_RETURNING_IFS) == Troolean.TRUE) {
+                Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
+            }
             op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, false);
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes, comments, options);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
@@ -469,7 +477,9 @@ public class CodeAnalyser {
             Op03SimpleStatement.combineTryCatchEnds(op03SimpleParseNodes);
             Op03SimpleStatement.rewriteTryBackJumps(op03SimpleParseNodes);
             Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
-            Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
+            if (options.getOption(OptionsImpl.FORCE_RETURNING_IFS) == Troolean.TRUE) {
+                Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
+            }
         }
 
         /*
@@ -546,7 +556,9 @@ public class CodeAnalyser {
 
         // Replacing returning ifs early (above, aggressively) interferes with some nice output.
         // Normally we'd do it AFTER loops.
-        Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, false);
+        if (options.getOption(OptionsImpl.FORCE_RETURNING_IFS) == Troolean.TRUE) {
+            Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, false);
+        }
 
         if (showOpsLevel == SHOW_L3_LOOPS1) {
             debugDumper.newln().newln();
@@ -737,7 +749,7 @@ public class CodeAnalyser {
 
             Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
             // Tidy variable names
-            Op04StructuredStatement.tidyVariableNames(method, block);
+            Op04StructuredStatement.tidyVariableNames(method, block, comments);
 
             /*
              * Now finally run some extra checks to spot wierdness.

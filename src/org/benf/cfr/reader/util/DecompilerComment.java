@@ -8,12 +8,14 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment UNABLE_TO_STRUCTURE = new DecompilerComment("Unable to fully structure code", true);
     public static DecompilerComment AGGRESSIVE_TOPOLOGICAL_SORT = new DecompilerComment("Enabled aggressive block sorting");
     public static DecompilerComment COND_PROPAGATE = new DecompilerComment("Enabled force condition propagation");
+    public static DecompilerComment RETURNING_IFS = new DecompilerComment("Lifted jumps to return sites");
     public static DecompilerComment PRUNE_EXCEPTIONS = new DecompilerComment("Enabled unnecessary exception pruning");
     public static DecompilerComment COMMENT_MONITORS = new DecompilerComment("Converted monitor instructions to comments");
     public static DecompilerComment PARAMETER_CORRUPTION = new DecompilerComment("WARNING - Possible parameter corruption");
     public static DecompilerComment TRY_BACKEDGE_REMOVED = new DecompilerComment("WARNING - Removed back jump from a try to a catch block - possible behaviour change.");
     public static DecompilerComment TYPE_CLASHES = new DecompilerComment("Could not resolve type clashes", true);
     public static DecompilerComment LOOSE_CATCH_BLOCK = new DecompilerComment("Loose catch block", true);
+    public static DecompilerComment CLASS_RENAMED = new DecompilerComment("Inner class renamed, behaviour may change", true);
 
     private final String comment;
     private final String summaryMessage;

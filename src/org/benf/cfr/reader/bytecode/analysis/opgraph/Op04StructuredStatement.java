@@ -603,8 +603,13 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         root.transform(new Inliner(), new StructuredScope());
     }
 
-    public static void tidyVariableNames(Method method, Op04StructuredStatement root) {
-        new VariableNameTidier(method).transform(root);
+    public static void tidyVariableNames(Method method, Op04StructuredStatement root, DecompilerComments comments) {
+        VariableNameTidier variableNameTidier = new VariableNameTidier(method);
+        variableNameTidier.transform(root);
+
+        if (variableNameTidier.isClassRenamed()) {
+            comments.addComment(DecompilerComment.CLASS_RENAMED);
+        }
     }
 
     public static void removePointlessReturn(Op04StructuredStatement root) {

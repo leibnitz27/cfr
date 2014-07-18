@@ -214,6 +214,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_COND_PROPAGATE = new PermittedOptionProvider.Argument<Troolean>(
             "forcecondpropagate", defaultNeitherTrooleanDecoder,
             "Pull results of deterministic jumps back through some constant assignments");
+    public static final PermittedOptionProvider.Argument<Troolean> FORCE_RETURNING_IFS = new PermittedOptionProvider.Argument<Troolean>(
+            "forcereturningifs", defaultNeitherTrooleanDecoder,
+            "Move return up to jump site");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean>(
             "forceexceptionprune", defaultNeitherTrooleanDecoder,
             "Try to extend and merge exceptions more aggressively");
@@ -313,7 +316,8 @@ public class OptionsImpl implements Options {
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
-                    ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS, RECOVER_TYPECLASHES, HELP);
+                    ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS, RECOVER_TYPECLASHES,
+                    FORCE_RETURNING_IFS, HELP);
         }
 
         @Override

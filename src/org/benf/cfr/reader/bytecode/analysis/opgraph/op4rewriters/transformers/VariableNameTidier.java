@@ -20,10 +20,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.Keywords;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.Predicate;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.LinkedList;
@@ -34,6 +31,7 @@ import java.util.Set;
 public class VariableNameTidier implements StructuredStatementTransformer {
 
     private final Method method;
+    private boolean classRenamed = false;
 
     public VariableNameTidier(Method method) {
         this.method = method;
@@ -49,6 +47,9 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         root.transform(this, structuredScopeWithVars);
     }
 
+    public boolean isClassRenamed() {
+        return classRenamed;
+    }
 
     @Override
     public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
@@ -198,7 +199,9 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                 postfixedVarName = getNext(name);
             } while (alreadyDefined(mkLcMojo(postfixedVarName)));
             scope.getFirst().defineHere(mkLcMojo(postfixedVarName));
+            // TODO : This is bad - passes will interfere with each other!
             method.markUsedLocalClassType(type, postfixedVarName);
+            classRenamed = true;
         }
 
         public void defineHere(StructuredStatement statement, LocalVariable localVariable) {
