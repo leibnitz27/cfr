@@ -11,10 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.TernaryExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.util.*;
@@ -240,6 +237,43 @@ public class ConditionalRewriter {
         return foundEnd;
     }
 
+
+    private static boolean detectAndRemarkJumpIntoOther(Set<BlockIdentifier> blocksAtStart, Set<BlockIdentifier> blocksAtEnd, Op03SimpleStatement realEnd, Op03SimpleStatement ifStatement) {
+        if (blocksAtEnd.size() != blocksAtStart.size() + 1) return false;
+
+        List<BlockIdentifier> diff =  SetUtil.differenceAtakeBtoList(blocksAtEnd, blocksAtStart);
+        BlockIdentifier testBlock = diff.get(0);
+        if (testBlock.getBlockType() != BlockType.SIMPLE_IF_TAKEN) return false;
+
+        // If the difference is a simple-if, AND the statement AFTER realEnd is the target of BOTH
+        // realEnd AND the source if statement... AND the if statement is inside our potential range,
+        // we can convert THAT to a block exit, and remove that conditional.
+        List<Op03SimpleStatement> realEndTargets = realEnd.getTargets();
+        if (!(realEndTargets.size() == 1 && realEndTargets.get(0).getLinearlyPrevious() == realEnd)) return false;
+
+        Op03SimpleStatement afterRealEnd = realEndTargets.get(0);
+        List<Op03SimpleStatement> areSources = afterRealEnd.getSources();
+        if (areSources.size() != 2) return false;
+        Op03SimpleStatement other = areSources.get(0) == realEnd ? areSources.get(1) : areSources.get(0);
+        // If other is the conditional for testBlock, we can change that jump into a break, as long as
+        // the new conditional is a labelled block.
+        Statement otherStatement = other.getStatement();
+        if (!other.getIndex().isBackJumpTo(ifStatement)) return false;
+
+        if (!(otherStatement instanceof IfStatement)) return false;
+
+        Pair<BlockIdentifier, BlockIdentifier> knownBlocks = ((IfStatement) otherStatement).getBlocks();
+        if (!(knownBlocks.getFirst() == testBlock && knownBlocks.getSecond() == null)) return false;
+
+        ((IfStatement) otherStatement).setJumpType(JumpType.BREAK_ANONYMOUS);
+        // And we need to unmark anything which is in testBlock.
+        Op03SimpleStatement current = other.getLinearlyNext();
+        while (current != null && current.getBlockIdentifiers().contains(testBlock)) {
+            current.getBlockIdentifiers().remove(testBlock);
+            current = current.getLinearlyNext();
+        }
+        return true;
+    }
 
     /*
     * This is an if statement where both targets are forward.
@@ -469,8 +503,11 @@ public class ConditionalRewriter {
 
         Op03SimpleStatement realEnd = statements.get(idxEnd);
         Set<BlockIdentifier> blocksAtEnd = realEnd.getBlockIdentifiers();
+        // If we've changed the blocks we're in, that means we've jumped into a block.
+        // The only way we can cope with this, is if we're jumping into a block which we subsequently change
+        // to be an anonymous escape.
         if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) {
-            return takenAction;
+            if (!detectAndRemarkJumpIntoOther(blocksAtStart, blocksAtEnd, realEnd, ifStatement)) return takenAction;
         }
 
         // It's an if statement / simple if/else, for sure.  Can we replace it with a ternary?

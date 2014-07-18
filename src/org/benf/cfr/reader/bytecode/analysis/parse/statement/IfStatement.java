@@ -162,6 +162,10 @@ public class IfStatement extends GotoStatement {
         this.knownElseBlock = elseBlock;
     }
 
+    public Pair<BlockIdentifier, BlockIdentifier> getBlocks() {
+        return Pair.make(knownIfBlock, knownElseBlock);
+    }
+
     public void optimiseForTypes() {
         condition = condition.optimiseForType();
     }
