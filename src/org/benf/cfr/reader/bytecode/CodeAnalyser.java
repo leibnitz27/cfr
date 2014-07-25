@@ -107,12 +107,12 @@ public class CodeAnalyser {
     );
 
     private static final RecoveryOptions recover2 = new RecoveryOptions(recover1,
-            new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_EXTRA, Troolean.TRUE)
     );
 
-    private static final RecoveryOptions recover3 = new RecoveryOptions(recover2,
-            new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS)
+    private static final RecoveryOptions recover3 = new RecoveryOptions(recover1,
+            new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
     );
 
     private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recover1, recover2, recover3};
@@ -460,6 +460,8 @@ public class CodeAnalyser {
                 Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
             }
             op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, false);
+//            Op03SimpleStatement.extendCatchBlocks(op03SimpleParseNodes);
+
             op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes, comments, options);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 

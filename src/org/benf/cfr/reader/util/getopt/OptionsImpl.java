@@ -211,6 +211,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Troolean>(
             "forcetopsort", defaultNeitherTrooleanDecoder,
             "Force basic block sorting.  Usually not necessary for code emitted directly from javac, but required in the case of obfuscation (or dex2jar!).  Will be enabled in recovery.");
+    public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT_EXTRA = new PermittedOptionProvider.Argument<Troolean>(
+            "forcetopsortaggress", defaultNeitherTrooleanDecoder,
+            "Force extra aggressive topsort options");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_COND_PROPAGATE = new PermittedOptionProvider.Argument<Troolean>(
             "forcecondpropagate", defaultNeitherTrooleanDecoder,
             "Pull results of deterministic jumps back through some constant assignments");
@@ -313,7 +316,7 @@ public class OptionsImpl implements Options {
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
-                    DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
+                    DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS, RECOVER_TYPECLASHES,

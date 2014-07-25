@@ -367,11 +367,30 @@ public class Op03Blocks {
 
     /*
      * Very cheap version of loop detection, to see if we've moved something out incorrectly.
+     *
+     * If we've got what looks like a loop (backjump where first instruction is a if)
+     * but the if jumps into the middle of the loop, make the middle instruction (ie. target of the if)
+     * also dependent on the final (backjumping) block.
+     *
+     * Particularly bad:
+     *
+     * com/google/android/gms/internal/c\$j.class k
+     * com/mobtaxi/android/driver/app/LoginActivity\$UserLoginTask.class
+     * com/db4o/io/b.class
+     * com/strobel/decompiler/languages/java/ast/NameVariables.class
+     * org/acra/SendWorker.class
+     *
+     * If these are working, we're probably quite happy!
      */
-    private static boolean detectMoves(List<Block3> blocks) {
+    private static boolean detectMoves(List<Block3> blocks, Options options) {
+        Map<Op03SimpleStatement, Block3> opLocations = MapFactory.newIdentityMap();
         Map<Block3, Integer> idxLut = MapFactory.newIdentityMap();
         for (int i = 0, len = blocks.size(); i < len; ++i) {
-            idxLut.put(blocks.get(i), i);
+            Block3 blk = blocks.get(i);
+            idxLut.put(blk, i);
+            for (Op03SimpleStatement stm : blk.getContent()) {
+                opLocations.put(stm, blk);
+            }
         }
 
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
@@ -386,42 +405,78 @@ public class Op03Blocks {
             Block3 lastBackJump = block.getLastUnconditionalBackjumpToHere(idxLut);
             if (lastBackJump != null) {
                 BlockIdentifier bid = blockIdentifierFactory.getNextBlockIdentifier(BlockType.DOLOOP);
-                for (int x = i + 1, last = idxLut.get(lastBackJump); x <= last; ++x) {
+                for (int x = i+1, last = idxLut.get(lastBackJump); x <= last; ++x) {
                     blockMembers.get(x).add(bid);
                 }
                 firstByBlock.put(bid, block);
                 lastByBlock.put(bid, lastBackJump);
             }
         }
+
         /*
          * Now, identify blocks which are the target of a forward jump into the middle of a DOLoop,
          * from before that loop started.
          * Make these blocks depend (spuriously) on the lastByBlock for that DOLoop.
          */
         boolean effect = false;
-        outer:
-        for (int i = 0, len = blocks.size(); i < len; ++i) {
-            Block3 block = blocks.get(i);
-            if (!block.targets.isEmpty()) continue;
-            Set<BlockIdentifier> inThese = blockMembers.get(i);
-            if (inThese.isEmpty()) continue;
-            for (Block3 source : block.originalSources) {
-                int j = idxLut.get(source);
-                if (j < i) {
-                    Set<BlockIdentifier> sourceInThese = blockMembers.get(j);
-                    if (!sourceInThese.containsAll(inThese)) {
-                        // Unless block is the BEGINNING of the missing one, make block depend on the END
-                        // of the loops which have been jumped into.
-                        Set<BlockIdentifier> tmp = SetFactory.newSet(inThese);
-                        tmp.removeAll(sourceInThese);
-                        List<Block3> newSources = ListFactory.newList();
-                        for (BlockIdentifier jumpedInto : tmp) {
-                            if (firstByBlock.get(jumpedInto) != block) {
-                                newSources.add(lastByBlock.get(jumpedInto));
+        if (options.getOption(OptionsImpl.FORCE_TOPSORT_EXTRA) == Troolean.TRUE) {
+            outer2:
+            for (int i = 0, len = blocks.size(); i < len; ++i) {
+                Block3 block = blocks.get(i);
+                if (!block.targets.isEmpty()) continue;
+                Set<BlockIdentifier> inThese = blockMembers.get(i);
+                if (inThese.isEmpty()) continue;
+                for (Block3 source : block.originalSources) {
+                    int j = idxLut.get(source);
+                    if (j < i) {
+                        Set<BlockIdentifier> sourceInThese = blockMembers.get(j);
+                        if (!sourceInThese.containsAll(inThese)) {
+    //                        if (block.originalSources.contains(blocks.get(i-1))) {
+    //                            if (blockMembers.get(i-1).containsAll(inThese)) continue;
+    //                        }
+                            // Unless block is the BEGINNING of the missing one, make block depend on the END
+                            // of the loops which have been jumped into.
+                            Set<BlockIdentifier> tmp = SetFactory.newSet(inThese);
+                            tmp.removeAll(sourceInThese);
+                            List<Block3> newSources = ListFactory.newList();
+                            for (BlockIdentifier jumpedInto : tmp) {
+                                if (firstByBlock.get(jumpedInto) != block) {
+                                    newSources.add(lastByBlock.get(jumpedInto));
+                                }
+                            }
+                            if (!newSources.isEmpty()) {
+                                block.addSources(newSources);
+                                effect = true;
+                                continue outer2;
                             }
                         }
-                        if (!newSources.isEmpty()) {
-                            block.addSources(newSources);
+                    }
+                }
+            }
+
+        } else {
+            outer:
+            for (Map.Entry<BlockIdentifier, Block3> entry : firstByBlock.entrySet()) {
+                BlockIdentifier ident = entry.getKey();
+                Block3 block = entry.getValue();
+                Op03SimpleStatement first = block.getStart();
+                Statement statement = first.getStatement();
+                if (statement instanceof IfStatement) {
+                    List<Op03SimpleStatement> tgts = first.getTargets();
+                    if (tgts.size() != 2) continue;
+
+                    Op03SimpleStatement tgt = tgts.get(1);
+                    Block3 blktgt = opLocations.get(tgt);
+                    if (!blockMembers.get(idxLut.get(blktgt)).contains(ident)) continue;
+                    if (lastByBlock.get(ident) == blktgt) continue;
+
+                    Set<Block3> origSources = SetFactory.newSet(blktgt.originalSources);
+                    origSources.remove(block);
+                    for (Block3 src : origSources) {
+                        if ((blockMembers.get(idxLut.get(src)).contains(ident) && src.startIndex.isBackJumpFrom(blktgt.startIndex)) ||
+                                src.startIndex.isBackJumpFrom(block.startIndex)) {
+                            // We give blktgt an additional source of the END of the loop.
+                            blktgt.addSource(lastByBlock.get(ident));
                             effect = true;
                             continue outer;
                         }
@@ -429,12 +484,13 @@ public class Op03Blocks {
                 }
             }
         }
-        if (!effect) return false;
 
-        for (Block3 block : blocks) {
-            block.copySources();
+        if (effect) {
+            for (Block3 block : blocks) {
+                block.copySources();
+            }
         }
-        return true;
+        return effect;
     }
 
     private static void stripTryBlockAliases(List<Op03SimpleStatement> out, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
@@ -510,6 +566,7 @@ public class Op03Blocks {
         return false;
     }
 
+
     private static List<Block3> combineNeighbouringBlocks(final Method method, List<Block3> blocks) {
         for (Block3 block : blocks) {
             block.sources.remove(block);
@@ -551,6 +608,7 @@ public class Op03Blocks {
                 Block3 target = getSingle(block.targets);
                 int idxsrc = idx.get(source);
                 int idxtgt = idx.get(target);
+                // If it slots in directly between source and target, use it.
                 if (idxsrc == idxtgt-1 && idxtgt < x) {
 
                     // The jump from source to target has to be the LAST branch in source.
@@ -680,7 +738,7 @@ public class Op03Blocks {
          * been moved out of order.  I'm SURE this isn't the right way to do it, however it stops us pessimising
          * some very odd cases.  :(
          */
-        if (detectMoves(blocks)) {
+        if (detectMoves(blocks, options)) {
             Collections.sort(blocks);
             blocks = doTopSort(blocks);
         }
@@ -890,7 +948,7 @@ public class Op03Blocks {
 
         @Override
         public String toString() {
-            return "(" + content.size() + ")[" + sources.size() + "/" + originalSources.size() + "," + targets.size() + "] " + getStart().toString();
+            return "(" + content.size() + ")[" + sources.size() + "/" + originalSources.size() + "," + targets.size() + "] " + startIndex + getStart().toString();
         }
 
         private List<Op03SimpleStatement> getContent() {

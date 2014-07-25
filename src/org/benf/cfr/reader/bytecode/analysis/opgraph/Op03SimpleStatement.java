@@ -3087,6 +3087,63 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     /*
+     * We make use of known ordering here - we expect contents of a catch block to be directly after it, and eligible
+     * instructions to be after that.
+     */
+    private static void extendCatchBlock(Op03SimpleStatement catchStart, List<Op03SimpleStatement> in) {
+        int idx = in.indexOf(catchStart);
+        CatchStatement catchStatement = (CatchStatement)catchStart.getStatement();
+        BlockIdentifier blockIdentifier = catchStatement.getCatchBlockIdent();
+        if (catchStart.getTargets().size() != 1) return;
+        idx++;
+        Op03SimpleStatement next = in.get(idx);
+        if (next != catchStart.getTargets().get(0)) return;
+        int tot = in.size();
+        while (idx < tot && in.get(idx).getBlockIdentifiers().contains(blockIdentifier)) {
+            idx++;
+        }
+        if (idx >= tot) return;
+        /*
+         * We assume we have a linear relationship - this is obviously quite poor, but serves to capture
+         * the nastier cases dex2jar generates.
+         */
+        Op03SimpleStatement prev = in.get(idx-1);
+        Set<BlockIdentifier> identifiers = prev.getBlockIdentifiers();
+        while (idx < tot) {
+            Op03SimpleStatement stm = in.get(idx);
+            if (stm.getBlockIdentifiers().size() != identifiers.size() - 1) return;
+            List<BlockIdentifier> diff =  SetUtil.differenceAtakeBtoList(identifiers, stm.getBlockIdentifiers());
+            if (diff.size() != 1) return;
+            if (diff.get(0) != blockIdentifier) return;
+            /*
+             * Verify that all stm's parents are in the catch block, and that diff has only <=one target.
+             */
+            if (stm.getTargets().size() > 1) return;
+            for (Op03SimpleStatement source : stm.getSources()){
+                if (!source.getBlockIdentifiers().contains(blockIdentifier)) return;
+            }
+            if (!stm.getSources().contains(prev)) return;
+            // Ok, add.
+            stm.getBlockIdentifiers().add(blockIdentifier);
+            prev = stm;
+        }
+    }
+
+    /*
+     * After some rewriting operations, we are left with code (return statements mainly!) which couldn't earlier
+     * be pulled inside a block, because it had multiple sources - but now can.
+     */
+    public static void extendCatchBlocks(List<Op03SimpleStatement> in) {
+        List<Op03SimpleStatement> catchStarts = Functional.filter(in, new TypeFilter<CatchStatement>(CatchStatement.class));
+        for (Op03SimpleStatement catchStart : catchStarts) {
+            CatchStatement catchStatement = (CatchStatement) catchStart.containedStatement;
+            if (catchStatement.getCatchBlockIdent() != null) {
+                extendCatchBlock(catchStart, in);
+            }
+        }
+    }
+
+    /*
      * Find the last statement in the block, assuming that this statement is the one BEFORE, linearly.
      */
     private static Op03SimpleStatement getLastContiguousBlockStatement(BlockIdentifier blockIdentifier, List<Op03SimpleStatement> in, Op03SimpleStatement preBlock) {

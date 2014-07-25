@@ -366,7 +366,7 @@ public class LoopIdentifier {
             if (lastPostBlock != postBlockIdx) {
                 // We will have rewritten a COMPLETELY impossible loop - but we're already too far gone.
                 if (!lastJump.getTargets().contains(start)) {
-                    throw new ConfusedCFRException("Nonsensican loop would be emitted - failure");
+                    throw new ConfusedCFRException("Nonsensical loop would be emitted - failure");
                 }
                 final Op03SimpleStatement afterNewJump = statements.get(lastPostBlock);
                 // Find after statement.  Insert a jump forward (out) here, and then insert
