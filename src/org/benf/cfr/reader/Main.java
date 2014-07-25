@@ -156,7 +156,9 @@ public class Main {
 
         DCCommonState dcCommonState = new DCCommonState(options);
         String path = options.getFileName();
-        if (dcCommonState.isJar(path)) {
+        String type = options.getOption(OptionsImpl.ANALYSE_AS);
+        if (type == null) type = dcCommonState.detectClsJar(path);
+        if (type.equals("jar")) {
             doJar(dcCommonState, path);
         } else {
             doClass(dcCommonState, path);

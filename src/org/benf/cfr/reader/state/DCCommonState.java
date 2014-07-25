@@ -197,7 +197,7 @@ public class DCCommonState {
             } finally {
                 if (zipFile != null) zipFile.close();
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             couldNotLoadClasses.add(path);
             throw new CannotLoadClassException(path, e);
         }
@@ -346,7 +346,8 @@ public class DCCommonState {
     }
 
     // No fancy file identification right now, just very very simple.
-    public boolean isJar(String path) {
-        return path.toLowerCase().endsWith(".jar");
+    public String detectClsJar(String path) {
+        if (path.toLowerCase().endsWith(".jar")) return "jar";
+        return "class";
     }
 }

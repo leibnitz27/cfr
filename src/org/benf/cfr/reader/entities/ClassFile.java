@@ -84,7 +84,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         this.usePath = usePath;
 
         int magic = data.getS4At(OFFSET_OF_MAGIC);
-        if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe");
+        if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe for class file '" + usePath + "'");
 
         minorVer = data.getS2At(OFFSET_OF_MINOR);
         majorVer = data.getS2At(OFFSET_OF_MAJOR);

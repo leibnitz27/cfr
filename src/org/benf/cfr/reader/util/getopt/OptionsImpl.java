@@ -265,6 +265,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Integer> FORCE_PASS = new PermittedOptionProvider.Argument<Integer>(
             "recpass", default0intDecoder,
             "Decompile specifically with recovery options from pass #X. (really only useful for debugging)", true);
+    public static final PermittedOptionProvider.Argument<String> ANALYSE_AS = new PermittedOptionProvider.Argument<String>(
+            "analyseas", defaultNullStringDecoder,
+            "Force file to be analysed as 'jar' or 'class'");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -320,7 +323,7 @@ public class OptionsImpl implements Options {
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS, RECOVER_TYPECLASHES,
-                    FORCE_RETURNING_IFS, HELP);
+                    FORCE_RETURNING_IFS, ANALYSE_AS, HELP);
         }
 
         @Override
