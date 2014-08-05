@@ -557,7 +557,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     public static void assignSSAIdentifiers(Method method, List<Op03SimpleStatement> statements) {
 
-        SSAIdentifierFactory<LValue> ssaIdentifierFactory = new SSAIdentifierFactory<LValue>();
+        SSAIdentifierFactory<LValue> ssaIdentifierFactory = new SSAIdentifierFactory<LValue>(null);
 
         List<LocalVariable> params = method.getMethodPrototype().getComputedParameters();
         Map<LValue, SSAIdent> initialSSAValues = MapFactory.newMap();

@@ -3,15 +3,24 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 import java.util.BitSet;
 
 public class SSAIdent {
-    private final BitSet val;
+    public static SSAIdent poison = new SSAIdent(0, new Object());
 
-    public SSAIdent(int idx) {
+    private final BitSet val;
+    private final Object comparisonType;
+
+    public SSAIdent(int idx, Object comparisonType) {
         val = new BitSet();
         val.set(idx);
+        this.comparisonType = comparisonType;
     }
 
-    private SSAIdent(BitSet content) {
+    private SSAIdent(BitSet content, Object comparisonType) {
         this.val = content;
+        this.comparisonType = comparisonType;
+    }
+
+    public Object getComparisonType() {
+        return comparisonType;
     }
 
     public SSAIdent mergeWith(SSAIdent other) {
@@ -20,7 +29,7 @@ public class SSAIdent {
         if (b1.equals(b2)) return this;
         b1 = (BitSet) b1.clone();
         b1.or(b2);
-        return new SSAIdent(b1);
+        return new SSAIdent(b1, comparisonType);
     }
 
     public boolean isSuperSet(SSAIdent other) {

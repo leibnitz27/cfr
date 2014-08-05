@@ -15,9 +15,15 @@ public class SSAIdentifierFactory<KEYTYPE> {
                 }
             });
 
+    private final UnaryFunction<KEYTYPE, Object> typeComparisonFunction;
+
+    public SSAIdentifierFactory(UnaryFunction<KEYTYPE, Object> typeComparisonFunction) {
+        this.typeComparisonFunction = typeComparisonFunction;
+    }
+
     public SSAIdent getIdent(KEYTYPE lValue) {
         int val = nextIdentFor.get(lValue);
         nextIdentFor.put(lValue, val + 1);
-        return new SSAIdent(val);
+        return new SSAIdent(val, typeComparisonFunction == null ? null : typeComparisonFunction.invoke(lValue));
     }
 }

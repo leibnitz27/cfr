@@ -1609,7 +1609,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     public static void discoverStorageLiveness(Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> op2list, BytecodeMeta bytecodeMeta, Options options) {
-        SSAIdentifierFactory<Slot> ssaIdentifierFactory = new SSAIdentifierFactory<Slot>();
+        SSAIdentifierFactory<Slot> ssaIdentifierFactory = new SSAIdentifierFactory<Slot>(new UnaryFunction<Slot, Object>() {
+            @Override
+            public Object invoke(Slot arg) {
+                return arg.getJavaTypeInstance().getStackType();
+            }
+        });
 
         assignSSAIdentifiers(ssaIdentifierFactory, method, comments, op2list, bytecodeMeta, options);
 

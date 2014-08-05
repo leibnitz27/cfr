@@ -69,7 +69,15 @@ public class SSAIdentifiers<KEYTYPE> {
             } else {
                 // Merge
                 SSAIdent oldIdent = knownIdentifiers.get(lValue);
-                SSAIdent newIdent = oldIdent.mergeWith(otherIdent);
+                Object k1 = oldIdent.getComparisonType();
+                Object k2 = otherIdent.getComparisonType();
+                SSAIdent newIdent;
+                if (k1 == k2) {
+                    newIdent = oldIdent.mergeWith(otherIdent);
+                } else {
+                    newIdent = SSAIdent.poison;
+                }
+
                 if (!newIdent.equals(oldIdent)) {
                     knownIdentifiers.put(lValue, newIdent);
                     changed = true;
