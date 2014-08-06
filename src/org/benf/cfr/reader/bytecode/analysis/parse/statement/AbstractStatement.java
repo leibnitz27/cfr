@@ -57,16 +57,6 @@ public abstract class AbstractStatement implements Statement {
     }
 
     @Override
-    public boolean condenseWithNextConditional() {
-        return false;
-    }
-
-    @Override
-    public boolean condenseWithPriorIfStatement(IfStatement ifStatement) {
-        return false;
-    }
-
-    @Override
     public boolean isCompound() {
         return false;
     }

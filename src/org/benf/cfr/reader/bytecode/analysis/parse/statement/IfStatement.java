@@ -53,14 +53,6 @@ public class IfStatement extends GotoStatement {
         condition.collectUsedLValues(lValueUsageCollector);
     }
 
-    @Override
-    public boolean condenseWithNextConditional() {
-        // Get the next (fall through) statement.  If that's not a conditional, ignore.
-        // Since the next statement is ALWAYS fall through, we don't need to test that.
-        Statement nextStatement = getTargetStatement(JUMP_NOT_TAKEN);
-        return nextStatement.condenseWithPriorIfStatement(this);
-    }
-
     public ConditionalExpression getCondition() {
         return condition;
     }
@@ -77,7 +69,6 @@ public class IfStatement extends GotoStatement {
         condition = ConditionalUtils.simplify(condition.getNegated());
     }
 
-    @Override
     public boolean condenseWithPriorIfStatement(IfStatement prior) {
         Statement fallThrough2 = getTargetStatement(JUMP_NOT_TAKEN);
         Statement target1 = prior.getTargetStatement(JUMP_TAKEN);

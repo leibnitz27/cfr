@@ -619,10 +619,13 @@ lbl10: // 1 sources:
             default:
                 return null;
         }
+        if (ifBranch.get(0).getSources().size() != 1) return null;
+
         elseBranch = Functional.filter(elseBranch, notNops);
         if (elseBranch.size() != 1) {
             return null;
         }
+        if (elseBranch.get(0).getSources().size() != 1) return null;
 
         Op03SimpleStatement s1 = ifBranch.get(0);
         Op03SimpleStatement s2 = elseBranch.get(0);

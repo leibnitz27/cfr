@@ -35,11 +35,7 @@ public interface Statement extends Dumpable, ComparableUnderEC {
 
     SSAIdentifiers<LValue> collectLocallyMutatedVariables(SSAIdentifierFactory<LValue> ssaIdentifierFactory);
 
-    boolean condenseWithNextConditional();
-
     boolean isCompound();
-
-    boolean condenseWithPriorIfStatement(IfStatement ifStatement);
 
     // Valid to call on everything, only useful on an assignment.
     LValue getCreatedLValue();

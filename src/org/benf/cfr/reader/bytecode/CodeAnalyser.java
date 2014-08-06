@@ -510,9 +510,15 @@ public class CodeAnalyser {
             Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
             // Condense odder conditionals, which may involve inline ternaries which are
             // hard to work out later.  This isn't going to get everything, but may help!
+            //
             reloop = Op03SimpleStatement.condenseConditionals2(op03SimpleParseNodes);
+            reloop = reloop | Op03SimpleStatement.normalizeDupAssigns(op03SimpleParseNodes);
+            if (reloop) {
+                LValueProp.condenseLValues(op03SimpleParseNodes);
+            }
 
             op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
+
         } while (reloop);
 
         logger.info("simplifyConditionals");

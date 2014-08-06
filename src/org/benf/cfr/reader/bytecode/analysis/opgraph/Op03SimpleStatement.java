@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StackVarToLocalRewriter;
+import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -424,10 +425,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     private void findCreation(CreationCollector creationCollector) {
         containedStatement.collectObjectCreation(creationCollector);
-    }
-
-    public boolean condenseWithNextConditional() {
-        return containedStatement.condenseWithNextConditional();
     }
 
     private void simplifyConditional() {
@@ -944,6 +941,28 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *
      * === if (!c1 && c2) then a
      * b:
+     *
+     * TODO :
+     * /Users/lee/Downloads/jarsrc/com/strobel/decompiler/languages/java/utilities/RedundantCastUtility.class :: processCall.
+     *
+     * has
+     * if (c1) then a
+     * if (c2) then b
+     * goto a
+     *
+     * ==>
+     *
+     * if (c1) then a
+     * if (!c2) then a
+     * goto b
+     *
+     * ==>
+     *
+     * if (c1 || !c2) then a
+     * goto b
+     *
+     * also
+     * /Users/lee/code/java/cfr_tests/out/production/cfr_tests/org/benf/cfr/tests/ShortCircuitAssignTest7.class
      */
     public static void condenseConditionals(List<Op03SimpleStatement> statements) {
         for (int x = 0; x < statements.size(); ++x) {
@@ -953,7 +972,19 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 Op03SimpleStatement op03SimpleStatement = statements.get(x);
                 // If successful, this statement will be nopped out, and the next one will be
                 // the combination of the two.
-                if (op03SimpleStatement.condenseWithNextConditional()) {
+                Statement inner = op03SimpleStatement.getStatement();
+                if (!(inner instanceof IfStatement)) continue;
+                Op03SimpleStatement fallThrough = op03SimpleStatement.getTargets().get(0);
+                Statement nextinner = fallThrough.getStatement();
+                if (!(nextinner instanceof IfStatement)) continue;
+
+                IfStatement if1 = (IfStatement)inner;
+                IfStatement if2 = (IfStatement)nextinner;
+
+                if (fallThrough.getSources().size() > 1) {
+                    continue;
+                }
+                if (if2.condenseWithPriorIfStatement(if1)) {
                     retry = true;
                     // If it worked, go back to the last nop, and retry.
                     // This could probably be refactored to do less work.....
@@ -976,7 +1007,55 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
         boolean result = false;
         for (Op03SimpleStatement ifStatement : ifStatements) {
+            // separated for stepping
             if (condenseConditional2_type1(ifStatement, statements)) {
+                result = true;
+            } else if (condenseConditional2_type2(ifStatement, statements)) {
+                result = true;
+            }
+        }
+        return result;
+    }
+
+    /* Search for
+     * stackvar = X
+     * Y = stackvar
+     *
+     * convert to stackvar = Y = X
+     *
+     * Otherwise this gets in the way of rolling assignments into conditionals.
+     */
+    private static boolean normalizeDupAssigns_type1(Op03SimpleStatement stm) {
+        Statement inner1 = stm.getStatement();
+        if (!(inner1 instanceof AssignmentSimple)) return false;
+        List<Op03SimpleStatement> tgts = stm.getTargets();
+        if (tgts.size() != 1) return false;
+        Op03SimpleStatement next = tgts.get(0);
+        Statement inner2 = next.getStatement();
+        if (!(inner2 instanceof AssignmentSimple)) return false;
+
+        AssignmentSimple a1 = (AssignmentSimple)inner1;
+        AssignmentSimple a2 = (AssignmentSimple)inner2;
+
+        LValue l1 = a1.getCreatedLValue();
+        LValue l2 = a2.getCreatedLValue();
+        Expression r1 = a1.getRValue();
+        Expression r2 = a2.getRValue();
+
+        if (!(r2 instanceof StackValue)) return false;
+        StackSSALabel s2 = ((StackValue)r2).getStackValue();
+        if (!l1.equals(s2)) return false;
+        next.nopOut();
+
+        stm.replaceStatement(new AssignmentSimple(l1, new AssignmentExpression(l2, r1, true)));
+        return true;
+    }
+
+    public static boolean normalizeDupAssigns(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> assignStatements = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
+        boolean result = false;
+        for (Op03SimpleStatement assign : assignStatements) {
+            if (normalizeDupAssigns_type1(assign)) {
                 result = true;
             }
         }
@@ -1298,8 +1377,54 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
 
-    private static boolean condenseConditional2_type2(Op03SimpleStatement ifStatement) {
-        return false;
+    /*
+     * Attempt to find really simple inline ternaries / negations, so we can convert them before conditional rollup.
+     */
+    private static boolean condenseConditional2_type2(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> allStatements) {
+        Statement innerStatement = ifStatement.getStatement();
+        if (!(innerStatement instanceof IfStatement)) return false;
+        IfStatement innerIf = (IfStatement)innerStatement;
+        Op03SimpleStatement tgt1 = ifStatement.targets.get(0);
+        Op03SimpleStatement tgt2 = ifStatement.targets.get(1);
+        if (tgt1.sources.size() != 1) return false;
+        if (tgt2.sources.size() != 1) return false;
+        if (tgt1.targets.size() != 1) return false;
+        if (tgt2.targets.size() != 1) return false;
+        Op03SimpleStatement evTgt = tgt1.targets.get(0);
+        evTgt = Misc.followNopGoto(evTgt, true, false);
+        if (evTgt.sources.size() != 2) return false;
+        if (tgt2.targets.get(0) != evTgt) return false;
+        Statement stm1 = tgt1.getStatement();
+        Statement stm2 = tgt2.getStatement();
+        if (!(stm1 instanceof AssignmentSimple && stm2 instanceof AssignmentSimple)) {
+            return false;
+        }
+        AssignmentSimple a1 = (AssignmentSimple)stm1;
+        AssignmentSimple a2 = (AssignmentSimple)stm2;
+        LValue lv = a1.getCreatedLValue();
+        if (!lv.equals(a2.getCreatedLValue())) return false;
+        Expression e1 = a1.getRValue();
+        Expression e2 = a2.getRValue();
+        ConditionalExpression condition = innerIf.getCondition().getNegated();
+        if (e1.equals(Literal.TRUE) && e2.equals(Literal.FALSE)) {
+            ifStatement.replaceStatement(new AssignmentSimple(lv, condition));
+        } else if (e1.equals(Literal.FALSE) && e2.equals(Literal.TRUE)) {
+            ifStatement.replaceStatement(new AssignmentSimple(lv, condition.getNegated()));
+        } else {
+            ifStatement.replaceStatement(new AssignmentSimple(lv, new TernaryExpression(condition, a1.getRValue(), a2.getRValue())));
+        }
+        for (Op03SimpleStatement source : evTgt.sources) {
+            source.replaceStatement(new Nop());
+            source.removeTarget(evTgt);
+        }
+        evTgt.sources.clear();
+        evTgt.sources.add(ifStatement);
+        for (Op03SimpleStatement tgt : ifStatement.targets) {
+            tgt.removeSource(ifStatement);
+        }
+        ifStatement.targets.clear();
+        ifStatement.addTarget(evTgt);
+        return true;
     }
 
     /*

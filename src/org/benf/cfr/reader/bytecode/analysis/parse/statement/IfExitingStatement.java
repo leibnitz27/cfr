@@ -52,11 +52,6 @@ public class IfExitingStatement extends AbstractStatement {
         statement.collectLValueUsage(lValueUsageCollector);
     }
 
-    @Override
-    public boolean condenseWithNextConditional() {
-        return false;
-    }
-
     public ConditionalExpression getCondition() {
         return condition;
     }
