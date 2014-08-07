@@ -674,7 +674,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             AbstractMutatingAssignmentExpression me = ar1.getMutationOf(l1);
             newRhs = me;
         }
-        if (newRhs == null) newRhs = new AssignmentExpression(l1, r1, true);
+        if (newRhs == null) newRhs = new AssignmentExpression(l1, r1);
         stm2.replaceStatement(new AssignmentSimple(l2, newRhs));
     }
 
@@ -1151,7 +1151,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         next.nopOut();
         // And copy ssa identifiers from next.
         stm.ssaIdentifiers = next.ssaIdentifiers;
-        stm.replaceStatement(new AssignmentSimple(l1, new AssignmentExpression(l2, r1, true)));
+        stm.replaceStatement(new AssignmentSimple(l1, new AssignmentExpression(l2, r1)));
         return true;
     }
 

@@ -18,22 +18,16 @@ import java.util.Map;
 public class AssignmentExpression extends AbstractAssignmentExpression {
     private LValue lValue;
     private Expression rValue;
-    private boolean inlined;
 
-    public AssignmentExpression(LValue lValue, Expression rValue, boolean inlined) {
+    public AssignmentExpression(LValue lValue, Expression rValue) {
         super(lValue.getInferredJavaType());
         this.lValue = lValue;
         this.rValue = rValue;
-        this.inlined = inlined;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new AssignmentExpression(cloneHelper.replaceOrClone(lValue), cloneHelper.replaceOrClone(rValue), inlined);
-    }
-
-    public void setInlined(boolean inlined) {
-        this.inlined = inlined;
+        return new AssignmentExpression(cloneHelper.replaceOrClone(lValue), cloneHelper.replaceOrClone(rValue));
     }
 
     @Override
@@ -98,7 +92,6 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
 
         AssignmentExpression that = (AssignmentExpression) o;
 
-        if (inlined != that.inlined) return false;
         if (lValue != null ? !lValue.equals(that.lValue) : that.lValue != null) return false;
         if (rValue != null ? !rValue.equals(that.rValue) : that.rValue != null) return false;
 
@@ -111,7 +104,6 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
         if (o == this) return true;
         if (getClass() != o.getClass()) return false;
         AssignmentExpression other = (AssignmentExpression) o;
-        if (inlined != other.inlined) return false;
         if (!constraint.equivalent(lValue, other.lValue)) return false;
         if (!constraint.equivalent(rValue, other.rValue)) return false;
         return true;

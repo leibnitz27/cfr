@@ -263,7 +263,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         CloneHelper cloneHelper = new CloneHelper(expressionReplacements, lValueReplacements);
 
         if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
-            AssignmentExpression assignmentExpression = new AssignmentExpression(accessorMatchCollector.lValue, accessorMatchCollector.rValue, true);
+            AssignmentExpression assignmentExpression = new AssignmentExpression(accessorMatchCollector.lValue, accessorMatchCollector.rValue);
             return cloneHelper.replaceOrClone(assignmentExpression);
         } else if (matchType.equals(RETURN_LVALUE)) {
             return cloneHelper.replaceOrClone(new LValueExpression(accessorMatchCollector.lValue));

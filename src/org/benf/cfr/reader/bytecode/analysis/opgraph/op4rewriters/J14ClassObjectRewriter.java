@@ -114,8 +114,8 @@ public class J14ClassObjectRewriter {
                         StaticFunctionInvokation.createMatcher(
                                 classType,
                                 new InferredJavaType(classType, InferredJavaType.Source.TEST),
-                                ListFactory.<Expression>newList(wcm.getExpressionWildCard("classString"))),
-                        true),
+                                ListFactory.<Expression>newList(wcm.getExpressionWildCard("classString")))
+                        ),
                 staticExpression);
 
         final Set<String> hideThese = SetFactory.newSet();

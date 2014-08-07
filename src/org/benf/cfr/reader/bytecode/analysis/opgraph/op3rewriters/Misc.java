@@ -222,7 +222,7 @@ public class Misc {
 
 
     public static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue) {
-        AssignmentExpression needle = new AssignmentExpression(lValue, rValue, true);
+        AssignmentExpression needle = new AssignmentExpression(lValue, rValue);
         NOPSearchingExpressionRewriter finder = new NOPSearchingExpressionRewriter(needle);
 
         statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
@@ -230,7 +230,7 @@ public class Misc {
     }
 
     public static void replaceHiddenIter(Statement statement, LValue lValue, Expression rValue) {
-        AssignmentExpression needle = new AssignmentExpression(lValue, rValue, true);
+        AssignmentExpression needle = new AssignmentExpression(lValue, rValue);
         ExpressionReplacingRewriter finder = new ExpressionReplacingRewriter(needle, new LValueExpression(lValue));
 
         statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
