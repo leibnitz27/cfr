@@ -317,6 +317,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    public void removeGotoTarget(Op03SimpleStatement oldTarget) {
+        if (!targets.remove(oldTarget)) {
+            throw new ConfusedCFRException("Invalid target, tried to remove " + oldTarget + "\nfrom " + this + "\nbut was not a target.");
+        }
+    }
+
     private LValue getCreatedLValue() {
         return containedStatement.getCreatedLValue();
     }
@@ -964,7 +970,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * also
      * /Users/lee/code/java/cfr_tests/out/production/cfr_tests/org/benf/cfr/tests/ShortCircuitAssignTest7.class
      */
-    public static void condenseConditionals(List<Op03SimpleStatement> statements) {
+    public static boolean condenseConditionals(List<Op03SimpleStatement> statements) {
+        boolean effect = false;
         for (int x = 0; x < statements.size(); ++x) {
             boolean retry = false;
             do {
@@ -975,25 +982,117 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 Statement inner = op03SimpleStatement.getStatement();
                 if (!(inner instanceof IfStatement)) continue;
                 Op03SimpleStatement fallThrough = op03SimpleStatement.getTargets().get(0);
-                Statement nextinner = fallThrough.getStatement();
-                if (!(nextinner instanceof IfStatement)) continue;
+                Op03SimpleStatement taken = op03SimpleStatement.getTargets().get(1);
+                Statement fallthroughInner = fallThrough.getStatement();
+                Statement takenInner = taken.getStatement();
+                // Is the taken path just jumping straight over the non taken?
+                boolean takenJumpBy1 = (x < statements.size() - 2) && statements.get(x+2) == taken;
 
-                IfStatement if1 = (IfStatement)inner;
-                IfStatement if2 = (IfStatement)nextinner;
+                if (fallthroughInner instanceof IfStatement) {
+                    Op03SimpleStatement sndIf = fallThrough;
+                    Op03SimpleStatement sndTaken = sndIf.getTargets().get(1);
+                    Op03SimpleStatement sndFallThrough = sndIf.getTargets().get(0);
 
-                if (fallThrough.getSources().size() > 1) {
-                    continue;
+                    retry = condenseIfs(op03SimpleStatement, sndIf, taken, sndTaken, sndFallThrough, false);
+
+//                    if (if2.condenseWithPriorIfStatement(if1, false)) {
+//                        retry = true;
+//                    }
+                } else if (fallthroughInner.getClass() == GotoStatement.class && takenJumpBy1 && takenInner instanceof IfStatement) {
+                    // If it's not an if statement, we might have to negate a jump - i.e.
+                    // if (c1) a1
+                    // goto a2
+                    // a1 : if (c2) goto a2
+                    // a3
+                    //
+                    // is (of course) equivalent to
+                    // if (!c1 || c2) goto a2
+
+                    Op03SimpleStatement negatedTaken = fallThrough.getTargets().get(0);
+                    Op03SimpleStatement sndIf = statements.get(x+2);
+                    Op03SimpleStatement sndTaken = sndIf.getTargets().get(1);
+                    Op03SimpleStatement sndFallThrough = sndIf.getTargets().get(0);
+
+                    retry = condenseIfs(op03SimpleStatement, sndIf, negatedTaken, sndTaken, sndFallThrough, true);
+
+//                    IfStatement if1 = (IfStatement)inner;
+//                    IfStatement if2 = (IfStatement)takenInner;
+//                    if (if2.condenseWithPriorIfStatement(if1, true)) {
+//                        retry = true;
+//                    }
                 }
-                if (if2.condenseWithPriorIfStatement(if1)) {
-                    retry = true;
-                    // If it worked, go back to the last nop, and retry.
-                    // This could probably be refactored to do less work.....
+
+                if (retry) {
+                    effect = true;
                     do {
                         x--;
                     } while (statements.get(x).isNop() && x > 0);
                 }
             } while (retry);
         }
+        return effect;
+    }
+
+    // if (c1) goto a
+    // if (c2) goto b
+    // a
+    // ->
+    // if (!c1 && c2) goto b
+
+    // if (c1) goto a
+    // if (c2) goto a
+    // b
+    // ->
+    // if (c1 || c2) goto a
+    private static boolean condenseIfs(Op03SimpleStatement if1, Op03SimpleStatement if2,
+                                       Op03SimpleStatement taken1, Op03SimpleStatement taken2, Op03SimpleStatement fall2,
+                                       boolean negated1) {
+        if (if2.sources.size() != 1) {
+            return false;
+        }
+
+        BoolOp resOp;
+        boolean negate1 = false;
+
+        if (taken1 == fall2) {
+            resOp = BoolOp.AND;
+            negate1 = true;
+        } else if (taken1 == taken2) {
+            resOp = BoolOp.OR;
+            negate1 = false;
+        } else {
+            return false;
+        }
+
+        ConditionalExpression cond1 = ((IfStatement)if1.getStatement()).getCondition();
+        ConditionalExpression cond2 = ((IfStatement)if2.getStatement()).getCondition();
+        if (negated1) {
+            negate1 = !negate1;
+        }
+        if (negate1) cond1 = cond1.getNegated();
+        ConditionalExpression combined = new BooleanOperation(cond1, cond2, resOp);
+        combined = combined.simplify();
+        Op03SimpleStatement newTaken = taken2;
+        Op03SimpleStatement newFall = fall2;
+        // We need to remove both the targets from the first if, all the sources from the second if (which should be just 1!).
+        // Then first if becomes a NOP which points directly to second, and second gets new condition.
+        if2.replaceStatement(new IfStatement(combined));
+
+        // HACK - we know this is how nopoutconditional will work.
+        for (Op03SimpleStatement target1 : if1.getTargets()){
+            target1.removeSource(if1);
+        }
+        if1.targets.clear();
+        for (Op03SimpleStatement source1 : if2.getSources()) {
+            source1.removeGotoTarget(if2);
+        }
+        if2.sources.clear();
+        if1.targets.add(if2);
+        if2.sources.add(if1);
+
+        if1.nopOutConditional();
+
+        return true;
     }
 
     public static void simplifyConditionals(List<Op03SimpleStatement> statements) {
@@ -1034,6 +1133,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Statement inner2 = next.getStatement();
         if (!(inner2 instanceof AssignmentSimple)) return false;
 
+        if (next.getTargets().size() != 1) return false;
+        Op03SimpleStatement after = next.getTargets().get(0);
+        if (!(after.getStatement() instanceof IfStatement)) return false;
+
         AssignmentSimple a1 = (AssignmentSimple)inner1;
         AssignmentSimple a2 = (AssignmentSimple)inner2;
 
@@ -1046,7 +1149,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         StackSSALabel s2 = ((StackValue)r2).getStackValue();
         if (!l1.equals(s2)) return false;
         next.nopOut();
-
+        // And copy ssa identifiers from next.
+        stm.ssaIdentifiers = next.ssaIdentifiers;
         stm.replaceStatement(new AssignmentSimple(l1, new AssignmentExpression(l2, r1, true)));
         return true;
     }
@@ -1406,9 +1510,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Expression e1 = a1.getRValue();
         Expression e2 = a2.getRValue();
         ConditionalExpression condition = innerIf.getCondition().getNegated();
-        if (e1.equals(Literal.TRUE) && e2.equals(Literal.FALSE)) {
+        condition = condition.simplify();
+        boolean isBool = e1.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN &&
+                         e2.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN;
+        if (isBool && e1.equals(Literal.TRUE) && e2.equals(Literal.FALSE)) {
             ifStatement.replaceStatement(new AssignmentSimple(lv, condition));
-        } else if (e1.equals(Literal.FALSE) && e2.equals(Literal.TRUE)) {
+        } else if (isBool && e1.equals(Literal.FALSE) && e2.equals(Literal.TRUE)) {
             ifStatement.replaceStatement(new AssignmentSimple(lv, condition.getNegated()));
         } else {
             ifStatement.replaceStatement(new AssignmentSimple(lv, new TernaryExpression(condition, a1.getRValue(), a2.getRValue())));
@@ -1424,6 +1531,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         ifStatement.targets.clear();
         ifStatement.addTarget(evTgt);
+        tgt1.replaceStatement(new Nop());
+        // Reduce count, or lvalue condensing won't work.
+        if (lv instanceof StackSSALabel) {
+            ((StackSSALabel) lv).getStackEntry().decSourceCount();
+        }
         return true;
     }
 
@@ -2009,8 +2121,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * y:
      *
      * We assume that statements are ordered.
+     *
+     * RequireDirectAfter - y MUST equal x+1.
      */
-    public static void rewriteNegativeJumps(List<Op03SimpleStatement> statements) {
+    public static void rewriteNegativeJumps(List<Op03SimpleStatement> statements, boolean requireChainedConditional) {
         List<Op03SimpleStatement> removeThese = ListFactory.newList();
         for (int x = 0; x < statements.size() - 2; ++x) {
             Op03SimpleStatement aStatement = statements.get(x);
@@ -2019,8 +2133,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 Op03SimpleStatement zStatement = statements.get(x + 1);
                 Op03SimpleStatement xStatement = statements.get(x + 2);
 
+                if (requireChainedConditional) {
+                    if (!(xStatement.getStatement() instanceof IfStatement)) continue;
+                }
+
                 if (aStatement.targets.get(0) == zStatement &&
-                        aStatement.targets.get(1) == xStatement) {
+                    aStatement.targets.get(1) == xStatement) {
 
                     Statement innerZStatement = zStatement.getStatement();
                     if (innerZStatement.getClass() == GotoStatement.class) {
@@ -2045,6 +2163,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         statements.removeAll(removeThese);
     }
+
+
 
     /* DEAD CODE */
 
@@ -2646,8 +2766,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // This is being done twice deliberately.  Should rewrite rewriteNegativeJumps to iterate.
             // in practice 2ce is fine.
             // see /com/db4o/internal/btree/BTreeNode.class
-            Op03SimpleStatement.rewriteNegativeJumps(statements);
-            Op03SimpleStatement.rewriteNegativeJumps(statements);
+            Op03SimpleStatement.rewriteNegativeJumps(statements, false);
+            Op03SimpleStatement.rewriteNegativeJumps(statements, false);
         }
         return statements;
     }

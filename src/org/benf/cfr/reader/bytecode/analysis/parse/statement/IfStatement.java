@@ -69,35 +69,6 @@ public class IfStatement extends GotoStatement {
         condition = ConditionalUtils.simplify(condition.getNegated());
     }
 
-    public boolean condenseWithPriorIfStatement(IfStatement prior) {
-        Statement fallThrough2 = getTargetStatement(JUMP_NOT_TAKEN);
-        Statement target1 = prior.getTargetStatement(JUMP_TAKEN);
-
-        // if (c1) goto a
-        // if (c2) goto b
-        // a
-        // ->
-        // if (!c1 && c2) goto b
-        if (fallThrough2 == target1) {
-            this.condition = new BooleanOperation(new NotOperation(prior.getCondition()), getCondition(), BoolOp.AND).simplify();
-            prior.getContainer().nopOutConditional();
-            return true;
-        }
-        // if (c1) goto a
-        // if (c2) goto a
-        // b
-        // ->
-        // if (c1 || c2) goto a
-        Statement target2 = getTargetStatement(JUMP_TAKEN);
-        if (target1 == target2) {
-            this.condition = new BooleanOperation(prior.getCondition(), getCondition(), BoolOp.OR).simplify();
-            prior.getContainer().nopOutConditional();
-            return true;
-        }
-        return false;
-    }
-
-
     public void replaceWithWhileLoopStart(BlockIdentifier blockIdentifier) {
         WhileStatement replacement = new WhileStatement(ConditionalUtils.simplify(condition.getNegated()), blockIdentifier);
         getContainer().replaceStatement(replacement);

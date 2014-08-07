@@ -502,21 +502,22 @@ public class CodeAnalyser {
 
         boolean reloop = false;
         do {
+            Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes, true);
+
             logger.info("collapseAssignmentsIntoConditionals");
             Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options);
 
             // Collapse conditionals into || / &&
             logger.info("condenseConditionals");
-            Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
+            reloop = Op03SimpleStatement.condenseConditionals(op03SimpleParseNodes);
             // Condense odder conditionals, which may involve inline ternaries which are
             // hard to work out later.  This isn't going to get everything, but may help!
             //
-            reloop = Op03SimpleStatement.condenseConditionals2(op03SimpleParseNodes);
+            reloop = reloop | Op03SimpleStatement.condenseConditionals2(op03SimpleParseNodes);
             reloop = reloop | Op03SimpleStatement.normalizeDupAssigns(op03SimpleParseNodes);
             if (reloop) {
                 LValueProp.condenseLValues(op03SimpleParseNodes);
             }
-
             op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
 
         } while (reloop);
@@ -527,7 +528,7 @@ public class CodeAnalyser {
 
         // Rewrite conditionals which jump into an immediate jump (see specifics)
         logger.info("rewriteNegativeJumps");
-        Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes);
+        Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes, false);
 
         Op03SimpleStatement.optimiseForTypes(op03SimpleParseNodes);
 
