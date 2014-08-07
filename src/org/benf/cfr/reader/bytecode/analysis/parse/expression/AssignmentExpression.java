@@ -16,7 +16,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.Map;
 
 public class AssignmentExpression extends AbstractAssignmentExpression {
-    private final LValue lValue;
+    private LValue lValue;
     private Expression rValue;
     private boolean inlined;
 
@@ -56,6 +56,7 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        lValue = lValue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         rValue = rValue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;
     }

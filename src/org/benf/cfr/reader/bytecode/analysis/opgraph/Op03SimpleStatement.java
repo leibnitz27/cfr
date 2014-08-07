@@ -1489,15 +1489,19 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (!(innerStatement instanceof IfStatement)) return false;
         IfStatement innerIf = (IfStatement)innerStatement;
         Op03SimpleStatement tgt1 = ifStatement.targets.get(0);
-        Op03SimpleStatement tgt2 = ifStatement.targets.get(1);
+        final Op03SimpleStatement tgt2 = ifStatement.targets.get(1);
         if (tgt1.sources.size() != 1) return false;
         if (tgt2.sources.size() != 1) return false;
         if (tgt1.targets.size() != 1) return false;
         if (tgt2.targets.size() != 1) return false;
         Op03SimpleStatement evTgt = tgt1.targets.get(0);
         evTgt = Misc.followNopGoto(evTgt, true, false);
-        if (evTgt.sources.size() != 2) return false;
-        if (tgt2.targets.get(0) != evTgt) return false;
+        Op03SimpleStatement oneSource = tgt1;
+        if (!(evTgt.sources.contains(oneSource) || evTgt.sources.contains(oneSource = oneSource.targets.get(0)))) {
+            return false;
+        }
+        if (evTgt.sources.size() < 2) return false; // FIXME.  Shouldnt' clear, below.
+        if (tgt2.targets.get(0) != evTgt) return false; // asserted tgt2 is a source of evTgt.
         Statement stm1 = tgt1.getStatement();
         Statement stm2 = tgt2.getStatement();
         if (!(stm1 instanceof AssignmentSimple && stm2 instanceof AssignmentSimple)) {
@@ -1520,11 +1524,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         } else {
             ifStatement.replaceStatement(new AssignmentSimple(lv, new TernaryExpression(condition, a1.getRValue(), a2.getRValue())));
         }
-        for (Op03SimpleStatement source : evTgt.sources) {
-            source.replaceStatement(new Nop());
-            source.removeTarget(evTgt);
-        }
-        evTgt.sources.clear();
+        oneSource.replaceStatement(new Nop());
+        oneSource.removeTarget(evTgt);
+        tgt2.replaceStatement(new Nop());
+        tgt2.removeTarget(evTgt);
+        evTgt.removeSource(oneSource);
+        evTgt.removeSource(tgt2);
         evTgt.sources.add(ifStatement);
         for (Op03SimpleStatement tgt : ifStatement.targets) {
             tgt.removeSource(ifStatement);
