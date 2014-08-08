@@ -100,6 +100,7 @@ public class CodeAnalyser {
 
     private static final RecoveryOptions recover1 = new RecoveryOptions(recover0,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FOR_LOOP_CAPTURE, Troolean.TRUE),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
@@ -523,7 +524,7 @@ public class CodeAnalyser {
         } while (reloop);
 
         logger.info("simplifyConditionals");
-        Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes);
+        Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes, false);
         op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
 
         // Rewrite conditionals which jump into an immediate jump (see specifics)
@@ -590,7 +591,7 @@ public class CodeAnalyser {
         Op03SimpleStatement.rewriteBreakStatements(op03SimpleParseNodes);
         logger.info("rewriteWhilesAsFors");
         Op03SimpleStatement.rewriteDoWhileTruePredAsWhile(op03SimpleParseNodes);
-        Op03SimpleStatement.rewriteWhilesAsFors(op03SimpleParseNodes);
+        Op03SimpleStatement.rewriteWhilesAsFors(options, op03SimpleParseNodes);
 
         // TODO : I think this is now redundant.
         logger.info("removeSynchronizedCatchBlocks");
@@ -698,6 +699,8 @@ public class CodeAnalyser {
 //                triggerRecovery = true;
 //            }
 //        }
+
+        Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes, true);
 
         /*
          * At this point, if we have any remaining stack variables, then we're either looking

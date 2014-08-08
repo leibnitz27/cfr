@@ -93,7 +93,12 @@ public class ArrayIterRewriter implements Op04Rewriter {
                                 ), // end do version
                                 // for version.  Quite a bit simpler!
                                 new MatchSequence(
-                                        new CollectMatch("for", new StructuredFor(new ComparisonOperation(i$, len$, CompOp.LT), new AssignmentSimple(i$_lv, new Literal(TypedLiteral.getInt(0))), new ArithmeticPreMutationOperation(i$_lv, ArithOp.PLUS), null, wcm.getBlockIdentifier("doblockident"))),
+                                        new CollectMatch("for", new StructuredFor(
+                                                new ComparisonOperation(i$, len$, CompOp.LT),
+                                                new AssignmentSimple(i$_lv, new Literal(TypedLiteral.getInt(0))),
+                                                ListFactory.<AbstractAssignmentExpression>newList(new ArithmeticPreMutationOperation(i$_lv, ArithOp.PLUS)),
+                                                null, wcm.getBlockIdentifier("doblockident")
+                                        )),
                                         new BeginBlock(wcm.getBlockWildcard("forblock")),
                                         new CollectMatch("assigniter", new StructuredAssignment(iter_lv, new ArrayIndex(array$, i$))),
                                         new CollectMatchRange("body", new KleenePlus(new Negated(

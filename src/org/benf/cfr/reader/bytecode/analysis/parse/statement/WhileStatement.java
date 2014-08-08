@@ -11,6 +11,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredWh
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.List;
+
 public class WhileStatement extends AbstractStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
@@ -37,7 +39,7 @@ public class WhileStatement extends AbstractStatement {
         return dumper;
     }
 
-    public void replaceWithForLoop(AssignmentSimple initial, AbstractAssignmentExpression assignment) {
+    public void replaceWithForLoop(AssignmentSimple initial, List<AbstractAssignmentExpression> assignment) {
         if (condition == null) {
             throw new UnsupportedOperationException();
         }

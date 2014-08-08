@@ -19,6 +19,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -26,15 +27,15 @@ import java.util.List;
 public class StructuredFor extends AbstractStructuredBlockStatement {
     private ConditionalExpression condition;
     private AssignmentSimple initial;
-    private AbstractAssignmentExpression assignment;
+    private List<AbstractAssignmentExpression> assignments;
     private final BlockIdentifier block;
     private boolean isCreator;
 
-    public StructuredFor(ConditionalExpression condition, AssignmentSimple initial, AbstractAssignmentExpression assignment, Op04StructuredStatement body, BlockIdentifier block) {
+    public StructuredFor(ConditionalExpression condition, AssignmentSimple initial, List<AbstractAssignmentExpression> assignments, Op04StructuredStatement body, BlockIdentifier block) {
         super(body);
         this.condition = condition;
         this.initial = initial;
-        this.assignment = assignment;
+        this.assignments = assignments;
         this.block = block;
         this.isCreator = false;
     }
@@ -42,7 +43,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collectFrom(condition);
-        collector.collectFrom(assignment);
+        collector.collectFrom(assignments);
         super.collectTypeUsages(collector);
     }
 
@@ -60,7 +61,13 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         } else {
             dumper.print(";");
         }
-        dumper.print(" ").dump(condition).print("; ").dump(assignment).print(") ");
+        dumper.print(" ").dump(condition).print("; ");
+        boolean first = true;
+        for (Expression assignment : assignments) {
+            first = CommaHelp.comma(first, dumper);
+            dumper.dump(assignment);
+        }
+        dumper.print(") ");
         getBody().dump(dumper);
         return dumper;
     }
@@ -88,7 +95,9 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         // While it's not strictly speaking 2 blocks, we can model it as the statement / definition
         // section of the for as being an enclosing block.  (otherwise we add the variable in the wrong scope).
         scopeDiscoverer.enterBlock(this);
-        assignment.collectUsedLValues(scopeDiscoverer);
+        for (Expression assignment : assignments) {
+            assignment.collectUsedLValues(scopeDiscoverer);
+        }
         condition.collectUsedLValues(scopeDiscoverer);
         if (initial != null) {
             LValue lValue = initial.getCreatedLValue();
@@ -118,7 +127,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     public String suggestName(LocalVariable createdHere, Predicate<String> testNameUsedFn) {
         JavaTypeInstance loopType = createdHere.getInferredJavaType().getJavaTypeInstance();
 
-        if (!(assignment instanceof AbstractMutatingAssignmentExpression)) return null;
+        if (!(assignments.get(0) instanceof AbstractMutatingAssignmentExpression)) return null;
 
         if (!(loopType instanceof RawJavaType)) return null;
         RawJavaType rawJavaType = (RawJavaType) loopType;
@@ -159,7 +168,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         } else {
             if (!condition.equals(other.condition)) return false;
         }
-        if (!assignment.equals(other.assignment)) return false;
+        if (!assignments.equals(other.assignments)) return false;
         if (!block.equals(other.block)) return false;
         // Don't check locality.
         matchIterator.advance();

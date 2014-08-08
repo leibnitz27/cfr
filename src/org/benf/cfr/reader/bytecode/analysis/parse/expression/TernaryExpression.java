@@ -50,6 +50,18 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
         return a;
     }
 
+    public ConditionalExpression getCondition() {
+        return condition;
+    }
+
+    public Expression getLhs() {
+        return lhs;
+    }
+
+    public Expression getRhs() {
+        return rhs;
+    }
+
     @Override
     public Precedence getPrecedence() {
         return Precedence.CONDITIONAL;

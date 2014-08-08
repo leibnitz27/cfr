@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ConditionalSimplifyingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StackVarToLocalRewriter;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
@@ -1095,9 +1096,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return true;
     }
 
-    public static void simplifyConditionals(List<Op03SimpleStatement> statements) {
+    public static void simplifyConditionals(List<Op03SimpleStatement> statements, boolean aggressive) {
         for (Op03SimpleStatement statement : statements) {
             statement.simplifyConditional();
+        }
+
+        // Fixme - surely simplifyConditional above should be in the rewriter!?
+        if (aggressive) {
+            ExpressionRewriter conditionalSimplifier = new ConditionalSimplifyingRewriter();
+            for (Op03SimpleStatement statement : statements) {
+                statement.rewrite(conditionalSimplifier);
+            }
         }
     }
 
@@ -1515,15 +1524,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Expression e2 = a2.getRValue();
         ConditionalExpression condition = innerIf.getCondition().getNegated();
         condition = condition.simplify();
-        boolean isBool = e1.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN &&
-                         e2.getInferredJavaType().getRawType() == RawJavaType.BOOLEAN;
-        if (isBool && e1.equals(Literal.TRUE) && e2.equals(Literal.FALSE)) {
-            ifStatement.replaceStatement(new AssignmentSimple(lv, condition));
-        } else if (isBool && e1.equals(Literal.FALSE) && e2.equals(Literal.TRUE)) {
-            ifStatement.replaceStatement(new AssignmentSimple(lv, condition.getNegated()));
-        } else {
-            ifStatement.replaceStatement(new AssignmentSimple(lv, new TernaryExpression(condition, a1.getRValue(), a2.getRValue())));
-        }
+        ifStatement.replaceStatement(new AssignmentSimple(lv, new TernaryExpression(condition, a1.getRValue(), a2.getRValue())));
         oneSource.replaceStatement(new Nop());
         oneSource.removeTarget(evTgt);
         tgt2.replaceStatement(new Nop());
@@ -2218,7 +2219,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private static Set<LValue> findForInvariants(Op03SimpleStatement start, BlockIdentifier whileLoop) {
-        Set<LValue> res = SetFactory.newSet();
+        Set<LValue> res = SetFactory.newOrderedSet();
         Op03SimpleStatement current = start;
         while (current.containedInBlocks.contains(whileLoop)) {
             /* Note that here we're checking for assignments to determine what is suitable for lifting into a
@@ -2272,7 +2273,29 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return null;
     }
 
-    private static void rewriteWhileAsFor(Op03SimpleStatement statement, List<Op03SimpleStatement> statements) {
+    private static List<Op03SimpleStatement> getMutations(List<Op03SimpleStatement> backSources, LValue loopVariable, BlockIdentifier whileBlockIdentifier) {
+
+        /*
+         * Now, go back and get the list of mutations.  Make sure they're all equivalent, then nop them out.
+         */
+        List<Op03SimpleStatement> mutations = ListFactory.newList();
+        for (Op03SimpleStatement source : backSources) {
+            Op03SimpleStatement incrStatement = getForInvariant(source, loopVariable, whileBlockIdentifier);
+            mutations.add(incrStatement);
+        }
+
+        Op03SimpleStatement baseline = mutations.get(0);
+        for (Op03SimpleStatement incrStatement : mutations) {
+            // Compare - they all have to mutate in the same way.
+            if (!baseline.equals(incrStatement)) {
+                logger.info("Incompatible constant mutations.");
+                return null;
+            }
+        }
+        return mutations;
+    }
+
+    private static void rewriteWhileAsFor(Op03SimpleStatement statement, List<Op03SimpleStatement> statements, boolean aggcapture) {
         // Find the backwards jumps to this statement
         List<Op03SimpleStatement> backSources = Functional.filter(statement.sources, new Misc.IsBackJumpTo(statement.index));
         //
@@ -2291,75 +2314,85 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // For each of the back calling targets, find a CONSTANT inc/dec
         // * which is in the loop arena
         // * before any instruction which has multiple parents.
-        Set<LValue> mutatedPossibilities = null;
+        Set<LValue> reverseOrderedMutatedPossibilities = null;
         for (Op03SimpleStatement source : backSources) {
             Set<LValue> incrPoss = findForInvariants(source, whileBlockIdentifier);
-            if (mutatedPossibilities == null) {
-                mutatedPossibilities = incrPoss;
+            if (reverseOrderedMutatedPossibilities == null) {
+                reverseOrderedMutatedPossibilities = incrPoss;
             } else {
-                mutatedPossibilities.retainAll(incrPoss);
+                reverseOrderedMutatedPossibilities.retainAll(incrPoss);
             }
             // If there are no possibilites, then we can't do anything.
-            if (mutatedPossibilities.isEmpty()) {
+            if (reverseOrderedMutatedPossibilities.isEmpty()) {
                 logger.info("No invariant possibilities on source\n");
                 return;
             }
         }
-        if (mutatedPossibilities == null || mutatedPossibilities.isEmpty()) {
+        if (reverseOrderedMutatedPossibilities == null || reverseOrderedMutatedPossibilities.isEmpty()) {
             logger.info("No invariant intersection\n");
             return;
         }
-        loopVariablePossibilities.retainAll(mutatedPossibilities);
+        loopVariablePossibilities.retainAll(reverseOrderedMutatedPossibilities);
         // Intersection between incremented / tested.
         if (loopVariablePossibilities.isEmpty()) {
             logger.info("No invariant intersection\n");
             return;
         }
 
-        // If we've got choices, ignore currently.
-        if (loopVariablePossibilities.size() > 1) {
-            logger.info("Multiple invariant intersection\n");
-            return;
+        Op03SimpleStatement loopVariableOp = null;
+        LValue loopVariable = null;
+        for (LValue loopVariablePoss : loopVariablePossibilities) {
+
+            //
+            // If possible, go back and find an unconditional assignment to the loop variable.
+            // We have to be sure that moving this to the for doesn't violate SSA versions.
+            //
+            Op03SimpleStatement initialValue = findMovableAssignment(statement, loopVariablePoss);
+            if (loopVariableOp == null || initialValue.getIndex().isBackJumpTo(loopVariableOp)) {
+                loopVariableOp = initialValue;
+                loopVariable = loopVariablePoss;
+            }
         }
+        if (loopVariable == null) return;
+        AssignmentSimple initalAssignmentSimple = null;
 
-        LValue loopVariable = loopVariablePossibilities.iterator().next();
 
-        /*
-         * Now, go back and get the list of mutations.  Make sure they're all equivalent, then nop them out.
-         */
-        List<Op03SimpleStatement> mutations = ListFactory.newList();
-        for (Op03SimpleStatement source : backSources) {
-            Op03SimpleStatement incrStatement = getForInvariant(source, loopVariable, whileBlockIdentifier);
-            mutations.add(incrStatement);
+        List<AbstractAssignmentExpression> postUpdates = ListFactory.newList();
+        List<List<Op03SimpleStatement>> usedMutatedPossibilities = ListFactory.newList();
+        boolean usesLoopVar = false;
+        for (LValue otherMutant : reverseOrderedMutatedPossibilities) {
+            List<Op03SimpleStatement> othermutations = getMutations(backSources, otherMutant, whileBlockIdentifier);
+            if (othermutations == null) continue;
+
+            // We abort if we're about to lift a mutation which isn't in the predicate.
+            // This is not necessarily the best idea, but otherwise we might lift all sorts of stuff,
+            // leading to very ugly code.
+            if (!loopVariablePossibilities.contains(otherMutant)) {
+                if (!aggcapture) break;
+            }
+            if (otherMutant.equals(loopVariable)) usesLoopVar = true;
+
+            AbstractAssignmentExpression postUpdate2 = ((AbstractAssignment)(othermutations.get(0).getStatement())).getInliningExpression();
+            postUpdates.add(postUpdate2);
+            usedMutatedPossibilities.add(othermutations);
         }
+        if (!usesLoopVar) return;
 
-        Op03SimpleStatement baseline = mutations.get(0);
-        for (Op03SimpleStatement incrStatement : mutations) {
-            // Compare - they all have to mutate in the same way.
-            if (!baseline.equals(incrStatement)) {
-                logger.info("Incompatible constant mutations.");
-                return;
+        Collections.reverse(postUpdates);
+        for (List<Op03SimpleStatement> lst : usedMutatedPossibilities) {
+            for (Op03SimpleStatement op : lst) {
+                op.nopOut();
             }
         }
 
-        //
-        // If possible, go back and find an unconditional assignment to the loop variable.
-        // We have to be sure that moving this to the for doesn't violate SSA versions.
-        //
-        Op03SimpleStatement initialValue = findMovableAssignment(statement, loopVariable);
-        AssignmentSimple initalAssignmentSimple = null;
-
-        if (initialValue != null) {
-            initalAssignmentSimple = (AssignmentSimple) initialValue.containedStatement;
-            initialValue.nopOut();
+        if (loopVariableOp != null) {
+            initalAssignmentSimple = (AssignmentSimple) loopVariableOp.containedStatement;
+            loopVariableOp.nopOut();
         }
 
-        AbstractAssignment updateAssignment = (AbstractAssignment) baseline.containedStatement;
-        for (Op03SimpleStatement incrStatement : mutations) {
-            incrStatement.nopOut();
-        }
         whileBlockIdentifier.setBlockType(BlockType.FORLOOP);
-        whileStatement.replaceWithForLoop(initalAssignmentSimple, updateAssignment.getInliningExpression());
+
+        whileStatement.replaceWithForLoop(initalAssignmentSimple, postUpdates);
 
         for (Op03SimpleStatement source : backSources) {
             if (source.containedInBlocks.contains(whileBlockIdentifier)) {
@@ -2385,7 +2418,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static void rewriteWhilesAsFors(List<Op03SimpleStatement> statements) {
+    public static void rewriteWhilesAsFors(Options options, List<Op03SimpleStatement> statements) {
         // Find all the while loops beginnings.
         List<Op03SimpleStatement> whileStarts = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
             @Override
@@ -2393,9 +2426,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return (in.containedStatement instanceof WhileStatement) && ((WhileStatement) in.containedStatement).getBlockIdentifier().getBlockType() == BlockType.WHILELOOP;
             }
         });
-
+        boolean aggcapture = options.getOption(OptionsImpl.FOR_LOOP_CAPTURE) == Troolean.TRUE;
         for (Op03SimpleStatement whileStart : whileStarts) {
-            rewriteWhileAsFor(whileStart, statements);
+            rewriteWhileAsFor(whileStart, statements, aggcapture);
         }
     }
 

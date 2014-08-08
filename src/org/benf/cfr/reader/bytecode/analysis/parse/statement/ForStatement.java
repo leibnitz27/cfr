@@ -7,51 +7,66 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredFor;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.List;
 
 public class ForStatement extends AbstractStatement {
     private ConditionalExpression condition;
     private BlockIdentifier blockIdentifier;
     private AssignmentSimple initial;
-    private AbstractAssignmentExpression assignment;
+    private List<AbstractAssignmentExpression> assignments;
 
-    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, AssignmentSimple initial, AbstractAssignmentExpression assignment) {
+    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, AssignmentSimple initial, List<AbstractAssignmentExpression> assignments) {
         this.condition = conditionalExpression;
         this.blockIdentifier = blockIdentifier;
         this.initial = initial;
-        this.assignment = assignment;
+        this.assignments = assignments;
     }
 
     @Override
     public Dumper dump(Dumper dumper) {
         dumper.print("for (");
         if (initial != null) dumper.dump(initial);
-        dumper.print("; ").dump(condition).print("; ").dump(assignment).print(") ");
+        dumper.print("; ").dump(condition).print("; ");
+        boolean first = true;
+        for (AbstractAssignmentExpression assignment : assignments) {
+            first = CommaHelp.comma(first, dumper);
+            dumper.dump(assignment);
+        }
+        dumper.print(") ");
         dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
         return dumper;
     }
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
-        assignment.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+        for (AbstractAssignmentExpression assignment : assignments) {
+            assignment.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+        }
     }
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
         condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
-        assignment = expressionRewriter.rewriteExpression(assignment, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
+        for (int i=0,len=assignments.size();i<len;++i) {
+            assignments.set(i, expressionRewriter.rewriteExpression(assignments.get(i), ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE));
+        }
     }
 
 
     @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
         condition.collectUsedLValues(lValueUsageCollector);
-        assignment.collectUsedLValues(lValueUsageCollector);
+        for (AbstractAssignmentExpression assignment : assignments) {
+            assignment.collectUsedLValues(lValueUsageCollector);
+        }
     }
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredFor(condition, blockIdentifier, initial, assignment);
+        return new UnstructuredFor(condition, blockIdentifier, initial, assignments);
     }
 
     public BlockIdentifier getBlockIdentifier() {
@@ -66,8 +81,8 @@ public class ForStatement extends AbstractStatement {
         return initial;
     }
 
-    public AbstractAssignmentExpression getAssignment() {
-        return assignment;
+    public List<AbstractAssignmentExpression> getAssignments() {
+        return assignments;
     }
 
     @Override
@@ -78,7 +93,7 @@ public class ForStatement extends AbstractStatement {
         ForStatement other = (ForStatement) o;
         if (!constraint.equivalent(condition, other.condition)) return false;
         if (!constraint.equivalent(initial, other.initial)) return false;
-        if (!constraint.equivalent(assignment, other.assignment)) return false;
+        if (!constraint.equivalent(assignments, other.assignments)) return false;
         return true;
     }
 

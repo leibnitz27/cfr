@@ -211,6 +211,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Troolean>(
             "forcetopsort", defaultNeitherTrooleanDecoder,
             "Force basic block sorting.  Usually not necessary for code emitted directly from javac, but required in the case of obfuscation (or dex2jar!).  Will be enabled in recovery.");
+    public static final PermittedOptionProvider.Argument<Troolean> FOR_LOOP_CAPTURE = new PermittedOptionProvider.Argument<Troolean>(
+            "forloopaggcapture", defaultNeitherTrooleanDecoder,
+            "Allow for loops to aggresively roll mutations into update section, even if they don't appear to be involved with the predicate");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT_EXTRA = new PermittedOptionProvider.Argument<Troolean>(
             "forcetopsortaggress", defaultNeitherTrooleanDecoder,
             "Force extra aggressive topsort options");
@@ -323,7 +326,7 @@ public class OptionsImpl implements Options {
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS, RECOVER_TYPECLASHES,
-                    FORCE_RETURNING_IFS, ANALYSE_AS, HELP);
+                    FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, HELP);
         }
 
         @Override

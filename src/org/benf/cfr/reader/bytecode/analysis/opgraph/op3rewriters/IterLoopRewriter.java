@@ -62,7 +62,9 @@ public class IterLoopRewriter {
         LValue originalLoopVariable = wildcardMatch.getLValueWildCard("iter").getMatch();
 
         // Assignments are fiddly, as they can be assignmentPreChange or regular Assignment.
-        AbstractAssignmentExpression assignment = forStatement.getAssignment();
+        List<AbstractAssignmentExpression> assignments = forStatement.getAssignments();
+        if (assignments.size() != 1) return false;
+        AbstractAssignmentExpression assignment = assignments.get(0);
         boolean incrMatch = assignment.isSelfMutatingOp1(originalLoopVariable, ArithOp.PLUS);
         if (!incrMatch) return false;
 

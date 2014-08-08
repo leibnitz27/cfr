@@ -3,10 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -81,9 +78,18 @@ public class AssignmentSimple extends AbstractAssignment {
      */
     @Override
     public boolean isSelfMutatingOperation() {
-        if (rvalue instanceof ArithmeticOperation) {
-            ArithmeticOperation arithmeticOperation = (ArithmeticOperation) rvalue;
+        Expression localR = rvalue;
+        while (localR instanceof CastExpression) localR = ((CastExpression) localR).getChild();
+        if (localR instanceof ArithmeticOperation) {
+            ArithmeticOperation arithmeticOperation = (ArithmeticOperation) localR;
             if (arithmeticOperation.isLiteralFunctionOf(lvalue)) return true;
+        } else if (localR instanceof MemberFunctionInvokation) {
+            MemberFunctionInvokation memberFunctionInvokation = (MemberFunctionInvokation)localR;
+            Expression object = memberFunctionInvokation.getObject();
+            if (object instanceof LValueExpression) {
+                LValue memberLValue = ((LValueExpression) object).getLValue();
+                if (memberLValue.equals(lvalue)) return true;
+            }
         }
         return false;
     }
