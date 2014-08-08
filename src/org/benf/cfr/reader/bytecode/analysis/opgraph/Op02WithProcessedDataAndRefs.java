@@ -165,6 +165,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return rawData[index];
     }
 
+    // Cheap unsigned byte read, save constructing a baseByteData.
+    private int getInstrArgU1(int index) {
+        int res = rawData[index];
+        if (res < 0) {
+            res = 256 + res;
+        }
+        return res;
+    }
+
     private int getInstrArgShort(int index) {
         BaseByteData tmp = new BaseByteData(rawData);
         return tmp.getS2At(index);
@@ -626,7 +635,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case DLOAD:
             case FLOAD:
             case IINC:
-                idx = getInstrArgByte(0);
+                idx = getInstrArgU1(0);
                 break;
             case ALOAD_0:
             case ILOAD_0:
@@ -724,7 +733,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case DSTORE:
             case FSTORE:
             case IINC:
-                idx = getInstrArgByte(0);
+                idx = getInstrArgU1(0);
                 break;
             case ASTORE_0:
             case ISTORE_0:
@@ -1083,7 +1092,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 );
             }
             case RET: {
-                int slot = getInstrArgByte(0);
+                int slot = getInstrArgU1(0);
                 // This ret could return to after any JSR instruction which it is reachable from.  This is ... tricky.
                 Expression retVal = new LValueExpression(variableFactory.localVariable(slot, localVariablesBySlot.get(slot), originalRawOffset, false));
                 return new JSRRetStatement(retVal);
@@ -1247,7 +1256,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LOOKUPSWITCH:
                 return new RawSwitchStatement(getStackRValue(0), new DecodedLookupSwitch(rawData, originalRawOffset));
             case IINC: {
-                int variableIndex = getInstrArgByte(0);
+                int variableIndex = getInstrArgU1(0);
                 int incrAmount = getInstrArgByte(1);
                 ArithOp op = ArithOp.PLUS;
                 if (incrAmount < 0) {
