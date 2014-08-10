@@ -1937,10 +1937,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Statement innerStatement = statement.getStatement();
             if (innerStatement.getClass() == GotoStatement.class) {
                 GotoStatement innerGoto = (GotoStatement) innerStatement;
-                switch (innerGoto.getJumpType()) {
-                    case BREAK:
-                        continue;
-                }
+                if (innerGoto.getJumpType() == JumpType.BREAK) continue;
                 Op03SimpleStatement target = statement.targets.get(0);
                 Op03SimpleStatement ultimateTarget = Misc.followNopGotoChain(target, false, false);
                 if (target != ultimateTarget) {
@@ -1951,6 +1948,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             } else if (innerStatement.getClass() == IfStatement.class) {
                 IfStatement ifStatement = (IfStatement) innerStatement;
+                if (ifStatement.getJumpType() == JumpType.BREAK) continue;
                 Op03SimpleStatement target = statement.targets.get(1);
                 Op03SimpleStatement ultimateTarget = Misc.followNopGotoChain(target, false, false);
                 if (target != ultimateTarget) {
