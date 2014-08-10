@@ -196,9 +196,6 @@ public class LoopIdentifier {
                 }
                 return;
             }
-
-        } else {
-            int x = 1;
         }
     }
 
