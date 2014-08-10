@@ -73,6 +73,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             matchResultCollector.clear();
             if (m.match(mi, matchResultCollector)) {
                 tryRewrite(matchResultCollector);
+                mi.rewind1();
             }
         }
     }
