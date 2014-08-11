@@ -51,7 +51,8 @@ public class InstanceOfExpression extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        return d.dump(lhs).print(" instanceof ").dump(typeInstance);
+        lhs.dumpWithOuterPrecedence(d, getPrecedence());
+        return d.print(" instanceof ").dump(typeInstance);
     }
 
     @Override
