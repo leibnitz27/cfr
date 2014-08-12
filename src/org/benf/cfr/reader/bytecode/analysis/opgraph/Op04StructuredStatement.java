@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.Op04Checker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.ConstructorUtils;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -712,43 +713,69 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return false;
     }
 
-    private static LValue removeSyntheticConstructorParams(Method method, Op04StructuredStatement root, boolean isInstance) {
+    public static FieldVariable findInnerClassOuterThis(Method method, Op04StructuredStatement root) {
+
         MethodPrototype prototype = method.getMethodPrototype();
-        // method.getConstructorFlag());
+
         List<LocalVariable> vars = prototype.getComputedParameters();
         if (vars.isEmpty()) return null;
-        FieldVariable matchedLValue = null;
+
+        LocalVariable outerThis = vars.get(0);
+        // Todo : Should we test that it's the right type?  Already been done, really....
+
+        InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(method.getClassFile(), outerThis);
+        // Not actually rewriting, just checking.
+        innerClassConstructorRewriter.rewrite(root);
+        FieldVariable matchedLValue = innerClassConstructorRewriter.getMatchedField();
+        return matchedLValue;
+    }
+
+
+    public static void removeInnerClassOuterThis(Method method, Op04StructuredStatement root) {
+
+        MethodPrototype prototype = method.getMethodPrototype();
+
+        List<LocalVariable> vars = prototype.getComputedParameters();
+        if (vars.isEmpty()) return;
+
+        LocalVariable outerThis = vars.get(0);
+        // Todo : Should we test that it's the right type?  Already been done, really....
+
+        InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(method.getClassFile(), outerThis);
+        // Not actually rewriting, just checking.
+        innerClassConstructorRewriter.rewrite(root);
+        FieldVariable matchedLValue = innerClassConstructorRewriter.getMatchedField();
+        if (matchedLValue == null) {
+            return;
+        }
+
+        /* If there was a value to match, we now have to replace the parameter with the member anywhere it was used
+         * in the constructor.
+         */
+
+        Map<LValue, LValue> replacements = MapFactory.newMap();
+        replacements.put(outerThis, matchedLValue);
+        innerClassConstructorRewriter.getAssignmentStatement().getContainer().nopOut();
+        prototype.hide(0);
+
+        applyLValueReplacer(replacements, root);
+    }
+
+    private static void removeSyntheticConstructorOuterArgs(Method method, Op04StructuredStatement root, boolean isInstance) {
+        MethodPrototype prototype = method.getMethodPrototype();
+        List<LocalVariable> vars = prototype.getComputedParameters();
+        if (vars.isEmpty()) return;
 
         Map<LValue, LValue> replacements = MapFactory.newMap();
 
-        List<ConstructorInvokationAnoynmousInner> usages = method.getClassFile().getAnonymousUsages();
         /*
          * In normal usage, there will be only one instance of the construction of an anonymous inner.
          * If there are multiple, then we will have an issue rewriting the inner variables to match the outer
          * ones.
          */
+        List<ConstructorInvokationAnoynmousInner> usages = method.getClassFile().getAnonymousUsages();
+
         ConstructorInvokationAnoynmousInner usage = usages.size() == 1 ? usages.get(0) : null;
-
-        if (isInstance) {
-            LocalVariable outerThis = vars.get(0);
-            // Todo : Should we test that it's the right type?  Already been done, really....
-
-            InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(method.getClassFile(), outerThis);
-            innerClassConstructorRewriter.rewrite(root);
-            matchedLValue = innerClassConstructorRewriter.getMatchedField();
-            if (matchedLValue != null) {
-                /* If there was a value to match, we now have to replace the parameter with the member anywhere it was used
-                 * in the constructor.
-                 */
-                ClassFileField classFileField = matchedLValue.getClassFileField();
-                classFileField.markHidden();
-                classFileField.markSyntheticOuterRef();
-
-                replacements.put(outerThis, matchedLValue);
-                innerClassConstructorRewriter.getAssignmentStatement().getContainer().nopOut();
-                prototype.hide(0);
-            }
-        }
 
         /* If this inner class is an anonymous inner class, it could capture outer locals directly.
          * for all the other members - we'll search for any private final members which are initialised in the constructor
@@ -794,40 +821,28 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             }
         }
 
+        applyLValueReplacer(replacements, root);
+    }
 
+    private static void applyLValueReplacer(Map<LValue, LValue> replacements, Op04StructuredStatement root) {
         if (!replacements.isEmpty()) {
             LValueReplacingRewriter lValueReplacingRewriter = new LValueReplacingRewriter(replacements);
             MiscStatementTools.applyExpressionRewriter(root, lValueReplacingRewriter);
         }
-
-        return matchedLValue;
     }
 
     /*
-     * This is performed in 2 parts, only (b) is implemented here, (a) is in ConstructiorInvokation /
-     * MemberFunctionInvokation (for super).
-     *
-     * a)
-     * Remove first arg to calls which use inner <init> on non-statics.
-     *
-     * b)
-     * Also, if we are ourselves an inner class constructor, remove the first argument, and remove usages of it
-     * downstream, plus mark the synthetic outer this as invisible.
+     * Remove (and rewrite) references to this$x
      */
-    public static LValue fixInnerClassConstruction(Method method, Op04StructuredStatement root) {
-
-        /*
-         * b)
-         */
-        LValue res = null;
+    public static void fixInnerClassConstructorSyntheticOuterArgs(Method method, Op04StructuredStatement root) {
         if (method.isConstructor()) {
             ClassFile classFile = method.getClassFile();
             if (classFile.isInnerClass()) {
-                res = removeSyntheticConstructorParams(method, root, !classFile.testAccessFlag(AccessFlag.ACC_STATIC));
+                removeSyntheticConstructorOuterArgs(method, root, !classFile.testAccessFlag(AccessFlag.ACC_STATIC));
             }
         }
-        return res;
     }
+
 
     public static void inlineSyntheticAccessors(DCCommonState state, Method method, Op04StructuredStatement root) {
         JavaTypeInstance classType = method.getClassFile().getClassType();

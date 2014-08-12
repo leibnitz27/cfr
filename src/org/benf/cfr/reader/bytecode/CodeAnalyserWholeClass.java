@@ -3,8 +3,8 @@ package org.benf.cfr.reader.bytecode;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.DeadMethodRemover;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.ConstructorUtils;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
-import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -15,12 +15,10 @@ import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.MiscConstants;
-import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Analysis which needs to be performed on the whole classfile in one go, once we've
@@ -65,6 +63,10 @@ public class CodeAnalyserWholeClass {
         if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
             removeBoilerplateMethods(classFile);
         }
+
+        if (classFile.isInnerClass() && options.getOption(OptionsImpl.REMOVE_INNER_CLASS_SYNTHETICS)) {
+            fixInnerClassConstructors(classFile);
+        }
     }
 
     private static void replaceNestedSyntheticOuterRefs(ClassFile classFile) {
@@ -85,37 +87,66 @@ public class CodeAnalyserWholeClass {
         }
     }
 
+    /*
+     * Fix references to this$x etc
+     */
+    private static void fixInnerClassConstructorSyntheticOuterArgs(ClassFile classFile) {
+        for (Method method : classFile.getConstructors()) {
+            Op04StructuredStatement.fixInnerClassConstructorSyntheticOuterArgs(method, method.getAnalysis());
+        }
+    }
+
+    /*
+     * Remove the first argument from inner class constructors.
+     *
+     * We expect that ALL constructors will have the same argument removed - if that's the case
+     * then we mark that as a synthetic outer.
+     */
     private static void fixInnerClassConstructors(ClassFile classFile) {
 
         if (classFile.testAccessFlag(AccessFlag.ACC_STATIC)) return;
 
-        Set<LValue> removedLValues = SetFactory.newSet();
-        boolean invalid = false;
+        boolean isInstance = !classFile.testAccessFlag(AccessFlag.ACC_STATIC);
+        if (!isInstance) return;
+
+        /*
+         * First pass - verify that all constructors either have an outer arg,
+         * or are chained constructors.  If they're chained constructors, they should
+         * have the outer arg, but we can't verify that they assign to the field.
+         */
+        FieldVariable foundOuterThis = null;
         for (Method method : classFile.getConstructors()) {
-            LValue removed = Op04StructuredStatement.fixInnerClassConstruction(method, method.getAnalysis());
-            if (removed == null) {
-                invalid = true;
-            } else {
-                removedLValues.add(removed);
+            if (ConstructorUtils.isDelegating(method)) continue;
+            FieldVariable outerThis = Op04StructuredStatement.findInnerClassOuterThis(method, method.getAnalysis());
+            if (outerThis == null) return;
+            if (foundOuterThis == null) {
+                foundOuterThis = outerThis;
+            } else if (foundOuterThis != outerThis) {
+                return;
             }
         }
-        if (invalid || removedLValues.size() != 1) return;
+        if (foundOuterThis == null) return;
 
-        LValue outerThis = removedLValues.iterator().next();
-        if (!(outerThis instanceof FieldVariable)) return;
+        ClassFileField classFileField = foundOuterThis.getClassFileField();
+        classFileField.markHidden();
+        classFileField.markSyntheticOuterRef();
 
-        FieldVariable fieldVariable = (FieldVariable) outerThis;
-        String originalName = fieldVariable.getFieldName();
+        for (Method method : classFile.getConstructors()) {
+            if (ConstructorUtils.isDelegating(method)) continue;
+            Op04StructuredStatement.removeInnerClassOuterThis(method, method.getAnalysis());
+        }
+
+
+        String originalName = foundOuterThis.getFieldName();
         /*
          * FieldVariable here is a 'local' one - it has an expression object of 'this'.
          *
          * Find all instances of 'this'.fieldVariable in the class, and replace with
          * OuterClassName.this
          */
-        JavaTypeInstance fieldType = outerThis.getInferredJavaType().getJavaTypeInstance();
+        JavaTypeInstance fieldType = foundOuterThis.getInferredJavaType().getJavaTypeInstance();
         JavaRefTypeInstance fieldRefType = (JavaRefTypeInstance) fieldType.getDeGenerifiedType();
         String name = fieldRefType.getRawShortName();
-        ClassFileField classFileField = fieldVariable.getClassFileField();
         classFileField.overrideName(name + ".this");
         classFileField.markSyntheticOuterRef();
         /*
@@ -129,6 +160,7 @@ public class CodeAnalyserWholeClass {
             localClassFileField.markSyntheticOuterRef();
         } catch (NoSuchFieldException e) {
         }
+        classFile.getClassType().getInnerClassHereInfo().setHideSyntheticThis();
     }
 
     private static Method getStaticConstructor(ClassFile classFile) {
@@ -257,7 +289,7 @@ public class CodeAnalyserWholeClass {
              * and it should be marked as hidden.
              */
             if (classFile.isInnerClass()) {
-                fixInnerClassConstructors(classFile);
+                fixInnerClassConstructorSyntheticOuterArgs(classFile);
             }
 
             replaceNestedSyntheticOuterRefs(classFile);

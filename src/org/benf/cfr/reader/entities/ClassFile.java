@@ -537,14 +537,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 return;
             }
         }
-        /*
-         * Else it's not static.  If the params say so, tweak the inner class info to let
-         * users know the first parameter is to be elided.
-         */
-        if (options.getOption(OptionsImpl.REMOVE_INNER_CLASS_SYNTHETICS)) {
-            innerClassInfo.setHideSyntheticThis();
-        }
-
     }
 
     // just after construction

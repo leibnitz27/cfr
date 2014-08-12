@@ -1,22 +1,19 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.ConstructorUtils;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
-import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.*;
@@ -32,32 +29,9 @@ import java.util.Map;
 public class NonStaticLifter {
 
     private final ClassFile classFile;
-    private final ConstantPool cp;
 
     public NonStaticLifter(ClassFile classFile) {
         this.classFile = classFile;
-        this.cp = classFile.getConstantPool();
-    }
-
-    private boolean isDelegating(Method constructor) {
-        List<Op04StructuredStatement> statements = MiscStatementTools.getBlockStatements(constructor.getAnalysis());
-        if (statements == null) return false;
-        for (Op04StructuredStatement statement : statements) {
-            StructuredStatement structuredStatement = statement.getStatement();
-            if (structuredStatement instanceof StructuredComment) continue;
-            if (!(structuredStatement instanceof StructuredExpressionStatement)) return false;
-            StructuredExpressionStatement structuredExpressionStatement = (StructuredExpressionStatement) structuredStatement;
-
-            WildcardMatch wcm1 = new WildcardMatch();
-            StructuredStatement test = new StructuredExpressionStatement(wcm1.getMemberFunction("m", null, true /* this method */, new LValueExpression(wcm1.getLValueWildCard("o")), (List<Expression>) null), false);
-            if (test.equals(structuredExpressionStatement)) {
-                MemberFunctionInvokation m = wcm1.getMemberFunction("m").getMatch();
-                MethodPrototype prototype = m.getMethodPrototype();
-                return true;
-            }
-            return false;
-        }
-        return false;
     }
 
     public void liftNonStatics() {
@@ -83,7 +57,7 @@ public class NonStaticLifter {
         List<Method> constructors = Functional.filter(classFile.getConstructors(), new Predicate<Method>() {
             @Override
             public boolean test(Method in) {
-                return !isDelegating(in);
+                return !ConstructorUtils.isDelegating(in);
             }
         });
 
