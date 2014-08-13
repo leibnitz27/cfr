@@ -74,32 +74,32 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
     private static String charName(Object o) {
         if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting char-as-int");
         int i = (Integer) o;
-        if (i < 32 || i >= 254) {
-            // perversely, java will allow you to compare non-char values to chars
-            // happily..... (also pretty print for out of range.)
-            return "'\\u" + String.format("%04x", i) + "\'";
-        } else {
-            char c = (char) i;
-            switch (c) {
-                case '\"':
-                    return "'\\\"'";
-                case '\r':
-                    return "'\\r'";
-                case '\n':
-                    return "'\\n'";
-                case '\t':
-                    return "'\\t'";
-                case '\b':
-                    return "'\\b'";
-                case '\f':
-                    return "'\\r'";
-                case '\\':
-                    return "'\\\\'";
-                case '\'':
-                    return "'\\\''";
-                default:
+        char c = (char) i;
+        switch (c) {
+            case '\"':
+                return "'\\\"'";
+            case '\r':
+                return "'\\r'";
+            case '\n':
+                return "'\\n'";
+            case '\t':
+                return "'\\t'";
+            case '\b':
+                return "'\\b'";
+            case '\f':
+                return "'\\r'";
+            case '\\':
+                return "'\\\\'";
+            case '\'':
+                return "'\\\''";
+            default:
+                if (i < 32 || i >= 254) {
+                    // perversely, java will allow you to compare non-char values to chars
+                    // happily..... (also pretty print for out of range.)
+                    return "'\\u" + String.format("%04x", i) + "\'";
+                } else {
                     return "'" + c + "'";
-            }
+                }
         }
     }
 
