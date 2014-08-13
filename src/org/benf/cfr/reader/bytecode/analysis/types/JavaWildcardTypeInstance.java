@@ -28,6 +28,10 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
         }
     }
 
+    public JavaTypeInstance getUnderlyingType() {
+        return underlyingType;
+    }
+
     @Override
     public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target) {
         if (underlyingType instanceof JavaGenericBaseInstance) {

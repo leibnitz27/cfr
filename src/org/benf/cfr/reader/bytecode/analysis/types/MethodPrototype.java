@@ -545,7 +545,14 @@ public class MethodPrototype implements TypeUsageCollectable {
         }
 
         JavaGenericBaseInstance genericResult = (JavaGenericBaseInstance) result;
-        return genericResult.getBoundInstance(genericTypeBinder);
+        JavaTypeInstance boundResultInstance = genericResult.getBoundInstance(genericTypeBinder);
+        /*
+         * This is a result type - if it contains an unbound wildcard, we have to strip it.
+         */
+        if (boundResultInstance instanceof JavaWildcardTypeInstance) {
+            boundResultInstance = ((JavaWildcardTypeInstance) boundResultInstance).getUnderlyingType();
+        }
+        return boundResultInstance;
     }
 
 
