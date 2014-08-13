@@ -346,13 +346,6 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             this.statements = statements;
             this.outerStart = outerStart;
         }
-
-        private static class BlockIdentifierGetter implements UnaryFunction<StackedBlock, BlockIdentifier> {
-            @Override
-            public BlockIdentifier invoke(StackedBlock arg) {
-                return arg.blockIdentifier;
-            }
-        }
     }
 
 
