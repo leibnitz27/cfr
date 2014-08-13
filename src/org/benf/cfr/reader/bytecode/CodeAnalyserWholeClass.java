@@ -8,17 +8,20 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscState
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Analysis which needs to be performed on the whole classfile in one go, once we've
@@ -64,9 +67,14 @@ public class CodeAnalyserWholeClass {
             removeBoilerplateMethods(classFile);
         }
 
-        if (classFile.isInnerClass() && options.getOption(OptionsImpl.REMOVE_INNER_CLASS_SYNTHETICS)) {
-            fixInnerClassConstructors(classFile);
+        if (options.getOption(OptionsImpl.REMOVE_INNER_CLASS_SYNTHETICS)) {
+            if (classFile.isInnerClass()) {
+                removeInnerClassOuterThis(classFile);
+            }
+            // Synthetic constructor friends can exist on OUTER classes, when an inner makes a call out.
+            removeInnerClassSyntheticConstructorFriends(classFile);
         }
+
     }
 
     private static void replaceNestedSyntheticOuterRefs(ClassFile classFile) {
@@ -97,17 +105,59 @@ public class CodeAnalyserWholeClass {
     }
 
     /*
+     * Friend accessors tack an extra, hidden argument onto the end of a synthetic
+     * constructor to make sure that only 'friends' can access it.
+     *
+     * Find these, and mark them as hidden.  This constructor should forward to an
+     * identical private one, minus the last argument.
+     */
+    private static void removeInnerClassSyntheticConstructorFriends(ClassFile classFile) {
+        for (Method method : classFile.getConstructors()) {
+            Set<AccessFlagMethod> flags = method.getAccessFlags();
+            if (!flags.contains(AccessFlagMethod.ACC_SYNTHETIC)) continue;
+            if (flags.contains(AccessFlagMethod.ACC_PUBLIC)) continue;
+
+            MethodPrototype chainPrototype =  ConstructorUtils.getDelegatingPrototype(method);
+            if (chainPrototype == null) continue;
+            // Verify that the target is identical to this, minus last arg.
+            MethodPrototype prototype = method.getMethodPrototype();
+
+            List<JavaTypeInstance> argsThis = prototype.getArgs();
+            if (argsThis.isEmpty()) continue;
+            List<JavaTypeInstance> argsThat = chainPrototype.getArgs();
+            argsThis = ListFactory.newList(argsThis);
+            JavaTypeInstance last = argsThis.get(argsThis.size()-1);
+            argsThis.remove(argsThis.size()-1);
+            /*
+             * Compare the types, but not the discovered
+             */
+            if (!argsThis.equals(argsThat)) continue;
+
+            /*
+             * This is a synthetic non public constructor, which forwards to another constructor minus
+             * a single terminal argument.  If this argument is an inner class of one of our outers (or us)
+             * we assume it's a fake.
+             *
+             * This could be tricked.....
+             */
+            InnerClassInfo innerClassInfo = last.getInnerClassHereInfo();
+            if (!innerClassInfo.isInnerClass()) continue;
+
+            innerClassInfo.hideSyntheticFriendClass();
+            prototype.hide(argsThis.size());
+            method.hideSynthetic();
+        }
+    }
+
+    /*
      * Remove the first argument from inner class constructors.
      *
      * We expect that ALL constructors will have the same argument removed - if that's the case
      * then we mark that as a synthetic outer.
      */
-    private static void fixInnerClassConstructors(ClassFile classFile) {
+    private static void removeInnerClassOuterThis(ClassFile classFile) {
 
         if (classFile.testAccessFlag(AccessFlag.ACC_STATIC)) return;
-
-        boolean isInstance = !classFile.testAccessFlag(AccessFlag.ACC_STATIC);
-        if (!isInstance) return;
 
         /*
          * First pass - verify that all constructors either have an outer arg,
@@ -132,7 +182,10 @@ public class CodeAnalyserWholeClass {
         classFileField.markSyntheticOuterRef();
 
         for (Method method : classFile.getConstructors()) {
-            if (ConstructorUtils.isDelegating(method)) continue;
+            if (ConstructorUtils.isDelegating(method)) {
+                // TODO: This is a bit brittle.
+                method.getMethodPrototype().hide(0);
+            }
             Op04StructuredStatement.removeInnerClassOuterThis(method, method.getAnalysis());
         }
 

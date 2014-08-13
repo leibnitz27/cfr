@@ -289,6 +289,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         private boolean isAnonymous = false;
         private boolean isMethodScoped = false;
         private boolean hideSyntheticThis = false;
+        private boolean hideSyntheticFriendClass = false;
 
         private RefTypeInnerClassInfo(JavaRefTypeInstance outerClass) {
             this.outerClass = outerClass;
@@ -333,6 +334,16 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         @Override
         public void setHideSyntheticThis() {
             hideSyntheticThis = true;
+        }
+
+        @Override
+        public void hideSyntheticFriendClass() {
+            hideSyntheticFriendClass = true;
+        }
+
+        @Override
+        public boolean isSyntheticFriendClass() {
+            return hideSyntheticFriendClass;
         }
 
         @Override

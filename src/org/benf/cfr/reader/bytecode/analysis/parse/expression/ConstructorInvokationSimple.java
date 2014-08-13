@@ -39,13 +39,13 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
     @Override
     public Dumper dumpInner(Dumper d) {
         JavaTypeInstance clazz = super.getTypeInstance();
-        InnerClassInfo innerClassInfo = clazz.getInnerClassHereInfo();
         List<Expression> args = getArgs();
+        MethodPrototype prototype = constructorInvokation.getMethodPrototype();
 
         d.print("new ").dump(clazz).print("(");
         boolean first = true;
-        int start = innerClassInfo.isHideSyntheticThis() ? 1 : 0;
-        for (int i = start; i < args.size(); ++i) {
+        for (int i = 0; i < args.size(); ++i) {
+            if (prototype.isHiddenArg(i)) continue;
             Expression arg = args.get(i);
             if (!first) d.print(", ");
             first = false;

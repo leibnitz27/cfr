@@ -14,13 +14,13 @@ import org.benf.cfr.reader.entities.Method;
 import java.util.List;
 
 public class ConstructorUtils {
-    public static boolean isDelegating(Method constructor) {
+    public static MethodPrototype getDelegatingPrototype(Method constructor) {
         List<Op04StructuredStatement> statements = MiscStatementTools.getBlockStatements(constructor.getAnalysis());
-        if (statements == null) return false;
+        if (statements == null) return null;
         for (Op04StructuredStatement statement : statements) {
             StructuredStatement structuredStatement = statement.getStatement();
             if (structuredStatement instanceof StructuredComment) continue;
-            if (!(structuredStatement instanceof StructuredExpressionStatement)) return false;
+            if (!(structuredStatement instanceof StructuredExpressionStatement)) return null;
             StructuredExpressionStatement structuredExpressionStatement = (StructuredExpressionStatement) structuredStatement;
 
             WildcardMatch wcm1 = new WildcardMatch();
@@ -28,11 +28,15 @@ public class ConstructorUtils {
             if (test.equals(structuredExpressionStatement)) {
                 MemberFunctionInvokation m = wcm1.getMemberFunction("m").getMatch();
                 MethodPrototype prototype = m.getMethodPrototype();
-                return true;
+                return prototype;
             }
-            return false;
+            return null;
         }
-        return false;
+        return null;
     }
 
+    public static boolean isDelegating(Method constructor) {
+        return getDelegatingPrototype(constructor) != null;
+    }
 }
+

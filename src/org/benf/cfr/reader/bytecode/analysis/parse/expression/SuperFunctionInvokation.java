@@ -29,7 +29,11 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
     }
 
     public boolean isEmptyIgnoringSynthetics() {
-        return (getArgs().size() == (isSyntheticThisFirstArg() ? 1 : 0));
+        MethodPrototype prototype = getMethodPrototype();
+        for (int i=0, len=prototype.getArgs().size();i<len;++i) {
+            if (!prototype.isHiddenArg(i)) return false;
+        }
+        return true;
     }
 
     @Override
@@ -48,8 +52,8 @@ public class SuperFunctionInvokation extends AbstractFunctionInvokation {
         }
         boolean first = true;
 
-        int start = isSyntheticThisFirstArg() ? 1 : 0;
-        for (int x = start; x < args.size(); ++x) {
+        for (int x = 0; x < args.size(); ++x) {
+            if (methodPrototype.isHiddenArg(x)) continue;
             Expression arg = args.get(x);
             if (!first) d.print(", ");
             first = false;

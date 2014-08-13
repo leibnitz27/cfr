@@ -107,6 +107,9 @@ public class MethodPrototype implements TypeUsageCollectable {
 
         List<LocalVariable> parameterLValues = getComputedParameters();
         int argssize = args.size();
+        if (parameterLValues.size() != args.size()) {
+            int x = 1;
+        }
         boolean first = true;
         for (int i = 0; i < argssize; ++i) {
             JavaTypeInstance arg = args.get(i);

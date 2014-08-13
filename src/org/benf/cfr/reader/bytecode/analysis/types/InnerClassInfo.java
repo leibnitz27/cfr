@@ -7,6 +7,10 @@ public interface InnerClassInfo {
 
     boolean isTransitiveInnerClassOf(JavaTypeInstance possibleParent);
 
+    void hideSyntheticFriendClass();
+
+    boolean isSyntheticFriendClass();
+
     void setHideSyntheticThis();
 
     boolean isHideSyntheticThis();
@@ -56,6 +60,16 @@ public interface InnerClassInfo {
         @Override
         public void setHideSyntheticThis() {
             throw new IllegalStateException();
+        }
+
+        @Override
+        public void hideSyntheticFriendClass() {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public boolean isSyntheticFriendClass() {
+            return false;
         }
 
         @Override
