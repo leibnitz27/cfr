@@ -15,8 +15,10 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
@@ -125,11 +127,23 @@ public class CodeAnalyserWholeClass {
             List<JavaTypeInstance> argsThis = prototype.getArgs();
             if (argsThis.isEmpty()) continue;
             List<JavaTypeInstance> argsThat = chainPrototype.getArgs();
-            argsThis = ListFactory.newList(argsThis);
+            if (argsThis.size() != argsThat.size() + 1) continue;
             JavaTypeInstance last = argsThis.get(argsThis.size()-1);
+
+            UnaryFunction<JavaTypeInstance, JavaTypeInstance> degenerifier = new UnaryFunction<JavaTypeInstance, JavaTypeInstance>() {
+                @Override
+                public JavaTypeInstance invoke(JavaTypeInstance arg) {
+                    return arg.getDeGenerifiedType();
+                }
+            };
+            argsThis = Functional.map(argsThis, degenerifier);
+            argsThat = Functional.map(argsThat, degenerifier);
             argsThis.remove(argsThis.size()-1);
+
+
             /*
-             * Compare the types, but not the discovered
+             * Compare the types.  However, we compare AFTER ERASURE, as there's no
+             * need for the compiler to emit a generic signature for the synthetic method.
              */
             if (!argsThis.equals(argsThat)) continue;
 
