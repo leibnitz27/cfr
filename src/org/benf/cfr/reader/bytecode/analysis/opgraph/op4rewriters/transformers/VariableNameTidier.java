@@ -219,6 +219,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                 }
                 if (suggestion == null) suggestion = suggestByType(localVariable);
                 if (suggestion != null) {
+                    if (suggestion.length() == 1 && suggestion.toUpperCase().equals(suggestion)) suggestion = suggestion.toLowerCase();
                     namedVariable.forceName(suggestion);
                 }
             }
