@@ -777,7 +777,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         if (usage != null) {
             List<Expression> actualArgs = usage.getArgs();
             if (actualArgs.size() != vars.size()) {
-                throw new IllegalStateException();
+                // can't handle this.  It's probably an enum synthetic.
+                return;
             }
             int start = isInstance ? 1 : 0;
             for (int x = start, len = vars.size(); x < len; ++x) {
@@ -827,12 +828,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     /*
      * Remove (and rewrite) references to this$x
      */
-    public static void fixInnerClassConstructorSyntheticOuterArgs(Method method, Op04StructuredStatement root) {
-        if (method.isConstructor()) {
-            ClassFile classFile = method.getClassFile();
-            if (classFile.isInnerClass()) {
-                removeSyntheticConstructorOuterArgs(method, root, !classFile.testAccessFlag(AccessFlag.ACC_STATIC));
-            }
+    public static void fixInnerClassConstructorSyntheticOuterArgs(ClassFile classFile, Method method, Op04StructuredStatement root) {
+        if (classFile.isInnerClass()) {
+            removeSyntheticConstructorOuterArgs(method, root, !classFile.testAccessFlag(AccessFlag.ACC_STATIC));
         }
     }
 

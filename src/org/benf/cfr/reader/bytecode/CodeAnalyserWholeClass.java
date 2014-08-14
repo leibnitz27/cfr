@@ -102,7 +102,7 @@ public class CodeAnalyserWholeClass {
      */
     private static void fixInnerClassConstructorSyntheticOuterArgs(ClassFile classFile) {
         for (Method method : classFile.getConstructors()) {
-            Op04StructuredStatement.fixInnerClassConstructorSyntheticOuterArgs(method, method.getAnalysis());
+            Op04StructuredStatement.fixInnerClassConstructorSyntheticOuterArgs(classFile, method, method.getAnalysis());
         }
     }
 
