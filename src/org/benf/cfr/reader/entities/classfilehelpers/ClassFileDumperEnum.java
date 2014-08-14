@@ -32,7 +32,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         this.entries = entries;
     }
 
-    private static void dumpHeader(ClassFile c, Dumper d) {
+    private static void dumpHeader(ClassFile c, InnerClassDumpType innerClassDumpType, Dumper d) {
         d.print(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsEnum));
 
         d.print("enum ").dump(c.getThisClassConstpoolEntry().getTypeInstance()).print(" ");
@@ -77,15 +77,15 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
     }
 
     @Override
-    public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
+    public Dumper dump(ClassFile classFile, InnerClassDumpType innerClass, Dumper d) {
 
-        if (!innerClass) {
+        if (!innerClass.isInnerClass()) {
             dumpTopHeader(classFile, d);
             dumpImports(d, classFile);
         }
 
         dumpAnnotations(classFile, d);
-        dumpHeader(classFile, d);
+        dumpHeader(classFile, innerClass, d);
         d.print("{\n");
         d.indent(1);
 

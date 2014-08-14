@@ -6,7 +6,23 @@ import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public interface ClassFileDumper extends TypeUsageCollectable {
-    Dumper dump(ClassFile classFile, boolean innerClass, Dumper d);
+    public enum InnerClassDumpType {
+        NOT(false),
+        INNER_CLASS(true),
+        INLINE_CLASS(true);
+
+        final boolean isInnerClass;
+
+        private InnerClassDumpType(boolean isInnerClass) {
+            this.isInnerClass = isInnerClass;
+        }
+
+        public boolean isInnerClass() {
+            return isInnerClass;
+        }
+    }
+
+    Dumper dump(ClassFile classFile, InnerClassDumpType innerClass, Dumper d);
 
     /*
      * Some dumpers may need to request additional types -

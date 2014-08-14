@@ -16,13 +16,17 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
     private static final AccessFlag[] dumpableAccessFlagsClass = new AccessFlag[]{
             AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_STATIC, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
     };
+    private static final AccessFlag[] dumpableAccessFlagsInlineClass = new AccessFlag[]{
+            AccessFlag.ACC_PUBLIC, AccessFlag.ACC_PRIVATE, AccessFlag.ACC_PROTECTED, AccessFlag.ACC_STRICT, AccessFlag.ACC_FINAL, AccessFlag.ACC_ABSTRACT
+    };
 
     public ClassFileDumperNormal(DCCommonState dcCommonState) {
         super(dcCommonState);
     }
 
-    private void dumpHeader(ClassFile c, Dumper d) {
-        d.print(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsClass));
+    private void dumpHeader(ClassFile c, InnerClassDumpType innerClassDumpType, Dumper d) {
+        AccessFlag[] accessFlagsToDump = innerClassDumpType == InnerClassDumpType.INLINE_CLASS ? dumpableAccessFlagsInlineClass : dumpableAccessFlagsClass;
+        d.print(getAccessFlagsString(c.getAccessFlags(), accessFlagsToDump));
 
         ClassSignature signature = c.getClassSignature();
 
@@ -50,16 +54,16 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
     }
 
     @Override
-    public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
+    public Dumper dump(ClassFile classFile, InnerClassDumpType innerClass, Dumper d) {
         if (!d.canEmitClass(classFile.getClassType())) return d;
 
-        if (!innerClass) {
+        if (!innerClass.isInnerClass()) {
             dumpTopHeader(classFile, d);
             dumpImports(d, classFile);
         }
 
         dumpAnnotations(classFile, d);
-        dumpHeader(classFile, d);
+        dumpHeader(classFile, innerClass, d);
         d.print("{\n");
         d.indent(1);
         boolean first = true;

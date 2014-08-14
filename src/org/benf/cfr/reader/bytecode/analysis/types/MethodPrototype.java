@@ -38,11 +38,17 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final List<Slot> syntheticArgs = ListFactory.newList();
     private transient List<LocalVariable> parameterLValues = null;
 
-    public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, ConstantPool cp) {
+    public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         this.constructorFlag = constructorFlag;
-        if (constructorFlag.equals(Method.MethodConstructor.ENUM_CONSTRUCTOR)) {
+        /*
+         * We add a fake String and Int argument onto NON SYNTHETIC methods.
+         * Can't add onto synthetic methods, as they don't get mutilated to have their args removed.
+         *
+         * Strictly speaking, we should check to see if this is a forwarding method, not just check the synthetic flag.
+         */
+        if (constructorFlag.equals(Method.MethodConstructor.ENUM_CONSTRUCTOR) && !synthetic) {
             List<JavaTypeInstance> args2 = ListFactory.newList();
             args2.add(TypeConstants.STRING);
             args2.add(RawJavaType.INT);

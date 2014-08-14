@@ -22,7 +22,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
     }
 
     @Override
-    public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
+    public Dumper dump(ClassFile classFile, InnerClassDumpType innerClass, Dumper d) {
         return dumpWithArgs(classFile, null, ListFactory.<Expression>newList(), false, d);
     }
 

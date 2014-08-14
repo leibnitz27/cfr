@@ -739,18 +739,18 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             TypeUsageInformation innerclassTypeUsageInformation = new InnerClassTypeUsageInformation(typeUsageInformation, (JavaRefTypeInstance) classFile.getClassType());
             Dumper d2 = new TypeOverridingDumper(d, innerclassTypeUsageInformation);
 
-            classFile.dumpHelper.dump(classFile, true, d2);
+            classFile.dumpHelper.dump(classFile, ClassFileDumper.InnerClassDumpType.INNER_CLASS, d2);
             d.newln();
         }
     }
 
     @Override
     public Dumper dump(Dumper d) {
-        return dumpHelper.dump(this, false, d);
+        return dumpHelper.dump(this, ClassFileDumper.InnerClassDumpType.NOT, d);
     }
 
-    public Dumper dumpAsInnerClass(Dumper d) {
-        return dumpHelper.dump(this, true, d);
+    public Dumper dumpAsInlineClass(Dumper d) {
+        return dumpHelper.dump(this, ClassFileDumper.InnerClassDumpType.INLINE_CLASS, d);
     }
 
     public String getFilePath() {

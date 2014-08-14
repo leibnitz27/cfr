@@ -21,7 +21,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
         super(dcCommonState);
     }
 
-    private void dumpHeader(ClassFile c, Dumper d) {
+    private void dumpHeader(ClassFile c, InnerClassDumpType innerClassDumpType, Dumper d) {
 
         d.print(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsInterface));
 
@@ -44,15 +44,15 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
     }
 
     @Override
-    public Dumper dump(ClassFile classFile, boolean innerClass, Dumper d) {
+    public Dumper dump(ClassFile classFile, InnerClassDumpType innerClass, Dumper d) {
 
-        if (!innerClass) {
+        if (!innerClass.isInnerClass()) {
             dumpTopHeader(classFile, d);
             dumpImports(d, classFile);
         }
 
         dumpAnnotations(classFile, d);
-        dumpHeader(classFile, d);
+        dumpHeader(classFile, innerClass, d);
         boolean first = true;
         d.print("{\n");
         d.indent(1);

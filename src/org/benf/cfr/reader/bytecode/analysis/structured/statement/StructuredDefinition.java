@@ -42,7 +42,7 @@ public class StructuredDefinition extends AbstractStructuredStatement {
             if (type instanceof JavaRefTypeInstance) {
                 ClassFile classFile = ((JavaRefTypeInstance) type).getClassFile();
                 if (classFile != null) {
-                    return classFile.dumpAsInnerClass(dumper);
+                    return classFile.dumpAsInlineClass(dumper);
                 }
             }
         }
