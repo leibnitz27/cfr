@@ -127,7 +127,6 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             // Oh dear, can't load that class.  Proceed without it.
             return;
         }
-        ConstantPool classConstantPool = enumLutClass.getConstantPool();
         Field lut;
         try {
             lut = enumLutClass.getFieldByName(varName).getField();
@@ -167,7 +166,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                         new StructuredAssignment(lookupTable, new NewPrimitiveArray(
                                 new ArrayLength(wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), "values")),
                                 RawJavaType.INT)),
-                        new KleenePlus(new ResetAfterTest(wcm2,
+                        new KleeneStar(new ResetAfterTest(wcm2,
                                 new MatchSequence(
                                         new StructuredTry(null, null, null),
                                         new BeginBlock(null),
@@ -206,7 +205,10 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             }
         }
 
-        if (!matched) return;
+        if (!matched) {
+            // If the switch is a completely empty enum switch, we can still remove the blank lookup initialiser.
+            return;
+        }
 
         Map<Integer, StaticVariable> reverseLut = matchResultCollector.getLUT();
         /*

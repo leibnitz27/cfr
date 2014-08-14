@@ -26,8 +26,10 @@ public class SwitchReplacer {
     public static void replaceRawSwitches(Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
         List<Op03SimpleStatement> switchStatements = Functional.filter(in, new TypeFilter<RawSwitchStatement>(RawSwitchStatement.class));
         // Replace raw switch statements with switches and case statements inline.
+        List<Op03SimpleStatement> switches = ListFactory.newList();
         for (Op03SimpleStatement switchStatement : switchStatements) {
-            replaceRawSwitch(method, switchStatement, in, blockIdentifierFactory);
+            Op03SimpleStatement switchToProcess = replaceRawSwitch(method, switchStatement, in, blockIdentifierFactory);
+            if (switchToProcess != null) switches.add(switchToProcess);
         }
         // We've injected 'case' statements, sort to get them into the proper place.
         Collections.sort(in, new CompareByIndex());
@@ -55,8 +57,7 @@ public class SwitchReplacer {
         // without leaving the block.
 
 
-        switchStatements = Functional.filter(in, new TypeFilter<SwitchStatement>(SwitchStatement.class));
-        for (Op03SimpleStatement switchStatement : switchStatements) {
+        for (Op03SimpleStatement switchStatement : switches) {
             // (assign switch block).
             examineSwitchContiguity(switchStatement, in);
             moveJumpsToCaseStatements(switchStatement, in);
@@ -65,7 +66,7 @@ public class SwitchReplacer {
 
     }
 
-    public static void replaceRawSwitch(Method method, Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    public static Op03SimpleStatement replaceRawSwitch(Method method, Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
         List<Op03SimpleStatement> targets = swatch.getTargets();
         RawSwitchStatement switchStatement = (RawSwitchStatement) swatch.getStatement();
         DecodedSwitch switchData = switchStatement.getSwitchData();
@@ -85,10 +86,35 @@ public class SwitchReplacer {
         }
         if (!mismatch) {
             /*
-             * TODO : May have to clear out sources / targets?
+             * The potential issue here is if we've computed an intermediate value to switch on for
+             * an enum switch - that will still be hanging around, but with no switch attached to it.
+             *
+             * We'd rather drop the switch altogether, because a 'fake' switch like this might be used to hide a goto.
+             *
+             * As a compromise - if the switches single target is directly after the switch, we'll emit
+             * it anyway - as an empty switch, but if it's not, we'll drop it completely.
              */
-            swatch.replaceStatement(new GotoStatement());
-            return;
+            int idx = in.indexOf(swatch);
+            if (idx+1 >= in.size() || oneTarget != in.get(idx+1)) {
+                // drop it completely.
+                swatch.replaceStatement(new GotoStatement());
+                return null;
+            }
+            // emit an empty switch.
+            swatch.replaceStatement(switchStatement.getSwitchStatement(switchBlockIdentifier));
+            BlockIdentifier defBlock = blockIdentifierFactory.getNextBlockIdentifier(BlockType.CASE);
+            Op03SimpleStatement defStm = new Op03SimpleStatement(swatch.getBlockIdentifiers(),
+                    new CaseStatement(ListFactory.<Expression>newList(), switchStatement.getSwitchOn().getInferredJavaType(), switchBlockIdentifier, defBlock),
+                    swatch.getIndex().justAfter()
+            );
+            swatch.replaceTarget(oneTarget, defStm);
+            oneTarget.replaceSource(swatch, defStm);
+            defStm.addSource(swatch);
+            defStm.addTarget(oneTarget);
+            defStm.getBlockIdentifiers().add(switchBlockIdentifier);
+            in.add(defStm);
+            return null;
+
         }
 
         // For each of the switch targets, add a 'case' statement
@@ -164,6 +190,8 @@ public class SwitchReplacer {
          * And (as it doesn't matter) reorder swatch's targets, for minimal confusion
          */
         Collections.sort(swatch.getTargets(), new CompareByIndex());
+
+        return swatch;
     }
 
     private static void buildSwitchCases(Op03SimpleStatement swatch, List<Op03SimpleStatement> targets, BlockIdentifier switchBlockIdentifier, List<Op03SimpleStatement> in) {
@@ -253,6 +281,10 @@ public class SwitchReplacer {
     public static void rebuildSwitches(List<Op03SimpleStatement> statements) {
 
         List<Op03SimpleStatement> switchStatements = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
+        /*
+         * Filter out any no-op switches we've had to leave in....
+         */
+
         /*
          * Get the block identifiers for all switch statements and their cases.
          */

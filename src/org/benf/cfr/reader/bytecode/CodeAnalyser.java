@@ -350,6 +350,8 @@ public class CodeAnalyser {
         final VariableFactory variableFactory = new VariableFactory(method);
 
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState);
+        // Renumber, just in case JSR stage (or something) has left bad labellings.
+        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
 
 
         if (showOpsLevel == SHOW_L3_RAW) {

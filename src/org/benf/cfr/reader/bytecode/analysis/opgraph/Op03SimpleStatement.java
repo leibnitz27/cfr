@@ -3894,6 +3894,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         // If one of the targets is a "default", and it's definitely a target for this switch statement...
         // AND it hasn't been marked as belonging to the block, remove it.
         // A default with no code is of course equivalent to no default.
+        if (swtch.getTargets().size() <= 1) return;
         for (Op03SimpleStatement tgt : swtch.getTargets()) {
             Statement statement = tgt.getStatement();
             if (statement instanceof CaseStatement) {
