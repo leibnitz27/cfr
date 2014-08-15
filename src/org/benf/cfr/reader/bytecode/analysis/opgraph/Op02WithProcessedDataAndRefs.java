@@ -784,7 +784,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         Ident ident = localVariablesBySlot.get(slot);
 
         SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(new Slot(storageTypeAndIdx.getFirst(), slot));
-        AssignmentSimple res = new AssignmentSimple(variableFactory.localVariable(slot, ident, originalRawOffset, ssaIdent.card() == 1), getStackRValue(0));
+        AssignmentSimple res = new AssignmentSimple(variableFactory.localVariable(slot, ident, originalRawOffset), getStackRValue(0));
         if (ssaIdentifiers.isInitialAssign()) {
             res.setInitialAssign(true);
         }
@@ -797,7 +797,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         Ident ident = localVariablesBySlot.get(slot);
 
         SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(new Slot(storageTypeAndIdx.getFirst(), slot));
-        return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, ident, originalRawOffset, ssaIdent.card() == 1)));
+        return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, ident, originalRawOffset)));
     }
 
     public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory, DCCommonState dcCommonState) {
@@ -1094,7 +1094,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case RET: {
                 int slot = getInstrArgU1(0);
                 // This ret could return to after any JSR instruction which it is reachable from.  This is ... tricky.
-                Expression retVal = new LValueExpression(variableFactory.localVariable(slot, localVariablesBySlot.get(slot), originalRawOffset, false));
+                Expression retVal = new LValueExpression(variableFactory.localVariable(slot, localVariablesBySlot.get(slot), originalRawOffset));
                 return new JSRRetStatement(retVal);
             }
             case GOTO:
@@ -1265,7 +1265,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 }
 
                 // Can we have ++ / += instead?
-                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset, false);
+                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset);
                 return new AssignmentSimple(lvalue,
                         new ArithmeticOperation(new LValueExpression(lvalue), new Literal(TypedLiteral.getInt(incrAmount)), op));
             }
@@ -1279,7 +1279,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 }
 
                 // Can we have ++ / += instead?
-                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset, false);
+                LValue lvalue = variableFactory.localVariable(variableIndex, localVariablesBySlot.get(variableIndex), originalRawOffset);
 
                 return new AssignmentSimple(lvalue,
                         new ArithmeticOperation(new LValueExpression(lvalue), new Literal(TypedLiteral.getInt(incrAmount)), op));

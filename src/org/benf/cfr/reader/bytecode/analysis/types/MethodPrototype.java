@@ -255,13 +255,13 @@ public class MethodPrototype implements TypeUsageCollectable {
             // TODO : It's not a valid assumption that synthetic args are at the front!
             for (Slot synthetic : syntheticArgs) {
                 JavaTypeInstance typeInstance = synthetic.getJavaTypeInstance();
-                parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true), false));
+                parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true)));
                 offset += typeInstance.getStackType().getComputationCategory();
             }
         }
 
         for (JavaTypeInstance arg : args) {
-            parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(offset), variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true), false));
+            parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(offset), variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)));
             offset += arg.getStackType().getComputationCategory();
         }
         return parameterLValues;

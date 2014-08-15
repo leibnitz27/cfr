@@ -33,6 +33,16 @@ public class StackSSALabel extends AbstractLValue {
     }
 
     @Override
+    public void markFinal() {
+
+    }
+
+    @Override
+    public boolean isFinal() {
+        return false;
+    }
+
+    @Override
     public Precedence getPrecedence() {
         return Precedence.HIGHEST;
     }

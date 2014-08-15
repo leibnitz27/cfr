@@ -27,6 +27,16 @@ public class SentinelLocalClassLValue extends AbstractLValue {
     }
 
     @Override
+    public void markFinal() {
+
+    }
+
+    @Override
+    public boolean isFinal() {
+        return false;
+    }
+
+    @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         // nothing.
     }

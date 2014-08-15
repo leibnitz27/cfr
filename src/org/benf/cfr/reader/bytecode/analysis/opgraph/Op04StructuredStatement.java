@@ -811,6 +811,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                     classFileField.markSyntheticOuterRef();
                     classFileField.markHidden();
                     prototype.hide(x);
+                    lValueArg.markFinal();
                 }
             }
         }

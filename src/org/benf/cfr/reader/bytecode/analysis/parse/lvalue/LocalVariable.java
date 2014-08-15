@@ -22,14 +22,14 @@ public class LocalVariable extends AbstractLValue {
     // We keep this so we don't confuse two variables with the same name, tricksy.
     private final int idx;
     private final Ident ident;
-    private final boolean guessedFinal;
+    private boolean guessedFinal;
 
-    public LocalVariable(int stackPosition, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType, boolean guessedFinal) {
+    public LocalVariable(int stackPosition, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType) {
         super(inferredJavaType);
         this.name = variableNamer.getName(originalRawOffset, ident, stackPosition);
         this.idx = stackPosition;
         this.ident = ident;
-        this.guessedFinal = guessedFinal;
+        this.guessedFinal = false;
     }
 
     public LocalVariable(String name, InferredJavaType inferredJavaType) {
@@ -45,13 +45,19 @@ public class LocalVariable extends AbstractLValue {
         throw new ConfusedCFRException("NYI");
     }
 
-    public boolean isGuessedFinal() {
+    @Override
+    public boolean isFinal() {
         return guessedFinal;
     }
 
+    @Override
+    public void markFinal() {
+        guessedFinal = true;
+    }
+
     /*
-     * Can't modify, so deep clone is this.
-     */
+         * Can't modify, so deep clone is this.
+         */
     @Override
     public LValue deepClone(CloneHelper cloneHelper) {
         return this;

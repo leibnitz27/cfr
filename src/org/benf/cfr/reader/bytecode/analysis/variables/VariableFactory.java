@@ -49,7 +49,7 @@ public class VariableFactory {
     /*
      * NB: idx is slot, i.e. offset.
      */
-    public LValue localVariable(int stackPosition, Ident ident, int origCodeRawOffset, boolean guessedFinal) {
+    public LValue localVariable(int stackPosition, Ident ident, int origCodeRawOffset) {
         if (ident == null) {
             throw new IllegalStateException();
         }
@@ -58,7 +58,7 @@ public class VariableFactory {
             // Shouldn't happen, but protect.
             varType = new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.UNKNOWN);
         }
-        LValue tmp = new LocalVariable(stackPosition, ident, variableNamer, origCodeRawOffset, varType, guessedFinal);
+        LValue tmp = new LocalVariable(stackPosition, ident, variableNamer, origCodeRawOffset, varType);
         LValue val = cache.get(tmp);
         if (val == null) {
             cache.put(tmp, tmp);

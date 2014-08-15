@@ -23,6 +23,16 @@ public class ArrayVariable extends AbstractLValue {
     }
 
     @Override
+    public void markFinal() {
+
+    }
+
+    @Override
+    public boolean isFinal() {
+        return false;
+    }
+
+    @Override
     public LValue deepClone(CloneHelper cloneHelper) {
         return new ArrayVariable((ArrayIndex) cloneHelper.replaceOrClone(arrayIndex));
     }

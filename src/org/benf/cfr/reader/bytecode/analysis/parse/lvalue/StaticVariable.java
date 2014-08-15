@@ -46,6 +46,16 @@ public class StaticVariable extends AbstractLValue {
     }
 
     @Override
+    public void markFinal() {
+
+    }
+
+    @Override
+    public boolean isFinal() {
+        return false;
+    }
+
+    @Override
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");
     }

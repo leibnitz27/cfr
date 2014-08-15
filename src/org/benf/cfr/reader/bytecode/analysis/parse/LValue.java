@@ -26,4 +26,8 @@ public interface LValue extends DumpableWithPrecedence, DeepCloneable<LValue>, T
 
     boolean canThrow(ExceptionCheck caught);
 
+    void markFinal();
+
+    boolean isFinal();
+
 }

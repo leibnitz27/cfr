@@ -49,6 +49,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
     @Override
     public Dumper dump(Dumper dumper) {
         if (isCreator) {
+            if (lvalue.isFinal()) dumper.print("final ");
             dumper.dump(lvalue.getInferredJavaType().getJavaTypeInstance()).print(" ");
         }
         dumper.dump(lvalue).print(" = ").dump(rvalue).endCodeln();

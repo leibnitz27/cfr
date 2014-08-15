@@ -53,6 +53,16 @@ public class FieldVariable extends AbstractLValue {
         return new FieldVariable(getInferredJavaType(), cloneHelper.replaceOrClone(object), classFile, classFileField, failureName);
     }
 
+    @Override
+    public void markFinal() {
+
+    }
+
+    @Override
+    public boolean isFinal() {
+        return false;
+    }
+
     static ClassFileField getField(ConstantPoolEntryFieldRef fieldRef) {
         String name = fieldRef.getLocalName();
         JavaRefTypeInstance ref = (JavaRefTypeInstance) fieldRef.getClassEntry().getTypeInstance();
