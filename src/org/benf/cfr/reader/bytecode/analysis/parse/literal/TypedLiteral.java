@@ -87,7 +87,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             case '\b':
                 return "'\\b'";
             case '\f':
-                return "'\\r'";
+                return "'\\f'";
             case '\\':
                 return "'\\\\'";
             case '\'':
