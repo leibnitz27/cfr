@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDefinition;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
@@ -73,7 +74,12 @@ public class NonStaticLifter {
             blockStatements = Functional.filter(blockStatements, new Predicate<Op04StructuredStatement>() {
                 @Override
                 public boolean test(Op04StructuredStatement in) {
-                    return (!(in.getStatement() instanceof StructuredComment));
+                    StructuredStatement stm = in.getStatement();
+                    // We can skip comments and definitions - they won't have any effect on meaning of assignment to
+                    // members.
+                    if (stm instanceof StructuredComment) return false;
+                    if (stm instanceof StructuredDefinition) return false;
+                    return true;
                 }
             });
             if (blockStatements.isEmpty()) return;
@@ -106,6 +112,7 @@ public class NonStaticLifter {
                 StructuredStatement sOther = constructorCodeList.get(y).get(x).getStatement();
                 if (!s1.equals(sOther)) return;
             }
+
             /*
              * Ok, they're all the same.  Now, is this an assignment to a member, AND does it use only other fields,
              * which have already been initialised? (and are not forward references) Sheeeesh....
