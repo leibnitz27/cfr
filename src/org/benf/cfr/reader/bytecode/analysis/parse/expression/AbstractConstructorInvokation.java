@@ -147,6 +147,8 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
             return false;
         }
 
+        GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(args);
+        boolean callsCorrectEntireMethod = overloadMethodSet.callsCorrectEntireMethod(args, gtb);
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -
@@ -160,7 +162,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
              * we only need to shove a cast to the exact type on it if our current argument
              * doesn't call the 'correct' method.
              */
-            if (!overloadMethodSet.callsCorrectMethod(arg, x, null)) {
+            if (!callsCorrectEntireMethod && !overloadMethodSet.callsCorrectMethod(arg, x, null)) {
                 /*
                  * If arg isn't the right type, shove an extra cast on the front now.
                  * Then we will forcibly remove it if we don't need it.

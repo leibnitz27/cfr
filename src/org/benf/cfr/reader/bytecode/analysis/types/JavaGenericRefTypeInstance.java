@@ -209,9 +209,19 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
         if (degenerifiedThis.equals(other)) return true;
 
         if (!bindingSuperContainer.containsBase(degenerifiedOther)) return false;
+        // If this was cast to the type of other, what would it be?
         JavaTypeInstance boundBase = bindingSuperContainer.getBoundSuperForBase(degenerifiedOther);
         if (other.equals(boundBase)) return true;
         if (degenerifiedOther.equals(other)) return true;
+
+        if (gtb != null) {
+            JavaTypeInstance reboundBase = (gtb.getBindingFor(boundBase));
+            if (other.equals(reboundBase)) return true;
+
+
+            JavaTypeInstance reboundOther = (gtb.getBindingFor(other));
+            if (this.equivalentUnder(reboundOther, WILDCARD_CONSTRAINT)) return true;
+        }
         return false;
     }
 
