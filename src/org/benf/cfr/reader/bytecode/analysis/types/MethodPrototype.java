@@ -121,6 +121,9 @@ public class MethodPrototype implements TypeUsageCollectable {
             JavaTypeInstance arg = args.get(i);
             if (hidden.contains(i)) continue;
             first = CommaHelp.comma(first, d);
+
+            LocalVariable param = parameterLValues.get(i);
+            if (param.isFinal()) d.print("final ");
             annotationsHelper.addAnnotationTextForParameterInto(i, d);
             if (varargs && (i == argssize - 1)) {
                 if (!(arg instanceof JavaArrayTypeInstance)) {
@@ -130,7 +133,7 @@ public class MethodPrototype implements TypeUsageCollectable {
             } else {
                 d.dump(arg);
             }
-            d.print(" ").dump(parameterLValues.get(i).getName());
+            d.print(" ").dump(param.getName());
         }
         d.print(")");
     }

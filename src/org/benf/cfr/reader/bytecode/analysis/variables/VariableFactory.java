@@ -39,6 +39,11 @@ public class VariableFactory {
             typedArgs.put(offset, new InferredJavaType(arg, InferredJavaType.Source.UNKNOWN, true));
             offset += arg.getStackType().getComputationCategory();
         }
+        if (methodPrototype.parametersComputed()) {
+            for (LocalVariable localVariable : methodPrototype.getComputedParameters()) {
+                cache.put(localVariable, localVariable);
+            }
+        }
         this.method = method;
     }
 
