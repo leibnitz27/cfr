@@ -16,6 +16,7 @@ public class ClassFileField {
     private Expression initialValue;
     private boolean isHidden;
     private boolean isSyntheticOuterRef;
+    // Should use NamedVariable?
     private String overriddenName;
 
     public ClassFileField(Field field) {

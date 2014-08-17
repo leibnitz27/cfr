@@ -28,6 +28,8 @@ public abstract class AbstractExpressionRewriter implements ExpressionRewriter {
     @Override
     public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         return lValue;
+        // TODO : Should be applying expression rewriter, but I wasn't.  Verify.
+//        return lValue.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
 
     @Override

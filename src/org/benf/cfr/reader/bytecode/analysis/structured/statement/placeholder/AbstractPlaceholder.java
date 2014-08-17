@@ -88,7 +88,7 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
 
     @Override
     public List<LValue> findCreatedHere() {
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override

@@ -16,8 +16,8 @@ import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -93,6 +93,28 @@ public class CodeAnalyserWholeClass {
             if (method.hasCodeAttribute()) {
                 Op04StructuredStatement code = method.getAnalysis();
                 Op04StructuredStatement.inlineSyntheticAccessors(state, method, code);
+            }
+        }
+    }
+
+    private static void renameAnonymousScopeHidingVariables(ClassFile classFile) {
+        List<ClassFileField> fields = Functional.filter(classFile.getFields(), new Predicate<ClassFileField>() {
+            @Override
+            public boolean test(ClassFileField in) {
+                return in.isSyntheticOuterRef();
+            }
+        });
+        if (fields.isEmpty()) return;
+
+
+        for (Method method : classFile.getMethods()) {
+            if (method.hasCodeAttribute()) {
+                /*
+                 * Construct a renamer - gather names from prototype and from locals assigned in the code.
+                 * Make sure that they don't hide the outer variable.
+                 */
+                ScopeHidingVariableRewriter rewriter = new ScopeHidingVariableRewriter(fields, method);
+                rewriter.rewrite(method.getAnalysis());
             }
         }
     }
@@ -362,7 +384,14 @@ public class CodeAnalyserWholeClass {
             replaceNestedSyntheticOuterRefs(classFile);
 
             inlineAccessors(state, classFile);
+
+            /*
+             * Rename anonymous and method scoped inner variables which inadvertently hide outer class
+             * variables.
+             */
+            renameAnonymousScopeHidingVariables(classFile);
         }
+
 
         if (options.getOption(OptionsImpl.REMOVE_DEAD_METHODS)) {
             removeDeadMethods(classFile);

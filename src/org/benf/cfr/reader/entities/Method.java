@@ -380,10 +380,6 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return codeAttribute != null;
     }
 
-    public boolean isInstanceMethod() {
-        return !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
-    }
-
     public void dumpComments(Dumper d) {
         if (comments != null) {
             comments.dump(d);

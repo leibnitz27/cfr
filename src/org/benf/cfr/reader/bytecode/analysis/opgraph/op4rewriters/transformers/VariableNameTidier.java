@@ -47,6 +47,16 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         root.transform(this, structuredScopeWithVars);
     }
 
+    public void renameToAvoidHiding(Set<String> avoid, List<LocalVariable> collisions) {
+        StructuredScopeWithVars structuredScopeWithVars = new StructuredScopeWithVars();
+        structuredScopeWithVars.add(null);
+        structuredScopeWithVars.markInitiallyDefined(avoid);
+        for (LocalVariable hider : collisions) {
+            // This will cause it to be renamed.
+            structuredScopeWithVars.defineHere(hider);
+        }
+    }
+
     public boolean isClassRenamed() {
         return classRenamed;
     }
@@ -66,63 +76,11 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                 }
             }
         }
-        /*
-         * We have to search expression tree as well, for lambdas.
-         */
-        ExpressionRewriter expressionRewriter = new ExpressionNameTidier(structuredScopeWithVars);
-//        in.rewriteExpressions(expressionRewriter);
 
         in.transformStructuredChildren(this, scope);
         return in;
     }
 
-    private class ExpressionNameTidier implements ExpressionRewriter {
-        private final StructuredScopeWithVars currentScope;
-
-        private ExpressionNameTidier(StructuredScopeWithVars currentScope) {
-            this.currentScope = currentScope;
-        }
-
-        @Override
-        public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-            if (expression instanceof LambdaExpression) {
-                currentScope.add(null);
-                List<LValue> lValues = ((LambdaExpression) expression).getArgs();
-                for (LValue lValue : lValues) {
-                    if (lValue instanceof LocalVariable) {
-                        currentScope.defineHere((LocalVariable) lValue);
-                    }
-                }
-                currentScope.remove(null);
-            }
-            return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        }
-
-        @Override
-        public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-            return (ConditionalExpression) expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        }
-
-        @Override
-        public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-            return (AbstractAssignmentExpression) expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        }
-
-        @Override
-        public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-            return lValue.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        }
-
-        @Override
-        public StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-            return lValue; // shouldn't happen.
-        }
-
-        @Override
-        public void handleStatement(StatementContainer statementContainer) {
-
-        }
-    }
 
     private class StructuredScopeWithVars extends StructuredScope {
         private final LinkedList<AtLevel> scope = ListFactory.newLinkedList();
@@ -230,6 +188,9 @@ public class VariableNameTidier implements StructuredStatementTransformer {
             defineHere(localVariable);
         }
 
+        public void markInitiallyDefined(Set<String> names) {
+            for (String name : names) scope.getFirst().defineHere(name);
+        }
 
         public void defineHere(LocalVariable localVariable) {
 
