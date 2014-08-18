@@ -36,9 +36,6 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final List<Slot> syntheticArgs = ListFactory.newList();
     private transient List<LocalVariable> parameterLValues = null;
 
-    private static int sidx = 0;
-    private final int sidx_i = sidx++;
-
     public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
