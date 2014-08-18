@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
+import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -155,7 +156,15 @@ public class CreationCollector {
                         memberFunctionInvokation,
                         inferredJavaType,
                         memberFunctionInvokation.getArgs(),
-                        dcCommonState);
+                        dcCommonState, lValueType);
+
+                BindingSuperContainer bindingSuperContainer = lValueType.getBindingSupers();
+                // This may be null, if we simply don't have the information present.
+                if (bindingSuperContainer != null) {
+                    JavaTypeInstance bestGuess = bindingSuperContainer.getMostLikelyAnonymousType(lValueType);
+                    // We don't want to FORCE the delegate, just allow it to be cast back to the most likely type...
+                    inferredJavaType.forceDelegate(new InferredJavaType(bestGuess, InferredJavaType.Source.UNKNOWN));
+                }
             } else {
                 constructorInvokation = new ConstructorInvokationSimple(
                         memberFunctionInvokation,

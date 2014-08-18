@@ -19,12 +19,14 @@ import java.util.List;
 public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvokation {
     private final MemberFunctionInvokation constructorInvokation;
     private final ClassFile classFile;
+    private final JavaTypeInstance anonymousTypeInstance;
 
     public ConstructorInvokationAnonymousInner(MemberFunctionInvokation constructorInvokation,
                                                InferredJavaType inferredJavaType, List<Expression> args,
-                                               DCCommonState dcCommonState) {
+                                               DCCommonState dcCommonState, JavaTypeInstance anonymousTypeInstance) {
         super((inferredJavaType), constructorInvokation.getFunction(), args);
         this.constructorInvokation = constructorInvokation;
+        this.anonymousTypeInstance = anonymousTypeInstance;
         /*
          * As much as I'd rather not tie this to its use, we have to make sure that the target variables etc
          * are available at the time of usage, so we can hide anonymous inner member clones.
@@ -44,6 +46,7 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         super(other, cloneHelper);
         this.constructorInvokation = (MemberFunctionInvokation) cloneHelper.replaceOrClone(other.constructorInvokation);
         this.classFile = other.classFile;
+        this.anonymousTypeInstance = other.anonymousTypeInstance;
     }
 
     @Override
@@ -63,7 +66,7 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         ConstantPool cp = constructorInvokation.getCp();
 
         ClassFile anonymousClassFile = null;
-        JavaTypeInstance typeInstance = getTypeInstance();
+        JavaTypeInstance typeInstance = anonymousTypeInstance;
         try {
             anonymousClassFile = cp.getDCCommonState().getClassFile(typeInstance);
         } catch (CannotLoadClassException e) {

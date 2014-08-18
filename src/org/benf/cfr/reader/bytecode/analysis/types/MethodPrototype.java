@@ -36,6 +36,9 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final List<Slot> syntheticArgs = ListFactory.newList();
     private transient List<LocalVariable> parameterLValues = null;
 
+    private static int sidx = 0;
+    private final int sidx_i = sidx++;
+
     public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
@@ -262,7 +265,8 @@ public class MethodPrototype implements TypeUsageCollectable {
         }
 
         for (JavaTypeInstance arg : args) {
-            parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(offset), variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)));
+            Ident ident = slotToIdentMap.get(offset);
+            parameterLValues.add(new LocalVariable(offset, ident, variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)));
             offset += arg.getStackType().getComputationCategory();
         }
         return parameterLValues;
