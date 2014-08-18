@@ -1536,6 +1536,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         toProcess.addAll(endPoints);
         toProcessContent.addAll(endPoints);
 
+        SSAIdentifiers<Slot> initial = new SSAIdentifiers<Slot>(op2list.get(0).ssaIdentifiers);
+
         List<Op02WithProcessedDataAndRefs> storeWithoutRead = ListFactory.newList();
         while (!toProcess.isEmpty()) {
             Op02WithProcessedDataAndRefs node = toProcess.removeFirst();
@@ -1625,6 +1627,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             SSAIdent ident = ssaIdentifierFactory.getIdent(slot);
             store.ssaIdentifiers.getKnownIdentifiers().put(slot, ident);
         }
+        op2list.get(0).ssaIdentifiers.mergeWith(initial);
     }
 
     public static void discoverStorageLiveness(Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> op2list, BytecodeMeta bytecodeMeta, Options options) {
