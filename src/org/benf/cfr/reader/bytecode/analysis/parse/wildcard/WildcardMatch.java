@@ -891,8 +891,8 @@ public class WildcardMatch {
         }
     }
 
-    public class ConstructorInvokationAnonymousInnerWildcard extends AbstractBaseExpressionWildcard implements Wildcard<ConstructorInvokationAnoynmousInner> {
-        private ConstructorInvokationAnoynmousInner matchedValue;
+    public class ConstructorInvokationAnonymousInnerWildcard extends AbstractBaseExpressionWildcard implements Wildcard<ConstructorInvokationAnonymousInner> {
+        private ConstructorInvokationAnonymousInner matchedValue;
 
         private final JavaTypeInstance clazz;
         private final List<Expression> args;
@@ -903,7 +903,7 @@ public class WildcardMatch {
         }
 
         @Override
-        public ConstructorInvokationAnoynmousInner getMatch() {
+        public ConstructorInvokationAnonymousInner getMatch() {
             return matchedValue;
         }
 
@@ -916,13 +916,13 @@ public class WildcardMatch {
         public boolean equals(Object o) {
             if (o == this) return true;
             if (o == null) return false;
-            if (!(o instanceof ConstructorInvokationAnoynmousInner)) return false;
+            if (!(o instanceof ConstructorInvokationAnonymousInner)) return false;
 
             if (matchedValue != null) {
                 return matchedValue.equals(o);
             }
 
-            ConstructorInvokationAnoynmousInner other = (ConstructorInvokationAnoynmousInner) o;
+            ConstructorInvokationAnonymousInner other = (ConstructorInvokationAnonymousInner) o;
             JavaTypeInstance otherType = other.getTypeInstance();
             if (clazz != null && !clazz.equals(otherType)) return false;
             if (args != null && args.equals(other.getArgs())) return false;

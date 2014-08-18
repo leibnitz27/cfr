@@ -54,12 +54,13 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         }
     }
 
-    private String addDisplayName(JavaRefTypeInstance type) {
+    private String addDisplayName(final JavaRefTypeInstance type) {
         String already = displayName.get(type);
         if (already != null) return already;
 
         String useName = null;
-        if (type.getInnerClassHereInfo().isInnerClass()) {
+        InnerClassInfo innerClassInfo = type.getInnerClassHereInfo();
+        if (innerClassInfo.isInnerClass()) {
             useName = generateInnerClassShortName(type);
             shortNames.add(useName);
         } else {

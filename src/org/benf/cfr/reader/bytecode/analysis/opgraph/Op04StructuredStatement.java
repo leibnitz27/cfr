@@ -4,13 +4,12 @@ import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.Op04Checker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.*;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.ConstructorUtils;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnoynmousInner;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -29,7 +28,6 @@ import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -766,9 +764,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
          * If there are multiple, then we will have an issue rewriting the inner variables to match the outer
          * ones.
          */
-        List<ConstructorInvokationAnoynmousInner> usages = method.getClassFile().getAnonymousUsages();
+        List<ConstructorInvokationAnonymousInner> usages = method.getClassFile().getAnonymousUsages();
 
-        ConstructorInvokationAnoynmousInner usage = usages.size() == 1 ? usages.get(0) : null;
+        ConstructorInvokationAnonymousInner usage = usages.size() == 1 ? usages.get(0) : null;
 
         /* If this inner class is an anonymous inner class, it could capture outer locals directly.
          * for all the other members - we'll search for any private final members which are initialised in the constructor

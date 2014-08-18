@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnoynmousInner;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Triplet;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
@@ -883,13 +883,13 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         classFile.getBoundSuperClasses(boundBase, boundSuperCollector, route);
     }
 
-    private List<ConstructorInvokationAnoynmousInner> anonymousUsages = ListFactory.newList();
+    private List<ConstructorInvokationAnonymousInner> anonymousUsages = ListFactory.newList();
 
-    public void noteAnonymousUse(ConstructorInvokationAnoynmousInner anoynmousInner) {
+    public void noteAnonymousUse(ConstructorInvokationAnonymousInner anoynmousInner) {
         anonymousUsages.add(anoynmousInner);
     }
 
-    public List<ConstructorInvokationAnoynmousInner> getAnonymousUsages() {
+    public List<ConstructorInvokationAnonymousInner> getAnonymousUsages() {
         return anonymousUsages;
     }
 }

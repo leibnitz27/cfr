@@ -2,17 +2,15 @@ package org.benf.cfr.reader.entities.classfilehelpers;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractConstructorInvokation;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnoynmousInner;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
-import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -64,8 +62,8 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
                 }
                 d.print(')');
             }
-        } else if (constructorInvokation instanceof ConstructorInvokationAnoynmousInner) {
-            ((ConstructorInvokationAnoynmousInner) constructorInvokation).dumpForEnum(d);
+        } else if (constructorInvokation instanceof ConstructorInvokationAnonymousInner) {
+            ((ConstructorInvokationAnonymousInner) constructorInvokation).dumpForEnum(d);
         } else {
             // ???
         }

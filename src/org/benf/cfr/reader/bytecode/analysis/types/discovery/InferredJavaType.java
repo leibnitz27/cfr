@@ -552,6 +552,10 @@ public class InferredJavaType {
         }
     }
 
+    public void forceDelegate(InferredJavaType other) {
+        mkDelegate(this.value, other.value);
+    }
+
     /*
     * v0 [t1<-] = true [t1]
     * v1 [t2<-] = true [t2]

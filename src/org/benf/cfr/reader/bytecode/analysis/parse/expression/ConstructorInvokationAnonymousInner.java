@@ -1,21 +1,13 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
-import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnonymousInner;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -24,14 +16,14 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvokation {
+public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvokation {
     private final MemberFunctionInvokation constructorInvokation;
     private final ClassFile classFile;
 
-    public ConstructorInvokationAnoynmousInner(MemberFunctionInvokation constructorInvokation,
+    public ConstructorInvokationAnonymousInner(MemberFunctionInvokation constructorInvokation,
                                                InferredJavaType inferredJavaType, List<Expression> args,
                                                DCCommonState dcCommonState) {
-        super(inferredJavaType, constructorInvokation.getFunction(), args);
+        super((inferredJavaType), constructorInvokation.getFunction(), args);
         this.constructorInvokation = constructorInvokation;
         /*
          * As much as I'd rather not tie this to its use, we have to make sure that the target variables etc
@@ -48,7 +40,7 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
         }
     }
 
-    protected ConstructorInvokationAnoynmousInner(ConstructorInvokationAnoynmousInner other, CloneHelper cloneHelper) {
+    protected ConstructorInvokationAnonymousInner(ConstructorInvokationAnonymousInner other, CloneHelper cloneHelper) {
         super(other, cloneHelper);
         this.constructorInvokation = (MemberFunctionInvokation) cloneHelper.replaceOrClone(other.constructorInvokation);
         this.classFile = other.classFile;
@@ -56,7 +48,7 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ConstructorInvokationAnoynmousInner(this, cloneHelper);
+        return new ConstructorInvokationAnonymousInner(this, cloneHelper);
     }
 
     @Override
@@ -107,9 +99,9 @@ public class ConstructorInvokationAnoynmousInner extends AbstractConstructorInvo
 
     @Override
     public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
-        if (!(o instanceof ConstructorInvokationAnoynmousInner)) return false;
+        if (!(o instanceof ConstructorInvokationAnonymousInner)) return false;
         if (!super.equivalentUnder(o, constraint)) return false;
-        ConstructorInvokationAnoynmousInner other = (ConstructorInvokationAnoynmousInner) o;
+        ConstructorInvokationAnonymousInner other = (ConstructorInvokationAnonymousInner) o;
         if (!constraint.equivalent(constructorInvokation, other.constructorInvokation)) return false;
         return true;
     }

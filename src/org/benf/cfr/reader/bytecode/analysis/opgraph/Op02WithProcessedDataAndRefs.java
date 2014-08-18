@@ -331,6 +331,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
                 new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
 
+//        InferredJavaType inferredJavaType = object.getInferredJavaType();
+//        if (inferredJavaType.getJavaTypeInstance().getInnerClassHereInfo().isAnonymousClass()) {
+//            JavaTypeInstance javaTypeInstance = inferredJavaType.getJavaTypeInstance();
+//            JavaTypeInstance mostLikelyAnonymousType = javaTypeInstance.getBindingSupers().getMostLikelyAnonymousType(javaTypeInstance);
+//            if (mostLikelyAnonymousType != javaTypeInstance) {
+//                InferredJavaType replacement = new InferredJavaType(mostLikelyAnonymousType, InferredJavaType.Source.FUNCTION);
+//                object.getInferredJavaType().forceDelegate(replacement);
+//            }
+//        }
+
         if (object.getInferredJavaType().getJavaTypeInstance() == RawJavaType.NULL) {
             JavaTypeInstance type = methodPrototype.getClassType();
             if (type != null) {

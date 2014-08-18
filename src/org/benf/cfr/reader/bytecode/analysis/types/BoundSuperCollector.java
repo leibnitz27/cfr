@@ -14,8 +14,8 @@ public class BoundSuperCollector {
 
     public BoundSuperCollector(ClassFile classFile) {
         this.classFile = classFile;
-        this.boundSupers = MapFactory.newMap();
-        this.boundSuperRoute = MapFactory.newMap();
+        this.boundSupers = MapFactory.newLinkedMap();
+        this.boundSuperRoute = MapFactory.newLinkedMap();
     }
 
     public BindingSuperContainer getBoundSupers() {

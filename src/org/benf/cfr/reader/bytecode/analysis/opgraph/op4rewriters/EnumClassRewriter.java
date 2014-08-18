@@ -221,7 +221,7 @@ public class EnumClassRewriter {
 
             if (name.equals("entryderived")) {
                 StaticVariable staticVariable = wcm.getStaticVariable("e2").getMatch();
-                ConstructorInvokationAnoynmousInner constructorInvokation = wcm.getConstructorAnonymousWildcard("c2").getMatch();
+                ConstructorInvokationAnonymousInner constructorInvokation = wcm.getConstructorAnonymousWildcard("c2").getMatch();
                 entryMap.put(staticVariable, new CollectedEnumData<AbstractConstructorInvokation>(statement.getContainer(), constructorInvokation));
                 return;
             }

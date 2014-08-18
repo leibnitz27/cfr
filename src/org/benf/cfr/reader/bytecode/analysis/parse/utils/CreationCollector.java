@@ -151,7 +151,7 @@ public class CreationCollector {
                  * (i.e. the ones which are being passed into the constructor for the base of the anonymous
                  * class), vs ones which are being bound without being passed in.
                  */
-                constructorInvokation = new ConstructorInvokationAnoynmousInner(
+                constructorInvokation = new ConstructorInvokationAnonymousInner(
                         memberFunctionInvokation,
                         inferredJavaType,
                         memberFunctionInvokation.getArgs(),
