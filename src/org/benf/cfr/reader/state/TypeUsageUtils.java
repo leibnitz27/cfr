@@ -15,7 +15,16 @@ public class TypeUsageUtils {
         boolean analysisTypeFound = false;
         if (clazz.getRawName().startsWith(analysisType.getRawName())) {
             // In case we don't have full info.
-            analysisTypeFound = true;
+            // This is, at best, a guess.
+            String possible = clazz.getRawName().substring(analysisType.getRawName().length());
+            if (!possible.isEmpty()) {
+                switch (possible.charAt(0)) {
+                    case '$':
+                    case '.':
+                        analysisTypeFound = true;
+                        break;
+                }
+            }
         }
         JavaRefTypeInstance currentClass = clazz;
         do {
