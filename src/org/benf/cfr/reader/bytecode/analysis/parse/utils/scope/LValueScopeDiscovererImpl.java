@@ -380,9 +380,6 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
                                 LValue lValue, JavaTypeInstance type, NamedVariable name) {
             this.depth = depth;
             this.nestedScope = nestedScope == null ? null : ListFactory.newList(nestedScope);
-            if (exactStatement == null && depth > 1) {
-                int x = 1;
-            }
             this.exactStatement = exactStatement;
             this.lValue = lValue;
             this.lValueType = type;
@@ -416,6 +413,11 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
 
         public List<StatementContainer<StructuredStatement>> getNestedScope() {
             return nestedScope;
+        }
+
+        @Override
+        public String toString() {
+            return name + " : " + lValueType.getRawName();
         }
     }
 
