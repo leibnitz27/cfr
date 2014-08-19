@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.util.*;
@@ -41,8 +42,8 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
         final List<LocalVariable> parameters = prototype.getComputedParameters();
         this.variableFactory = variableFactory;
         for (LocalVariable parameter : parameters) {
-            JavaTypeInstance type = parameter.getInferredJavaType().getJavaTypeInstance();
-            final ScopeDefinition prototypeScope = new ScopeDefinition(0, null, null, parameter, type, parameter.getName());
+            InferredJavaType inferredJavaType = parameter.getInferredJavaType();
+            final ScopeDefinition prototypeScope = new ScopeDefinition(0, null, null, parameter, inferredJavaType, parameter.getName());
             earliestDefinition.put(parameter.getName(), prototypeScope);
         }
     }
@@ -112,8 +113,8 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
                 name = localVariable.getName();
             }
 
-            JavaTypeInstance type = localVariable.getInferredJavaType().getJavaTypeInstance();
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, type, name);
+            InferredJavaType inferredJavaType = localVariable.getInferredJavaType();
+            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, inferredJavaType, name);
             earliestDefinition.put(name, scopeDefinition);
             earliestDefinitionsByLevel.get(currentDepth).put(name, true);
             discoveredCreations.add(scopeDefinition);
@@ -273,8 +274,8 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
 
             // If it's out of scope, we have a variable defined but only assigned in an inner scope, but used in the
             // outer scope later!
-            JavaTypeInstance type = lValue.getInferredJavaType().getJavaTypeInstance();
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, type, name);
+            InferredJavaType inferredJavaType = lValue.getInferredJavaType();
+            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, inferredJavaType, name);
             earliestDefinition.put(name, scopeDefinition);
             earliestDefinitionsByLevel.get(currentDepth).put(name, true);
             discoveredCreations.add(scopeDefinition);
@@ -363,7 +364,20 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
         private final NamedVariable name;
         private final ScopeKey scopeKey;
 
-        private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement, LValue lValue, JavaTypeInstance type, NamedVariable name) {
+        private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
+                                LValue lValue, InferredJavaType inferredJavaType, NamedVariable name) {
+            this(depth, nestedScope, exactStatement, lValue, getUnclashedType(inferredJavaType), name);
+        }
+
+        private static JavaTypeInstance getUnclashedType(InferredJavaType inferredJavaType) {
+            if (inferredJavaType.isClash()) {
+                inferredJavaType.collapseTypeClash();
+            }
+            return inferredJavaType.getJavaTypeInstance();
+        }
+
+        private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
+                                LValue lValue, JavaTypeInstance type, NamedVariable name) {
             this.depth = depth;
             this.nestedScope = nestedScope == null ? null : ListFactory.newList(nestedScope);
             if (exactStatement == null && depth > 1) {
