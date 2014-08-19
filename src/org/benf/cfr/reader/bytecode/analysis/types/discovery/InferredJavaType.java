@@ -729,6 +729,8 @@ public class InferredJavaType {
                 }
             }
             return;
+        } else if (thisTypeInstance instanceof RawJavaType && thisTypeInstance == RawJavaType.NULL) {
+            this.value.forceType(otherTypeInstance, false);
         } else if (thisTypeInstance instanceof JavaArrayTypeInstance &&
                 otherTypeInstance instanceof JavaArrayTypeInstance) {
             JavaArrayTypeInstance thisArrayTypeInstance = (JavaArrayTypeInstance) thisTypeInstance;
