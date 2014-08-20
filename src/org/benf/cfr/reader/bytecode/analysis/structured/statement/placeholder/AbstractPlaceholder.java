@@ -87,6 +87,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
+    public boolean canDefine(LValue scopedEntity) {
+        return false;
+    }
+
+    @Override
     public List<LValue> findCreatedHere() {
         return null;
     }

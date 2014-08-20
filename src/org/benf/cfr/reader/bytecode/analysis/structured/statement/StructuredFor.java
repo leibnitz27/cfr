@@ -110,7 +110,20 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
 
     @Override
     public void markCreator(LValue scopedEntity) {
+        LValue lValue = null;
+        if (initial != null) lValue = initial.getCreatedLValue();
+        if (!scopedEntity.equals(lValue)) {
+            throw new IllegalStateException("Being asked to define something I can't define.");
+        }
         this.isCreator = true;
+    }
+
+    @Override
+    public boolean canDefine(LValue scopedEntity) {
+        LValue lValue = null;
+        if (initial != null) lValue = initial.getCreatedLValue();
+        if (scopedEntity == null) return false;
+        return scopedEntity.equals(lValue);
     }
 
     @Override

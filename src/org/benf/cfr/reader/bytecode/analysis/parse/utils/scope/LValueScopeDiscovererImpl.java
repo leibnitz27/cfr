@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -167,7 +168,6 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
             }
         });
 
-        List<ScopeDefinition> finalDefinitions = ListFactory.newList();
         for (Map.Entry<ScopeKey, List<ScopeDefinition>> entry : definitionsByType.entrySet()) {
             ScopeKey scopeKey = entry.getKey();
             List<ScopeDefinition> definitions = entry.getValue();
@@ -184,11 +184,29 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
                     continue;
                 }
                 List<StatementContainer<StructuredStatement>> scopeList = definition.getNestedScope();
+                if (scopeList.isEmpty()) scopeList = null;
+//
+//                if (scopeList != null) {
+//                    // Wind back up the scope until we find somewhere that's ALLOWED to define it.
+//                    StatementContainer<StructuredStatement> lastContainer = scopeList.get(scopeList.size()-1);
+//                    if (!lastContainer.getStatement().canDefine(scopedEntity)) {
+//                        // Copy, as we're going to be
+//                        scopeList = ListFactory.newList(scopeList);
+//                        scopeList.remove(scopeList.size()-1);
+//                        for (int x=scopeList.size()-1;x>=0;--x) {
+//                            if (scopeList.get(x).getStatement().canDefine(scopedEntity)) break;
+//                            scopeList.remove(x);
+//                        }
+//                    }
+//                    if (scopeList.isEmpty()) scopeList = null;
+//                }
+
                 if (scopeList == null) {
                     commonScope = null;
                     bestDefn = definition;
                     break;
                 }
+
                 if (commonScope == null) {
                     commonScope = scopeList;
                     bestDefn = definition;
@@ -379,12 +397,34 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
         private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
                                 LValue lValue, JavaTypeInstance type, NamedVariable name) {
             this.depth = depth;
-            this.nestedScope = nestedScope == null ? null : ListFactory.newList(nestedScope);
-            this.exactStatement = exactStatement;
+            Pair< List<StatementContainer<StructuredStatement>>, StatementContainer<StructuredStatement>> adjustedScope = getBestScopeFor(lValue, nestedScope, exactStatement);
+            this.nestedScope = adjustedScope.getFirst();
+            this.exactStatement = adjustedScope.getSecond();
             this.lValue = lValue;
             this.lValueType = type;
             this.name = name;
             this.scopeKey = new ScopeKey(lValue, type);
+        }
+
+        // nestedScope == null ? null : ListFactory.newList(nestedScope);
+        private static Pair< List<StatementContainer<StructuredStatement>>, StatementContainer<StructuredStatement>> getBestScopeFor(
+                                     LValue lValue,
+                                     Collection<StatementContainer<StructuredStatement>> nestedScope,
+                                     StatementContainer<StructuredStatement> exactStatement) {
+            if (nestedScope == null) return Pair.make(null, exactStatement);;
+            List<StatementContainer<StructuredStatement>> scope = ListFactory.newList(nestedScope);
+            if (exactStatement != null && exactStatement.getStatement().alwaysDefines(lValue)) return Pair.make(scope, exactStatement);;
+            if (scope.isEmpty()) return Pair.make(scope, exactStatement);
+            for (int x=scope.size()-1;x>=0;--x) {
+                StatementContainer<StructuredStatement> scopeTest = scope.get(x);
+                if (scopeTest.getStatement().canDefine(lValue)) break;
+                scope.remove(x);
+            }
+            if (scope.size() == nestedScope.size()) return Pair.make(scope, exactStatement);
+            if (scope.isEmpty()) return Pair.make(null, exactStatement);
+            exactStatement = scope.get(scope.size()-1);
+
+            return Pair.make(scope, exactStatement);
         }
 
         public JavaTypeInstance getJavaTypeInstance() {

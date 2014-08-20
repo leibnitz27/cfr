@@ -62,6 +62,11 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     }
 
     @Override
+    public boolean canDefine(LValue scopedEntity) {
+        return true;
+    }
+
+    @Override
     public List<LValue> findCreatedHere() {
         return null;
     }
