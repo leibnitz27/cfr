@@ -32,9 +32,12 @@ public class VariableNameTidier implements StructuredStatementTransformer {
 
     private final Method method;
     private boolean classRenamed = false;
+    // Used for detecting static accesses we can mark as accessible via the simple name.
+    private final JavaTypeInstance ownerClassType;
 
     public VariableNameTidier(Method method) {
         this.method = method;
+        this.ownerClassType = method.getClassFile().getClassType();
     }
 
     public void transform(Op04StructuredStatement root) {
