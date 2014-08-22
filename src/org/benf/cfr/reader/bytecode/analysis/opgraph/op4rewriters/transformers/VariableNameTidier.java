@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
@@ -10,6 +11,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -80,8 +83,39 @@ public class VariableNameTidier implements StructuredStatementTransformer {
             }
         }
 
+        /*
+         * See if there's anything USED here which could be tidied - e.g. if we're using a (class local) static
+         * variable, and there's nothing in scope which hides it, then we should use the simple name.
+         * (this is indeed necessary in the case of static final variables in the static initialiser).
+         */
+        ExpressionRewriter simplifier = new NameSimplifier(ownerClassType, structuredScopeWithVars);
+        in.rewriteExpressions(simplifier);
+
         in.transformStructuredChildren(this, scope);
         return in;
+    }
+
+    private static class NameSimplifier extends AbstractExpressionRewriter {
+        private final StructuredScopeWithVars localScope;
+        private final JavaTypeInstance ownerClassType;
+
+        private NameSimplifier(JavaTypeInstance ownerClassType, StructuredScopeWithVars localScope) {
+            this.ownerClassType = ownerClassType;
+            this.localScope = localScope;
+        }
+
+        @Override
+        public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            if (lValue.getClass() == StaticVariable.class) {
+                StaticVariable staticVariable = (StaticVariable)lValue;
+                if (staticVariable.getOwningClassTypeInstance().equals(ownerClassType)) {
+                    if (!localScope.isDefined(staticVariable.getVarName())) {
+                        return staticVariable.getSimpleCopy();
+                    }
+                }
+            }
+            return lValue;
+        }
     }
 
 
@@ -193,6 +227,10 @@ public class VariableNameTidier implements StructuredStatementTransformer {
 
         public void markInitiallyDefined(Set<String> names) {
             for (String name : names) scope.getFirst().defineHere(name);
+        }
+
+        public boolean isDefined(String anyNameType) {
+            return alreadyDefined(anyNameType);
         }
 
         public void defineHere(LocalVariable localVariable) {

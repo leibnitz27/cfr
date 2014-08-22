@@ -128,6 +128,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
         expressionRewriter.handleStatement(getContainer());
+        lvalue = expressionRewriter.rewriteExpression(lvalue, null, this.getContainer(), null);
         rvalue = expressionRewriter.rewriteExpression(rvalue, null, this.getContainer(), null);
     }
 

@@ -21,12 +21,14 @@ public class StaticVariable extends AbstractLValue {
     private final ConstantPoolEntryFieldRef field;
     private final JavaTypeInstance clazz;
     private final String varName;
+    private final boolean knownSimple;
 
-    public StaticVariable(ClassFile classFile, ConstantPool cp, ConstantPoolEntry field) {
+    public StaticVariable(ConstantPoolEntry field) {
         super(FieldVariable.getFieldType((ConstantPoolEntryFieldRef) field));
         this.field = (ConstantPoolEntryFieldRef) field;
         this.clazz = this.field.getClassEntry().getTypeInstance();
         this.varName = this.field.getLocalName();
+        this.knownSimple = false;
     }
 
     /*
@@ -37,6 +39,22 @@ public class StaticVariable extends AbstractLValue {
         this.field = null;
         this.varName = varName;
         this.clazz = clazz;
+        this.knownSimple = false;
+    }
+
+    private StaticVariable(StaticVariable other, boolean knownSimple) {
+        super(other.getInferredJavaType());
+        this.field = other.field;
+        this.varName = other.varName;
+        this.clazz = other.clazz;
+        this.knownSimple = knownSimple;
+    }
+
+    /*
+     * There are some circumstances (final assignment) where it's illegal to use the FQN of a static.
+     */
+    public StaticVariable getSimpleCopy() {
+        return new StaticVariable(this, true);
     }
 
     @Override
@@ -83,7 +101,11 @@ public class StaticVariable extends AbstractLValue {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        return d.dump(clazz).print(".").print(varName);
+        if (knownSimple) {
+            return d.print(varName);
+        } else {
+            return d.dump(clazz).print(".").print(varName);
+        }
     }
 
     @Override

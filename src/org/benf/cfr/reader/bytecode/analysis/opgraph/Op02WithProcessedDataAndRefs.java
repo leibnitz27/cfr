@@ -1129,9 +1129,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return new AssignmentSimple(getStackLValue(0), fieldExpression);
             }
             case GETSTATIC:
-                return new AssignmentSimple(getStackLValue(0), new LValueExpression(new StaticVariable(method.getClassFile(), cp, cpEntries[0])));
+                return new AssignmentSimple(getStackLValue(0), new LValueExpression(new StaticVariable(cpEntries[0])));
             case PUTSTATIC:
-                return new AssignmentSimple(new StaticVariable(method.getClassFile(), cp, cpEntries[0]), getStackRValue(0));
+                return new AssignmentSimple(new StaticVariable(cpEntries[0]), getStackRValue(0));
             case PUTFIELD:
                 return new AssignmentSimple(new FieldVariable(getStackRValue(1), method.getClassFile(), cpEntries[0]), getStackRValue(0));
             case SWAP: {

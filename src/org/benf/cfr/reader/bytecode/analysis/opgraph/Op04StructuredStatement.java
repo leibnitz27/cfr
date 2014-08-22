@@ -635,6 +635,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      *
      * We can also discover if stack locations have been re-used with a type change - this would have resulted
      * in what looks like invalid variable re-use, which we can now convert.
+     *
+     * Note - because this may lift variables to an earlier scoped declaration, we have a second pass to tidy
+     * (eg remove spurious 'this.', VariableNameTidier).
      */
     public static void discoverVariableScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
         LValueScopeDiscovererImpl scopeDiscoverer = new LValueScopeDiscovererImpl(method.getMethodPrototype(), variableFactory);
