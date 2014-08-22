@@ -380,6 +380,8 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (object != null && classFile != null && !MiscConstants.INIT_METHOD.equals(name)) {
             object.getInferredJavaType().noteUseAs(classFile.getClassType());
         }
+
+
         int length = args.size();
         for (int x = 0; x < length; ++x) {
             Expression expression = expressions.get(x);
@@ -387,13 +389,9 @@ public class MethodPrototype implements TypeUsageCollectable {
             expression.getInferredJavaType().useAsWithoutCasting(type);
         }
 
-    }
-
-    public void addExplicitCasts(Expression object, List<Expression> expressions) {
-        int length = expressions.size();
-
         GenericTypeBinder genericTypeBinder = null;
         if (object != null && object.getInferredJavaType().getJavaTypeInstance() instanceof JavaGenericBaseInstance) {
+            JavaTypeInstance objectType = object.getInferredJavaType().getJavaTypeInstance();
             List<JavaTypeInstance> invokingTypes = ListFactory.newList();
             for (Expression invokingArg : expressions) {
                 invokingTypes.add(invokingArg.getInferredJavaType().getJavaTypeInstance());
@@ -403,7 +401,7 @@ public class MethodPrototype implements TypeUsageCollectable {
              * For each of the formal type parameters of the class signature, what has it been bound to in the
              * instance?
              */
-            JavaGenericRefTypeInstance boundInstance = (object instanceof JavaGenericRefTypeInstance) ? (JavaGenericRefTypeInstance) object : null;
+            JavaGenericRefTypeInstance boundInstance = (objectType instanceof JavaGenericRefTypeInstance) ? (JavaGenericRefTypeInstance) objectType : null;
             if (classFile != null) {
                 genericTypeBinder = GenericTypeBinder.bind(formalTypeParameters, classFile.getClassSignature(), args, boundInstance, invokingTypes);
             }

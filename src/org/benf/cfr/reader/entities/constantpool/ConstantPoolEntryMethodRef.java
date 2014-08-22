@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.entities.constantpool;
 
+import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerDefault;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -12,6 +14,7 @@ import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
+import java.util.Collection;
 
 public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_CLASS_INDEX = 1;
@@ -75,15 +78,43 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
             // See if we can load the class to get a signature version of this prototype.
             // TODO : Improve the caching?
 
-            try {
+            findBetterMethod : try {
                 JavaTypeInstance loadType = classType.getArrayStrippedType().getDeGenerifiedType();
                 ClassFile classFile = cp.getDCCommonState().getClassFile(loadType);
-                MethodPrototype replacement = classFile.getMethodByPrototype(basePrototype).getMethodPrototype();
+                MethodPrototype replacement;
+                foundBetterMethod : try {
+                    replacement = classFile.getMethodByPrototype(basePrototype).getMethodPrototype();
+                } catch (NoSuchMethodException e) {
+                    if (basePrototype.getName().equals(MiscConstants.INIT_METHOD)) break findBetterMethod;
+                    // The method is not present here.
+                    // This means we might have inherited an implementation from a base class
+                    // (or, in java8, from a base implementation, but not handling that yet!)
+                    BindingSuperContainer bindingSuperContainer = classFile.getBindingSupers();
+                    if (bindingSuperContainer == null) break findBetterMethod;
+                    Collection<JavaRefTypeInstance> supers = bindingSuperContainer.getBoundSuperClasses().keySet();
+                    for (JavaTypeInstance supertype : supers) {
+                        loadType = supertype.getDeGenerifiedType();
+                        ClassFile superClassFile = cp.getDCCommonState().getClassFile(loadType);
+                        try {
+                            MethodPrototype baseReplacement = superClassFile.getMethodByPrototype(basePrototype).getMethodPrototype();
+                            /*
+                             * Ok, one of our bases actually implements this.  Now we /PRETEND/ the class we're
+                             * interrogating implemented it.  This means we need to rewrite any generics so that they
+                             * are using the bindings present in the underlying class.
+                             * (i.e. if we are trying to find add<T> , and we've found add<E>, because the
+                             * child class has T->base E.)
+                             */
+                            classFile = superClassFile;
+                            replacement = baseReplacement;
+                            break foundBetterMethod;
+                        } catch (NoSuchMethodException e2) {
+                        }
+                    }
+                    break findBetterMethod;
+                }
 
                 overloadMethodSet = classFile.getOverloadMethodSet(replacement);
                 basePrototype = replacement;
-            } catch (NoSuchMethodException ignore) {
-                int x = 1;
             } catch (CannotLoadClassException ignore) {
                 int x = 1;
             }

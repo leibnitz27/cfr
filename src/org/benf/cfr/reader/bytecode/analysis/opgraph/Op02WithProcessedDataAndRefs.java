@@ -326,7 +326,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          * Use information about arguments to help us deduce lValue types.
          */
         methodPrototype.tightenArgs(object, args);
-        methodPrototype.addExplicitCasts(object, args);
+
         AbstractFunctionInvokation funcCall = isSuper ?
                 new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
                 new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
@@ -425,7 +425,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
         dynamicPrototype.tightenArgs(null, dynamicArgs);
-        dynamicPrototype.addExplicitCasts(null, dynamicArgs); // todo - useful?
+
         Expression funcCall = null;
         switch (bootstrapBehaviour) {
             case INVOKE_STATIC:
@@ -1038,7 +1038,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 MethodPrototype methodPrototype = function.getMethodPrototype();
                 List<Expression> args = getNStackRValuesAsExpressions(stackConsumed.size());
                 methodPrototype.tightenArgs(null, args);
-                methodPrototype.addExplicitCasts(null, args);
+
                 // FIXME - BIND RESULT.
                 StaticFunctionInvokation funcCall = new StaticFunctionInvokation(function, args);
                 if (stackProduced.size() == 0) {
