@@ -702,15 +702,17 @@ public class InferredJavaType {
     public void useAsWithoutCasting(JavaTypeInstance otherTypeInstance) {
         if (this == IGNORE) return;
 
-
+        JavaTypeInstance thisTypeInstance = getJavaTypeInstance();
+        if (thisTypeInstance == RawJavaType.NULL) {
+            this.value.forceType(otherTypeInstance, false);
+        }
         /* If value is something that can legitimately be forced /DOWN/
          * (i.e. from int to char) then we should push it down.
          *
          * If it's being upscaled, we don't affect it.
          */
-        JavaTypeInstance thisTypeInstance = getJavaTypeInstance();
         if (thisTypeInstance instanceof RawJavaType &&
-                otherTypeInstance instanceof RawJavaType) {
+            otherTypeInstance instanceof RawJavaType) {
             RawJavaType otherRaw = otherTypeInstance.getRawTypeOfSimpleType();
             RawJavaType thisRaw = getRawType();
             if (thisRaw.getStackType() != otherRaw.getStackType()) return;
@@ -728,9 +730,6 @@ public class InferredJavaType {
                     }
                 }
             }
-            return;
-        } else if (thisTypeInstance instanceof RawJavaType && thisTypeInstance == RawJavaType.NULL) {
-            this.value.forceType(otherTypeInstance, false);
         } else if (thisTypeInstance instanceof JavaArrayTypeInstance &&
                 otherTypeInstance instanceof JavaArrayTypeInstance) {
             JavaArrayTypeInstance thisArrayTypeInstance = (JavaArrayTypeInstance) thisTypeInstance;
