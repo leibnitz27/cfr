@@ -1119,9 +1119,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FRETURN: {
                 Expression retVal = getStackRValue(0);
                 JavaTypeInstance tgtType = variableFactory.getReturn();
-                if (tgtType instanceof RawJavaType) {
-                    retVal.getInferredJavaType().useAsWithoutCasting((RawJavaType) tgtType);
-                }
+                retVal.getInferredJavaType().useAsWithoutCasting(tgtType);
                 return new ReturnValueStatement(retVal, tgtType);
             }
             case GETFIELD: {
