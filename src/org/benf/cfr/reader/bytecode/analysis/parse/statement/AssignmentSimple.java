@@ -122,6 +122,8 @@ public class AssignmentSimple extends AbstractAssignment {
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         lvalue = lvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
         rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+        // We need to make sure that we haven't violated any preconditions with a rewrite.
+        lValueRewriter.checkPostConditions(lvalue, rvalue);
     }
 
     @Override

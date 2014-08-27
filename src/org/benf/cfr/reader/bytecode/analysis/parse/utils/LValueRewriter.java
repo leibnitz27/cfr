@@ -8,4 +8,6 @@ public interface LValueRewriter<T> {
     Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<T> statementContainer);
 
     boolean explicitlyReplaceThisLValue(LValue lValue);
+
+    void checkPostConditions(LValue lValue, Expression rValue);
 }

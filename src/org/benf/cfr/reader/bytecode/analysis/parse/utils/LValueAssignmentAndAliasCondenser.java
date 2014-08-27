@@ -29,7 +29,8 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     //
     // Found states that key can be replaced with value.
     //
-    private final Map<StackSSALabel, ExpressionStatement> found = MapFactory.newMap();
+    private final Map<StackSSALabel, ExpressionStatement> found = MapFactory.newLinkedMap();
+    private final Set<StackSSALabel> blacklisted = SetFactory.newOrderedSet();
     //
     // A chain of dup, copy assign can be considered to be an alias set.
     // we can replace references to subsequent temporaries with references to the first LValue.
@@ -98,6 +99,9 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         StackSSALabel stackSSALabel = (StackSSALabel) lValue;
 
         if (!found.containsKey(stackSSALabel)) return null;
+        if (blacklisted.contains(stackSSALabel)) {
+            return null;
+        }
         ExpressionStatement pair = found.get(stackSSALabel);
         // res is a valid replacement for lValue in an rValue, IF no mutable fields have different version
         // identifiers (SSA tags)
@@ -188,6 +192,33 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     @Override
     public boolean explicitlyReplaceThisLValue(LValue lValue) {
         return false;
+    }
+
+    /*
+     * This is a bit of a hack.  We need to avoid the (VANISHINGLY RARE)
+     * circumstance where we have
+     *
+     * s0 = THING
+     * s1 = s0
+     * s2 = s1
+     * s3 = s1
+     * v1 = s2
+     * v2 = s3
+     *
+     * These all look like they're replaceable, (and we need to allow the split because of inline array
+     * resugaring.)  However, we'll end up with a possible duplicate call of THING.  We could fix this with a single pass
+     * which nops out all 1->1 assignments, but for now I'm checking this way, seems less work.).
+     */
+    @Override
+    public void checkPostConditions(LValue lValue, Expression rValue) {
+        if (!(lValue instanceof StackSSALabel)) return;
+        StackSSALabel label = (StackSSALabel)lValue;
+        if (aliasReplacements.containsKey(label)) return;
+        if (!(found.containsKey(label))) return;
+        long count = label.getStackEntry().getUsageCount();
+        if (count > 1 && !rValue.isSimple()) {
+            blacklisted.add(label);
+        }
     }
 
     private static class ExpressionStatement {
@@ -325,6 +356,10 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         public boolean explicitlyReplaceThisLValue(LValue lValue) {
             return false;
         }
+
+        @Override
+        public void checkPostConditions(LValue lValue, Expression rValue) {
+        }
     }
 
 
@@ -362,16 +397,21 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             return true;
         }
 
+        @Override
+        public void checkPostConditions(LValue lValue, Expression rValue) {
+
+        }
+
         /* Given an original statement (in which we're pre-incrementing x), and a number of uses of X at the value
-         * 'after' the pre-increment, we want to determine if there is a single use which dominates all others.
-         *
-         * We can accomplish this with a DFS starting at the start, which aborts at each node, but if it sees 2, then
-         * game over.
-         *
-         * We can further simplify - if we see a node with 2 targets, we can abort.
-         *
-         * todo : StatementContainer doesn't have children.
-         */
+                 * 'after' the pre-increment, we want to determine if there is a single use which dominates all others.
+                 *
+                 * We can accomplish this with a DFS starting at the start, which aborts at each node, but if it sees 2, then
+                 * game over.
+                 *
+                 * We can further simplify - if we see a node with 2 targets, we can abort.
+                 *
+                 * todo : StatementContainer doesn't have children.
+                 */
         private StatementContainer getUniqueParent(StatementContainer start, final Set<StatementContainer> seen) {
             Op03SimpleStatement o3current = (Op03SimpleStatement) start;
 
@@ -436,6 +476,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         @Override
         public boolean explicitlyReplaceThisLValue(LValue lValue) {
             return true;
+        }
+
+        @Override
+        public void checkPostConditions(LValue lValue, Expression rValue) {
+
         }
     }
 

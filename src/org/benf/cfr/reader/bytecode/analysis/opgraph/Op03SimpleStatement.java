@@ -839,6 +839,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
 
         @Override
+        public void checkPostConditions(LValue lValue, Expression rValue) {
+
+        }
+
+        @Override
         public boolean explicitlyReplaceThisLValue(LValue lValue) {
             return true;
         }

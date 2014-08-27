@@ -28,6 +28,11 @@ public class LValueAssignmentExpressionRewriter implements LValueRewriter<Statem
     }
 
     @Override
+    public void checkPostConditions(LValue lValue, Expression rValue) {
+
+    }
+
+    @Override
     public boolean explicitlyReplaceThisLValue(LValue lValue) {
         return lValue.equals(this.lValue);
     }

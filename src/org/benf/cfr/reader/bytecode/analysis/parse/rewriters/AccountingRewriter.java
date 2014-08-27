@@ -16,7 +16,7 @@ import java.util.Map;
 public class AccountingRewriter implements ExpressionRewriter {
 
     private final Map<StackSSALabel, Long> count = new LazyMap<StackSSALabel, Long>(
-            MapFactory.<StackSSALabel, Long>newMap(),
+            MapFactory.<StackSSALabel, Long>newLinkedMap(),
             new UnaryFunction<StackSSALabel, Long>() {
                 @Override
                 public Long invoke(StackSSALabel arg) {
