@@ -33,7 +33,7 @@ public class GenericTypeBinder {
             List<FormalTypeParameter> unboundParameters = classSignature.getFormalTypeParameters();
             List<JavaTypeInstance> boundParameters = boundInstance.getGenericTypes();
 
-            if (boundParameters.size() != unboundParameters.size()) {
+            if (unboundParameters == null || boundParameters.size() != unboundParameters.size()) {
                 // I suspect this will happen all the time, but on the face of it I can't see why it should
                 // be valid right now.
 
