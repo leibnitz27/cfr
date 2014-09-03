@@ -758,7 +758,42 @@ public class InferredJavaType {
                     }
                 }
             }
+//        } else if (thisTypeInstance instanceof JavaGenericRefTypeInstance &&
+//                 otherTypeInstance instanceof JavaGenericRefTypeInstance) {
+//            improveGenericType((JavaGenericRefTypeInstance)otherTypeInstance);
         }
+    }
+
+    private void improveGenericType(JavaGenericRefTypeInstance otherGeneric) {
+        JavaTypeInstance thisTypeInstance = getJavaTypeInstance();
+        if (!(thisTypeInstance instanceof JavaGenericRefTypeInstance)) throw new IllegalStateException();
+        JavaGenericRefTypeInstance thisGeneric = (JavaGenericRefTypeInstance)thisTypeInstance;
+        JavaRefTypeInstance other = otherGeneric.getDeGenerifiedType();
+        // Both generics - can we use the hint of the other type to
+        // improve this type?
+        // eg :
+        // otherGeneric: Pair<String, Interface>
+        // thisGeneric : DerivedFlippedPair<Impl, String>.
+        // IF this is derived (or identity) of other, we can find bindings for the types in other, then reapply them
+        // to the bindings for original type.
+        BindingSuperContainer thisBindingContainer = thisTypeInstance.getBindingSupers();
+        if (thisBindingContainer == null) return;
+        JavaGenericRefTypeInstance otherUnbound = thisBindingContainer.getBoundSuperForBase(other);
+        if (otherUnbound == null) return;
+        GenericTypeBinder otherBindings = GenericTypeBinder.extractBindings(otherUnbound, otherGeneric);
+        JavaGenericRefTypeInstance thisUnbound = thisBindingContainer.getBoundSuperForBase(thisGeneric.getDeGenerifiedType());
+        GenericTypeBinder thisBindings = GenericTypeBinder.extractBindings(thisUnbound, thisGeneric);
+
+        GenericTypeBinder improvementBindings = otherBindings.createAssignmentRhsBindings(thisBindings);
+        if (improvementBindings == null) return;
+
+        // Now, rebind the LOCAL type using this information.
+        if (thisUnbound == null) return;
+        JavaTypeInstance thisRebound = improvementBindings.getBindingFor(thisUnbound);
+        if (thisRebound == null || thisRebound.equals(thisGeneric)) return;
+        if (!(thisRebound instanceof JavaGenericRefTypeInstance)) return;
+        // So - thisRebound is a better guess for the type we've already got.
+        value.forceType(thisRebound, true);
     }
 
     public void deGenerify(JavaTypeInstance other) {

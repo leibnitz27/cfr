@@ -198,4 +198,48 @@ public class GenericTypeBinder {
         }
         return new GenericTypeBinder(res);
     }
+
+
+    /*
+     * Given that we have a type on the left we know (eg a return type), and a type on the right
+     * which we're unsure of, can we use information about how the type on the left would be defined
+     * if it was the type on the right?
+     *
+     * eg
+     *
+     * Pair<? extends Foo, Interface> function() {
+     *    return new FlippedPair(new Impl(), FooBar);
+     * }
+     *
+     * We can improve the declaration to
+     *
+     * new FlippedPair<Bar, Interface>(new Impl(), FooBar);
+     */
+    public GenericTypeBinder createAssignmentRhsBindings(GenericTypeBinder rhsBinder) {
+        // First - check compatibility.
+        if (!nameToBoundType.keySet().equals(rhsBinder.nameToBoundType.keySet())) return null;
+
+        Map<String, JavaTypeInstance> resultMap = MapFactory.<String, JavaTypeInstance>newMap();
+        for (Map.Entry<String, JavaTypeInstance> entry : nameToBoundType.entrySet()) {
+            String key = entry.getKey();
+            JavaTypeInstance lhstype = entry.getValue();
+            JavaTypeInstance rhstype = rhsBinder.nameToBoundType.get(key);
+            JavaTypeInstance lhsStripped = lhstype.getDeGenerifiedType();
+            JavaTypeInstance rhsStripped = rhstype.getDeGenerifiedType();
+            if (!lhsStripped.equals(rhsStripped)) {
+                BindingSuperContainer rhsBoundSupers = rhstype.getBindingSupers();
+                if (rhsBoundSupers == null || !rhsBoundSupers.containsBase(lhstype.getDeGenerifiedType())) return null;
+            }
+            // Ok, rhstype extends/= lhstype.
+            JavaTypeInstance bestGuess = null;
+            if (lhstype instanceof JavaWildcardTypeInstance) {
+                bestGuess = rhstype;
+            } else {
+                bestGuess = lhstype;
+            }
+            if (bestGuess instanceof JavaGenericPlaceholderTypeInstance) return null;
+            resultMap.put(key, bestGuess);
+        }
+        return new GenericTypeBinder(resultMap);
+    }
 }
