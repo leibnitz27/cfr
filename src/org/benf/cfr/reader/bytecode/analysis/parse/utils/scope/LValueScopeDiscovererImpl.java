@@ -128,7 +128,7 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
 
         private ScopeKey(LValue lValue, JavaTypeInstance type) {
             this.lValue = lValue;
-            this.type = type;
+            this.type = type.getDeGenerifiedType();
         }
 
         @Override
