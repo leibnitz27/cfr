@@ -651,13 +651,27 @@ public class CodeAnalyser {
 
         // Introduce java 6 style for (x : array)
         logger.info("rewriteArrayForLoops");
+        boolean checkLoopTypeClash = false;
         if (options.getOption(OptionsImpl.ARRAY_ITERATOR, classFileVersion)) {
             IterLoopRewriter.rewriteArrayForLoops(op03SimpleParseNodes);
+            checkLoopTypeClash = true;
         }
         // and for (x : iterable)
         logger.info("rewriteIteratorWhileLoops");
         if (options.getOption(OptionsImpl.COLLECTION_ITERATOR, classFileVersion)) {
             IterLoopRewriter.rewriteIteratorWhileLoops(op03SimpleParseNodes);
+            checkLoopTypeClash = true;
+        }
+
+        /*
+         * It's possible to have false sharing across distinct regimes in the case of loops -
+         * see LoopTest56.  We need to verify that we have not generated obviously bad code.
+         * If that's the case - split the lifetime of the relevant variable more aggresively.
+         */
+        if (passIdx == 0 && checkLoopTypeClash) {
+            if (LoopLivenessClash.detect(op03SimpleParseNodes, bytecodeMeta)) {
+                comments.addComment(DecompilerComment.TYPE_CLASHES);
+            }
         }
 
         logger.info("findSynchronizedBlocks");
