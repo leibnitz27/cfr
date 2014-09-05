@@ -483,10 +483,37 @@ public class InferredJavaType {
         return value.getLocalId();
     }
 
+    /*
+     * For now, we know these two bases are identical.
+     */
+    private boolean checkGenericCompatibility(JavaGenericRefTypeInstance thisType, JavaGenericRefTypeInstance otherType) {
+        List<JavaTypeInstance> thisTypes = thisType.getGenericTypes();
+        List<JavaTypeInstance> otherTypes = otherType.getGenericTypes();
+        if (thisTypes.size() != otherTypes.size()) return true; // lost already.
+        for (int x=0,len=thisTypes.size();x<len;++x) {
+            JavaTypeInstance this1 = thisTypes.get(x);
+            JavaTypeInstance other1 = otherTypes.get(x);
+            if (!checkBaseCompatibility(this1, other1)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private boolean checkBaseCompatibility(JavaTypeInstance otherType) {
-        JavaTypeInstance thisStripped = getJavaTypeInstance().getDeGenerifiedType();
+        return checkBaseCompatibility(getJavaTypeInstance(), otherType);
+    }
+
+    private boolean checkBaseCompatibility(JavaTypeInstance thisType, JavaTypeInstance otherType) {
+        JavaTypeInstance thisStripped = thisType.getDeGenerifiedType();
         JavaTypeInstance otherStripped = otherType.getDeGenerifiedType();
-        if (thisStripped.equals(otherStripped)) return true;
+        if (thisStripped.equals(otherStripped)) {
+            if (thisType instanceof JavaGenericRefTypeInstance &&
+                otherType instanceof JavaGenericRefTypeInstance) {
+                return checkGenericCompatibility((JavaGenericRefTypeInstance)thisType, (JavaGenericRefTypeInstance)otherType);
+            }
+            return true;
+        }
 
         BindingSuperContainer otherSupers = otherType.getBindingSupers();
         if (otherSupers == null) {
@@ -758,9 +785,9 @@ public class InferredJavaType {
                     }
                 }
             }
-//        } else if (thisTypeInstance instanceof JavaGenericRefTypeInstance &&
-//                 otherTypeInstance instanceof JavaGenericRefTypeInstance) {
-//            improveGenericType((JavaGenericRefTypeInstance)otherTypeInstance);
+        } else if (thisTypeInstance instanceof JavaGenericRefTypeInstance &&
+                 otherTypeInstance instanceof JavaGenericRefTypeInstance) {
+            improveGenericType((JavaGenericRefTypeInstance)otherTypeInstance);
         }
     }
 
