@@ -51,7 +51,7 @@ public class ForStatement extends AbstractStatement {
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
         condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
         for (int i=0,len=assignments.size();i<len;++i) {
-            assignments.set(i, expressionRewriter.rewriteExpression(assignments.get(i), ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE));
+            assignments.set(i, (AbstractAssignmentExpression) expressionRewriter.rewriteExpression(assignments.get(i), ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE));
         }
     }
 

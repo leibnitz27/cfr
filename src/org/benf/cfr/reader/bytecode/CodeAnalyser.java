@@ -649,6 +649,12 @@ public class CodeAnalyser {
         //
         ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
 
+        /*
+         * Now we've got here, there's no benefit in having spurious inline assignments.  Where possible,
+         * pull them out!
+         */
+        InlineDeAssigner.extractAssignments(op03SimpleParseNodes);
+
         // Introduce java 6 style for (x : array)
         logger.info("rewriteArrayForLoops");
         boolean checkLoopTypeClash = false;
@@ -661,17 +667,6 @@ public class CodeAnalyser {
         if (options.getOption(OptionsImpl.COLLECTION_ITERATOR, classFileVersion)) {
             IterLoopRewriter.rewriteIteratorWhileLoops(op03SimpleParseNodes);
             checkLoopTypeClash = true;
-        }
-
-        /*
-         * It's possible to have false sharing across distinct regimes in the case of loops -
-         * see LoopTest56.  We need to verify that we have not generated obviously bad code.
-         * If that's the case - split the lifetime of the relevant variable more aggresively.
-         */
-        if (passIdx == 0 && checkLoopTypeClash) {
-            if (LoopLivenessClash.detect(op03SimpleParseNodes, bytecodeMeta)) {
-                comments.addComment(DecompilerComment.TYPE_CLASHES);
-            }
         }
 
         logger.info("findSynchronizedBlocks");
@@ -724,6 +719,18 @@ public class CodeAnalyser {
          * (albeit locals which known that they don't have a valid lookup).
          */
         Op03SimpleStatement.replaceStackVarsWithLocals(op03SimpleParseNodes);
+
+
+        /*
+         * It's possible to have false sharing across distinct regimes in the case of loops -
+         * see LoopTest56.  We need to verify that we have not generated obviously bad code.
+         * If that's the case - split the lifetime of the relevant variable more aggressively.
+         */
+        if (passIdx == 0 && checkLoopTypeClash) {
+            if (LoopLivenessClash.detect(op03SimpleParseNodes, bytecodeMeta)) {
+                comments.addComment(DecompilerComment.TYPE_CLASHES);
+            }
+        }
 
         Cleaner.reindexInPlace(op03SimpleParseNodes);
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);

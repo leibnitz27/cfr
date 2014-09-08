@@ -32,7 +32,6 @@ import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -327,7 +326,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          */
         methodPrototype.tightenArgs(object, args);
 
-        AbstractFunctionInvokation funcCall = isSuper ?
+        AbstractMemberFunctionInvokation funcCall = isSuper ?
                 new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
                 new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
 

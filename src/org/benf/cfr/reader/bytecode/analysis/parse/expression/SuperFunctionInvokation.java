@@ -12,7 +12,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-public class SuperFunctionInvokation extends AbstractFunctionInvokation {
+public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
 
     public SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args) {
         super(cp, function, methodPrototype, object, args);

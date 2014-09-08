@@ -23,7 +23,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-public class StaticFunctionInvokation extends AbstractExpression implements FunctionProcessor, BoxingProcessor {
+public class StaticFunctionInvokation extends AbstractFunctionInvokation implements FunctionProcessor, BoxingProcessor {
     private final ConstantPoolEntryMethodRef function;
     private final List<Expression> args;
     private final JavaTypeInstance clazz;

@@ -38,6 +38,18 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
 
     }
 
+    public ConditionalExpression getLhs() {
+        return lhs;
+    }
+
+    public ConditionalExpression getRhs() {
+        return rhs;
+    }
+
+    public BoolOp getOp() {
+        return op;
+    }
+
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         lhs.collectTypeUsages(collector);

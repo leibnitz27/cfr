@@ -73,14 +73,14 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
         return (ConditionalExpression) res;
     }
 
-    @Override
-    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        if (expression instanceof BoxingProcessor) {
-            ((BoxingProcessor) expression).rewriteBoxing(this);
-        }
-        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        return (AbstractAssignmentExpression) res;
-    }
+//    @Override
+//    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+//        if (expression instanceof BoxingProcessor) {
+//            ((BoxingProcessor) expression).rewriteBoxing(this);
+//        }
+//        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+//        return (AbstractAssignmentExpression) res;
+//    }
 
     @Override
     public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
@@ -204,7 +204,7 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
     public boolean isUnboxedType(Expression in) {
         JavaTypeInstance type = in.getInferredJavaType().getJavaTypeInstance();
         if (!(type instanceof RawJavaType)) return false;
-        if (in instanceof AbstractFunctionInvokation) return false;
+        if (in instanceof AbstractMemberFunctionInvokation) return false;
         RawJavaType rawJavaType = (RawJavaType) type;
         return rawJavaType.isUsableType();
     }

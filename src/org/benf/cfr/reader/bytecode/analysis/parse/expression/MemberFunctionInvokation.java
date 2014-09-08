@@ -14,7 +14,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-public class MemberFunctionInvokation extends AbstractFunctionInvokation {
+public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
     private final String name;
     private final boolean special;
     private final boolean isInitMethod;

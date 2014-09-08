@@ -20,10 +20,10 @@ public abstract class AbstractExpressionRewriter implements ExpressionRewriter {
         return (ConditionalExpression) expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
 
-    @Override
-    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        return (AbstractAssignmentExpression) expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-    }
+//    @Override
+//    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+//        return (AbstractAssignmentExpression) expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+//    }
 
     @Override
     public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {

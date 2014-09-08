@@ -52,11 +52,11 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         return (ConditionalExpression) res;
     }
 
-    @Override
-    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        return (AbstractAssignmentExpression) res;
-    }
+//    @Override
+//    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+//        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+//        return (AbstractAssignmentExpression) res;
+//    }
 
     @Override
     public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {

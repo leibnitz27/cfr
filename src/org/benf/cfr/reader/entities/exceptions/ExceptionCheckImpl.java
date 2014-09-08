@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractMemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -88,7 +88,7 @@ public class ExceptionCheckImpl implements ExceptionCheck {
 
     // Might this throw in a way which means it can't be moved into the exception block?
     @Override
-    public boolean checkAgainst(AbstractFunctionInvokation functionInvokation) {
+    public boolean checkAgainst(AbstractMemberFunctionInvokation functionInvokation) {
         if (mightUseUnchecked) return true;
         JavaTypeInstance type = functionInvokation.getClassTypeInstance();
         try {

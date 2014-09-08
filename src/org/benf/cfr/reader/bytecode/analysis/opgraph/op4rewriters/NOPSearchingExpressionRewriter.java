@@ -17,8 +17,10 @@ public class NOPSearchingExpressionRewriter extends AbstractExpressionRewriter {
 
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        if (needle.equals(expression)) {
-            found = true;
+        if (!found) {
+            if (needle.equals(expression)) {
+                found = true;
+            }
         }
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
