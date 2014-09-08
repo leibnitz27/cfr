@@ -9,7 +9,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
@@ -84,6 +83,12 @@ public class InlineDeAssigner {
                 AssignmentExpression assignmentExpression = (AssignmentExpression)expression;
                 assignmentExpression.getrValue().applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
                 return tryExtractAssignment((AssignmentExpression)expression);
+            }
+            /*
+             * Need to be very... VERY careful when extracting through ternaries.
+             */
+            if (expression instanceof TernaryExpression) {
+                noFurther = true;
             }
 
             Expression result = super.rewriteExpression(expression, ssaIdentifiers, statementContainer, flags);
