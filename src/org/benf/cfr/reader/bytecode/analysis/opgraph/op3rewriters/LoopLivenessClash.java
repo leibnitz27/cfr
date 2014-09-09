@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ForIterStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.SetFactory;
 
@@ -47,7 +48,8 @@ public class LoopLivenessClash {
         if (!(iterator instanceof LocalVariable)) return false;
 
         JavaTypeInstance iterType = iterator.getInferredJavaType().getJavaTypeInstance();
-        JavaTypeInstance listType = forIterStatement.getList().getInferredJavaType().getJavaTypeInstance();
+        InferredJavaType inferredListType = forIterStatement.getList().getInferredJavaType();
+        JavaTypeInstance listType = inferredListType.getJavaTypeInstance();
         // Figure out the iterable type - if we have an array / list.
         JavaTypeInstance listIterType = null;
         if (listType instanceof JavaArrayTypeInstance) {
@@ -58,7 +60,11 @@ public class LoopLivenessClash {
         if (listIterType == null) return false;
         if (iterType.equals(listIterType)) return false;
         // We've probably screwed up the types by failing to get the correct list type instead.
-        if (listIterType instanceof JavaGenericPlaceholderTypeInstance) return false;
+        // If it's appropriate, collect the 'better' type.
+        if (listIterType instanceof JavaGenericPlaceholderTypeInstance) {
+            bytecodeMeta.takeIteratedTypeHint(inferredListType, iterType);
+            return false;
+        }
 
         /*
          * We're not interating over the right thing.

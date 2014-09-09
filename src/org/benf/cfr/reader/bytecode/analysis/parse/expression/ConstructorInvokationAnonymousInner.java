@@ -37,9 +37,6 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         } catch (CannotLoadClassException e) {
         }
         this.classFile = classFile;
-        if (classFile != null) {
-            classFile.noteAnonymousUse(this);
-        }
     }
 
     protected ConstructorInvokationAnonymousInner(ConstructorInvokationAnonymousInner other, CloneHelper cloneHelper) {
@@ -48,6 +45,11 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         this.classFile = other.classFile;
         this.anonymousTypeInstance = other.anonymousTypeInstance;
     }
+
+    public ClassFile getClassFile() {
+        return classFile;
+    }
+
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {

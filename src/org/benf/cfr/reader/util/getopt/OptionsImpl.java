@@ -232,6 +232,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> RECOVER_TYPECLASHES = new PermittedOptionProvider.Argument<Troolean>(
             "recovertypeclash", defaultNeitherTrooleanDecoder,
             "Split lifetimes where analysis caused type clash");
+    public static final PermittedOptionProvider.Argument<Troolean> USE_RECOVERED_ITERATOR_TYPE_HINTS = new PermittedOptionProvider.Argument<Troolean>(
+            "recovertypehints", defaultNeitherTrooleanDecoder,
+            "Recover type hints for iterators from first pass.");
     public static final PermittedOptionProvider.Argument<String> OUTPUT_DIR = new PermittedOptionProvider.Argument<String>(
             "outputdir", defaultNullStringDecoder,
             "Decompile to files in [directory]");
@@ -325,7 +328,8 @@ public class OptionsImpl implements Options {
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
-                    ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS, RECOVER_TYPECLASHES,
+                    ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
+                    RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, HELP);
         }
 

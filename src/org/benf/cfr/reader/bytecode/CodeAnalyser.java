@@ -2,10 +2,14 @@ package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.Op02LambdaRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecovery;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecoveryImpl;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecoveryNone;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.XorRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
@@ -68,10 +72,12 @@ public class CodeAnalyser {
     private static class AnalysisResult {
         public DecompilerComments comments;
         public Op04StructuredStatement code;
+        public AnonymousClassUsage anonymousClassUsage;
         public boolean failed;
         public boolean exception;
 
-        private AnalysisResult(DecompilerComments comments, Op04StructuredStatement code) {
+        private AnalysisResult(DecompilerComments comments, Op04StructuredStatement code, AnonymousClassUsage anonymousClassUsage) {
+            this.anonymousClassUsage = anonymousClassUsage;
             this.comments = comments;
             this.code = code;
             boolean failed = false;
@@ -90,7 +96,8 @@ public class CodeAnalyser {
     }
 
     private static final RecoveryOptions recover0 = new RecoveryOptions(
-            new RecoveryOption.TrooleanRO(OptionsImpl.RECOVER_TYPECLASHES, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.LIVENESS_CLASH))
+            new RecoveryOption.TrooleanRO(OptionsImpl.RECOVER_TYPECLASHES, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.LIVENESS_CLASH)),
+            new RecoveryOption.TrooleanRO(OptionsImpl.USE_RECOVERED_ITERATOR_TYPE_HINTS, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.ITERATED_TYPE_HINTS))
     );
 
     private static final RecoveryOptions recover0a = new RecoveryOptions(recover0,
@@ -103,8 +110,8 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FOR_LOOP_CAPTURE, Troolean.TRUE),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
     );
 
     private static final RecoveryOptions recover2 = new RecoveryOptions(recover1,
@@ -112,7 +119,7 @@ public class CodeAnalyser {
     );
 
     private static final RecoveryOptions recover3 = new RecoveryOptions(recover1,
-            new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.testFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS),
+            new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
     );
 
@@ -170,6 +177,11 @@ public class CodeAnalyser {
             method.setComments(res.comments);
         }
 
+        /*
+         * Take the anonymous usages from the selected result.
+         */
+        res.anonymousClassUsage.useNotes();
+
         analysed = res.code;
         return analysed;
     }
@@ -207,7 +219,7 @@ public class CodeAnalyser {
             Op04StructuredStatement coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
             DecompilerComments comments = new DecompilerComments();
             comments.addComment(new DecompilerComment("Exception decompiling", e));
-            return new AnalysisResult(comments, coderes);
+            return new AnalysisResult(comments, coderes, new AnonymousClassUsage());
         }
     }
 
@@ -349,7 +361,10 @@ public class CodeAnalyser {
         // Create a non final version...
         final VariableFactory variableFactory = new VariableFactory(method);
 
-        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState);
+        TypeHintRecovery typeHintRecovery = options.optionIsSet(OptionsImpl.USE_RECOVERED_ITERATOR_TYPE_HINTS) ?
+                new TypeHintRecoveryImpl(bytecodeMeta) : TypeHintRecoveryNone.INSTANCE;
+
+        List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState, typeHintRecovery);
         // Renumber, just in case JSR stage (or something) has left bad labellings.
         op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
 
@@ -417,7 +432,8 @@ public class CodeAnalyser {
         //      Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
 
         // Rewrite new / constructor pairs.
-        Op03SimpleStatement.condenseConstruction(dcCommonState, method, op03SimpleParseNodes);
+        AnonymousClassUsage anonymousClassUsage = new AnonymousClassUsage();
+        Op03SimpleStatement.condenseConstruction(dcCommonState, method, op03SimpleParseNodes, anonymousClassUsage);
         LValueProp.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
 
@@ -730,6 +746,9 @@ public class CodeAnalyser {
             if (LoopLivenessClash.detect(op03SimpleParseNodes, bytecodeMeta)) {
                 comments.addComment(DecompilerComment.TYPE_CLASHES);
             }
+            if (bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.ITERATED_TYPE_HINTS)) {
+                comments.addComment(DecompilerComment.ITERATED_TYPE_HINTS);
+            }
         }
 
         Cleaner.reindexInPlace(op03SimpleParseNodes);
@@ -799,7 +818,7 @@ public class CodeAnalyser {
             }
         }
 
-        return new AnalysisResult(comments, block);
+        return new AnalysisResult(comments, block, anonymousClassUsage);
     }
 
 

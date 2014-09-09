@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -936,8 +937,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      *
      * a1 = new foo(x,y,z)
      */
-    public static void condenseConstruction(DCCommonState state, Method method, List<Op03SimpleStatement> statements) {
-        CreationCollector creationCollector = new CreationCollector();
+    public static void condenseConstruction(DCCommonState state, Method method, List<Op03SimpleStatement> statements, AnonymousClassUsage anonymousClassUsage) {
+        CreationCollector creationCollector = new CreationCollector(anonymousClassUsage);
         for (Op03SimpleStatement statement : statements) {
             statement.findCreation(creationCollector);
         }

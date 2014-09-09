@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecovery;
 import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
@@ -809,7 +810,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, ident, originalRawOffset)));
     }
 
-    public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory, DCCommonState dcCommonState) {
+    public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory, DCCommonState dcCommonState, TypeHintRecovery typeHintRecovery) {
         switch (instr) {
             case ALOAD:
             case ILOAD:
@@ -1043,6 +1044,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 if (stackProduced.size() == 0) {
                     return new ExpressionStatement(funcCall);
                 } else {
+                    InferredJavaType type = funcCall.getInferredJavaType();
+                    type.setTaggedBytecodeLocation(originalRawOffset);
+                    typeHintRecovery.improve(type);
                     return new AssignmentSimple(getStackLValue(0), funcCall);
                 }
             }
@@ -1789,7 +1793,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                                                               final Method method,
                                                               final VariableFactory variableFactory,
                                                               final BlockIdentifierFactory blockIdentifierFactory,
-                                                              final DCCommonState dcCommonState) {
+                                                              final DCCommonState dcCommonState,
+                                                              final TypeHintRecovery typeHintRecovery) {
 
 
         final List<Op03SimpleStatement> op03SimpleParseNodesTmp = ListFactory.newList();
@@ -1800,11 +1805,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         // By only processing reachable bytecode, we ignore deliberate corruption.   However, we could
         // Nop out unreachable code, so as to not have this ugliness.
         // We start at 0 as that's not controversial ;)
+
         GraphVisitor<Op02WithProcessedDataAndRefs> o2Converter = new GraphVisitorFIFO<Op02WithProcessedDataAndRefs>(op2list.get(0),
                 new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                     @Override
                     public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
-                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(method, variableFactory, blockIdentifierFactory, dcCommonState));
+                        Op03SimpleStatement res = new Op03SimpleStatement(arg1, arg1.createStatement(method, variableFactory, blockIdentifierFactory, dcCommonState, typeHintRecovery));
                         conversionHelper.registerOriginalAndNew(arg1, res);
                         op03SimpleParseNodesTmp.add(res);
                         for (Op02WithProcessedDataAndRefs target : arg1.getTargets()) {
@@ -1815,6 +1821,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         );
         o2Converter.process();
         conversionHelper.patchUpRelations();
+
         return op03SimpleParseNodesTmp;
     }
 

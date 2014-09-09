@@ -14,6 +14,7 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment PARAMETER_CORRUPTION = new DecompilerComment("WARNING - Possible parameter corruption");
     public static DecompilerComment TRY_BACKEDGE_REMOVED = new DecompilerComment("WARNING - Removed back jump from a try to a catch block - possible behaviour change.");
     public static DecompilerComment TYPE_CLASHES = new DecompilerComment("Could not resolve type clashes", true);
+    public static DecompilerComment ITERATED_TYPE_HINTS = new DecompilerComment("Iterators could be improved", true);
     public static DecompilerComment LOOSE_CATCH_BLOCK = new DecompilerComment("Loose catch block", true);
     public static DecompilerComment CLASS_RENAMED = new DecompilerComment("Inner class renamed, behaviour may change", true);
 

@@ -44,7 +44,8 @@ public class InferredJavaType {
         INSTRUCTION, // Instr returns type which guarantees this (eg arraylength returns int).
         GENERICCALL,
         EXCEPTION,
-        STRING_TRANSFORM
+        STRING_TRANSFORM,
+        IMPROVED_ITERATION
     }
 
 
@@ -80,6 +81,10 @@ public class InferredJavaType {
         public boolean isLocked();
 
         public IJTInternal getFirstLocked();
+
+        public int getTaggedBytecodeLocation();
+
+        public void setTaggedBytecodeLocation(int location);
     }
 
     private static class IJTInternal_Clash implements IJTInternal {
@@ -217,6 +222,16 @@ public class InferredJavaType {
         }
 
         @Override
+        public int getTaggedBytecodeLocation() {
+            return -1;
+        }
+
+        // Ignore.
+        @Override
+        public void setTaggedBytecodeLocation(int location) {
+        }
+
+        @Override
         public JavaTypeInstance getJavaTypeInstance() {
             if (resolved) {
                 return type;
@@ -297,6 +312,9 @@ public class InferredJavaType {
         private final boolean locked;
         // When not delegating
         private JavaTypeInstance type;
+        // If we're using a type and we later discover more information about it, we can
+        // remember this for a recovery pass.
+        private int taggedBytecodeLocation;
 
         private final Source source;
         private final int id;
@@ -318,6 +336,24 @@ public class InferredJavaType {
                 return delegate.getRawType();
             } else {
                 return type.getRawTypeOfSimpleType();
+            }
+        }
+
+        @Override
+        public int getTaggedBytecodeLocation() {
+            if (isDelegate) {
+                return delegate.getTaggedBytecodeLocation();
+            } else {
+                return taggedBytecodeLocation;
+            }
+        }
+
+        @Override
+        public void setTaggedBytecodeLocation(int location) {
+            if (isDelegate) {
+                delegate.setTaggedBytecodeLocation(location);
+            } else {
+                taggedBytecodeLocation = location;
             }
         }
 
@@ -481,6 +517,14 @@ public class InferredJavaType {
 
     public int getLocalId() {
         return value.getLocalId();
+    }
+
+    public int getTaggedBytecodeLocation() {
+        return value.getTaggedBytecodeLocation();
+    }
+
+    public void setTaggedBytecodeLocation(int location) {
+        value.setTaggedBytecodeLocation(location);
     }
 
     /*

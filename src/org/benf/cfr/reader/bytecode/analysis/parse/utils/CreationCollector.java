@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
+import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -13,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ListFactory;
@@ -77,6 +79,12 @@ public class CreationCollector {
             return ListFactory.newList();
         }
     });
+
+    private final AnonymousClassUsage anonymousClassUsage;
+
+    public CreationCollector(AnonymousClassUsage anonymousClassUsage) {
+        this.anonymousClassUsage = anonymousClassUsage;
+    }
 
     public void collectCreation(LValue lValue, Expression rValue, StatementContainer container) {
         if (!(rValue instanceof NewObject)) return;
@@ -152,11 +160,16 @@ public class CreationCollector {
                  * (i.e. the ones which are being passed into the constructor for the base of the anonymous
                  * class), vs ones which are being bound without being passed in.
                  */
-                constructorInvokation = new ConstructorInvokationAnonymousInner(
+                ConstructorInvokationAnonymousInner constructorInvokationAnonymousInner = new ConstructorInvokationAnonymousInner(
                         memberFunctionInvokation,
                         inferredJavaType,
                         memberFunctionInvokation.getArgs(),
                         dcCommonState, lValueType);
+                constructorInvokation = constructorInvokationAnonymousInner;
+                ClassFile classFile = constructorInvokationAnonymousInner.getClassFile();
+                if (classFile != null) {
+                    anonymousClassUsage.note(classFile, constructorInvokationAnonymousInner);
+                }
 
                 BindingSuperContainer bindingSuperContainer = lValueType.getBindingSupers();
                 // This may be null, if we simply don't have the information present.
