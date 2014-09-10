@@ -91,8 +91,14 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
 
     @Override
     public boolean alwaysDefines(LValue scopedEntity) {
-        // Could check!
-        return true;
+        if (scopedEntity == null) return false;
+        return scopedEntity.equals(iterator);
+    }
+
+    @Override
+    public boolean canDefine(LValue scopedEntity) {
+        if (scopedEntity == null) return false;
+        return scopedEntity.equals(iterator);
     }
 
     @Override
