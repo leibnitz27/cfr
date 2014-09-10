@@ -220,6 +220,10 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
                     bestDefn = null;
                 }
             }
+            // But - we can only accept the first definition as a 'location'.
+            // This is because we might be combining two declarations, in which case we
+            // will NOT want to use the later one!
+            if (bestDefn != definitions.get(0)) bestDefn = null;
             StatementContainer<StructuredStatement> creationContainer = null;
             if (scopedEntity instanceof SentinelLocalClassLValue) {
                 List<StatementContainer<StructuredStatement>> scope = null;
