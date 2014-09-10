@@ -17,7 +17,7 @@ public class TypeHintRecoveryImpl implements TypeHintRecovery {
     @Override
     public void improve(InferredJavaType type) {
         int index = type.getTaggedBytecodeLocation();
-        if (index <= 0) return;
+        if (index < 0) return;
         JavaTypeInstance original = type.getJavaTypeInstance();
         JavaTypeInstance improved = iteratedTypeHints.get(index);
         if (improved == null || !(original instanceof JavaGenericRefTypeInstance)) return;

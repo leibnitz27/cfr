@@ -57,7 +57,7 @@ public class BytecodeMeta {
 
     public void takeIteratedTypeHint(InferredJavaType inferredJavaType, JavaTypeInstance itertype) {
         int bytecodeIdx = inferredJavaType.getTaggedBytecodeLocation();
-        if (bytecodeIdx <= 0) return;
+        if (bytecodeIdx < 0) return;
         Integer key = bytecodeIdx;
         if (iteratedTypeHints.containsKey(key)) {
             JavaTypeInstance already = iteratedTypeHints.get(key);

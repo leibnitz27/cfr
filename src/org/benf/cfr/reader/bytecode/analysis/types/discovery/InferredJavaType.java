@@ -314,7 +314,7 @@ public class InferredJavaType {
         private JavaTypeInstance type;
         // If we're using a type and we later discover more information about it, we can
         // remember this for a recovery pass.
-        private int taggedBytecodeLocation;
+        private int taggedBytecodeLocation = -1;
 
         private final Source source;
         private final int id;
