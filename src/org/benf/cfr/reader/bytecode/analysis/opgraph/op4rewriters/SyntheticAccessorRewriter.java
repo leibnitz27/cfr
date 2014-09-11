@@ -118,16 +118,6 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
     private static final String FUNCCALL2 = "funccall2";
 
     private static boolean validRelationship(JavaTypeInstance type1, JavaTypeInstance type2) {
-//        InnerClassInfo thisClassInnerClassInfo = type1.getInnerClassHereInfo();
-//        boolean child = thisClassInnerClassInfo.isTransitiveInnerClassOf(type2);
-//        InnerClassInfo tgtClassInnerClassInfo = type2.getInnerClassHereInfo();
-//        boolean parent = tgtClassInnerClassInfo.isTransitiveInnerClassOf(type1);
-//        if (!(child || parent)) {
-//            // If these two SHARE an outer class it is also valid.
-//            return false;
-//        }
-//        return true;
-//        Set<JavaTypeInstance> parents1 = type1.getInnerClassHereInfo().getTransitiveDegenericParents();
         Set<JavaTypeInstance> parents1 = SetFactory.newSet();
         type1.getInnerClassHereInfo().collectTransitiveDegenericParents(parents1);
         parents1.add(type1);
