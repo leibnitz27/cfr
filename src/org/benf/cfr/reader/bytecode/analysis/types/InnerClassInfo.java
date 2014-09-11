@@ -1,6 +1,12 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.util.annotation.Nullable;
+
+import java.util.Set;
+
 public interface InnerClassInfo {
+    void collectTransitiveDegenericParents(Set<JavaTypeInstance> parents);
+
     boolean isInnerClass();
 
     boolean isInnerClassOf(JavaTypeInstance possibleParent);
@@ -31,6 +37,10 @@ public interface InnerClassInfo {
         @Override
         public boolean isInnerClass() {
             return false;
+        }
+
+        @Override
+        public void collectTransitiveDegenericParents(Set<JavaTypeInstance> parents) {
         }
 
         @Override

@@ -13,6 +13,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.Map;
+import java.util.Set;
 
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
@@ -293,6 +294,13 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
         private RefTypeInnerClassInfo(JavaRefTypeInstance outerClass) {
             this.outerClass = outerClass;
+        }
+
+        @Override
+        public
+        void collectTransitiveDegenericParents(Set<JavaTypeInstance> parents) {
+            parents.add(outerClass);
+            outerClass.getInnerClassHereInfo().collectTransitiveDegenericParents(parents);
         }
 
         @Override

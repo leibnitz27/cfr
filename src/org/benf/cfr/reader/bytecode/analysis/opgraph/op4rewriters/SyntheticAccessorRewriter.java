@@ -20,6 +20,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.AccessFlagMethod;
@@ -27,9 +28,12 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.SetUtil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewriter {
 
@@ -113,12 +117,31 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
     private static final String FUNCCALL1 = "funccall1";
     private static final String FUNCCALL2 = "funccall2";
 
+    private static boolean validRelationship(JavaTypeInstance type1, JavaTypeInstance type2) {
+//        InnerClassInfo thisClassInnerClassInfo = type1.getInnerClassHereInfo();
+//        boolean child = thisClassInnerClassInfo.isTransitiveInnerClassOf(type2);
+//        InnerClassInfo tgtClassInnerClassInfo = type2.getInnerClassHereInfo();
+//        boolean parent = tgtClassInnerClassInfo.isTransitiveInnerClassOf(type1);
+//        if (!(child || parent)) {
+//            // If these two SHARE an outer class it is also valid.
+//            return false;
+//        }
+//        return true;
+//        Set<JavaTypeInstance> parents1 = type1.getInnerClassHereInfo().getTransitiveDegenericParents();
+        Set<JavaTypeInstance> parents1 = SetFactory.newSet();
+        type1.getInnerClassHereInfo().collectTransitiveDegenericParents(parents1);
+        parents1.add(type1);
+        Set<JavaTypeInstance> parents2 = SetFactory.newSet();
+        type2.getInnerClassHereInfo().collectTransitiveDegenericParents(parents2);
+        parents2.add(type2);
+        boolean res = SetUtil.hasIntersection(parents1, parents2);
+        return res;
+    }
+
     private Expression rewriteFunctionExpression2(final StaticFunctionInvokation functionInvokation) {
         JavaTypeInstance tgtType = functionInvokation.getClazz();
         // Does tgtType have an inner relationship with this?
-        boolean child = thisClassType.getInnerClassHereInfo().isTransitiveInnerClassOf(tgtType);
-        boolean parent = tgtType.getInnerClassHereInfo().isTransitiveInnerClassOf(thisClassType);
-        if (!(child || parent)) return null;
+        if (!validRelationship(thisClassType, tgtType)) return null;
 
         ClassFile otherClass = state.getClassFile(tgtType);
         JavaTypeInstance otherType = otherClass.getClassType();
