@@ -131,13 +131,14 @@ public class InlineDeAssigner {
     }
 
 
-    private static void rewrite(Deassigner deassigner, Op03SimpleStatement container, Op03SimpleStatement previous, List<Op03SimpleStatement> added) {
+    private static void rewrite(Deassigner deassigner, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
         List<AssignmentExpression> assignmentExpressions = deassigner.extracted;
         if (assignmentExpressions.isEmpty()) return;
         Collections.reverse(assignmentExpressions);
         InstrIndex index = container.getIndex();
         Op03SimpleStatement last = container;
-        container.removeSource(previous);
+        List<Op03SimpleStatement> sources = ListFactory.newList(container.getSources());
+        container.getSources().clear();
         for (AssignmentExpression expression : assignmentExpressions) {
             index = index.justBefore();
             AssignmentSimple assignmentSimple = new AssignmentSimple(expression.getlValue(), expression.getrValue());
@@ -147,27 +148,43 @@ public class InlineDeAssigner {
             last.addSource(newAssign);
             last = newAssign;
         }
-        previous.replaceTarget(container, last);
-        last.addSource(previous);
+        for (Op03SimpleStatement source : sources) {
+            source.replaceTarget(container, last);
+            last.addSource(source);
+        }
     }
 
-    private static void deAssign(IfStatement ifStatement, Op03SimpleStatement container, Op03SimpleStatement previous, List<Op03SimpleStatement> added) {
+    private static void deAssign(IfStatement ifStatement, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
         Deassigner deassigner = new Deassigner();
-        deassigner.rewriteExpression(ifStatement.getCondition(), container.getSSAIdentifiers(), container, ExpressionRewriterFlags.RVALUE);
-        rewrite(deassigner, container, previous, added);
+        // The outer expression can never be an assignment (that would be wrapped in a boolean expression)
+        // so we don't have to push back into the if statement.
+        Expression condition = ifStatement.getCondition();
+        deassigner.rewriteExpression(condition, container.getSSAIdentifiers(), container, ExpressionRewriterFlags.RVALUE);
+        rewrite(deassigner, container, added);
+    }
+
+    /* We don't want to stop a slew of a = b = c = fred
+     * only a = ( b = 12 ) > (c = 43)
+     * So should descend any immediate assignments first.....
+     */
+    private static void deAssign(AssignmentSimple assignmentSimple, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
+        Deassigner deassigner = new Deassigner();
+        assignmentSimple.rewriteExpressions(deassigner, container.getSSAIdentifiers());
+        rewrite(deassigner, container, added);
     }
 
     public static boolean extractAssignments(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> newStatements = ListFactory.newList();
         for (Op03SimpleStatement statement : statements) {
-            if (statement.getSources().size() != 1) continue;
-            Op03SimpleStatement previous = statement.getSources().get(0);
             Statement stmt = statement.getStatement();
             Class<? extends Statement> clazz = stmt.getClass();
             if (clazz == IfStatement.class) {
-                deAssign((IfStatement)stmt, statement, previous, newStatements);
+                if (statement.getSources().size() != 1) continue;
+                deAssign((IfStatement)stmt, statement, newStatements);
+//            } else if (clazz == AssignmentSimple.class) {
+//                deAssign((AssignmentSimple)stmt, statement, newStatements);
+//                continue;
             }
-
         }
         if (newStatements.isEmpty()) return false;
         statements.addAll(newStatements);
