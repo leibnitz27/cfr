@@ -128,7 +128,10 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
 
         private ScopeKey(LValue lValue, JavaTypeInstance type) {
             this.lValue = lValue;
-            this.type = type.getDeGenerifiedType();
+//            this.type = type.getDeGenerifiedType();
+            // Using the degenerified type causes us to 'correctly' combine a variable where it's been split into generic
+            // and non-generic types, but I can't convince myself it doesn't have scope for illegal combining.
+            this.type = type;
         }
 
         @Override
