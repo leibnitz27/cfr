@@ -71,11 +71,15 @@ public class AssignmentSimple extends AbstractAssignment {
         return rvalue;
     }
 
+    public void setRValue(Expression rvalue) {
+        this.rvalue = rvalue;
+    }
+
     /* We /should/ be using assignmentPreChange here, but if that has been disabled, these
-     * assignments should be able to stand in.
-     *
-     * This (should) also catch self member calls?
-     */
+         * assignments should be able to stand in.
+         *
+         * This (should) also catch self member calls?
+         */
     @Override
     public boolean isSelfMutatingOperation() {
         Expression localR = rvalue;

@@ -18,6 +18,7 @@ import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -76,19 +77,26 @@ public class InlineDeAssigner {
         public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
             if (noFurther) return expression;
 
+            // We could be called by a client without the correct dispatching - normally that won't matter but
+            // we need to make sure we never descend an optional term.
+            if (expression instanceof ConditionalExpression) return rewriteExpression((ConditionalExpression)expression, ssaIdentifiers, statementContainer, flags);
+
             /* We can pull this out if none of the RHS has yet been modified.
              * the LHS has not yet been read.
              */
             if (expression instanceof AssignmentExpression) {
                 AssignmentExpression assignmentExpression = (AssignmentExpression)expression;
-                assignmentExpression.getrValue().applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+                assignmentExpression.applyRValueOnlyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
                 return tryExtractAssignment((AssignmentExpression)expression);
             }
             /*
-             * Need to be very... VERY careful when extracting through ternaries.
+             * Again - never descend an optional term.
              */
             if (expression instanceof TernaryExpression) {
+                TernaryExpression ternaryExpression = (TernaryExpression)expression;
+                expression = ternaryExpression.applyConditionOnlyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
                 noFurther = true;
+                return expression;
             }
 
             Expression result = super.rewriteExpression(expression, ssaIdentifiers, statementContainer, flags);
@@ -168,8 +176,22 @@ public class InlineDeAssigner {
      * So should descend any immediate assignments first.....
      */
     private static void deAssign(AssignmentSimple assignmentSimple, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
+        Expression rhs = assignmentSimple.getRValue();
+        if (rhs instanceof LValueExpression || rhs instanceof Literal) return;
         Deassigner deassigner = new Deassigner();
-        assignmentSimple.rewriteExpressions(deassigner, container.getSSAIdentifiers());
+        LinkedList<LValue> lValues = ListFactory.newLinkedList();
+        while (rhs instanceof AssignmentExpression) {
+            AssignmentExpression assignmentExpression = (AssignmentExpression)rhs;
+            lValues.addFirst(assignmentExpression.getlValue());
+            rhs = assignmentExpression.getrValue();
+        }
+
+        Expression rhs2 = deassigner.rewriteExpression(rhs, container.getSSAIdentifiers(), container, ExpressionRewriterFlags.RVALUE);
+        if (deassigner.extracted.isEmpty()) return;
+        for (LValue outer : lValues) {
+            rhs2 = new AssignmentExpression(outer, rhs2);
+        }
+        assignmentSimple.setRValue(rhs2);
         rewrite(deassigner, container, added);
     }
 
@@ -181,9 +203,8 @@ public class InlineDeAssigner {
             if (clazz == IfStatement.class) {
                 if (statement.getSources().size() != 1) continue;
                 deAssign((IfStatement)stmt, statement, newStatements);
-//            } else if (clazz == AssignmentSimple.class) {
-//                deAssign((AssignmentSimple)stmt, statement, newStatements);
-//                continue;
+            } else if (clazz == AssignmentSimple.class) {
+                deAssign((AssignmentSimple)stmt, statement, newStatements);
             }
         }
         if (newStatements.isEmpty()) return false;

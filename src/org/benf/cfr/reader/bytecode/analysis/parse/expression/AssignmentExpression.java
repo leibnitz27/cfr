@@ -61,6 +61,12 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
         return this;
     }
 
+    // Could directly call above, but this is an aide memoir to not change behaviour of above.
+    public Expression applyRValueOnlyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        rValue = expressionRewriter.rewriteExpression(rValue, ssaIdentifiers, statementContainer, flags);
+        return this;
+    }
+
     @Override
     public boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp) {
         return false;
