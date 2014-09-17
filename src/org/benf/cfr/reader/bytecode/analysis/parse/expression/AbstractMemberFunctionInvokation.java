@@ -28,8 +28,9 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
     private final List<Expression> args;
     private final ConstantPool cp;
     private final MethodPrototype methodPrototype;
+    private final List<Boolean> nulls;
 
-    public AbstractMemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args) {
+    public AbstractMemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args, List<Boolean> nulls) {
         super(new InferredJavaType(
                 methodPrototype.getReturnType(
                         object.getInferredJavaType().getJavaTypeInstance(), args
@@ -39,6 +40,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         this.methodPrototype = methodPrototype;
         this.object = object;
         this.args = args;
+        this.nulls = nulls;
         this.cp = cp;
     }
 
@@ -82,6 +84,10 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
 
     public List<Expression> getArgs() {
         return args;
+    }
+
+    public List<Boolean> getNulls() {
+        return nulls;
     }
 
     public MethodPrototype getMethodPrototype() {

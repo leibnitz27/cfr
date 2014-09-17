@@ -12,7 +12,15 @@ public class SetUtil {
         return false;
     }
 
+    // Note - this could return the original set, so don't use it if you want to mutate the set!
+    public static <X> Set<X> originalIntersectionOrNull(Set<X> a, Set<? extends X> b) {
+        if (a==null||b==null) return null;
+        if (a.equals(b)) return a;
+        return intersectionOrNull(a,b);
+    }
+
     public static <X> Set<X> intersectionOrNull(Set<? extends X> a, Set<? extends X> b) {
+        if (a==null||b==null) return null;
         if (b.size() < a.size()) {
             Set<? extends X> tmp = a;
             a = b;

@@ -19,8 +19,8 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
     private final boolean special;
     private final boolean isInitMethod;
 
-    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, boolean special, List<Expression> args) {
-        super(cp, function, methodPrototype, object, args);
+    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, boolean special, List<Expression> args, List<Boolean> nulls) {
+        super(cp, function, methodPrototype, object, args, nulls);
         ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
         String funcName = nameAndType.getName().getValue();
         // Most of the time a member function invokation for a constructor will
@@ -33,7 +33,7 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new MemberFunctionInvokation(getCp(), getFunction(), getMethodPrototype(), cloneHelper.replaceOrClone(getObject()), special, cloneHelper.replaceOrClone(getArgs()));
+        return new MemberFunctionInvokation(getCp(), getFunction(), getMethodPrototype(), cloneHelper.replaceOrClone(getObject()), special, cloneHelper.replaceOrClone(getArgs()), getNulls());
     }
 
     @Override

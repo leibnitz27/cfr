@@ -8,19 +8,91 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericPlaceholderTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class GenericInferer {
 
-    static GenericTypeBinder getGtb(MemberFunctionInvokation m) {
-        return m.getMethodPrototype().getTypeBinderFor(m.getArgs());
+    private static class GenericInferData {
+        GenericTypeBinder binder;
+        Set<JavaGenericPlaceholderTypeInstance> nullPlaceholders;
+
+        private GenericInferData(GenericTypeBinder binder, Set<JavaGenericPlaceholderTypeInstance> nullPlaceholders) {
+            this.binder = binder;
+            this.nullPlaceholders = nullPlaceholders;
+        }
+
+        private GenericInferData(GenericTypeBinder binder) {
+            this.binder = binder;
+            this.nullPlaceholders = null;
+        }
+
+        public boolean isValid() {
+            return binder != null;
+        }
+
+        public GenericInferData mergeWith(GenericInferData other) {
+            if (!isValid()) return this;
+            if (!other.isValid()) return other;
+
+            GenericTypeBinder newBinder = binder.mergeWith(other.binder, true);
+            if (newBinder == null) return new GenericInferData(null);
+
+            Set<JavaGenericPlaceholderTypeInstance> newNullPlaceHolders = SetUtil.originalIntersectionOrNull(nullPlaceholders, other.nullPlaceholders);
+            return new GenericInferData(newBinder, newNullPlaceHolders);
+        }
+
+        /*
+         * Ordinarily just return the binder.  however if there are any arguments that have ONLY EVER been 'null',
+         * we can make use of that.
+         */
+        public GenericTypeBinder getTypeBinder() {
+            if (nullPlaceholders != null && !nullPlaceholders.isEmpty()) {
+                for (JavaGenericPlaceholderTypeInstance onlyNull : nullPlaceholders) {
+                    binder.suggestOnlyNullBinding(onlyNull);
+                }
+            }
+            return binder;
+        }
+    }
+
+    static GenericInferData getGtbNullFiltered(MemberFunctionInvokation m) {
+        List<Expression> args = m.getArgs();
+        GenericTypeBinder res =  m.getMethodPrototype().getTypeBinderFor(args);
+        List<Boolean> nulls = m.getNulls();
+        if (args.size() != nulls.size()) return new GenericInferData(res);
+        boolean found = false;
+        for (Boolean b : nulls) {
+            if (b) { found = true; break; }
+        }
+        if (!found) return new GenericInferData(res);
+        /*
+         * Possibly unwind some of the bindings, if they're identity bindings caused by null arguments
+         * this would be better done inside the generic type binder, but
+         * I'd like to keep it here, for now...
+         */
+        Set<JavaGenericPlaceholderTypeInstance> nullBindings = null;
+        for (int x=0,len=args.size();x<len;++x) {
+            if (nulls.get(x)) {
+                JavaTypeInstance t = args.get(x).getInferredJavaType().getJavaTypeInstance();
+                if (t instanceof JavaGenericPlaceholderTypeInstance) {
+                    JavaGenericPlaceholderTypeInstance placeholder = (JavaGenericPlaceholderTypeInstance)t;
+                    JavaTypeInstance t2 = res.getBindingFor(placeholder);
+                    if (!t2.equals(placeholder)) continue;
+                    if (nullBindings == null) nullBindings = SetFactory.newSet();
+                    res.removeBinding(placeholder);
+                    nullBindings.add(placeholder);
+                }
+            }
+        }
+
+        return new GenericInferData(res, nullBindings);
     }
 
     public static void inferGenericObjectInfoFromCalls(List<Op03SimpleStatement> statements) {
@@ -60,19 +132,17 @@ public class GenericInferer {
             JavaGenericBaseInstance genericType = (JavaGenericBaseInstance) type;
             if (!genericType.hasUnbound()) continue;
 
-            GenericTypeBinder gtb0 = getGtb(invokations.get(0));
-            if (gtb0 == null) continue invokationGroup;
+            GenericInferData inferData = getGtbNullFiltered(invokations.get(0));
+            if (!inferData.isValid()) continue invokationGroup;
             for (int x = 1, len = invokations.size(); x < len; ++x) {
-                GenericTypeBinder gtb = getGtb(invokations.get(x));
-                if (gtb == null) {
-                    continue invokationGroup;
-                }
-                gtb0 = gtb0.mergeWith(gtb, true);
-                if (gtb0 == null) {
+                GenericInferData inferData1 = getGtbNullFiltered(invokations.get(x));
+                inferData = inferData.mergeWith(inferData1);
+                if (!inferData.isValid()) {
                     continue invokationGroup;
                 }
             }
-            obj0.getInferredJavaType().deGenerify(gtb0.getBindingFor(obj0.getInferredJavaType().getJavaTypeInstance()));
+            GenericTypeBinder typeBinder = inferData.getTypeBinder();
+            obj0.getInferredJavaType().deGenerify(typeBinder.getBindingFor(obj0.getInferredJavaType().getJavaTypeInstance()));
         }
     }
 }

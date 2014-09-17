@@ -130,6 +130,11 @@ public class GenericTypeBinder {
         }
     }
 
+    public void removeBinding(JavaGenericPlaceholderTypeInstance type) {
+        String name = type.getRawName();
+        nameToBoundType.remove(name);
+    }
+
     public JavaTypeInstance getBindingFor(JavaTypeInstance maybeUnbound) {
         if (maybeUnbound instanceof JavaGenericPlaceholderTypeInstance) {
             JavaGenericPlaceholderTypeInstance placeholder = (JavaGenericPlaceholderTypeInstance) maybeUnbound;
@@ -145,10 +150,17 @@ public class GenericTypeBinder {
         return maybeUnbound;
     }
 
+
     private static boolean isBetterBinding(JavaTypeInstance isBetter, JavaTypeInstance than) {
         if (than == null) return true;
         if (isBetter instanceof JavaGenericPlaceholderTypeInstance) return false;
         return true;
+    }
+
+    public void suggestOnlyNullBinding(JavaGenericPlaceholderTypeInstance type) {
+        String name = type.getRawName();
+        if (nameToBoundType.containsKey(name)) return;
+        nameToBoundType.put(name, TypeConstants.OBJECT);
     }
 
     public void suggestBindingFor(String name, JavaTypeInstance binding) {

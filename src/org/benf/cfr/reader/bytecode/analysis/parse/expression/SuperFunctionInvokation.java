@@ -14,13 +14,13 @@ import java.util.List;
 
 public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
 
-    public SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args) {
-        super(cp, function, methodPrototype, object, args);
+    public SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args, List<Boolean> nulls) {
+        super(cp, function, methodPrototype, object, args, nulls);
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new SuperFunctionInvokation(getCp(), getFunction(), getMethodPrototype(), cloneHelper.replaceOrClone(getObject()), cloneHelper.replaceOrClone(getArgs()));
+        return new SuperFunctionInvokation(getCp(), getFunction(), getMethodPrototype(), cloneHelper.replaceOrClone(getObject()), cloneHelper.replaceOrClone(getArgs()), getNulls());
     }
 
     private boolean isSyntheticThisFirstArg() {

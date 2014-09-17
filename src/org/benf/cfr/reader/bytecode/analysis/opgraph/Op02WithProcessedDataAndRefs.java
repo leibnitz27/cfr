@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecovery;
 import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
@@ -70,6 +71,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private final List<StackEntryHolder> stackConsumed = ListFactory.newList();
     private final List<StackEntryHolder> stackProduced = ListFactory.newList();
     private StackSim unconsumedJoinedStack = null;
+    private boolean hasCatchParent = false;
 
     private SSAIdentifiers<Slot> ssaIdentifiers;
     private Map<Integer, Ident> localVariablesBySlot = MapFactory.newLinkedMap();
@@ -293,6 +295,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return d;
     }
 
+    private static List<Boolean> getNullsByType(List<Expression> expressions) {
+        List<Boolean> res = ListFactory.newList(expressions.size());
+        for (Expression e : expressions) {
+            res.add(e.getInferredJavaType().getJavaTypeInstance() == RawJavaType.NULL);
+        }
+        return res;
+    }
+
     private Statement buildInvoke(Method thisCallerMethod) {
         ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
         StackValue object = getStackRValue(stackConsumed.size() - 1);
@@ -325,11 +335,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         /*
          * Use information about arguments to help us deduce lValue types.
          */
+        List<Boolean> nulls = getNullsByType(args);
         methodPrototype.tightenArgs(object, args);
 
         AbstractMemberFunctionInvokation funcCall = isSuper ?
-                new SuperFunctionInvokation(cp, function, methodPrototype, object, args) :
-                new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args);
+                new SuperFunctionInvokation(cp, function, methodPrototype, object, args, nulls) :
+                new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args, nulls);
 
 //        InferredJavaType inferredJavaType = object.getInferredJavaType();
 //        if (inferredJavaType.getJavaTypeInstance().getInnerClassHereInfo().isAnonymousClass()) {
@@ -1477,14 +1488,25 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
         };
 
+        final BinaryPredicate<Slot, Slot> always = new BinaryPredicate<Slot, Slot>() {
+            @Override
+            public boolean test(Slot a, Slot b) {
+                return false;
+            }
+        };
+
         LinkedList<Op02WithProcessedDataAndRefs> toProcess = ListFactory.newLinkedList();
         toProcess.addAll(statements);
         while (!toProcess.isEmpty()) {
             Op02WithProcessedDataAndRefs statement = toProcess.remove();
             SSAIdentifiers<Slot> ssaIdentifiers = statement.ssaIdentifiers;
             boolean changed = false;
+            // If this is a catch, we know for CERTAIN that we can't be sharing a lifetime with a previous incarnation
+            // of the variable in the slot.
+            BinaryPredicate<Slot, Slot> test = testSlot;
+            if (statement.hasCatchParent) test = always;
             for (Op02WithProcessedDataAndRefs source : statement.getSources()) {
-                if (ssaIdentifiers.mergeWith(source.ssaIdentifiers, testSlot)) {
+                if (ssaIdentifiers.mergeWith(source.ssaIdentifiers, test)) {
                     changed = true;
                 }
             }
@@ -1660,6 +1682,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                         });
                     }
                 });
+        // We have to poison some idents, as we don't want them to be used.
+        // (eg anything that is caught cannot have been merged)
+        Map<Slot, Set<SSAIdent>> poisoned = MapFactory.newLazyMap(
+                new UnaryFunction<Slot, Set<SSAIdent>>() {
+                    @Override
+                    public Set<SSAIdent> invoke(Slot arg) {
+                        return SetFactory.newSet();
+                    }
+                }
+        );
 
         final Set<Integer> livenessClashes = bytecodeMeta.getLivenessClashes();
 
@@ -1672,6 +1704,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 SSAIdent fixedIdent = identifiers.getValFixedHere();
                 if (fixedIdent.isFirstIn(finalIdent)) {
                     identifiers.setInitialAssign();
+                }
+                if (op.hasCatchParent) {
+                    poisoned.get(fixedHere).add(finalIdent);
                 }
             }
 
@@ -1697,6 +1732,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         final Map<Pair<Slot, SSAIdent>, Ident> combinedMap = MapFactory.newLinkedMap();
 
         final IdentFactory identFactory = new IdentFactory();
+        for (Map.Entry<Slot, Set<SSAIdent>> entry : poisoned.entrySet()) {
+            Slot slot = entry.getKey();
+            Map<SSAIdent, Set<SSAIdent>> map = identChain.get(slot);
+            for (SSAIdent key : entry.getValue()) {
+                map.get(key).clear();
+            }
+        }
 
         for (Map.Entry<Slot, Map<SSAIdent, Set<SSAIdent>>> entry : identChain.entrySet()) {
             // This is a map of all the things that are ever in slot Slot, if they alias.
@@ -2176,6 +2218,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     tryTarget = adjustOrdering(insertions, tryTarget, exceptionGroup, preCatchOp);
                     preCatchOp.containedInTheseBlocks.addAll(tryTarget.getContainedInTheseBlocks());
                     preCatchOp.addTarget(tryTarget);
+                    if (JVMInstr.isAStore(tryTarget.getInstr())) tryTarget.hasCatchParent = true;
                     tryTarget.addSource(preCatchOp);
                     op2list.add(preCatchOp);
                 }

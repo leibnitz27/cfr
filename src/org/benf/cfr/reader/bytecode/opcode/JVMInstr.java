@@ -326,4 +326,17 @@ public enum JVMInstr {
     public boolean isNoThrow() {
         return noThrow;
     }
+
+    public static boolean isAStore(JVMInstr instr) {
+        switch (instr) {
+            case ASTORE:
+            case ASTORE_0:
+            case ASTORE_1:
+            case ASTORE_2:
+            case ASTORE_3:
+            case ASTORE_WIDE:
+                return true;
+        }
+        return false;
+    }
 }
