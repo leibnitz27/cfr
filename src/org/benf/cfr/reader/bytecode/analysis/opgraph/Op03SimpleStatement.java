@@ -680,8 +680,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         stm2.replaceStatement(new AssignmentSimple(l2, newRhs));
     }
 
-    public static void determineFinal(List<Op03SimpleStatement> statements, VariableFactory variableFactory) {
-    }
 
 
     /*

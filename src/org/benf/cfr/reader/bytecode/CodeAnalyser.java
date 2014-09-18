@@ -511,11 +511,6 @@ public class CodeAnalyser {
             Op03SimpleStatement.propagateToReturn(method, op03SimpleParseNodes);
         }
 
-        // At this point, make a first stab at identifying final variables, (or stack values which can't be
-        // removed and appear as pseudo-variables).
-        Op03SimpleStatement.determineFinal(op03SimpleParseNodes, variableFactory);
-
-
         logger.info("sugarAnyonymousArrays");
         AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
 
