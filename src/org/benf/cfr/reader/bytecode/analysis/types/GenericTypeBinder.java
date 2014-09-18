@@ -238,7 +238,7 @@ public class GenericTypeBinder {
             JavaTypeInstance rhstype = rhsBinder.nameToBoundType.get(key);
             JavaTypeInstance lhsStripped = lhstype.getDeGenerifiedType();
             JavaTypeInstance rhsStripped = rhstype.getDeGenerifiedType();
-            if (!lhsStripped.equals(rhsStripped)) {
+            if (!lhsStripped.equals(rhsStripped) && !(rhstype instanceof JavaGenericPlaceholderTypeInstance)) {
                 BindingSuperContainer rhsBoundSupers = rhstype.getBindingSupers();
                 if (rhsBoundSupers == null || !rhsBoundSupers.containsBase(lhstype.getDeGenerifiedType())) return null;
             }
