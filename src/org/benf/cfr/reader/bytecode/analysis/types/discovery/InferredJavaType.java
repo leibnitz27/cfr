@@ -549,15 +549,25 @@ public class InferredJavaType {
     }
 
     private boolean checkBaseCompatibility(JavaTypeInstance thisType, JavaTypeInstance otherType) {
+
+        if (thisType instanceof JavaGenericPlaceholderTypeInstance || otherType instanceof JavaGenericPlaceholderTypeInstance) {
+            return (thisType.equals(otherType));
+        }
+
         JavaTypeInstance thisStripped = thisType.getDeGenerifiedType();
         JavaTypeInstance otherStripped = otherType.getDeGenerifiedType();
         if (thisStripped.equals(otherStripped)) {
-            if (thisType instanceof JavaGenericRefTypeInstance &&
-                otherType instanceof JavaGenericRefTypeInstance) {
+            boolean genericThis = thisType instanceof JavaGenericRefTypeInstance;
+            boolean genericThat = otherType instanceof JavaGenericRefTypeInstance;
+            if (genericThis && genericThat) {
                 return checkGenericCompatibility((JavaGenericRefTypeInstance)thisType, (JavaGenericRefTypeInstance)otherType);
             }
+            /*
+             *
+             */
             return true;
         }
+
 
         BindingSuperContainer otherSupers = otherType.getBindingSupers();
         if (otherSupers == null) {
