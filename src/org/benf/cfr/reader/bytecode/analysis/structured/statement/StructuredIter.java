@@ -50,6 +50,7 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
         if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
         JavaTypeInstance itertype = iterator.getInferredJavaType().getJavaTypeInstance();
         dumper.print("for (");
+        if (iterator.isFinal()) dumper.print("final ");
         dumper.dump(itertype).print(" ");
         dumper.dump(iterator).print(" : ").dump(list).print(") ");
         getBody().dump(dumper);
