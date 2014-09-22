@@ -90,6 +90,25 @@ public class GenericTypeBinder {
         return new GenericTypeBinder(unboundNames);
     }
 
+    /*
+     * Extra faffing if we don't know that the two classes are the same.
+     */
+    public static GenericTypeBinder extractBaseBindings(JavaGenericBaseInstance unbound, JavaTypeInstance maybeBound) {
+        if (!(unbound instanceof JavaGenericRefTypeInstance)) return extractBindings(unbound, maybeBound);
+        if (!(maybeBound instanceof JavaGenericRefTypeInstance)) return extractBindings(unbound, maybeBound);
+
+        JavaGenericRefTypeInstance unboundGeneric = (JavaGenericRefTypeInstance)unbound;
+        JavaGenericRefTypeInstance maybeBoundGeneric = (JavaGenericRefTypeInstance)maybeBound;
+
+        BindingSuperContainer maybeBindingContainer = maybeBound.getBindingSupers();
+        JavaTypeInstance boundAssignable = maybeBindingContainer.getBoundAssignable(maybeBoundGeneric, unboundGeneric);
+
+        BindingSuperContainer thisBindingContainer = unbound.getBindingSupers();
+        GenericTypeBinder binder = extractBindings(unboundGeneric, boundAssignable);
+
+        return binder;
+    }
+
 
     public static GenericTypeBinder extractBindings(JavaGenericBaseInstance unbound, JavaTypeInstance maybeBound) {
         Map<String, JavaTypeInstance> boundNames = MapFactory.newMap();
@@ -133,6 +152,10 @@ public class GenericTypeBinder {
     public void removeBinding(JavaGenericPlaceholderTypeInstance type) {
         String name = type.getRawName();
         nameToBoundType.remove(name);
+    }
+
+    public JavaTypeInstance getBindingFor(FormalTypeParameter formalTypeParameter) {
+        return nameToBoundType.get(formalTypeParameter.getName());
     }
 
     public JavaTypeInstance getBindingFor(JavaTypeInstance maybeUnbound) {

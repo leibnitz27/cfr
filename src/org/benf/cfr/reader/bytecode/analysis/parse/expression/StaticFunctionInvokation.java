@@ -19,6 +19,8 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.annotation.Nullable;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -27,6 +29,8 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
     private final ConstantPoolEntryMethodRef function;
     private final List<Expression> args;
     private final JavaTypeInstance clazz;
+    private @Nullable
+    List<JavaTypeInstance> explicitGenerics;
 
     private static InferredJavaType getTypeForFunction(ConstantPoolEntryMethodRef function, List<Expression> args) {
         InferredJavaType res = new InferredJavaType(
@@ -77,10 +81,25 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        applyExpressionRewriterToArgs(expressionRewriter, ssaIdentifiers, statementContainer, flags);
+        return this;
+    }
+
+    @Override
+    public void applyExpressionRewriterToArgs(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         for (int x = 0; x < args.size(); ++x) {
             args.set(x, expressionRewriter.rewriteExpression(args.get(x), ssaIdentifiers, statementContainer, flags));
         }
-        return this;
+    }
+
+    @Override
+    public void setExplicitGenerics(List<JavaTypeInstance> types) {
+        explicitGenerics = types;
+    }
+
+    @Override
+    public List<JavaTypeInstance> getExplicitGenerics() {
+        return explicitGenerics;
     }
 
     @Override
@@ -91,12 +110,20 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
     @Override
     public Dumper dumpInner(Dumper d) {
         d.dump(clazz).print(".");
+        if (explicitGenerics != null && !explicitGenerics.isEmpty()) {
+            d.print("<");
+            boolean first = true;
+            for (JavaTypeInstance typeInstance : explicitGenerics) {
+                first = CommaHelp.comma(first, d);
+                d.dump(typeInstance);
+            }
+            d.print(">");
+        }
         ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
         d.print(nameAndType.getName().getValue() + "(");
         boolean first = true;
         for (Expression arg : args) {
-            if (!first) d.print(", ");
-            first = false;
+            first = CommaHelp.comma(first, d);
             d.dump(arg);
         }
         d.print(")");

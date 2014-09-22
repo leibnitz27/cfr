@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewr
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExplicitTypeCallRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.XorRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
@@ -731,7 +732,9 @@ public class CodeAnalyser {
          */
         Op03SimpleStatement.replaceStackVarsWithLocals(op03SimpleParseNodes);
 
-
+        if (options.getOption(OptionsImpl.SHOW_INFERRABLE, classFileVersion)) {
+            Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new ExplicitTypeCallRewriter());
+        }
         /*
          * It's possible to have false sharing across distinct regimes in the case of loops -
          * see LoopTest56.  We need to verify that we have not generated obviously bad code.

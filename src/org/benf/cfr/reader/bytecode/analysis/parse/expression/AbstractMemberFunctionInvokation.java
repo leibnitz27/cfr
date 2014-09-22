@@ -64,10 +64,25 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         object = expressionRewriter.rewriteExpression(object, ssaIdentifiers, statementContainer, flags);
+        applyExpressionRewriterToArgs(expressionRewriter, ssaIdentifiers, statementContainer, flags);
+        return this;
+    }
+
+    @Override
+    public void applyExpressionRewriterToArgs(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         for (int x = 0; x < args.size(); ++x) {
             args.set(x, expressionRewriter.rewriteExpression(args.get(x), ssaIdentifiers, statementContainer, flags));
         }
-        return this;
+    }
+
+    // Ignored, for now.
+    @Override
+    public void setExplicitGenerics(List<JavaTypeInstance> types) {
+    }
+
+    @Override
+    public List<JavaTypeInstance> getExplicitGenerics() {
+        return null;
     }
 
     public Expression getObject() {

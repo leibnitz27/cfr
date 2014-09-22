@@ -281,6 +281,16 @@ public class MethodPrototype implements TypeUsageCollectable {
         return formalTypeParameters != null && !formalTypeParameters.isEmpty();
     }
 
+    public List<JavaTypeInstance> getExplicitGenericUsage(GenericTypeBinder binder) {
+        List<JavaTypeInstance> types = ListFactory.newList();
+        for (FormalTypeParameter parameter : formalTypeParameters) {
+            JavaTypeInstance type = binder.getBindingFor(parameter);
+            if (type == null) return null;
+            types.add(type);
+        }
+        return types;
+    }
+
     public JavaTypeInstance getClassType() {
         if (classFile == null) return null;
         return classFile.getClassType();

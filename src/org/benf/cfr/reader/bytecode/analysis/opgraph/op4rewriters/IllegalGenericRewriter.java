@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -13,6 +14,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+
+import java.util.List;
 
 public class IllegalGenericRewriter implements ExpressionRewriter {
     private final ConstantPool cp;
@@ -35,6 +38,17 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
         }
     }
 
+    private void maybeRewriteExplicitCallTyping(AbstractFunctionInvokation abstractFunctionInvokation) {
+        List<JavaTypeInstance> list = abstractFunctionInvokation.getExplicitGenerics();
+        if (list == null) return;
+        for (JavaTypeInstance type : list) {
+            if (hasIllegalGenerics(type)) {
+                abstractFunctionInvokation.setExplicitGenerics(null);
+                return;
+            }
+        }
+    }
+
     @Override
     public void handleStatement(StatementContainer statementContainer) {
 
@@ -43,6 +57,9 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        if (expression instanceof AbstractFunctionInvokation) {
+            maybeRewriteExplicitCallTyping((AbstractFunctionInvokation)expression);
+        }
         maybeRewriteExpressionType(expression.getInferredJavaType());
         return expression;
     }
