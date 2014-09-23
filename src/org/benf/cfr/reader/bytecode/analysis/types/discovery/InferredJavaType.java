@@ -76,6 +76,10 @@ public class InferredJavaType {
 
         public void forceType(JavaTypeInstance rawJavaType, boolean ignoreLock);
 
+        public void markKnownBaseClass(JavaTypeInstance knownBase);
+
+        public JavaTypeInstance getKnownBaseType();
+
         public void markClashState(ClashState newClashState);
 
         public boolean isLocked();
@@ -279,6 +283,15 @@ public class InferredJavaType {
         }
 
         @Override
+        public void markKnownBaseClass(JavaTypeInstance knownBase) {
+        }
+
+        @Override
+        public JavaTypeInstance getKnownBaseType() {
+            return null;
+        }
+
+        @Override
         public void markClashState(ClashState newClashState) {
         }
 
@@ -312,6 +325,8 @@ public class InferredJavaType {
         private final boolean locked;
         // When not delegating
         private JavaTypeInstance type;
+        // If we don't know what the type is, but we know it's at LEAST this, it can inform a guess.
+        private JavaTypeInstance knownBase;
         // If we're using a type and we later discover more information about it, we can
         // remember this for a recovery pass.
         private int taggedBytecodeLocation = -1;
@@ -320,6 +335,7 @@ public class InferredJavaType {
         private final int id;
         // When delegating
         private IJTInternal delegate;
+
 
 
         private IJTInternal_Impl(JavaTypeInstance type, Source source, boolean locked) {
@@ -407,6 +423,28 @@ public class InferredJavaType {
                 isDelegate = true;
                 delegate = newDelegate;
             }
+        }
+
+        @Override
+        public void markKnownBaseClass(JavaTypeInstance newKnownBase) {
+            if (isDelegate) {
+                delegate.markKnownBaseClass(newKnownBase);
+                return;
+            }
+            if (this.knownBase == null) {
+                this.knownBase = newKnownBase;
+            } else {
+                BindingSuperContainer boundSupers = this.knownBase.getBindingSupers();
+                if (boundSupers == null || !boundSupers.containsBase(newKnownBase.getDeGenerifiedType())) {
+                    this.knownBase = newKnownBase;
+                }
+            }
+        }
+
+        @Override
+        public JavaTypeInstance getKnownBaseType() {
+            if (isDelegate) return delegate.getKnownBaseType();
+            return knownBase;
         }
 
         public void forceType(JavaTypeInstance rawJavaType, boolean ignoreLock) {
@@ -778,14 +816,20 @@ public class InferredJavaType {
     /*
      * This is being used as an argument to a known typed function.  Maybe we can infer some type information.
      *
-     * Todo : this needs much more structure.
+     * We're limited with what we can do here - all this is telling us is that the other type is a superclass
+     * so we CAN'T use it to force a type.
+     *
+     * However, we CAN use it to determine if the type is an array, or to tighten generic bounds.
      */
     public void useAsWithoutCasting(JavaTypeInstance otherTypeInstance) {
         if (this == IGNORE) return;
 
+        // Stand to gain no information from this!
+        if (otherTypeInstance == TypeConstants.OBJECT) return;
+
         JavaTypeInstance thisTypeInstance = getJavaTypeInstance();
         if (thisTypeInstance == RawJavaType.NULL) {
-            this.value.forceType(otherTypeInstance, false);
+            this.value.markKnownBaseClass(otherTypeInstance);
         }
         /* If value is something that can legitimately be forced /DOWN/
          * (i.e. from int to char) then we should push it down.
@@ -886,6 +930,16 @@ public class InferredJavaType {
             }
         }
         value.forceType(other, true);
+    }
+
+    // Ok - this type has failed - has there been any useful known base?
+    public void applyKnownBaseType() {
+        JavaTypeInstance type = value.getKnownBaseType();
+        if (type == null) {
+            return;
+        } else {
+            value.forceType(type, false);
+        }
     }
 
     /* We've got some type info about this type already, but we're assigning from other.

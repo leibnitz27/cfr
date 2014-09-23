@@ -387,6 +387,9 @@ public class CodeAnalyser {
 
         // Expand any 'multiple' statements (eg from dups)
         Misc.flattenCompoundStatements(op03SimpleParseNodes);
+        // Before we get complicated, see if there are any values which have been left with null/void types, but have
+        // known base information which can improve it.
+        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new NullTypedLValueRewriter());
 
         // Very early, we make a pass through collecting all the method calls for a given type
         // SPECIFICALLY by type pointer, don't alias identical types.
