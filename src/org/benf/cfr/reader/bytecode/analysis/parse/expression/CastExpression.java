@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class CastExpression extends AbstractExpression implements BoxingProcessor {
@@ -59,13 +60,13 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
             // This is ugly.  Unfortunately, it's necessary (currently!) as we don't have an extra pass to
             // transform invalid casts like this.
             d.print("(").dump(castType).print(")");
-            child.dumpWithOuterPrecedence(d, getPrecedence());
+            child.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
             d.print(" ? 1 : 0");
         } else if (castType == RawJavaType.NULL) {
-            child.dumpWithOuterPrecedence(d, getPrecedence());
+            child.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         } else {
             d.print("(").dump(castType).print(")");
-            child.dumpWithOuterPrecedence(d, getPrecedence());
+            child.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         }
         return d;
     }

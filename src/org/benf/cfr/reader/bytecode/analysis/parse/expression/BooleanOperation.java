@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
@@ -82,9 +83,9 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        lhs.dumpWithOuterPrecedence(d, getPrecedence());
+        lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE);
         d.print(" ").print(op.getShowAs()).print(" ");
-        rhs.dumpWithOuterPrecedence(d, getPrecedence());
+        rhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.FALSE);
         return d;
     }
 

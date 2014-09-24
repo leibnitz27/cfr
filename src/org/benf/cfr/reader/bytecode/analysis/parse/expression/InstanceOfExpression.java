@@ -14,6 +14,7 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class InstanceOfExpression extends AbstractExpression {
@@ -51,7 +52,7 @@ public class InstanceOfExpression extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        lhs.dumpWithOuterPrecedence(d, getPrecedence());
+        lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d.print(" instanceof ").dump(typeInstance);
     }
 

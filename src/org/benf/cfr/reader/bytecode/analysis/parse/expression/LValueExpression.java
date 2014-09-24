@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
@@ -77,7 +78,7 @@ public class LValueExpression extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        return lValue.dumpWithOuterPrecedence(d, getPrecedence());
+        return lValue.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
     }
 
     public LValue getLValue() {

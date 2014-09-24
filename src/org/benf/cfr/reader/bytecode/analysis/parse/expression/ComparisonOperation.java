@@ -17,6 +17,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
@@ -88,9 +89,9 @@ public class ComparisonOperation extends AbstractExpression implements Condition
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        lhs.dumpWithOuterPrecedence(d, getPrecedence());
+        lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE);
         d.print(" ").print(op.getShowAs()).print(" ");
-        rhs.dumpWithOuterPrecedence(d, getPrecedence());
+        rhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.FALSE);
         return d;
     }
 

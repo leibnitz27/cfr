@@ -9,6 +9,7 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -49,7 +50,7 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
     @Override
     public Dumper dumpInner(Dumper d) {
         String comment = null;
-        getObject().dumpWithOuterPrecedence(d, getPrecedence());
+        getObject().dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
 
         MethodPrototype methodPrototype = getMethodPrototype();
         if (!isInitMethod) d.print("." + name);

@@ -20,6 +20,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -377,7 +378,7 @@ public class WildcardMatch {
         }
 
         @Override
-        public Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerPrecedence) {
+        public Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerPrecedence, Troolean isLhs) {
             return d;
         }
 
@@ -495,7 +496,7 @@ public class WildcardMatch {
         }
 
         @Override
-        public Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerPrecedence) {
+        public Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerPrecedence, Troolean isLhs) {
             return dump(d);
         }
 

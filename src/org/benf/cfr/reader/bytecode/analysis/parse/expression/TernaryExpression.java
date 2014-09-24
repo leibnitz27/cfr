@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class TernaryExpression extends AbstractExpression implements BoxingProcessor {
@@ -69,11 +70,11 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        condition.dumpWithOuterPrecedence(d, getPrecedence());
+        condition.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         d.print(" ? ");
-        lhs.dumpWithOuterPrecedence(d, getPrecedence());
+        lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         d.print(" : ");
-        rhs.dumpWithOuterPrecedence(d, getPrecedence());
+        rhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
     }
 

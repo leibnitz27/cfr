@@ -18,6 +18,7 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryFieldRef;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 /**
@@ -144,7 +145,7 @@ public class FieldVariable extends AbstractLValue {
         if (isOuterRef() && objectIsThis()) {
             return d.print(getFieldName());
         } else {
-            object.dumpWithOuterPrecedence(d, getPrecedence());
+            object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
             return d.print(".").print(getFieldName());
         }
     }

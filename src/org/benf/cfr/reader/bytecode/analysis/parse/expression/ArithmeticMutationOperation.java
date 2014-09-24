@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpression {
@@ -43,7 +44,7 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
     @Override
     public Dumper dumpInner(Dumper d) {
         d.dump(mutated).print(op.getShowAs() + "=");
-        mutation.dumpWithOuterPrecedence(d, getPrecedence());
+        mutation.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
     }
 

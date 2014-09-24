@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
@@ -58,7 +59,7 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
     @Override
     public Dumper dumpInner(Dumper d) {
         d.print("!");
-        inner.dumpWithOuterPrecedence(d, getPrecedence());
+        inner.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
     }
 

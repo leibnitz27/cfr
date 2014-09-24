@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
@@ -49,7 +50,7 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        array.dumpWithOuterPrecedence(d, getPrecedence());
+        array.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         d.print("[").dump(index).print("]");
         return d;
     }

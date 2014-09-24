@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
@@ -76,7 +77,7 @@ public abstract class AbstractExpression implements Expression {
 
     @Override
     public final Dumper dump(Dumper d) {
-        return dumpWithOuterPrecedence(d, Precedence.WEAKEST);
+        return dumpWithOuterPrecedence(d, Precedence.WEAKEST, Troolean.NEITHER);
     }
 
     @Override
@@ -85,10 +86,27 @@ public abstract class AbstractExpression implements Expression {
     public abstract Dumper dumpInner(Dumper d);
 
     @Override
-    public final Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerP) {
+    public final Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerP, Troolean isLhs) {
         Precedence innerP = getPrecedence();
         int cmp = innerP.compareTo(outerP);
-        if (cmp > 0 || cmp == 0 && !innerP.isLtoR()) {
+        boolean requires = false;
+        if (cmp > 0) {
+            requires = true;
+        } else if (cmp == 0) {
+            switch (isLhs) {
+                case TRUE:
+                    // I.e. same precedence, we're on LHS, we only need braces if prec is R->L.
+                    requires = !innerP.isLtoR();
+                    break;
+                case FALSE:
+                    requires = innerP.isLtoR();
+                    break;
+                case NEITHER:
+                    requires = !innerP.isLtoR();
+                    break;
+            }
+        }
+        if (requires) {
             d.print("(");
             dumpInner(d);
             d.print(")");

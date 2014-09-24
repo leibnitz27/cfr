@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class ExplicitBraceExpression extends AbstractExpression {
@@ -40,7 +41,7 @@ public class ExplicitBraceExpression extends AbstractExpression {
     @Override
     public Dumper dumpInner(Dumper d) {
         d.print("(");
-        contained.dumpWithOuterPrecedence(d, contained.getPrecedence());
+        contained.dumpWithOuterPrecedence(d, contained.getPrecedence(), Troolean.NEITHER);
         d.print(")");
         return d;
     }
