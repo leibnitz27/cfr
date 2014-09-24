@@ -143,6 +143,7 @@ public class OverloadMethodSet {
         for (int x = 0, len = args.size(); x < len; ++x) {
             Expression arg = args.get(x);
             JavaTypeInstance actual = arg.getInferredJavaType().getJavaTypeInstance();
+            actual = actual.getDeGenerifiedType();
             Iterator<MethodData> possiter = possibleMatches.iterator();
             while (possiter.hasNext()) {
                 MethodData prototype = possiter.next();
@@ -151,6 +152,7 @@ public class OverloadMethodSet {
                     possiter.remove();
                     continue;
                 }
+                argType = argType.getDeGenerifiedType();
                 // If it was equal, it would have been satisfied previously.
                 if (!(actual.implicitlyCastsTo(argType, gtb) && actual.canCastTo(argType, gtb))) {
                     possiter.remove();
