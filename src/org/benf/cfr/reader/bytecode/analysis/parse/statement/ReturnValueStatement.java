@@ -1,13 +1,16 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericPlaceholderTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -17,6 +20,9 @@ public class ReturnValueStatement extends ReturnStatement {
 
     public ReturnValueStatement(Expression rvalue, JavaTypeInstance fnReturnType) {
         this.rvalue = rvalue;
+        if (fnReturnType instanceof JavaGenericPlaceholderTypeInstance) {
+            this.rvalue = new CastExpression(new InferredJavaType(fnReturnType, InferredJavaType.Source.FUNCTION, true), this.rvalue);
+        }
         this.fnReturnType = fnReturnType;
     }
 
