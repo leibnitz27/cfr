@@ -14,6 +14,8 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
+
+// DEAD?
 public class ExplicitBraceExpression extends AbstractExpression {
     private Expression contained;
 

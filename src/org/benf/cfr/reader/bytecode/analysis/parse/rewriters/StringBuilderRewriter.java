@@ -144,9 +144,9 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         InferredJavaType inferredJavaType = new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.STRING_TRANSFORM, true);
         for (--x; x >= 0; --x) {
             Expression appendee = revList.get(x);
-            if (appendee instanceof ArithmeticOperation && appendee.getPrecedence().compareTo(Precedence.ADD_SUB) <= 0) {
-                appendee = new ExplicitBraceExpression(appendee);
-            }
+//            if (appendee instanceof ArithmeticOperation && appendee.getPrecedence().compareTo(Precedence.ADD_SUB) <= 0) {
+//                appendee = new ExplicitBraceExpression(appendee);
+//            }
             head = new ArithmeticOperation(inferredJavaType, head, appendee, ArithOp.PLUS);
         }
         return head;
