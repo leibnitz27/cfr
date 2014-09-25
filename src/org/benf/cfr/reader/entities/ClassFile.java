@@ -556,6 +556,15 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             JavaTypeInstance innerType = innerClassAttributeInfo.getInnerClassInfo();
             if (innerType == null) continue;
 
+            if (innerType == thisType) {
+                JavaTypeInstance outerType = innerClassAttributeInfo.getOuterClassInfo();
+                if (outerType == null || outerType == thisType) {
+                    accessFlags.addAll(innerClassAttributeInfo.getAccessFlags());
+                    // A public class can be marked as protected "as an inner class".
+                    sanitiseAccessPermissions();
+                }
+            }
+
             /*
              * Inner classes can be referred to when they are not direct inner classes.
              * We even refer to inner classes which belong to entirely different classes!
@@ -567,11 +576,13 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             try {
                 ClassFile innerClass = dcCommonState.getClassFile(innerType);
                 innerClass.loadInnerClasses(dcCommonState);
-                markInnerClassAsStatic(options, innerClass, thisType);
+                // This is a fallback mechanism incase the access flags above aren't working - do we need it?
+//                markInnerClassAsStatic(options, innerClass, thisType);
 
                 innerClassesByTypeInfo.put(innerType, new Pair<InnerClassAttributeInfo, ClassFile>(innerClassAttributeInfo, innerClass));
             } catch (CannotLoadClassException e) {
             }
+
         }
     }
 
@@ -694,6 +705,18 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     public Set<AccessFlag> getAccessFlags() {
         return accessFlags;
+    }
+
+    private void sanitiseAccessPermissions() {
+        if (accessFlags.contains(AccessFlag.ACC_PRIVATE)) {
+            accessFlags.remove(AccessFlag.ACC_PROTECTED);
+            accessFlags.remove(AccessFlag.ACC_PUBLIC);
+            return;
+        }
+        if (accessFlags.contains(AccessFlag.ACC_PROTECTED)) {
+            accessFlags.remove(AccessFlag.ACC_PUBLIC);
+            return;
+        }
     }
 
     private ClassSignature getSignature(ConstantPool cp,
