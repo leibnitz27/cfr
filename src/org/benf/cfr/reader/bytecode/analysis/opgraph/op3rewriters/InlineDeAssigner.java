@@ -111,6 +111,7 @@ public class InlineDeAssigner {
         public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
             if (noFurther) return expression;
             // We can only go down the LHS of a boolean -
+            // TODO : ApplyLHSOnly?
             if (expression instanceof BooleanOperation) {
                 BooleanOperation booleanOperation = (BooleanOperation)expression;
                 ConditionalExpression lhs = booleanOperation.getLhs();

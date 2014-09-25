@@ -3,15 +3,12 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ConditionalSimplifyingRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StackVarToLocalRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp.*;
@@ -1798,28 +1795,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // We don't have to worry about RHS having undesired side effects if we roll it into the
             // conditional - that has already happened.
             LValueUsageCollectorSimple lvc = new LValueUsageCollectorSimple();
+            // NB - this will collect values even if they are NOT guaranteed to be used
+            // i.e. are on the RHS of a comparison, or in a ternary.
             conditionalExpression.collectUsedLValues(lvc);
             if (!lvc.isUsed(lValue)) return;
             AbstractAssignment assignment = (AbstractAssignment) (source.containedStatement);
-
-            // These two are horrible hacks to stop iterator loops being rewritten.
-            // (Otherwise, if they're rolled up, the first statement inside the loop is the comparison instead
-            // of the assignment.
-//            Expression e1 = wcm.getMemberFunction("tst", "next", wcm.getExpressionWildCard("e"));
-//            Expression e2 = new ArrayIndex(wcm.getExpressionWildCard("a"), new LValueExpression(wcm.getLValueWildCard("i")));
-//            if (assignment instanceof AssignmentSimple) {
-//                AssignmentSimple assignmentSimple = (AssignmentSimple) assignment;
-//                if (assignmentSimple.isInitialAssign()) {
-//                    Expression rV = assignment.getRValue();
-//                    if (e1.equals(rV)) return;
-//                    if (e2.equals(rV)) return;
-//                }
-//            }
-            // This stops us rolling up finals, but at the cost of un-finalling them...
-//            if (lValue instanceof LocalVariable) {
-//                LocalVariable localVariable = (LocalVariable)lValue;
-//                if (localVariable.isGuessedFinal()) return;
-//            }
 
             AbstractAssignmentExpression assignmentExpression = assignment.getInliningExpression();
             LValueUsageCollectorSimple assignmentLVC = new LValueUsageCollectorSimple();
@@ -1836,10 +1816,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return;
             }
 
-
             if (!ifStatement.getSSAIdentifiers().isValidReplacement(lValue, source.getSSAIdentifiers())) return;
             LValueAssignmentExpressionRewriter rewriter = new LValueAssignmentExpressionRewriter(lValue, assignmentExpression, source);
-            Expression replacement = conditionalExpression.replaceSingleUsageLValues(rewriter, ifStatement.getSSAIdentifiers(), ifStatement);
+            Expression replacement = rewriter.rewriteExpression(conditionalExpression, ifStatement.getSSAIdentifiers(), ifStatement, ExpressionRewriterFlags.LVALUE);
             if (replacement == null) return;
             if (!(replacement instanceof ConditionalExpression)) return;
             innerIf.setCondition((ConditionalExpression) replacement);
