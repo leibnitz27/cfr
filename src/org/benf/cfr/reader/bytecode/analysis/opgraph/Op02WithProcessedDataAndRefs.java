@@ -394,6 +394,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         // Should have this as a member on name and type
         ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
+        ConstantPoolEntryUTF8 name = nameAndType.getName();
         // Todo : Not happy about hardcoding if this is an instance function.
         // also - we have a descriptor, but NOT a signature here.  Is that right?
         MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, null, "", false, Method.MethodConstructor.NOT, descriptor, cp, false, false, new VariableNamerDefault());
@@ -414,6 +415,17 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         List<Expression> callargs;
         switch (dynamicInvokeType) {
+            case BOOTSTRAP: {
+                callargs = buildInvokeBootstrapArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
+                List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
+                callargs.addAll(dynamicArgs);
+                Expression funcCall = new StaticFunctionInvokation(methodRef, callargs);
+                if (stackProduced.size() == 0) {
+                    return new ExpressionStatement(funcCall);
+                } else {
+                    return new AssignmentSimple(getStackLValue(0), funcCall);
+                }
+            }
             case METAFACTORY_1:
             case METAFACTORY_2:
                 callargs = buildInvokeDynamicMetaFactoryArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
@@ -425,6 +437,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             default:
                 throw new IllegalStateException();
         }
+
+        // Below here really can only process 'the java way' of doing invokedynamic.
         Expression strippedType = callargs.get(3);
         Expression instantiatedType = callargs.get(5);
 
@@ -562,6 +576,27 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return callargs;
     }
 
+    private List<Expression> buildInvokeBootstrapArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef) {
+        final int ARG_OFFSET = 3;
+        List<JavaTypeInstance> argTypes = prototype.getArgs();
+        ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
+        if ((bootstrapArguments.length + ARG_OFFSET) != argTypes.size()) {
+            throw new IllegalStateException("Dynamic invoke arg count mismatch " + bootstrapArguments.length + "(+3) vs " + argTypes.size());
+        }
+
+        List<Expression> callargs = ListFactory.newList();
+
+        for (int x = 0; x < bootstrapArguments.length; ++x) {
+            JavaTypeInstance expected = argTypes.get(ARG_OFFSET + x);
+            TypedLiteral typedLiteral = getBootstrapArg(bootstrapArguments, x, cp);
+            if (!expected.equals(typedLiteral.getInferredJavaType().getJavaTypeInstance())) {
+                throw new IllegalStateException("Dynamic invoke Expected " + expected + ", got " + typedLiteral);
+            }
+            callargs.add(new Literal(typedLiteral));
+        }
+
+        return callargs;
+    }
 
     private List<Expression> buildInvokeDynamicMetaFactoryArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef) {
 
