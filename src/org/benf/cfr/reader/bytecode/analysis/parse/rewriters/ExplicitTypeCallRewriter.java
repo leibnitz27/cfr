@@ -3,10 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.rewriters;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractFunctionInvokation;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
@@ -74,6 +71,8 @@ public class ExplicitTypeCallRewriter extends AbstractExpressionRewriter {
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         if (expression instanceof AbstractFunctionInvokation) {
             ((AbstractFunctionInvokation)expression).applyExpressionRewriterToArgs(inner, ssaIdentifiers, statementContainer, flags);
+        } else if (expression instanceof ConstructorInvokationSimple) {
+            expression.applyExpressionRewriter(inner, ssaIdentifiers, statementContainer, flags);
         }
         return super.rewriteExpression(expression, ssaIdentifiers, statementContainer, flags);
     }
