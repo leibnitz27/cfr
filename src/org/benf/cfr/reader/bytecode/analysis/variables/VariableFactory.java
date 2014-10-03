@@ -58,9 +58,8 @@ public class VariableFactory {
         if (ident == null) {
             throw new IllegalStateException();
         }
-        InferredJavaType varType = typedArgs.get(stackPosition);
+        InferredJavaType varType = ident.getIdx() == 0 ? typedArgs.get(stackPosition) : null;
         if (varType == null) {
-            // Shouldn't happen, but protect.
             varType = new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.UNKNOWN);
         }
         LValue tmp = new LocalVariable(stackPosition, ident, variableNamer, origCodeRawOffset, varType);

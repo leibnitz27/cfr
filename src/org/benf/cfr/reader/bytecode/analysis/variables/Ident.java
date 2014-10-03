@@ -28,6 +28,10 @@ public class Ident {
         return true;
     }
 
+    public int getIdx() {
+        return idx;
+    }
+
     @Override
     public int hashCode() {
         int result = stackpos;

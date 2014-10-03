@@ -839,7 +839,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         int slot = storageTypeAndIdx.getSecond();
         Ident ident = localVariablesBySlot.get(slot);
 
-        SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(new Slot(storageTypeAndIdx.getFirst(), slot));
         AssignmentSimple res = new AssignmentSimple(variableFactory.localVariable(slot, ident, originalRawOffset), getStackRValue(0));
         if (ssaIdentifiers.isInitialAssign()) {
             res.setInitialAssign(true);
@@ -852,7 +851,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         int slot = storageTypeAndIdx.getSecond();
         Ident ident = localVariablesBySlot.get(slot);
 
-        SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(new Slot(storageTypeAndIdx.getFirst(), slot));
         return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, ident, originalRawOffset)));
     }
 
@@ -1498,6 +1496,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          * The problem is if we have actual parameters, AND hidden synthetics - in this case
          * we will mark our actual parameters as eliding our synthetics
          */
+        // pos 329 idx 185 TODO
+
         Map<Slot, SSAIdent> idents = method.getMethodPrototype().collectInitialSlotUsage(method.getConstructorFlag(), ssaIdentifierFactory);
 
         for (Op02WithProcessedDataAndRefs statement : statements) {
