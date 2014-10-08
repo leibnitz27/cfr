@@ -840,9 +840,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         Ident ident = localVariablesBySlot.get(slot);
 
         AssignmentSimple res = new AssignmentSimple(variableFactory.localVariable(slot, ident, originalRawOffset), getStackRValue(0));
-        if (ssaIdentifiers.isInitialAssign()) {
-            res.setInitialAssign(true);
-        }
         return res;
     }
 
@@ -1737,9 +1734,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             if (fixedHere != null) {
                 SSAIdent finalIdent = identifiers.getSSAIdent(fixedHere);
                 SSAIdent fixedIdent = identifiers.getValFixedHere();
-                if (fixedIdent.isFirstIn(finalIdent)) {
-                    identifiers.setInitialAssign();
-                }
                 if (op.hasCatchParent) {
                     poisoned.get(fixedHere).add(finalIdent);
                 }

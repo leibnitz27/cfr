@@ -11,7 +11,6 @@ public class SSAIdentifiers<KEYTYPE> {
     private final KEYTYPE fixedHere;
     private final SSAIdent valFixedHere;
     private final Map<KEYTYPE, SSAIdent> knownIdentifiers;
-    private boolean initialAssign = false;
 
     public SSAIdentifiers() {
         fixedHere = null;
@@ -24,7 +23,6 @@ public class SSAIdentifiers<KEYTYPE> {
         this.valFixedHere = other.valFixedHere;
         this.knownIdentifiers = MapFactory.newMap();
         knownIdentifiers.putAll(other.knownIdentifiers);
-        this.initialAssign = other.initialAssign;
     }
 
     public SSAIdentifiers(KEYTYPE lValue, SSAIdentifierFactory<KEYTYPE> ssaIdentifierFactory) {
@@ -39,14 +37,6 @@ public class SSAIdentifiers<KEYTYPE> {
         this.knownIdentifiers = precomputedIdentifiers;
         this.fixedHere = null;
         this.valFixedHere = null;
-    }
-
-    public void setInitialAssign() {
-        initialAssign = true;
-    }
-
-    public boolean isInitialAssign() {
-        return initialAssign;
     }
 
     public boolean mergeWith(SSAIdentifiers<KEYTYPE> other) {

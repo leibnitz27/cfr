@@ -820,7 +820,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     }
 
-    private static class UsageWatcher implements LValueRewriter<Statement> {
+    private static class UsageWatcher extends AbstractExpressionRewriter {
         private final LValue needle;
         boolean found = false;
 
@@ -829,19 +829,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
 
         @Override
-        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
-
-            return null;
-        }
-
-        @Override
-        public void checkPostConditions(LValue lValue, Expression rValue) {
-
-        }
-
-        @Override
-        public boolean explicitlyReplaceThisLValue(LValue lValue) {
-            return true;
+        public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            if (needle.equals(lValue)) found = true;
+            return super.rewriteExpression(lValue, ssaIdentifiers, statementContainer, flags);
         }
 
         public boolean isFound() {
@@ -890,7 +880,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     return;
                 }
             }
-            current.condense(usageWatcher);
+            current.rewrite(usageWatcher);
             if (usageWatcher.isFound()) {
                 /*
                  * Found a use "Before" assignment.
@@ -913,6 +903,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     public static void pushPreChangeBack(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentPreMutation>(AssignmentPreMutation.class));
         assignments = Functional.filter(assignments, new StatementCanBePostMutation());
+        if (assignments.isEmpty()) return;
 
         for (Op03SimpleStatement assignment : assignments) {
             pushPreChangeBack(assignment);
