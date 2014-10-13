@@ -66,7 +66,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
 
     @Override
     public void collectMutatedLValue(LValue lValue, StatementContainer<Statement> statementContainer, Expression value) {
-        SSAIdent version = statementContainer.getSSAIdentifiers().getSSAIdent(lValue);
+        SSAIdent version = statementContainer.getSSAIdentifiers().getSSAIdentOnExit(lValue);
         if (null != mutableFound.put(new VersionedLValue(lValue, version), new ExpressionStatement(value, statementContainer))) {
             throw new ConfusedCFRException("Duplicate versioned SSA Ident.");
         }
@@ -381,7 +381,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         /* Bit cheeky, we'll never actually replace here, but use this pass to collect info. */
         @Override
         public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
-            SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(lValue);
+            SSAIdent ssaIdent = ssaIdentifiers.getSSAIdentOnExit(lValue);
             if (ssaIdent != null) {
                 VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);
                 if (mutableFound.containsKey(versionedLValue)) {
@@ -456,7 +456,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
 
         @Override
         public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
-            SSAIdent ssaIdent = ssaIdentifiers.getSSAIdent(lValue);
+            SSAIdent ssaIdent = ssaIdentifiers.getSSAIdentOnExit(lValue);
             if (ssaIdent != null) {
                 VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);
                 StatementContainer canReplaceIn = mutableReplacable.get(versionedLValue);

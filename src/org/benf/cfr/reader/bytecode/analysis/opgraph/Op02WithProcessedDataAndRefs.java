@@ -1464,7 +1464,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             Pair<JavaTypeInstance, Integer> load = op02.getRetrieveType();
             if (load == null) continue;
 
-            SSAIdent ident = op02.ssaIdentifiers.getSSAIdent(new Slot(load.getFirst(), load.getSecond()));
+            SSAIdent ident = op02.ssaIdentifiers.getSSAIdentOnExit(new Slot(load.getFirst(), load.getSecond()));
             if (ident == null) {
                 missing.put(load.getSecond(), load.getFirst());
             }
@@ -1605,7 +1605,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
              * simply remove it.
              */
             SSAIdentifiers<Slot> ssaIdents = node.ssaIdentifiers;
-            Map<Slot, SSAIdent> idents = ssaIdents.getKnownIdentifiers();
+            // We look at what we're propagating to child nodes.
+            Map<Slot, SSAIdent> idents = ssaIdents.getKnownIdentifiersOnExit();
             Iterator<Map.Entry<Slot, SSAIdent>> iterator = idents.entrySet().iterator();
             while (iterator.hasNext()) {
                 Map.Entry<Slot, SSAIdent> entry = iterator.next();
@@ -1621,7 +1622,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 }
                 if (!used) {
                     for (Op02WithProcessedDataAndRefs target : node.targets) {
-                        if (target.ssaIdentifiers.getSSAIdent(slot) != null) {
+                        if (target.ssaIdentifiers.getSSAIdentOnEntry(slot) != null) {
                             used = true;
                             break;
                         }
@@ -1638,7 +1639,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                          * If one of the SOURCES
                          */
                         for (Op02WithProcessedDataAndRefs source : node.sources) {
-                            SSAIdent sourceIdent = source.ssaIdentifiers.getSSAIdent(slot);
+                            SSAIdent sourceIdent = source.ssaIdentifiers.getSSAIdentOnExit(slot);
                             if (sourceIdent != null && thisIdent.isSuperSet(sourceIdent)) {
                                 used = true;
                                 break;
@@ -1659,6 +1660,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                         storeWithoutRead.add(node);
                     }
                     iterator.remove();
+                    ssaIdents.removeEntryIdent(slot);
                 } else {
                     /*
                      * we only need to process sources if they've never been seen, OR if we changed something.
@@ -1680,7 +1682,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             Pair<JavaTypeInstance, Integer> storage = store.getStorageType();
             Slot slot = new Slot(storage.getFirst(), storage.getSecond());
             SSAIdent ident = ssaIdentifierFactory.getIdent(slot);
-            store.ssaIdentifiers.getKnownIdentifiers().put(slot, ident);
+            store.ssaIdentifiers.setKnownIdentifierOnExit(slot, ident);
         }
         op2list.get(0).ssaIdentifiers.mergeWith(initial);
     }
@@ -1730,16 +1732,18 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         for (Op02WithProcessedDataAndRefs op : op2list) {
             SSAIdentifiers<Slot> identifiers = op.ssaIdentifiers;
 
-            Slot fixedHere = identifiers.getFixedHere();
-            if (fixedHere != null) {
-                SSAIdent finalIdent = identifiers.getSSAIdent(fixedHere);
-                SSAIdent fixedIdent = identifiers.getValFixedHere();
-                if (op.hasCatchParent) {
-                    poisoned.get(fixedHere).add(finalIdent);
+            if (op.hasCatchParent) {
+                Set<Slot> fixedHereSet = identifiers.getFixedHere();
+                if (!fixedHereSet.isEmpty()) {
+                    for (Slot fixedHere : fixedHereSet) {
+                        SSAIdent finalIdent = identifiers.getSSAIdentOnExit(fixedHere);
+//                        SSAIdent fixedIdent = identifiers.getValFixedHere();
+                        poisoned.get(fixedHere).add(finalIdent);
+                    }
                 }
             }
 
-            Map<Slot, SSAIdent> identMap = identifiers.getKnownIdentifiers();
+            Map<Slot, SSAIdent> identMap = identifiers.getKnownIdentifiersOnExit();
             for (Map.Entry<Slot, SSAIdent> entry : identMap.entrySet()) {
                 Slot thisSlot = entry.getKey();
 
@@ -1750,7 +1754,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 Set<SSAIdent> thisNextSet = map.get(thisIdents);
 
                 for (Op02WithProcessedDataAndRefs tgt : op.getTargets()) {
-                    SSAIdent nextIdents = tgt.ssaIdentifiers.getSSAIdent(thisSlot);
+                    SSAIdent nextIdents = tgt.ssaIdentifiers.getSSAIdentOnEntry(thisSlot);
                     if (nextIdents != null && nextIdents.isSuperSet(thisIdents)) {
                         thisNextSet.add(nextIdents);
                     }
@@ -1824,7 +1828,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     private void mapSSASlots(Map<Pair<Slot, SSAIdent>, Ident> identmap) {
-        Map<Slot, SSAIdent> knownIdents = ssaIdentifiers.getKnownIdentifiers();
+        Map<Slot, SSAIdent> knownIdents = ssaIdentifiers.getKnownIdentifiersOnExit();
         for (Map.Entry<Slot, SSAIdent> entry : knownIdents.entrySet()) {
             Ident ident = identmap.get(Pair.make(entry.getKey(), entry.getValue()));
             if (ident == null) {
