@@ -1754,7 +1754,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 Set<SSAIdent> thisNextSet = map.get(thisIdents);
 
                 for (Op02WithProcessedDataAndRefs tgt : op.getTargets()) {
-                    SSAIdent nextIdents = tgt.ssaIdentifiers.getSSAIdentOnEntry(thisSlot);
+                    SSAIdent nextIdents = tgt.ssaIdentifiers.getSSAIdentOnExit(thisSlot);
                     if (nextIdents != null && nextIdents.isSuperSet(thisIdents)) {
                         thisNextSet.add(nextIdents);
                     }
