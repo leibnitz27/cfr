@@ -48,4 +48,9 @@ public class Pair<X, Y> {
         if (y != null) hashCode = (hashCode * 31) + y.hashCode();
         return hashCode;
     }
+
+    @Override
+    public String toString() {
+        return "P[" + x + "," + y + "]";
+    }
 }
