@@ -81,13 +81,14 @@ public class SSAIdentifiers<KEYTYPE> {
         for (Map.Entry<KEYTYPE, SSAIdent> valueSetEntry : other.knownIdentifiersOnExit.entrySet()) {
             KEYTYPE lValue = valueSetEntry.getKey();
             SSAIdent otherIdent = valueSetEntry.getValue();
+            boolean c1 = registerChange(knownIdentifiersOnEntry, lValue, otherIdent);
+            boolean skip = false;
             if (fixedHere.containsKey(lValue)) {
                 if (pred == null || !pred.test(lValue, fixedHere.get(lValue))) {
-                    continue;
+                    skip = true;
                 }
             }
-            boolean c1 = registerChange(knownIdentifiersOnEntry, lValue, otherIdent);
-            boolean c2 = registerChange(knownIdentifiersOnExit, lValue, otherIdent);
+            boolean c2 = !skip && registerChange(knownIdentifiersOnExit, lValue, otherIdent);
             if (c1 || c2) changed = true;
         }
         return changed;
@@ -108,9 +109,25 @@ public class SSAIdentifiers<KEYTYPE> {
      * i.e. v10 = a        (at exit a=1)
      *      v11 = a++      (at exit a=2)
      *      foo(v10, v11), (at entry a=2)
+     *
+     *
      */
     public boolean isValidReplacement(LValue lValue, SSAIdentifiers<KEYTYPE> other) {
         SSAIdent thisVersion = knownIdentifiersOnEntry.get(lValue);
+        SSAIdent otherVersion = other.knownIdentifiersOnExit.get(lValue);
+        if (thisVersion == null && otherVersion == null) return true;
+        if (thisVersion == null || otherVersion == null) return false;
+        boolean res = thisVersion.equals(otherVersion);
+        if (res) return true;
+        /*
+         * Last chance, is otherVersion a subset of thisVersion.
+         */
+        if (thisVersion.isSuperSet(otherVersion)) return true;
+        return false;
+    }
+
+    public boolean isValidReplacementOnExit(LValue lValue, SSAIdentifiers<KEYTYPE> other) {
+        SSAIdent thisVersion = knownIdentifiersOnExit.get(lValue);
         SSAIdent otherVersion = other.knownIdentifiersOnExit.get(lValue);
         if (thisVersion == null && otherVersion == null) return true;
         if (thisVersion == null || otherVersion == null) return false;
