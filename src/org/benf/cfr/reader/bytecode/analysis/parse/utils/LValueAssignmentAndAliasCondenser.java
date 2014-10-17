@@ -139,6 +139,27 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     return null;
                 }
             }
+
+            /*
+             * If the source statement changes anything (i.e. replacement identifiers before != after)
+             * If the source has a direct child other than the target, check that the other targets don't require the
+             * changed value at its new level.
+             * (otherwise we might move a ++ past a subsequent usage).
+             */
+            Set<LValue> changes = replacementIdentifiers.getChanges();
+            if (!changes.isEmpty() && statementContainer instanceof Op03SimpleStatement) {
+                Op03SimpleStatement container = (Op03SimpleStatement)statementContainer;
+                for (Op03SimpleStatement target : container.getTargets()) {
+                    if (target != lvSc) {
+                        for (LValue change : changes) {
+                            if (target.getSSAIdentifiers().getSSAIdentOnEntry(change).equals(replacementIdentifiers.getSSAIdentOnExit(change))) {
+                                // We can't move this statement (yet).
+                                return null;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
 //        if (res instanceof LValueExpression && replacementIdentifiers != null) {

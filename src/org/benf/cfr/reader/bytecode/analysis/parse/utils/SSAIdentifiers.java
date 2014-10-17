@@ -140,6 +140,17 @@ public class SSAIdentifiers<KEYTYPE> {
         return false;
     }
 
+    public Set<KEYTYPE> getChanges() {
+        Set<KEYTYPE> result = SetFactory.newSet();
+        for (Map.Entry<KEYTYPE, SSAIdent> entry : knownIdentifiersOnEntry.entrySet()) {
+            SSAIdent after = knownIdentifiersOnExit.get(entry.getKey());
+            if (after != null && !after.equals(entry.getValue())) {
+                result.add(entry.getKey());
+            }
+        }
+        return result;
+    }
+
     public SSAIdent getSSAIdentOnExit(KEYTYPE lValue) {
         return knownIdentifiersOnExit.get(lValue);
     }
