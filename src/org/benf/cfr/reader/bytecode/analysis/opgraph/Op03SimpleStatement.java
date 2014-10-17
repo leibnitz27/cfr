@@ -724,8 +724,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
 
         ArithmeticPostMutationOperation postMutationOperation = new ArithmeticPostMutationOperation(postIncLValue, op);
-        prior.replaceStatement(new AssignmentSimple(tmp, postMutationOperation));
-        statement.nopOut();
+        prior.nopOut();
+        statement.replaceStatement(new AssignmentSimple(tmp, postMutationOperation));
     }
 
     /* We're searching for something a bit too fiddly to use wildcards on,
@@ -875,8 +875,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 AssignmentSimple assignmentSimple = (AssignmentSimple) innerStatement;
                 if (assignmentSimple.getRValue().equals(lvalueExpression)) {
                     LValue tgt = assignmentSimple.getCreatedLValue();
-                    preChange.nopOut();
-                    current.replaceStatement(new AssignmentSimple(tgt, mutation.getPostMutation()));
+                    current.nopOut();
+                    preChange.replaceStatement(new AssignmentSimple(tgt, mutation.getPostMutation()));
                     return;
                 }
             }

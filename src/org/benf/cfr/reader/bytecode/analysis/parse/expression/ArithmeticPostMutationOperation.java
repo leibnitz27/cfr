@@ -70,7 +70,7 @@ public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentE
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-//        lValueUsageCollector.collect(mutated);
+        lValueUsageCollector.collect(mutated);
     }
 
     @Override

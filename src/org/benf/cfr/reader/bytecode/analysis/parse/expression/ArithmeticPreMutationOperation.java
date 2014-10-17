@@ -64,7 +64,7 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-//        lValueUsageCollector.collect(mutated);
+        lValueUsageCollector.collect(mutated);
     }
 
     public LValue getMutated() {
