@@ -167,6 +167,10 @@ public class SSAIdentifiers<KEYTYPE> {
         knownIdentifiersOnExit.put(lValue, ident);
     }
 
+    public void setKnownIdentifierOnEntry(KEYTYPE lValue, SSAIdent ident) {
+        knownIdentifiersOnEntry.put(lValue, ident);
+    }
+
     public int sizeOnExit() {
         return knownIdentifiersOnExit.size();
     }

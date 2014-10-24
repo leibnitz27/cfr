@@ -471,6 +471,9 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValueChain2(op03SimpleParseNodes);
 
         // Condense again, now we've simplified constructors.
+        // Inline assingments need to be dealt with HERE (!).
+//        LValueProp.condenseLValues(op03SimpleParseNodes);
+        Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options);
         LValueProp.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
 

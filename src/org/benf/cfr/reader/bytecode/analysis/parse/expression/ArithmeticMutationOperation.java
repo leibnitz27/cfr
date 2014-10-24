@@ -56,7 +56,7 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        // TODO : Rvalue?
+        mutated = expressionRewriter.rewriteExpression(mutated, ssaIdentifiers, statementContainer, ExpressionRewriterFlags.LANDRVALUE);
         mutation = expressionRewriter.rewriteExpression(mutation, ssaIdentifiers, statementContainer, flags);
         return this;
     }

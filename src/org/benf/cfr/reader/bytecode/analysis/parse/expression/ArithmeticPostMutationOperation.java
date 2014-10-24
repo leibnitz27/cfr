@@ -50,10 +50,7 @@ public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentE
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        LValue mut = expressionRewriter.rewriteExpression(mutated, ssaIdentifiers, statementContainer, flags);
-        if (mut != null) {
-            mutated = mut;
-        }
+        mutated = expressionRewriter.rewriteExpression(mutated, ssaIdentifiers, statementContainer, ExpressionRewriterFlags.LANDRVALUE);
         return this;
     }
 

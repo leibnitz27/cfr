@@ -13,6 +13,7 @@ public class LValueAssignmentExpressionRewriter extends AbstractExpressionRewrit
     private final LValue lValue;
     private final AbstractAssignmentExpression lValueReplacement;
     private final Op03SimpleStatement source;
+    private boolean terminated = false;
 
     public LValueAssignmentExpressionRewriter(LValue lValue, AbstractAssignmentExpression lValueReplacement, Op03SimpleStatement source) {
         this.lValue = lValue;
@@ -20,9 +21,13 @@ public class LValueAssignmentExpressionRewriter extends AbstractExpressionRewrit
         this.source = source;
     }
 
-    /* We can't descend any conditionals, so only go down test of those */
+    /* We can't descend any conditionals, so only go down test of those.
+     * We also can't pass THROUGH any method calls, however, we CAN pass into arguments.
+     * i.e. we can't rewrite foo = bar(); jim.getBob().do(foo), as call order changes.
+     */
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        if (terminated) return expression;
         if (expression instanceof BooleanOperation) {
             return ((BooleanOperation)expression).applyLHSOnlyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         } else if (expression instanceof TernaryExpression) {
@@ -32,13 +37,19 @@ public class LValueAssignmentExpressionRewriter extends AbstractExpressionRewrit
             if (!lValue.equals(this.lValue)) return expression;
             if (!ssaIdentifiers.isValidReplacement(lValue, statementContainer.getSSAIdentifiers())) return expression;
             source.nopOut();
+            terminated = true;
             return lValueReplacement;
         }
-        return super.rewriteExpression(expression, ssaIdentifiers, statementContainer, flags);
+        Expression res = super.rewriteExpression(expression, ssaIdentifiers, statementContainer, flags);
+        if (expression instanceof AbstractFunctionInvokation) {
+            terminated = true;
+        }
+        return res;
     }
 
     @Override
     public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        if (terminated) return expression;
         return (ConditionalExpression)rewriteExpression((Expression)expression, ssaIdentifiers, statementContainer, flags);
     }
 }

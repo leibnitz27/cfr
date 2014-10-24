@@ -113,10 +113,10 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         Expression prev = null;
 
         if (replacementIdentifiers != null) {
-            LValueUsageCollectorSimple lvc = new LValueUsageCollectorSimple();
-            res.collectUsedLValues(lvc);
+            LValueUsageCollectorSimple lvcInSource = new LValueUsageCollectorSimple();
+            res.collectUsedLValues(lvcInSource);
 
-            for (LValue resLValue : lvc.getUsedLValues()) {
+            for (LValue resLValue : lvcInSource.getUsedLValues()) {
                 replaceTest:
                 if (!ssaIdentifiers.isValidReplacement(resLValue, replacementIdentifiers)) {
                     /* Second chance - self assignment in the source.
@@ -146,8 +146,8 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
              * changed value at its new level.
              * (otherwise we might move a ++ past a subsequent usage).
              */
-            Set<LValue> changes = replacementIdentifiers.getChanges();
-            if (!changes.isEmpty() && statementContainer instanceof Op03SimpleStatement) {
+            Set<LValue> changes = (statementContainer instanceof Op03SimpleStatement) ? replacementIdentifiers.getChanges() : null;
+            if (changes != null && !changes.isEmpty()) {
                 Op03SimpleStatement container = (Op03SimpleStatement)statementContainer;
                 for (Op03SimpleStatement target : container.getTargets()) {
                     if (target != lvSc) {
@@ -160,32 +160,19 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     }
                 }
             }
+
+            /*
+             * We've decided we're going to make the substitution - now changes need to be applied to the target identifiers.
+             */
+            if (changes != null && !changes.isEmpty()) {
+                SSAIdentifiers tgtIdents = lvSc.getSSAIdentifiers();
+                for (LValue change : changes) {
+                    // The change is now being applied inside lvsc.
+                    tgtIdents.setKnownIdentifierOnEntry(change, replacementIdentifiers.getSSAIdentOnEntry(change));
+                }
+            }
         }
 
-//        if (res instanceof LValueExpression && replacementIdentifiers != null) {
-//            LValue resLValue = ((LValueExpression) res).getLValue();
-//            replaceTest:
-//            if (!ssaIdentifiers.isValidReplacement(resLValue, replacementIdentifiers)) {
-//                /* Second chance - self assignment
-//                 */
-//                Statement lvStm = lvSc.getStatement();
-//                if (lvStm instanceof AssignmentSimple) {
-//                    if (lvStm.getCreatedLValue().equals(resLValue)) {
-//                        Op03SimpleStatement lv03 = (Op03SimpleStatement) lvSc;
-//                        for (Op03SimpleStatement source : lv03.getSources()) {
-//                            if (!source.getSSAIdentifiers().isValidReplacement(resLValue, replacementIdentifiers)) {
-//                                return null;
-//                            }
-//                        }
-//                        /*
-//                         * Ok, we can get away with it.
-//                         */
-//                        break replaceTest;
-//                    }
-//                }
-//                return null;
-//            }
-//        }
         if (statementContainer != null) {
             lvSc.copyBlockInformationFrom(statementContainer);
             statementContainer.nopOut();

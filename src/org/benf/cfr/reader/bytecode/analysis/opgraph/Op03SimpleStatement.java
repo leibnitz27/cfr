@@ -1715,8 +1715,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     // --> if ((b=x)==(a=y))
     private static void collapseAssignmentsIntoConditional(Op03SimpleStatement ifStatement, boolean testEclipse) {
 
-        WildcardMatch wcm = new WildcardMatch();
-
         if (!(appropriateForIfAssignmentCollapse1(ifStatement) ||
                 appropriateForIfAssignmentCollapse2(ifStatement))) return;
         IfStatement innerIf = (IfStatement) ifStatement.containedStatement;
@@ -1761,7 +1759,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     }
                 }
                 if (statement.sources.isEmpty()) {
-                    return;
+                    break;
                 }
                 statement = statement.sources.get(0);
                 if (!visited.add(statement)) {
@@ -1783,6 +1781,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             previousSource = source;
             if (!(source.containedStatement instanceof AbstractAssignment)) return;
             LValue lValue = source.getCreatedLValue();
+            if (lValue instanceof StackSSALabel) return;
             // We don't have to worry about RHS having undesired side effects if we roll it into the
             // conditional - that has already happened.
             LValueUsageCollectorSimple lvc = new LValueUsageCollectorSimple();
@@ -1803,11 +1802,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // a = x
             // b = y.f(a)
             // if (a == b) <-- should not get rolled up.
-            if (SetUtil.hasIntersection(used, usedComparison)) {
-                return;
+            SSAIdentifiers<LValue> beforeSSA = source.getSSAIdentifiers();
+            SSAIdentifiers<LValue> afterSSA = ifStatement.getSSAIdentifiers();
+
+            Set<LValue> intersection  = SetUtil.intersectionOrNull(used, usedComparison);
+            if (intersection != null) {
+                // If there's an intersection, we require the ssa idents for before/after to be the same.
+                for (LValue intersect : intersection) {
+                    if (!afterSSA.isValidReplacement(intersect, beforeSSA)) {
+                        return;
+                    }
+                }
             }
 
-            if (!ifStatement.getSSAIdentifiers().isValidReplacement(lValue, source.getSSAIdentifiers())) return;
+            if (!afterSSA.isValidReplacement(lValue, beforeSSA)) return;
             LValueAssignmentExpressionRewriter rewriter = new LValueAssignmentExpressionRewriter(lValue, assignmentExpression, source);
             Expression replacement = rewriter.rewriteExpression(conditionalExpression, ifStatement.getSSAIdentifiers(), ifStatement, ExpressionRewriterFlags.LVALUE);
             if (replacement == null) return;

@@ -12,6 +12,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionR
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnValueStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.ListFactory;
@@ -128,8 +130,18 @@ public class InlineDeAssigner {
 
         @Override
         public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-            Set<LValue> set = flags == ExpressionRewriterFlags.LVALUE ? write : read;
-            set.add(lValue);
+            switch (flags) {
+                case LVALUE:
+                    write.add(lValue);
+                    break;
+                case RVALUE:
+                    read.add(lValue);
+                    break;
+                case LANDRVALUE:
+                    write.add(lValue);
+                    read.add(lValue);
+                    break;
+            }
             return lValue;
         }
 
@@ -161,6 +173,15 @@ public class InlineDeAssigner {
             source.replaceTarget(container, last);
             last.addSource(source);
         }
+    }
+
+    private static void deAssign(ReturnValueStatement returnValueStatement, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
+        Deassigner deassigner = new Deassigner();
+        // The outer expression can never be an assignment (that would be wrapped in a boolean expression)
+        // so we don't have to push back into the if statement.
+        Expression value = returnValueStatement.getReturnValue();
+        deassigner.rewriteExpression(value, container.getSSAIdentifiers(), container, ExpressionRewriterFlags.RVALUE);
+        rewrite(deassigner, container, added);
     }
 
     private static void deAssign(IfStatement ifStatement, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
@@ -206,6 +227,8 @@ public class InlineDeAssigner {
                 deAssign((IfStatement)stmt, statement, newStatements);
             } else if (clazz == AssignmentSimple.class) {
                 deAssign((AssignmentSimple)stmt, statement, newStatements);
+            } else if (clazz == ReturnValueStatement.class) {
+                deAssign((ReturnValueStatement)stmt, statement, newStatements);
             }
         }
         if (newStatements.isEmpty()) return false;
