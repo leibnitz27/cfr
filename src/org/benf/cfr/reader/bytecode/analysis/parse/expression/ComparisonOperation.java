@@ -121,6 +121,14 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     }
 
     @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        rhs = expressionRewriter.rewriteExpression(rhs, ssaIdentifiers, statementContainer, flags);
+        lhs = expressionRewriter.rewriteExpression(lhs, ssaIdentifiers, statementContainer, flags);
+        return this;
+    }
+
+
+    @Override
     public ConditionalExpression getNegated() {
         return new ComparisonOperation(lhs, rhs, op.getInverted());
     }

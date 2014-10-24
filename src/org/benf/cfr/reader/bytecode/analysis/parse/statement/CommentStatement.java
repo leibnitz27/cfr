@@ -106,6 +106,11 @@ public class CommentStatement extends AbstractStatement {
         }
 
         @Override
+        public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            return applyExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
+        }
+
+        @Override
         public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
             statement.collectLValueUsage(lValueUsageCollector);
         }

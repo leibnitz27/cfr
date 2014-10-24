@@ -70,6 +70,13 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
     }
 
     @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        index = expressionRewriter.rewriteExpression(index, ssaIdentifiers, statementContainer, flags);
+        array = expressionRewriter.rewriteExpression(array, ssaIdentifiers, statementContainer, flags);
+        return this;
+    }
+
+    @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         array.collectUsedLValues(lValueUsageCollector);
         index.collectUsedLValues(lValueUsageCollector);

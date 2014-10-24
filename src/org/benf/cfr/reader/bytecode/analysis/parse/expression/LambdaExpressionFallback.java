@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
@@ -14,6 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -84,19 +86,15 @@ public class LambdaExpressionFallback extends AbstractExpression {
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        for (int x = 0; x < curriedArgs.size(); ++x) {
-            curriedArgs.set(x, expressionRewriter.rewriteExpression(curriedArgs.get(x), ssaIdentifiers, statementContainer, flags));
-        }
+        ExpressionRewriterHelper.applyForwards(curriedArgs, expressionRewriter, ssaIdentifiers, statementContainer, flags);
         return this;
     }
 
-    private boolean comma(boolean first, Dumper d) {
-        if (!first) {
-            d.print(", ");
-        }
-        return false;
+    @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        ExpressionRewriterHelper.applyBackwards(curriedArgs, expressionRewriter, ssaIdentifiers, statementContainer, flags);
+        return this;
     }
-
 
     @Override
     public Precedence getPrecedence() {
@@ -129,11 +127,11 @@ public class LambdaExpressionFallback extends AbstractExpression {
             boolean first = true;
             for (int x = instance ? 1 : 0, cnt = curriedArgs.size(); x < cnt; ++x) {
                 Expression c = curriedArgs.get(x);
-                first = comma(first, d);
+                first = CommaHelp.comma(first, d);
                 d.dump(c);
             }
             for (int x = 0; x < n; ++x) {
-                first = comma(first, d);
+                first = CommaHelp.comma(first, d);
                 d.print("arg_" + x);
             }
             d.print(")");

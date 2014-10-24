@@ -145,6 +145,13 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
     }
 
     @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        rhs = expressionRewriter.rewriteExpression(rhs, ssaIdentifiers, statementContainer, flags);
+        lhs = expressionRewriter.rewriteExpression(lhs, ssaIdentifiers, statementContainer, flags);
+        return this;
+    }
+
+    @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         lhs.collectUsedLValues(lValueUsageCollector);
         rhs.collectUsedLValues(lValueUsageCollector);

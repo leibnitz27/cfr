@@ -55,6 +55,11 @@ public class NewObject extends AbstractExpression {
         return this;
     }
 
+    @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return this;
+    }
+
     public ConstantPoolEntryClass getType() {
         return type;
     }

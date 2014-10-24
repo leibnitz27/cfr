@@ -62,6 +62,13 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
     }
 
     @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        mutation = expressionRewriter.rewriteExpression(mutation, ssaIdentifiers, statementContainer, flags);
+        mutated = expressionRewriter.rewriteExpression(mutated, ssaIdentifiers, statementContainer, ExpressionRewriterFlags.LANDRVALUE);
+        return this;
+    }
+
+    @Override
     public boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp) {
         return this.mutated.equals(lValue) &&
                 this.op == arithOp &&

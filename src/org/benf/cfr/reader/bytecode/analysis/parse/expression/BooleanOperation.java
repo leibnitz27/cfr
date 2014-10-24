@@ -76,6 +76,13 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
         return this;
     }
 
+    @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        rhs = expressionRewriter.rewriteExpression(rhs, ssaIdentifiers, statementContainer, flags);
+        lhs = expressionRewriter.rewriteExpression(lhs, ssaIdentifiers, statementContainer, flags);
+        return this;
+    }
+
     public Expression applyLHSOnlyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         lhs = expressionRewriter.rewriteExpression(lhs, ssaIdentifiers, statementContainer, flags);
         return this;

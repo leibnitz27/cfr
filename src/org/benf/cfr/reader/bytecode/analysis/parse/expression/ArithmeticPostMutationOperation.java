@@ -55,6 +55,11 @@ public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentE
     }
 
     @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return applyExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
+    }
+
+    @Override
     public ArithmeticPostMutationOperation getPostMutation() {
         throw new IllegalStateException();
     }

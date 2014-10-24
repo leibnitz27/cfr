@@ -24,6 +24,8 @@ public interface Expression extends DumpableWithPrecedence, DeepCloneable<Expres
 
     Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags);
 
+    Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags);
+
     boolean isSimple();
 
     void collectUsedLValues(LValueUsageCollector lValueUsageCollector);

@@ -96,6 +96,14 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
         return this;
     }
 
+    @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        rhs = expressionRewriter.rewriteExpression(rhs, ssaIdentifiers, statementContainer, flags);
+        lhs = expressionRewriter.rewriteExpression(lhs, ssaIdentifiers, statementContainer, flags);
+        condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, statementContainer, flags);
+        return this;
+    }
+
     public Expression applyConditionOnlyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, statementContainer, flags);
         return this;

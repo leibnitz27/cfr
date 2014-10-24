@@ -63,6 +63,11 @@ public class StackValue extends AbstractExpression {
         return this;
     }
 
+    @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return applyExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
+    }
+
     public StackSSALabel getStackValue() {
         return stackValue;
     }

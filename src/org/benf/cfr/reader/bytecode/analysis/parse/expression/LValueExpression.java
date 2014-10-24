@@ -72,6 +72,11 @@ public class LValueExpression extends AbstractExpression {
     }
 
     @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return applyExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
+    }
+
+    @Override
     public Precedence getPrecedence() {
         return Precedence.PAREN_SUB_MEMBER;
     }

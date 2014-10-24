@@ -62,6 +62,11 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
         return this;
     }
 
+    @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return applyExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
+    }
+
     // Could directly call above, but this is an aide memoir to not change behaviour of above.
     public Expression applyRValueOnlyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         rValue = expressionRewriter.rewriteExpression(rValue, ssaIdentifiers, statementContainer, flags);

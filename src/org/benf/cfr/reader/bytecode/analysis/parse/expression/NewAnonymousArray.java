@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.B
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
@@ -107,9 +108,13 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        for (int x = 0; x < values.size(); ++x) {
-            values.set(x, expressionRewriter.rewriteExpression(values.get(x), ssaIdentifiers, statementContainer, flags));
-        }
+        ExpressionRewriterHelper.applyForwards(values, expressionRewriter, ssaIdentifiers, statementContainer, flags);
+        return this;
+    }
+
+    @Override
+    public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        ExpressionRewriterHelper.applyBackwards(values, expressionRewriter, ssaIdentifiers, statementContainer, flags);
         return this;
     }
 
