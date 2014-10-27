@@ -32,6 +32,8 @@ public class LValueProp {
         /*
          * Can we replace any mutable values?
          * If we found any on the first pass, we will try to move them here.
+         *
+         * TODO - this breaks incrtest3
          */
         LValueAssignmentAndAliasCondenser.MutationRewriterFirstPass firstPassRewriter = lValueAssigmentCollector.getMutationRewriterFirstPass();
         if (firstPassRewriter != null) {
@@ -44,6 +46,11 @@ public class LValueProp {
                 for (Op03SimpleStatement statement : statements) {
                     statement.condense(secondPassRewriter);
                 }
+            }
+
+            lValueAssigmentCollector = new LValueAssignmentAndAliasCondenser();
+            for (Op03SimpleStatement statement : statements) {
+                statement.collect(lValueAssigmentCollector);
             }
         }
 

@@ -476,6 +476,9 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     // Only the first time.
                     mutableReplacable.remove(versionedLValue);
                     replaceWith.statementContainer.nopOut();
+                    SSAIdentifiers previousIdents = replaceWith.statementContainer.getSSAIdentifiers();
+                    SSAIdentifiers currentIdents = statementContainer.getSSAIdentifiers();
+                    currentIdents.setKnownIdentifierOnEntry(lValue, previousIdents.getSSAIdentOnEntry(lValue));
                     return replaceWith.expression;
                 }
             }

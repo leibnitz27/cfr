@@ -57,8 +57,8 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        array = array.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         index = index.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+        array = array.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;
     }
 

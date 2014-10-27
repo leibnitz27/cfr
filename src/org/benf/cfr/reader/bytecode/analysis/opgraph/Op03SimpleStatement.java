@@ -875,8 +875,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 AssignmentSimple assignmentSimple = (AssignmentSimple) innerStatement;
                 if (assignmentSimple.getRValue().equals(lvalueExpression)) {
                     LValue tgt = assignmentSimple.getCreatedLValue();
-                    current.nopOut();
-                    preChange.replaceStatement(new AssignmentSimple(tgt, mutation.getPostMutation()));
+                    /*
+                     * Verify that the saident of tgt does not change.
+                     */
+                    SSAIdentifiers preChangeIdents = preChange.getSSAIdentifiers();
+                    SSAIdentifiers assignIdents = current.getSSAIdentifiers();
+                    if (!preChangeIdents.isValidReplacement(tgt, assignIdents)) {
+                        return;
+                    }
+                    assignIdents.setKnownIdentifierOnExit(mutatedLValue, preChangeIdents.getSSAIdentOnExit(mutatedLValue));
+                    current.replaceStatement(new AssignmentSimple(tgt, mutation.getPostMutation()));
+                    preChange.nopOut();
                     return;
                 }
             }

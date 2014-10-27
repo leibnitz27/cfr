@@ -100,7 +100,7 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        for (int x = 0; x < values.size(); ++x) {
+        for (int x = values.size()-1; x >= 0; --x) {
             values.set(x, values.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));
         }
         return this;

@@ -38,7 +38,7 @@ public class DynamicInvokation extends AbstractExpression {
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         innerInvokation.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
-        for (int x = 0; x < dynamicArgs.size(); ++x) {
+        for (int x = dynamicArgs.size()-1; x >=0; --x) {
             dynamicArgs.set(x, dynamicArgs.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));
         }
         return this;

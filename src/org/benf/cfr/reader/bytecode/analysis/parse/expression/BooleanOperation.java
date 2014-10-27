@@ -64,8 +64,8 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        lhs = (ConditionalExpression) lhs.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         rhs = (ConditionalExpression) rhs.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+        lhs = (ConditionalExpression) lhs.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;
     }
 
