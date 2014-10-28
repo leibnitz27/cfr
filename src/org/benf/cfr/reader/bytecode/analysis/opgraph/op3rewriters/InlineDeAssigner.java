@@ -10,10 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnValueStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.util.ListFactory;
@@ -175,23 +172,6 @@ public class InlineDeAssigner {
         }
     }
 
-    private static void deAssign(ReturnValueStatement returnValueStatement, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
-        Deassigner deassigner = new Deassigner();
-        // The outer expression can never be an assignment (that would be wrapped in a boolean expression)
-        // so we don't have to push back into the if statement.
-        Expression value = returnValueStatement.getReturnValue();
-        deassigner.rewriteExpression(value, container.getSSAIdentifiers(), container, ExpressionRewriterFlags.RVALUE);
-        rewrite(deassigner, container, added);
-    }
-
-    private static void deAssign(IfStatement ifStatement, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
-        Deassigner deassigner = new Deassigner();
-        // The outer expression can never be an assignment (that would be wrapped in a boolean expression)
-        // so we don't have to push back into the if statement.
-        Expression condition = ifStatement.getCondition();
-        deassigner.rewriteExpression(condition, container.getSSAIdentifiers(), container, ExpressionRewriterFlags.RVALUE);
-        rewrite(deassigner, container, added);
-    }
 
     /* We don't want to stop a slew of a = b = c = fred
      * only a = ( b = 12 ) > (c = 43)
@@ -217,18 +197,24 @@ public class InlineDeAssigner {
         rewrite(deassigner, container, added);
     }
 
+    private static void deAssign(Op03SimpleStatement container, List<Op03SimpleStatement> added) {
+        Deassigner deassigner = new Deassigner();
+        container.rewrite(deassigner);
+        rewrite(deassigner, container, added);
+    }
+
     public static boolean extractAssignments(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> newStatements = ListFactory.newList();
         for (Op03SimpleStatement statement : statements) {
+            if (statement.getSources().size() != 1) continue;
             Statement stmt = statement.getStatement();
             Class<? extends Statement> clazz = stmt.getClass();
-            if (clazz == IfStatement.class) {
-                if (statement.getSources().size() != 1) continue;
-                deAssign((IfStatement)stmt, statement, newStatements);
-            } else if (clazz == AssignmentSimple.class) {
-                deAssign((AssignmentSimple)stmt, statement, newStatements);
-            } else if (clazz == ReturnValueStatement.class) {
-                deAssign((ReturnValueStatement)stmt, statement, newStatements);
+            if (clazz == AssignmentSimple.class) {
+                deAssign((AssignmentSimple) stmt, statement, newStatements);
+            } else if (clazz == WhileStatement.class) {
+                // skip. (just looks better!)
+            } else {
+                deAssign(statement, newStatements);
             }
         }
         if (newStatements.isEmpty()) return false;
