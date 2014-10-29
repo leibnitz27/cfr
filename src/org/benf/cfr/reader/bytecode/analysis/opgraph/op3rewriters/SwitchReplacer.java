@@ -124,6 +124,8 @@ public class SwitchReplacer {
         List<DecodedSwitchEntry> entries = switchData.getJumpTargets();
         InferredJavaType caseType = switchStatement.getSwitchOn().getInferredJavaType();
         Map<InstrIndex, Op03SimpleStatement> firstPrev = MapFactory.newMap();
+
+        InstrIndex nextIntermed = swatch.getIndex().justAfter();
         for (int x = 0, len=targets.size(); x < len; ++x) {
             Op03SimpleStatement target = targets.get(x);
             InstrIndex tindex = target.getIndex();
@@ -157,6 +159,23 @@ public class SwitchReplacer {
                 source.replaceTarget(target, caseStatement);
                 caseStatement.addSource(source);
                 iterator.remove();
+            }
+            if (caseStatement.getSources().isEmpty()) {
+                // We have to add a case target after the case, and jump from that to the expected target.
+                // Order will be FIFO.
+                caseStatement.setIndex(nextIntermed);
+                nextIntermed = nextIntermed.justAfter();
+                Op03SimpleStatement intermediateGoto = new Op03SimpleStatement(blocks, new GotoStatement(), nextIntermed);
+                nextIntermed = nextIntermed.justAfter();
+                intermediateGoto.addSource(caseStatement);
+                intermediateGoto.addTarget(target);
+                caseStatement.addTarget(intermediateGoto);
+                target.replaceSource(swatch, intermediateGoto);
+                swatch.replaceTarget(target, caseStatement);
+                caseStatement.addSource(swatch);
+                in.add(caseStatement);
+                in.add(intermediateGoto);
+                continue;
             }
             target.addSource(caseStatement);
             caseStatement.addTarget(target);
