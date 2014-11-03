@@ -10,7 +10,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheckSimple;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
@@ -567,18 +566,66 @@ public class Op03Blocks {
     }
 
 
-    private static List<Block3> combineNeighbouringBlocks(final Method method, List<Block3> blocks) {
+    private static List<Block3> sanitiseBlocks(final Method method, List<Block3> blocks) {
         for (Block3 block : blocks) {
             block.sources.remove(block);
             block.targets.remove(block);
         }
+        return blocks;
+    }
 
+    private static List<Block3> combineNeighbouringBlocks(final Method method, List<Block3> blocks) {
         boolean reloop = false;
         do {
             blocks = combineNeighbouringBlocksPass1(method, blocks);
             reloop = moveSingleOutOrderBlocks(method, blocks);
         } while (reloop);
         // Now try to see if we can move single blocks into place.
+        return blocks;
+    }
+
+    /*
+     * We're looking for a very specific feature here - a case statement which jumps BACK immediately, to something which has NO
+     * OTHER source.  This won't get very many exemplars.
+     */
+    private static List<Block3> combineSingleCaseBackBlock(final Method method, List<Block3> blocks) {
+        IdentityHashMap<Block3, Integer> idx = new IdentityHashMap<Block3, Integer>();
+
+        boolean effect = false;
+        for (int x = 0, len = blocks.size(); x<len;++x) {
+            Block3 block = blocks.get(x);
+            idx.put(block, x);
+            if (block.targets.size() == 1 && block.content.size() == 2) {
+                Block3 target = getSingle(block.targets);
+                Integer tgtIdx = idx.get(target);
+                if (tgtIdx == null) continue;
+                if (target.sources.size() != 1) continue;
+                List<Op03SimpleStatement> content = block.content;
+                if (content.get(0).getStatement().getClass() != CaseStatement.class) continue;
+                if (content.get(1).getStatement().getClass() != GotoStatement.class) continue;
+                Set<BlockIdentifier> containedIn = content.get(1).getBlockIdentifiers();
+
+                content = target.getContent();
+                for (Op03SimpleStatement statement : content) {
+                    statement.getBlockIdentifiers().addAll(containedIn);
+                }
+                block.content.addAll(content);
+                target.sources.remove(block);
+                block.targets.remove(target);
+                for (Block3 tgt2 : target.targets) {
+                    tgt2.sources.remove(target);
+                    tgt2.sources.add(block);
+                    block.targets.add(tgt2);
+                    tgt2.resetSources();
+                }
+                target.targets.clear();
+                blocks.set(tgtIdx, null);
+                effect = true;
+            }
+        }
+        if (effect) {
+            blocks = Functional.filter(blocks, new Functional.NotNull<Block3>());
+        }
         return blocks;
     }
 
@@ -728,8 +775,13 @@ public class Op03Blocks {
         Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = getTryBlockAliases(statements);
         applyKnownBlocksHeuristic(method, blocks, tryBlockAliases);
 
+        blocks = sanitiseBlocks(method, blocks);
         blocks = combineNeighbouringBlocks(method, blocks);
 
+        // Case statements can vector BACK to blocks which are tricky to move if we rely on a general
+        // reachability ordering criteria.
+        // see bb/xh.class
+        blocks = combineSingleCaseBackBlock(method, blocks);
 
         blocks = doTopSort(blocks);
 

@@ -608,7 +608,9 @@ public class LoopIdentifier {
         Set<BlockIdentifier> catches = SetFactory.newSet(Functional.filterSet(lastBlocks, new Predicate<BlockIdentifier>() {
             @Override
             public boolean test(BlockIdentifier in) {
-                return (in.getBlockType() == BlockType.CATCHBLOCK);
+                BlockType type = in.getBlockType();
+                return type == BlockType.CATCHBLOCK ||
+                       type == BlockType.SWITCH;
             }
         }));
         int newlast = last;
