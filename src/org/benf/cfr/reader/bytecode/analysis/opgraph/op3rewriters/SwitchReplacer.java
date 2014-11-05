@@ -661,4 +661,20 @@ public class SwitchReplacer {
         }
     }
 
+    /*
+     * Handle situation in which default extends such that all the other cases (which break) break into it.
+     * Only necessary if there is a default, and it has content, and it is the last case.
+     * Find egress points for other cases - if they all jump into the same point in the default, we can shrink it back to
+     * there.
+     */
+    public static void tidyOverExtendedDefault(List<Op03SimpleStatement> statements) {
+        List<Op03SimpleStatement> switchStatements = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
+        for (Op03SimpleStatement switchst : switchStatements) {
+            SwitchStatement switchStatement = (SwitchStatement)switchst.getStatement();
+            // Verify that the last target is a default.  If it is, see if
+            // other cases jump into it.
+            // Search backwards from this statement (remaining in switch)
+
+        }
+    }
 }

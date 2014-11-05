@@ -9,7 +9,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExplicitTypeCallRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.XorRewriter;
@@ -444,7 +443,7 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Op03SimpleStatement.removeRedundantTries(op03SimpleParseNodes);
 
 
-        Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
+        FinallyRewriter.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
 
         op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, !willSort);
         op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
@@ -504,7 +503,7 @@ public class CodeAnalyser {
             op03SimpleParseNodes = Op03Blocks.combineTryBlocks(method, op03SimpleParseNodes);
             Op03SimpleStatement.combineTryCatchEnds(op03SimpleParseNodes);
             Op03SimpleStatement.rewriteTryBackJumps(op03SimpleParseNodes);
-            Op03SimpleStatement.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
+            FinallyRewriter.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
             if (options.getOption(OptionsImpl.FORCE_RETURNING_IFS) == Troolean.TRUE) {
                 Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
             }
@@ -515,7 +514,7 @@ public class CodeAnalyser {
          * returning is deterministic, return that.
          */
         if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
-            Op03SimpleStatement.propagateToReturn(method, op03SimpleParseNodes);
+            RemoveDeterministicJumps.propagateToReturn(method, op03SimpleParseNodes);
         }
 
         logger.info("sugarAnyonymousArrays");

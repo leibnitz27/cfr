@@ -1224,46 +1224,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    /*
-     * VERY aggressive options for simplifying control flow, at the cost of changing the appearance.
-     *
-     */
-    public static void propagateToReturn(Method method, List<Op03SimpleStatement> statements) {
-        boolean success = false;
-
-        List<Op03SimpleStatement> assignmentSimples = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
-
-        for (Op03SimpleStatement stm : assignmentSimples) {
-            Statement inner = stm.getStatement();
-            /*
-             * This pass helps with scala and dex2jar style output - find a remaining assignment to a stack
-             * variable (or POSSIBLY a local), and follow it through.  If nothing intervenes, and we hit a return, we can
-             * simply replace the entry point.
-             *
-             * We agressively attempt to follow through computable literals.
-             *
-             * Note that we pull this one out here, because it can handle a non-literal assignment -
-             * inside PLReturn we can only handle subsequent literal assignments.
-             */
-            if (stm.getTargets().size() != 1)
-                continue; // shouldn't be possible to be other, but a pruning might have removed.
-            AssignmentSimple assignmentSimple = (AssignmentSimple) inner;
-            LValue lValue = assignmentSimple.getCreatedLValue();
-            Expression rValue = assignmentSimple.getRValue();
-            if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) continue;
-            Map<LValue, Literal> display = MapFactory.newMap();
-            if (rValue instanceof Literal) {
-                display.put(lValue, (Literal) rValue);
-            }
-            Op03SimpleStatement next = stm.getTargets().get(0);
-            success |= propagateLiteralReturn(method, stm, next, lValue, rValue, display);
-            // Note - we can't have another go with return back yet, as it would break ternary discovery.
-        }
-
-
-        if (success) Op03SimpleStatement.replaceReturningIfs(statements, true);
-    }
-
     public static void propagateToReturn2(Method method, List<Op03SimpleStatement> statements) {
         boolean success = false;
         for (Op03SimpleStatement stm : statements) {
@@ -1308,183 +1268,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         for (Op03SimpleStatement remove : toRemove) {
             pushReturnBack(method, remove);
-        }
-
-        return true;
-    }
-
-    /*
-     * We require a straight through route, with no chances that any side effects have occured.
-     * (i.e. call any methods, change members).
-     * However, we can cope with further LITERAL assignments to locals and stackvars, and even
-     * conditionals on them (if literal).
-     *
-     * This allows us to cope with the disgusting scala pattern.
-     *
-     * if (temp1) {
-     *   ALSO JUMP HERE FROM ELSEWHERE
-     *   temp2 = true;
-     * } else {
-     *   temp2 = false;
-     * }
-     * if (temp2) {
-     *   temp3 = true;
-     * } else {
-     *   temp3 = false;
-     * }
-     * return temp3;
-     *
-     */
-    private static boolean propagateLiteralReturn(Method method, Op03SimpleStatement original, final Op03SimpleStatement orignext, final LValue originalLValue, final Expression originalRValue, Map<LValue, Literal> display) {
-        Op03SimpleStatement current = orignext;
-        Set<Op03SimpleStatement> seen = SetFactory.newSet();
-        do {
-            if (!seen.add(current)) return false;
-            Class<?> cls = current.getStatement().getClass();
-            List<Op03SimpleStatement> curTargets = current.getTargets();
-            int nTargets = curTargets.size();
-            if (cls == Nop.class) {
-                if (nTargets != 1) return false;
-                current = curTargets.get(0);
-                continue;
-            }
-            if (cls == ReturnNothingStatement.class) break;
-            if (cls == ReturnValueStatement.class) break;
-            if (cls == GotoStatement.class ||
-                    cls == MonitorExitStatement.class) {
-                if (nTargets != 1) return false;
-                current = curTargets.get(0);
-                continue;
-            }
-            if (cls == AssignmentSimple.class) {
-                AssignmentSimple assignmentSimple = (AssignmentSimple) current.getStatement();
-                LValue lValue = assignmentSimple.getCreatedLValue();
-                if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) return false;
-                Literal literal = assignmentSimple.getRValue().getComputedLiteral(display);
-                if (literal == null) return false;
-                display.put(lValue, literal);
-                current = curTargets.get(0);
-                continue;
-            }
-
-            // We /CAN/ actually cope with a conditional, if we're 100% sure of where we're going!
-            if (cls == IfStatement.class) {
-                IfStatement ifStatement = (IfStatement) current.getStatement();
-                Literal literal = ifStatement.getCondition().getComputedLiteral(display);
-                Boolean bool = literal == null ? null : literal.getValue().getMaybeBoolValue();
-                if (bool == null) {
-                    return false;
-                }
-                current = curTargets.get(bool ? 1 : 0);
-                continue;
-            }
-            return false;
-        } while (true);
-
-        Class<?> cls = current.getStatement().getClass();
-        /*
-         * If the original rValue is a literal, we can replace.  If not, we can't.
-         */
-        if (cls == ReturnNothingStatement.class) {
-            if (!(originalRValue instanceof Literal)) return false;
-            original.replaceStatement(new ReturnNothingStatement());
-            orignext.removeSource(original);
-            original.removeTarget(orignext);
-            return true;
-        }
-        /*
-         * Heuristic of doom.  If the ORIGINAL rvalue is a literal (i.e. side effect free), we can
-         * ignore it, and replace the original assignment with the computed literal.
-         *
-         * If the original rvalue is NOT a literal, AND we are returning the original lValue, we can
-         * return the original rValue. (This is why we can't have side effects during the above).
-         */
-        if (cls == ReturnValueStatement.class) {
-            ReturnValueStatement returnValueStatement = (ReturnValueStatement) current.getStatement();
-            if (originalRValue instanceof Literal) {
-                Expression e = returnValueStatement.getReturnValue().getComputedLiteral(display);
-                if (e == null) return false;
-                original.replaceStatement(new ReturnValueStatement(e, returnValueStatement.getFnReturnType()));
-            } else {
-                Expression ret = returnValueStatement.getReturnValue();
-                if (!(ret instanceof LValueExpression)) return false;
-                LValue retLValue = ((LValueExpression) ret).getLValue();
-                if (!retLValue.equals(originalLValue)) return false;
-                // NB : we don't have to clone rValue, as we're replacing the statement it came from.
-                original.replaceStatement(new ReturnValueStatement(originalRValue, returnValueStatement.getFnReturnType()));
-            }
-            orignext.removeSource(original);
-            original.removeTarget(orignext);
-            return true;
-        }
-        return false;
-    }
-
-    /*
-     * Another type of literal propagation
-     *
-     * if (x == false) goto b
-     * a: if (y == false) goto c
-     * return FRED
-     * b:
-     * ..
-     * y = false
-     * if (p) goto a
-     * ..
-     * ..
-     * y = true
-     * if (p) goto a
-     * ..
-     * c:
-     *
-     * Above, both the 'goto a' can be replaced with either 'return FRED' or 'goto c'.
-     *
-     * This has the potential for making normal control flow quite ugly, so should be used
-     * as a fallback mechanism.
-     */
-    private static boolean propagateLiteralBranch(Method method, final Op03SimpleStatement original, final Op03SimpleStatement conditional, IfStatement ifStatement, Map<LValue, Literal> display) {
-        if (method.toString().equals("mpc: mpc(android.content.Context )") && original.getIndex().toString().equals("lbl20")) {
-            int x = 1;
-        }
-
-        Op03SimpleStatement improvement = null;
-        /* We're looking for a conditional which we can rewrite the branch on.
-         * Find the target of the conditional, see if it's conditional on a hardcoded value.
-         */
-
-        Op03SimpleStatement target = conditional.getTargets().get(1);
-        final Op03SimpleStatement originalConditionalTarget = target;
-        /*
-         * At this point, we COULD continue to walk nops, gotos and literal assignments.
-         *
-         * TODO : Should work for an IfExitingStatement too (actually, that needs nuking. :P )
-         */
-        do {
-            Statement tgtStatement = target.getStatement();
-            if (!(tgtStatement instanceof IfStatement)) break;
-            IfStatement ifStatement2 = (IfStatement)tgtStatement;
-            Literal literal = ifStatement2.getCondition().getComputedLiteral(display);
-            Boolean bool = literal == null ? null : literal.getValue().getMaybeBoolValue();
-            if (bool == null) break;
-
-            target = target.getTargets().get(bool ? 1 : 0);
-            improvement = target;
-        } while (true);
-
-        if (improvement == null) return false;
-
-        /*
-         * If the improvement target is a return, we can generate an ifExiting here.
-         */
-        Statement improvementStatement = improvement.getStatement();
-        if (improvementStatement instanceof ReturnStatement) {
-            conditional.removeTarget(originalConditionalTarget);
-            originalConditionalTarget.removeSource(conditional);
-            conditional.replaceStatement(new IfExitingStatement(ifStatement.getCondition(), (ReturnStatement)improvementStatement));
-        } else {
-            conditional.replaceTarget(originalConditionalTarget, improvement);
-            improvement.addSource(conditional);
-            originalConditionalTarget.removeSource(conditional);
         }
 
         return true;
@@ -3078,7 +2861,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         /* Add something inFRONT of the try statement which is NOT going to be in this block, which can adopt it
          * (This is obviously an unreal artifact)
          */
+        /* See Tock test for why we should only extend try/catch.
+         */
         Set<BlockIdentifier> tryBlocks = tryStatement.containedInBlocks;
+        tryBlocks = SetFactory.newSet(Functional.filter(tryBlocks, new Predicate<BlockIdentifier>() {
+            @Override
+            public boolean test(BlockIdentifier in) {
+                return in.getBlockType() == BlockType.TRYBLOCK || in.getBlockType() == BlockType.CATCHBLOCK;
+            }
+        }));
         if (tryBlocks.isEmpty()) return;
         for (Op03SimpleStatement statement : allStatements) {
             statement.containedInBlocks.addAll(tryBlocks);
@@ -3521,34 +3312,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement tryStatement : tries) {
             extendTryBlock(tryStatement, in, dcCommonState);
         }
-
-    }
-
-    public static void identifyFinally(Options options, Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
-        if (!options.getOption(OptionsImpl.DECODE_FINALLY)) return;
-        /* Get all the try statements, get their catches.  For all the EXIT points to the catches, try to identify
-         * a common block of code (either before a throw, return or goto.)
-         * Be careful, if a finally block contains a throw, this will mess up...
-         */
-        final Set<Op03SimpleStatement> analysedTries = SetFactory.newSet();
-        boolean continueLoop;
-        do {
-            List<Op03SimpleStatement> tryStarts = Functional.filter(in, new Predicate<Op03SimpleStatement>() {
-                @Override
-                public boolean test(Op03SimpleStatement in) {
-                    if (in.getStatement() instanceof TryStatement &&
-                            !analysedTries.contains(in)) return true;
-                    return false;
-                }
-            });
-            for (Op03SimpleStatement tryS : tryStarts) {
-                FinalAnalyzer.identifyFinally(method, tryS, in, blockIdentifierFactory, analysedTries);
-            }
-            /*
-             * We may need to reloop, if analysis has created new tries inside finally handlers. (!).
-             */
-            continueLoop = (!tryStarts.isEmpty());
-        } while (continueLoop);
     }
 
     public static List<Op03SimpleStatement> removeRedundantTries(List<Op03SimpleStatement> statements) {

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.*;
@@ -18,11 +19,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class RemoveDeterministicJumps {
+
     public static void apply(Method method, List<Op03SimpleStatement> statements) {
         boolean success = false;
+        Set<BlockIdentifier> ignoreInThese = FinallyRewriter.getBlocksAffectedByFinally(statements);
 
         for (Op03SimpleStatement stm : statements) {
             if (!(stm.getStatement() instanceof AssignmentSimple)) continue;
+            if (SetUtil.hasIntersection(ignoreInThese, stm.getBlockIdentifiers())) continue;
             Map<LValue, Literal> display = MapFactory.newMap();
             success |= propagateLiteralReturn(method, stm, display);
         }
@@ -173,4 +177,154 @@ public class RemoveDeterministicJumps {
             replaceAssignmentReturn(source, returnNothingStatement);
         }
     }
+
+    /*
+ * We require a straight through route, with no chances that any side effects have occured.
+ * (i.e. call any methods, change members).
+ * However, we can cope with further LITERAL assignments to locals and stackvars, and even
+ * conditionals on them (if literal).
+ *
+ * This allows us to cope with the disgusting scala pattern.
+ *
+ * if (temp1) {
+ *   ALSO JUMP HERE FROM ELSEWHERE
+ *   temp2 = true;
+ * } else {
+ *   temp2 = false;
+ * }
+ * if (temp2) {
+ *   temp3 = true;
+ * } else {
+ *   temp3 = false;
+ * }
+ * return temp3;
+ *
+ */
+    private static boolean propagateLiteralReturn(Method method, Op03SimpleStatement original, final Op03SimpleStatement orignext, final LValue originalLValue, final Expression originalRValue, Map<LValue, Literal> display) {
+        Op03SimpleStatement current = orignext;
+        Set<Op03SimpleStatement> seen = SetFactory.newSet();
+        do {
+            if (!seen.add(current)) return false;
+            Class<?> cls = current.getStatement().getClass();
+            List<Op03SimpleStatement> curTargets = current.getTargets();
+            int nTargets = curTargets.size();
+            if (cls == Nop.class) {
+                if (nTargets != 1) return false;
+                current = curTargets.get(0);
+                continue;
+            }
+            if (cls == ReturnNothingStatement.class) break;
+            if (cls == ReturnValueStatement.class) break;
+            if (cls == GotoStatement.class ||
+                    cls == MonitorExitStatement.class) {
+                if (nTargets != 1) return false;
+                current = curTargets.get(0);
+                continue;
+            }
+            if (cls == AssignmentSimple.class) {
+                AssignmentSimple assignmentSimple = (AssignmentSimple) current.getStatement();
+                LValue lValue = assignmentSimple.getCreatedLValue();
+                if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) return false;
+                Literal literal = assignmentSimple.getRValue().getComputedLiteral(display);
+                if (literal == null) return false;
+                display.put(lValue, literal);
+                current = curTargets.get(0);
+                continue;
+            }
+
+            // We /CAN/ actually cope with a conditional, if we're 100% sure of where we're going!
+            if (cls == IfStatement.class) {
+                IfStatement ifStatement = (IfStatement) current.getStatement();
+                Literal literal = ifStatement.getCondition().getComputedLiteral(display);
+                Boolean bool = literal == null ? null : literal.getValue().getMaybeBoolValue();
+                if (bool == null) {
+                    return false;
+                }
+                current = curTargets.get(bool ? 1 : 0);
+                continue;
+            }
+            return false;
+        } while (true);
+
+        Class<?> cls = current.getStatement().getClass();
+        /*
+         * If the original rValue is a literal, we can replace.  If not, we can't.
+         */
+        if (cls == ReturnNothingStatement.class) {
+            if (!(originalRValue instanceof Literal)) return false;
+            original.replaceStatement(new ReturnNothingStatement());
+            orignext.removeSource(original);
+            original.removeTarget(orignext);
+            return true;
+        }
+        /*
+         * Heuristic of doom.  If the ORIGINAL rvalue is a literal (i.e. side effect free), we can
+         * ignore it, and replace the original assignment with the computed literal.
+         *
+         * If the original rvalue is NOT a literal, AND we are returning the original lValue, we can
+         * return the original rValue. (This is why we can't have side effects during the above).
+         */
+        if (cls == ReturnValueStatement.class) {
+            ReturnValueStatement returnValueStatement = (ReturnValueStatement) current.getStatement();
+            if (originalRValue instanceof Literal) {
+                Expression e = returnValueStatement.getReturnValue().getComputedLiteral(display);
+                if (e == null) return false;
+                original.replaceStatement(new ReturnValueStatement(e, returnValueStatement.getFnReturnType()));
+            } else {
+                Expression ret = returnValueStatement.getReturnValue();
+                if (!(ret instanceof LValueExpression)) return false;
+                LValue retLValue = ((LValueExpression) ret).getLValue();
+                if (!retLValue.equals(originalLValue)) return false;
+                // NB : we don't have to clone rValue, as we're replacing the statement it came from.
+                original.replaceStatement(new ReturnValueStatement(originalRValue, returnValueStatement.getFnReturnType()));
+            }
+            orignext.removeSource(original);
+            original.removeTarget(orignext);
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * VERY aggressive options for simplifying control flow, at the cost of changing the appearance.
+     *
+     */
+    public static void propagateToReturn(Method method, List<Op03SimpleStatement> statements) {
+        boolean success = false;
+
+        List<Op03SimpleStatement> assignmentSimples = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
+        Set<BlockIdentifier> affectedByFinally = FinallyRewriter.getBlocksAffectedByFinally(statements);
+
+        for (Op03SimpleStatement stm : assignmentSimples) {
+            if (SetUtil.hasIntersection(affectedByFinally, stm.getBlockIdentifiers())) continue;
+            Statement inner = stm.getStatement();
+            /*
+             * This pass helps with scala and dex2jar style output - find a remaining assignment to a stack
+             * variable (or POSSIBLY a local), and follow it through.  If nothing intervenes, and we hit a return, we can
+             * simply replace the entry point.
+             *
+             * We agressively attempt to follow through computable literals.
+             *
+             * Note that we pull this one out here, because it can handle a non-literal assignment -
+             * inside PLReturn we can only handle subsequent literal assignments.
+             */
+            if (stm.getTargets().size() != 1)
+                continue; // shouldn't be possible to be other, but a pruning might have removed.
+            AssignmentSimple assignmentSimple = (AssignmentSimple) inner;
+            LValue lValue = assignmentSimple.getCreatedLValue();
+            Expression rValue = assignmentSimple.getRValue();
+            if (!(lValue instanceof StackSSALabel || lValue instanceof LocalVariable)) continue;
+            Map<LValue, Literal> display = MapFactory.newMap();
+            if (rValue instanceof Literal) {
+                display.put(lValue, (Literal) rValue);
+            }
+            Op03SimpleStatement next = stm.getTargets().get(0);
+            success |= propagateLiteralReturn(method, stm, next, lValue, rValue, display);
+            // Note - we can't have another go with return back yet, as it would break ternary discovery.
+        }
+
+
+        if (success) Op03SimpleStatement.replaceReturningIfs(statements, true);
+    }
+
 }
