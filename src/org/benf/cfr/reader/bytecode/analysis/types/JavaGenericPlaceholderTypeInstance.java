@@ -147,6 +147,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
 
     @Override
     public String suggestVarName() {
+        if (className.equals(MiscConstants.UNBOUND_GENERIC)) { return "obj"; }
         return className;
     }
 }
