@@ -125,7 +125,7 @@ public class Main {
             }
         } catch (RuntimeException e) {
             String err = "Exception analysing jar " + e;
-            System.err.print(err);
+            System.err.println(err);
             if (summaryDumper != null) summaryDumper.notify(err);
         } finally {
             if (summaryDumper != null) summaryDumper.close();
