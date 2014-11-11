@@ -277,6 +277,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<String> ANALYSE_AS = new PermittedOptionProvider.Argument<String>(
             "analyseas", defaultNullStringDecoder,
             "Force file to be analysed as 'jar' or 'class'");
+    public static final PermittedOptionProvider.Argument<String> JAR_FILTER = new PermittedOptionProvider.Argument<String>(
+            "jarfilter", defaultNullStringDecoder,
+            "Substring regex - analyse only classes where the fqn matches this pattern. (when analysing jar).");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -328,7 +331,7 @@ public class OptionsImpl implements Options {
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
-                    DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
+                    DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR, JAR_FILTER,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES, SHOW_INFERRABLE,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,

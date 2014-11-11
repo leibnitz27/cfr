@@ -5,9 +5,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.util.CannotLoadClassException;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.BadParametersException;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
@@ -82,6 +80,7 @@ public class Main {
         SummaryDumper summaryDumper = null;
         boolean silent = true;
         try {
+            Predicate<String> matcher = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.JAR_FILTER), true);
             silent = options.getOption(OptionsImpl.SILENT);
             summaryDumper = DumperFactory.getSummaryDumper(options);
             List<JavaTypeInstance> types = dcCommonState.explicitlyLoadJar(path);
@@ -90,9 +89,10 @@ public class Main {
             if (!silent) {
                 System.err.println("Processing " + path + " (use " + OptionsImpl.SILENT.getName() + " to silence)");
             }
-            int fatal = 0;
-            int succeded = 0;
             for (JavaTypeInstance type : types) {
+                if (!matcher.test(type.getRawName())) {
+                    continue;
+                }
                 Dumper d = new ToStringDumper();  // Sentinel dumper.
                 try {
                     ClassFile c = dcCommonState.getClassFile(type);
@@ -113,12 +113,10 @@ public class Main {
                     d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation());
 
                     c.dump(d);
-                    succeded++;
                     d.print("\n\n");
                 } catch (Dumper.CannotCreate e) {
                     throw e;
                 } catch (RuntimeException e) {
-                    fatal++;
                     d.print(e.toString()).print("\n\n\n");
                 } finally {
                     d.close();
