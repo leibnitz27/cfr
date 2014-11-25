@@ -484,6 +484,10 @@ public class CodeAnalyser {
             if (options.getOption(OptionsImpl.FORCE_RETURNING_IFS) == Troolean.TRUE) {
                 Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
             }
+            if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
+                Op03SimpleStatement.propagateToReturn2(method, op03SimpleParseNodes);
+            }
+
             op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, false);
 //            Op03SimpleStatement.extendCatchBlocks(op03SimpleParseNodes);
 

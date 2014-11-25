@@ -1245,29 +1245,42 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (success) Op03SimpleStatement.replaceReturningIfs(statements, true);
     }
 
-    private static boolean pushReturnBack(Method method, Op03SimpleStatement stm) {
+    private static boolean pushReturnBack(Method method, final Op03SimpleStatement returnStm) {
 
-        ReturnStatement returnStatement = (ReturnStatement) stm.getStatement();
+        ReturnStatement returnStatement = (ReturnStatement) returnStm.getStatement();
+        final List<Op03SimpleStatement> replaceWithReturn = ListFactory.newList();
 
-        List<Op03SimpleStatement> toRemove = null;
-        for (Op03SimpleStatement src : stm.getSources()) {
-            if (src.getStatement().getClass() == GotoStatement.class) {
-                if (toRemove == null) toRemove = ListFactory.newList();
-                toRemove.add(src);
+        new GraphVisitorDFS<Op03SimpleStatement>(returnStm.getSources(), new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
+            @Override
+            public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+                Class<?> clazz = arg1.getStatement().getClass();
+                if (clazz == CommentStatement.class ||
+                    clazz == Nop.class ||
+                    clazz == DoStatement.class) {
+                    arg2.enqueue(arg1.getSources());
+                } else if (clazz == WhileStatement.class) {
+                    // only if it's 'while true'.
+                    WhileStatement whileStatement = (WhileStatement)arg1.getStatement();
+                    if (whileStatement.getCondition() == null) {
+                        arg2.enqueue(arg1.getSources());
+                        replaceWithReturn.add(arg1);
+                    }
+                } else if (clazz == GotoStatement.class) {
+                    arg2.enqueue(arg1.getSources());
+                    replaceWithReturn.add(arg1);
+                }
             }
-        }
+        }).process();
 
-        if (toRemove == null) return false;
+        if (replaceWithReturn.isEmpty()) return false;
 
         CloneHelper cloneHelper = new CloneHelper();
-        for (Op03SimpleStatement remove : toRemove) {
+        for (Op03SimpleStatement remove : replaceWithReturn) {
             remove.replaceStatement(returnStatement.deepClone(cloneHelper));
-            remove.removeTarget(stm);
-            stm.removeSource(remove);
-        }
-
-        for (Op03SimpleStatement remove : toRemove) {
-            pushReturnBack(method, remove);
+            for (Op03SimpleStatement tgt : remove.getTargets()) {
+                tgt.removeSource(remove);
+            }
+            remove.targets.clear();
         }
 
         return true;
@@ -1379,8 +1392,19 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             nottaken3 = nontaken3rewrite;
         } while (true);
 
-
-        if (nottaken2 != nottaken3) return false;   // nottaken2 = nottaken3 = c
+        // nottaken2 = nottaken3 = c
+        if (nottaken2 != nottaken3) {
+            // There's one final thing we can get away with - if these are both returns, and they are IDENTICAL
+            // (i.e. same, AND for any variables accessed, ssa-same), then we can assume nottaken2 is a rewritten branch
+            // to nottaken3.
+            if (nottaken2.getStatement() instanceof ReturnStatement) {
+                if (!nottaken2.getStatement().equivalentUnder(nottaken3.getStatement(), new StatementEquivalenceConstraint(nottaken2, nottaken3))) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
         if (taken2 != taken3) return false; // taken2 = taken3 = b;
         /*
          * rewrite as if ((w && z) || x)
