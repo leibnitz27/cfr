@@ -733,6 +733,8 @@ public class CodeAnalyser {
 //        }
 
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes, true);
+        Op03SimpleStatement.extractExceptionMiddle(op03SimpleParseNodes);
+
 
         /*
          * At this point, if we have any remaining stack variables, then we're either looking

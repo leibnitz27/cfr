@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -30,6 +31,7 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
+import javax.sound.sampled.Line;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -1873,6 +1875,205 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
         for (Op03SimpleStatement tryi : tries) {
             extractExceptionJumps(tryi, in);
+        }
+    }
+
+
+    private static LinearScannedBlock getLinearScannedBlock(List<Op03SimpleStatement> statements, int idx, Op03SimpleStatement stm, BlockIdentifier blockIdentifier, boolean prefix) {
+        Set<Op03SimpleStatement> found = SetFactory.newSet();
+        int nextIdx = idx+(prefix?1:0);
+        if (prefix) found.add(stm);
+        int cnt = statements.size();
+        do {
+            Op03SimpleStatement nstm = statements.get(nextIdx);
+            if (!nstm.getBlockIdentifiers().contains(blockIdentifier)) break;
+            found.add(nstm);
+            nextIdx++;
+        } while (nextIdx < cnt);
+        Set<Op03SimpleStatement> reachable = new GraphVisitorBlockReachable(stm, blockIdentifier).run();
+        if (!reachable.equals(found)) return null;
+        nextIdx--;
+        if (reachable.isEmpty()) return null;
+        return new LinearScannedBlock(stm, statements.get(nextIdx), idx, nextIdx);
+    }
+
+    private static class SingleExceptionAddressing {
+        BlockIdentifier tryBlockIdent;
+        BlockIdentifier catchBlockIdent;
+        LinearScannedBlock tryBlock;
+        LinearScannedBlock catchBlock;
+
+        private SingleExceptionAddressing(BlockIdentifier tryBlockIdent, BlockIdentifier catchBlockIdent, LinearScannedBlock tryBlock, LinearScannedBlock catchBlock) {
+            this.tryBlockIdent = tryBlockIdent;
+            this.catchBlockIdent = catchBlockIdent;
+            this.tryBlock = tryBlock;
+            this.catchBlock = catchBlock;
+        }
+    }
+
+    private static SingleExceptionAddressing getSingleTryCatch(Op03SimpleStatement trystm, List<Op03SimpleStatement> statements) {
+        int idx = statements.indexOf(trystm);
+        TryStatement tryStatement = (TryStatement)trystm.getStatement();
+        BlockIdentifier tryBlockIdent = tryStatement.getBlockIdentifier();
+        LinearScannedBlock tryBlock = getLinearScannedBlock(statements, idx, trystm, tryBlockIdent, true);
+        if (tryBlock == null) return null;
+        Op03SimpleStatement catchs = trystm.getTargets().get(1);
+        Statement testCatch = catchs.getStatement();
+        if (!(testCatch instanceof CatchStatement)) return null;
+        CatchStatement catchStatement = (CatchStatement)testCatch;
+        BlockIdentifier catchBlockIdent = catchStatement.getCatchBlockIdent();
+        LinearScannedBlock catchBlock = getLinearScannedBlock(statements, statements.indexOf(catchs), catchs, catchBlockIdent, true);
+        if (catchBlock == null) return null;
+
+        if (!catchBlock.isAfter(tryBlock)) return null;
+
+        return new SingleExceptionAddressing(tryBlockIdent, catchBlockIdent, tryBlock, catchBlock);
+    }
+
+    private static boolean extractExceptionMiddle(Op03SimpleStatement trystm, List<Op03SimpleStatement> statements, SingleExceptionAddressing trycatch) {
+        LinearScannedBlock tryBlock = trycatch.tryBlock;
+        LinearScannedBlock catchBlock = trycatch.catchBlock;
+        BlockIdentifier tryBlockIdent = trycatch.tryBlockIdent;
+        BlockIdentifier catchBlockIdent = trycatch.catchBlockIdent;
+
+        /*
+         * Check that the catch block does not exit to the statement linearly after it.
+         * (if there is such a statement).
+         */
+        int catchLast = catchBlock.getIdxLast();
+        if (catchLast < statements.size()-1) {
+            Op03SimpleStatement afterCatchBlock = statements.get(catchLast+1);
+            for (Op03SimpleStatement source : afterCatchBlock.getSources()) {
+                if (source.getBlockIdentifiers().contains(catchBlockIdent)) return false;
+            }
+        }
+
+        if (catchBlock.immediatelyFollows(tryBlock)) return false;
+
+        Set<BlockIdentifier> expected = trystm.getBlockIdentifiers();
+        /*
+         * Ok, we have a try block, a catch block and something inbetween them.  Verify that there are no jumps INTO
+         * this intermediate code other than from the try or catch block, (or blocks in this range)
+         * and that the blockset of the START of the try block is present the whole time.
+         */
+        Set<Op03SimpleStatement> middle = SetFactory.newSet();
+        List<Op03SimpleStatement> toMove = ListFactory.newList();
+        for (int x=tryBlock.getIdxLast()+1;x<catchBlock.getIdxFirst();++x) {
+            Op03SimpleStatement stm = statements.get(x);
+            middle.add(stm);
+            toMove.add(stm);
+        }
+        for (int x=tryBlock.getIdxLast()+1;x<catchBlock.getIdxFirst();++x) {
+            Op03SimpleStatement stm = statements.get(x);
+            if (!stm.getBlockIdentifiers().containsAll(expected)) {
+                return false;
+            }
+            for (Op03SimpleStatement source : stm.getSources()) {
+                if (source.getIndex().isBackJumpTo(stm)) {
+                    Set<BlockIdentifier> sourceBlocks = source.getBlockIdentifiers();
+                    if (!(sourceBlocks.contains(tryBlockIdent) || (sourceBlocks.contains(catchBlockIdent)))) {
+                        return false;
+                    }
+                }
+            }
+        }
+        InstrIndex afterIdx = catchBlock.getLast().getIndex().justAfter();
+        for (Op03SimpleStatement move : toMove) {
+            move.setIndex(afterIdx);
+            afterIdx = afterIdx.justAfter();
+        }
+        return true;
+    }
+
+    /*
+     * If the try block jumps directly into the catch block, we might have an over-aggressive catch statement,
+     * where the last bit should be outside it.
+     *
+     * As a conservative heuristic, treat this as valid if there are no other out of block forward jumps in the try
+     * block. (strictly speaking this is pessimistic, and avoids indexed breaks and continues.  Revisit if examples
+     * of those are found to be problematic).
+     */
+    private static void extractCatchEnd(Op03SimpleStatement trystm, List<Op03SimpleStatement> statements, SingleExceptionAddressing trycatch) {
+        LinearScannedBlock tryBlock = trycatch.tryBlock;
+        BlockIdentifier tryBlockIdent = trycatch.tryBlockIdent;
+        BlockIdentifier catchBlockIdent = trycatch.catchBlockIdent;
+        Op03SimpleStatement possibleAfterBlock = null;
+        /*
+         * If there IS a statement after the catch block, it can't be jumped to by the try block.
+         * Otherwise, the catch block is the last code in the method.
+         */
+        if (trycatch.catchBlock.getIdxLast() < statements.size()-1) {
+            Op03SimpleStatement afterCatch = statements.get(trycatch.catchBlock.getIdxLast()+1);
+            for (Op03SimpleStatement source : afterCatch.getSources()) {
+                if (source.getBlockIdentifiers().contains(tryBlockIdent)) return;
+            }
+        }
+        for (int x = tryBlock.getIdxFirst()+1; x <= tryBlock.getIdxLast(); ++x) {
+            List<Op03SimpleStatement> targets = statements.get(x).getTargets();
+            for (Op03SimpleStatement target : targets) {
+                if (target.getBlockIdentifiers().contains(catchBlockIdent)) {
+                    if (possibleAfterBlock == null) {
+                        possibleAfterBlock = target;
+                    } else {
+                        if (target != possibleAfterBlock) return;
+                    }
+                }
+            }
+        }
+        if (possibleAfterBlock == null) return;
+
+        /*
+         * We require that possibleAfterBlock's block identifiers are the same as the try block, plus the catch ident.
+         */
+        Set<BlockIdentifier> tryStartBlocks = trycatch.tryBlock.getFirst().getBlockIdentifiers();
+        Set<BlockIdentifier> possibleBlocks = possibleAfterBlock.getBlockIdentifiers();
+        if (possibleBlocks.size() != tryStartBlocks.size()+1) return;
+
+        if (!possibleBlocks.containsAll(tryStartBlocks)) return;
+        if (!possibleBlocks.contains(catchBlockIdent)) return;
+
+        /* We require that the reachable statements IN THE CATCH BLOCK are exactly the ones which are between
+         * possibleAfterBlock and the end of the catch block.
+         */
+        int possibleIdx = statements.indexOf(possibleAfterBlock);
+        LinearScannedBlock unmarkBlock = getLinearScannedBlock(statements, possibleIdx, possibleAfterBlock, catchBlockIdent, false);
+        if (unmarkBlock == null) return;
+        for (int x = unmarkBlock.getIdxFirst(); x<=unmarkBlock.getIdxLast(); ++x) {
+            statements.get(x).getBlockIdentifiers().remove(catchBlockIdent);
+        }
+    }
+
+    /*
+     * If we've got any code between try and catch blocks, see if it can legitimately be moved
+     * after the catch block.
+     * (com/db4o/internal/Config4Class)
+     *
+     * For each try statement with one handler(*), find code between the end of the try and the start of the
+     * handler.  If this is finally code, we should have picked that up by now.
+     *
+     * If that code starts/ends in the same blockset as the catch target/try source, and the catch block doesn't assume
+     * it can fall through, then move the code after the catch block.
+     *
+     * This will be handled in a more general way by the op04 code, but doing it early gives us a better chance to spot
+     * some issues.
+     *
+     */
+    public static void extractExceptionMiddle(List<Op03SimpleStatement> in) {
+        List<Op03SimpleStatement> tryStatements = Functional.filter(in, new Op03SimpleStatement.ExactTypeFilter<TryStatement>(TryStatement.class));
+        if (tryStatements.isEmpty()) return;
+        Collections.reverse(tryStatements);
+        for (Op03SimpleStatement tryStatement : tryStatements) {
+            if (tryStatement.getTargets().size() != 2) continue;
+            SingleExceptionAddressing trycatch = getSingleTryCatch(tryStatement, in);
+            if (trycatch == null) continue;
+            if (extractExceptionMiddle(tryStatement, in, trycatch)) {
+                // We will only have ever moved something downwards, and won't have removed any tries, so this doesn't
+                // invalidate any loop invariants.
+                Cleaner.renumberInPlace(in);
+                trycatch.tryBlock.reindex(in);
+                trycatch.catchBlock.reindex(in);
+            }
+            extractCatchEnd(tryStatement, in, trycatch);
         }
     }
 

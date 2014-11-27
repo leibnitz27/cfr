@@ -868,7 +868,6 @@ public class FinalAnalyzer {
         List<Op03SimpleStatement> tryStatements = Functional.filter(statementsInCatch, new TypeFilter<TryStatement>(TryStatement.class));
         addPeerTries(tryStatements, peerTries);
 
-        List<Result> matchedFinallyClones = ListFactory.newList();
         /*
          * NOW - Given the exits we THINK we have, find out if any of them are preceeded by a detected
          * finally clone.
