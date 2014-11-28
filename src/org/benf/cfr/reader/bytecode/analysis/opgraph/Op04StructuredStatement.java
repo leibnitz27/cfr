@@ -546,7 +546,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
             in.transformStructuredChildren(this, scope);
             if (in instanceof UnstructuredGoto ||
-                    in instanceof UnstructuredAnonymousBreak) {
+                in instanceof UnstructuredAnonymousBreak) {
                 in = transformStructuredGotoWithScope(scope, in);
             }
             return in;

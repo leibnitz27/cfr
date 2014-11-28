@@ -2714,8 +2714,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (inner instanceof JumpingStatement) {
                 JumpingStatement jumpingStatement = (JumpingStatement) inner;
                 JumpType jumpType = jumpingStatement.getJumpType();
-                if (!(jumpType == JumpType.GOTO // || jumpType == JumpType.GOTO_OUT_OF_IF
-                )) continue;
+                if (jumpType != JumpType.GOTO) continue;
                 Op03SimpleStatement targetStatement = (Op03SimpleStatement) jumpingStatement.getJumpTarget().getContainer();
                 boolean isForwardJump = targetStatement.getIndex().isBackJumpTo(statement);
                 if (isForwardJump) {
@@ -2737,6 +2736,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         if (targetBlocks.size() < srcBlocks.size() && srcBlocks.containsAll(targetBlocks)) {
                             /*
                              * Break out of an anonymous block
+                             */
+                            /*
+                             * Should we now be re-looking at ALL other forward jumps to this target?
                              */
                             jumpingStatement.setJumpType(JumpType.BREAK_ANONYMOUS);
                             result = true;
