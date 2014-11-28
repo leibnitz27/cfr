@@ -47,6 +47,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
+    public void transformStructuredChildrenInReverse(StructuredStatementTransformer transformer, StructuredScope scope) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
     }
 

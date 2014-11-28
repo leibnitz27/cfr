@@ -27,6 +27,8 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
 
     void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope);
 
+    void transformStructuredChildrenInReverse(StructuredStatementTransformer transformer, StructuredScope scope);
+
     // This isn't recursive - maybe it should be.
     void rewriteExpressions(ExpressionRewriter expressionRewriter);
 

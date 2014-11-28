@@ -541,10 +541,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return stm;
     }
 
+    // Walk block children in reverse - this allows us to skip over repeated 'last' statements
     private static class StructuredGotoRemover implements StructuredStatementTransformer {
         @Override
         public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
-            in.transformStructuredChildren(this, scope);
+            in.transformStructuredChildrenInReverse(this, scope);
             if (in instanceof UnstructuredGoto ||
                 in instanceof UnstructuredAnonymousBreak) {
                 in = transformStructuredGotoWithScope(scope, in);

@@ -382,6 +382,22 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
+    @Override
+    public void transformStructuredChildrenInReverse(StructuredStatementTransformer transformer, StructuredScope scope) {
+
+        scope.add(this);
+        try {
+            int last = containedStatements.size() - 1;
+            for (int x = last; x>=0; --x) {
+                Op04StructuredStatement structuredBlock = containedStatements.get(x);
+                scope.setNextAtThisLevel(this, x < last ? x + 1 : -1);
+                structuredBlock.transform(transformer, scope);
+            }
+        } finally {
+            scope.remove(this);
+        }
+    }
+
     public Set<Op04StructuredStatement> getNextAfter(int x) {
         Set<Op04StructuredStatement> res = SetFactory.newSet();
         if (x == -1 || x > containedStatements.size()) return res;

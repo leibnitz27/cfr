@@ -3,9 +3,11 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.ToStringDumper;
@@ -24,6 +26,11 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     @Override
     public void setContainer(Op04StructuredStatement container) {
         this.container = container;
+    }
+
+    @Override
+    public void transformStructuredChildrenInReverse(StructuredStatementTransformer transformer, StructuredScope scope) {
+        transformStructuredChildren(transformer, scope);
     }
 
     @Override

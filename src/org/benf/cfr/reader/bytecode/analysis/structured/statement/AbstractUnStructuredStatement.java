@@ -20,6 +20,10 @@ public abstract class AbstractUnStructuredStatement extends AbstractStructuredSt
     }
 
     @Override
+    public final void transformStructuredChildrenInReverse(StructuredStatementTransformer transformer, StructuredScope scope) {
+    }
+
+    @Override
     public final boolean isProperlyStructured() {
         return false;
     }
