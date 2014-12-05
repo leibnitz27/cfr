@@ -641,6 +641,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
             for (Method method : methods) {
                 if (method.isConstructor()) continue;
+                if (method.testAccessFlag(AccessFlagMethod.ACC_STATIC)) continue;
                 MethodPrototype prototype = method.getMethodPrototype();
                 Method baseMethod = null;
                 for (Triplet<JavaRefTypeInstance, ClassFile, GenericTypeBinder> bindTester : bindTesters) {
