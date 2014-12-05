@@ -361,7 +361,7 @@ lbl10: // 1 sources:
          * If that's the case, cache it and rewrite any jumps we see which go to the same place
          * as double jumps via this unconditional.
          */
-        Op03SimpleStatement stmtLastBlock = statements.get(idxTaken - 1);
+        final Op03SimpleStatement stmtLastBlock = statements.get(idxTaken - 1);
         Op03SimpleStatement stmtLastBlockRewrite = null;
         Statement stmtLastBlockInner = stmtLastBlock.getStatement();
         if (stmtLastBlockInner.getClass() == GotoStatement.class) {
@@ -522,8 +522,29 @@ lbl10: // 1 sources:
         // If we've changed the blocks we're in, that means we've jumped into a block.
         // The only way we can cope with this, is if we're jumping into a block which we subsequently change
         // to be an anonymous escape.
-        if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) {
-            if (!detectAndRemarkJumpIntoOther(blocksAtStart, blocksAtEnd, realEnd, ifStatement)) return takenAction;
+        mismatchedBlocks : if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) {
+            /*
+             * A 'normal' case where we might jump into a different blockset - if we've jumped over
+             * the body of a switch block - if this is the case, the only difference will be one case statement,
+             * and we'll jump into a case statement - the statement LINEARLY BEFORE that will be in the missing block.
+             */
+            if (blocksAtStart.size() == blocksAtEnd.size()+1) {
+                List<BlockIdentifier> change = SetUtil.differenceAtakeBtoList(blocksAtStart, blocksAtEnd);
+                // size == 1 already verified, but...
+                if (change.size() == 1 && change.get(0).getBlockType() == BlockType.CASE &&
+                    takenTarget.getStatement() instanceof CaseStatement) {
+                    // We need to check if the statement LINEARLY preceeding this is in the block we've left.
+                    if (stmtLastBlock.getBlockIdentifiers().contains(change.get(0))) {
+                        break mismatchedBlocks;
+                    }
+                }
+            }
+            /*
+             * Handle some ugly kinds of conditionals that dex2jar generates. (Comments at function).
+             */
+            if (detectAndRemarkJumpIntoOther(blocksAtStart, blocksAtEnd, realEnd, ifStatement)) break mismatchedBlocks;
+
+            return takenAction;
         }
 
         // It's an if statement / simple if/else, for sure.  Can we replace it with a ternary?
