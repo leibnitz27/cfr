@@ -574,6 +574,89 @@ public class Op03Blocks {
         return blocks;
     }
 
+    /*
+     * Look for blocks with multiple targets, where one of the targets has 0 targets itself (AND ONLY ONE SOURCE).
+     * and is NOT a neighbour, and the last 0p3 in the source block is a conditional.
+     *
+     * if that's the case, we can reorder the sense of the final conditional to jump OVER the 0 target
+     * block into wherever it was going, and move the 0 target block immediately after its source.
+     *
+     * In order to satisfy other tests, cause the conditional to jump to the END of the combined block, and THAT
+     * can jump to the original target.
+     *
+     * We have to do this BEFORE we combine neighbouring blocks, otherwise we may unsatisfy the last-op-conditional
+     * predicate.
+     *
+     * Note that this bears quite a lot of similarity to moveSingleOutOrderBlocks, however that needs
+     * to happen AFTER neighbouring blocks have been combined.
+     *
+     * THIS COULD PROBABLY BE REFACTORED TO REDUCE DUPLICATE CODE.
+     */
+    private static List<Block3> invertJoinZeroTargetJumps(final Method method, List<Block3> blocks) {
+        final Map<Op03SimpleStatement, Block3> seenPrevBlock = MapFactory.newMap();
+        boolean effect = false;
+        testOne : for (int x = 0, len = blocks.size(); x<len;++x) {
+            Block3 block = blocks.get(x);
+
+            // We keep track of the start of a block to the linearly previous, to discount the case
+            // where there's a conditional with two block targets, BOTH of which are 0 target.
+            // re-ordering in that circumstance probably buys us nothing, and moves us further away
+            // from the original code.
+
+            if (block.sources.size() == 1 && block.targets.size() == 0) {
+                if (x > 0) seenPrevBlock.put(block.getStart(), blocks.get(x-1));
+
+                Block3 source = getSingle(block.sources);
+                /*
+                 * Verify that source ends with a conditional that positive jumps to this target.
+                 */
+                Op03SimpleStatement sourceEnd = source.getEnd();
+                Statement statement = sourceEnd.getStatement();
+                if (statement.getClass() != IfStatement.class) continue;
+                IfStatement ifStatement = (IfStatement)statement;
+                // But does it TAKEN jump to the dangling block?
+                List<Op03SimpleStatement> targets = sourceEnd.getTargets();
+                if (targets.size() != 2) continue;
+                Op03SimpleStatement taken = targets.get(1);
+                if (taken != block.getStart()) continue;
+                // ARE THE Block Idents THE SAME?
+                if (!sourceEnd.getBlockIdentifiers().equals(taken.getBlockIdentifiers())) continue;
+                Op03SimpleStatement notTaken = targets.get(0);
+
+                // If the OTHER target also was a block3 with no targets, we're not going to improve the situation.
+                Block3 notTakenPrevBlock = seenPrevBlock.get(notTaken);
+                if (notTakenPrevBlock == source) continue;
+
+                // ok - flip the sense of the test, make it fall through to the jump site, and jump to the fall through
+                ifStatement.setCondition(ifStatement.getCondition().getNegated());
+
+                source.getContent().addAll(block.getContent());
+                block.getContent().clear();
+                block.sources.clear();
+                source.targets.remove(block);
+
+                // index doesn't really matter, we'll re-index at combination.
+                Op03SimpleStatement newGoto = new Op03SimpleStatement(sourceEnd.getBlockIdentifiers(), new GotoStatement(), sourceEnd.getIndex().justAfter());
+                source.getContent().add(newGoto);
+
+                // What was 'taken' becomes the fallthrough, and newGoto becomes the explicit taken target.
+                sourceEnd.replaceTarget(taken, newGoto);
+                sourceEnd.replaceTarget(notTaken, taken);
+
+                notTaken.replaceSource(sourceEnd, newGoto);
+                newGoto.addSource(sourceEnd);
+                newGoto.addTarget(notTaken);
+
+                blocks.set(x, null);
+                effect = true;
+            }
+        }
+        if (effect) {
+            blocks = Functional.filter(blocks, new Functional.NotNull<Block3>());
+        }
+        return blocks;
+    }
+
     private static List<Block3> combineNeighbouringBlocks(final Method method, List<Block3> blocks) {
         boolean reloop = false;
         do {
@@ -725,7 +808,7 @@ public class Op03Blocks {
                     // If the last of curr is an explicit goto the start of next, cull it.
                     Op03SimpleStatement lastCurr = curr.getEnd();
                     Op03SimpleStatement firstNext = next.getStart();
-                    if (lastCurr.getStatement().getClass() == GotoStatement.class && lastCurr.getTargets().get(0) == firstNext) {
+                    if (lastCurr.getStatement().getClass() == GotoStatement.class && !lastCurr.getTargets().isEmpty() && lastCurr.getTargets().get(0) == firstNext) {
                         lastCurr.nopOut();
                     }
 
@@ -776,6 +859,7 @@ public class Op03Blocks {
         applyKnownBlocksHeuristic(method, blocks, tryBlockAliases);
 
         blocks = sanitiseBlocks(method, blocks);
+        blocks = invertJoinZeroTargetJumps(method, blocks);
         blocks = combineNeighbouringBlocks(method, blocks);
 
         // Case statements can vector BACK to blocks which are tricky to move if we rely on a general
@@ -815,10 +899,7 @@ public class Op03Blocks {
             outStatements.addAll(outBlock.getContent());
         }
 
-        int newIndex = 0;
-        for (Op03SimpleStatement statement : outStatements) {
-            statement.setIndex(new InstrIndex(newIndex++));
-        }
+        Cleaner.reindexInPlace(outStatements);
 
         /*
          * Patch up conditionals.
@@ -853,7 +934,7 @@ public class Op03Blocks {
         }
 
         if (patched) {
-            outStatements = Cleaner.renumber(outStatements);
+            outStatements = Cleaner.sortAndRenumber(outStatements);
         }
 
         stripTryBlockAliases(outStatements, tryBlockAliases);
