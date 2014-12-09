@@ -74,7 +74,7 @@ public class Cleaner {
     /*
 * Filter out nops (where appropriate) and renumber.  For display purposes.
 */
-    public static List<Op03SimpleStatement> renumber(List<Op03SimpleStatement> statements) {
+    public static List<Op03SimpleStatement> sortAndRenumber(List<Op03SimpleStatement> statements) {
         boolean nonNopSeen = false;
         List<Op03SimpleStatement> result = ListFactory.newList();
         for (Op03SimpleStatement statement : statements) {
@@ -84,11 +84,11 @@ public class Cleaner {
             }
         }
         // Sort result by existing index.
-        renumberInPlace(result);
+        sortAndRenumberInPlace(result);
         return result;
     }
 
-    public static void renumberInPlace(List<Op03SimpleStatement> statements) {
+    public static void sortAndRenumberInPlace(List<Op03SimpleStatement> statements) {
         // Sort result by existing index.
         Collections.sort(statements, new CompareByIndex());
         reindexInPlace(statements);

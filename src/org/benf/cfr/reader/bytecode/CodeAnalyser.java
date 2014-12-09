@@ -366,7 +366,7 @@ public class CodeAnalyser {
 
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState, typeHintRecovery);
         // Renumber, just in case JSR stage (or something) has left bad labellings.
-        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
 
         if (showOpsLevel == SHOW_L3_RAW) {
@@ -398,18 +398,18 @@ public class CodeAnalyser {
 
         // Expand raw switch statements into more useful ones.
         SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory);
-        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         // Remove 2nd (+) jumps in pointless jump chains.
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
-        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         Op03SimpleStatement.assignSSAIdentifiers(method, op03SimpleParseNodes);
 
         // Condense pointless assignments
         LValueProp.condenseLValues(op03SimpleParseNodes);
-        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
 
         // Try to eliminate catch temporaries.
@@ -446,7 +446,7 @@ public class CodeAnalyser {
         FinallyRewriter.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
 
         op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, !willSort);
-        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         /*
          * See if try blocks can be extended with simple returns here.  This is an extra pass, because we might have
@@ -474,7 +474,7 @@ public class CodeAnalyser {
 //        LValueProp.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options);
         LValueProp.condenseLValues(op03SimpleParseNodes);
-        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
             RemoveDeterministicJumps.apply(method, op03SimpleParseNodes);
@@ -548,7 +548,7 @@ public class CodeAnalyser {
 
         logger.info("simplifyConditionals");
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes, false);
-        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         // Rewrite conditionals which jump into an immediate jump (see specifics)
         logger.info("rewriteNegativeJumps");
@@ -599,7 +599,7 @@ public class CodeAnalyser {
             op03SimpleParseNodes.get(0).dump(debugDumper);
         }
 
-        op03SimpleParseNodes = Cleaner.renumber(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
         op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
 
         if (showOpsLevel == SHOW_L3_EXCEPTION_BLOCKS) {

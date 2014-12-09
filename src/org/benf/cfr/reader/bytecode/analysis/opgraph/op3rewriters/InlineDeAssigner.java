@@ -219,7 +219,7 @@ public class InlineDeAssigner {
         }
         if (newStatements.isEmpty()) return false;
         statements.addAll(newStatements);
-        Cleaner.renumberInPlace(statements);
+        Cleaner.sortAndRenumberInPlace(statements);
         return true;
     }
 }

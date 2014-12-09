@@ -183,7 +183,7 @@ public class SwitchReplacer {
             firstPrev.put(tindex, caseStatement);
         }
 
-        Cleaner.renumberInPlace(in);
+        Cleaner.sortAndRenumberInPlace(in);
         /*
          * Now, we have one final possible issue - what if a case block is reachable from a LATER block?
          * i.e.

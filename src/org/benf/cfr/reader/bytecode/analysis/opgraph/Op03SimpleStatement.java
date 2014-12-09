@@ -4,15 +4,11 @@ import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.*;
-import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
-import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.Method;
@@ -31,7 +27,6 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
-import javax.sound.sampled.Line;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -1703,12 +1698,28 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
 
         // Do this pass first, as it needs spatial locality.
-        for (int x = 0; x < size; ++x) {
+        for (int x = 0; x < size-1; ++x) {
             Op03SimpleStatement maybeJump = statements.get(x);
             if (maybeJump.containedStatement.getClass() == GotoStatement.class &&
                     maybeJump.targets.size() == 1 &&
                     maybeJump.targets.get(0) == statements.get(x + 1)) {
-                maybeJump.nopOut();
+                // But only if they're in the same blockset!
+                if (maybeJump.getBlockIdentifiers().equals(statements.get(x+1).getBlockIdentifiers())) {
+                    maybeJump.nopOut();
+                } else {
+                    // It might still be legit - if we've ended a loop, it's not.
+                    Set<BlockIdentifier> changes = SetUtil.difference(maybeJump.getBlockIdentifiers(),statements.get(x+1).getBlockIdentifiers());
+                    boolean ok = true;
+                    for (BlockIdentifier change : changes) {
+                        if (change.getBlockType().isLoop()) {
+                            ok = false;
+                            break;
+                        }
+                    }
+                    if (ok) {
+                        maybeJump.nopOut();
+                    }
+                }
             }
         }
 
@@ -2069,7 +2080,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             if (extractExceptionMiddle(tryStatement, in, trycatch)) {
                 // We will only have ever moved something downwards, and won't have removed any tries, so this doesn't
                 // invalidate any loop invariants.
-                Cleaner.renumberInPlace(in);
+                Cleaner.sortAndRenumberInPlace(in);
                 trycatch.tryBlock.reindex(in);
                 trycatch.catchBlock.reindex(in);
             }
@@ -2799,7 +2810,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
         if (success) {
-            statements = Cleaner.renumber(statements);
+            statements = Cleaner.sortAndRenumber(statements);
             // This is being done twice deliberately.  Should rewrite rewriteNegativeJumps to iterate.
             // in practice 2ce is fine.
             // see /com/db4o/internal/btree/BTreeNode.class
@@ -3577,7 +3588,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         if (effect) {
             statements = Cleaner.removeUnreachableCode(statements, false);
-            statements = Cleaner.renumber(statements);
+            statements = Cleaner.sortAndRenumber(statements);
         }
 
         return statements;
