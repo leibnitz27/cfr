@@ -89,6 +89,10 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         getBody().linearizeStatementsInto(out);
     }
 
+    @Override
+    public BlockIdentifier getBreakableBlockOrNull() {
+        return block;
+    }
 
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {

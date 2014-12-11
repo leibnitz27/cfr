@@ -53,6 +53,17 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
         return true;
     }
 
+    /*
+     * Strictly speaking, any statement is breakable foo : synchronised(this) {}
+     * is perfectly legitimate.  However CFR handles labelled blocks only on loops, switches and
+     * explicit block statements.  There's no loss of generality, and it's simpler.
+     */
+
+    @Override
+    public BlockIdentifier getBreakableBlockOrNull() {
+        return null;
+    }
+
     @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         throw new UnsupportedOperationException();

@@ -206,7 +206,7 @@ public class Block extends AbstractStructuredStatement {
         newS.getSources().remove(oldS);
     }
 
-    public void extractAnonymousBlocks() {
+    public void extractLabelledBlocks() {
         Iterator<Op04StructuredStatement> iterator = containedStatements.descendingIterator();
         while (iterator.hasNext()) {
             Op04StructuredStatement stm = iterator.next();
@@ -422,6 +422,11 @@ public class Block extends AbstractStructuredStatement {
             break;
         }
         return false;
+    }
+
+    @Override
+    public BlockIdentifier getBreakableBlockOrNull() {
+        return (blockIdentifier != null && blockIdentifier.hasForeignReferences()) ? blockIdentifier : null;
     }
 
     @Override

@@ -54,6 +54,11 @@ public class StructuredWhile extends AbstractStructuredBlockStatement {
     }
 
     @Override
+    public BlockIdentifier getBreakableBlockOrNull() {
+        return block;
+    }
+
+    @Override
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
         getBody().linearizeStatementsInto(out);

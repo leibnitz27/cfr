@@ -84,6 +84,11 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
     }
 
     @Override
+    public BlockIdentifier getBreakableBlockOrNull() {
+        return block;
+    }
+
+    @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         StructuredStatement o = matchIterator.getCurrent();
         if (!(o instanceof StructuredDo)) return false;

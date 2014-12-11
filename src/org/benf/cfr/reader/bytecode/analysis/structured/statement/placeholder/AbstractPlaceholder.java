@@ -37,6 +37,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
+    public BlockIdentifier getBreakableBlockOrNull() {
+        return null;
+    }
+
+    @Override
     public boolean fallsNopToNext() {
         return false;
     }

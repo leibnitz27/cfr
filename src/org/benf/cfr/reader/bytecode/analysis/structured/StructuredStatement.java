@@ -42,6 +42,8 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
      */
     boolean isRecursivelyStructured();
 
+    BlockIdentifier getBreakableBlockOrNull();
+
     void linearizeInto(List<StructuredStatement> out);
 
     void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer);

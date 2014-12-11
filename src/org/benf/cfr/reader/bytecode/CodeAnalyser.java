@@ -771,8 +771,11 @@ public class CodeAnalyser {
         Op04StructuredStatement.removePointlessReturn(block);
         Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
-            Op04StructuredStatement.insertAnonymousBlocks(block);
+            Op04StructuredStatement.insertLabelledBlocks(block);
         }
+        // It seems perverse to do a second pass for removal of pointless blocks - but now everything is in place
+        // the logic is much cleaner.
+        Op04StructuredStatement.removeUnnecessaryLabelledBreaks(block);
 
         /*
          * If we can't fully structure the code, we bow out here.

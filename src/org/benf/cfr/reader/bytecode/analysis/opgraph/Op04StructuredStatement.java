@@ -475,12 +475,12 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     }
 
-    private static class AnonymousBlockExtractor implements StructuredStatementTransformer {
+    private static class LabelledBlockExtractor implements StructuredStatementTransformer {
         @Override
         public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
             if (in instanceof Block) {
                 Block block = (Block) in;
-                block.extractAnonymousBlocks();
+                block.extractLabelledBlocks();
             }
             in.transformStructuredChildren(this, scope);
             return in;
@@ -554,6 +554,36 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    private static class NamedBreakRemover implements StructuredStatementTransformer {
+
+        private final Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> targets = new Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>>();
+
+        @Override
+        public StructuredStatement transform(final StructuredStatement in, StructuredScope scope) {
+            /*
+             * If this statement is a breakable block, (i.e. it's a block with foreign references, a loop or the like)
+             * determine what the statement after it (so effect of a break from it) would be.
+             */
+            final BlockIdentifier breakableBlock = in.getBreakableBlockOrNull();
+            if (breakableBlock != null) {
+                final Set<Op04StructuredStatement> next = scope.getNextFallThrough(in);
+                targets.push(Triplet.make(in, breakableBlock, next));
+            }
+            StructuredStatement out = in;
+            try {
+                out.transformStructuredChildrenInReverse(this, scope);
+                if (out instanceof StructuredBreak) {
+                    out = ((StructuredBreak)out).maybeTightenToLocal(targets);
+                }
+            } finally {
+                if (breakableBlock != null) {
+                    targets.pop();
+                }
+            }
+            return out;
+        }
+    }
+
     private static class PointlessBlockRemover implements StructuredStatementTransformer {
         @Override
         public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
@@ -576,8 +606,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     /*
      * If we have any UnstructuredAnonBreakTargets in a block, starting at the last one, pull them into sub-blocks.
      */
-    public static void insertAnonymousBlocks(Op04StructuredStatement root) {
-        root.transform(new AnonymousBlockExtractor(), new StructuredScope());
+    public static void insertLabelledBlocks(Op04StructuredStatement root) {
+        root.transform(new LabelledBlockExtractor(), new StructuredScope());
     }
 
     /*
@@ -624,6 +654,35 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void removeStructuredGotos(Op04StructuredStatement root) {
         root.transform(new StructuredGotoRemover(), new StructuredScope());
+    }
+
+    /*
+     * Named blocks can be left in when they're no longer necessary - i.e.
+     *
+     * public class LoopTest58 {
+        public void test(int n, int n2) {
+            block3 : {
+                if (n < n2) {
+                    for (int i = n; i < n2; ++i) {
+                        System.out.print("s");
+                        if (i < n2) continue;
+                        System.out.print("s2");
+                        break block3;
+                    }
+                } else {
+                    System.out.print(n);
+                }
+            }
+            System.out.println("Done");
+        }
+    }
+
+        In this case, we need to detect if the statement after an anonymous block is the next
+        statement out of the innermost breakable block - if that's the case, the specific reference
+        to the named block is unnecessary.
+     */
+    public static void removeUnnecessaryLabelledBreaks(Op04StructuredStatement root) {
+        root.transform(new NamedBreakRemover(), new StructuredScope());
     }
 
     public static void removePointlessBlocks(Op04StructuredStatement root) {

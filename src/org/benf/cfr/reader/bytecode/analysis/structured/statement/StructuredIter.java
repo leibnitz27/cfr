@@ -74,6 +74,11 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     }
 
     @Override
+    public BlockIdentifier getBreakableBlockOrNull() {
+        return block;
+    }
+
+    @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         // While it's not strictly speaking 2 blocks, we can model it as the statement / definition
         // section of the for as being an enclosing block.  (otherwise we add the variable in the wrong scope).

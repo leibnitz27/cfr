@@ -45,6 +45,11 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
     }
 
     @Override
+    public BlockIdentifier getBreakableBlockOrNull() {
+        return blockIdentifier; // even if no foreign references.
+    }
+
+    @Override
     public boolean isProperlyStructured() {
         return true;
     }
