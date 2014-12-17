@@ -1687,7 +1687,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             Op03SimpleStatement b = statements.get(x + 1);
             if (a.containedStatement.getClass() == GotoStatement.class &&
                     b.containedStatement.getClass() == GotoStatement.class &&
-                    a.targets.get(0) == b.targets.get(0)) {
+                    a.targets.get(0) == b.targets.get(0) &&
+//                    a.getJumpType() != JumpType.BREAK
+                    a.getBlockIdentifiers().equals(b.getBlockIdentifiers())
+                    ) {
                 Op03SimpleStatement realTgt = a.targets.get(0);
                 realTgt.removeSource(a);
                 a.replaceTarget(realTgt, b);
@@ -1701,6 +1704,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (int x = 0; x < size-1; ++x) {
             Op03SimpleStatement maybeJump = statements.get(x);
             if (maybeJump.containedStatement.getClass() == GotoStatement.class &&
+                    maybeJump.getJumpType() != JumpType.BREAK &&
                     maybeJump.targets.size() == 1 &&
                     maybeJump.targets.get(0) == statements.get(x + 1)) {
                 // But only if they're in the same blockset!
@@ -1733,7 +1737,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 if (innerPrior instanceof JumpingStatement) {
                     JumpingStatement jumpInnerPrior = (JumpingStatement) innerPrior;
                     Statement jumpingInnerPriorTarget = jumpInnerPrior.getJumpTarget();
-                    if (jumpingInnerPriorTarget == innerStatement) {
+                    if (jumpingInnerPriorTarget == innerStatement &&
+                        jumpInnerPrior.getJumpType() != JumpType.BREAK) {
                         statement.nopOut();
                     }
                 }
