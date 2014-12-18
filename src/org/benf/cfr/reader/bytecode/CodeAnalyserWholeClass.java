@@ -244,7 +244,7 @@ public class CodeAnalyserWholeClass {
          * class.  So replace the local one with the field variable one.
          */
         try {
-            ClassFileField localClassFileField = classFile.getFieldByName(originalName);
+            ClassFileField localClassFileField = classFile.getFieldByName(originalName, fieldType);
             localClassFileField.overrideName(name + ".this");
             localClassFileField.markSyntheticOuterRef();
         } catch (NoSuchFieldException e) {

@@ -286,7 +286,7 @@ public class EnumClassRewriter {
             }
             StaticVariable valuesArrayStatic = (StaticVariable) valuesArray;
             try {
-                ClassFileField valuesField = classFile.getFieldByName(valuesArrayStatic.getVarName());
+                ClassFileField valuesField = classFile.getFieldByName(valuesArrayStatic.getVarName(), valuesArrayStatic.getInferredJavaType().getJavaTypeInstance());
                 if (!valuesField.getField().testAccessFlag(AccessFlag.ACC_STATIC)) {
                     return false;
                 }

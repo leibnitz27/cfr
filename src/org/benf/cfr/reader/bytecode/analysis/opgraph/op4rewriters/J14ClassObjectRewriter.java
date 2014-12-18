@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnValueStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
@@ -118,7 +119,7 @@ public class J14ClassObjectRewriter {
                         ),
                 staticExpression);
 
-        final Set<String> hideThese = SetFactory.newSet();
+        final Set<Pair<String, JavaTypeInstance>> hideThese = SetFactory.newSet();
         ExpressionRewriter expressionRewriter = new ExpressionWildcardReplacingRewriter(wcm, test, new NonaryFunction<Expression>() {
             @Override
             public Expression invoke() {
@@ -128,8 +129,8 @@ public class J14ClassObjectRewriter {
                 if (literal.getType() != TypedLiteral.LiteralType.String) return null;
                 Expression res = new Literal(TypedLiteral.getClass(state.getClassCache().getRefClassFor(QuotingUtils.unquoteString((String) literal.getValue()))));
 
-                String hideThis = staticVariable.getMatch().getVarName();
-                hideThese.add(hideThis);
+                StaticVariable found = staticVariable.getMatch();
+                hideThese.add(Pair.make(found.getVarName(), found.getInferredJavaType().getJavaTypeInstance()));
                 return res;
             }
         });
@@ -150,9 +151,9 @@ public class J14ClassObjectRewriter {
             }
         }
 
-        for (String hideThis : hideThese) {
+        for (Pair<String, JavaTypeInstance> hideThis : hideThese) {
             try {
-                ClassFileField fileField = classFile.getFieldByName(hideThis);
+                ClassFileField fileField = classFile.getFieldByName(hideThis.getFirst(), hideThis.getSecond());
                 fileField.markHidden();
             } catch (NoSuchFieldException e) {
             }

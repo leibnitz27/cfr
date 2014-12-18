@@ -73,7 +73,7 @@ public class StaticLifter {
         StaticVariable fieldVariable = (StaticVariable) lValue;
         ClassFileField field;
         try {
-            field = classFile.getFieldByName(fieldVariable.getVarName());
+            field = classFile.getFieldByName(fieldVariable.getVarName(), fieldVariable.getInferredJavaType().getJavaTypeInstance());
         } catch (NoSuchFieldException e) {
             return false;
         }

@@ -280,6 +280,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<String> JAR_FILTER = new PermittedOptionProvider.Argument<String>(
             "jarfilter", defaultNullStringDecoder,
             "Substring regex - analyse only classes where the fqn matches this pattern. (when analysing jar).");
+    public static final PermittedOptionProvider.Argument<Boolean> RENAME_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
+            "renamemembers", defaultFalseBooleanDecoder,
+            "Rename ambiguous fields.  Note - this WILL break reflection based access, so is not automatically enabled.");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -336,7 +339,7 @@ public class OptionsImpl implements Options {
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
-                    FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, HELP);
+                    FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_MEMBERS, HELP);
         }
 
         @Override

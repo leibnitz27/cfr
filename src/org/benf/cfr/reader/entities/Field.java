@@ -14,6 +14,7 @@ import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -39,7 +40,8 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     private final Set<AccessFlag> accessFlags;
     private final Map<String, Attribute> attributes;
     private final TypedLiteral constantValue;
-    private final String fieldName;
+    private final String rawFieldName;
+    private boolean disambiguate;
     private transient JavaTypeInstance cachedDecodedType;
 
     public Field(ByteData raw, final ConstantPool cp) {
@@ -62,7 +64,8 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
         Attribute cvAttribute = attributes.get(AttributeConstantValue.ATTRIBUTE_NAME);
         this.constantValue = cvAttribute == null ? null : TypedLiteral.getConstantPoolEntry(cp, ((AttributeConstantValue) cvAttribute).getValue());
-        this.fieldName = cp.getUTF8Entry(nameIndex).getValue();
+        this.rawFieldName = cp.getUTF8Entry(nameIndex).getValue();
+        this.disambiguate = false;
     }
 
     @Override
@@ -95,8 +98,19 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         return cachedDecodedType;
     }
 
+    public String getRawFieldName() {
+        return rawFieldName;
+    }
+
+    public void setDisambiguate() {
+        disambiguate = true;
+    }
+
     public String getFieldName() {
-        return fieldName;
+        if (disambiguate) {
+            return rawFieldName + "_" + getJavaTypeInstance().getRawName();
+        }
+        return rawFieldName;
     }
 
     public boolean testAccessFlag(AccessFlag accessFlag) {

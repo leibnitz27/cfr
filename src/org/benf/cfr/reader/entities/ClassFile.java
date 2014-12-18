@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities;
 
+import com.sun.tools.internal.ws.processor.model.java.JavaType;
 import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -45,7 +46,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private final ConstantPool constantPool;
     private final Set<AccessFlag> accessFlags;
     private final List<ClassFileField> fields;
-    private Map<String, ClassFileField> fieldsByName; // Lazily populated if interrogated.
+    private Map<String, Map<JavaTypeInstance, ClassFileField>> fieldsByName; // Lazily populated if interrogated.
 
     private final List<Method> methods;
     private Map<String, List<Method>> methodsByName; // Lazily populated if interrogated.
@@ -247,14 +248,22 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return usePath;
     }
 
+    private void addComment(DecompilerComment comment) {
+        if (decompilerComments == null) decompilerComments = new DecompilerComments();
+        decompilerComments.addComment(comment);
+    }
+
     private void addComment(String comment) {
         if (decompilerComments == null) decompilerComments = new DecompilerComments();
         decompilerComments.addComment(comment);
     }
 
     private void addComment(String comment, Exception e) {
-        if (decompilerComments == null) decompilerComments = new DecompilerComments();
-        decompilerComments.addComment(new DecompilerComment(comment, e));
+        addComment(new DecompilerComment(comment, e));
+    }
+
+    public DecompilerComments getDecompilerComments() {
+        return decompilerComments;
     }
 
     /* Get the list of constantPools, and that of inner classes */
@@ -342,15 +351,44 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
 
-    public ClassFileField getFieldByName(String name) throws NoSuchFieldException {
+    public ClassFileField getFieldByName(String name, JavaTypeInstance type) throws NoSuchFieldException {
         if (fieldsByName == null) {
             fieldsByName = MapFactory.newMap();
             for (ClassFileField field : fields) {
-                fieldsByName.put(field.getField().getFieldName(), field);
+                String fieldName = field.getRawFieldName();
+                JavaTypeInstance fieldType = field.getField().getJavaTypeInstance();
+                Map<JavaTypeInstance, ClassFileField> perNameMap = fieldsByName.get(fieldName);
+                if (perNameMap == null) {
+                    perNameMap = MapFactory.newLinkedMap();
+                    fieldsByName.put(fieldName, perNameMap);
+                }
+                perNameMap.put(fieldType, field);
+            }
+            boolean warnAmbig = false;
+            for (Map<JavaTypeInstance, ClassFileField> typeMap : fieldsByName.values()) {
+                if (typeMap.size() > 1) {
+                    if (constantPool.getDCCommonState().getOptions().optionIsSet(OptionsImpl.RENAME_MEMBERS)) {
+                        for (ClassFileField field : typeMap.values()) {
+                            field.getField().setDisambiguate();
+                        }
+                    } else {
+                        warnAmbig = true;
+                    }
+                }
+            }
+            if (warnAmbig) {
+                addComment(DecompilerComment.RENAME_MEMBERS);
             }
         }
-        ClassFileField field = fieldsByName.get(name);
-        if (field == null) throw new NoSuchFieldException(name);
+        Map<JavaTypeInstance, ClassFileField> fieldsByType = fieldsByName.get(name);
+        if (fieldsByType == null || fieldsByType.isEmpty()) { // can't be empty, but....
+            throw new NoSuchFieldException(name);
+        }
+        ClassFileField field = fieldsByType.get(type);
+        if (field == null) {
+            // Fall back to the first one.  This is in case of bad type guesswork.
+            return fieldsByType.values().iterator().next();
+        }
         return field;
     }
 
@@ -687,7 +725,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
             CodeAnalyserWholeClass.wholeClassAnalysisPass1(this, state);
         } catch (RuntimeException e) {
-            addComment("Exception performing whole class analysis.");
+            addComment(DecompilerComment.WHOLE_CLASS_EXCEPTION);
         }
 
     }

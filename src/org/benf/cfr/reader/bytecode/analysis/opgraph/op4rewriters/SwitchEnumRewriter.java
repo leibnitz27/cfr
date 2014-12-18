@@ -129,7 +129,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         }
         Field lut;
         try {
-            lut = enumLutClass.getFieldByName(varName).getField();
+            lut = enumLutClass.getFieldByName(varName, staticLookupTable.getInferredJavaType().getJavaTypeInstance()).getField();
         } catch (NoSuchFieldException e) {
             return;
         }

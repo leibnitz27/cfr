@@ -134,6 +134,12 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         d.print("\n");
     }
 
+    protected void dumpComments(ClassFile classFile, Dumper d) {
+        DecompilerComments comments = classFile.getDecompilerComments();
+        if (comments == null) return;
+        comments.dump(d);
+    }
+
     protected void dumpAnnotations(ClassFile classFile, Dumper d) {
         AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = classFile.getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
         AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = classFile.getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
