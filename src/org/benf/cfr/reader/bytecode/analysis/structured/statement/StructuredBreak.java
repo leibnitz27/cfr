@@ -80,7 +80,8 @@ public class StructuredBreak extends AbstractStructuredStatement {
          * ok, it's not local.  Go up the scopes, and find the enclosing block, then see if the innermost breakable also
          * falls through to the same target.  If so, we can convert it to a local break.
          */
-        Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>> local = scopes.get(scopes.size()-1);
+        // === scopes.peek?
+        Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>> local = scopes.peek();
         if (local.getSecond() == breakBlock) {
             // well this is wrong.  Should be marked as a local break!
             return this;
