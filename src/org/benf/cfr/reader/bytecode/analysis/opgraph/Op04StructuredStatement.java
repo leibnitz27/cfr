@@ -523,7 +523,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
-    public static StructuredStatement transformStructuredGotoWithScope(StructuredScope scope, StructuredStatement stm) {
+    public static StructuredStatement transformStructuredGotoWithScope(StructuredScope scope, StructuredStatement stm,
+                                                                       Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> breaktargets
+                                                                       ) {
         Set<Op04StructuredStatement> nextFallThrough = scope.getNextFallThrough(stm);
         List<Op04StructuredStatement> targets = stm.getContainer().getTargets();
         // Targets is an invalid concept for op04 really, should get rid of it.
@@ -537,26 +539,22 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             } else {
                 return stm;
             }
+        } else if (!breaktargets.isEmpty()) {
+            // Ok - it doesn't.  But can we get there by breaking out of one of the enclosing blocks?
+            Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>> breakTarget = breaktargets.peek();
+            if (breakTarget.getThird().contains(target)) {
+                return new StructuredBreak(breakTarget.getSecond(), true);
+            }
         }
         return stm;
     }
 
-    // Walk block children in reverse - this allows us to skip over repeated 'last' statements
-    private static class StructuredGotoRemover implements StructuredStatementTransformer {
-        @Override
-        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
-            in.transformStructuredChildrenInReverse(this, scope);
-            if (in instanceof UnstructuredGoto ||
-                in instanceof UnstructuredAnonymousBreak) {
-                in = transformStructuredGotoWithScope(scope, in);
-            }
-            return in;
-        }
-    }
 
-    private static class NamedBreakRemover implements StructuredStatementTransformer {
+    private static abstract class ScopeDescendingTransformer implements StructuredStatementTransformer {
 
         private final Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> targets = new Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>>();
+
+        protected abstract StructuredStatement doTransform(StructuredStatement statement, Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> targets, StructuredScope scope);
 
         @Override
         public StructuredStatement transform(final StructuredStatement in, StructuredScope scope) {
@@ -572,6 +570,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             StructuredStatement out = in;
             try {
                 out.transformStructuredChildrenInReverse(this, scope);
+                out = doTransform(out, targets, scope);
                 if (out instanceof StructuredBreak) {
                     out = ((StructuredBreak)out).maybeTightenToLocal(targets);
                 }
@@ -581,6 +580,28 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                 }
             }
             return out;
+        }
+    }
+
+    // Walk block children in reverse - this allows us to skip over repeated 'last' statements
+    private static class StructuredGotoRemover extends ScopeDescendingTransformer {
+        @Override
+        protected StructuredStatement doTransform(StructuredStatement statement, Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> targets, StructuredScope scope) {
+            if (statement instanceof UnstructuredGoto ||
+                statement instanceof UnstructuredAnonymousBreak) {
+                statement = transformStructuredGotoWithScope(scope, statement, targets);
+            }
+            return statement;
+        }
+    }
+
+    private static class NamedBreakRemover extends ScopeDescendingTransformer {
+        @Override
+        protected StructuredStatement doTransform(StructuredStatement statement, Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> targets, StructuredScope scope) {
+            if (statement instanceof StructuredBreak) {
+                statement = ((StructuredBreak)statement).maybeTightenToLocal(targets);
+            }
+            return statement;
         }
     }
 
