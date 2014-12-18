@@ -281,8 +281,8 @@ public class OptionsImpl implements Options {
             "jarfilter", defaultNullStringDecoder,
             "Substring regex - analyse only classes where the fqn matches this pattern. (when analysing jar).");
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
-            "renamemembers", defaultFalseBooleanDecoder,
-            "Rename ambiguous fields.  Note - this WILL break reflection based access, so is not automatically enabled.");
+            "renamedupmembers", defaultFalseBooleanDecoder,
+            "Rename ambiguous/duplicate fields.  Note - this WILL break reflection based access, so is not automatically enabled.");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
