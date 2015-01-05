@@ -108,7 +108,9 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
 
     public String getFieldName() {
         if (disambiguate) {
-            return rawFieldName + "_" + getJavaTypeInstance().getRawName();
+            String rawName = getJavaTypeInstance().getRawName();
+            rawName = rawName.replace("[]", "_arr").replaceAll("[*?<>.]","_");
+            return rawFieldName + "_" + rawName;
         }
         return rawFieldName;
     }
