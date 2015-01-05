@@ -9,6 +9,7 @@ import java.util.Set;
 
 public abstract class StreamDumper implements Dumper {
     private final TypeUsageInformation typeUsageInformation;
+    private final IllegalIdentifierDump illegalIdentifierDump;
 
     private int outputCount = 0;
     private int indent;
@@ -16,8 +17,9 @@ public abstract class StreamDumper implements Dumper {
     private boolean pendingCR = false;
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
-    public StreamDumper(TypeUsageInformation typeUsageInformation) {
+    public StreamDumper(TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         this.typeUsageInformation = typeUsageInformation;
+        this.illegalIdentifierDump = illegalIdentifierDump;
     }
 
     @Override
@@ -52,6 +54,11 @@ public abstract class StreamDumper implements Dumper {
             atStart = true;
             pendingCR = false;
         }
+    }
+
+    @Override
+    public Dumper identifier(String s) {
+        return print(illegalIdentifierDump.getLegalIdentifierFor(s));
     }
 
     @Override

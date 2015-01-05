@@ -4,8 +4,8 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
 public class StdIODumper extends StreamDumper {
-    public StdIODumper(TypeUsageInformation typeUsageInformation) {
-        super(typeUsageInformation);
+    public StdIODumper(TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+        super(typeUsageInformation, illegalIdentifierDump);
     }
 
     @Override

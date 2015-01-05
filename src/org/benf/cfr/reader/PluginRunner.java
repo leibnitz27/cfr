@@ -11,6 +11,7 @@ import org.benf.cfr.reader.util.output.*;
 
 public class PluginRunner {
     private DCCommonState dcCommonState = initDCState();
+    private IllegalIdentifierDump illegalIdentifierDump = new IllegalIdentifierDump.Nop();
 
     /*
      *
@@ -48,7 +49,7 @@ public class PluginRunner {
             final StringBuffer outBuffer = new StringBuffer();
             class StringStreamDumper extends StreamDumper {
                 public StringStreamDumper(TypeUsageInformation typeUsageInformation) {
-                    super(typeUsageInformation);
+                    super(typeUsageInformation, illegalIdentifierDump);
                 }
 
                 @Override

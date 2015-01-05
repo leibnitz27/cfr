@@ -37,8 +37,8 @@ public class FileDumper extends StreamDumper {
                 className + ".java");
     }
 
-    public FileDumper(String dir, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation) {
-        super(typeUsageInformation);
+    public FileDumper(String dir, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+        super(typeUsageInformation, illegalIdentifierDump);
         this.type = type;
         this.summaryDumper = summaryDumper;
         Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(type.getRawName());

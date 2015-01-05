@@ -144,10 +144,10 @@ public class FieldVariable extends AbstractLValue {
     @Override
     public Dumper dumpInner(Dumper d) {
         if (isOuterRef() && objectIsThis()) {
-            return d.print(getFieldName());
+            return d.identifier(getFieldName());
         } else {
             object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
-            return d.print(".").print(getFieldName());
+            return d.print(".").identifier(getFieldName());
         }
     }
 

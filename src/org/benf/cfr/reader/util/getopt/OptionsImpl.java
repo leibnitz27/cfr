@@ -283,6 +283,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
             "renamedupmembers", defaultFalseBooleanDecoder,
             "Rename ambiguous/duplicate fields.  Note - this WILL break reflection based access, so is not automatically enabled.");
+    public static final PermittedOptionProvider.Argument<Boolean> RENAME_ILLEGAL_IDENTS = new PermittedOptionProvider.Argument<Boolean>(
+            "renameillegalidents", defaultFalseBooleanDecoder,
+            "Rename identifiers which are not valid java identifiers.  Note - this WILL break reflection based access, so is not automatically enabled.");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -339,7 +342,7 @@ public class OptionsImpl implements Options {
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
-                    FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_MEMBERS, HELP);
+                    FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_MEMBERS, RENAME_ILLEGAL_IDENTS, HELP);
         }
 
         @Override

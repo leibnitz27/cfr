@@ -18,6 +18,7 @@ public class Main {
 
     public static void doClass(DCCommonState dcCommonState, String path) {
         Options options = dcCommonState.getOptions();
+        IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         Dumper d = new ToStringDumper(); // sentinel dumper.
         try {
             SummaryDumper summaryDumper = new NopSummaryDumper();
@@ -42,7 +43,7 @@ public class Main {
             TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
             c.collectTypeUsages(collectingDumper);
 
-            d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation());
+            d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 
             String methname = options.getMethodName();
             if (methname == null) {
@@ -71,12 +72,13 @@ public class Main {
                 System.err.println(x);
             }
         } finally {
-            d.close();
+            if (d != null) d.close();
         }
     }
 
     public static void doJar(DCCommonState dcCommonState, String path) {
         Options options = dcCommonState.getOptions();
+        IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         SummaryDumper summaryDumper = null;
         boolean silent = true;
         try {
@@ -98,7 +100,7 @@ public class Main {
                     ClassFile c = dcCommonState.getClassFile(type);
                     // Don't explicitly dump inner classes.  But make sure we ask the CLASS if it's
                     // an inner class, rather than using the name, as scala tends to abuse '$'.
-                    if (c.isInnerClass()) continue;
+                    if (c.isInnerClass()) { d = null; continue; }
                     if (!silent) {
                         System.err.println("Processing " + type.getRawName());
                     }
@@ -110,7 +112,7 @@ public class Main {
 
                     TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
                     c.collectTypeUsages(collectingDumper);
-                    d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation());
+                    d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 
                     c.dump(d);
                     d.print("\n\n");
@@ -119,7 +121,7 @@ public class Main {
                 } catch (RuntimeException e) {
                     d.print(e.toString()).print("\n\n\n");
                 } finally {
-                    d.close();
+                    if (d != null) d.close();
                 }
 
             }

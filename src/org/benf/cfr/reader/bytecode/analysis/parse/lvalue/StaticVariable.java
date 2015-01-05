@@ -102,9 +102,9 @@ public class StaticVariable extends AbstractLValue {
     @Override
     public Dumper dumpInner(Dumper d) {
         if (knownSimple) {
-            return d.print(varName);
+            return d.identifier(varName);
         } else {
-            return d.dump(clazz).print(".").print(varName);
+            return d.dump(clazz).print(".").identifier(varName);
         }
     }
 

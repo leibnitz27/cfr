@@ -19,6 +19,8 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment LOOSE_CATCH_BLOCK = new DecompilerComment("Loose catch block", true);
     public static DecompilerComment CLASS_RENAMED = new DecompilerComment("Inner class renamed, behaviour may change", true);
     public static DecompilerComment RENAME_MEMBERS = new DecompilerComment("Duplicate member names - consider using --" + OptionsImpl.RENAME_MEMBERS.getName() + " true");
+    public static DecompilerComment ILLEGAL_MEMBERS = new DecompilerComment("Illegal member names - consider using --" + OptionsImpl.RENAME_ILLEGAL_IDENTS.getName() + " true");
+    public static DecompilerComment ILLEGAL_METHODS = new DecompilerComment("Illegal method names - consider using --" + OptionsImpl.RENAME_ILLEGAL_IDENTS.getName() + " true");
     public static DecompilerComment WHOLE_CLASS_EXCEPTION = new DecompilerComment("Exception performing whole class analysis.");
 
     private final String comment;

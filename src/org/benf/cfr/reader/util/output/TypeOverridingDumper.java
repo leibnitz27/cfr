@@ -37,6 +37,12 @@ public class TypeOverridingDumper implements Dumper {
     }
 
     @Override
+    public Dumper identifier(String s) {
+        delegate.identifier(s);
+        return this;
+    }
+
+    @Override
     public Dumper print(String s) {
         delegate.print(s);
         return this;

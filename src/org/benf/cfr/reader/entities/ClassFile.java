@@ -25,6 +25,7 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierReplacement;
 import org.benf.cfr.reader.util.output.TypeOverridingDumper;
 
 import java.util.*;
@@ -149,6 +150,14 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (accessFlags.contains(AccessFlag.ACC_STRICT)) {
             for (Method method : tmpMethods) {
                 method.getAccessFlags().remove(AccessFlagMethod.ACC_STRICT);
+            }
+        }
+        if (!dcCommonState.getOptions().getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS)) {
+            for (Method method : tmpMethods) {
+                if (IllegalIdentifierReplacement.isIllegal(method.getName())) {
+                    addComment(DecompilerComment.ILLEGAL_METHODS);
+                    break;
+                }
             }
         }
 
@@ -353,9 +362,12 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     public ClassFileField getFieldByName(String name, JavaTypeInstance type) throws NoSuchFieldException {
         if (fieldsByName == null) {
+            boolean testIllegal = !constantPool.getDCCommonState().getOptions().getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS);
+            boolean illegal = false;
             fieldsByName = MapFactory.newMap();
             for (ClassFileField field : fields) {
                 String fieldName = field.getRawFieldName();
+                if (testIllegal && !illegal && IllegalIdentifierReplacement.isIllegal(fieldName)) illegal = true;
                 JavaTypeInstance fieldType = field.getField().getJavaTypeInstance();
                 Map<JavaTypeInstance, ClassFileField> perNameMap = fieldsByName.get(fieldName);
                 if (perNameMap == null) {
@@ -367,7 +379,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             boolean warnAmbig = false;
             for (Map<JavaTypeInstance, ClassFileField> typeMap : fieldsByName.values()) {
                 if (typeMap.size() > 1) {
-                    if (constantPool.getDCCommonState().getOptions().optionIsSet(OptionsImpl.RENAME_MEMBERS)) {
+                    if (constantPool.getDCCommonState().getOptions().getOption(OptionsImpl.RENAME_MEMBERS)) {
                         for (ClassFileField field : typeMap.values()) {
                             field.getField().setDisambiguate();
                         }
@@ -378,6 +390,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             }
             if (warnAmbig) {
                 addComment(DecompilerComment.RENAME_MEMBERS);
+            }
+            if (illegal) {
+                addComment(DecompilerComment.ILLEGAL_MEMBERS);
             }
         }
         Map<JavaTypeInstance, ClassFileField> fieldsByType = fieldsByName.get(name);

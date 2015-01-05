@@ -29,6 +29,7 @@ import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 import org.benf.cfr.reader.util.output.StdIODumper;
 
@@ -239,7 +240,7 @@ public class CodeAnalyser {
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
         DecompilerComments comments = new DecompilerComments();
-        Dumper debugDumper = new StdIODumper(new TypeUsageInformationEmpty());
+        Dumper debugDumper = new StdIODumper(new TypeUsageInformationEmpty(), new IllegalIdentifierDump.Nop());
         Map<Integer, Integer> lutByOffset = new HashMap<Integer, Integer>();
         Map<Integer, Integer> lutByIdx = new HashMap<Integer, Integer>();
         int idx2 = 0;

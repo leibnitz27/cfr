@@ -52,6 +52,11 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
+    public Dumper identifier(String s) {
+        return print(s);
+    }
+
+    @Override
     public Dumper print(String s) {
         processPendingCR();
         doIndent();

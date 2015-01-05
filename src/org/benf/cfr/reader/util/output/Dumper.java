@@ -23,6 +23,8 @@ public interface Dumper {
 
     Dumper print(String s);
 
+    Dumper identifier(String s);
+
     Dumper print(char c);
 
     Dumper newln();

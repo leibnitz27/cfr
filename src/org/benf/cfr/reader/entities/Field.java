@@ -148,6 +148,6 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
             d.print(prefix).print(' ');
         }
         JavaTypeInstance type = getJavaTypeInstance();
-        d.dump(type).print(' ').print(name);
+        d.dump(type).print(' ').identifier(name);
     }
 }

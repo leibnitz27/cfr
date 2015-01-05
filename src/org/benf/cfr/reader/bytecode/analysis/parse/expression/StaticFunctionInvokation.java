@@ -125,7 +125,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
             d.print(">");
         }
         ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
-        d.print(nameAndType.getName().getValue() + "(");
+        d.identifier(nameAndType.getName().getValue() + "(");
         boolean first = true;
         for (Expression arg : args) {
             first = CommaHelp.comma(first, d);

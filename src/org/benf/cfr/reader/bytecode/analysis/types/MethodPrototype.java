@@ -105,7 +105,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (!isConstructor.isConstructor()) {
             d.dump(result).print(" ");
         }
-        d.print(methName).print("(");
+        d.identifier(methName).print("(");
         /* We don't get a vararg type to change itself, as it's a function of the method, not the type
          */
 
