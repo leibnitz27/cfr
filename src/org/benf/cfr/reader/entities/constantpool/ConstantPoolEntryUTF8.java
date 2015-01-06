@@ -16,8 +16,7 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_DATA = 3;
 
     private final int length;
-    private transient String value;
-    private final String rawValue;
+    private final String value;
 
     private static int idx;
 
@@ -69,8 +68,7 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
             tmpValue = "longStr" + idx++ + "[" + tmpValue.substring(0, 10).replace('\r', '_').replace('\n', '_') + "]";
         }
 //        tmpValue = tmpValue.replace("\n", "\\n").replace("\r", "\\r");
-        this.rawValue = tmpValue;
-        if (!needsUTF) this.value = tmpValue;
+        this.value = tmpValue;
     }
 
 
@@ -80,14 +78,7 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
     }
 
     public String getValue() {
-        if (value == null) {
-            value = QuotingUtils.enquoteIdentifier(rawValue, getCp().getDCCommonState().getOptions().getOption(OptionsImpl.HIDE_UTF8));
-        }
         return value;
-    }
-
-    public String getRawValue() {
-        return rawValue;
     }
 
     @Override

@@ -61,7 +61,7 @@ public class AnnotationHelpers {
             }
             case 's': {
                 ConstantPoolEntry constantPoolEntry = cp.getEntry(raw.getS2At(offset));
-                TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntryUTF8((ConstantPoolEntryUTF8) constantPoolEntry, cp.getDCCommonState().getOptions().getOption(OptionsImpl.HIDE_UTF8));
+                TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntryUTF8((ConstantPoolEntryUTF8) constantPoolEntry);
                 return new Pair<Long, ElementValue>(offset + 2, new ElementValueConst(typedLiteral));
             }
             case 'e': {

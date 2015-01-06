@@ -240,7 +240,7 @@ public class CodeAnalyser {
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
         DecompilerComments comments = new DecompilerComments();
-        Dumper debugDumper = new StdIODumper(new TypeUsageInformationEmpty(), new IllegalIdentifierDump.Nop());
+        Dumper debugDumper = new StdIODumper(new TypeUsageInformationEmpty(), options, new IllegalIdentifierDump.Nop());
         Map<Integer, Integer> lutByOffset = new HashMap<Integer, Integer>();
         Map<Integer, Integer> lutByIdx = new HashMap<Integer, Integer>();
         int idx2 = 0;

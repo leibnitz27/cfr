@@ -39,7 +39,6 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     private final Set<AccessFlag> accessFlags;
     private final Map<String, Attribute> attributes;
     private final TypedLiteral constantValue;
-    private final String rawFieldName;
     private final String fieldName;
     private boolean disambiguate;
     private transient JavaTypeInstance cachedDecodedType;
@@ -65,9 +64,6 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         Attribute cvAttribute = attributes.get(AttributeConstantValue.ATTRIBUTE_NAME);
         this.constantValue = cvAttribute == null ? null : TypedLiteral.getConstantPoolEntry(cp, ((AttributeConstantValue) cvAttribute).getValue());
         this.fieldName = cp.getUTF8Entry(nameIndex).getValue();
-        String rawfieldName = cp.getUTF8Entry(nameIndex).getRawValue();
-        if (this.fieldName.equals(rawfieldName)) rawfieldName = this.fieldName;
-        this.rawFieldName = rawfieldName;
         this.disambiguate = false;
     }
 
@@ -99,10 +95,6 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
             cachedDecodedType = ConstantPoolUtils.decodeTypeTok(prototype.getValue(), cp);
         }
         return cachedDecodedType;
-    }
-
-    public String getRawFieldName() {
-        return rawFieldName;
     }
 
     public void setDisambiguate() {

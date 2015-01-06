@@ -1,7 +1,24 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 public class QuotingUtils {
-    public static String enquoteString(String s, boolean hideUtf) {
+
+    /*
+     * Expensive!
+     */
+    public static String enquoteUTF(String s) {
+        char[] raw = s.toCharArray();
+        StringBuilder stringBuilder = new StringBuilder();
+        for (char c : raw) {
+            if (c < 32 || c > 128) {
+                stringBuilder.append("\\u").append(String.format("%04x", (int) c));
+            } else {
+                stringBuilder.append(c);
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    public static String enquoteString(String s) {
         char[] raw = s.toCharArray();
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("\"");
@@ -29,28 +46,11 @@ public class QuotingUtils {
                     stringBuilder.append("\\\"");
                     break;
                 default:
-                    if (c < 32 || (hideUtf && c > 127)) {
-                        stringBuilder.append("\\u").append(String.format("%04x", (int) c));
-                    } else {
-                        stringBuilder.append(c);
-                    }
+                    stringBuilder.append(c);
                     break;
             }
         }
         stringBuilder.append("\"");
-        return stringBuilder.toString();
-    }
-
-    public static String enquoteIdentifier(String s, boolean hideUtf) {
-        char[] raw = s.toCharArray();
-        StringBuilder stringBuilder = new StringBuilder();
-        for (char c : raw) {
-            if (c < 32 || (hideUtf && c > 127)) {
-                stringBuilder.append("\\u").append(String.format("%04x", (int) c));
-            } else {
-                stringBuilder.append(c);
-            }
-        }
         return stringBuilder.toString();
     }
 

@@ -31,8 +31,7 @@ public class ConstantPoolEntryString extends AbstractConstantPoolEntry implement
 
     public String getValue() {
         if (string == null) {
-            boolean hideUtf = getCp().getDCCommonState().getOptions().getOption(OptionsImpl.HIDE_UTF8);
-            string = QuotingUtils.enquoteString(getCp().getUTF8Entry((int) stringIndex).getRawValue(), hideUtf);
+            string = QuotingUtils.enquoteString(getCp().getUTF8Entry((int) stringIndex).getValue());
         }
         return string;
     }

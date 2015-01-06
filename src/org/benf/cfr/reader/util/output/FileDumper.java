@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.getopt.Options;
 
 import java.io.*;
 
@@ -37,8 +38,8 @@ public class FileDumper extends StreamDumper {
                 className + ".java");
     }
 
-    public FileDumper(String dir, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-        super(typeUsageInformation, illegalIdentifierDump);
+    public FileDumper(String dir, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
+        super(typeUsageInformation, options, illegalIdentifierDump);
         this.type = type;
         this.summaryDumper = summaryDumper;
         Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(type.getRawName());

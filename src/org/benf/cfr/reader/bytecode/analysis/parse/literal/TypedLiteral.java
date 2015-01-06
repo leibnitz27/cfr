@@ -244,8 +244,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodType);
     }
 
-    public static TypedLiteral getConstantPoolEntryUTF8(ConstantPoolEntryUTF8 cpe, boolean hideUtf) {
-        return getString(QuotingUtils.enquoteString(cpe.getRawValue(), hideUtf));
+    public static TypedLiteral getConstantPoolEntryUTF8(ConstantPoolEntryUTF8 cpe) {
+        return getString(QuotingUtils.enquoteString(cpe.getValue()));
     }
 
     public static TypedLiteral getConstantPoolEntry(ConstantPool cp, ConstantPoolEntry cpe) {

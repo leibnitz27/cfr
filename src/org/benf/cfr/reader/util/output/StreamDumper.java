@@ -1,8 +1,11 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
 import java.util.Set;
@@ -10,6 +13,7 @@ import java.util.Set;
 public abstract class StreamDumper implements Dumper {
     private final TypeUsageInformation typeUsageInformation;
     private final IllegalIdentifierDump illegalIdentifierDump;
+    private final boolean convertUTF;
 
     private int outputCount = 0;
     private int indent;
@@ -17,9 +21,10 @@ public abstract class StreamDumper implements Dumper {
     private boolean pendingCR = false;
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
-    public StreamDumper(TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+    public StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
         this.typeUsageInformation = typeUsageInformation;
         this.illegalIdentifierDump = illegalIdentifierDump;
+        this.convertUTF = options.getOption(OptionsImpl.HIDE_UTF8);
     }
 
     @Override
@@ -70,6 +75,7 @@ public abstract class StreamDumper implements Dumper {
             s = s.substring(0, s.length() - 1);
             doNewLn = true;
         }
+        if (convertUTF) s = QuotingUtils.enquoteUTF(s);
         write(s);
         atStart = false;
         if (doNewLn) {

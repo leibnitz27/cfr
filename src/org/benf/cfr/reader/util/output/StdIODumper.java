@@ -2,10 +2,11 @@ package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.getopt.Options;
 
 public class StdIODumper extends StreamDumper {
-    public StdIODumper(TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-        super(typeUsageInformation, illegalIdentifierDump);
+    public StdIODumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
+        super(typeUsageInformation, options, illegalIdentifierDump);
     }
 
     @Override

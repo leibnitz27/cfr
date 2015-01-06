@@ -10,9 +10,9 @@ import java.io.IOException;
 public class DumperFactory {
 
     public static Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-        if (!options.optionIsSet(OptionsImpl.OUTPUT_DIR)) return new StdIODumper(typeUsageInformation, illegalIdentifierDump);
+        if (!options.optionIsSet(OptionsImpl.OUTPUT_DIR)) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump);
 
-        return new FileDumper(options.getOption(OptionsImpl.OUTPUT_DIR), classType, summaryDumper, typeUsageInformation, illegalIdentifierDump);
+        return new FileDumper(options.getOption(OptionsImpl.OUTPUT_DIR), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
     }
 
     /*

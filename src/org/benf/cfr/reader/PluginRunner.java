@@ -6,6 +6,7 @@ import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.*;
 
@@ -48,8 +49,8 @@ public class PluginRunner {
 
             final StringBuffer outBuffer = new StringBuffer();
             class StringStreamDumper extends StreamDumper {
-                public StringStreamDumper(TypeUsageInformation typeUsageInformation) {
-                    super(typeUsageInformation, illegalIdentifierDump);
+                public StringStreamDumper(TypeUsageInformation typeUsageInformation, Options options) {
+                    super(typeUsageInformation, options, illegalIdentifierDump);
                 }
 
                 @Override
@@ -66,7 +67,7 @@ public class PluginRunner {
                 }
             }
 
-            Dumper d = new StringStreamDumper(collectingDumper.getTypeUsageInformation());
+            Dumper d = new StringStreamDumper(collectingDumper.getTypeUsageInformation(), dcCommonState.getOptions());
             c.dump(d);
             return outBuffer.toString();
         } catch (Exception e) {
