@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class ConstantPoolEntryString extends AbstractConstantPoolEntry implements ConstantPoolEntryLiteral {
@@ -30,7 +31,8 @@ public class ConstantPoolEntryString extends AbstractConstantPoolEntry implement
 
     public String getValue() {
         if (string == null) {
-            string = QuotingUtils.enquoteString(getCp().getUTF8Entry((int) stringIndex).getRawValue());
+            boolean hideUtf = getCp().getDCCommonState().getOptions().getOption(OptionsImpl.HIDE_UTF8);
+            string = QuotingUtils.enquoteString(getCp().getUTF8Entry((int) stringIndex).getRawValue(), hideUtf);
         }
         return string;
     }

@@ -154,7 +154,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
         if (!dcCommonState.getOptions().getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS)) {
             for (Method method : tmpMethods) {
-                if (IllegalIdentifierReplacement.isIllegalMethodName(method.getName())) {
+                String rawName = method.getRawName();
+                if (IllegalIdentifierReplacement.isIllegalMethodName(rawName)) {
                     addComment(DecompilerComment.ILLEGAL_IDENTIFIERS);
                     break;
                 }

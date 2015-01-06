@@ -60,6 +60,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final EnumSet<AccessFlagMethod> accessFlags;
     private final Map<String, Attribute> attributes;
     private final String name;
+    private final String rawName;
     private MethodConstructor isConstructor;
     private final short descriptorIndex;
     private final AttributeCode codeAttribute;
@@ -97,6 +98,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
 
         this.name = cp.getUTF8Entry(nameIndex).getValue();
+        String rawValue = cp.getUTF8Entry(nameIndex).getRawValue();
+        if (this.name.equals(rawValue)) rawValue = this.name;
+        this.rawName = rawValue;
+
         MethodConstructor methodConstructor = MethodConstructor.NOT;
         if (name.equals(MiscConstants.INIT_METHOD)) {
             boolean isEnum = classFile.getAccessFlags().contains(AccessFlag.ACC_ENUM);
@@ -192,6 +197,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
     public String getName() {
         return name;
+    }
+
+    public String getRawName() {
+        return rawName;
     }
 
     /* This is a bit ugly - otherwise though we need to tie a variable namer to this earlier.

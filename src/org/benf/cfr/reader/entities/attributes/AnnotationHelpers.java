@@ -13,6 +13,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class AnnotationHelpers {
             }
             case 's': {
                 ConstantPoolEntry constantPoolEntry = cp.getEntry(raw.getS2At(offset));
-                TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntryUTF8((ConstantPoolEntryUTF8) constantPoolEntry);
+                TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntryUTF8((ConstantPoolEntryUTF8) constantPoolEntry, cp.getDCCommonState().getOptions().getOption(OptionsImpl.HIDE_UTF8));
                 return new Pair<Long, ElementValue>(offset + 2, new ElementValueConst(typedLiteral));
             }
             case 'e': {

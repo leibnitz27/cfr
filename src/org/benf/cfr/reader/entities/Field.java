@@ -14,7 +14,6 @@ import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
@@ -41,6 +40,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     private final Map<String, Attribute> attributes;
     private final TypedLiteral constantValue;
     private final String rawFieldName;
+    private final String fieldName;
     private boolean disambiguate;
     private transient JavaTypeInstance cachedDecodedType;
 
@@ -64,7 +64,10 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
         Attribute cvAttribute = attributes.get(AttributeConstantValue.ATTRIBUTE_NAME);
         this.constantValue = cvAttribute == null ? null : TypedLiteral.getConstantPoolEntry(cp, ((AttributeConstantValue) cvAttribute).getValue());
-        this.rawFieldName = cp.getUTF8Entry(nameIndex).getValue();
+        this.fieldName = cp.getUTF8Entry(nameIndex).getValue();
+        String rawfieldName = cp.getUTF8Entry(nameIndex).getRawValue();
+        if (this.fieldName.equals(rawfieldName)) rawfieldName = this.fieldName;
+        this.rawFieldName = rawfieldName;
         this.disambiguate = false;
     }
 
@@ -110,9 +113,9 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         if (disambiguate) {
             String rawName = getJavaTypeInstance().getRawName();
             rawName = rawName.replace("[]", "_arr").replaceAll("[*?<>. ]","_");
-            return rawFieldName + "_" + rawName;
+            return fieldName + "_" + rawName;
         }
-        return rawFieldName;
+        return fieldName;
     }
 
     public boolean testAccessFlag(AccessFlag accessFlag) {

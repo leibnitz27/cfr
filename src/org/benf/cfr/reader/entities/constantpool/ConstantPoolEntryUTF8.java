@@ -81,7 +81,7 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
 
     public String getValue() {
         if (value == null) {
-            value = QuotingUtils.enquoteIdentifier(rawValue);
+            value = QuotingUtils.enquoteIdentifier(rawValue, getCp().getDCCommonState().getOptions().getOption(OptionsImpl.HIDE_UTF8));
         }
         return value;
     }
