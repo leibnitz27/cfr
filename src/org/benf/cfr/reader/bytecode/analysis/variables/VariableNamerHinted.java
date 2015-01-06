@@ -5,6 +5,7 @@ import org.benf.cfr.reader.entities.attributes.LocalVariableEntry;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.output.IllegalIdentifierReplacement;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -55,7 +56,12 @@ public class VariableNamerHinted implements VariableNamer {
         LocalVariableEntry key = lve;
         NamedVariable namedVariable = cache.get(key);
         if (namedVariable == null) {
-            namedVariable = new NamedVariableFromHint(cp.getUTF8Entry(lve.getNameIndex()).getValue(), lve.getIndex(), genIdx);
+            String name = cp.getUTF8Entry(lve.getNameIndex()).getValue();
+            if (IllegalIdentifierReplacement.isIllegal(name)) {
+                namedVariable = new NamedVariableDefault(name);
+            } else {
+                namedVariable = new NamedVariableFromHint(name, lve.getIndex(), genIdx);
+            }
             cache.put(key, namedVariable);
         }
         return namedVariable;
