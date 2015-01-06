@@ -366,9 +366,18 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             boolean testIllegal = !constantPool.getDCCommonState().getOptions().getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS);
             boolean illegal = false;
             fieldsByName = MapFactory.newMap();
+            if (testIllegal) {
+                for (ClassFileField field : fields) {
+                    String rawFieldName = field.getFieldName();
+                    // Check illegality on RAW field name, as otherwise unicode is already quoted.
+                    if (IllegalIdentifierReplacement.isIllegal(rawFieldName)) {
+                        illegal = true;
+                        break;
+                    }
+                }
+            }
             for (ClassFileField field : fields) {
-                String fieldName = field.getRawFieldName();
-                if (testIllegal && !illegal && IllegalIdentifierReplacement.isIllegal(fieldName)) illegal = true;
+                String fieldName = field.getFieldName();
                 JavaTypeInstance fieldType = field.getField().getJavaTypeInstance();
                 Map<JavaTypeInstance, ClassFileField> perNameMap = fieldsByName.get(fieldName);
                 if (perNameMap == null) {
