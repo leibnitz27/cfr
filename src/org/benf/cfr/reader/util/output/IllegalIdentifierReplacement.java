@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 
 import java.util.Map;
 
@@ -34,6 +35,12 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
             if (!Character.isJavaIdentifierPart(chars[x])) return true;
         }
         return false;
+    }
+
+    public static boolean isIllegalMethodName(String name) {
+        if (name.equals(MiscConstants.INIT_METHOD)) return false;
+        if (name.equals(MiscConstants.STATIC_INIT_METHOD)) return false;
+        return isIllegal(name);
     }
 
     @Override

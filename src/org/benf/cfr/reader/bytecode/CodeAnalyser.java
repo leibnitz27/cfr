@@ -83,7 +83,7 @@ public class CodeAnalyser {
             this.code = code;
             boolean failed = false;
             boolean exception = false;
-            for (DecompilerComment comment : comments.getCommentList()) {
+            for (DecompilerComment comment : comments.getCommentCollection()) {
                 if (comment.isFailed()) {
                     failed = true;
                 }

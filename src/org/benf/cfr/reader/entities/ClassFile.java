@@ -154,8 +154,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
         if (!dcCommonState.getOptions().getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS)) {
             for (Method method : tmpMethods) {
-                if (IllegalIdentifierReplacement.isIllegal(method.getName())) {
-                    addComment(DecompilerComment.ILLEGAL_METHODS);
+                if (IllegalIdentifierReplacement.isIllegalMethodName(method.getName())) {
+                    addComment(DecompilerComment.ILLEGAL_IDENTIFIERS);
                     break;
                 }
             }
@@ -392,7 +392,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 addComment(DecompilerComment.RENAME_MEMBERS);
             }
             if (illegal) {
-                addComment(DecompilerComment.ILLEGAL_MEMBERS);
+                addComment(DecompilerComment.ILLEGAL_IDENTIFIERS);
             }
         }
         Map<JavaTypeInstance, ClassFileField> fieldsByType = fieldsByName.get(name);

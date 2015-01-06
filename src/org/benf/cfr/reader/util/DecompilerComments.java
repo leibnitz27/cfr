@@ -4,40 +4,40 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 public class DecompilerComments implements Dumpable {
-    List<DecompilerComment> commentList = ListFactory.newList();
+    Set<DecompilerComment> comments = SetFactory.newOrderedSet();
 
     public DecompilerComments() {
     }
 
     public void addComment(String comment) {
         DecompilerComment decompilerComment = new DecompilerComment(comment);
-        commentList.add(decompilerComment);
+        comments.add(decompilerComment);
     }
 
     public void addComment(DecompilerComment comment) {
-        commentList.add(comment);
+        comments.add(comment);
     }
 
     public void addComments(Collection<DecompilerComment> comments) {
-        commentList.addAll(comments);
+        this.comments.addAll(comments);
     }
 
     @Override
     public Dumper dump(Dumper d) {
-        if (commentList.isEmpty()) return d;
+        if (comments.isEmpty()) return d;
         d.print("/*").newln();
-        for (DecompilerComment comment : commentList) {
+        for (DecompilerComment comment : comments) {
             d.print(" * ").dump(comment).newln();
         }
         d.print(" */").newln();
         return d;
     }
 
-    public List<DecompilerComment> getCommentList() {
-        return commentList;
+    public Collection<DecompilerComment> getCommentCollection() {
+        return comments;
     }
 
 }
