@@ -112,6 +112,9 @@ public class NewObjectArray extends AbstractNewArray {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        for (Expression dimSize : dimSizes) {
+            dimSize.collectUsedLValues(lValueUsageCollector);
+        }
     }
 
     @Override
