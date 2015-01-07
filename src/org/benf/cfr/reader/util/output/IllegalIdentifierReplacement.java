@@ -28,7 +28,7 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
      * However, if you look at the content of java.lang.CharacterData00, you can see why I'd rather not
      * reimplement this particular wheel.
      */
-    public static boolean isIllegal(String identifier) {
+    private static boolean isIllegal2(String identifier) {
         if (Keywords.isAKeyword(identifier)) return true;
         if (identifier.length() == 0) return false;
         char[] chars = identifier.toCharArray();
@@ -38,6 +38,14 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
         }
         return false;
     }
+
+    // Ending in .this is a hack, need to fix .this appending elsewhere.
+    public static boolean isIllegal(String identifier) {
+        if (!isIllegal2(identifier)) return false;
+        if (identifier.endsWith(".this")) return false;
+        return true;
+    }
+
 
     public static boolean isIllegalMethodName(String name) {
         if (name.equals(MiscConstants.INIT_METHOD)) return false;
