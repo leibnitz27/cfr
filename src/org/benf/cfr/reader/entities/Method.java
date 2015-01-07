@@ -73,7 +73,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private boolean isOverride;
     private transient Set<JavaTypeInstance> thrownTypes = null;
 
-    public Method(ByteData raw, ClassFile classFile, final ConstantPool cp, final DCCommonState dcCommonState) {
+    public Method(ByteData raw, ClassFile classFile, final ConstantPool cp, final DCCommonState dcCommonState, final ClassFileVersion classFileVersion) {
         Options options = dcCommonState.getOptions();
 
         this.cp = cp;
@@ -85,12 +85,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
         long attributesLength = ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
-                new UnaryFunction<ByteData, Attribute>() {
-                    @Override
-                    public Attribute invoke(ByteData arg) {
-                        return AttributeFactory.build(arg, cp);
-                    }
-                });
+                AttributeFactory.getBuilder(cp, classFileVersion));
+
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         AccessFlagMethod.applyAttributes(attributes, accessFlags);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;

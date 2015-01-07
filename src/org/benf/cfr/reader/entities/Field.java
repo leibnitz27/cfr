@@ -9,6 +9,7 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.CollectionUtils;
 import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
@@ -43,19 +44,15 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     private boolean disambiguate;
     private transient JavaTypeInstance cachedDecodedType;
 
-    public Field(ByteData raw, final ConstantPool cp) {
+    public Field(ByteData raw, final ConstantPool cp, final ClassFileVersion classFileVersion) {
         this.cp = cp;
         this.accessFlags = AccessFlag.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
         short attributes_count = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(attributes_count);
         long attributesLength = ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), attributes_count, tmpAttributes,
-                new UnaryFunction<ByteData, Attribute>() {
-                    @Override
-                    public Attribute invoke(ByteData arg) {
-                        return AttributeFactory.build(arg, cp);
-                    }
-                });
+                AttributeFactory.getBuilder(cp, classFileVersion));
+
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         AccessFlag.applyAttributes(attributes, accessFlags);
         this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);

@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.entities;
 
-import com.sun.tools.internal.ws.processor.model.java.JavaType;
 import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -90,6 +89,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         minorVer = data.getS2At(OFFSET_OF_MINOR);
         majorVer = data.getS2At(OFFSET_OF_MAJOR);
+        ClassFileVersion classFileVersion = new ClassFileVersion(majorVer, minorVer);
+        final ClassFileVersion cfv = classFileVersion;
         short constantPoolCount = data.getS2At(OFFSET_OF_CONSTANT_POOL_COUNT);
         this.constantPool = new ConstantPool(this, dcCommonState, data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
         final long OFFSET_OF_ACCESS_FLAGS = OFFSET_OF_CONSTANT_POOL + constantPool.getRawByteLength();
@@ -100,7 +101,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         short numInterfaces = data.getS2At(OFFSET_OF_INTERFACES_COUNT);
         ArrayList<ConstantPoolEntryClass> tmpInterfaces = new ArrayList<ConstantPoolEntryClass>();
-        final long interfacesLength = ContiguousEntityFactory.buildSized(data.getOffsetData(OFFSET_OF_INTERFACES), numInterfaces, 2, tmpInterfaces,
+        ContiguousEntityFactory.buildSized(data.getOffsetData(OFFSET_OF_INTERFACES), numInterfaces, 2, tmpInterfaces,
                 new UnaryFunction<ByteData, ConstantPoolEntryClass>() {
                     @Override
                     public ConstantPoolEntryClass invoke(ByteData arg) {
@@ -126,7 +127,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 new UnaryFunction<ByteData, Field>() {
                     @Override
                     public Field invoke(ByteData arg) {
-                        return new Field(arg, constantPool);
+                        return new Field(arg, constantPool, cfv);
                     }
                 });
         this.fields = ListFactory.newList();
@@ -143,7 +144,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 new UnaryFunction<ByteData, Method>() {
                     @Override
                     public Method invoke(ByteData arg) {
-                        return new Method(arg, ClassFile.this, constantPool, dcCommonState);
+                        return new Method(arg, ClassFile.this, constantPool, dcCommonState, cfv);
                     }
                 });
         this.methods = tmpMethods;
@@ -167,12 +168,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
         ContiguousEntityFactory.build(data.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
-                new UnaryFunction<ByteData, Attribute>() {
-                    @Override
-                    public Attribute invoke(ByteData arg) {
-                        return AttributeFactory.build(arg, constantPool);
-                    }
-                });
+                AttributeFactory.getBuilder(constantPool, classFileVersion)
+        );
+
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         AccessFlag.applyAttributes(attributes, accessFlags);
 
@@ -205,7 +203,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         /*
          *
          */
-        ClassFileVersion classFileVersion = new ClassFileVersion(majorVer, minorVer);
         if (classFileVersion.before(ClassFileVersion.JAVA_6)) {
             boolean hasSignature = false;
             if (null != getAttributeByName(AttributeSignature.ATTRIBUTE_NAME)) hasSignature = true;
@@ -221,6 +218,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 addComment("This class specifies class file version " + classFileVersion + " but uses Java 6 signatures.  Assumed Java 6.");
                 classFileVersion = ClassFileVersion.JAVA_6;
             }
+        }
+        if (classFileVersion.before(ClassFileVersion.JAVA_1_0)) {
+            addComment(new DecompilerComment("Class file version " + classFileVersion + " predates " + ClassFileVersion.JAVA_1_0 + ", recompilation may lose compatibility!"));
         }
 
         this.classFileVersion = classFileVersion;

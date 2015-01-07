@@ -31,6 +31,7 @@ public class ClassFileVersion {
         return "" + major + "." + minor + (name == null ? "" : (" (Java " + name + ")"));
     }
 
+    public static ClassFileVersion JAVA_1_0 = new ClassFileVersion(45, 3, "1.0");
     public static ClassFileVersion JAVA_1_2 = new ClassFileVersion(46, 0, "1.2");
     public static ClassFileVersion JAVA_1_3 = new ClassFileVersion(47, 0, "1.3");
     public static ClassFileVersion JAVA_1_4 = new ClassFileVersion(48, 0, "1.4");

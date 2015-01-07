@@ -3,13 +3,14 @@ package org.benf.cfr.reader.entityfactories;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
 import org.benf.cfr.reader.entities.attributes.*;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 public class AttributeFactory {
     private static final long OFFSET_OF_ATTRIBUTE_NAME_INDEX = 0;
 
-    public static Attribute build(ByteData raw, ConstantPool cp) {
+    public static Attribute build(ByteData raw, ConstantPool cp, ClassFileVersion classFileVersion) {
         final short nameIndex = raw.getS2At(OFFSET_OF_ATTRIBUTE_NAME_INDEX);
         ConstantPoolEntryUTF8 name = (ConstantPoolEntryUTF8) cp.getEntry(nameIndex);
         String attributeName = name.getValue();
@@ -17,7 +18,7 @@ public class AttributeFactory {
         if (AttributeCode.ATTRIBUTE_NAME.equals(attributeName)) {
             // Code attribute needs the signature of the method, so that we have type information for the
             // local variables.
-            return new AttributeCode(raw, cp);
+            return new AttributeCode(raw, cp, classFileVersion);
         } else if (AttributeLocalVariableTable.ATTRIBUTE_NAME.equals(attributeName)) {
             return new AttributeLocalVariableTable(raw, cp);
         } else if (AttributeSignature.ATTRIBUTE_NAME.equals(attributeName)) {
@@ -59,20 +60,22 @@ public class AttributeFactory {
 
     }
 
-    public static UnaryFunction<ByteData, Attribute> getBuilder(ConstantPool cp) {
-        return new AttributeBuilder(cp);
+    public static UnaryFunction<ByteData, Attribute> getBuilder(ConstantPool cp, ClassFileVersion classFileVersion) {
+        return new AttributeBuilder(cp, classFileVersion);
     }
 
     private static class AttributeBuilder implements UnaryFunction<ByteData, Attribute> {
         private final ConstantPool cp;
+        private final ClassFileVersion classFileVersion;
 
-        public AttributeBuilder(ConstantPool cp) {
+        public AttributeBuilder(ConstantPool cp, ClassFileVersion classFileVersion) {
             this.cp = cp;
+            this.classFileVersion = classFileVersion;
         }
 
         @Override
         public Attribute invoke(ByteData arg) {
-            return AttributeFactory.build(arg, cp);
+            return AttributeFactory.build(arg, cp, classFileVersion);
         }
     }
 }
