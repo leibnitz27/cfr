@@ -92,4 +92,20 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
         }
         return elseBlock;
     }
+
+    /*
+     * An unstructured if which is effectively just a goto can be converted explicitly to a structured if
+     * containing an unstructured goto.
+     */
+    public StructuredStatement convertEmptyToGoto() {
+        if (!(knownIfBlock == null && knownElseBlock == null && setIfBlock == null)) return this;
+        Op04StructuredStatement gotoStm = new Op04StructuredStatement(
+                new UnstructuredGoto()
+        );
+        Op04StructuredStatement target = getContainer().getTargets().get(1);
+        gotoStm.addTarget(target);
+        target.getSources().remove(this.getContainer());
+        target.addSource(gotoStm);
+        return new StructuredIf(conditionalExpression, gotoStm);
+    }
 }

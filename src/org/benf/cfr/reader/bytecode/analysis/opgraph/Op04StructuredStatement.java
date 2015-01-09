@@ -523,6 +523,20 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    /*
+     * So far I've only actually seen this be useful for sun.tools.javac.sourceClass.....
+     */
+    public static class UnstructuredIfConverter implements StructuredStatementTransformer {
+        @Override
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            in.transformStructuredChildren(this, scope);
+            if (in instanceof UnstructuredIf) {
+                in = ((UnstructuredIf)in).convertEmptyToGoto();
+            }
+            return in;
+        }
+    }
+
     public static StructuredStatement transformStructuredGotoWithScope(StructuredScope scope, StructuredStatement stm,
                                                                        Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> breaktargets
                                                                        ) {
@@ -645,6 +659,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void inlinePossibles(Op04StructuredStatement root) {
         root.transform(new Inliner(), new StructuredScope());
+    }
+
+    public static void convertUnstructuredIf(Op04StructuredStatement root) {
+        root.transform(new UnstructuredIfConverter(), new StructuredScope());
     }
 
     public static void tidyVariableNames(Method method, Op04StructuredStatement root, DecompilerComments comments) {

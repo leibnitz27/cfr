@@ -766,6 +766,7 @@ public class CodeAnalyser {
 
         Op04StructuredStatement.tidyEmptyCatch(block);
         Op04StructuredStatement.tidyTryCatch(block);
+        Op04StructuredStatement.convertUnstructuredIf(block);
         Op04StructuredStatement.inlinePossibles(block);
         Op04StructuredStatement.removeStructuredGotos(block);
         Op04StructuredStatement.removePointlessBlocks(block);
