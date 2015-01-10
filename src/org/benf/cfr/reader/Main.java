@@ -115,11 +115,12 @@ public class Main {
                     d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 
                     c.dump(d);
-                    d.print("\n\n");
+                    d.print("\n");
+                    d.print("\n");
                 } catch (Dumper.CannotCreate e) {
                     throw e;
                 } catch (RuntimeException e) {
-                    d.print(e.toString()).print("\n\n\n");
+                    d.print(e.toString()).print("\n").print("\n").print("\n");
                 } finally {
                     if (d != null) d.close();
                 }
