@@ -112,9 +112,10 @@ public class J14ClassObjectRewriter {
         Expression test = new TernaryExpression(
                 new ComparisonOperation(staticExpression, Literal.NULL, CompOp.EQ),
                 new AssignmentExpression(staticVariable,
-                        StaticFunctionInvokation.createMatcher(
+                        wcm.getStaticFunction("test",
                                 classType,
-                                new InferredJavaType(classType, InferredJavaType.Source.TEST),
+                                TypeConstants.CLASS,
+                                null,
                                 ListFactory.<Expression>newList(wcm.getExpressionWildCard("classString")))
                         ),
                 staticExpression);
@@ -182,7 +183,7 @@ public class J14ClassObjectRewriter {
                         new BeginBlock(null),
                         new StructuredTry(null, null, null),
                         new BeginBlock(null),
-                        new StructuredReturn(wcm1.getStaticFunction("forName", CLASS, "forName", new LValueExpression(arg)), CLASS),
+                        new StructuredReturn(wcm1.getStaticFunction("forName", CLASS, null, "forName", new LValueExpression(arg)), CLASS),
                         new EndBlock(null),
                         new StructuredCatch(null, null, null, null),
                         new BeginBlock(null),

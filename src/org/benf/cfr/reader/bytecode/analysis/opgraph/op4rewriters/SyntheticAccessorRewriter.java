@@ -384,13 +384,13 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                 new StructuredExpressionStatement(wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null), false)
                         ),
                         new ResetAfterTest(wcm, STA_SUB1,
-                                new StructuredExpressionStatement(wcm.getStaticFunction("func", otherType, null, (List<Expression>) null), false)
+                                new StructuredExpressionStatement(wcm.getStaticFunction("func", otherType, null, null, (List<Expression>) null), false)
                         ),
                         new ResetAfterTest(wcm, MEM_FUN1,
                                 new StructuredReturn(wcm.getMemberFunction("func", null, false, new LValueExpression(wcm.getLValueWildCard("lvalue")), null), null)
                         ),
                         new ResetAfterTest(wcm, STA_FUN1,
-                                new StructuredReturn(wcm.getStaticFunction("func", otherType, null, (List<Expression>) null), null)
+                                new StructuredReturn(wcm.getStaticFunction("func", otherType, null, null, (List<Expression>) null), null)
                         )
                 ),
                 new EndBlock(null)

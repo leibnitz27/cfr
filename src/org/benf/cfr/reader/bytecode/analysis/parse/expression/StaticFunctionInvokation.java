@@ -53,17 +53,6 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
         this.clazz = function.getClassEntry().getTypeInstance();
     }
 
-    private StaticFunctionInvokation(JavaTypeInstance clazz, InferredJavaType res, List<Expression> args) {
-        super(res);
-        this.function = null;
-        this.args = args;
-        this.clazz = clazz;
-    }
-
-    public static StaticFunctionInvokation createMatcher(JavaTypeInstance clazz, InferredJavaType res, List<Expression> args) {
-        return new StaticFunctionInvokation(clazz, res, args);
-    }
-
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(clazz);
@@ -124,8 +113,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
             }
             d.print(">");
         }
-        ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
-        d.identifier(nameAndType.getName().getValue()).print("(");
+        d.identifier(getName()).print("(");
         boolean first = true;
         for (Expression arg : args) {
             first = CommaHelp.comma(first, d);
@@ -202,6 +190,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
         if (o == this) return true;
         if (!(o instanceof StaticFunctionInvokation)) return false;
         StaticFunctionInvokation other = (StaticFunctionInvokation) o;
+        if (!getName().equals(other.getName())) return false;
         if (!clazz.equals(other.clazz)) return false;
         if (!args.equals(other.args)) return false;
         return true;
@@ -213,6 +202,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
         if (o == this) return true;
         if (!(o instanceof StaticFunctionInvokation)) return false;
         StaticFunctionInvokation other = (StaticFunctionInvokation) o;
+        if (!constraint.equivalent(getName(), other.getName())) return false;
         if (!constraint.equivalent(clazz, other.clazz)) return false;
         if (!constraint.equivalent(args, other.args)) return false;
         return true;

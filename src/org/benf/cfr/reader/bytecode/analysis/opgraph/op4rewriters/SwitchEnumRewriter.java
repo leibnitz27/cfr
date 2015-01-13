@@ -164,7 +164,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1,
                 new MatchSequence(
                         new StructuredAssignment(lookupTable, new NewPrimitiveArray(
-                                new ArrayLength(wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), "values")),
+                                new ArrayLength(wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), null, "values")),
                                 RawJavaType.INT)),
                         new KleeneStar(new ResetAfterTest(wcm2,
                                 new MatchSequence(

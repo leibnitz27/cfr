@@ -233,22 +233,22 @@ public class WildcardMatch {
         return res;
     }
 
-    public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, String methodname) {
-        return getStaticFunction(name, clazz, methodname, ListFactory.<Expression>newList());
+    public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, JavaTypeInstance returnType, String methodname) {
+        return getStaticFunction(name, clazz, returnType, methodname, ListFactory.<Expression>newList());
     }
 
-    public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, String methodname, Expression... args) {
-        return getStaticFunction(name, clazz, methodname, ListFactory.<Expression>newList(args));
+    public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, JavaTypeInstance returnType, String methodname, Expression... args) {
+        return getStaticFunction(name, clazz, returnType, methodname, ListFactory.<Expression>newList(args));
     }
 
     /* When matching a function invokation, we don't really have all the details to construct a plausible
      * StaticFunctionInvokation expression, so just construct something which will match it!
      */
-    public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, String methodname, List<Expression> args) {
+    public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, JavaTypeInstance returnType, String methodname, List<Expression> args) {
         StaticFunctionInvokationWildcard res = staticFunctionMap.get(name);
         if (res != null) return res;
 
-        res = new StaticFunctionInvokationWildcard(methodname, clazz, args);
+        res = new StaticFunctionInvokationWildcard(methodname, clazz, returnType, args);
         staticFunctionMap.put(name, res);
         return res;
     }
@@ -701,13 +701,15 @@ public class WildcardMatch {
     public class StaticFunctionInvokationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<StaticFunctionInvokation> {
         private final String name;
         private final JavaTypeInstance clazz;
+        private final JavaTypeInstance returnType;
         private final List<Expression> args;
         private transient StaticFunctionInvokation matchedValue;
 
-        public StaticFunctionInvokationWildcard(String name, JavaTypeInstance clazz, List<Expression> args) {
+        public StaticFunctionInvokationWildcard(String name, JavaTypeInstance clazz, JavaTypeInstance returnType, List<Expression> args) {
             this.name = name;
             this.clazz = clazz;
             this.args = args;
+            this.returnType = returnType;
         }
 
         @Override
@@ -718,6 +720,9 @@ public class WildcardMatch {
             StaticFunctionInvokation other = (StaticFunctionInvokation) o;
             if (name != null) {
                 if (!name.equals(other.getName())) return false;
+            }
+            if (returnType != null) {
+                if (!returnType.equals(other.getInferredJavaType().getJavaTypeInstance())) return false;
             }
             if (!clazz.equals(other.getClazz())) return false;
             List<Expression> otherArgs = other.getArgs();
