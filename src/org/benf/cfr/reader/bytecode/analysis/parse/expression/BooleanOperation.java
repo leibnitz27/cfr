@@ -112,6 +112,29 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     }
 
     @Override
+    public ConditionalExpression getRightDeep() {
+        // transform (a x1 b) x2 c (where this is x2) to a x2 (b x1 c)
+        // todo - no allocations here but this feels like there might be a n^2 case.
+        while (lhs instanceof BooleanOperation) {
+            BooleanOperation lbool = (BooleanOperation)lhs;
+            if (lbool.op == op) {
+                ConditionalExpression a = lbool.lhs;
+                ConditionalExpression b = lbool.rhs;
+                ConditionalExpression c = rhs;
+                lhs = a;
+                lbool.lhs = b;
+                lbool.rhs = c;
+                rhs = lbool;
+            } else {
+                break;
+            }
+        }
+        lhs = lhs.getRightDeep();
+        rhs = rhs.getRightDeep();
+        return this;
+    }
+
+    @Override
     public Set<LValue> getLoopLValues() {
         Set<LValue> res = SetFactory.newSet();
         res.addAll(lhs.getLoopLValues());

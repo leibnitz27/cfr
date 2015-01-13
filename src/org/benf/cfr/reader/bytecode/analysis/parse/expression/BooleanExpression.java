@@ -81,6 +81,10 @@ public class BooleanExpression extends AbstractExpression implements Conditional
         return getNegated();
     }
 
+    @Override
+    public ConditionalExpression getRightDeep() {
+        return this;
+    }
 
     protected void addIfLValue(Expression expression, Set<LValue> res) {
         if (expression instanceof LValueExpression) {

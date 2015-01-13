@@ -143,6 +143,10 @@ public class ComparisonOperation extends AbstractExpression implements Condition
         return getNegated();
     }
 
+    @Override
+    public ConditionalExpression getRightDeep() {
+        return this;
+    }
 
     protected void addIfLValue(Expression expression, Set<LValue> res) {
         if (expression instanceof LValueExpression) {

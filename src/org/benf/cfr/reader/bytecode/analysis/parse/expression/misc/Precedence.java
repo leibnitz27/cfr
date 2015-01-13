@@ -13,19 +13,30 @@ public enum Precedence {
     BIT_AND(true),
     BIT_XOR(true),
     BIT_OR(true),
-    LOG_AND(true),
-    LOG_OR(true),
+    LOG_AND(true, true),
+    LOG_OR(true, true),
     CONDITIONAL(false),
     ASSIGNMENT(false),
     WEAKEST(true);
 
     private final boolean isLtoR;
+    private final boolean commute;
 
     private Precedence(boolean ltoR) {
-        isLtoR = ltoR;
+        this.isLtoR = ltoR;
+        this.commute = false;
+    }
+
+    private Precedence(boolean ltoR, boolean commute) {
+        this.isLtoR = ltoR;
+        this.commute = commute;
     }
 
     public boolean isLtoR() {
         return isLtoR;
+    }
+
+    public boolean isCommutative() {
+        return commute;
     }
 }

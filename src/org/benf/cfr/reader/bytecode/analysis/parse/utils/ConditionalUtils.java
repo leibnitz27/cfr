@@ -12,6 +12,10 @@ public class ConditionalUtils {
         if (applyDemorgan.getSize() < condition.getSize()) {
             condition = applyDemorgan;
         }
+        // Prefer right-deep trees to left-deep (other transforms (eg assert) may hardcode expected expressions, so
+        // if we have to cope with all balancings of the same tree, it becomes painful!)
+        // Note that this MAY NOT change ordering, just layout.
+        condition = condition.getRightDeep();
         return condition;
     }
 

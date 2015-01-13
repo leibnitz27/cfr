@@ -93,17 +93,21 @@ public abstract class AbstractExpression implements Expression {
         if (cmp > 0) {
             requires = true;
         } else if (cmp == 0) {
-            switch (isLhs) {
-                case TRUE:
-                    // I.e. same precedence, we're on LHS, we only need braces if prec is R->L.
-                    requires = !innerP.isLtoR();
-                    break;
-                case FALSE:
-                    requires = innerP.isLtoR();
-                    break;
-                case NEITHER:
-                    requires = !innerP.isLtoR();
-                    break;
+            if (innerP == outerP && innerP.isCommutative()) {
+                requires = false;
+            } else {
+                switch (isLhs) {
+                    case TRUE:
+                        // I.e. same precedence, we're on LHS, we only need braces if prec is R->L.
+                        requires = !innerP.isLtoR();
+                        break;
+                    case FALSE:
+                        requires = innerP.isLtoR();
+                        break;
+                    case NEITHER:
+                        requires = !innerP.isLtoR();
+                        break;
+                }
             }
         }
         if (requires) {

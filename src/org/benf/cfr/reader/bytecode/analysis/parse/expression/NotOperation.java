@@ -78,6 +78,12 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
     }
 
     @Override
+    public ConditionalExpression getRightDeep() {
+        inner = inner.getRightDeep();
+        return this;
+    }
+
+    @Override
     public Set<LValue> getLoopLValues() {
         return inner.getLoopLValues();
     }

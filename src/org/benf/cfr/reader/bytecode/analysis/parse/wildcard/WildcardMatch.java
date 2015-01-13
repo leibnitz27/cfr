@@ -1039,6 +1039,11 @@ public class WildcardMatch {
         }
 
         @Override
+        public ConditionalExpression getRightDeep() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public int getSize() {
             throw new UnsupportedOperationException();
         }
