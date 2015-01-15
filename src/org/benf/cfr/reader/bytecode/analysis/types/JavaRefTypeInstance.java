@@ -134,6 +134,10 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         d.print(res);
     }
 
+    public String getPackageName() {
+        return ClassNameUtils.getPackageAndClassNames(getRawName()).getFirst();
+    }
+
     @Override
     public String toString() {
         return new ToStringDumper().dump(this).toString();

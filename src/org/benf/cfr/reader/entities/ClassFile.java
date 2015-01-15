@@ -508,10 +508,20 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         throw new NoSuchMethodException();
     }
 
-    public Method getMethodByPrototype(final MethodPrototype prototype, GenericTypeBinder binder) throws NoSuchMethodException {
+    public Method getAccessibleMethodByPrototype(final MethodPrototype prototype, GenericTypeBinder binder, JavaRefTypeInstance accessor) throws NoSuchMethodException {
+        JavaRefTypeInstance thisRef = (JavaRefTypeInstance)getClassType().getDeGenerifiedType();
         List<Method> named = getMethodsWithMatchingName(prototype);
         Method methodMatch = null;
         for (Method method : named) {
+            if (method.getAccessFlags().contains(AccessFlagMethod.ACC_PRIVATE)) {
+                if (!accessor.equals(thisRef)) continue;
+            } else if (method.getAccessFlags().contains(AccessFlagMethod.ACC_PUBLIC) ||
+                method.getAccessFlags().contains(AccessFlagMethod.ACC_PROTECTED)) {
+                // Fine, might be an override.
+            } else {
+                // Make sure we're in the same package.
+                if (!thisRef.getPackageName().equals(accessor.getPackageName())) continue;
+            }
             MethodPrototype tgt = method.getMethodPrototype();
             if (tgt.equalsMatch(prototype)) return method;
             if (binder != null) {
@@ -711,7 +721,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                     ClassFile classFile = bindTester.getSecond();
                     GenericTypeBinder genericTypeBinder = bindTester.getThird();
                     try {
-                        baseMethod = classFile.getMethodByPrototype(prototype, genericTypeBinder);
+                        baseMethod = classFile.getAccessibleMethodByPrototype(prototype, genericTypeBinder, (JavaRefTypeInstance)getClassType().getDeGenerifiedType());
                     } catch (NoSuchMethodException e) {
                     }
                     if (baseMethod != null) break;
