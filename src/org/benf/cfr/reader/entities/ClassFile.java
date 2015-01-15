@@ -587,30 +587,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return thisClass;
     }
 
-    //    FIXME - inside constructor for inner class classfile
-    private void markInnerClassAsStatic(Options options, ClassFile innerClass, JavaTypeInstance thisType) {
-        /*
-        * We need to tell the inner class it's a static, if it doesn't have the outer
-        * class as a first constructor parameter, which is assigned to a synthetic local.
-        *
-        * TODO : Check assignment to synthetic local.
-        *
-        * (Either all will have it or none will).
-        */
-        List<Method> constructors = innerClass.getConstructors();
-        InnerClassInfo innerClassInfo = innerClass.getClassType().getInnerClassHereInfo();
-        if (!innerClassInfo.isInnerClass()) return;
-        for (Method constructor : constructors) {
-            List<JavaTypeInstance> params = constructor.getMethodPrototype().getArgs();
-            if (params == null ||
-                    params.isEmpty() ||
-                    !params.get(0).equals(thisType)) {
-                innerClass.markAsStatic();
-                return;
-            }
-        }
-    }
-
     // just after construction
     public void loadInnerClasses(DCCommonState dcCommonState) {
         Options options = dcCommonState.getOptions();
