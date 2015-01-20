@@ -16,19 +16,15 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 
 public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
-    private final String name;
     private final boolean special;
     private final boolean isInitMethod;
 
     public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, boolean special, List<Expression> args, List<Boolean> nulls) {
         super(cp, function, methodPrototype, object, args, nulls);
-        ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
-        String funcName = nameAndType.getName().getValue();
         // Most of the time a member function invokation for a constructor will
         // get pulled up into a constructorInvokation, however, when it's a super call, it won't.
 
         this.isInitMethod = function.isInitMethod();
-        this.name = funcName;
         this.special = special;
     }
 
@@ -53,7 +49,7 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
         getObject().dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
 
         MethodPrototype methodPrototype = getMethodPrototype();
-        if (!isInitMethod) d.print(".").identifier(name);
+        if (!isInitMethod) d.print(".").identifier(getName());
         d.print("(");
         List<Expression> args = getArgs();
         boolean first = true;
@@ -73,7 +69,7 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
     }
 
     public String getName() {
-        return name;
+        return getMethodPrototype().getName();
     }
 
 
@@ -82,7 +78,7 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
         if (!super.equals(o)) return false;
         if (o == this) return true;
         if (!(o instanceof MemberFunctionInvokation)) return false;
-        return name.equals(((MemberFunctionInvokation) o).name);
+        return getName().equals(((MemberFunctionInvokation) o).getName());
     }
 
     @Override
@@ -91,6 +87,6 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
         if (o == this) return true;
         if (!(o instanceof MemberFunctionInvokation)) return false;
         MemberFunctionInvokation other = (MemberFunctionInvokation) o;
-        return constraint.equivalent(name, other.name);
+        return constraint.equivalent(getName(), other.getName());
     }
 }

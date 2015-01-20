@@ -30,7 +30,6 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final boolean varargs;
     private final String name;
     private final ClassFile classFile;
-    private final Method.MethodConstructor constructorFlag;
     // Synthetic args are arguments which are not VISIBLY present in the method prototype at all, but
     // are nonetheless used by the method body.
     private final List<Slot> syntheticArgs = ListFactory.newList();
@@ -39,7 +38,6 @@ public class MethodPrototype implements TypeUsageCollectable {
     public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
-        this.constructorFlag = constructorFlag;
         /*
          * We add a fake String and Int argument onto NON SYNTHETIC methods.
          * Can't add onto synthetic methods, as they don't get mutilated to have their args removed.

@@ -132,8 +132,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
 
     public String getName() {
-        ConstantPoolEntryNameAndType nameAndType = function.getNameAndTypeEntry();
-        return nameAndType.getName().getValue();
+        return function.getMethodPrototype().getName();
     }
 
     public JavaTypeInstance getClazz() {
