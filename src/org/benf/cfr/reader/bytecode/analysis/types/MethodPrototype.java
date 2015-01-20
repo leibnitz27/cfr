@@ -13,6 +13,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.annotation.Nullable;
 import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -29,6 +30,7 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final boolean instanceMethod;
     private final boolean varargs;
     private final String name;
+    private @Nullable String fixedName;
     private final ClassFile classFile;
     // Synthetic args are arguments which are not VISIBLY present in the method prototype at all, but
     // are nonetheless used by the method body.
@@ -71,6 +73,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         this.varargs = varargs;
         this.variableNamer = variableNamer;
         this.name = name;
+        this.fixedName = null;
         this.classFile = classFile;
     }
 
@@ -273,6 +276,11 @@ public class MethodPrototype implements TypeUsageCollectable {
 
     public String getName() {
         return name;
+    }
+
+    public String getFixedName() {
+//        return "XXX";
+        return fixedName != null ? fixedName : name;
     }
 
     public boolean hasFormalTypeParameters() {

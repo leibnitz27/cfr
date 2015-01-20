@@ -111,7 +111,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
             }
             d.print(">");
         }
-        d.identifier(getName()).print("(");
+        d.identifier(getFixedName()).print("(");
         boolean first = true;
         for (Expression arg : args) {
             first = CommaHelp.comma(first, d);

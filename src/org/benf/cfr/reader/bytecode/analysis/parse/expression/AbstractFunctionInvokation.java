@@ -37,4 +37,8 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression {
         return methodPrototype.getName();
     }
 
+    public String getFixedName() {
+        return methodPrototype.getFixedName();
+    }
+
 }

@@ -59,7 +59,6 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final long length;
     private final EnumSet<AccessFlagMethod> accessFlags;
     private final Map<String, Attribute> attributes;
-    private final String name;
     private MethodConstructor isConstructor;
     private final short descriptorIndex;
     private final AttributeCode codeAttribute;
@@ -92,13 +91,13 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
 
 
-        this.name = cp.getUTF8Entry(nameIndex).getValue();
+        String initialName = cp.getUTF8Entry(nameIndex).getValue();
 
         MethodConstructor methodConstructor = MethodConstructor.NOT;
-        if (name.equals(MiscConstants.INIT_METHOD)) {
+        if (initialName.equals(MiscConstants.INIT_METHOD)) {
             boolean isEnum = classFile.getAccessFlags().contains(AccessFlag.ACC_ENUM);
             methodConstructor = isEnum ? MethodConstructor.ENUM_CONSTRUCTOR : MethodConstructor.CONSTRUCTOR;
-        } else if (name.equals(MiscConstants.STATIC_INIT_METHOD)) {
+        } else if (initialName.equals(MiscConstants.STATIC_INIT_METHOD)) {
             methodConstructor = MethodConstructor.STATIC_CONSTRUCTOR;
         }
         this.isConstructor = methodConstructor;
@@ -120,7 +119,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             this.codeAttribute.setMethod(this);
         }
 
-        this.methodPrototype = generateMethodPrototype();
+        this.methodPrototype = generateMethodPrototype(initialName);
         if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
                 options.getOption(OptionsImpl.HIDE_BRIDGE_METHODS)) {
             this.hidden = true;
@@ -188,7 +187,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     public String getName() {
-        return name;
+        return methodPrototype.getName();
     }
 
     /* This is a bit ugly - otherwise though we need to tie a variable namer to this earlier.
@@ -200,7 +199,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
      *
      *
      */
-    private MethodPrototype generateMethodPrototype() {
+    private MethodPrototype generateMethodPrototype(String initialName) {
         AttributeSignature sig = getSignatureAttribute();
         ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
         ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
@@ -213,7 +212,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
         boolean isSynthetic = accessFlags.contains(AccessFlagMethod.ACC_SYNTHETIC);
-        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), getName(), isInstance, getConstructorFlag(), prototype, cp, isVarargs, isSynthetic, variableNamer);
+        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), initialName, isInstance, getConstructorFlag(), prototype, cp, isVarargs, isSynthetic, variableNamer);
         /*
          * Work around bug in inner class signatures.
          *
@@ -221,7 +220,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
          */
         if (classFile.isInnerClass()) {
             if (signature != null) {
-                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), getName(), isInstance, getConstructorFlag(), descriptor, cp, isVarargs, isSynthetic, variableNamer);
+                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), initialName, isInstance, getConstructorFlag(), descriptor, cp, isVarargs, isSynthetic, variableNamer);
                 if (descriptorProto.getArgs().size() != res.getArgs().size()) {
                     // error due to inner class sig bug.
                     res = fixupInnerClassSignature(descriptorProto, res);
@@ -322,10 +321,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
                 this.<AttributeRuntimeInvisibleParameterAnnotations>getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME)
         );
 
-        String displayName = name;
-        if (isConstructor.isConstructor()) {
-            displayName = d.getTypeUsageInformation().getName(classFile.getClassType());
-        }
+        String displayName = isConstructor.isConstructor() ?
+                d.getTypeUsageInformation().getName(classFile.getClassType()) :
+                methodPrototype.getFixedName();
+
         getMethodPrototype().dumpDeclarationSignature(d, displayName, isConstructor, paramAnnotationsHelper);
         AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
@@ -421,6 +420,6 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
     @Override
     public String toString() {
-        return name + ": " + methodPrototype;
+        return getName() + ": " + methodPrototype;
     }
 }
