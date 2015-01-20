@@ -24,21 +24,18 @@ import java.util.List;
  * Lot of common code in here and static function invokation.
  */
 public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionInvokation implements FunctionProcessor, BoxingProcessor {
-    private final ConstantPoolEntryMethodRef function;
-    private Expression object;
-    private final List<Expression> args;
     private final ConstantPool cp;
-    private final MethodPrototype methodPrototype;
+    private final List<Expression> args;
+    private Expression object;
     private final List<Boolean> nulls;
 
-    public AbstractMemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, List<Expression> args, List<Boolean> nulls) {
-        super(new InferredJavaType(
-                methodPrototype.getReturnType(
+    public AbstractMemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls) {
+        super(function,
+                new InferredJavaType(
+                function.getMethodPrototype().getReturnType(
                         object.getInferredJavaType().getJavaTypeInstance(), args
                 ), InferredJavaType.Source.FUNCTION, true
         ));
-        this.function = function;
-        this.methodPrototype = methodPrototype;
         this.object = object;
         this.args = args;
         this.nulls = nulls;
@@ -48,7 +45,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         for (Expression arg : args) arg.collectTypeUsages(collector);
-        methodPrototype.collectTypeUsages(collector);
+        getMethodPrototype().collectTypeUsages(collector);
         collector.collectFrom(object);
         super.collectTypeUsages(collector);
     }
@@ -95,12 +92,8 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         return object;
     }
 
-    public ConstantPoolEntryMethodRef getFunction() {
-        return function;
-    }
-
     public JavaTypeInstance getClassTypeInstance() {
-        return function.getClassEntry().getTypeInstance();
+        return getFunction().getClassEntry().getTypeInstance();
     }
 
     public List<Expression> getArgs() {
@@ -111,12 +104,8 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         return nulls;
     }
 
-    public MethodPrototype getMethodPrototype() {
-        return methodPrototype;
-    }
-
     public Expression getAppropriatelyCastArgument(int idx) {
-        return methodPrototype.getAppropriatelyCastedArgument(args.get(idx), idx);
+        return getMethodPrototype().getAppropriatelyCastedArgument(args.get(idx), idx);
     }
 
     public ConstantPool getCp() {
@@ -133,7 +122,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
     }
 
     private OverloadMethodSet getOverloadMethodSet() {
-        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        OverloadMethodSet overloadMethodSet = getFunction().getOverloadMethodSet();
         if (overloadMethodSet == null) return null;
         JavaTypeInstance objectType = object.getInferredJavaType().getJavaTypeInstance();
         if (objectType instanceof JavaGenericRefTypeInstance) {
@@ -143,10 +132,9 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         return overloadMethodSet;
     }
 
-    public abstract String getName();
-
     @Override
     public void rewriteVarArgs(VarArgsRewriter varArgsRewriter) {
+        MethodPrototype methodPrototype = getMethodPrototype();
         if (!methodPrototype.isVarArgs()) return;
         OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
         if (overloadMethodSet == null) return;
@@ -167,6 +155,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
             return false;
         }
 
+        MethodPrototype methodPrototype = getMethodPrototype();
         BindingSuperContainer bindingSuperContainer = object.getInferredJavaType().getJavaTypeInstance().getBindingSupers();
         GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(args);
 

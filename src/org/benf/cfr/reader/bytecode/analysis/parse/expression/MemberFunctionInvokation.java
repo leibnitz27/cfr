@@ -19,8 +19,8 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
     private final boolean special;
     private final boolean isInitMethod;
 
-    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, MethodPrototype methodPrototype, Expression object, boolean special, List<Expression> args, List<Boolean> nulls) {
-        super(cp, function, methodPrototype, object, args, nulls);
+    public MemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, boolean special, List<Expression> args, List<Boolean> nulls) {
+        super(cp, function, object, args, nulls);
         // Most of the time a member function invokation for a constructor will
         // get pulled up into a constructorInvokation, however, when it's a super call, it won't.
 
@@ -30,7 +30,7 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new MemberFunctionInvokation(getCp(), getFunction(), getMethodPrototype(), cloneHelper.replaceOrClone(getObject()), special, cloneHelper.replaceOrClone(getArgs()), getNulls());
+        return new MemberFunctionInvokation(getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), special, cloneHelper.replaceOrClone(getArgs()), getNulls());
     }
 
     @Override
@@ -45,7 +45,6 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        String comment = null;
         getObject().dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
 
         MethodPrototype methodPrototype = getMethodPrototype();
@@ -60,18 +59,12 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
             methodPrototype.dumpAppropriatelyCastedArgumentString(arg, x, d);
         }
         d.print(")");
-        if (comment != null) d.print(comment);
         return d;
     }
 
     public boolean isInitMethod() {
         return isInitMethod;
     }
-
-    public String getName() {
-        return getMethodPrototype().getName();
-    }
-
 
     @Override
     public boolean equals(Object o) {

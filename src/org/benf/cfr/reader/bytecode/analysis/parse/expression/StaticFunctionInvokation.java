@@ -27,7 +27,6 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 
 public class StaticFunctionInvokation extends AbstractFunctionInvokation implements FunctionProcessor, BoxingProcessor {
-    private final ConstantPoolEntryMethodRef function;
     private final List<Expression> args;
     private final JavaTypeInstance clazz;
     private @Nullable
@@ -42,13 +41,12 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new StaticFunctionInvokation(function, cloneHelper.replaceOrClone(args));
+        return new StaticFunctionInvokation(getFunction(), cloneHelper.replaceOrClone(args));
     }
 
 
     public StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args) {
-        super(getTypeForFunction(function, args));
-        this.function = function;
+        super(function, getTypeForFunction(function, args));
         this.args = args;
         this.clazz = function.getClassEntry().getTypeInstance();
     }
@@ -130,11 +128,6 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
         }
     }
 
-
-    public String getName() {
-        return function.getMethodPrototype().getName();
-    }
-
     public JavaTypeInstance getClazz() {
         return clazz;
     }
@@ -143,15 +136,11 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
         return args;
     }
 
-    public ConstantPoolEntryMethodRef getFunction() {
-        return function;
-    }
-
     @Override
     public void rewriteVarArgs(VarArgsRewriter varArgsRewriter) {
-        MethodPrototype methodPrototype = function.getMethodPrototype();
+        MethodPrototype methodPrototype = getMethodPrototype();
         if (!methodPrototype.isVarArgs()) return;
-        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        OverloadMethodSet overloadMethodSet = getFunction().getOverloadMethodSet();
         if (overloadMethodSet == null) return;
         GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(args);
         varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, getArgs(), gtb);
@@ -159,7 +148,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
 
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
-        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        OverloadMethodSet overloadMethodSet = getFunction().getOverloadMethodSet();
         if (overloadMethodSet == null) {
             return false;
         }
@@ -173,7 +162,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
              */
             Expression arg = args.get(x);
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
-            args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, null, function.getMethodPrototype()));
+            args.set(x, boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, null, getFunction().getMethodPrototype()));
         }
         return true;
     }

@@ -336,11 +336,14 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          * Use information about arguments to help us deduce lValue types.
          */
         List<Boolean> nulls = getNullsByType(args);
+        /*
+         * This doesn't affect the methodprototype, just uses it to tweak the arguments.
+         */
         methodPrototype.tightenArgs(object, args);
 
         AbstractMemberFunctionInvokation funcCall = isSuper ?
-                new SuperFunctionInvokation(cp, function, methodPrototype, object, args, nulls) :
-                new MemberFunctionInvokation(cp, function, methodPrototype, object, special, args, nulls);
+                new SuperFunctionInvokation(cp, function, object, args, nulls) :
+                new MemberFunctionInvokation(cp, function, object, special, args, nulls);
 
 //        InferredJavaType inferredJavaType = object.getInferredJavaType();
 //        if (inferredJavaType.getJavaTypeInstance().getInnerClassHereInfo().isAnonymousClass()) {
