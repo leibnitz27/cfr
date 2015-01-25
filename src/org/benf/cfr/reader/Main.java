@@ -3,6 +3,7 @@ package org.benf.cfr.reader;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.relationship.MemberNameResolver;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
@@ -82,19 +83,28 @@ public class Main {
         SummaryDumper summaryDumper = null;
         boolean silent = true;
         try {
-            Predicate<String> matcher = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.JAR_FILTER), true);
+            final Predicate<String> matcher = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.JAR_FILTER), true);
             silent = options.getOption(OptionsImpl.SILENT);
             summaryDumper = DumperFactory.getSummaryDumper(options);
-            List<JavaTypeInstance> types = dcCommonState.explicitlyLoadJar(path);
             summaryDumper.notify("Summary for " + path);
             summaryDumper.notify(MiscConstants.CFR_HEADER_BRA + " " + MiscConstants.CFR_VERSION);
             if (!silent) {
                 System.err.println("Processing " + path + " (use " + OptionsImpl.SILENT.getName() + " to silence)");
             }
-            for (JavaTypeInstance type : types) {
-                if (!matcher.test(type.getRawName())) {
-                    continue;
+            List<JavaTypeInstance> types = dcCommonState.explicitlyLoadJar(path);
+            types = Functional.filter(types, new Predicate<JavaTypeInstance>() {
+                @Override
+                public boolean test(JavaTypeInstance in) {
+                    return matcher.test(in.getRawName());
                 }
+            });
+            /*
+             * If resolving names, we need a first pass......
+             */
+            if (options.getOption(OptionsImpl.RENAME_MEMBERS)) {
+                MemberNameResolver.resolveNames(dcCommonState, types);
+            }
+            for (JavaTypeInstance type : types) {
                 Dumper d = new ToStringDumper();  // Sentinel dumper.
                 try {
                     ClassFile c = dcCommonState.getClassFile(type);

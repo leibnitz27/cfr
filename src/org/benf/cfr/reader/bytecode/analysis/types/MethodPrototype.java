@@ -283,6 +283,14 @@ public class MethodPrototype implements TypeUsageCollectable {
         return fixedName != null ? fixedName : name;
     }
 
+    public boolean hasNameBeenFixed() {
+        return fixedName != null;
+    }
+
+    public void setFixedName(String name) {
+        this.fixedName = name;
+    }
+
     public boolean hasFormalTypeParameters() {
         return formalTypeParameters != null && !formalTypeParameters.isEmpty();
     }
@@ -484,6 +492,22 @@ public class MethodPrototype implements TypeUsageCollectable {
             return false;
         }
 
+        JavaTypeInstance otherRes = other.getReturnType();
+        JavaTypeInstance res = getReturnType();
+        if (res != null && otherRes != null) {
+            JavaTypeInstance deGenerifiedRes = res.getDeGenerifiedType();
+            JavaTypeInstance deGenerifiedResOther = otherRes.getDeGenerifiedType();
+            if (!deGenerifiedRes.equals(deGenerifiedResOther)) {
+                if (res instanceof JavaGenericBaseInstance) {
+                    if (!((JavaGenericBaseInstance) res).tryFindBinding(otherRes, genericTypeBinder)) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+        }
+
         // TODO : Actually, really dislike tryFindBinding, replace.
         for (int x = 0; x < args.size(); ++x) {
             JavaTypeInstance lhs = args.get(x);
@@ -592,6 +616,15 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (!name.equals(other.name)) return false;
         List<JavaTypeInstance> otherArgs = other.getArgs();
         if (!args.equals(otherArgs)) return false;
+        if (result != null && other.result != null) {
+            // NOTE - COVARIANT RETURN!
+            if (!result.equals(other.result)) {
+                BindingSuperContainer otherBindingSupers = other.result.getBindingSupers();
+                if (otherBindingSupers == null) return false;
+                if (otherBindingSupers.containsBase(result)) return true;
+                return false;
+            }
+        }
         return true;
     }
 

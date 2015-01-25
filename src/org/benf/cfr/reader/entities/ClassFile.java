@@ -13,6 +13,7 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
+import org.benf.cfr.reader.relationship.MemberNameResolver;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.InnerClassTypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -83,6 +84,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
      */
     public ClassFile(final ByteData data, final String usePath, final DCCommonState dcCommonState) {
         this.usePath = usePath;
+        Options options = dcCommonState.getOptions();
 
         int magic = data.getS4At(OFFSET_OF_MAGIC);
         if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe for class file '" + usePath + "'");
@@ -153,7 +155,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 method.getAccessFlags().remove(AccessFlagMethod.ACC_STRICT);
             }
         }
-        if (!dcCommonState.getOptions().getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS)) {
+        if (!options.getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS)) {
             for (Method method : tmpMethods) {
                 if (IllegalIdentifierReplacement.isIllegalMethodName(method.getName())) {
                     addComment(DecompilerComment.ILLEGAL_IDENTIFIERS);
@@ -234,7 +236,18 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (typeInstance.getInnerClassHereInfo().isInnerClass()) {
             checkInnerClassAssumption(attributeInnerClasses, typeInstance);
         }
+
+        /*
+         * If we're NOT renaming duplicate members, do a quick scan to see if any of our methods could benifit from
+         * it.
+         */
+        if (!options.getOption(OptionsImpl.RENAME_MEMBERS)) {
+            if (MemberNameResolver.verifySingleClassNames(this)) {
+                addComment(DecompilerComment.RENAME_MEMBERS);
+            }
+        }
     }
+
 
     /*
      * We might have to correct this, if an assumption has been made based on type name.
@@ -273,13 +286,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     public DecompilerComments getDecompilerComments() {
         return decompilerComments;
-    }
-
-    /* Get the list of constantPools, and that of inner classes */
-    public List<ConstantPool> getAllCps() {
-        Set<ConstantPool> res = SetFactory.newSet();
-        getAllCps(res);
-        return ListFactory.newList(res);
     }
 
     private void getAllCps(Set<ConstantPool> tgt) {
@@ -509,19 +515,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
     public Method getAccessibleMethodByPrototype(final MethodPrototype prototype, GenericTypeBinder binder, JavaRefTypeInstance accessor) throws NoSuchMethodException {
-        JavaRefTypeInstance thisRef = (JavaRefTypeInstance)getClassType().getDeGenerifiedType();
         List<Method> named = getMethodsWithMatchingName(prototype);
         Method methodMatch = null;
         for (Method method : named) {
-            if (method.getAccessFlags().contains(AccessFlagMethod.ACC_PRIVATE)) {
-                if (!accessor.equals(thisRef)) continue;
-            } else if (method.getAccessFlags().contains(AccessFlagMethod.ACC_PUBLIC) ||
-                method.getAccessFlags().contains(AccessFlagMethod.ACC_PROTECTED)) {
-                // Fine, might be an override.
-            } else {
-                // Make sure we're in the same package.
-                if (!thisRef.getPackageName().equals(accessor.getPackageName())) continue;
-            }
+            if (!method.isVisibleTo(accessor)) continue;;
             MethodPrototype tgt = method.getMethodPrototype();
             if (tgt.equalsMatch(prototype)) return method;
             if (binder != null) {
@@ -744,6 +741,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return thisClass.getTypeInstance();
     }
 
+    public JavaRefTypeInstance getRefClasstype() {
+        return (JavaRefTypeInstance)thisClass.getTypeInstance();
+    }
+
     public JavaTypeInstance getBaseClassType() {
         return classSignature.getSuperClass();
     }
@@ -861,16 +862,16 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             boundSuperCollector.collect((JavaRefTypeInstance) thisType, BindingSuperContainer.Route.IDENTITY);
         }
 
-        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.EXTENSION);
+        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.EXTENSION, SetFactory.<JavaTypeInstance>newSet());
         for (JavaTypeInstance interfaceBase : classSignature.getInterfaces()) {
-            getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.INTERFACE);
+            getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.INTERFACE, SetFactory.<JavaTypeInstance>newSet());
         }
 
         return boundSuperCollector.getBoundSupers();
 
     }
 
-    public void getBoundSuperClasses(JavaTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector, BindingSuperContainer.Route route) {
+    public void getBoundSuperClasses(JavaTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector, BindingSuperContainer.Route route, Set<JavaTypeInstance> seen) {
         // TODO: This seems deeply over complicated ;)
         // Perhaps rather than matching in terms of types, we could match in terms of the signature?
         JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType(), getConstantPool());
@@ -905,9 +906,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         /*
          * Now, apply this to each of our superclass/interfaces.
          */
-        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector, route);
+        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector, route, SetFactory.newSet(seen));
         for (JavaTypeInstance interfaceBase : classSignature.getInterfaces()) {
-            getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.INTERFACE);
+            getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.INTERFACE, SetFactory.newSet(seen));
         }
     }
 
@@ -921,12 +922,16 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
     }
 
-    private void getBoundSuperClasses2(JavaTypeInstance base, GenericTypeBinder genericTypeBinder, BoundSuperCollector boundSuperCollector, BindingSuperContainer.Route route) {
+    private void getBoundSuperClasses2(JavaTypeInstance base, GenericTypeBinder genericTypeBinder, BoundSuperCollector boundSuperCollector, BindingSuperContainer.Route route,
+                                       Set<JavaTypeInstance> seen) {
+        if (seen.contains(base)) return;
+        seen.add(base);
+
         if (base instanceof JavaRefTypeInstance) {
             // No bindings to do, can't go any further, mark relationship and move on.
             boundSuperCollector.collect((JavaRefTypeInstance) base, route);
             ClassFile classFile = ((JavaRefTypeInstance) base).getClassFile();
-            if (classFile != null) classFile.getBoundSuperClasses(base, boundSuperCollector, route);
+            if (classFile != null) classFile.getBoundSuperClasses(base, boundSuperCollector, route, seen);
             return;
         }
 
@@ -952,7 +957,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (classFile == null) {
             return;
         }
-        classFile.getBoundSuperClasses(boundBase, boundSuperCollector, route);
+        classFile.getBoundSuperClasses(boundBase, boundSuperCollector, route, seen);
     }
 
     private List<ConstructorInvokationAnonymousInner> anonymousUsages = ListFactory.newList();

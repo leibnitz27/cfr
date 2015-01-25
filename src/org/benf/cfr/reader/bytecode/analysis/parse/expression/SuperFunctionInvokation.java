@@ -43,7 +43,7 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
         if (methodPrototype.getName().equals(MiscConstants.INIT_METHOD)) {
             d.print("super(");
         } else {
-            d.print("super.").print(methodPrototype.getName()).print("(");
+            d.print("super.").print(methodPrototype.getFixedName()).print("(");
         }
         boolean first = true;
 

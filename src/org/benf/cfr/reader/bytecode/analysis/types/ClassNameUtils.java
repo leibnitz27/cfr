@@ -18,4 +18,10 @@ public class ClassNameUtils {
         if (idx == -1) return Pair.make("", rawName);
         return Pair.make(full.substring(0, idx), full.substring(idx + 1));
     }
+
+    public static String getTypeFixPrefix(JavaTypeInstance typ) {
+        String rawName = typ.getRawName();
+        rawName = rawName.replace("[]", "_arr").replaceAll("[*?<>. ]","_");
+        return rawName + "_";
+    }
 }

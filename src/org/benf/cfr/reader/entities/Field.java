@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
@@ -100,9 +101,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
 
     public String getFieldName() {
         if (disambiguate) {
-            String rawName = getJavaTypeInstance().getRawName();
-            rawName = rawName.replace("[]", "_arr").replaceAll("[*?<>. ]","_");
-            return fieldName + "_" + rawName;
+            return ClassNameUtils.getTypeFixPrefix(getJavaTypeInstance()) + fieldName;
         }
         return fieldName;
     }

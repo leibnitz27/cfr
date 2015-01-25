@@ -393,6 +393,33 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         this.comments = comments;
     }
 
+    private boolean isInnerVisibleTo(JavaTypeInstance maybeCaller) {
+        JavaRefTypeInstance thisClass = getClassFile().getRefClasstype();
+            /*
+             * If this is an inner class of maybeCaller (or the other way around), it's allowed, otherwise
+             * not.
+             */
+        if (maybeCaller.getInnerClassHereInfo().isTransitiveInnerClassOf(thisClass)) return true;
+        if (thisClass.getInnerClassHereInfo().isTransitiveInnerClassOf(maybeCaller)) return true;
+        return false;
+    }
+
+    public boolean isVisibleTo(JavaRefTypeInstance maybeCaller) {
+        if (accessFlags.contains(AccessFlagMethod.ACC_PUBLIC)) return true;
+        if (maybeCaller.equals(getClassFile().getClassType())) return true;
+        if (accessFlags.contains(AccessFlagMethod.ACC_PRIVATE)) {
+            return isInnerVisibleTo(maybeCaller);
+        }
+        if (accessFlags.contains(AccessFlagMethod.ACC_PROTECTED)) {
+            // If it's derived, it can see it - if it's inner, it can see it.
+            if (maybeCaller.getBindingSupers().containsBase(getClassFile().getClassType())) return true;
+            return isInnerVisibleTo(maybeCaller);
+        }
+        // Otherwise, we're left with package visibility.
+        if (maybeCaller.getPackageName().equals(getClassFile().getRefClasstype().getPackageName())) return true;
+        return false;
+    }
+
     public void dump(Dumper d, boolean asClass) {
         if (codeAttribute != null) {
             // force analysis so we have comments.
