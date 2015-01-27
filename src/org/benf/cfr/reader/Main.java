@@ -36,6 +36,11 @@ public class Main {
             if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
                 c.loadInnerClasses(dcCommonState);
             }
+            if (options.getOption(OptionsImpl.RENAME_MEMBERS)) {
+                MemberNameResolver.resolveNames(dcCommonState, ListFactory.newList(dcCommonState.getClassCache().getLoadedTypes()));
+            }
+
+
             // THEN analyse.
             c.analyseTop(dcCommonState);
             /*

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,5 +56,9 @@ public class ClassCache {
         }
         return Pair.make(inner, outer);
 
+    }
+
+    public Collection<JavaRefTypeInstance> getLoadedTypes() {
+        return refClassTypeCache.values();
     }
 }

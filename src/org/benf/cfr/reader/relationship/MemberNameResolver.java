@@ -11,7 +11,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import java.util.*;
 
 public class MemberNameResolver {
-    public static void resolveNames(DCCommonState dcCommonState, List<JavaTypeInstance> types) {
+    public static void resolveNames(DCCommonState dcCommonState, Collection<? extends JavaTypeInstance> types) {
         MemberNameResolver self = new MemberNameResolver(dcCommonState);
         self.initialise(types);
         self.resolve();
@@ -54,7 +54,7 @@ public class MemberNameResolver {
         }
     }
 
-    private void initialise(List<JavaTypeInstance> types) {
+    private void initialise(Collection<? extends JavaTypeInstance> types) {
         List<ClassFile> classFiles = ListFactory.newList();
         for (JavaTypeInstance type : types) {
             try {
@@ -71,7 +71,9 @@ public class MemberNameResolver {
         for (ClassFile classFile : classFiles) {
             ClassSignature signature = classFile.getClassSignature();
             if (signature == null) continue;
-            ClassFile base = classFileOrNull(signature.getSuperClass());
+            JavaTypeInstance superClass = signature.getSuperClass();
+            if (superClass == null) continue;
+            ClassFile base = classFileOrNull(superClass);
             if (base != null) {
                 childToParent.get(classFile).add(base);
                 parentToChild.get(base).add(classFile);
@@ -254,11 +256,22 @@ public class MemberNameResolver {
             MethodKey methodKey = new MethodKey(name, args);
             JavaTypeInstance type = prototype.getReturnType();
             if (type instanceof JavaGenericBaseInstance) return;
-            add(methodKey, prototype.getReturnType(), method);
+            add(methodKey, prototype.getReturnType(), method, false);
         }
 
-        private void add(MethodKey key1, JavaTypeInstance key2, Method method) {
+        private void add(MethodKey key1, JavaTypeInstance key2, Method method, boolean fromParent) {
             Map<JavaTypeInstance, Collection<Method>> methods = knownMethods.get(key1);
+            if (method.isHiddenFromDisplay()) return;
+            if (fromParent && !methods.containsKey(key2) && !methods.isEmpty()) {
+                // This is ok if key2 is covariant to an existing key.
+                if (methods.keySet().size() == 1) {
+                    JavaTypeInstance existing = methods.keySet().iterator().next();
+                    BindingSuperContainer supers = existing.getBindingSupers();
+                    if (supers != null && supers.containsBase(key2)) {
+                        key2 = existing;
+                    }
+                }
+            }
             methods.get(key2).add(method);
             if (methods.size() > 1) {
                 clashes.add(key1);
@@ -296,7 +309,7 @@ public class MemberNameResolver {
                      */
                     for (Method method : methods) {
                         if (method.isVisibleTo(classFile.getRefClasstype())) {
-                            add(key, returnType, method);
+                            add(key, returnType, method, true);
                         }
                     }
                 }
