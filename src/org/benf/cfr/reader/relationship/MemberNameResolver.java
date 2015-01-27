@@ -103,6 +103,21 @@ public class MemberNameResolver {
         for (ClassFile root : roots) {
             checkBadNames(root);
         }
+
+        /*
+         * Explicitly insert clashes of parents, so they can be pushed back down!
+         */
+
+        insertParentClashes();
+        /*
+         * A second pass, starting again at the roots, pushing any detected bad names into any children -
+         * this is necessary to handle (a->X, a->Y, b->X, where a and b clash - we need to make sure we rename Y as well).
+         */
+        for (ClassFile root : roots) {
+            rePushBadNames(root);
+        }
+
+
         /*
          * Now, infoMap contains all the MemberInfos for the classes we're analysing.
          * Obviously, a child will have all the clashes its parents have, unless there is a private blocker.
@@ -116,8 +131,8 @@ public class MemberNameResolver {
             if (!memberInfo.hasClashes()) continue;
             Set<MethodKey> clashes = memberInfo.getClashes();
             for (MethodKey clashKey : clashes) {
-                Map<JavaTypeInstance, List<Method>> clashMap = memberInfo.getClashedMethodsFor(clashKey);
-                for (Map.Entry<JavaTypeInstance, List<Method>> clashByType : clashMap.entrySet()) {
+                Map<JavaTypeInstance, Collection<Method>> clashMap = memberInfo.getClashedMethodsFor(clashKey);
+                for (Map.Entry<JavaTypeInstance, Collection<Method>> clashByType : clashMap.entrySet()) {
                     String resolvedName = null;
                     for (Method method : clashByType.getValue()) {
                         MethodPrototype methodPrototype = method.getMethodPrototype();
@@ -135,6 +150,49 @@ public class MemberNameResolver {
                 }
             }
         }
+    }
+
+    private void insertParentClashes() {
+        for (MemberInfo memberInfo : infoMap.values()) {
+            if (memberInfo.hasClashes()) {
+                Set<MethodKey> clashes = memberInfo.getClashes();
+                for (MethodKey clash : clashes) {
+                    for (Collection<Method> methodList : memberInfo.getClashedMethodsFor(clash).values()) {
+                        for (Method method : methodList) {
+                            infoMap.get(method.getClassFile()).addClash(clash);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+     * Anything that's been marked as bad has to be pushed to children now,
+     * to avoid implementors of a changed interface being, themselves, unchanged.
+     */
+    private void rePushBadNames(ClassFile c) {
+        Stack<ClassFile> parents = StackFactory.newStack();
+        Set<MethodKey> clashes = SetFactory.newSet();
+        rePushBadNames(c, clashes, parents);
+    }
+
+    private void rePushBadNames(ClassFile c, Set<MethodKey> clashes, Stack<ClassFile> parents) {
+        MemberInfo memberInfo = infoMap.get(c);
+        if (memberInfo != null) {
+            memberInfo.addClashes(clashes);
+            if (!memberInfo.getClashes().isEmpty()) {
+                clashes = SetFactory.newSet(clashes);
+                clashes.addAll(memberInfo.getClashes());
+            }
+        }
+
+        parents.push(c);
+        for (ClassFile child : parentToChild.get(c)) {
+            rePushBadNames(child, clashes, parents);
+        }
+        parents.pop();
+
     }
 
     private void checkBadNames(ClassFile c) {
@@ -163,13 +221,13 @@ public class MemberNameResolver {
 
         private final ClassFile classFile;
 
-        private final Map<MethodKey, Map<JavaTypeInstance, List<Method>>> knownMethods = MapFactory.newLazyMap(new UnaryFunction<MethodKey, Map<JavaTypeInstance, List<Method>>>() {
+        private final Map<MethodKey, Map<JavaTypeInstance, Collection<Method>>> knownMethods = MapFactory.newLazyMap(new UnaryFunction<MethodKey, Map<JavaTypeInstance, Collection<Method>>>() {
             @Override
-            public Map<JavaTypeInstance, List<Method>> invoke(MethodKey arg) {
-                return MapFactory.newLazyMap(new UnaryFunction<JavaTypeInstance, List<Method>>() {
+            public Map<JavaTypeInstance, Collection<Method>> invoke(MethodKey arg) {
+                return MapFactory.newLazyMap(new UnaryFunction<JavaTypeInstance, Collection<Method>>() {
                     @Override
-                    public List<Method> invoke(JavaTypeInstance arg) {
-                        return ListFactory.newList();
+                    public Collection<Method> invoke(JavaTypeInstance arg) {
+                        return SetFactory.newOrderedSet();
                     }
                 });
             };
@@ -200,7 +258,7 @@ public class MemberNameResolver {
         }
 
         private void add(MethodKey key1, JavaTypeInstance key2, Method method) {
-            Map<JavaTypeInstance, List<Method>> methods = knownMethods.get(key1);
+            Map<JavaTypeInstance, Collection<Method>> methods = knownMethods.get(key1);
             methods.get(key2).add(method);
             if (methods.size() > 1) {
                 clashes.add(key1);
@@ -215,16 +273,24 @@ public class MemberNameResolver {
             return clashes;
         }
 
-        public Map<JavaTypeInstance, List<Method>> getClashedMethodsFor(MethodKey key) {
+        public void addClashes(Set<MethodKey> newClashes) {
+            clashes.addAll(newClashes);
+        }
+
+        public void addClash(MethodKey clash) {
+            clashes.add(clash);
+        }
+
+        public Map<JavaTypeInstance, Collection<Method>> getClashedMethodsFor(MethodKey key) {
             return knownMethods.get(key);
         }
 
         public void inheritFrom(MemberInfo base) {
-            for (Map.Entry<MethodKey, Map<JavaTypeInstance, List<Method>>> entry : base.knownMethods.entrySet()) {
+            for (Map.Entry<MethodKey, Map<JavaTypeInstance, Collection<Method>>> entry : base.knownMethods.entrySet()) {
                 MethodKey key = entry.getKey();
-                for (Map.Entry<JavaTypeInstance, List<Method>> entry2 : entry.getValue().entrySet()) {
+                for (Map.Entry<JavaTypeInstance, Collection<Method>> entry2 : entry.getValue().entrySet()) {
                     JavaTypeInstance returnType = entry2.getKey();
-                    List<Method> methods = entry2.getValue();
+                    Collection<Method> methods = entry2.getValue();
                     /*
                      * Only add visible ones.
                      */
