@@ -48,6 +48,11 @@ public class ArrayVariable extends AbstractLValue {
     }
 
     @Override
+    public boolean doesBlackListLValueReplacement(LValue replace, Expression with) {
+        return arrayIndex.doesBlackListLValueReplacement(replace, with);
+    }
+
+    @Override
     public int getNumberOfCreators() {
         throw new ConfusedCFRException("NYI");
     }

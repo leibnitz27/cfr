@@ -31,6 +31,11 @@ public abstract class AbstractStatement implements Statement {
     }
 
     @Override
+    public boolean doesBlackListLValueReplacement(LValue lValue, Expression expression) {
+        return false;
+    }
+
+    @Override
     public void collectObjectCreation(CreationCollector creationCollector) {
     }
 

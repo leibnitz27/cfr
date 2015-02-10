@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -34,6 +35,11 @@ public abstract class AbstractLValue implements LValue {
 
     @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+    }
+
+    @Override
+    public boolean doesBlackListLValueReplacement(LValue replace, Expression with) {
+        return false;
     }
 
     @Override

@@ -2,9 +2,11 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.PrimitiveBoxingRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.BoxingProcessor;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -60,6 +62,17 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
         index = index.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         array = array.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;
+    }
+
+    public boolean doesBlackListLValueReplacement(LValue replace, Expression with) {
+        if (replace instanceof StackSSALabel && array instanceof StackValue) {
+            StackSSALabel referred = ((StackValue)array).getStackValue();
+            if (referred.equals(replace)) {
+                if (with.isSimple()) return false;
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

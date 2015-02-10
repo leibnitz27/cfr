@@ -14,6 +14,8 @@ public interface LValue extends DumpableWithPrecedence, DeepCloneable<LValue>, T
 
     <T> void collectLValueAssignments(Expression assignedTo, StatementContainer<T> statementContainer, LValueAssignmentCollector<T> lValueAssigmentCollector);
 
+    boolean doesBlackListLValueReplacement(LValue replace, Expression with);
+
     void collectLValueUsage(LValueUsageCollector lValueUsageCollector);
 
     SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory);

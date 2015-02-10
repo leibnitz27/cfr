@@ -244,10 +244,10 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     }
 
     public class AliasRewriter implements LValueRewriter<Statement> {
-        private final Map<StackSSALabel, List<StatementContainer>> usages = MapFactory.newLazyMap(
-                new UnaryFunction<StackSSALabel, List<StatementContainer>>() {
+        private final Map<StackSSALabel, List<StatementContainer<Statement>>> usages = MapFactory.newLazyMap(
+                new UnaryFunction<StackSSALabel, List<StatementContainer<Statement>>>() {
                     @Override
-                    public List<StatementContainer> invoke(StackSSALabel ignore) {
+                    public List<StatementContainer<Statement>> invoke(StackSSALabel ignore) {
                         return ListFactory.newList();
                     }
                 }
@@ -287,7 +287,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
          * If all the others, when used, can be seen to be at the same version as the first one.
          * (the first one which is NOT a stackSSALabel)
          */
-        private LValue getAlias(StackSSALabel stackSSALabel) {
+        private LValue getAlias(StackSSALabel stackSSALabel, ExpressionStatement target) {
             List<LValueStatementContainer> possibleAliasList = possibleAliases.get(stackSSALabel);
             if (possibleAliasList.isEmpty()) return null;
             LValue guessAlias = null;
@@ -325,11 +325,12 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             } else {
                 checkThese.add(guessAlias);
             }
-            for (StatementContainer verifyStatement : usages.get(stackSSALabel)) {
+            for (StatementContainer<Statement> verifyStatement : usages.get(stackSSALabel)) {
                 /*
                  * verify that 'guessAlias' is the same version in verifyStatement
                  * as it is in guessStatement.
                  */
+                if (verifyStatement.getStatement().doesBlackListLValueReplacement(stackSSALabel, target.expression)) return null;
                 for (LValue checkThis : checkThese) {
                     if (guessStatement == verifyStatement) continue;
                     if (!verifyStatement.getSSAIdentifiers().isValidReplacement(checkThis, guessStatement.getSSAIdentifiers())) {
@@ -350,7 +351,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                  * How many aliases does this have?
                  */
                 StackSSALabel stackSSALabel = multi.getKey();
-                LValue alias = getAlias(stackSSALabel);
+                LValue alias = getAlias(stackSSALabel, multi.getValue());
                 if (alias != null) {
                     /* The assignment between stackSSAlabel and alias can be elided, and
                      * referenced to stackSSALabel can be replaced with references to alias.

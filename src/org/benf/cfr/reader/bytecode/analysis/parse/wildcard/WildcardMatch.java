@@ -333,6 +333,11 @@ public class WildcardMatch {
         }
 
         @Override
+        public boolean doesBlackListLValueReplacement(LValue replace, Expression with) {
+            return false;
+        }
+
+        @Override
         public LValue deepClone(CloneHelper cloneHelper) {
             throw new UnsupportedOperationException();
         }

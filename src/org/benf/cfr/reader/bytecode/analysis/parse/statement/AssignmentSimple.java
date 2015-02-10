@@ -38,6 +38,11 @@ public class AssignmentSimple extends AbstractAssignment {
     }
 
     @Override
+    public boolean doesBlackListLValueReplacement(LValue lValue, Expression expression) {
+        return lvalue.doesBlackListLValueReplacement(lValue, expression);
+    }
+
+    @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
         rvalue.collectUsedLValues(lValueUsageCollector);
     }

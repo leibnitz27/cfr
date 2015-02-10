@@ -27,6 +27,8 @@ public interface Statement extends Dumpable, ComparableUnderEC {
 
     void collectLValueUsage(LValueUsageCollector lValueUsageCollector);
 
+    boolean doesBlackListLValueReplacement(LValue lValue, Expression expression);
+
     void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers);
 
     void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers);
