@@ -101,7 +101,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
 
     public String getFieldName() {
         if (disambiguate) {
-            return ClassNameUtils.getTypeFixPrefix(getJavaTypeInstance()) + fieldName;
+            return "var_" + ClassNameUtils.getTypeFixPrefix(getJavaTypeInstance()) + fieldName;
         }
         return fieldName;
     }
