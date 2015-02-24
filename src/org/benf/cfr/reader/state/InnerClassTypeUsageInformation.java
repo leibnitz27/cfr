@@ -29,7 +29,7 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
         for (JavaRefTypeInstance outerInner : outerInners) {
             if (outerInner.getInnerClassHereInfo().isTransitiveInnerClassOf(analysisInnerClass)) {
                 usedInnerClassTypes.add(outerInner);
-                String name = TypeUsageUtils.generateInnerClassShortName(outerInner, analysisInnerClass);
+                String name = TypeUsageUtils.generateInnerClassShortName(outerInner, analysisInnerClass, false);
                 if (!usedLocalTypeNames.contains(name)) {
                     localTypeNames.put(outerInner, name);
                     usedLocalTypeNames.add(name);
@@ -64,5 +64,15 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
     @Override
     public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
         return delegate.generateInnerClassShortName(clazz);
+    }
+
+    @Override
+    public String generateOverriddenName(JavaRefTypeInstance clazz) {
+        return delegate.generateOverriddenName(clazz);
+    }
+
+    @Override
+    public Set<JavaRefTypeInstance> getShortenedClassTypes() {
+        return delegate.getShortenedClassTypes();
     }
 }

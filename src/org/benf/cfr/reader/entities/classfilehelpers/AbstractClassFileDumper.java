@@ -88,7 +88,7 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
 
     public void dumpImports(Dumper d, ClassFile classFile) {
         List<JavaTypeInstance> classTypes = classFile.getAllClassTypes();
-        Set<JavaRefTypeInstance> types = d.getTypeUsageInformation().getUsedClassTypes();
+        Set<JavaRefTypeInstance> types = d.getTypeUsageInformation().getShortenedClassTypes();
         types.removeAll(classTypes);
         /*
          * Now - for all inner class types, remove them, but make sure the base class of the inner class is imported.

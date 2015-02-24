@@ -5,7 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
 
@@ -13,9 +13,15 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
 
     private final JavaRefTypeInstance analysisType;
     private final Set<JavaRefTypeInstance> usedRefTypes = SetFactory.newOrderedSet();
+    private final Set<JavaRefTypeInstance> shortenedRefTypes = SetFactory.newOrderedSet();
     private final Set<JavaRefTypeInstance> usedLocalInnerTypes = SetFactory.newOrderedSet();
     private final Map<JavaRefTypeInstance, String> displayName = MapFactory.newMap();
-    private final Set<String> shortNames = SetFactory.newSet();
+    private final Map<String, LinkedList<JavaRefTypeInstance>> shortNames = MapFactory.newLazyMap(new UnaryFunction<String, LinkedList<JavaRefTypeInstance>>() {
+        @Override
+        public LinkedList<JavaRefTypeInstance> invoke(String arg) {
+            return ListFactory.newLinkedList();
+        }
+    });
 
     public TypeUsageInformationImpl(JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes) {
         this.analysisType = analysisType;
@@ -24,7 +30,15 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
 
     @Override
     public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
-        return TypeUsageUtils.generateInnerClassShortName(clazz, analysisType);
+        return TypeUsageUtils.generateInnerClassShortName(clazz, analysisType, false);
+    }
+
+    @Override
+    public String generateOverriddenName(JavaRefTypeInstance clazz) {
+        if (clazz.getInnerClassHereInfo().isInnerClass()) {
+            return TypeUsageUtils.generateInnerClassShortName(clazz, analysisType, true);
+        }
+        return clazz.getRawName();
     }
 
     private void initialiseFrom(Set<JavaRefTypeInstance> usedRefTypes) {
@@ -43,37 +57,124 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
                 return in.getInnerClassHereInfo().isTransitiveInnerClassOf(analysisType);
             }
         });
-        addDisplayNames(types.getFirst());
         this.usedLocalInnerTypes.addAll(types.getFirst());
-        addDisplayNames(types.getSecond());
+        addDisplayNames(usedRefTypes);
     }
 
     private void addDisplayNames(Collection<JavaRefTypeInstance> types) {
+        if (!shortNames.isEmpty()) throw new IllegalStateException();
         for (JavaRefTypeInstance type : types) {
-            addDisplayName(type);
+            InnerClassInfo innerClassInfo = type.getInnerClassHereInfo();
+            if (innerClassInfo.isInnerClass()) {
+                String name =  generateInnerClassShortName(type);
+                shortNames.get(name).addFirst(type);
+            } else {
+                String name = type.getRawShortName();
+                shortNames.get(name).addLast(type);
+            }
+        }
+        /*
+         * Now, decide which is the best - if multiple 'win', then we can't use any.
+         */
+        for (Map.Entry<String, LinkedList<JavaRefTypeInstance>> nameList : shortNames.entrySet()) {
+            LinkedList<JavaRefTypeInstance> typeList = nameList.getValue();
+            String name = nameList.getKey();
+            if (typeList.size() == 1) {
+                displayName.put(typeList.get(0), name);
+                shortenedRefTypes.add(typeList.get(0));
+                continue;
+            }
+            /*
+             * There's been a collision in shortname.
+             *
+             * Resolve :
+             *
+             * 1) Inner class
+             * 2) Package
+             * Anything
+             *
+             * This is ... slightly wrong.  If the list is prefixed by any inner classes, they win.
+             * otherwise, if there is a SINGLE same package (same level), it wins.
+             * Everything else gets the long name.
+             */
+            class PriClass implements Comparable<PriClass> {
+                private int priType;
+                private boolean innerClass = false;
+                private JavaRefTypeInstance type;
+
+                public PriClass(JavaRefTypeInstance type) {
+                    if (type.equals(analysisType)) {
+                        priType = 0;
+                    } else {
+                        InnerClassInfo innerClassInfo = type.getInnerClassHereInfo();
+                        if (innerClassInfo.isInnerClass()) {
+                            innerClass = true;
+                            if (innerClassInfo.isTransitiveInnerClassOf(analysisType)) {
+                                priType = 1;
+                            } else {
+                                priType = 3;
+                            }
+                        } else {
+                            String p1 = type.getPackageName();
+                            String p2 = analysisType.getPackageName();
+                            if (p1.startsWith(p2) || p2.startsWith(p1)) {
+                                priType = 2;
+                            } else {
+                                priType = 3;
+                            }
+                        }
+                    }
+                    this.type = type;
+                }
+
+                @Override
+                public int compareTo(PriClass priClass) {
+                    return priType - priClass.priType;
+                }
+            }
+
+            List<PriClass> priClasses = Functional.map(typeList, new UnaryFunction<JavaRefTypeInstance, PriClass>() {
+                @Override
+                public PriClass invoke(JavaRefTypeInstance arg) {
+                    return new PriClass(arg);
+                }
+            });
+            Collections.sort(priClasses);
+
+            displayName.put(priClasses.get(0).type, name);
+            shortenedRefTypes.add(priClasses.get(0).type);
+            priClasses.set(0, null);
+            for (int x=0;x<priClasses.size();++x) {
+                PriClass priClass = priClasses.get(x);
+                if (priClass != null && priClass.priType == 1) {
+                    displayName.put(priClass.type, name);
+                    shortenedRefTypes.add(priClass.type);
+                    priClasses.set(x, null);
+                }
+            }
+            for (PriClass priClass : priClasses) {
+                if (priClass == null) continue;
+                if (priClass.innerClass) {
+                    String useName = generateInnerClassShortName(priClass.type);
+                    shortenedRefTypes.add(priClass.type);
+                    displayName.put(priClass.type, useName);
+                } else {
+                    String useName = priClass.type.getRawName();
+                    displayName.put(priClass.type, useName);
+                }
+            }
         }
     }
 
-    private String addDisplayName(final JavaRefTypeInstance type) {
-        String already = displayName.get(type);
-        if (already != null) return already;
-
-        String useName = null;
-        InnerClassInfo innerClassInfo = type.getInnerClassHereInfo();
-        if (innerClassInfo.isInnerClass()) {
-            useName = generateInnerClassShortName(type);
-            shortNames.add(useName);
-        } else {
-            String shortName = type.getRawShortName();
-            useName = shortNames.add(shortName) ? shortName : type.getRawName();
-        }
-        displayName.put(type, useName);
-        return useName;
-    }
 
     @Override
     public Set<JavaRefTypeInstance> getUsedClassTypes() {
         return usedRefTypes;
+    }
+
+    @Override
+    public Set<JavaRefTypeInstance> getShortenedClassTypes() {
+        return shortenedRefTypes;
     }
 
     @Override

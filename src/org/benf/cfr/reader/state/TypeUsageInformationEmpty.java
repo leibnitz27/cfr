@@ -18,8 +18,18 @@ public class TypeUsageInformationEmpty implements TypeUsageInformation {
     }
 
     @Override
+    public Set<JavaRefTypeInstance> getShortenedClassTypes() {
+        return SetFactory.newOrderedSet();
+    }
+
+    @Override
     public String getName(JavaTypeInstance type) {
         return type.getRawName();
+    }
+
+    @Override
+    public String generateOverriddenName(JavaRefTypeInstance clazz) {
+        return clazz.getRawName();
     }
 
     @Override

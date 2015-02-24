@@ -9,7 +9,7 @@ import org.benf.cfr.reader.util.output.CommaHelp;
 import java.util.LinkedList;
 
 public class TypeUsageUtils {
-    public static String generateInnerClassShortName(final JavaRefTypeInstance clazz, JavaRefTypeInstance analysisType) {
+    public static String generateInnerClassShortName(final JavaRefTypeInstance clazz, JavaRefTypeInstance analysisType, boolean prefixAnalysisType) {
         LinkedList<JavaRefTypeInstance> classStack = ListFactory.newLinkedList();
 
         boolean analysisTypeFound = false;
@@ -48,6 +48,14 @@ public class TypeUsageUtils {
         if (analysisTypeFound == currentClass.equals(analysisType)) {
             StringBuilder sb = new StringBuilder();
             boolean first = true;
+            /*
+             * if we've been overridden, we need to prefix the analysis type. (See ShortNameTest5)
+             */
+            if (prefixAnalysisType) {
+                sb.append(analysisType.getRawShortName());
+                first = false;
+            }
+
             for (JavaRefTypeInstance stackClass : classStack) {
                 first = CommaHelp.dot(first, sb);
                 sb.append(stackClass.getRawShortName());

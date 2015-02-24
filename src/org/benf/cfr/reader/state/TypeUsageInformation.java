@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 public interface TypeUsageInformation {
+    public Set<JavaRefTypeInstance> getShortenedClassTypes();
+
     public Set<JavaRefTypeInstance> getUsedClassTypes();
 
     public Set<JavaRefTypeInstance> getUsedInnerClassTypes();
@@ -16,4 +18,6 @@ public interface TypeUsageInformation {
     public String getName(JavaTypeInstance type);
 
     public String generateInnerClassShortName(JavaRefTypeInstance clazz);
+
+    public String generateOverriddenName(JavaRefTypeInstance clazz);
 }

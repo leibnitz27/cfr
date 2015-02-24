@@ -67,7 +67,11 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
 
         String res = delegate.getName(type);
         if (usedLocalTypeNames.contains(res)) {
-            return type.getRawName();
+            if (type instanceof JavaRefTypeInstance) {
+                return delegate.generateOverriddenName((JavaRefTypeInstance) type);
+            } else {
+                return type.getRawName();
+            }
         }
         return res;
     }
@@ -76,4 +80,15 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
     public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
         return delegate.generateInnerClassShortName(clazz);
     }
+
+    @Override
+    public String generateOverriddenName(JavaRefTypeInstance clazz) {
+        return delegate.generateOverriddenName(clazz);
+    }
+
+    @Override
+    public Set<JavaRefTypeInstance> getShortenedClassTypes() {
+        return delegate.getShortenedClassTypes();
+    }
+
 }
