@@ -580,9 +580,11 @@ public class CodeAnalyser {
         if (options.getOption(OptionsImpl.ECLIPSE)) {
             Op03SimpleStatement.eclipseLoopPass(op03SimpleParseNodes);
         }
+      //  Op03SimpleStatement.classifyGotos(op03SimpleParseNodes);
 
         // Identify simple while loops.
         logger.info("identifyLoops1");
+        op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
         LoopIdentifier.identifyLoops1(method, op03SimpleParseNodes, blockIdentifierFactory);
 
         // After we've identified loops, try to push any instructions through a goto
