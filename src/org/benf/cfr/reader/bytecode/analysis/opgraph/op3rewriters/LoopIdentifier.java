@@ -235,13 +235,28 @@ public class LoopIdentifier {
         if (backJumpSources.isEmpty()) {
             throw new ConfusedCFRException("Node should have back jump sources.");
         }
-        Op03SimpleStatement lastJump = backJumpSources.get(backJumpSources.size() - 1);
+        final int lastJumpIdx = backJumpSources.size() - 1;
+        Op03SimpleStatement lastJump = backJumpSources.get(lastJumpIdx);
         boolean conditional = false;
+        boolean wasConditional = false;
         if (lastJump.getStatement() instanceof IfStatement) {
             conditional = true;
+            wasConditional = true;
             IfStatement ifStatement = (IfStatement) lastJump.getStatement();
             if (ifStatement.getJumpTarget().getContainer() != start) {
                 return null;
+            }
+            /*
+             * But, if there are other back jumps to the start inside, which are either unconditional or don't have the same
+             * condition, we can't do this....
+             */
+            for (int x=0;x<lastJumpIdx;++x) {
+                Op03SimpleStatement prevJump = backJumpSources.get(x);
+                Statement prevJumpStatement = prevJump.getStatement();
+                if (prevJumpStatement.getClass() == GotoStatement.class) {
+                    conditional = false;
+                    break;
+                }
             }
         }
 //        if (!conditional) return false;
@@ -288,7 +303,29 @@ public class LoopIdentifier {
             /*
              * The best we can do is know it's a fall through to whatever WOULD have happened.
              */
+
+            if (wasConditional) {
+                // Negate the test, turn it into a break.  Insert the unconditional between the condition
+                // and what used to be its fallthrough.
+                IfStatement ifStatement = (IfStatement)lastJump.getStatement();
+                ifStatement.negateCondition();
+                ifStatement.setJumpType(JumpType.BREAK);
+                Op03SimpleStatement oldFallthrough = lastJump.getTargets().get(0);
+                Op03SimpleStatement oldTaken = lastJump.getTargets().get(1);
+                // Now, lastJump EXPLICTLY has to jump to tgt1 (was fallthrough), and falls through to GOTO tgt2 (was jumps to tgt2).
+                Op03SimpleStatement newBackJump = new Op03SimpleStatement(lastJump.getBlockIdentifiers(), new GotoStatement(), lastJump.getIndex().justAfter());
+                // ULGY - need primitive operator!
+                lastJump.getTargets().set(0, newBackJump);
+                lastJump.getTargets().set(1, oldFallthrough);
+                oldTaken.replaceSource(lastJump, newBackJump);
+                newBackJump.addSource(lastJump);
+                newBackJump.addTarget(oldTaken);
+                statements.add(statements.indexOf(oldFallthrough), newBackJump);
+                lastJump = newBackJump;
+            }
+
             int newIdx = statements.indexOf(lastJump) + 1;
+
             if (newIdx >= statements.size()) {
                 postBlock = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new ReturnNothingStatement(), lastJump.getIndex().justAfter());
                 statements.add(postBlock);
