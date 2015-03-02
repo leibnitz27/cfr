@@ -757,16 +757,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    private static void eliminateCatchTemporary(Op03SimpleStatement catchh) {
-        if (catchh.targets.size() != 1) return;
+    private static boolean eliminateCatchTemporary(Op03SimpleStatement catchh) {
+        if (catchh.targets.size() != 1) return false;
         Op03SimpleStatement maybeAssign = catchh.targets.get(0);
 
         CatchStatement catchStatement = (CatchStatement) catchh.getStatement();
         LValue catching = catchStatement.getCreatedLValue();
 
-        if (!(catching instanceof StackSSALabel)) return;
+        if (!(catching instanceof StackSSALabel)) return false;
         StackSSALabel catchingSSA = (StackSSALabel) catching;
-        if (catchingSSA.getStackEntry().getUsageCount() != 1) return;
+        if (catchingSSA.getStackEntry().getUsageCount() != 1) return false;
 
         while (maybeAssign.getStatement() instanceof TryStatement) {
             // Note that the 'tried' path is always path 0 of a try statement.
@@ -775,19 +775,26 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         WildcardMatch match = new WildcardMatch();
         if (!match.match(new AssignmentSimple(match.getLValueWildCard("caught"), new StackValue(catchingSSA)),
                 maybeAssign.getStatement())) {
-            return;
+            return false;
         }
 
         // Hurrah - maybeAssign is an assignment of the caught value.
         catchh.replaceStatement(new CatchStatement(catchStatement.getExceptions(), match.getLValueWildCard("caught").getMatch()));
         maybeAssign.nopOut();
+        return true;
     }
 
-    public static void eliminateCatchTemporaries(List<Op03SimpleStatement> statements) {
+    public static List<Op03SimpleStatement> eliminateCatchTemporaries(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> catches = Functional.filter(statements, new TypeFilter<CatchStatement>(CatchStatement.class));
+        boolean effect = false;
         for (Op03SimpleStatement catchh : catches) {
-            eliminateCatchTemporary(catchh);
+            effect = effect | eliminateCatchTemporary(catchh);
         }
+        if (effect) {
+            // Before we identify finally, clean the code again.
+            statements = Cleaner.removeUnreachableCode(statements, false);
+        }
+        return statements;
     }
 
     // Expression statements which can't have any effect can be removed.

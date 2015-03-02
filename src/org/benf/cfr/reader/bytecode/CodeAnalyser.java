@@ -414,7 +414,7 @@ public class CodeAnalyser {
 
 
         // Try to eliminate catch temporaries.
-        Op03SimpleStatement.eliminateCatchTemporaries(op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.eliminateCatchTemporaries(op03SimpleParseNodes);
 
         logger.info("identifyCatchBlocks");
         Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
@@ -442,7 +442,6 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
 
         op03SimpleParseNodes = Op03SimpleStatement.removeRedundantTries(op03SimpleParseNodes);
-
 
         FinallyRewriter.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
 
