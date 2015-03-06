@@ -504,6 +504,12 @@ public class LoopIdentifier {
          *
          */
         if (loopBreak == conditional && start == conditional) {
+
+            Statement stm = conditional.getStatement();
+            if (!(stm instanceof IfStatement)) return null;
+            IfStatement ifStatement = (IfStatement)stm;
+            ifStatement.negateCondition();
+
             Op03SimpleStatement backJump = new Op03SimpleStatement(conditional.getBlockIdentifiers(), new GotoStatement(), conditional.getIndex().justAfter());
             Op03SimpleStatement notTaken = conditional.getTargets().get(0);
             conditional.replaceTarget(notTaken, backJump);
