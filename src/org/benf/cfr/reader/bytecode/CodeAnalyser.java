@@ -820,6 +820,8 @@ public class CodeAnalyser {
             // Tidy variable names
             Op04StructuredStatement.tidyVariableNames(method, block, comments);
 
+            Op04StructuredStatement.miscKeyholeTransforms(block);
+
             /*
              * Now finally run some extra checks to spot wierdness.
              */

@@ -687,6 +687,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new TypedBooleanTidier().transform(root);
     }
 
+    public static void miscKeyholeTransforms(Op04StructuredStatement root) {
+        new NakedNullCaster().transform(root);
+    }
+
     public static void prettifyBadLoops(Op04StructuredStatement root) {
         new BadLoopPrettifier().transform(root);
     }

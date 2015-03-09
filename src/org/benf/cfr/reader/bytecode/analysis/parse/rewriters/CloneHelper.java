@@ -23,6 +23,11 @@ public class CloneHelper {
         this.lValueMap = lValueMap;
     }
 
+    public CloneHelper(Map<Expression, Expression> expressionMap) {
+        this.expressionMap = expressionMap;
+        this.lValueMap = MapFactory.newMap();
+    }
+
     public <X extends DeepCloneable<X>> List<X> replaceOrClone(List<X> in) {
         List<X> res = ListFactory.newList();
         for (X i : in) {
