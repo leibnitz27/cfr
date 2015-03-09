@@ -642,6 +642,11 @@ public class FinalAnalyzer {
         gv.process();
 
         /*
+         * VERY (too much so, this won't catch everything) special case - IFF the finally code body is a single
+         * MONITOREXIT statement, AND none of the exitpaths are, then they might have been rolled into the try body.
+         */
+
+        /*
          * See if this block jumps into any peerTries, in which case we add them to peerTries.
          */
         addPeerTries(exitPaths, peerTries); // , possibleCatches);
