@@ -853,6 +853,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         Map<LValue, LValue> replacements = MapFactory.newMap();
         replacements.put(outerThis, matchedLValue);
         innerClassConstructorRewriter.getAssignmentStatement().getContainer().nopOut();
+        prototype.setInnerOuterThis();
         prototype.hide(0);
 
         applyLValueReplacer(replacements, root);

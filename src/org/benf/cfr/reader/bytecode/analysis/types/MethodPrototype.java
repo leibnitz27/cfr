@@ -25,6 +25,7 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final List<FormalTypeParameter> formalTypeParameters;
     private final List<JavaTypeInstance> args;
     private final Set<Integer> hidden = SetFactory.newSet();
+    private boolean innerOuterThis = false;
     private JavaTypeInstance result;
     private final VariableNamer variableNamer;
     private final boolean instanceMethod;
@@ -88,8 +89,16 @@ public class MethodPrototype implements TypeUsageCollectable {
         hidden.add(x);
     }
 
+    public void setInnerOuterThis() {
+        innerOuterThis = true;
+    }
+
     public boolean isHiddenArg(int x) {
         return hidden.contains(x);
+    }
+
+    public boolean isInnerOuterThis() {
+        return innerOuterThis;
     }
 
     public void dumpDeclarationSignature(Dumper d, String methName, Method.MethodConstructor isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {

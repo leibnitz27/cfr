@@ -7,15 +7,18 @@ import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
-import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
-import org.benf.cfr.reader.entities.constantpool.*;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryInvokeDynamic;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.util.MiscConstants;
 
 import java.util.List;
 
-public class Op02LambdaRewriter {
+public class Op02GetClassRewriter {
 
-    private static Op02WithProcessedDataAndRefs getSinglePrev(Op02WithProcessedDataAndRefs item) {
+    private static Op02GetClassRewriter INSTANCE = new Op02GetClassRewriter();
+
+    private Op02WithProcessedDataAndRefs getSinglePrev(Op02WithProcessedDataAndRefs item) {
         if (item.getSources().size() != 1) return null;
         Op02WithProcessedDataAndRefs prev = item.getSources().get(0);
         if (prev.getTargets().size() != 1) return null;
@@ -25,11 +28,10 @@ public class Op02LambdaRewriter {
     /*
      * This is all a very cheap and dirty way of doing things - replace with a regex?
      */
-    private static void tryRemove(ClassFile classFile, Op02WithProcessedDataAndRefs item) {
+    private void tryRemove(ClassFile classFile, Op02WithProcessedDataAndRefs item, GetClassTest classTest) {
 
         Op02WithProcessedDataAndRefs pop = getSinglePrev(item);
         if (pop == null) return;
-        if (!isLambda(classFile, item)) return;
 
         if (pop.getInstr() != JVMInstr.POP) return;
         Op02WithProcessedDataAndRefs getClass = getSinglePrev(pop);
@@ -40,12 +42,14 @@ public class Op02LambdaRewriter {
         if (dup == null) return;
         if (dup.getInstr() != JVMInstr.DUP) return;
 
+        if (!classTest.test(classFile, item)) return;
+
         dup.nop();
         getClass.nop();
         pop.nop();
     }
 
-    private static boolean isGetClass(Op02WithProcessedDataAndRefs item) {
+    private boolean isGetClass(Op02WithProcessedDataAndRefs item) {
         ConstantPoolEntry[] cpEntries = item.getCpEntries();
         ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
 
@@ -57,29 +61,13 @@ public class Op02LambdaRewriter {
         return true;
     }
 
-    private static boolean isLambda(ClassFile classFile, Op02WithProcessedDataAndRefs item) {
-
-        ConstantPoolEntry[] cpEntries = item.getCpEntries();
-        ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
-
-        // Should have this as a member on name and type
-        int idx = invokeDynamic.getBootstrapMethodAttrIndex();
-
-        BootstrapMethodInfo bootstrapMethodInfo = classFile.getBootstrapMethods().getBootStrapMethodInfo(idx);
-        ConstantPoolEntryMethodRef methodRef = bootstrapMethodInfo.getConstantPoolEntryMethodRef();
-        String methodName = methodRef.getName();
-
-        DynamicInvokeType dynamicInvokeType = DynamicInvokeType.lookup(methodName);
-        if (dynamicInvokeType == DynamicInvokeType.UNKNOWN) return false;
-
-        return true;
-    }
-
-    public static void removeInvokeGetClass(ClassFile classFile, List<Op02WithProcessedDataAndRefs> op02list) {
+    public static void removeInvokeGetClass(ClassFile classFile, List<Op02WithProcessedDataAndRefs> op02list, GetClassTest classTest) {
+        JVMInstr testInstr = classTest.getInstr();
         for (Op02WithProcessedDataAndRefs item : op02list) {
-            if (item.getInstr() == JVMInstr.INVOKEDYNAMIC) {
-                tryRemove(classFile, item);
+            if (item.getInstr() == testInstr) {
+                INSTANCE.tryRemove(classFile, item, classTest);
             }
         }
     }
+
 }

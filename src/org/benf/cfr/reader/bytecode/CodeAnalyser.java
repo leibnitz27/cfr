@@ -1,10 +1,7 @@
 package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.Op02LambdaRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecovery;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecoveryImpl;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecoveryNone;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
@@ -315,8 +312,9 @@ public class CodeAnalyser {
          */
         if (options.getOption(OptionsImpl.REWRITE_LAMBDAS, classFileVersion) &&
                 bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.USES_INVOKEDYNAMIC)) {
-            Op02LambdaRewriter.removeInvokeGetClass(classFile, op2list);
+            Op02GetClassRewriter.removeInvokeGetClass(classFile, op2list, GetClassTestLambda.INSTANCE);
         }
+        Op02GetClassRewriter.removeInvokeGetClass(classFile, op2list, GetClassTestInnerConstructor.INSTANCE);
 
         long codeLength = originalCodeAttribute.getCodeLength();
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, dcCommonState, options);

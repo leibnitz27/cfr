@@ -220,7 +220,9 @@ public class CodeAnalyserWholeClass {
         for (Method method : classFile.getConstructors()) {
             if (ConstructorUtils.isDelegating(method)) {
                 // TODO: This is a bit brittle.
-                method.getMethodPrototype().hide(0);
+                MethodPrototype prototype = method.getMethodPrototype();
+                prototype.setInnerOuterThis();
+                prototype.hide(0);
             }
             Op04StructuredStatement.removeInnerClassOuterThis(method, method.getAnalysis());
         }
