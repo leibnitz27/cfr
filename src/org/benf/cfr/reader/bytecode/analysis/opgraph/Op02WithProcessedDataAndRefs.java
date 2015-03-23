@@ -638,7 +638,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return callargs;
     }
 
-    private Pair<JavaTypeInstance, Integer> getRetrieveType() {
+    public Pair<JavaTypeInstance, Integer> getRetrieveType() {
         JavaTypeInstance type = null;
         switch (instr) {
             case ALOAD:
@@ -736,7 +736,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return Pair.make(type, idx);
     }
 
-    private Pair<JavaTypeInstance, Integer> getStorageType() {
+    public Pair<JavaTypeInstance, Integer> getStorageType() {
         JavaTypeInstance type = null;
         switch (instr) {
             case ASTORE:
@@ -1441,6 +1441,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     public void nop() {
         this.instr = JVMInstr.NOP;
+    }
+
+    public void swap() {
+        this.instr = JVMInstr.SWAP;
     }
 
     private void collectLocallyMutatedVariables(SSAIdentifierFactory<Slot> ssaIdentifierFactory) {

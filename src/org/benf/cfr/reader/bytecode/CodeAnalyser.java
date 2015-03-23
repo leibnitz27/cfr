@@ -237,6 +237,12 @@ public class CodeAnalyser {
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
 
         DecompilerComments comments = new DecompilerComments();
+
+        boolean aggressiveSizeReductions = options.getOption(OptionsImpl.AGGRESSIVE_SIZE_REDUCTION_THRESHOLD) < instrs.size();
+        if (aggressiveSizeReductions) {
+            comments.addComment("Opcode count of " + instrs.size() + " triggered aggressive code reduction.  Override with --" + OptionsImpl.AGGRESSIVE_SIZE_REDUCTION_THRESHOLD.getName() + ".");
+        }
+
         Dumper debugDumper = new StdIODumper(new TypeUsageInformationEmpty(), options, new IllegalIdentifierDump.Nop());
         Map<Integer, Integer> lutByOffset = new HashMap<Integer, Integer>();
         Map<Integer, Integer> lutByIdx = new HashMap<Integer, Integer>();
@@ -319,6 +325,16 @@ public class CodeAnalyser {
         long codeLength = originalCodeAttribute.getCodeLength();
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, dcCommonState, options);
         lutByOffset = null; // No longer valid.
+
+        /*
+         * Now we know what's covered by exceptions, we can see if we can remove intermediate stores, which significantly complicate
+         * SSA analysis.
+         *
+         * Note - this will ONLY be a valid transformation in the absence of exceptions / branching.
+         */
+        if (aggressiveSizeReductions) {
+            Op02RedundantStoreRewriter.rewrite(op2list, originalCodeAttribute.getMaxLocals());
+        }
 
 
         // Populate stack info (each instruction gets references to stack objects
@@ -403,6 +419,10 @@ public class CodeAnalyser {
         Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
+
+        if (aggressiveSizeReductions) {
+            op03SimpleParseNodes = LValuePropSimple.condenseSimpleLValues(op03SimpleParseNodes);
+        }
 
         Op03SimpleStatement.assignSSAIdentifiers(method, op03SimpleParseNodes);
 

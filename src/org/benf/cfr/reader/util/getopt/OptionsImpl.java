@@ -10,10 +10,16 @@ public class OptionsImpl implements Options {
     private final Map<String, String> opts;
 
 
-    private static final OptionDecoder<Integer> default0intDecoder = new OptionDecoder<Integer>() {
+    private static class DefaultingIntDecoder implements OptionDecoder<Integer> {
+        final Integer defaultValue;
+
+        private DefaultingIntDecoder(Integer defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
         @Override
         public Integer invoke(String arg, Void ignore) {
-            if (arg == null) return 0;
+            if (arg == null) return defaultValue;
             int x = Integer.parseInt(arg);
             if (x < 0) throw new IllegalArgumentException("required int >= 0");
             return x;
@@ -26,9 +32,11 @@ public class OptionsImpl implements Options {
 
         @Override
         public String getDefaultValue() {
-            return "0";
+            return "" + defaultValue;
         }
-    };
+    }
+    private static final OptionDecoder<Integer> default0intDecoder = new DefaultingIntDecoder(0);
+
     private static final OptionDecoder<Troolean> defaultNeitherTrooleanDecoder = new OptionDecoder<Troolean>() {
         @Override
         public Troolean invoke(String arg, Void ignore) {
@@ -286,6 +294,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_ILLEGAL_IDENTS = new PermittedOptionProvider.Argument<Boolean>(
             "renameillegalidents", defaultFalseBooleanDecoder,
             "Rename identifiers which are not valid java identifiers.  Note - this WILL break reflection based access, so is not automatically enabled.");
+    public static final PermittedOptionProvider.Argument<Integer> AGGRESSIVE_SIZE_REDUCTION_THRESHOLD = new PermittedOptionProvider.Argument<Integer>(
+            "aggressivesizethreshold", new DefaultingIntDecoder(15000),
+            "Opcode count at which to trigger aggressive reductions");
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
