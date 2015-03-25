@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.stack;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -55,26 +56,30 @@ public class StackSim {
         return depth;
     }
 
-    public StackSim getChange(StackDelta delta, List<StackEntryHolder> consumed, List<StackEntryHolder> produced) {
+    public StackSim getChange(StackDelta delta, List<StackEntryHolder> consumed, List<StackEntryHolder> produced, Op02WithProcessedDataAndRefs instruction) {
         if (delta.isNoOp()) {
             return this;
         }
-        StackSim thisSim = this;
-        StackTypes consumedStack = delta.getConsumed();
-        for (StackType stackType : consumedStack) {
-            consumed.add(thisSim.stackEntryHolder);
-            thisSim = thisSim.getParent();
+        try {
+            StackSim thisSim = this;
+            StackTypes consumedStack = delta.getConsumed();
+            for (StackType stackType : consumedStack) {
+                consumed.add(thisSim.stackEntryHolder);
+                thisSim = thisSim.getParent();
+            }
+            StackTypes producedStack = delta.getProduced();
+            for (int x = producedStack.size() - 1; x >= 0; --x) {
+                thisSim = new StackSim(thisSim, producedStack.get(x));
+            }
+            StackSim thatSim = thisSim;
+            for (StackType stackType : producedStack) {
+                produced.add(thatSim.stackEntryHolder);
+                thatSim = thatSim.getParent();
+            }
+            return thisSim;
+        } catch (ConfusedCFRException e) {
+            throw new ConfusedCFRException("While processing " + instruction + " : " + e.getMessage());
         }
-        StackTypes producedStack = delta.getProduced();
-        for (int x=producedStack.size()-1;x>=0;--x) {
-            thisSim = new StackSim(thisSim, producedStack.get(x));
-        }
-        StackSim thatSim = thisSim;
-        for (StackType stackType : producedStack) {
-            produced.add(thatSim.stackEntryHolder);
-            thatSim = thatSim.getParent();
-        }
-        return thisSim;
     }
 
     private StackSim getParent() {

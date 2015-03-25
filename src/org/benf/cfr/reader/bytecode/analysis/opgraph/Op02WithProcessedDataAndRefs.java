@@ -210,7 +210,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
             List<StackEntryHolder> alsoConsumed = ListFactory.newList();
             List<StackEntryHolder> alsoProduced = ListFactory.newList();
-            StackSim newStackSim = stackSim.getChange(stackDelta, alsoConsumed, alsoProduced);
+            StackSim newStackSim = stackSim.getChange(stackDelta, alsoConsumed, alsoProduced, this);
             if (alsoConsumed.size() != stackConsumed.size()) {
                 throw new ConfusedCFRException("Unexpected stack sizes on merge");
             }
@@ -240,7 +240,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
             this.stackDepthAfterExecution = stackDepthBeforeExecution + stackDelta.getChange();
 
-            StackSim newStackSim = stackSim.getChange(stackDelta, stackConsumed, stackProduced);
+            StackSim newStackSim = stackSim.getChange(stackDelta, stackConsumed, stackProduced, this);
 
             if (this.sources.size() > 1 && newStackSim.getDepth() > stackProduced.size()) {
                 // We're merging stacks here, and haven't consumed everything from the branch we came
@@ -277,11 +277,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         d.print(" " + index + " (" + originalRawOffset + ") : " + instr + "\t Stack:" + stackDepthBeforeExecution + "\t");
         d.print("Consumes:[");
         for (StackEntryHolder stackEntryHolder : stackConsumed) {
-            d.print(stackEntryHolder.toString() + " ");
+            d.print("" + stackEntryHolder + " ");
         }
         d.print("] Produces:[");
         for (StackEntryHolder stackEntryHolder : stackProduced) {
-            d.print(stackEntryHolder.toString() + " ");
+            d.print("" + stackEntryHolder + " ");
         }
         d.print("] sources ");
         for (Op02WithProcessedDataAndRefs source : sources) {
