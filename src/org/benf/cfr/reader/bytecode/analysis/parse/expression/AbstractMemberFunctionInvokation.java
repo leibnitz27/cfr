@@ -142,6 +142,27 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, args, gtb);
     }
 
+
+    private Expression insertCastOrIgnore(Expression arg, OverloadMethodSet overloadMethodSet, int x) {
+        JavaTypeInstance argType = overloadMethodSet.getArgType(x, arg.getInferredJavaType().getJavaTypeInstance());
+        boolean ignore = false;
+        if (argType instanceof JavaGenericBaseInstance) {
+            // TODO : Should check flag for ignore bad generics?
+            ignore |= ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp);
+        }
+                /*
+                 * Lambda types will always look wrong.
+                 */
+        if (!ignore) {
+            ignore |= arg instanceof LambdaExpression;
+            ignore |= arg instanceof LambdaExpressionFallback;
+        }
+        if (!ignore) {
+            arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
+        }
+        return arg;
+    }
+
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
         if (args.isEmpty()) return false;
@@ -160,6 +181,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(args);
 
         boolean callsCorrectEntireMethod = overloadMethodSet.callsCorrectEntireMethod(args, gtb);
+        boolean nullsPresent = false;
         for (int x = 0; x < args.size(); ++x) {
             /*
              * We can only remove explicit boxing if the target type is correct -
@@ -178,27 +200,25 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
                  * If arg isn't the right type, shove an extra cast on the front now.
                  * Then we will forcibly remove it if we don't need it.
                  */
-                JavaTypeInstance argType = overloadMethodSet.getArgType(x, arg.getInferredJavaType().getJavaTypeInstance());
-                boolean ignore = false;
-                if (argType instanceof JavaGenericBaseInstance) {
-                    // TODO : Should check flag for ignore bad generics?
-                    ignore |= ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp);
-                }
-                /*
-                 * Lambda types will always look wrong.
-                 */
-                if (!ignore) {
-                    ignore |= arg instanceof LambdaExpression;
-                    ignore |= arg instanceof LambdaExpressionFallback;
-                }
-                if (!ignore) {
-                    arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
-                }
+                arg = insertCastOrIgnore(arg, overloadMethodSet, x);
             }
 
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
             arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, gtb, methodPrototype);
+            nullsPresent |= (Literal.NULL.equals(arg));
             args.set(x, arg);
+        }
+        if (nullsPresent) {
+            callsCorrectEntireMethod = overloadMethodSet.callsCorrectEntireMethod(args, gtb);
+            if (!callsCorrectEntireMethod) {
+                for (int x = 0; x < args.size(); ++x) {
+                    Expression arg = args.get(x);
+                    if (Literal.NULL.equals(arg)) {
+                        arg = insertCastOrIgnore(arg, overloadMethodSet, x);
+                        args.set(x, arg);
+                    }
+                }
+            }
         }
 
         return true;

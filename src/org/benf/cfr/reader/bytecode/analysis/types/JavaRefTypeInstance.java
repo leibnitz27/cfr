@@ -56,6 +56,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         this.shortName = innerSub;
     }
 
+    @Override
+    public boolean isObject() {
+        return true;
+    }
+
     public void markNotInner() {
         this.innerClassInfo = InnerClassInfo.NOT;
         this.shortName = getShortName(className, innerClassInfo);

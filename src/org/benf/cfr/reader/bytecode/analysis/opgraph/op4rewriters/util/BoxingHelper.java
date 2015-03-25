@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -33,7 +34,8 @@ public class BoxingHelper {
         String rawTypeName = type.getRawName();
         Pair<String, String> testPair = Pair.make(rawTypeName, name);
         if (unboxing.contains(testPair)) {
-            return memberFunctionInvokation.getObject();
+            Expression expression = memberFunctionInvokation.getObject();
+            return expression;
         }
         return memberFunctionInvokation;
     }

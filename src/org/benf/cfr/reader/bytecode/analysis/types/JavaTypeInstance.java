@@ -58,4 +58,6 @@ public interface JavaTypeInstance {
     public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation);
 
     public void collectInto(TypeUsageCollector typeUsageCollector);
+
+    public boolean isObject();
 }

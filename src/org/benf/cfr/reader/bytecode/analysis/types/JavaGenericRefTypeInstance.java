@@ -63,6 +63,10 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
         return false;
     }
 
+    @Override
+    public boolean isObject() {
+        return true;
+    }
 
     @Override
     public JavaGenericRefTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {

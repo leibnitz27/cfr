@@ -62,6 +62,11 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
+    public boolean isObject() {
+        return true;
+    }
+
+    @Override
     public List<JavaTypeInstance> getGenericTypes() {
         if (underlyingType instanceof JavaGenericBaseInstance) {
             return ((JavaGenericBaseInstance) underlyingType).getGenericTypes();

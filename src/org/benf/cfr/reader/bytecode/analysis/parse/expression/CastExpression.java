@@ -112,12 +112,16 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
             CastExpression childCast = (CastExpression) child;
             JavaTypeInstance thisType = getInferredJavaType().getJavaTypeInstance();
             JavaTypeInstance childType = childCast.getInferredJavaType().getJavaTypeInstance();
-            JavaTypeInstance grandChildType = childCast.child.getInferredJavaType().getJavaTypeInstance();
+            Expression grandChild = childCast.child;
+            JavaTypeInstance grandChildType = grandChild.getInferredJavaType().getJavaTypeInstance();
 //            if (thisType.implicitlyCastsTo(grandChildType)) {
 //                child = childCast.child;
 //            } else {
 //                break;
 //            }
+            if (Literal.NULL.equals(grandChild) && !thisType.isObject() && childType.isObject()) {
+                break;
+            }
             if (grandChildType.implicitlyCastsTo(childType, null) && childType.implicitlyCastsTo(thisType, null)) {
                 child = childCast.child;
             } else {

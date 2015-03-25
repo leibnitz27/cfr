@@ -24,6 +24,11 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     @Override
+    public boolean isObject() {
+        return true;
+    }
+
+    @Override
     public boolean hasUnbound() {
         return true;
     }

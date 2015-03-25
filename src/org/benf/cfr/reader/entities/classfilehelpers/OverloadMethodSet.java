@@ -6,15 +6,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.Predicate;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * These are the possibilities we could be hitting when we call an overloaded method.
@@ -140,26 +135,110 @@ public class OverloadMethodSet {
                     }
                 }));
 
+
+        Map<Integer, Set<MethodData>> weakMatches = MapFactory.<Integer, Set<MethodData>>newLazyMap(new UnaryFunction<Integer, Set<MethodData>>() {
+            @Override
+            public Set<MethodData> invoke(Integer arg) {
+                return SetFactory.newSet();
+            }
+        });
+
         for (int x = 0, len = args.size(); x < len; ++x) {
             Expression arg = args.get(x);
+            boolean isNull = Literal.NULL.equals(arg);
             JavaTypeInstance actual = arg.getInferredJavaType().getJavaTypeInstance();
             actual = actual.getDeGenerifiedType();
             Iterator<MethodData> possiter = possibleMatches.iterator();
             while (possiter.hasNext()) {
                 MethodData prototype = possiter.next();
                 JavaTypeInstance argType = prototype.getArgType(x, actual);
-                if (argType == null) {
-                    possiter.remove();
-                    continue;
+                if (argType != null) {
+                    argType = argType.getDeGenerifiedType();
+                    // If the argument is an undecorated literal null, it can satisfy any object.
+                    // BUT - it will preferentially satisfy an exact object type to OBJECT, so
+                    // just because there are two valid ones, doesn't mean we have an ambiguity.
+                    if (isNull) {
+                        if (argType.isObject()) {
+                            if (TypeConstants.OBJECT.equals(argType)) {
+                                weakMatches.get(x).add(prototype);
+                            }
+                            continue;
+                        } else {
+                            possiter.remove();
+                            continue;
+                        }
+                    }
+                    // If it was equal, it would have been satisfied previously.
+                    if ((actual.implicitlyCastsTo(argType, gtb) && actual.canCastTo(argType, gtb))) {
+                        continue;
+                    }
                 }
-                argType = argType.getDeGenerifiedType();
-                // If it was equal, it would have been satisfied previously.
-                if (!(actual.implicitlyCastsTo(argType, gtb) && actual.canCastTo(argType, gtb))) {
-                    possiter.remove();
-                }
+                possiter.remove();
             }
         }
         if (possibleMatches.isEmpty()) return false;
+
+        if (possibleMatches.size() > 1 && !weakMatches.isEmpty()) {
+            /* Of our matches, is one strongest?
+             * We're looking to find a candidate in which the argument does NOT occur in a weak context.
+             */
+            for (int x=0, len=args.size();x<len;++x) {
+                if (weakMatches.containsKey(x)) { // containskey - it's a lazy map.
+                    Set<MethodData> weakMatchedMethods = weakMatches.get(x);
+                    // If ONE of possibleMatches is NOT in weakMatchedMethods, it's the winner!
+                    List<MethodData> remaining = SetUtil.differenceAtakeBtoList(possibleMatches, weakMatchedMethods);
+                    if (remaining.size() == 1) {
+                        possibleMatches.clear();
+                        possibleMatches.addAll(remaining);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (possibleMatches.size() > 1) {
+            List<MethodData> remaining = ListFactory.newList(possibleMatches);
+            // Otherwise - if one of them is the most specific type....
+            // Doesn't work if unrelated. (see JLS 15.12.2)
+            for (int x=0, len=args.size();x<len;++x) {
+                JavaTypeInstance argTypeUsed = args.get(x).getInferredJavaType().getJavaTypeInstance();
+                JavaTypeInstance mostDefined = null;
+                int best = -1;
+                for (int y = 0, len2 = remaining.size(); y < len2; ++y) {
+                    JavaTypeInstance t = remaining.get(y).getArgType(x, argTypeUsed);
+                    BindingSuperContainer t2bs = t.getBindingSupers();
+                    if (t2bs == null) {
+                        best = -1;
+                        break;
+                    }
+                    if (mostDefined == null) {
+                        mostDefined = t;
+                        best = 0;
+                        continue;
+                    }
+                    boolean ainb = t2bs.containsBase(mostDefined);
+                    boolean bina = mostDefined.getBindingSupers().containsBase(t);
+                    if (ainb ^ bina) {
+                        if (ainb) {
+                            mostDefined = t;
+                            best = y;
+                        } else {
+                            // do nothing
+                        }
+                    } else {
+                        best = -1;
+                        break;
+                    }
+                }
+                if (best != -1) {
+                    MethodData match = remaining.get(best);
+                    possibleMatches.clear();
+                    possibleMatches.add(match);
+                    break;
+                }
+            }
+        }
+
         if (possibleMatches.size() == 1) {
             MethodData methodData = possibleMatches.iterator().next();
             return methodData.methodPrototype.equals(actualPrototype.methodPrototype);
@@ -194,7 +273,7 @@ public class OverloadMethodSet {
         for (MethodData prototype : allPrototypes) {
             JavaTypeInstance type = prototype.getArgType(idx, newArgType);
 
-            if (type != null && type.equals(newArgType)) {
+            if ((type != null && type.equals(newArgType))) {
                 exactMatches.add(prototype.methodPrototype);
             }
         }

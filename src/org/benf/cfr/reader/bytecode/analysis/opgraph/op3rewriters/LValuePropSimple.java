@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
-import com.apple.java.Usage;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;

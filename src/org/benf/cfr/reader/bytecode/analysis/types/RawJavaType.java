@@ -11,19 +11,19 @@ import java.util.Map;
 import java.util.Set;
 
 public enum RawJavaType implements JavaTypeInstance {
-    BOOLEAN("boolean", "bl", StackType.INT, true, TypeConstants.boxingNameBoolean, false),
-    BYTE("byte", "by", StackType.INT, true, TypeConstants.boxingNameByte, true),
-    CHAR("char", "c", StackType.INT, true, TypeConstants.boxingNameChar, false),
-    SHORT("short", "s", StackType.INT, true, TypeConstants.boxingNameShort, true),
-    INT("int", "n", StackType.INT, true, TypeConstants.boxingNameInt, true),
-    LONG("long", "l", StackType.LONG, true, TypeConstants.boxingNameLong, true),
-    FLOAT("float", "f", StackType.FLOAT, true, TypeConstants.boxingNameFloat, true),
-    DOUBLE("double", "d", StackType.DOUBLE, true, TypeConstants.boxingNameDouble, true),
-    VOID("void", null, StackType.VOID, false),
-    REF("reference", null, StackType.REF, false),  // Don't use for fixedtypeinstance.
-    RETURNADDRESS("returnaddress", null, StackType.RETURNADDRESS, false),
-    RETURNADDRESSORREF("returnaddress or ref", null, StackType.RETURNADDRESSORREF, false),
-    NULL("null", null, StackType.REF, false);  // Null is a special type, sort of.
+    BOOLEAN("boolean", "bl", StackType.INT, true, TypeConstants.boxingNameBoolean, false, false),
+    BYTE("byte", "by", StackType.INT, true, TypeConstants.boxingNameByte, true, false),
+    CHAR("char", "c", StackType.INT, true, TypeConstants.boxingNameChar, false, false),
+    SHORT("short", "s", StackType.INT, true, TypeConstants.boxingNameShort, true, false),
+    INT("int", "n", StackType.INT, true, TypeConstants.boxingNameInt, true, false),
+    LONG("long", "l", StackType.LONG, true, TypeConstants.boxingNameLong, true, false),
+    FLOAT("float", "f", StackType.FLOAT, true, TypeConstants.boxingNameFloat, true, false),
+    DOUBLE("double", "d", StackType.DOUBLE, true, TypeConstants.boxingNameDouble, true, false),
+    VOID("void", null, StackType.VOID, false, false),
+    REF("reference", null, StackType.REF, false, true),  // Don't use for fixedtypeinstance.
+    RETURNADDRESS("returnaddress", null, StackType.RETURNADDRESS, false, true),
+    RETURNADDRESSORREF("returnaddress or ref", null, StackType.RETURNADDRESSORREF, false, true),
+    NULL("null", null, StackType.REF, false, true);  // Null is a special type, sort of.
 
     private final String name;
     private final String suggestedVarName;
@@ -31,6 +31,7 @@ public enum RawJavaType implements JavaTypeInstance {
     private final boolean usableType;
     private final String boxedName;
     private final boolean isNumber;
+    private final boolean isObject;
 
     private static final Map<RawJavaType, Set<RawJavaType>> implicitCasts = MapFactory.newMap();
     private static final Map<String, RawJavaType> boxingTypes = MapFactory.newMap();
@@ -56,17 +57,18 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
 
-    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber) {
+    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber, boolean objectType) {
         this.name = name;
         this.stackType = stackType;
         this.usableType = usableType;
         this.boxedName = boxedName;
         this.suggestedVarName = suggestedVarName;
         this.isNumber = isNumber;
+        this.isObject = objectType;
     }
 
-    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType) {
-        this(name, suggestedVarName, stackType, usableType, null, false);
+    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, boolean objectType) {
+        this(name, suggestedVarName, stackType, usableType, null, false, objectType);
     }
 
     public String getName() {
@@ -83,6 +85,8 @@ public enum RawJavaType implements JavaTypeInstance {
         return false;
     }
 
+    @Override
+    public boolean isObject() { return isObject; }
 
     /*
      * Compare integral type priorities.

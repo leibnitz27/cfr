@@ -159,6 +159,10 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
         if (in instanceof CastExpression && ((CastExpression) in).couldBeImplicit((GenericTypeBinder) null)) {
             // We can strip this IF it is a cast that could be implicit.
             res = ((CastExpression) in).getChild();
+            /*
+             * But if this has left us with a simple null, and the target type is not an object, it won't work.
+             */
+            if (Literal.NULL.equals(res) && !tgtType.isObject()) return in;
             recast = !(tgtType instanceof RawJavaType);
         } else if (in instanceof MemberFunctionInvokation) {
             res = BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);

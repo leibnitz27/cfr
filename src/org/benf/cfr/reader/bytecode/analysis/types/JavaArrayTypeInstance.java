@@ -43,6 +43,11 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public boolean isObject() {
+        return true;
+    }
+
+    @Override
     public String getRawName() {
         return new ToStringDumper().dump(this).toString();
     }
