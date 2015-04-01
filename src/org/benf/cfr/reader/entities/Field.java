@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
@@ -60,9 +61,21 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         short nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
         Attribute cvAttribute = attributes.get(AttributeConstantValue.ATTRIBUTE_NAME);
-        this.constantValue = cvAttribute == null ? null : TypedLiteral.getConstantPoolEntry(cp, ((AttributeConstantValue) cvAttribute).getValue());
         this.fieldName = cp.getUTF8Entry(nameIndex).getValue();
         this.disambiguate = false;
+        TypedLiteral constValue = null;
+        if (cvAttribute != null) {
+            constValue = TypedLiteral.getConstantPoolEntry(cp, ((AttributeConstantValue) cvAttribute).getValue());
+            if (constValue.getType() == TypedLiteral.LiteralType.Integer) {
+                // Need to check if the field is actually something smaller than an integer, and downcast the
+                // literal - sufficiently constructed to do this. (although naughty).
+                JavaTypeInstance thisType = getJavaTypeInstance();
+                if (thisType instanceof RawJavaType) {
+                    constValue = TypedLiteral.shrinkTo(constValue, (RawJavaType)thisType);
+                }
+            }
+        }
+        this.constantValue = constValue;
     }
 
     @Override

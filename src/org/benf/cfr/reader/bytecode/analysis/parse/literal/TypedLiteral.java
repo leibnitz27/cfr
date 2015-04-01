@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
@@ -267,6 +268,18 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             return getMethodType((ConstantPoolEntryMethodType) cpe, cp);
         }
         throw new ConfusedCFRException("Can't turn ConstantPoolEntry into Literal - got " + cpe);
+    }
+
+    public static TypedLiteral shrinkTo(TypedLiteral original, RawJavaType tgt) {
+        if (original.getType() != LiteralType.Integer) return original;
+        if (tgt.getStackType() != StackType.INT) return original;
+        Integer i = (Integer)original.value;
+        if (i==null) return original;
+        switch (tgt) {
+            case BOOLEAN:
+                return getBoolean(i);
+        }
+        return original;
     }
 
     public LiteralType getType() {
