@@ -236,6 +236,9 @@ public class CodeAnalyserWholeClass {
          * OuterClassName.this
          */
         JavaTypeInstance fieldType = foundOuterThis.getInferredJavaType().getJavaTypeInstance();
+        if (!(fieldType instanceof JavaRefTypeInstance)) {
+            return;
+        }
         JavaRefTypeInstance fieldRefType = (JavaRefTypeInstance) fieldType.getDeGenerifiedType();
         String name = fieldRefType.getRawShortName();
         classFileField.overrideName(name + ".this");
