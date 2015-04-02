@@ -207,6 +207,10 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL), v);
     }
 
+    public static TypedLiteral getChar(int v) {
+        return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.CHAR, InferredJavaType.Source.LITERAL), v);
+    }
+
     // We don't know that a literal 1 or 0 is an integer, short or boolean.
     // We always guess at boolean, that way if we're proved wrong we can easily
     // promote the type to integer.
@@ -278,6 +282,8 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         switch (tgt) {
             case BOOLEAN:
                 return getBoolean(i);
+            case CHAR:
+                return getChar(i);
         }
         return original;
     }
