@@ -74,7 +74,7 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
             // Figure out the non generic version of this
             ConstantPoolEntryNameAndType nameAndType = cp.getNameAndTypeEntry(nameAndTypeIndex);
             ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
-            MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, classType, getName(), interfaceMethod, Method.MethodConstructor.NOT, descriptor, cp, false /* we can't tell */, false, fakeNamer);
+            MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, classType, getName(), /* interfaceMethod */ false, Method.MethodConstructor.NOT, descriptor, cp, false /* we can't tell */, false, fakeNamer);
             // See if we can load the class to get a signature version of this prototype.
             // TODO : Improve the caching?
 
