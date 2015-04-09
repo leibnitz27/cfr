@@ -19,7 +19,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Field;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -111,7 +110,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
         StaticVariable staticLookupTable = (StaticVariable) lookupTable;
         JavaTypeInstance classInfo = staticLookupTable.getOwningClassTypeInstance();  // The inner class
-        String varName = staticLookupTable.getVarName();
+        String varName = staticLookupTable.getFieldName();
 
         /*
          * All cases will of course be integers.  The lookup table /COULD/ be perverse, but that wouldn't

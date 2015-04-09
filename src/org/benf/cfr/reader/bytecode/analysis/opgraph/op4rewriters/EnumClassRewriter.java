@@ -19,7 +19,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperEnum;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.Options;
@@ -247,7 +246,6 @@ public class EnumClassRewriter {
              * Examine all static members, make sure they're in this set.
              */
             List<ClassFileField> fields = classFile.getFields();
-            ConstantPool cp = classFile.getConstantPool();
             for (ClassFileField classFileField : fields) {
                 Field field = classFileField.getField();
                 JavaTypeInstance fieldType = field.getJavaTypeInstance();
@@ -286,7 +284,7 @@ public class EnumClassRewriter {
             }
             StaticVariable valuesArrayStatic = (StaticVariable) valuesArray;
             try {
-                ClassFileField valuesField = classFile.getFieldByName(valuesArrayStatic.getVarName(), valuesArrayStatic.getInferredJavaType().getJavaTypeInstance());
+                ClassFileField valuesField = classFile.getFieldByName(valuesArrayStatic.getFieldName(), valuesArrayStatic.getInferredJavaType().getJavaTypeInstance());
                 if (!valuesField.getField().testAccessFlag(AccessFlag.ACC_STATIC)) {
                     return false;
                 }

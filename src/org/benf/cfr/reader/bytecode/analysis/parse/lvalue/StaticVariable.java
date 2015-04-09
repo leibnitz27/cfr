@@ -18,17 +18,18 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 public class StaticVariable extends AbstractLValue {
 
-    private final ConstantPoolEntryFieldRef field;
-    private final JavaTypeInstance clazz;
-    private final String varName;
+    private final ClassFileField classFileField;
+    private final String failureName;
     private final boolean knownSimple;
+    private final JavaTypeInstance owningClass;
 
     public StaticVariable(ConstantPoolEntry field) {
         super(FieldVariable.getFieldType((ConstantPoolEntryFieldRef) field));
-        this.field = (ConstantPoolEntryFieldRef) field;
-        this.clazz = this.field.getClassEntry().getTypeInstance();
-        this.varName = this.field.getLocalName();
+        ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) field;
+        this.classFileField = FieldVariable.getField(fieldRef);
+        this.failureName = fieldRef.getLocalName();
         this.knownSimple = false;
+        this.owningClass = fieldRef.getClassEntry().getTypeInstance();
     }
 
     /*
@@ -36,18 +37,18 @@ public class StaticVariable extends AbstractLValue {
      */
     public StaticVariable(InferredJavaType type, JavaTypeInstance clazz, String varName) {
         super(type);
-        this.field = null;
-        this.varName = varName;
-        this.clazz = clazz;
+        this.classFileField = null;
+        this.failureName = varName;
         this.knownSimple = false;
+        this.owningClass = clazz;
     }
 
     private StaticVariable(StaticVariable other, boolean knownSimple) {
         super(other.getInferredJavaType());
-        this.field = other.field;
-        this.varName = other.varName;
-        this.clazz = other.clazz;
+        this.classFileField = other.classFileField;
+        this.failureName = other.failureName;
         this.knownSimple = knownSimple;
+        this.owningClass = other.owningClass;
     }
 
     /*
@@ -59,7 +60,8 @@ public class StaticVariable extends AbstractLValue {
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
-        collector.collect(clazz);
+        if (classFileField != null) collector.collect(classFileField.getField().getJavaTypeInstance());
+        collector.collect(owningClass);
         super.collectTypeUsages(collector);
     }
 
@@ -79,19 +81,14 @@ public class StaticVariable extends AbstractLValue {
     }
 
     public JavaTypeInstance getOwningClassTypeInstance() {
-        return clazz;
+        return owningClass;
     }
 
-    public ConstantPoolEntryNameAndType getNameAndTypeEntry() {
-        return field.getNameAndTypeEntry();
-    }
-
-    public ConstantPoolEntryClass getClassEntry() {
-        return field.getClassEntry();
-    }
-
-    public String getVarName() {
-        return varName;
+    public String getFieldName() {
+        if (classFileField == null) {
+            return failureName;
+        }
+        return classFileField.getFieldName();
     }
 
     @Override
@@ -102,9 +99,9 @@ public class StaticVariable extends AbstractLValue {
     @Override
     public Dumper dumpInner(Dumper d) {
         if (knownSimple) {
-            return d.identifier(varName);
+            return d.identifier(getFieldName());
         } else {
-            return d.dump(clazz).print(".").identifier(varName);
+            return d.dump(owningClass).print(".").identifier(getFieldName());
         }
     }
 
@@ -136,14 +133,14 @@ public class StaticVariable extends AbstractLValue {
     public boolean equals(Object o) {
         if (!(o instanceof StaticVariable)) return false;
         StaticVariable other = (StaticVariable) o;
-        if (!other.clazz.equals(clazz)) return false;
-        return other.varName.equals(varName);
+        if (!other.owningClass.equals(owningClass)) return false;
+        return other.getFieldName().equals(getFieldName());
     }
 
     @Override
     public int hashCode() {
-        int hashcode = clazz.hashCode();
-        hashcode = (13 * hashcode) + varName.hashCode();
+        int hashcode = owningClass.hashCode();
+        hashcode = (13 * hashcode) + getFieldName().hashCode();
         return hashcode;
     }
 }

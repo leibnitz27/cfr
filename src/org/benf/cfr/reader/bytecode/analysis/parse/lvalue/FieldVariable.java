@@ -15,6 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryFieldRef;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -31,6 +32,7 @@ public class FieldVariable extends AbstractLValue {
     private final ClassFile classFile;
     private final ClassFileField classFileField;
     private final String failureName; // if we can't get the classfileField.
+    private final JavaTypeInstance owningClass;
 
     public FieldVariable(Expression object, ClassFile classFile, ConstantPoolEntry field) {
         super(getFieldType((ConstantPoolEntryFieldRef) field));
@@ -39,24 +41,32 @@ public class FieldVariable extends AbstractLValue {
         ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) field;
         this.classFileField = getField(fieldRef);
         this.failureName = fieldRef.getLocalName();
+        this.owningClass = fieldRef.getClassEntry().getTypeInstance();
     }
 
-    private FieldVariable(InferredJavaType type, Expression object, ClassFile classFile, ClassFileField classFileField, String failureName) {
+    private FieldVariable(InferredJavaType type, Expression object, ClassFile classFile, ClassFileField classFileField, String failureName, JavaTypeInstance owningClass) {
         super(type);
         this.object = object;
         this.classFile = classFile;
         this.classFileField = classFileField;
         this.failureName = failureName;
+        this.owningClass = owningClass;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        if (classFileField != null) collector.collect(classFileField.getField().getJavaTypeInstance());
+        collector.collect(owningClass);
+        super.collectTypeUsages(collector);
     }
 
     @Override
     public LValue deepClone(CloneHelper cloneHelper) {
-        return new FieldVariable(getInferredJavaType(), cloneHelper.replaceOrClone(object), classFile, classFileField, failureName);
+        return new FieldVariable(getInferredJavaType(), cloneHelper.replaceOrClone(object), classFile, classFileField, failureName, owningClass);
     }
 
     @Override
     public void markFinal() {
-
     }
 
     @Override
@@ -64,7 +74,7 @@ public class FieldVariable extends AbstractLValue {
         return false;
     }
 
-    static ClassFileField getField(ConstantPoolEntryFieldRef fieldRef) {
+    public static ClassFileField getField(ConstantPoolEntryFieldRef fieldRef) {
         String name = fieldRef.getLocalName();
         JavaRefTypeInstance ref = (JavaRefTypeInstance) fieldRef.getClassEntry().getTypeInstance();
         try {
@@ -105,7 +115,7 @@ public class FieldVariable extends AbstractLValue {
     }
 
     public JavaTypeInstance getOwningClassType() {
-        return classFile.getClassType();
+        return owningClass;
     }
 
     /*
@@ -205,4 +215,6 @@ public class FieldVariable extends AbstractLValue {
         if (!getFieldName().equals(other.getFieldName())) return false;
         return true;
     }
+
+
 }

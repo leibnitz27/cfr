@@ -368,7 +368,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     public ClassFileField getFieldByName(String name, JavaTypeInstance type) throws NoSuchFieldException {
         if (fieldsByName == null) {
-            boolean testIllegal = !constantPool.getDCCommonState().getOptions().getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS);
+            Options options = constantPool.getDCCommonState().getOptions();
+            boolean testIllegal = !options.getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS);
             boolean illegal = false;
             fieldsByName = MapFactory.newMap();
             if (testIllegal) {
@@ -381,6 +382,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                     }
                 }
             }
+            int smallMemberThreshold = options.getOption(OptionsImpl.RENAME_SMALL_MEMBERS);
+            boolean renameSmallMembers = smallMemberThreshold > 0;
             for (ClassFileField field : fields) {
                 String fieldName = field.getFieldName();
                 JavaTypeInstance fieldType = field.getField().getJavaTypeInstance();
@@ -390,6 +393,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                     fieldsByName.put(fieldName, perNameMap);
                 }
                 perNameMap.put(fieldType, field);
+                if (renameSmallMembers && fieldName.length() <= smallMemberThreshold) {
+                    field.getField().setDisambiguate();
+                }
             }
             boolean warnAmbig = false;
             for (Map<JavaTypeInstance, ClassFileField> typeMap : fieldsByName.values()) {

@@ -110,7 +110,7 @@ public class AssertRewriter {
 
             ClassFileField field;
             try {
-                field = classFile.getFieldByName(staticVariable.getVarName(), staticVariable.getInferredJavaType().getJavaTypeInstance());
+                field = classFile.getFieldByName(staticVariable.getFieldName(), staticVariable.getInferredJavaType().getJavaTypeInstance());
             } catch (NoSuchFieldException e) {
                 return;
             }
