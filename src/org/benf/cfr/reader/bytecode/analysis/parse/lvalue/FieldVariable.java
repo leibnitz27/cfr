@@ -9,15 +9,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryFieldRef;
 import org.benf.cfr.reader.state.TypeUsageCollector;
-import org.benf.cfr.reader.util.CannotLoadClassException;
-import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -25,111 +19,37 @@ import org.benf.cfr.reader.util.output.Dumper;
 /**
  * Note - a field variable LValue means an lValue of ANY object.
  */
-public class FieldVariable extends AbstractLValue {
+public class FieldVariable extends AbstractFieldVariable {
 
     private Expression object;
 
-    private final ClassFile classFile;
-    private final ClassFileField classFileField;
-    private final String failureName; // if we can't get the classfileField.
-    private final JavaTypeInstance owningClass;
-
-    public FieldVariable(Expression object, ClassFile classFile, ConstantPoolEntry field) {
-        super(getFieldType((ConstantPoolEntryFieldRef) field));
-        this.classFile = classFile;
+    public FieldVariable(Expression object, ConstantPoolEntry field) {
+        super(field);
         this.object = object;
-        ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) field;
-        this.classFileField = getField(fieldRef);
-        this.failureName = fieldRef.getLocalName();
-        this.owningClass = fieldRef.getClassEntry().getTypeInstance();
     }
 
-    private FieldVariable(InferredJavaType type, Expression object, ClassFile classFile, ClassFileField classFileField, String failureName, JavaTypeInstance owningClass) {
-        super(type);
-        this.object = object;
-        this.classFile = classFile;
-        this.classFileField = classFileField;
-        this.failureName = failureName;
-        this.owningClass = owningClass;
+    private FieldVariable(FieldVariable other, CloneHelper cloneHelper) {
+        super(other);
+        this.object = cloneHelper.replaceOrClone(other.object);
     }
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
-        if (classFileField != null) collector.collect(classFileField.getField().getJavaTypeInstance());
-        collector.collect(owningClass);
         super.collectTypeUsages(collector);
+        collector.collectFrom(object);
     }
 
     @Override
     public LValue deepClone(CloneHelper cloneHelper) {
-        return new FieldVariable(getInferredJavaType(), cloneHelper.replaceOrClone(object), classFile, classFileField, failureName, owningClass);
-    }
-
-    @Override
-    public void markFinal() {
-    }
-
-    @Override
-    public boolean isFinal() {
-        return false;
-    }
-
-    public static ClassFileField getField(ConstantPoolEntryFieldRef fieldRef) {
-        String name = fieldRef.getLocalName();
-        JavaRefTypeInstance ref = (JavaRefTypeInstance) fieldRef.getClassEntry().getTypeInstance();
-        try {
-            ClassFile classFile = ref.getClassFile();
-            if (classFile == null) return null;
-
-            ClassFileField field = classFile.getFieldByName(name, fieldRef.getJavaTypeInstance());
-            return field;
-        } catch (NoSuchFieldException ignore) {
-        } catch (CannotLoadClassException ignore) {
-        }
-        return null;
-    }
-
-    static InferredJavaType getFieldType(ConstantPoolEntryFieldRef fieldRef) {
-        String name = fieldRef.getLocalName();
-        JavaRefTypeInstance ref = (JavaRefTypeInstance) fieldRef.getClassEntry().getTypeInstance();
-        try {
-            ClassFile classFile = ref.getClassFile();
-            if (classFile != null) {
-                // this now seems rather pointless, as it's passing the type to GET the type!
-                Field field = classFile.getFieldByName(name, fieldRef.getJavaTypeInstance()).getField();
-                return new InferredJavaType(field.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
-            }
-        } catch (CannotLoadClassException e) {
-        } catch (NoSuchFieldException ignore) {
-        }
-        return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
-    }
-
-    public ClassFileField getClassFileField() {
-        return classFileField;
-    }
-
-    @Override
-    public int getNumberOfCreators() {
-        throw new ConfusedCFRException("NYI");
-    }
-
-    public JavaTypeInstance getOwningClassType() {
-        return owningClass;
+        return new FieldVariable(this, cloneHelper);
     }
 
     /*
      * This will only be meaningful after the inner class constructor transformation.
      */
     public boolean isOuterRef() {
+        ClassFileField classFileField = getClassFileField();
         return classFileField != null && classFileField.isSyntheticOuterRef();
-    }
-
-    public String getFieldName() {
-        if (classFileField == null) {
-            return failureName;
-        }
-        return classFileField.getFieldName();
     }
 
     public Expression getObject() {
@@ -159,15 +79,6 @@ public class FieldVariable extends AbstractLValue {
             object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
             return d.print(".").identifier(getFieldName());
         }
-    }
-
-    @Override
-    public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
-        return new SSAIdentifiers(this, ssaIdentifierFactory);
-    }
-
-    @Override
-    public void collectLValueAssignments(Expression assignedTo, StatementContainer statementContainer, LValueAssignmentCollector lValueAssigmentCollector) {
     }
 
     @Override
@@ -205,16 +116,23 @@ public class FieldVariable extends AbstractLValue {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null) return false;
         if (o == this) return true;
 
         if (!(o instanceof FieldVariable)) return false;
         FieldVariable other = (FieldVariable) o;
 
+        if (!super.equals(o)) return false;
         if (!object.equals(other.object)) return false;
-        if (!getFieldName().equals(other.getFieldName())) return false;
         return true;
     }
 
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this);
+//        throw new ConfusedCFRException("Mutable object");
+//        int hashcode = super.hashCode();
+//        if (object != null) hashcode = hashcode * 13 + object.hashCode();
+//        return hashcode;
+    }
 
 }

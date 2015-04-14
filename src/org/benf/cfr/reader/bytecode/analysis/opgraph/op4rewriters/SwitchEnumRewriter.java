@@ -109,7 +109,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         }
 
         StaticVariable staticLookupTable = (StaticVariable) lookupTable;
-        JavaTypeInstance classInfo = staticLookupTable.getOwningClassTypeInstance();  // The inner class
+        JavaTypeInstance classInfo = staticLookupTable.getOwningClassType();  // The inner class
         String varName = staticLookupTable.getFieldName();
 
         /*

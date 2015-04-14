@@ -20,7 +20,6 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
-import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.AccessFlagMethod;
@@ -253,7 +252,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         if (isStatic) {
             // let's be paranoid, and make sure that it's a static on the accessor class.
             StaticVariable staticVariable = (StaticVariable) accessorMatchCollector.lValue;
-            if (!otherType.equals(staticVariable.getOwningClassTypeInstance())) return null;
+            if (!otherType.equals(staticVariable.getOwningClassType())) return null;
         }
 
         /*

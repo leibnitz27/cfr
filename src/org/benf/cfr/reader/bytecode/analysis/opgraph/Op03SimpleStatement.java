@@ -558,6 +558,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.ssaIdentifiers = newIdentifiers;
     }
 
+
+    /*
+     * FIXME - the problem here is that LValues COULD be mutable.  FieldValue /is/ mutable.
+     *
+     * Therefore we can't keep it as a key!!!!!!
+     */
     public static void assignSSAIdentifiers(Method method, List<Op03SimpleStatement> statements) {
 
         SSAIdentifierFactory<LValue> ssaIdentifierFactory = new SSAIdentifierFactory<LValue>(null);

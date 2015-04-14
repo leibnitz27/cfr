@@ -53,7 +53,9 @@ public class StackValue extends AbstractExpression {
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         Expression replaceMeWith = lValueRewriter.getLValueReplacement(stackValue, ssaIdentifiers, statementContainer);
-        if (replaceMeWith != null) return replaceMeWith;
+        if (replaceMeWith != null) {
+            return replaceMeWith;
+        }
         return this;
     }
 

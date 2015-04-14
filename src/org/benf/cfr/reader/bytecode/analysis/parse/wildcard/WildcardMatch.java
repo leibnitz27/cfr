@@ -856,7 +856,7 @@ public class WildcardMatch {
             if (!(o instanceof StaticVariable)) return false;
             StaticVariable other = (StaticVariable) o;
 
-            if (!this.getOwningClassTypeInstance().equals(other.getOwningClassTypeInstance())) return false;
+            if (!this.getOwningClassType().equals(other.getOwningClassType())) return false;
             JavaTypeInstance thisType = this.getInferredJavaType().getJavaTypeInstance();
             JavaTypeInstance otherType = other.getInferredJavaType().getJavaTypeInstance();
             if (requireTypeMatch && !thisType.equals(otherType)) {

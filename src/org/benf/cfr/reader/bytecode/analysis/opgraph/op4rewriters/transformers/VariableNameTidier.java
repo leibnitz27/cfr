@@ -102,7 +102,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
             if (lValue.getClass() == StaticVariable.class) {
                 StaticVariable staticVariable = (StaticVariable)lValue;
-                if (staticVariable.getOwningClassTypeInstance().equals(ownerClassType)) {
+                if (staticVariable.getOwningClassType().equals(ownerClassType)) {
                     if (!localScope.isDefined(staticVariable.getFieldName())) {
                         return staticVariable.getSimpleCopy();
                     }
