@@ -126,6 +126,7 @@ public class FieldVariable extends AbstractFieldVariable {
         return true;
     }
 
+    // THIS IS ABSOLUTELY WRONG.
     @Override
     public int hashCode() {
         return System.identityHashCode(this);
