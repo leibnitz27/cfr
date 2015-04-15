@@ -412,7 +412,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         }
         if (accessFlags.contains(AccessFlagMethod.ACC_PROTECTED)) {
             // If it's derived, it can see it - if it's inner, it can see it.
-            if (maybeCaller.getBindingSupers().containsBase(getClassFile().getClassType())) return true;
+            BindingSuperContainer bindingSuperContainer = maybeCaller.getBindingSupers();
+            // paranoia.
+            if (bindingSuperContainer == null) return false;
+            if (bindingSuperContainer.containsBase(getClassFile().getClassType())) return true;
             return isInnerVisibleTo(maybeCaller);
         }
         // Otherwise, we're left with package visibility.
