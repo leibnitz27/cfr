@@ -187,7 +187,9 @@ public class InferredJavaType {
             do {
                 effect = false;
                 for (JavaTypeInstance pos : poss) {
-                    Set<JavaRefTypeInstance> supers = SetFactory.newSet(pos.getBindingSupers().getBoundSuperClasses().keySet());
+                    BindingSuperContainer superContainer = pos.getBindingSupers();
+                    if (superContainer == null) continue;
+                    Set<JavaRefTypeInstance> supers = SetFactory.newSet(superContainer.getBoundSuperClasses().keySet());
                     // but don't remove the actual type.
                     supers.remove(pos);
                     if (poss.removeAll(supers)) {
