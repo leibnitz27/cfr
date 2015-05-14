@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
@@ -22,6 +23,10 @@ public class AnonymousArray {
 
 
     private static boolean resugarAnonymousArray(Op03SimpleStatement newArray, List<Op03SimpleStatement> statements) {
+        Statement stm = newArray.getStatement();
+        if (!(stm instanceof AssignmentSimple)) {
+            return false;
+        }
         AssignmentSimple assignmentSimple = (AssignmentSimple) newArray.getStatement();
         WildcardMatch start = new WildcardMatch();
         if (!start.match(
