@@ -276,8 +276,12 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     public ClassFile getClassFile() {
         if (dcCommonState == null) return null;
-        ClassFile classFile = dcCommonState.getClassFile(this);
-        return classFile;
+        try {
+            ClassFile classFile = dcCommonState.getClassFile(this);
+            return classFile;
+        } catch (CannotLoadClassException e) {
+            return null;
+        }
     }
 
     private static String getShortName(String fullClassName, InnerClassInfo innerClassInfo) {
