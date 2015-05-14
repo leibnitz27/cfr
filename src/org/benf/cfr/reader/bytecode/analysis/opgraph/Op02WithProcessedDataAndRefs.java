@@ -729,7 +729,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LLOAD_WIDE:
             case DLOAD_WIDE:
             case FLOAD_WIDE:
-                throw new UnsupportedOperationException("LOAD_WIDE");
+                idx = getInstrArgShort(1);
+                break;
             default:
                 return null;
         }
@@ -823,14 +824,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 idx = 3;
                 break;
             case IINC_WIDE:
-                idx = getInstrArgShort(1);
-                break;
             case ASTORE_WIDE:
             case ISTORE_WIDE:
             case LSTORE_WIDE:
             case DSTORE_WIDE:
             case FSTORE_WIDE:
-                throw new UnsupportedOperationException("STORE_WIDE");
+                idx = getInstrArgShort(1);
+                break;
             default:
                 return null;
         }
@@ -881,6 +881,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LLOAD_3:
             case DLOAD_3:
             case FLOAD_3:
+            case ALOAD_WIDE:
+            case ILOAD_WIDE:
+            case LLOAD_WIDE:
+            case FLOAD_WIDE:
+            case DLOAD_WIDE:
                 return mkRetrieve(variableFactory);
             case ACONST_NULL:
                 return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getNull()));
@@ -941,6 +946,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LSTORE_3:
             case DSTORE_3:
             case FSTORE_3:
+            case ISTORE_WIDE:
+            case ASTORE_WIDE:
+            case LSTORE_WIDE:
+            case DSTORE_WIDE:
+            case FSTORE_WIDE:
                 return mkAssign(variableFactory);
             case NEW:
                 return new AssignmentSimple(getStackLValue(0), new NewObject(cpEntries[0]));
