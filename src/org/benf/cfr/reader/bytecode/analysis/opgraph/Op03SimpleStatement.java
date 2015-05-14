@@ -2378,9 +2378,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // We have to be sure that moving this to the for doesn't violate SSA versions.
             //
             Op03SimpleStatement initialValue = findMovableAssignment(statement, loopVariablePoss);
-            if (loopVariableOp == null || initialValue.getIndex().isBackJumpTo(loopVariableOp)) {
-                loopVariableOp = initialValue;
-                loopVariable = loopVariablePoss;
+            if (initialValue != null) {
+                if (loopVariableOp == null || initialValue.getIndex().isBackJumpTo(loopVariableOp)) {
+                    loopVariableOp = initialValue;
+                    loopVariable = loopVariablePoss;
+                }
             }
         }
         if (loopVariable == null) return;
