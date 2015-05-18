@@ -69,6 +69,24 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
     }
 
     @Override
+    public boolean hasL01Wildcard() {
+        for (JavaTypeInstance type : genericTypes) {
+            if (type instanceof JavaWildcardTypeInstance) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public JavaTypeInstance getWithoutL01Wildcard() {
+        List<JavaTypeInstance> unwildCarded = ListFactory.newList();
+        for (JavaTypeInstance type : genericTypes) {
+            if (type instanceof JavaWildcardTypeInstance) type = ((JavaWildcardTypeInstance) type).getWithoutL01Wildcard();
+            unwildCarded.add(type);
+        }
+        return new JavaGenericRefTypeInstance(typeInstance, unwildCarded);
+    }
+
+    @Override
     public JavaGenericRefTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
         if (genericTypeBinder == null) {
             return this;

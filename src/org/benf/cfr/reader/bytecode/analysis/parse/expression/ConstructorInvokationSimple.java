@@ -38,10 +38,17 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
         return Precedence.PAREN_SUB_MEMBER;
     }
 
+    private JavaTypeInstance getFinalDisplayTypeInstance() {
+        JavaTypeInstance res = getTypeInstance();
+        if (!(res instanceof JavaGenericBaseInstance)) return res;
+        if (!((JavaGenericBaseInstance) res).hasL01Wildcard()) return res;
+        res = ((JavaGenericBaseInstance) res).getWithoutL01Wildcard();
+        return res;
+    }
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        JavaTypeInstance clazz = super.getTypeInstance();
+        JavaTypeInstance clazz = getFinalDisplayTypeInstance();
         List<Expression> args = getArgs();
         MethodPrototype prototype = constructorInvokation.getMethodPrototype();
 
@@ -59,6 +66,7 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
                 d.dump(a1).print('.');
             }
         }
+
         d.print("new ").dump(clazz).print("(");
         boolean first = true;
         for (int i = 0; i < args.size(); ++i) {

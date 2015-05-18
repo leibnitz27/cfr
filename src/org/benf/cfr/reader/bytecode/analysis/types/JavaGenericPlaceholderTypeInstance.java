@@ -34,6 +34,16 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     @Override
+    public boolean hasL01Wildcard() {
+        return false;
+    }
+
+    @Override
+    public JavaTypeInstance getWithoutL01Wildcard() {
+        return this;
+    }
+
+    @Override
     public List<JavaTypeInstance> getGenericTypes() {
         return ListFactory.<JavaTypeInstance>newList(this);
     }

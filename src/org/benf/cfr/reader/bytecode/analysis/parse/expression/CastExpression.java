@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaWildcardTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -52,10 +53,17 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         return Precedence.UNARY_OTHER;
     }
 
+    /*
+     * Actions in here make this slightly gross.  Would be nicer to convert ahead of time.
+     */
     @Override
     public Dumper dumpInner(Dumper d) {
         JavaTypeInstance castType = getInferredJavaType().getJavaTypeInstance();
-        if (child.getInferredJavaType().getJavaTypeInstance() == RawJavaType.BOOLEAN &&
+        while (castType instanceof JavaWildcardTypeInstance) {
+            castType = ((JavaWildcardTypeInstance) castType).getUnderlyingType();
+        }
+        JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
+        if (childType == RawJavaType.BOOLEAN &&
                 !(RawJavaType.BOOLEAN.implicitlyCastsTo(castType, null))) {
             // This is ugly.  Unfortunately, it's necessary (currently!) as we don't have an extra pass to
             // transform invalid casts like this.

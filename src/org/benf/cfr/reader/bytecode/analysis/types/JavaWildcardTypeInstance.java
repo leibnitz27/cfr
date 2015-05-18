@@ -28,6 +28,16 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
         }
     }
 
+    @Override
+    public boolean hasL01Wildcard() {
+        return true;
+    }
+
+    @Override
+    public JavaTypeInstance getWithoutL01Wildcard() {
+        return underlyingType;
+    }
+
     public JavaTypeInstance getUnderlyingType() {
         return underlyingType;
     }
