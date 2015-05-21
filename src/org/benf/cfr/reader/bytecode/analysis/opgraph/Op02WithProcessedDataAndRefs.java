@@ -412,12 +412,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         DynamicInvokeType dynamicInvokeType = DynamicInvokeType.lookup(methodName);
 
-        if (dynamicInvokeType == DynamicInvokeType.UNKNOWN) {
-            throw new IllegalStateException("MetaFactory usage [" + methodName + "] not recognised.");
-        }
-
         List<Expression> callargs;
         switch (dynamicInvokeType) {
+            case UNKNOWN:
             case BOOTSTRAP: {
                 callargs = buildInvokeBootstrapArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
                 List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
