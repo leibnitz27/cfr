@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpressi
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -262,4 +263,56 @@ public class Misc {
         return b1;
     }
 
+
+    public static class GraphVisitorBlockReachable implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
+
+        private final Op03SimpleStatement start;
+        private final BlockIdentifier blockIdentifier;
+        private final Set<Op03SimpleStatement> found = SetFactory.newSet();
+        private final Set<Op03SimpleStatement> exits = SetFactory.newSet();
+
+        private GraphVisitorBlockReachable(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
+            this.start = start;
+            this.blockIdentifier = blockIdentifier;
+        }
+
+        @Override
+        public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+            if (arg1 == start || arg1.getBlockIdentifiers().contains(blockIdentifier)) {
+                found.add(arg1);
+                for (Op03SimpleStatement target : arg1.getTargets()) arg2.enqueue(target);
+            } else {
+                exits.add(arg1);
+            }
+        }
+
+        public Set<Op03SimpleStatement> privGetBlockReachable() {
+            GraphVisitorDFS<Op03SimpleStatement> reachableInBlock = new GraphVisitorDFS<Op03SimpleStatement>(
+                    start,
+                    this
+            );
+            reachableInBlock.process();
+            return found;
+        }
+
+        public static Set<Op03SimpleStatement> getBlockReachable(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
+            GraphVisitorBlockReachable r = new GraphVisitorBlockReachable(start, blockIdentifier);
+            return r.privGetBlockReachable();
+        }
+
+        public Pair<Set<Op03SimpleStatement>, Set<Op03SimpleStatement>> privGetBlockReachableAndExits() {
+            GraphVisitorDFS<Op03SimpleStatement> reachableInBlock = new GraphVisitorDFS<Op03SimpleStatement>(
+                    start,
+                    this
+            );
+            reachableInBlock.process();
+            return Pair.make(found,exits);
+        }
+
+        public static Pair<Set<Op03SimpleStatement>, Set<Op03SimpleStatement>> getBlockReachableAndExits(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
+            GraphVisitorBlockReachable r = new GraphVisitorBlockReachable(start, blockIdentifier);
+            return r.privGetBlockReachableAndExits();
+        }
+
+    }
 }

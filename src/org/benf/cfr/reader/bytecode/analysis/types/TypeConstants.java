@@ -7,6 +7,8 @@ public interface TypeConstants {
     public final static JavaRefTypeInstance STRING = JavaRefTypeInstance.createTypeConstant("java.lang.String", "String", OBJECT);
     public final static JavaRefTypeInstance CLASS = JavaRefTypeInstance.createTypeConstant("java.lang.Class", "Class", OBJECT);
     public final static JavaRefTypeInstance ITERABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Iterable", "Iterable", OBJECT);
+    public final static JavaRefTypeInstance CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.io.Closeable", "Closeable", OBJECT);
+    public final static JavaRefTypeInstance THROWABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Throwable", "Throwable", OBJECT);
 
     public final static String boxingNameBoolean = "java.lang.Boolean";
     public final static String boxingNameByte = "java.lang.Byte";

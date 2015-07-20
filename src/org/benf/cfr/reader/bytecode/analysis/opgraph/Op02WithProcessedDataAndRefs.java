@@ -1945,7 +1945,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             if (other == this) return 0;
             int startCompare = triggeringGroup.getBytecodeIndexFrom() - other.triggeringGroup.getBytecodeIndexFrom();
             if (startCompare != 0) return startCompare;
-            int endCompare = triggeringGroup.getByteCodeIndexTo() - triggeringGroup.getByteCodeIndexTo();
+            int endCompare = triggeringGroup.getByteCodeIndexTo() - other.triggeringGroup.getByteCodeIndexTo();
             return 0 - endCompare;
 //            throw new ConfusedCFRException("Can't compare these exception groups.");
         }

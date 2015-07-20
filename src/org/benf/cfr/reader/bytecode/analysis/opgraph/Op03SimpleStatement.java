@@ -1923,7 +1923,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             found.add(nstm);
             nextIdx++;
         } while (nextIdx < cnt);
-        Set<Op03SimpleStatement> reachable = new GraphVisitorBlockReachable(stm, blockIdentifier).run();
+        Set<Op03SimpleStatement> reachable = Misc.GraphVisitorBlockReachable.getBlockReachable(stm, blockIdentifier);
         if (!reachable.equals(found)) return null;
         nextIdx--;
         if (reachable.isEmpty()) return null;
@@ -3075,48 +3075,18 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return in;
     }
 
-    private static class GraphVisitorBlockReachable implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
-
-        private final Op03SimpleStatement start;
-        private final BlockIdentifier blockIdentifier;
-        private final Set<Op03SimpleStatement> found = SetFactory.newSet();
-
-        private GraphVisitorBlockReachable(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
-            this.start = start;
-            this.blockIdentifier = blockIdentifier;
-        }
-
-        @Override
-        public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-            if (arg1 == start || arg1.getBlockIdentifiers().contains(blockIdentifier)) {
-                found.add(arg1);
-                for (Op03SimpleStatement target : arg1.getTargets()) arg2.enqueue(target);
-            }
-        }
-
-        public Set<Op03SimpleStatement> run() {
-            GraphVisitorDFS<Op03SimpleStatement> reachableInBlock = new GraphVisitorDFS<Op03SimpleStatement>(
-                    start,
-                    this
-            );
-            reachableInBlock.process();
-            return found;
-        }
-
-    }
-
 
     private static void combineTryCatchBlocks(final Op03SimpleStatement tryStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
         Set<Op03SimpleStatement> allStatements = SetFactory.newSet();
         TryStatement innerTryStatement = (TryStatement) tryStatement.getStatement();
 
-        allStatements.addAll(new GraphVisitorBlockReachable(tryStatement, innerTryStatement.getBlockIdentifier()).run());
+        allStatements.addAll(Misc.GraphVisitorBlockReachable.getBlockReachable(tryStatement, innerTryStatement.getBlockIdentifier()));
 
         // all in block, reachable
         for (Op03SimpleStatement target : tryStatement.getTargets()) {
             if (target.containedStatement instanceof CatchStatement) {
                 CatchStatement catchStatement = (CatchStatement) target.containedStatement;
-                allStatements.addAll(new GraphVisitorBlockReachable(target, catchStatement.getCatchBlockIdent()).run());
+                allStatements.addAll(Misc.GraphVisitorBlockReachable.getBlockReachable(target, catchStatement.getCatchBlockIdent()));
             }
         }
 
