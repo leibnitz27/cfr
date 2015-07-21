@@ -1,8 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
@@ -20,10 +23,7 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class VariableNameTidier implements StructuredStatementTransformer {
 
@@ -31,10 +31,16 @@ public class VariableNameTidier implements StructuredStatementTransformer {
     private boolean classRenamed = false;
     // Used for detecting static accesses we can mark as accessible via the simple name.
     private final JavaTypeInstance ownerClassType;
+    private final Set<String> bannedNames;
 
-    public VariableNameTidier(Method method) {
+    public VariableNameTidier(Method method, Set<String> bannedNames) {
         this.method = method;
         this.ownerClassType = method.getClassFile().getClassType();
+        this.bannedNames = bannedNames;
+    }
+
+    public VariableNameTidier(Method method) {
+        this(method, new HashSet<String>());
     }
 
     public void transform(Op04StructuredStatement root) {
@@ -44,7 +50,68 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         for (LocalVariable param : params) {
             structuredScopeWithVars.defineHere(null, param);
         }
+
         root.transform(this, structuredScopeWithVars);
+    }
+
+    /*
+     * One pass to collect all the variables that are used, and a second to rename the bad ones.
+     * We do this so that legitimate name introductions for top level variables don't cause inner scope
+     * ones to be renamed as collisions.
+     *
+     * { int BADNAME;
+     * for (int a=0;a<10;++a);
+     * for (int a=0;a<10;++a); // shouldn't rename BADNAME -> a.
+     */
+    public static class NameDiscoverer extends AbstractExpressionRewriter implements StructuredStatementTransformer {
+        private final Set<String> usedNames = SetFactory.newSet();
+        private static final Set<String> EMPTY = SetFactory.newSet();
+
+        private NameDiscoverer() {
+        }
+
+
+        private void addLValues(Collection<LValue> definedHere) {
+            if (definedHere == null) return;
+            for (LValue scopedEntity : definedHere) {
+                if (scopedEntity instanceof LocalVariable) {
+                    NamedVariable namedVariable = ((LocalVariable) scopedEntity).getName();
+                    usedNames.add(namedVariable.getStringName());
+                }
+            }
+        }
+
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            /*
+             * Check if this statement has any embedded lambdas, as these can define clashing scopes.
+             * Note that we /WONT/ collect these as definedHere, as they don't ever generate or escape
+             * a scope.
+             */
+            in.rewriteExpressions(this);
+
+            in.transformStructuredChildren(this, scope);
+            return in;
+        }
+
+        @Override
+        public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            if (expression instanceof LambdaExpression) {
+                addLValues(((LambdaExpression) expression).getArgs());
+                return expression;
+            } else {
+                return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+            }
+
+        }
+
+        public static Set<String> getUsedLambdaNames(BytecodeMeta bytecodeMeta, Op04StructuredStatement in) {
+            if (!bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.USES_INVOKEDYNAMIC)) {
+                return EMPTY;
+            }
+            NameDiscoverer discoverer = new NameDiscoverer();
+            in.transform(discoverer, new StructuredScope());
+            return discoverer.usedNames;
+        }
     }
 
     public void renameToAvoidHiding(Set<String> avoid, List<LocalVariable> collisions) {
@@ -134,6 +201,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         }
 
         private boolean alreadyDefined(String name) {
+            if (bannedNames.contains(name)) return true;
             for (AtLevel atLevel : scope) {
                 if (atLevel.isDefinedHere(name)) {
                     return true;

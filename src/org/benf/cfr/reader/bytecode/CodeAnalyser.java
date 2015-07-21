@@ -836,7 +836,7 @@ public class CodeAnalyser {
 
             Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
             // Tidy variable names
-            Op04StructuredStatement.tidyVariableNames(method, block, comments);
+            Op04StructuredStatement.tidyVariableNames(method, block, bytecodeMeta, comments);
 
             Op04StructuredStatement.miscKeyholeTransforms(block);
 

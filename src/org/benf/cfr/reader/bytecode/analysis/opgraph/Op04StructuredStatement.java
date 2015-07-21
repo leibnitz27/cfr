@@ -665,8 +665,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         root.transform(new UnstructuredIfConverter(), new StructuredScope());
     }
 
-    public static void tidyVariableNames(Method method, Op04StructuredStatement root, DecompilerComments comments) {
-        VariableNameTidier variableNameTidier = new VariableNameTidier(method);
+    public static void tidyVariableNames(Method method, Op04StructuredStatement root, BytecodeMeta bytecodeMeta, DecompilerComments comments) {
+        VariableNameTidier variableNameTidier = new VariableNameTidier(method, VariableNameTidier.NameDiscoverer.getUsedLambdaNames(bytecodeMeta, root));
         variableNameTidier.transform(root);
 
         if (variableNameTidier.isClassRenamed()) {
