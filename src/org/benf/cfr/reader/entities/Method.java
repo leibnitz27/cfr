@@ -376,6 +376,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return codeAttribute != null;
     }
 
+    public AttributeCode getCodeAttribute() {
+        return codeAttribute;
+    }
+
     public void dumpComments(Dumper d) {
         if (comments != null) {
             comments.dump(d);

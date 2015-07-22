@@ -102,6 +102,13 @@ public class AttributeCode extends Attribute {
         return null;
     }
 
+    public AttributeLineNumberTable getLineNumberTable() {
+        for (Attribute attribute : attributes) {
+            if (attribute instanceof AttributeLineNumberTable) return (AttributeLineNumberTable) attribute;
+        }
+        return null;
+    }
+
     public ByteData getRawData() {
         return rawData;
     }

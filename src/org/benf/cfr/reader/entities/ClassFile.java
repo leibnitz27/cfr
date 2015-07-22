@@ -140,8 +140,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         final long OFFSET_OF_METHODS_COUNT = OFFSET_OF_FIELDS + fieldsLength;
         final long OFFSET_OF_METHODS = OFFSET_OF_METHODS_COUNT + 2;
         final short numMethods = data.getS2At(OFFSET_OF_METHODS_COUNT);
-        ArrayList<Method> tmpMethods = new ArrayList<Method>();
-        tmpMethods.ensureCapacity(numMethods);
+        List<Method> tmpMethods = new ArrayList<Method>(numMethods);
         final long methodsLength = ContiguousEntityFactory.build(data.getOffsetData(OFFSET_OF_METHODS), numMethods, tmpMethods,
                 new UnaryFunction<ByteData, Method>() {
                     @Override
@@ -149,6 +148,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                         return new Method(arg, ClassFile.this, constantPool, dcCommonState, cfv);
                     }
                 });
+//        tmpMethods = MethodOrdering.sort(tmpMethods);
         this.methods = tmpMethods;
         if (accessFlags.contains(AccessFlag.ACC_STRICT)) {
             for (Method method : tmpMethods) {
