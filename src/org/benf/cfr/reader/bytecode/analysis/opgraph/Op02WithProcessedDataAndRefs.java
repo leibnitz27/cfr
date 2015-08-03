@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecovery;
 import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
