@@ -125,6 +125,7 @@ public class GetOptParser {
                     if (x >= in.length - 1)
                         throw new BadParametersException("parameter " + name + " requires argument", optionProvider);
                     res.put(name, in[++x]);
+                    // invoke, to test that this is a valid argument early.
                     optData.getArgument().getFn().invoke(res.get(name), null);
                 }
             } else {
