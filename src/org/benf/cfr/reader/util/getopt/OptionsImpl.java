@@ -300,7 +300,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Integer> AGGRESSIVE_SIZE_REDUCTION_THRESHOLD = new PermittedOptionProvider.Argument<Integer>(
             "aggressivesizethreshold", new DefaultingIntDecoder(15000),
             "Opcode count at which to trigger aggressive reductions");
-
+    public static final PermittedOptionProvider.Argument<Boolean> STATIC_INIT_RETURN = new PermittedOptionProvider.Argument<Boolean>(
+            "staticinitreturn", defaultTrueBooleanDecoder,
+            "Try to remove return from static init");
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
         this.fileName = fileName;

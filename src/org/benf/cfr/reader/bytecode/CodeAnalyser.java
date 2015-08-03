@@ -95,7 +95,8 @@ public class CodeAnalyser {
 
     private static final RecoveryOptions recover0 = new RecoveryOptions(
             new RecoveryOption.TrooleanRO(OptionsImpl.RECOVER_TYPECLASHES, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.LIVENESS_CLASH)),
-            new RecoveryOption.TrooleanRO(OptionsImpl.USE_RECOVERED_ITERATOR_TYPE_HINTS, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.ITERATED_TYPE_HINTS))
+            new RecoveryOption.TrooleanRO(OptionsImpl.USE_RECOVERED_ITERATOR_TYPE_HINTS, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.ITERATED_TYPE_HINTS)),
+            new RecoveryOption.BooleanRO(OptionsImpl.STATIC_INIT_RETURN, Boolean.FALSE)
     );
 
     private static final RecoveryOptions recover0a = new RecoveryOptions(recover0,
@@ -458,6 +459,8 @@ public class CodeAnalyser {
         Op03SimpleStatement.condenseConstruction(dcCommonState, method, op03SimpleParseNodes, anonymousClassUsage);
         LValueProp.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
+
+        op03SimpleParseNodes = StaticInitReturnRewriter.rewrite(options, method, op03SimpleParseNodes);
 
         op03SimpleParseNodes = Op03SimpleStatement.removeRedundantTries(op03SimpleParseNodes);
 
