@@ -124,10 +124,13 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         }
         if (lhs.getInferredJavaType().getJavaTypeInstance() != RawJavaType.BOOLEAN &&
                 Literal.equalsAnyOne(rhs)) {
-            return new ArithmeticPreMutationOperation(lValue, op);
-        } else {
-            return new ArithmeticMutationOperation(lValue, rhs, op);
+            switch (op) {
+                case PLUS:
+                case MINUS:
+                    return new ArithmeticPreMutationOperation(lValue, op);
+            }
         }
+        return new ArithmeticMutationOperation(lValue, rhs, op);
     }
 
     @Override
