@@ -1,7 +1,9 @@
 package org.benf.cfr.reader;
 
+import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.ClassFileSourceImpl;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -10,14 +12,25 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.*;
 
+import java.util.Map;
+
 public class PluginRunner {
-    private DCCommonState dcCommonState = initDCState();
-    private IllegalIdentifierDump illegalIdentifierDump = new IllegalIdentifierDump.Nop();
+    private final DCCommonState dcCommonState;
+    private final IllegalIdentifierDump illegalIdentifierDump = new IllegalIdentifierDump.Nop();
 
     /*
      *
      */
     public PluginRunner() {
+        this(MapFactory.<String, String>newMap(), null);
+    }
+
+    public PluginRunner(Map<String, String> options) {
+        this(options, null);
+    }
+
+    public PluginRunner(Map<String, String> options, ClassFileSource classFileSource) {
+        this.dcCommonState = initDCState(options, classFileSource);
     }
 
     public void addJarPaths(String[] jarPaths) {
@@ -33,9 +46,9 @@ public class PluginRunner {
         }
     }
 
-    public String getDecompilationFor(String className) {
+    public String getDecompilationFor(String classFilePath) {
         try {
-            ClassFile c = dcCommonState.getClassFile(className);
+            ClassFile c = dcCommonState.getClassFile(classFilePath);
             c = dcCommonState.getClassFile(c.getClassType());
             c.loadInnerClasses(dcCommonState);
 
@@ -75,9 +88,10 @@ public class PluginRunner {
         }
     }
 
-    private static DCCommonState initDCState() {
-        OptionsImpl options = new OptionsImpl(null, null, MapFactory.<String, String>newMap());
-        DCCommonState dcCommonState = new DCCommonState(options);
+    private static DCCommonState initDCState(Map<String, String> optionsMap, ClassFileSource classFileSource) {
+        OptionsImpl options = new OptionsImpl(null, null, optionsMap);
+        if (classFileSource == null) classFileSource = new ClassFileSourceImpl(options);
+        DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
         return dcCommonState;
     }
 

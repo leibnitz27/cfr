@@ -1,9 +1,11 @@
 package org.benf.cfr.reader;
 
+import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.relationship.MemberNameResolver;
+import org.benf.cfr.reader.state.ClassFileSourceImpl;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
@@ -170,7 +172,8 @@ public class Main {
             return;
         }
 
-        DCCommonState dcCommonState = new DCCommonState(options);
+        ClassFileSource classFileSource = new ClassFileSourceImpl(options);
+        DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
         String path = options.getFileName();
         String type = options.getOption(OptionsImpl.ANALYSE_AS);
         if (type == null) type = dcCommonState.detectClsJar(path);
