@@ -22,7 +22,8 @@ public class Literal extends AbstractExpression {
     public static final Literal NULL = new Literal(TypedLiteral.getNull());
     // Avoid using directly, as you'll probably end up accidentally implementing equalsAnyOne
     // (I.e. you want to be using equalsAnyOne).
-    private static final Literal INT_ONE = new Literal(TypedLiteral.getInt(1));
+    public static final Literal INT_ZERO = new Literal(TypedLiteral.getInt(0));
+    public static final Literal INT_ONE = new Literal(TypedLiteral.getInt(1));
     private static final Literal LONG_ONE = new Literal(TypedLiteral.getLong(1));
 
     private final TypedLiteral value;

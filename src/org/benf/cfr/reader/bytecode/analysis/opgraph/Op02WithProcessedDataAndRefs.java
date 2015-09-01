@@ -850,6 +850,18 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, ident, originalRawOffset)));
     }
 
+    private static Expression ensureNonBool(Expression e) {
+        InferredJavaType inferredJavaType = e.getInferredJavaType();
+        if (inferredJavaType.getRawType() == RawJavaType.BOOLEAN) {
+            if (inferredJavaType.getSource() == InferredJavaType.Source.LITERAL) {
+                e.getInferredJavaType().useInArithOp(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL), true);
+            } else {
+                e = new TernaryExpression(new BooleanExpression(e), Literal.INT_ONE, Literal.INT_ZERO);
+            }
+        }
+        return e;
+    }
+
     public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory, DCCommonState dcCommonState, TypeHintRecovery typeHintRecovery) {
         switch (instr) {
             case ALOAD:
@@ -1313,9 +1325,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     return new CompoundStatement(s1, s2);
                 }
             case TABLESWITCH:
-                return new RawSwitchStatement(getStackRValue(0), new DecodedTableSwitch(rawData, originalRawOffset));
+                return new RawSwitchStatement(ensureNonBool(getStackRValue(0)), new DecodedTableSwitch(rawData, originalRawOffset));
             case LOOKUPSWITCH:
-                return new RawSwitchStatement(getStackRValue(0), new DecodedLookupSwitch(rawData, originalRawOffset));
+                return new RawSwitchStatement(ensureNonBool(getStackRValue(0)), new DecodedLookupSwitch(rawData, originalRawOffset));
             case IINC: {
                 int variableIndex = getInstrArgU1(0);
                 int incrAmount = getInstrArgByte(1);
