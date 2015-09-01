@@ -15,6 +15,7 @@ import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -103,6 +104,19 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         for (JavaRefTypeInstance inner : inners) {
             types.add(InnerClassInfoUtils.getTransitiveOuterClass(inner));
         }
+        /*
+         * Additional pass to find types we don't want to import for other reasons (default package, etc).
+         *
+         * (as with others, this could be done with an iterator pass to avoid having scan-then-remove,
+         * but this feels cleaner for very little cost).
+         */
+        types.removeAll(Functional.filter(types, new Predicate<JavaRefTypeInstance>() {
+            @Override
+            public boolean test(JavaRefTypeInstance in) {
+                if ("".equals(in.getPackageName())) return true;
+                return false;
+            }
+        }));
 
         List<String> names = Functional.map(types, new UnaryFunction<JavaRefTypeInstance, String>() {
             @Override
