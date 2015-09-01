@@ -39,16 +39,6 @@ public class MutableOptions implements Options {
     }
 
     @Override
-    public String getFileName() {
-        return delegate.getFileName();
-    }
-
-    @Override
-    public String getMethodName() {
-        return delegate.getMethodName();
-    }
-
-    @Override
     public <T> T getOption(PermittedOptionProvider.ArgumentParam<T, Void> option) {
         String override = overrides.get(option.getName());
         if (override != null) {

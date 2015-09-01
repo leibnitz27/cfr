@@ -33,6 +33,10 @@ public class PluginRunner {
         this.dcCommonState = initDCState(options, classFileSource);
     }
 
+    public Options getOptions() {
+        return this.dcCommonState.getOptions();
+    }
+
     public void addJarPaths(String[] jarPaths) {
         for (String jarPath : jarPaths) {
             addJarPath(jarPath);

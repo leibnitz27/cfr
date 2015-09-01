@@ -1,9 +1,6 @@
 package org.benf.cfr.reader.util.getopt;
 
 public interface Options {
-    String getFileName();
-
-    String getMethodName();
 
     boolean optionIsSet(PermittedOptionProvider.ArgumentParam<?, ?> option);
 

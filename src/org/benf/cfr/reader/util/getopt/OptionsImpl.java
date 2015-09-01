@@ -5,8 +5,6 @@ import org.benf.cfr.reader.util.*;
 import java.util.*;
 
 public class OptionsImpl implements Options {
-    private final String fileName;    // Ugly because we confuse parameters and state.
-    private final String methodName;  // Ugly because we confuse parameters and state.
     private final Map<String, String> opts;
 
 
@@ -303,21 +301,18 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> STATIC_INIT_RETURN = new PermittedOptionProvider.Argument<Boolean>(
             "staticinitreturn", defaultTrueBooleanDecoder,
             "Try to remove return from static init");
+    public static final PermittedOptionProvider.Argument<String> FILENAME = new PermittedOptionProvider.Argument<String>(
+            "filename", defaultNullStringDecoder,
+            "Name of file to analyse.");
+    public static final PermittedOptionProvider.Argument<String> METHODNAME = new PermittedOptionProvider.Argument<String>(
+            "methodname", defaultNullStringDecoder,
+            "Name of method to analyse.");
+
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
-        this.fileName = fileName;
-        this.methodName = methodName;
-        this.opts = opts;
-    }
-
-    @Override
-    public String getFileName() {
-        return fileName;
-    }
-
-    @Override
-    public String getMethodName() {
-        return methodName;
+        this.opts = new HashMap<String, String>(opts);
+        this.opts.put(FILENAME.getName(), fileName);
+        this.opts.put(METHODNAME.getName(), methodName);
     }
 
     @Override
@@ -365,15 +360,14 @@ public class OptionsImpl implements Options {
         public Options create(List<String> args, Map<String, String> opts) {
             String fname = null;
             String methodName = null;
+            // Handle positional arguments - only filename and method - everything else is
+            // handled by PermittedOptionProviders.
             switch (args.size()) {
-                case 0:
-                    break;
+                case 2:
+                    methodName = args.get(1);
                 case 1:
                     fname = args.get(0);
-                    break;
-                case 2:
-                    fname = args.get(0);
-                    methodName = args.get(1);
+                case 0:
                     break;
                 default:
                     throw new BadParametersException("Too many unqualified parameters", this);

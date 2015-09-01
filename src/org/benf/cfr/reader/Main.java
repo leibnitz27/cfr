@@ -53,7 +53,7 @@ public class Main {
 
             d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 
-            String methname = options.getMethodName();
+            String methname = options.getOption(OptionsImpl.METHODNAME);
             if (methname == null) {
                 c.dump(d);
             } else {
@@ -167,14 +167,14 @@ public class Main {
             System.exit(1);
         }
 
-        if (options.optionIsSet(OptionsImpl.HELP) || options.getFileName() == null) {
+        if (options.optionIsSet(OptionsImpl.HELP) || options.getOption(OptionsImpl.FILENAME) == null) {
             getOptParser.showHelp(OptionsImpl.getFactory(), options, OptionsImpl.HELP);
             return;
         }
 
         ClassFileSource classFileSource = new ClassFileSourceImpl(options);
         DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
-        String path = options.getFileName();
+        String path = options.getOption(OptionsImpl.FILENAME);
         String type = options.getOption(OptionsImpl.ANALYSE_AS);
         if (type == null) type = dcCommonState.detectClsJar(path);
         if (type.equals("jar")) {
