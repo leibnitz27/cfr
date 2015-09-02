@@ -143,7 +143,8 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
             }
         }
         Expression newchild = boxingRewriter.sugarNonParameterBoxing(child, getInferredJavaType().getJavaTypeInstance());
-        if (newchild.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(child.getInferredJavaType().getJavaTypeInstance(), null)) {
+        if (child != newchild &&
+            newchild.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(child.getInferredJavaType().getJavaTypeInstance(), null)) {
             child = newchild;
         }
         return false;
