@@ -1085,15 +1085,17 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case CHECKCAST: {
                 ConstantPoolEntryClass castTarget = (ConstantPoolEntryClass) cpEntries[0];
                 JavaTypeInstance tgtJavaType = castTarget.getTypeInstance();
-                JavaTypeInstance alreadyJavaType = getStackRValue(0).getInferredJavaType().getJavaTypeInstance();
+                JavaTypeInstance srcJavaType = getStackRValue(0).getInferredJavaType().getJavaTypeInstance();
                 // Have to check against the degenerified type, as checkcast is performed at runtime,
                 // i.e. without generic information.
-                if (tgtJavaType.equals(alreadyJavaType.getDeGenerifiedType())) {
-                    return new AssignmentSimple(getStackLValue(0), getStackRValue(0));
-                } else {
+                Expression rhs = getStackRValue(0);
+                if (!tgtJavaType.equals(srcJavaType.getDeGenerifiedType())) {
+                    // We still have a problem here - if we introduce an extra cast, we might not be ABLE
+                    // to perform this cast without going via 'Object'.  We just don't know currently.
                     InferredJavaType castType = new InferredJavaType(tgtJavaType, InferredJavaType.Source.EXPRESSION, true);
-                    return new AssignmentSimple(getStackLValue(0), new CastExpression(castType, getStackRValue(0)));
+                    rhs = new CastExpression(castType, getStackRValue(0));
                 }
+                return new AssignmentSimple(getStackLValue(0), rhs);
             }
             case INVOKESTATIC: {
                 ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef) cpEntries[0];
