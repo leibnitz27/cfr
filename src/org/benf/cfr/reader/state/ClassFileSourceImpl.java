@@ -140,7 +140,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
             if (dump) {
                 System.out.println("/* ClassPath Diagnostic - searching :" + classPath);
             }
-            String extraClassPath = options.getOption(OptionsImpl.EXTRACLASSPATH);
+            String extraClassPath = options.getOption(OptionsImpl.EXTRA_CLASS_PATH);
             if (null != extraClassPath) {
                 classPath = classPath + File.pathSeparatorChar + extraClassPath;
             }
