@@ -20,24 +20,38 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 public class CastExpression extends AbstractExpression implements BoxingProcessor {
     private Expression child;
+    private boolean forced;
 
     public CastExpression(InferredJavaType knownType, Expression child) {
         super(knownType);
         this.child = child;
+        this.forced = false;
+    }
+
+    public CastExpression(InferredJavaType knownType, Expression child, boolean forced) {
+        super(knownType);
+        this.child = child;
+        this.forced = forced;
+    }
+
+    public boolean isForced() {
+        return forced;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new CastExpression(getInferredJavaType(), cloneHelper.replaceOrClone(child));
+        return new CastExpression(getInferredJavaType(), cloneHelper.replaceOrClone(child), forced);
     }
 
     public boolean couldBeImplicit(GenericTypeBinder gtb) {
+        if (forced) return false;
         JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
         JavaTypeInstance tgtType = getInferredJavaType().getJavaTypeInstance();
         return childType.implicitlyCastsTo(tgtType, gtb);
     }
 
     public boolean couldBeImplicit(JavaTypeInstance tgtType, GenericTypeBinder gtb) {
+        if (forced) return false;
         JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
         return childType.implicitlyCastsTo(tgtType, gtb);
     }

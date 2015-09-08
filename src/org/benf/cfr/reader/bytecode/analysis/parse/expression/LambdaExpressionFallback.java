@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * Needs some work here to unify LambdaExpression and LambdaExpressionFallback.
  */
-public class LambdaExpressionFallback extends AbstractExpression {
+public class LambdaExpressionFallback extends AbstractExpression implements LambdaExpressionCommon {
 
     private JavaTypeInstance callClassType;
     private String lambdaFnName;

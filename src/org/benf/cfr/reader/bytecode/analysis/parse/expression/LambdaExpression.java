@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.CommaHelp;
@@ -20,7 +21,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-public class LambdaExpression extends AbstractExpression {
+public class LambdaExpression extends AbstractExpression implements LambdaExpressionCommon {
 
     private List<LValue> args;
     private Expression result;

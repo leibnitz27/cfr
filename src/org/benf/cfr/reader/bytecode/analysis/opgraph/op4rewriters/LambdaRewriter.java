@@ -70,8 +70,20 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         if (res instanceof CastExpression) {
             Expression child = ((CastExpression) res).getChild();
-            if (child instanceof LambdaExpression || child instanceof LambdaExpressionFallback) {
-                return child;
+            if (child instanceof LambdaExpressionCommon) {
+                JavaTypeInstance resType = res.getInferredJavaType().getJavaTypeInstance();
+                JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
+                if (childType.implicitlyCastsTo(resType, null)) {
+                    return child;
+                } else {
+                    /*
+                     * This is more interesting - the cast doesn't work?  This means we might need to explicitly label
+                     * the lambda expression type.
+                     */
+                    Expression tmp = new CastExpression(child.getInferredJavaType(), child, true);
+                    res = new CastExpression(res.getInferredJavaType(), tmp);
+                    return res;
+                }
             }
         }
         return res;
