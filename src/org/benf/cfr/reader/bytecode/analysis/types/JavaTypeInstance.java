@@ -51,7 +51,12 @@ public interface JavaTypeInstance {
 
     public boolean implicitlyCastsTo(JavaTypeInstance other, GenericTypeBinder gtb);
 
-    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb);
+    /*
+     * Boxing relies on this bad implementation.... :P
+     */
+    public boolean impreciseCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb);
+
+    public boolean correctCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb);
 
     public String suggestVarName();
 

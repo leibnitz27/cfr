@@ -157,7 +157,7 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
 
     @Override
     public JavaTypeInstance getDeGenerifiedType() {
-        return this;
+        return underlyingType;
     }
 
     @Override
@@ -171,8 +171,13 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
+    public boolean impreciseCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         return true;
+    }
+
+    @Override
+    public boolean correctCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
+        return impreciseCanCastTo(other, gtb);
     }
 
     @Override

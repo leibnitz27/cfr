@@ -169,7 +169,7 @@ public class OverloadMethodSet {
                         }
                     }
                     // If it was equal, it would have been satisfied previously.
-                    if ((actual.implicitlyCastsTo(argType, gtb) && actual.canCastTo(argType, gtb))) {
+                    if ((actual.implicitlyCastsTo(argType, gtb) && actual.impreciseCanCastTo(argType, gtb))) {
                         continue;
                     }
                 }
@@ -301,7 +301,7 @@ public class OverloadMethodSet {
         for (MethodData prototype : allPrototypes) {
             JavaTypeInstance arg = prototype.getArgType(idx, actual);
             // If it was equal, it would have been satisfied previously.
-            if (actual.implicitlyCastsTo(arg, null) && actual.canCastTo(arg, gtb)) {
+            if (actual.implicitlyCastsTo(arg, null) && actual.impreciseCanCastTo(arg, gtb)) {
                 matches.add(prototype);
             }
         }
@@ -349,7 +349,7 @@ public class OverloadMethodSet {
         for (MethodData prototype : allPrototypes) {
             JavaTypeInstance arg = prototype.getArgType(idx, actual);
             // If it was equal, it would have been satisfied previously.
-            if (arg != null && actual.implicitlyCastsTo(arg, null) && actual.canCastTo(arg, gtb)) {
+            if (arg != null && actual.implicitlyCastsTo(arg, null) && actual.impreciseCanCastTo(arg, gtb)) {
                 if (arg instanceof RawJavaType) {
                     podMatchExists = true;
                 } else {

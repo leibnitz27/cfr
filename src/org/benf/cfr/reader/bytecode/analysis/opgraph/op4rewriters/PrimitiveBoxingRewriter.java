@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -11,8 +10,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
-import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
@@ -23,17 +20,10 @@ import java.util.List;
  * This seems daft - why do I need to have all this boilerplate?
  * Why not just replace with a cast, and a function pointer.
  */
-public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, ExpressionRewriter {
+public class PrimitiveBoxingRewriter implements ExpressionRewriter {
 
 
     public PrimitiveBoxingRewriter() {
-    }
-
-    @Override
-    public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
-        in.transformStructuredChildren(this, scope);
-        in.rewriteExpressions(this);
-        return in;
     }
 
     @Override
@@ -119,7 +109,7 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
         if (res == in) return in;
         if (!possibleMethods.callsCorrectMethod(res, argIdx, gtb)) {
             if (outerCastType != null) {
-                if (res.getInferredJavaType().getJavaTypeInstance().canCastTo(outerCastType.getJavaTypeInstance(), gtb)) {
+                if (res.getInferredJavaType().getJavaTypeInstance().impreciseCanCastTo(outerCastType.getJavaTypeInstance(), gtb)) {
                     res = new CastExpression(outerCastType, res);
                     if (possibleMethods.callsCorrectMethod(res, argIdx, gtb)) {
                         return res;
@@ -143,6 +133,7 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
 
     public Expression removeRedundantCastOnly(Expression in) {
         if (in instanceof CastExpression) {
+            if (((CastExpression) in).isForced()) return in;
             JavaTypeInstance castType = in.getInferredJavaType().getJavaTypeInstance();
             JavaTypeInstance childType = ((CastExpression) in).getChild().getInferredJavaType().getJavaTypeInstance();
             if (castType.equals(childType)) {
@@ -183,14 +174,18 @@ public class PrimitiveBoxingRewriter implements StructuredStatementTransformer, 
          * nor is
          * (Integer)(double)d .
          */
-        if (!res.getInferredJavaType().getJavaTypeInstance().canCastTo(tgtType, null)) return in;
+        if (!res.getInferredJavaType().getJavaTypeInstance().impreciseCanCastTo(tgtType, null)) {
+            return in;
+        }
         res = sugarNonParameterBoxing(res, tgtType);
         if (recast) {
             CastExpression cast = (CastExpression) in;
-            if (cast.getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType) {
-                if (res.getInferredJavaType().getJavaTypeInstance() instanceof JavaRefTypeInstance) {
-                    // hmm - we've stripped this cast.
-                    res = new CastExpression(cast.getInferredJavaType(), res);
+            if (!cast.isForced()) {
+                if (cast.getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType) {
+                    if (res.getInferredJavaType().getJavaTypeInstance() instanceof JavaRefTypeInstance) {
+                        // hmm - we've stripped this cast.
+                        res = new CastExpression(cast.getInferredJavaType(), res);
+                    }
                 }
             }
         }

@@ -838,6 +838,10 @@ public class CodeAnalyser {
             Op04StructuredStatement.removeUnnecessaryVarargArrays(options, method, block);
 
             Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
+            // After the final boxing rewrite, go back and check for inconvertible type cast
+            // chains.  (BoxingTest37b)
+            Op04StructuredStatement.rewriteBadCastChains(options, method, block);
+
             // Tidy variable names
             Op04StructuredStatement.tidyVariableNames(method, block, bytecodeMeta, comments);
 

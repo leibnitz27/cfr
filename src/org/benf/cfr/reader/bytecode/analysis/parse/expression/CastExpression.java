@@ -130,6 +130,9 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     @Override
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
         // Horrible edge case.  If we're forcibly downcasting a cast, then skip the middle one.
+        if (isForced()) {
+            return false;
+        }
         while (child instanceof CastExpression) {
             CastExpression childCast = (CastExpression) child;
             JavaTypeInstance thisType = getInferredJavaType().getJavaTypeInstance();

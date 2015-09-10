@@ -259,7 +259,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
      * Fixme - shouldn't this use binding supercontainer?
      */
     @Override
-    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
+    public boolean impreciseCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
+        if (this == other || this.equals(other)) return true;
         if (other instanceof RawJavaType) {
             /*
              * If this is boxed, we can unbox, and cast up.
@@ -270,9 +271,40 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             }
             return true;
         }
-
         return true;
     }
+
+    @Override
+    public boolean correctCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
+        if (this == other || this.equals(other)) return true;
+        if (other instanceof RawJavaType) {
+            /*
+             * If this is boxed, we can unbox, and cast up.
+             */
+            RawJavaType thisAsRaw = RawJavaType.getUnboxedTypeFor(this);
+            if (thisAsRaw != null) {
+                return thisAsRaw.equals(other);
+            }
+            return true;
+        }
+        BindingSuperContainer bindingSuperContainer = getBindingSupers();
+        if (bindingSuperContainer == null) {
+            // Don't know, so have to assume so.
+            return true;
+        }
+        if (bindingSuperContainer.containsBase(other)) {
+            return true;
+        }
+        bindingSuperContainer = other.getBindingSupers();
+        if (bindingSuperContainer == null) {
+            return true;
+        }
+        if (bindingSuperContainer.containsBase(this)) {
+            return true;
+        }
+        return false;
+    }
+
 
     public ClassFile getClassFile() {
         if (dcCommonState == null) return null;

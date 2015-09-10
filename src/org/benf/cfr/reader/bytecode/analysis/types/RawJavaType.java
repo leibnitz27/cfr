@@ -192,7 +192,7 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
     @Override
-    public boolean canCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
+    public boolean impreciseCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         if (this.boxedName != null && other instanceof JavaRefTypeInstance) {
             RawJavaType tgt = getUnboxedTypeFor((JavaRefTypeInstance) other);
             if (tgt == null) {
@@ -211,6 +211,12 @@ public enum RawJavaType implements JavaTypeInstance {
         }
         return true;
     }
+
+    @Override
+    public boolean correctCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
+        return impreciseCanCastTo(other, gtb);
+    }
+
 
     @Override
     public String suggestVarName() {

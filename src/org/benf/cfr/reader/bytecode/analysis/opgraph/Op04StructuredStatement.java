@@ -964,7 +964,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public static void removePrimitiveDeconversion(Options options, Method method, Op04StructuredStatement root) {
         if (!options.getOption(OptionsImpl.SUGAR_BOXING)) return;
 
-        root.transform(new PrimitiveBoxingRewriter(), new StructuredScope());
+        root.transform(new ExpressionRewriterTransformer(new PrimitiveBoxingRewriter()), new StructuredScope());
+    }
+
+    public static void rewriteBadCastChains(Options options, Method method, Op04StructuredStatement root) {
+        root.transform(new ExpressionRewriterTransformer(new BadCastChainRewriter()), new StructuredScope());
     }
 
     public static void replaceNestedSyntheticOuterRefs(Op04StructuredStatement root) {
