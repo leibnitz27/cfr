@@ -1049,7 +1049,7 @@ public class WildcardMatch {
         }
 
         @Override
-        public int getSize() {
+        public int getSize(Precedence outerPrecedence) {
             throw new UnsupportedOperationException();
         }
 

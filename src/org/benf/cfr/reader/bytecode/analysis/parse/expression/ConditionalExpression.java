@@ -2,13 +2,14 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 
 import java.util.Set;
 
 public interface ConditionalExpression extends Expression {
     ConditionalExpression getNegated();
 
-    int getSize();
+    int getSize(Precedence outerPrecedence);
 
     ConditionalExpression getDemorganApplied(boolean amNegating);
 

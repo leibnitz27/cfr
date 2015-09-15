@@ -58,8 +58,10 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     }
 
     @Override
-    public int getSize() {
-        return 2 + lhs.getSize() + 2 + rhs.getSize();
+    public int getSize(Precedence outerPrecedence) {
+        Precedence precedence = getPrecedence();
+        int initial = outerPrecedence.compareTo(precedence) < 0 ? 2 : 0;
+        return initial + lhs.getSize(precedence) + 2 + rhs.getSize(precedence);
     }
 
     @Override

@@ -26,7 +26,7 @@ public class BooleanExpression extends AbstractExpression implements Conditional
     }
 
     @Override
-    public int getSize() {
+    public int getSize(Precedence outer) {
         return 1;
     }
 

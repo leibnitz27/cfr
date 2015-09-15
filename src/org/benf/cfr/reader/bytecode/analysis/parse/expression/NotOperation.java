@@ -35,8 +35,8 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
     }
 
     @Override
-    public int getSize() {
-        return 1 + inner.getSize();
+    public int getSize(Precedence outerPrecedence) {
+        return 1 + inner.getSize(getPrecedence());
     }
 
     @Override

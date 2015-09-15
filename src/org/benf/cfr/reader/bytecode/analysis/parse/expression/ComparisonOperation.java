@@ -78,7 +78,7 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     }
 
     @Override
-    public int getSize() {
+    public int getSize(Precedence outerPrecedence) {
         return 3;
     }
 
