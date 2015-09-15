@@ -139,7 +139,8 @@ public class IterLoopRewriter {
                 loopStart.getStatement())) {
             // If the assignment's been pushed down into a conditional, we could have
             // if ((i = a[x]) > 3).  This is why we've avoided pushing that down. :(
-            if (!Misc.findHiddenIter(loopStart.getStatement(), sugariterWC, arrIndex)) {
+            Set<Expression> poison = SetFactory.<Expression>newSet(new LValueExpression(originalLoopVariable));
+            if (!Misc.findHiddenIter(loopStart.getStatement(), sugariterWC, arrIndex, poison)) {
                 return false;
             }
             hiddenIter = true;
@@ -325,7 +326,8 @@ public class IterLoopRewriter {
             isCastExpression = true;
         } else {
             // Try seeing if it's a hidden iter, which has been pushed inside a conditional
-            if (!Misc.findHiddenIter(loopStart.getStatement(), sugariterWC, nextCall)) {
+            Set<Expression> poison = SetFactory.<Expression>newSet(new LValueExpression(iterable));
+            if (!Misc.findHiddenIter(loopStart.getStatement(), sugariterWC, nextCall, poison)) {
                 return;
             }
             hiddenIter = true;

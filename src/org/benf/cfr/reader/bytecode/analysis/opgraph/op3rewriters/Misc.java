@@ -222,9 +222,9 @@ public class Misc {
     }
 
 
-    public static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue) {
+    public static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue, Set<Expression> poison) {
         AssignmentExpression needle = new AssignmentExpression(lValue, rValue);
-        NOPSearchingExpressionRewriter finder = new NOPSearchingExpressionRewriter(needle);
+        NOPSearchingExpressionRewriter finder = new NOPSearchingExpressionRewriter(needle, poison);
 
         statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
         return finder.isFound();
