@@ -6,12 +6,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.ForIterStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.ForStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.WhileStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.Predicate;
@@ -25,6 +24,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class IterLoopRewriter {
+
+    private static Pair<ConditionalExpression, ConditionalExpression> getSplitAnd(ConditionalExpression cnd) {
+        if (!(cnd instanceof BooleanOperation)) return Pair.make(cnd, null);
+        BooleanOperation op = (BooleanOperation)cnd;
+        if (op.getOp() != BoolOp.AND) return Pair.make(cnd, null);
+        return Pair.make(op.getLhs(), op.getRhs());
+    }
 
     /* Given a for loop
  *
@@ -68,11 +74,20 @@ public class IterLoopRewriter {
         boolean incrMatch = assignment.isSelfMutatingOp1(originalLoopVariable, ArithOp.PLUS);
         if (!incrMatch) return false;
 
+        /*
+         * Potential problem is if the condition has been rolled in with another - we need to find the LHS of a deep
+         * and tree.  If there's remainder, we'll need to pull it out into a break, if we do this refactor.
+         */
+        ConditionalExpression condition = forStatement.getCondition();
+        Pair<ConditionalExpression, ConditionalExpression> condpr = getSplitAnd(condition);
+
         if (!wildcardMatch.match(
                 new ComparisonOperation(
                         new LValueExpression(originalLoopVariable),
                         new LValueExpression(wildcardMatch.getLValueWildCard("bound")),
-                        CompOp.LT), forStatement.getCondition())) return false;
+                        CompOp.LT), condpr.getFirst())) {
+            return false;
+        }
 
         LValue originalLoopBound = wildcardMatch.getLValueWildCard("bound").getMatch();
 
@@ -98,8 +113,22 @@ public class IterLoopRewriter {
             }
         }
 
+        /* If we've had to pull out a RHS from the condition, that's what we're interested in, not a
+         * loop start.
+         */
+        Op03SimpleStatement realLoopStart = loop.getTargets().get(0);
+        Op03SimpleStatement loopStart = realLoopStart;
+        if (condpr.getSecond() != null) {
+            /*
+             * If we're using the LHS of a conjunction, we need to assume the RHS
+             * of the conjunction is doing the work of the loop start.
+             * (we'll need to move it into the loop if we actually use this loop!)
+             */
+            IfStatement fakeLoopStm = new IfStatement(condpr.getSecond().getNegated());
+            fakeLoopStm.setJumpType(JumpType.BREAK);
+            loopStart = new Op03SimpleStatement(loopStart.getBlockIdentifiers(), fakeLoopStm, loopStart.getIndex().justBefore());
+        }
 
-        Op03SimpleStatement loopStart = loop.getTargets().get(0);
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
         WildcardMatch.LValueWildcard sugariterWC = wildcardMatch.getLValueWildCard("sugariter");
@@ -192,10 +221,34 @@ public class IterLoopRewriter {
 
 
         loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, arrayStatement));
-        if (hiddenIter) {
-            Misc.replaceHiddenIter(loopStart.getStatement(), sugariterWC.getMatch(), arrIndex);
+        if (loopStart != realLoopStart) {
+            if (hiddenIter) {
+                /*
+                 * TODO : this probably occurs dozens of times.  Factor out.
+                 */
+                // Insert between loopstart and loop.
+                loop.replaceTarget(realLoopStart, loopStart);
+                realLoopStart.replaceSource(loop, loopStart);
+                loopStart.addSource(loop);
+                loopStart.addTarget(realLoopStart);
+                Op03SimpleStatement endStm = loop.getTargets().get(1);
+                loopStart.addTarget(endStm);
+                endStm.addSource(loopStart);
+                Misc.replaceHiddenIter(loopStart.getStatement(), sugariterWC.getMatch(), arrIndex);
+                // This is an infrequent op, and we want to preserve sort
+                statements.add(statements.indexOf(realLoopStart), loopStart);
+            } else {
+                // Nothing to do - pretend we nopped it out!
+            }
         } else {
-            loopStart.nopOut();
+            if (hiddenIter) {
+                /*
+                 * If there was a fake loop start, we need to move it in before this.
+                 */
+                Misc.replaceHiddenIter(loopStart.getStatement(), sugariterWC.getMatch(), arrIndex);
+            } else {
+                loopStart.nopOut();
+            }
         }
         preceeding.nopOut();
         if (prepreceeding != null) {
@@ -232,15 +285,29 @@ public class IterLoopRewriter {
 
         WildcardMatch wildcardMatch = new WildcardMatch();
 
+        ConditionalExpression condition = whileStatement.getCondition();
+        Pair<ConditionalExpression, ConditionalExpression> condpr = getSplitAnd(condition);
+
         if (!wildcardMatch.match(
                 new BooleanExpression(
                         wildcardMatch.getMemberFunction("hasnextfn", "hasNext", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")))
                 ),
-                whileStatement.getCondition())) return;
+                condpr.getFirst())) return;
 
         final LValue iterable = wildcardMatch.getLValueWildCard("iterable").getMatch();
 
-        Op03SimpleStatement loopStart = loop.getTargets().get(0);
+        Op03SimpleStatement realLoopStart = loop.getTargets().get(0);
+        Op03SimpleStatement loopStart = realLoopStart;
+        if (condpr.getSecond() != null) {
+            /*
+             * If we're using the LHS of a conjunction, we need to assume the RHS
+             * of the conjunction is doing the work of the loop start.
+             * (we'll need to move it into the loop if we actually use this loop!)
+             */
+            IfStatement fakeLoopStm = new IfStatement(condpr.getSecond().getNegated());
+            fakeLoopStm.setJumpType(JumpType.BREAK);
+            loopStart = new Op03SimpleStatement(loopStart.getBlockIdentifiers(), fakeLoopStm, loopStart.getIndex().justBefore());
+        }
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
         boolean isCastExpression = false;
@@ -340,10 +407,31 @@ public class IterLoopRewriter {
         }
 
         loop.replaceStatement(new ForIterStatement(blockIdentifier, sugarIter, iterSource));
-        if (hiddenIter) {
-            Misc.replaceHiddenIter(loopStart.getStatement(), sugariterWC.getMatch(), nextCall);
+        if (loopStart != realLoopStart) {
+            if (hiddenIter) {
+                /*
+                 * TODO : this probably occurs dozens of times.  Factor out.
+                 */
+                // Insert between loopstart and loop.
+                loop.replaceTarget(realLoopStart, loopStart);
+                realLoopStart.replaceSource(loop, loopStart);
+                loopStart.addSource(loop);
+                loopStart.addTarget(realLoopStart);
+                Op03SimpleStatement endStm = loop.getTargets().get(1);
+                loopStart.addTarget(endStm);
+                endStm.addSource(loopStart);
+                Misc.replaceHiddenIter(loopStart.getStatement(), sugariterWC.getMatch(), nextCall);
+                // This is an infrequent op, and we want to preserve sort
+                statements.add(statements.indexOf(realLoopStart), loopStart);
+            } else {
+                // Nothing to do - pretend we nopped it out!
+            }
         } else {
-            loopStart.nopOut();
+            if (hiddenIter) {
+                Misc.replaceHiddenIter(loopStart.getStatement(), sugariterWC.getMatch(), nextCall);
+            } else {
+                loopStart.nopOut();
+            }
         }
         preceeding.nopOut();
     }

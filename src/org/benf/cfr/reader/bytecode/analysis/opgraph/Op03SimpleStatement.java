@@ -1051,7 +1051,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     // if (c1) goto a
     // if (c2) goto b
-    // a
+    // a    (equivalently, GOTO a)
     // ->
     // if (!c1 && c2) goto b
 
@@ -1068,7 +1068,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
 
         BoolOp resOp;
-        boolean negate1 = false;
+        boolean negate1;
 
         if (taken1 == fall2) {
             resOp = BoolOp.AND;
@@ -1077,7 +1077,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             resOp = BoolOp.OR;
             negate1 = false;
         } else {
-            return false;
+            Statement fall2stm = fall2.getStatement();
+            if (fall2stm.getClass() == GotoStatement.class && fall2.getTargets().get(0) == taken1) {
+                resOp = BoolOp.AND;
+                negate1 = true;
+            } else {
+                return false;
+            }
         }
 
         ConditionalExpression cond1 = ((IfStatement)if1.getStatement()).getCondition();
@@ -1088,8 +1094,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (negate1) cond1 = cond1.getNegated();
         ConditionalExpression combined = new BooleanOperation(cond1, cond2, resOp);
         combined = combined.simplify();
-        Op03SimpleStatement newTaken = taken2;
-        Op03SimpleStatement newFall = fall2;
         // We need to remove both the targets from the first if, all the sources from the second if (which should be just 1!).
         // Then first if becomes a NOP which points directly to second, and second gets new condition.
         if2.replaceStatement(new IfStatement(combined));
