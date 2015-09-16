@@ -276,7 +276,10 @@ public class Op03Blocks {
                 }
             }
             if (needLinPrev) {
-                block.addSource(linPrev);
+                if (linPrev != null) {
+                    block.addSource(linPrev);
+                    linPrev.addTarget(block);
+                }
             } else {
                 Op03SimpleStatement blockStart = block.getStart();
                 Statement statement = blockStart.getStatement();
@@ -289,6 +292,7 @@ public class Op03Blocks {
                             Block3 lastDep = lastByBlock.get(tryStatement.getBlockIdentifier());
                             if (lastDep != null) {
                                 block.addSource(lastDep);
+                                lastDep.addTarget(block);
                             }
                         }
                     }
