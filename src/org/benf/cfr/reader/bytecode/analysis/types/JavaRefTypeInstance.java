@@ -64,6 +64,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     public void markNotInner() {
         this.innerClassInfo = InnerClassInfo.NOT;
         this.shortName = getShortName(className, innerClassInfo);
+        this.suggestedVarName = null;
     }
 
     @Override
@@ -82,8 +83,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         }
         if (x >= len) return null;
         chars[x] = Character.toLowerCase(chars[x]);
-        displayName = new String(chars, x, len - x);
-        return displayName;
+        suggestedVarName = new String(chars, x, len - x);
+        return suggestedVarName;
     }
 
     private JavaRefTypeInstance(String className, String displayableName, JavaRefTypeInstance[] supers) {
