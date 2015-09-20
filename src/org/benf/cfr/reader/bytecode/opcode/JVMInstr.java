@@ -177,7 +177,7 @@ public enum JVMInstr {
     IXOR(0x82, 0, new StackTypes(StackType.INT, StackType.INT), StackType.INT.asList(), RawJavaType.INT),
     // Note that a JSR shares the GOTO factory.
     JSR(0xa8, 2, StackTypes.EMPTY, StackType.RETURNADDRESS.asList(), RawJavaType.RETURNADDRESS, new OperationFactoryGoto()),
-    JSR_W(0xc9, 4, StackTypes.EMPTY, StackType.RETURNADDRESS.asList(), RawJavaType.VOID),
+    JSR_W(0xc9, 4, StackTypes.EMPTY, StackType.RETURNADDRESS.asList(), RawJavaType.RETURNADDRESS, new OperationFactoryGotoW()),
     L2D(0x8a, 0, StackType.LONG.asList(), StackType.DOUBLE.asList(), RawJavaType.DOUBLE, true),
     L2F(0x89, 0, StackType.LONG.asList(), StackType.FLOAT.asList(), RawJavaType.FLOAT, true),
     L2I(0x88, 0, StackType.LONG.asList(), StackType.INT.asList(), RawJavaType.INT, true),
