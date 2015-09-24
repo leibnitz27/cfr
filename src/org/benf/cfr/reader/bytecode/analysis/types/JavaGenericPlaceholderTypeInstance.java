@@ -131,7 +131,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
 
     @Override
     public JavaTypeInstance removeAnArrayIndirection() {
-        throw new UnsupportedOperationException();
+        return this;
     }
 
     @Override
