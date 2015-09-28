@@ -596,6 +596,20 @@ public class LoopIdentifier {
         start.markBlockStatement(blockIdentifier, lastInBlock, blockEnd, statements);
         statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, blockEnd);
+
+        if (lastInBlock.getStatement().fallsToNext()) {
+            Op03SimpleStatement afterFallThrough = new Op03SimpleStatement(lastInBlock.getBlockIdentifiers(), new GotoStatement(), lastInBlock.getIndex().justAfter());
+            // Fixme - could do this in a seperate pass, but at that point we'd have to do it all the time.
+            // Refector introduction of new loop end?
+            SwitchUtils.checkFixNewCase(afterFallThrough, lastInBlock);
+            Op03SimpleStatement tgt = lastInBlock.getTargets().get(0);
+            lastInBlock.replaceTarget(tgt, afterFallThrough);
+            tgt.replaceSource(lastInBlock, afterFallThrough);
+            afterFallThrough.addSource(lastInBlock);
+            afterFallThrough.addTarget(tgt);
+            statements.add(afterFallThrough);
+            lastInBlock = afterFallThrough;
+        }
         /*
          * is the end of the while loop jumping to something which is NOT directly after it?  If so, we need to introduce
          * an intermediate jump.

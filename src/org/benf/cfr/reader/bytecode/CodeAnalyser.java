@@ -413,7 +413,7 @@ public class CodeAnalyser {
         GenericInferer.inferGenericObjectInfoFromCalls(op03SimpleParseNodes);
 
         // Expand raw switch statements into more useful ones.
-        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory);
+        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, options);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         // Remove 2nd (+) jumps in pointless jump chains.
@@ -518,7 +518,7 @@ public class CodeAnalyser {
             /*
              * Now we've sorted, we need to rebuild switch blocks.....
              */
-            SwitchReplacer.rebuildSwitches(op03SimpleParseNodes);
+            SwitchReplacer.rebuildSwitches(op03SimpleParseNodes, options);
             /*
              * This set of operations is /very/ aggressive.
              */

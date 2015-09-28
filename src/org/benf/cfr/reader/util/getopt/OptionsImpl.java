@@ -310,6 +310,10 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<String> EXTRA_CLASS_PATH = new PermittedOptionProvider.Argument<String>(
             "extraclasspath", defaultNullStringDecoder,
             "additional class path - classes in this classpath will be used if needed.");
+    public static final PermittedOptionProvider.Argument<Boolean> PULL_CODE_CASE = new PermittedOptionProvider.Argument<Boolean>(
+            "pullcodecase", defaultFalseBooleanDecoder,
+            "Pull code into case statements agressively.");
+
 
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
@@ -357,7 +361,7 @@ public class OptionsImpl implements Options {
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_MEMBERS, RENAME_SMALL_MEMBERS,  RENAME_ILLEGAL_IDENTS,
-                    AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, HELP);
+                    AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP);
         }
 
         @Override

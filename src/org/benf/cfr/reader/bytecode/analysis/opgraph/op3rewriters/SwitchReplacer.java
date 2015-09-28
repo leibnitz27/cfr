@@ -17,13 +17,15 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
 import java.util.*;
 
 public class SwitchReplacer {
-    public static void replaceRawSwitches(Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    public static void replaceRawSwitches(Method method, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory, Options options) {
         List<Op03SimpleStatement> switchStatements = Functional.filter(in, new TypeFilter<RawSwitchStatement>(RawSwitchStatement.class));
         // Replace raw switch statements with switches and case statements inline.
         List<Op03SimpleStatement> switches = ListFactory.newList();
@@ -57,9 +59,10 @@ public class SwitchReplacer {
         // without leaving the block.
 
 
+        boolean pullCodeIntoCase = options.getOption(OptionsImpl.PULL_CODE_CASE);
         for (Op03SimpleStatement switchStatement : switches) {
             // (assign switch block).
-            examineSwitchContiguity(switchStatement, in);
+            examineSwitchContiguity(switchStatement, in, pullCodeIntoCase);
             moveJumpsToCaseStatements(switchStatement, in);
             moveJumpsToTerminalIfEmpty(switchStatement, in);
         }
@@ -297,7 +300,7 @@ public class SwitchReplacer {
         }
     }
 
-    public static void rebuildSwitches(List<Op03SimpleStatement> statements) {
+    public static void rebuildSwitches(List<Op03SimpleStatement> statements, Options options) {
 
         List<Op03SimpleStatement> switchStatements = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
         /*
@@ -325,9 +328,10 @@ public class SwitchReplacer {
             SwitchStatement switchStatementInr = (SwitchStatement) switchStatement.getStatement();
             buildSwitchCases(switchStatement, switchStatement.getTargets(), switchStatementInr.getSwitchBlock(), statements);
         }
+        boolean pullCodeIntoCase = options.getOption(OptionsImpl.PULL_CODE_CASE);
         for (Op03SimpleStatement switchStatement : switchStatements) {
             // removePointlessSwitchDefault(switchStatement);
-            examineSwitchContiguity(switchStatement, statements);
+            examineSwitchContiguity(switchStatement, statements, pullCodeIntoCase);
             moveJumpsToTerminalIfEmpty(switchStatement, statements);
         }
 
@@ -348,7 +352,8 @@ public class SwitchReplacer {
 
 
 
-    private static boolean examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
+    private static boolean examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements,
+                                                   boolean pullCodeIntoCase) {
         Set<Op03SimpleStatement> forwardTargets = SetFactory.newSet();
 
         // Create a copy of the targets.  We're going to have to copy because we want to sort.
@@ -394,6 +399,51 @@ public class SwitchReplacer {
                             if (!innerTarget.getBlockIdentifiers().contains(switchBlock)) {
                                 forwardTargets.add(innerTarget);
                             }
+                        }
+                    }
+                }
+            }
+
+            if (pullCodeIntoCase) {
+                /*
+                 * What if the last statement jumps to something which is outside the switch block,
+                 * but held ONLY in common blocks, and has no other parents?
+                 * this is effectively case statement code which has been moved outside, and seems to be
+                 * pretty common for Kotlin to generate.
+                 *
+                 * This is a pretty aggressive operation, as it will seriously alter code which has only one valid
+                 * branch out of the switch, so require an option.
+                 */
+                Op03SimpleStatement lastStatement = statements.get(indexLastInThis);
+                /*
+                 * if the last statement's a GOTO (unconditional), and that target has only one source,
+                 * see if we can pull it up.  Note that we COULD be more aggressive here, but we are
+                 * being cautious.
+                 */
+                if (lastStatement.getStatement().getClass() == GotoStatement.class) {
+                    Set<BlockIdentifier> others = SetFactory.newSet(caseBlock, switchBlock);
+                    Op03SimpleStatement last = lastStatement;
+                    Op03SimpleStatement tgt = last.getTargets().get(0);
+                    InstrIndex moveTo = last.getIndex().justAfter();
+                    while (tgt.getSources().size() == 1 && tgt.getTargets().size() == 1 && SetUtil.difference(lastStatement.getBlockIdentifiers(), tgt.getBlockIdentifiers()).equals(others)) {
+                        tgt.setIndex(moveTo);
+                        moveTo = moveTo.justAfter();
+                        tgt.getBlockIdentifiers().addAll(others);
+                        last = tgt;
+                        tgt = last.getTargets().get(0);
+                    }
+                    if (last != lastStatement) {
+                        if (last.getStatement().getClass() != GotoStatement.class) {
+                            /*
+                             * Need to change last's target to a GOTO, which jumps to last's original target.
+                             */
+                            Op03SimpleStatement newGoto = new Op03SimpleStatement(last.getBlockIdentifiers(), new GotoStatement(), moveTo);
+                            Op03SimpleStatement originalTgt = last.getTargets().get(0);
+                            last.replaceTarget(originalTgt, newGoto);
+                            originalTgt.replaceSource(last, newGoto);
+                            newGoto.addTarget(originalTgt);
+                            newGoto.addSource(last);
+                            statements.add(newGoto);
                         }
                     }
                 }
