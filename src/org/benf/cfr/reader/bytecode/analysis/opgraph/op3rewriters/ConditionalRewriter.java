@@ -370,35 +370,42 @@ lbl10: // 1 sources:
 
         do {
             Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
+            boolean currentParent = false;
+            if (idxCurrent > 0) {
+                Op03SimpleStatement currentPrev = statements.get(idxCurrent-1);
+                if (currentPrev.getTargets().contains(statementCurrent) && currentPrev.getStatement().fallsToNext()) currentParent = true;
+            }
             /* Consider sources of this which jumped forward to get to it.
              *
              */
             InstrIndex currentIndex = statementCurrent.getIndex();
-            for (Op03SimpleStatement source : statementCurrent.getSources()) {
-                if (currentIndex.isBackJumpTo(source)) {
-                    if (!validForwardParents.contains(source)) {
-                        // source from outside the block.  This likely means that we've actually left the block.
-                        // eg
-                        // if (foo) goto Z
-                        // ....
-                        // return 1;
-                        // label:
-                        // statement <-- here.
-                        // ...
-                        // Z
-                        //
-                        // (although it might mean some horrid duffs device style compiler output).
-                        // TODO: CheckForDuff As below.
-                        //if (statementIsReachableFrom(statementCurrent, ifStatement)) return false;
-                        Op03SimpleStatement newJump = new Op03SimpleStatement(ifStatement.getBlockIdentifiers(), new GotoStatement(), statementCurrent.getIndex().justBefore());
-                        if (statementCurrent != ifStatement.getTargets().get(0)) {
-                            Op03SimpleStatement oldTarget = ifStatement.getTargets().get(1);
-                            newJump.addTarget(oldTarget);
-                            newJump.addSource(ifStatement);
-                            ifStatement.replaceTarget(oldTarget, newJump);
-                            oldTarget.replaceSource(ifStatement, newJump);
-                            statements.add(idxCurrent, newJump);
-                            return true;
+            if (!currentParent) {
+                for (Op03SimpleStatement source : statementCurrent.getSources()) {
+                    if (currentIndex.isBackJumpTo(source)) {
+                        if (!validForwardParents.contains(source)) {
+                            // source from outside the block.  This likely means that we've actually left the block.
+                            // eg
+                            // if (foo) goto Z
+                            // ....
+                            // return 1;
+                            // label:
+                            // statement <-- here.
+                            // ...
+                            // Z
+                            //
+                            // (although it might mean some horrid duffs device style compiler output).
+                            // TODO: CheckForDuff As below.
+                            //if (statementIsReachableFrom(statementCurrent, ifStatement)) return false;
+                            Op03SimpleStatement newJump = new Op03SimpleStatement(ifStatement.getBlockIdentifiers(), new GotoStatement(), statementCurrent.getIndex().justBefore());
+                            if (statementCurrent != ifStatement.getTargets().get(0)) {
+                                Op03SimpleStatement oldTarget = ifStatement.getTargets().get(1);
+                                newJump.addTarget(oldTarget);
+                                newJump.addSource(ifStatement);
+                                ifStatement.replaceTarget(oldTarget, newJump);
+                                oldTarget.replaceSource(ifStatement, newJump);
+                                statements.add(idxCurrent, newJump);
+                                return true;
+                            }
                         }
                     }
                 }

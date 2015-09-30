@@ -1684,6 +1684,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
 
+    private static boolean movableJump(JumpType jumpType) {
+        switch (jumpType) {
+            case BREAK:
+            case GOTO_OUT_OF_IF:
+            case CONTINUE:
+                return false;
+            default:
+                return true;
+        }
+    }
 
     /* Remove pointless jumps 
     *
@@ -1759,7 +1769,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     JumpingStatement jumpInnerPrior = (JumpingStatement) innerPrior;
                     Statement jumpingInnerPriorTarget = jumpInnerPrior.getJumpTarget();
                     if (jumpingInnerPriorTarget == innerStatement &&
-                        jumpInnerPrior.getJumpType() != JumpType.BREAK) {
+                        movableJump(jumpInnerPrior.getJumpType())) {
                         statement.nopOut();
                     }
                 }
@@ -1785,7 +1795,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 }
             } else if (innerStatement.getClass() == IfStatement.class) {
                 IfStatement ifStatement = (IfStatement) innerStatement;
-                if (ifStatement.getJumpType() == JumpType.BREAK) continue;
+                if (!movableJump(ifStatement.getJumpType())) continue;
                 Op03SimpleStatement target = statement.targets.get(1);
                 Op03SimpleStatement ultimateTarget = Misc.followNopGotoChain(target, false, false);
                 if (target != ultimateTarget) {
@@ -1912,6 +1922,48 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
         for (Op03SimpleStatement tryi : tries) {
             extractExceptionJumps(tryi, in);
+        }
+    }
+
+    public static void extractAssertionJumps(List<Op03SimpleStatement> in) {
+        /*
+         * If we have
+         *
+         * if () [non-goto-jump XX]
+         * throw new AssertionError
+         *
+         * transform BACK to
+         *
+         * if () goto YYY
+         * throw new AssertionError
+         * YYY:
+         * non-goto-jump XX
+         */
+        WildcardMatch wcm = new WildcardMatch();
+        Statement assertionError = new ThrowStatement(wcm.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR));
+
+        for (int x=0,len=in.size();x<len;++x) {
+            Op03SimpleStatement ostm = in.get(x);
+            Statement stm = ostm.getStatement();
+            if (stm.getClass() != IfStatement.class) continue;
+            IfStatement ifStatement = (IfStatement)stm;
+            if (ifStatement.getJumpType() == JumpType.GOTO) continue;
+            Op03SimpleStatement next = in.get(x+1);
+            if (next.getSources().size() != 1) continue;
+            wcm.reset();
+            if (!assertionError.equals(next.getStatement())) continue;
+            if (!ostm.getBlockIdentifiers().equals(next.getBlockIdentifiers())) continue;
+            GotoStatement reJumpStm = new GotoStatement();
+            reJumpStm.setJumpType(ifStatement.getJumpType());
+            Op03SimpleStatement reJump = new Op03SimpleStatement(ostm.getBlockIdentifiers(), reJumpStm, next.getIndex().justAfter());
+            in.add(x+2, reJump);
+            Op03SimpleStatement origTarget = ostm.getTargets().get(1);
+            ostm.replaceTarget(origTarget, reJump);
+            reJump.addSource(ostm);
+            origTarget.replaceSource(ostm, reJump);
+            reJump.addTarget(origTarget);
+            ifStatement.setJumpType(JumpType.GOTO);
+            len++;
         }
     }
 
@@ -3384,6 +3436,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
     }
+
 
     /*
      * We make use of known ordering here - we expect contents of a catch block to be directly after it, and eligible

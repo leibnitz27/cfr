@@ -597,7 +597,7 @@ public class LoopIdentifier {
         statements.get(idxConditional + 1).markFirstStatementInBlock(blockIdentifier);
         postBlockCache.put(blockIdentifier, blockEnd);
 
-        if (lastInBlock.getStatement().fallsToNext()) {
+        if (lastInBlock.getStatement().fallsToNext() && lastInBlock.getTargets().size() == 1) {
             Op03SimpleStatement afterFallThrough = new Op03SimpleStatement(lastInBlock.getBlockIdentifiers(), new GotoStatement(), lastInBlock.getIndex().justAfter());
             // Fixme - could do this in a seperate pass, but at that point we'd have to do it all the time.
             // Refector introduction of new loop end?

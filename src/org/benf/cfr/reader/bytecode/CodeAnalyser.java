@@ -655,6 +655,8 @@ public class CodeAnalyser {
         // (this removal and re-adding may seem daft, (and it often is), but we normalise code
         // and handle more cases by doing it).
         Op03SimpleStatement.extractExceptionJumps(op03SimpleParseNodes);
+        Op03SimpleStatement.extractAssertionJumps(op03SimpleParseNodes);
+        op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
 
         // Identify simple (nested) conditionals - note that this also generates ternary expressions,
         // if the conditional is simple enough.
@@ -757,6 +759,7 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes, true);
         Op03SimpleStatement.extractExceptionMiddle(op03SimpleParseNodes);
+        Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
 
         /*
