@@ -2906,6 +2906,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (clazz == AssignmentSimple.class) return true;
         if (clazz == CommentStatement.class) return true;
         if (clazz == ExpressionStatement.class) return true;
+        if (clazz == IfExitingStatement.class) return true;
         return false;
     }
 
@@ -2978,19 +2979,21 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
             if (statements.get(nextCandidateIdx) != tryMoveThis) return success;
             if (tryMoveThis.targets.size() != 1) return success;
-            if (tryMoveThis.sources.size() != 1) return success;
-            Op03SimpleStatement beforeTryMove = tryMoveThis.sources.get(0);
+            // If sources > 1, we can't continue processing after this one, but we can do this one.
+            boolean abortNext = (tryMoveThis.sources.size() != 1);
             // Is it in the same exception blocks?
             Set<BlockIdentifier> moveEB = SetFactory.newSet(Functional.filterSet(forwardGoto.getBlockIdentifiers(), exceptionFilter));
             if (!moveEB.equals(exceptionBlocks)) return success;
             /* Move this instruction through the goto
              */
-            beforeTryMove.replaceTarget(tryMoveThis, forwardGoto);
-            forwardGoto.replaceSource(tryMoveThis, beforeTryMove);
-
+            forwardGoto.sources.clear();
+            for (Op03SimpleStatement beforeTryMove : tryMoveThis.sources) {
+                beforeTryMove.replaceTarget(tryMoveThis, forwardGoto);
+                forwardGoto.sources.add(beforeTryMove);
+            }
+            tryMoveThis.sources.clear();
+            tryMoveThis.sources.add(forwardGoto);
             forwardGoto.replaceTarget(lastTarget, tryMoveThis);
-            tryMoveThis.replaceSource(beforeTryMove, forwardGoto);
-
             tryMoveThis.replaceTarget(forwardGoto, lastTarget);
             lastTarget.replaceSource(forwardGoto, tryMoveThis);
 
@@ -3002,6 +3005,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             lastTarget = tryMoveThis;
             nextCandidateIdx--;
             success = true;
+            if (abortNext) return success;
         }
     }
 
