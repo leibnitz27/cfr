@@ -18,6 +18,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -314,5 +315,14 @@ public class Misc {
             return r.privGetBlockReachableAndExits();
         }
 
+    }
+
+
+    public static Set<Op03SimpleStatement> collectAllSources(Collection<Op03SimpleStatement> statements) {
+        Set<Op03SimpleStatement> result = SetFactory.newSet();
+        for (Op03SimpleStatement statement : statements) {
+            result.addAll(statement.getSources());
+        }
+        return result;
     }
 }

@@ -88,6 +88,15 @@ public class Cleaner {
         return result;
     }
 
+    public static void sortAndRenumberFromInPlace(List<Op03SimpleStatement> statements, InstrIndex start) {
+        Collections.sort(statements, new CompareByIndex());
+        for (Op03SimpleStatement statement : statements) {
+            statement.setIndex(start);
+            start = start.justAfter();
+        }
+
+    }
+
     public static void sortAndRenumberInPlace(List<Op03SimpleStatement> statements) {
         // Sort result by existing index.
         Collections.sort(statements, new CompareByIndex());

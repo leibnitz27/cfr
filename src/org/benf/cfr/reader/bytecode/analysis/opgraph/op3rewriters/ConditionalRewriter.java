@@ -609,24 +609,78 @@ lbl10: // 1 sources:
         }
 
 
-        BlockIdentifier ifBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_TAKEN);
-        Misc.markWholeBlock(ifBranch, ifBlockLabel);
         BlockIdentifier elseBlockLabel = null;
-        if (maybeSimpleIfElse) {
-            elseBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_ELSE);
-            if (elseBranch.isEmpty()) {
-                elseBlockLabel = null;
-                maybeSimpleIfElse = false;
-                //throw new IllegalStateException();
-            } else {
-                Misc.markWholeBlock(elseBranch, elseBlockLabel);
-            }
+        if (maybeSimpleIfElse && elseBranch.isEmpty()) {
+            maybeSimpleIfElse = false;
         }
+        boolean flipBlocks = false;
+        doneElse : if (maybeSimpleIfElse) {
+            elseBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_ELSE);
+            Misc.markWholeBlock(elseBranch, elseBlockLabel);
+            /*
+             * Can the else block be escaped?  If not, we have the opportunity to push content from the if block out to after..
+             *
+             * i.e.
+             *
+             * if (x) {
+             *  a
+             *  b
+             * } else {
+             *  c
+             *  return
+             * }
+             *
+             * both a&b could be pushed after the block!
+             */
+            // First - detect if the "if" block-to-be has any foreign sources.
+            Set<Op03SimpleStatement> allIfSources = Misc.collectAllSources(ifBranch);
+            allIfSources.removeAll(ifBranch);
+            allIfSources.remove(ifStatement);
+            if (allIfSources.isEmpty()) break doneElse;
+
+            Op03SimpleStatement elseStart = elseBranch.get(0);
+            Pair<Set<Op03SimpleStatement>, Set<Op03SimpleStatement>> reachinfo = Misc.GraphVisitorBlockReachable.getBlockReachableAndExits(elseStart, elseBlockLabel);
+            Set<Op03SimpleStatement> reachableElse = reachinfo.getFirst();
+
+            if (!(reachableElse.size() == elseBranch.size() && reachinfo.getSecond().isEmpty())) break doneElse;
+
+            // Ok - invert the test, move the if statements after, relabel.
+            innerIfStatement.negateCondition();
+            List<Op03SimpleStatement> targets = ifStatement.getTargets();
+            Op03SimpleStatement tgt0 = targets.get(0);
+            Op03SimpleStatement tgt1 = targets.get(1);
+            targets.clear();
+            targets.add(tgt1);
+            targets.add(tgt0);
+
+            leaveIfBranchGoto = null;
+            List<Op03SimpleStatement> oldIfBranch = ifBranch;
+            ifBranch = elseBranch;
+            elseBranch = null;
+            Collections.sort(ifBranch, new CompareByIndex());
+            Op03SimpleStatement last = ifBranch.get(ifBranch.size()-1);
+            InstrIndex fromHere = last.getIndex().justAfter();
+            Cleaner.sortAndRenumberFromInPlace(oldIfBranch, fromHere);
+            ignoreLocally.removeAll(oldIfBranch);
+            flipBlocks = true;
+            elseBlockLabel.setBlockType(BlockType.SIMPLE_IF_TAKEN);
+        }
+        BlockIdentifier ifBlockLabel = blockIdentifierFactory.getNextBlockIdentifier(BlockType.SIMPLE_IF_TAKEN);
+        if (flipBlocks) {
+            ifBlockLabel = elseBlockLabel;
+            elseBlockLabel = null;
+        } else {
+            Misc.markWholeBlock(ifBranch, ifBlockLabel);
+        }
+
 
         if (leaveIfBranchGoto != null) leaveIfBranchGoto.setJumpType(JumpType.GOTO_OUT_OF_IF);
         innerIfStatement.setJumpType(JumpType.GOTO_OUT_OF_IF);
         innerIfStatement.setKnownBlocks(ifBlockLabel, elseBlockLabel);
         ignoreTheseJumps.addAll(ignoreLocally);
+        if (flipBlocks) {
+            Cleaner.sortAndRenumberInPlace(statements);
+        }
         return true;
     }
 
