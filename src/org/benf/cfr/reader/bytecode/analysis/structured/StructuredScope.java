@@ -61,6 +61,16 @@ public class StructuredScope {
         return res;
     }
 
+    public Set<Op04StructuredStatement> getDirectFallThrough(StructuredStatement structuredStatement) {
+        AtLevel atLevel = scope.getFirst();
+        if (atLevel.statement instanceof Block) {
+            if (atLevel.next != -1) {
+                return (((Block) atLevel.statement).getNextAfter(atLevel.next));
+            }
+        }
+        return SetFactory.newSet();
+    }
+
     // Check if, in the enclosing scope, this statement is the last one (i.e. can a break be dropped)?
     public boolean statementIsLast(StructuredStatement statement) {
         AtLevel atLevel = scope.getFirst();
