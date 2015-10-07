@@ -22,6 +22,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.*;
@@ -786,10 +787,12 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         public void collect(LValue lValue) {
             lValue.collectLValueUsage(this);
             InferredJavaType inferredJavaType = lValue.getInferredJavaType();
-            if (inferredJavaType != null && inferredJavaType.isClash()) {
-                if (lValue instanceof LocalVariable) {
-                    int idx = ((LocalVariable) lValue).getIdx();
-                    if (idx >= 0) clashes.add(idx);
+            if (inferredJavaType != null) {
+                if (inferredJavaType.isClash() || inferredJavaType.getJavaTypeInstance() == RawJavaType.REF) {
+                    if (lValue instanceof LocalVariable) {
+                        int idx = ((LocalVariable) lValue).getIdx();
+                        if (idx >= 0) clashes.add(idx);
+                    }
                 }
             }
         }
