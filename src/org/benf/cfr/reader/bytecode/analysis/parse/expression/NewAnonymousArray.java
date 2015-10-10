@@ -15,7 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -87,7 +87,7 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
         d.print("{");
         boolean first = true;
         for (Expression value : values) {
-            first = CommaHelp.comma(first, d);
+            first = StringUtils.comma(first, d);
             d.dump(value);
         }
         d.print("}");
@@ -120,6 +120,9 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        for (Expression value : values) {
+            value.collectUsedLValues(lValueUsageCollector);
+        }
     }
 
 

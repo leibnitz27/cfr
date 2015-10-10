@@ -99,6 +99,7 @@ public class NewPrimitiveArray extends AbstractNewArray {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        size.collectUsedLValues(lValueUsageCollector);
     }
 
     @Override
