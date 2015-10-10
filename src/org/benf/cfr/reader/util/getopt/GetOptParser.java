@@ -96,10 +96,10 @@ public class GetOptParser {
         System.err.println(getHelp(permittedOptionProvider));
     }
 
-    public <T> void showHelp(PermittedOptionProvider permittedOptionProvider, BadParametersException e) {
+    public <T> void showHelp(PermittedOptionProvider permittedOptionProvider, Exception e) {
         printErrHeader();
         printUsage();
-        System.err.println("Error parsing parameters : " + e.toString() + "\n");
+        System.err.println("Parameter error : " + e.toString() + "\n");
         System.err.println(getHelp(permittedOptionProvider));
     }
 
@@ -126,16 +126,20 @@ public class GetOptParser {
                 String name = in[x].substring(2);
                 OptData optData = optTypeMap.get(name);
                 if (optData == null) {
-                    throw new BadParametersException("Unknown argument " + name, optionProvider);
+                    throw new IllegalArgumentException("Unknown argument " + name);
                 }
                 if (optData.isFlag()) {
                     res.put(name, null);
                 } else {
                     if (x >= in.length - 1)
-                        throw new BadParametersException("parameter " + name + " requires argument", optionProvider);
+                        throw new BadParametersException("Requires argument", optData.getArgument());
                     res.put(name, in[++x]);
                     // invoke, to test that this is a valid argument early.
-                    optData.getArgument().getFn().invoke(res.get(name), null);
+                    try {
+                        optData.getArgument().getFn().invoke(res.get(name), null);
+                    } catch (Exception e) {
+                        throw new BadParametersException(e.toString(), optData.getArgument());
+                    }
                 }
             } else {
                 positional.add(in[x]);

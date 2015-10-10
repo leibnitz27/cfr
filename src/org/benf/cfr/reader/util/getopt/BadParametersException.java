@@ -1,15 +1,19 @@
 package org.benf.cfr.reader.util.getopt;
 
 public class BadParametersException extends IllegalArgumentException {
-    private final PermittedOptionProvider permittedOptionProvider;
+    private final PermittedOptionProvider.ArgumentParam<?, ?> option;
 
-    public BadParametersException(String s, PermittedOptionProvider permittedOptionProvider) {
+    public BadParametersException(String s, PermittedOptionProvider.ArgumentParam<?, ?> option) {
         super(s);
-        this.permittedOptionProvider = permittedOptionProvider;
+        this.option = option;
     }
 
     @Override
     public String toString() {
-        return getMessage();
+        StringBuilder sb = new StringBuilder();
+        sb.append("While processing argument '").append(option.getName()).append("':\n");
+        sb.append(super.getMessage()).append("\n");
+        sb.append("Valid argument range: ").append(option.getFn().getRangeDescription()).append("\n");
+        return sb.toString();
     }
 }

@@ -62,7 +62,7 @@ public class Main {
                         method.dump(d, true);
                     }
                 } catch (NoSuchMethodException e) {
-                    throw new BadParametersException("No such method '" + methname + "'.", OptionsImpl.getFactory());
+                    throw new IllegalArgumentException("No such method '" + methname + "'.");
                 }
             }
             d.print("");
@@ -159,12 +159,8 @@ public class Main {
         Options options = null;
         try {
             options = getOptParser.parse(args, OptionsImpl.getFactory());
-        } catch (BadParametersException e) {
-            getOptParser.showHelp(OptionsImpl.getFactory(), e);
-            System.exit(1);
         } catch (Exception e) {
-            getOptParser.showHelp(OptionsImpl.getFactory());
-            System.err.print(e);
+            getOptParser.showHelp(OptionsImpl.getFactory(), e);
             System.exit(1);
         }
 
