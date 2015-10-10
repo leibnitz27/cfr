@@ -8,7 +8,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
@@ -127,7 +127,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
         d.dump(typeInstance).print('<');
         boolean first = true;
         for (JavaTypeInstance type : genericTypes) {
-            first = CommaHelp.comma(first, d);
+            first = StringUtils.comma(first, d);
             d.dump(type);
         }
         d.print('>');

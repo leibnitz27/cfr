@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.getopt;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -77,26 +78,33 @@ public class GetOptParser {
     }
 
     public <T> T parse(String[] args, GetOptSinkFactory<T> getOptSinkFactory) {
+        Pair<List<String>, Map<String, String>> processed = process(args, getOptSinkFactory);
+        return getOptSinkFactory.create(processed.getFirst(), processed.getSecond());
+    }
 
-        List<String> unFlagged = ListFactory.newList();
-        int start = 0;
-        for (; start < args.length; ++start) {
-            String arg = args[start];
-            if (arg.startsWith("-")) break;
-            unFlagged.add(arg);
-        }
+    private static void printErrHeader() {
+        System.err.println("CFR " + MiscConstants.CFR_VERSION + "\n");
+    }
 
-        Map<String, String> processed = process(Arrays.copyOfRange(args, start, args.length), getOptSinkFactory);
-        return getOptSinkFactory.create(unFlagged, processed);
+    private static void printUsage() {
+        System.err.println("java --jar cfr_" + MiscConstants.CFR_VERSION + ".jar class_or_jar_file [method] [options]\n");
     }
 
     public <T> void showHelp(PermittedOptionProvider permittedOptionProvider) {
-        System.err.println("CFR " + MiscConstants.CFR_VERSION + "\n");
+        printErrHeader();
+        printUsage();
         System.err.println(getHelp(permittedOptionProvider));
     }
 
-    public <T> void showHelp(PermittedOptionProvider permittedOptionProvider, Options options, PermittedOptionProvider.ArgumentParam<String, Void> helpArg) {
-        System.err.println("CFR " + MiscConstants.CFR_VERSION + "\n");
+    public <T> void showHelp(PermittedOptionProvider permittedOptionProvider, BadParametersException e) {
+        printErrHeader();
+        printUsage();
+        System.err.println("Error parsing parameters : " + e.toString() + "\n");
+        System.err.println(getHelp(permittedOptionProvider));
+    }
+
+    public <T> void showOptionHelp(PermittedOptionProvider permittedOptionProvider, Options options, PermittedOptionProvider.ArgumentParam<String, Void> helpArg) {
+        printErrHeader();
         String relevantOption = options.getOption(helpArg);
         List<? extends PermittedOptionProvider.ArgumentParam<?, ?>> possible = permittedOptionProvider.getArguments();
         for (PermittedOptionProvider.ArgumentParam<?, ?> opt : possible) {
@@ -109,9 +117,10 @@ public class GetOptParser {
         System.err.println("No such argument '" + relevantOption + "'");
     }
 
-    private Map<String, String> process(String[] in, PermittedOptionProvider optionProvider) {
+    private Pair<List<String>, Map<String, String>> process(String[] in, PermittedOptionProvider optionProvider) {
         Map<String, OptData> optTypeMap = buildOptTypeMap(optionProvider);
         Map<String, String> res = MapFactory.newMap();
+        List<String> positional = ListFactory.newList();
         for (int x = 0; x < in.length; ++x) {
             if (in[x].startsWith("--")) {
                 String name = in[x].substring(2);
@@ -129,9 +138,9 @@ public class GetOptParser {
                     optData.getArgument().getFn().invoke(res.get(name), null);
                 }
             } else {
-                throw new BadParametersException("Unexpected argument " + in[x], optionProvider);
+                positional.add(in[x]);
             }
         }
-        return res;
+        return Pair.make(positional, res);
     }
 }

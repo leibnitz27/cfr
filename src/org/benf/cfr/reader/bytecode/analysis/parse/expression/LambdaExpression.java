@@ -7,16 +7,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -77,7 +74,7 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
         boolean first = true;
         if (multi) d.print("(");
         for (LValue lValue : args) {
-            first = CommaHelp.comma(first, d);
+            first = StringUtils.comma(first, d);
             d.dump(lValue);
         }
         if (multi) d.print(")");

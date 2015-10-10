@@ -7,10 +7,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.Troolean;
-import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -55,7 +54,7 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
         for (int x = 0; x < args.size(); ++x) {
             if (methodPrototype.isHiddenArg(x)) continue;
             Expression arg = args.get(x);
-            first = CommaHelp.comma(first, d);
+            first = StringUtils.comma(first, d);
             methodPrototype.dumpAppropriatelyCastedArgumentString(arg, x, d);
         }
         d.print(")");

@@ -11,11 +11,10 @@ import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -81,7 +80,7 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         d.print('<');
         boolean first = true;
         for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
-            first = CommaHelp.comma(first, d);
+            first = StringUtils.comma(first, d);
             d.dump(formalTypeParameter);
         }
         d.print('>');

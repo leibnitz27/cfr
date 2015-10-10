@@ -12,11 +12,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -128,11 +127,11 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
             boolean first = true;
             for (int x = instance ? 1 : 0, cnt = curriedArgs.size(); x < cnt; ++x) {
                 Expression c = curriedArgs.get(x);
-                first = CommaHelp.comma(first, d);
+                first = StringUtils.comma(first, d);
                 d.dump(c);
             }
             for (int x = 0; x < n; ++x) {
-                first = CommaHelp.comma(first, d);
+                first = StringUtils.comma(first, d);
                 d.print("arg_" + x);
             }
             d.print(")");

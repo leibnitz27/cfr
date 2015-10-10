@@ -7,7 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredFor;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class ForStatement extends AbstractStatement {
         dumper.print("; ").dump(condition).print("; ");
         boolean first = true;
         for (AbstractAssignmentExpression assignment : assignments) {
-            first = CommaHelp.comma(first, dumper);
+            first = StringUtils.comma(first, dumper);
             dumper.dump(assignment);
         }
         dumper.print(") ");

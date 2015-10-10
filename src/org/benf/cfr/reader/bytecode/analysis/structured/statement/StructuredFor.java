@@ -19,7 +19,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.Predicate;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -64,7 +64,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         dumper.print(" ").dump(condition).print("; ");
         boolean first = true;
         for (Expression assignment : assignments) {
-            first = CommaHelp.comma(first, dumper);
+            first = StringUtils.comma(first, dumper);
             dumper.dump(assignment);
         }
         dumper.print(") ");

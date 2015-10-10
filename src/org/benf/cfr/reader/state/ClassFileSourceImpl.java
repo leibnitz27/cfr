@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
@@ -224,20 +225,6 @@ public class ClassFileSourceImpl implements ClassFileSource {
             l.toArray(in);
         }
 
-        private String join(String[] in, String sep) {
-            StringBuilder sb = new StringBuilder();
-            boolean first = true;
-            for (String s : in) {
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(sep);
-                }
-                sb.append(s);
-            }
-            return sb.toString();
-        }
-
         private void getCommonRoot(String filePath, String classPath) {
             String npath = filePath.replace('\\', '/');
             String[] fileParts = npath.split("/");
@@ -253,8 +240,8 @@ public class ClassFileSourceImpl implements ClassFileSource {
             classParts = Arrays.copyOfRange(classParts, diffpt, classParts.length);
             reverse(fileParts);
             reverse(classParts);
-            pathPrefix = fileParts.length == 0 ? "" : (join(fileParts, "/") + "/");
-            classRemovePrefix = classParts.length == 0 ? "" : (join(classParts, "/") + "/");
+            pathPrefix = fileParts.length == 0 ? "" : (StringUtils.join(fileParts, "/") + "/");
+            classRemovePrefix = classParts.length == 0 ? "" : (StringUtils.join(classParts, "/") + "/");
         }
 
         public void configureWith(String usePath, String specPath) {

@@ -10,8 +10,6 @@ public class BadParametersException extends IllegalArgumentException {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getMessage()).append("\n\ncfr filename [ methname ]\n").append(GetOptParser.getHelp(permittedOptionProvider));
-        return sb.toString();
+        return getMessage();
     }
 }

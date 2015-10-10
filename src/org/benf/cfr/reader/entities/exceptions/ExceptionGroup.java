@@ -9,7 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 
 import java.util.Iterator;
 import java.util.List;
@@ -122,7 +122,7 @@ public class ExceptionGroup {
         sb.append("[egrp ").append(tryBlockIdentifier).append(" [");
         boolean bfirst = true;
         for (Entry e : entries) {
-            bfirst = CommaHelp.comma(bfirst, sb);
+            bfirst = StringUtils.comma(bfirst, sb);
             sb.append(e.getPriority());
         }
         sb.append(" : ").append(bytecodeIndexFrom).append("->").append(byteCodeIndexTo).append(")]");

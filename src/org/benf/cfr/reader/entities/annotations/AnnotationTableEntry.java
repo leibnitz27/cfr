@@ -1,14 +1,12 @@
 package org.benf.cfr.reader.entities.annotations;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
-import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
-import java.util.SortedMap;
 
 public class AnnotationTableEntry implements TypeUsageCollectable {
     private final JavaTypeInstance clazz;
@@ -26,7 +24,7 @@ public class AnnotationTableEntry implements TypeUsageCollectable {
             d.print('(');
             boolean first = true;
             for (Map.Entry<String, ElementValue> elementValueEntry : elementValueMap.entrySet()) {
-                first = CommaHelp.comma(first, d);
+                first = StringUtils.comma(first, d);
                 d.print(elementValueEntry.getKey()).print('=');
                 elementValueEntry.getValue().dump(d);
             }

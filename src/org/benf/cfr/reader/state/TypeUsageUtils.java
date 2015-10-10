@@ -3,8 +3,7 @@ package org.benf.cfr.reader.state;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MiscConstants;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 
 import java.util.LinkedList;
 
@@ -57,7 +56,7 @@ public class TypeUsageUtils {
             }
 
             for (JavaRefTypeInstance stackClass : classStack) {
-                first = CommaHelp.dot(first, sb);
+                first = StringUtils.dot(first, sb);
                 sb.append(stackClass.getRawShortName());
             }
             return sb.toString();

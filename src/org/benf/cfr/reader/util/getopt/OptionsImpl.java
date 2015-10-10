@@ -375,10 +375,11 @@ public class OptionsImpl implements Options {
                     methodName = args.get(1);
                 case 1:
                     fname = args.get(0);
-                case 0:
                     break;
+                case 0:
+                    throw new BadParametersException("Insufficient unqualified parameters - provide at least filename.", this);
                 default:
-                    throw new BadParametersException("Too many unqualified parameters", this);
+                    throw new BadParametersException("Too many unqualified parameters. (" + StringUtils.join(args, ", ") + ")", this);
             }
             return new OptionsImpl(fname, methodName, opts);
         }

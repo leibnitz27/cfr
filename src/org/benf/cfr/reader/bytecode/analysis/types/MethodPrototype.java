@@ -14,7 +14,7 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.annotation.Nullable;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -107,7 +107,7 @@ public class MethodPrototype implements TypeUsageCollectable {
             d.print('<');
             boolean first = true;
             for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
-                first = CommaHelp.comma(first, d);
+                first = StringUtils.comma(first, d);
                 d.dump(formalTypeParameter);
             }
             d.print("> ");
@@ -128,7 +128,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         for (int i = 0; i < argssize; ++i) {
             JavaTypeInstance arg = args.get(i);
             if (hidden.contains(i)) continue;
-            first = CommaHelp.comma(first, d);
+            first = StringUtils.comma(first, d);
 
             LocalVariable param = parameterLValues.get(i);
             if (param.isFinal()) d.print("final ");

@@ -17,11 +17,10 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.annotation.Nullable;
-import org.benf.cfr.reader.util.output.CommaHelp;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -106,7 +105,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
             d.print("<");
             boolean first = true;
             for (JavaTypeInstance typeInstance : explicitGenerics) {
-                first = CommaHelp.comma(first, d);
+                first = StringUtils.comma(first, d);
                 d.dump(typeInstance);
             }
             d.print(">");
@@ -114,7 +113,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
         d.identifier(getFixedName()).print("(");
         boolean first = true;
         for (Expression arg : args) {
-            first = CommaHelp.comma(first, d);
+            first = StringUtils.comma(first, d);
             d.dump(arg);
         }
         d.print(")");

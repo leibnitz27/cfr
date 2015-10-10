@@ -160,15 +160,16 @@ public class Main {
         try {
             options = getOptParser.parse(args, OptionsImpl.getFactory());
         } catch (BadParametersException e) {
-            getOptParser.showHelp(OptionsImpl.getFactory());
+            getOptParser.showHelp(OptionsImpl.getFactory(), e);
             System.exit(1);
         } catch (Exception e) {
+            getOptParser.showHelp(OptionsImpl.getFactory());
             System.err.print(e);
             System.exit(1);
         }
 
         if (options.optionIsSet(OptionsImpl.HELP) || options.getOption(OptionsImpl.FILENAME) == null) {
-            getOptParser.showHelp(OptionsImpl.getFactory(), options, OptionsImpl.HELP);
+            getOptParser.showOptionHelp(OptionsImpl.getFactory(), options, OptionsImpl.HELP);
             return;
         }
 

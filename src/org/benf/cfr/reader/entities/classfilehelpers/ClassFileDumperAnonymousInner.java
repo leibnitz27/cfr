@@ -5,12 +5,9 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
-import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MiscConstants;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -53,7 +50,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
             for (int i = 0, len = args.size(); i < len; ++i) {
                 if (usedMethod != null && usedMethod.isHiddenArg(i)) continue;
                 Expression arg = args.get(i);
-                first = CommaHelp.comma(first, d);
+                first = StringUtils.comma(first, d);
                 d.dump(arg);
             }
             d.print(")");

@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.entities.annotations;
 
 import org.benf.cfr.reader.state.TypeUsageCollector;
-import org.benf.cfr.reader.util.output.CommaHelp;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class ElementValueArray implements ElementValue {
         d.print('{');
         boolean first = true;
         for (ElementValue value : content) {
-            first = CommaHelp.comma(first, d);
+            first = StringUtils.comma(first, d);
             value.dump(d);
         }
         d.print('}');
