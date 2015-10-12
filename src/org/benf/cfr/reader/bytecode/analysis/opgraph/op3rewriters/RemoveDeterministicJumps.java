@@ -20,7 +20,7 @@ import java.util.Set;
 
 public class RemoveDeterministicJumps {
 
-    public static void apply(Method method, List<Op03SimpleStatement> statements) {
+    public static List<Op03SimpleStatement> apply(Method method, List<Op03SimpleStatement> statements) {
         boolean success = false;
         Set<BlockIdentifier> ignoreInThese = FinallyRewriter.getBlocksAffectedByFinally(statements);
 
@@ -31,7 +31,10 @@ public class RemoveDeterministicJumps {
             success |= propagateLiteralReturn(method, stm, display);
         }
 
-        if (success) Cleaner.removeUnreachableCode(statements, true);
+        if (success) {
+            statements = Cleaner.removeUnreachableCode(statements, true);
+        }
+        return statements;
     }
 
     private static boolean propagateLiteralReturn(Method method, Op03SimpleStatement original, Map<LValue, Literal> display) {

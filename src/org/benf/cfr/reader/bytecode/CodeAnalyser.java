@@ -498,7 +498,7 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
-            RemoveDeterministicJumps.apply(method, op03SimpleParseNodes);
+            op03SimpleParseNodes = RemoveDeterministicJumps.apply(method, op03SimpleParseNodes);
         }
 
         if (options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE) {
