@@ -14,6 +14,7 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -117,7 +118,20 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
             }
         }));
 
-        List<String> names = Functional.map(types, new UnaryFunction<JavaRefTypeInstance, String>() {
+        Options options = dcCommonState.getOptions();
+
+        Collection<JavaRefTypeInstance> importTypes = types;
+        if (options.getOption(OptionsImpl.HIDE_LANG_IMPORTS)) {
+            importTypes = Functional.filter(importTypes, new Predicate<JavaRefTypeInstance>() {
+                @Override
+                public boolean test(JavaRefTypeInstance in) {
+                    if ("java.lang".equals(in.getPackageName())) return false;
+                    return true;
+                }
+            });
+        }
+
+        List<String> names = Functional.map(importTypes, new UnaryFunction<JavaRefTypeInstance, String>() {
             @Override
             public String invoke(JavaRefTypeInstance arg) {
                 if (arg.getInnerClassHereInfo().isInnerClass()) {
@@ -127,17 +141,6 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
                 return arg.getRawName();
             }
         });
-
-        Options options = dcCommonState.getOptions();
-
-        if (options.getOption(OptionsImpl.HIDE_LANG_IMPORTS)) {
-            names = Functional.filter(names, new Predicate<String>() {
-                @Override
-                public boolean test(String in) {
-                    return !in.startsWith("java.lang");
-                }
-            });
-        }
 
         if (names.isEmpty()) return;
         Collections.sort(names);
