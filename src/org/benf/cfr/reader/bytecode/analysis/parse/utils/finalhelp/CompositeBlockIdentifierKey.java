@@ -2,7 +2,9 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Predicate;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +18,18 @@ public class CompositeBlockIdentifierKey implements Comparable<CompositeBlockIde
     }
 
     public CompositeBlockIdentifierKey(Set<BlockIdentifier> blockIdentifiers) {
-        List<BlockIdentifier> b = ListFactory.newList(blockIdentifiers);
+        List<BlockIdentifier> b = Functional.filter(blockIdentifiers, new Predicate<BlockIdentifier>() {
+            @Override
+            public boolean test(BlockIdentifier in) {
+                switch (in.getBlockType()) {
+                    case TRYBLOCK:
+                    case CATCHBLOCK:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        });
         Collections.sort(b);
         StringBuilder sb = new StringBuilder();
         for (BlockIdentifier blockIdentifier : b) {

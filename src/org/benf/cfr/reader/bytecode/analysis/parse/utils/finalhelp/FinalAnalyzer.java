@@ -888,17 +888,20 @@ public class FinalAnalyzer {
              * Expect all SOURCES to be in finally blocks.
              */
             for (Op03SimpleStatement exit : directExitsFromCatch) {
-                for (Op03SimpleStatement source : exit.getSources()) {
-                    Result res = matchedFinallyBlockMap.get(source);
-                    if (res == null) {
-                        if (exit.getStatement() instanceof ThrowStatement) {
-                            // Might be ok.
-                            continue;
+                Result res = matchedFinallyBlockMap.get(exit);
+                if (res == null) {
+                    for (Op03SimpleStatement source : exit.getSources()) {
+                        res = matchedFinallyBlockMap.get(source);
+                        if (res == null) {
+                            if (exit.getStatement() instanceof ThrowStatement) {
+                                // Might be ok.
+                                continue;
+                            }
+                            // Was a return, but didn't go through finally?  Problem.
+                            return false;
                         }
-                        // Was a return, but didn't go through finally?  Problem.
-                        return false;
+                        results.add(res);
                     }
-                    results.add(res);
                 }
             }
         } else {
