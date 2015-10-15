@@ -72,6 +72,7 @@ public class AssertRewriter {
                 // This really should only match once.  If it matches multiple times, something else
                 // is being identically initialised, which is probably wrong!
                 if (matchResultCollector.matched()) break;
+                mi.rewind1();
             }
         }
         if (!matchResultCollector.matched()) return;
@@ -202,7 +203,9 @@ public class AssertRewriter {
 
             while (mi.hasNext()) {
                 mi.advance();
-                m.match(mi, collector);
+                if (m.match(mi, collector)) {
+                    mi.rewind1();
+                }
             }
 
         }
