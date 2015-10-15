@@ -104,6 +104,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
 //                firstSwitch.getContainer().nopThisAndReplace();
 //                ((AbstractStructuredStatement) matchResultCollector.getStatementByName("ass1")).getContainer().nopThisAndReplace();
 //                ((AbstractStructuredStatement) matchResultCollector.getStatementByName("ass2")).getContainer().nopThisAndReplace();
+                mi.rewind1();
             }
         }
     }
