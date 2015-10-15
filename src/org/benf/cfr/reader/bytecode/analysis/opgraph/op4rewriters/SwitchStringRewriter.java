@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.ListFactory;
@@ -151,8 +152,16 @@ public class SwitchStringRewriter implements Op04Rewriter {
         }
         Block newBlock = new Block(tgt, true);
 
+        Expression switchOn = matchResultCollector.getStringExpression();
+
+        // If the literal is a naughty null, we need to expressly force it to a string.
+        // Don't cast to its own type, as this might be a null type.
+        if (switchOn.equals(Literal.NULL)) {
+            switchOn = new CastExpression(new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.EXPRESSION), switchOn, true);
+        }
+
         return new StructuredSwitch(
-                matchResultCollector.getStringExpression(),
+                switchOn,
                 new Op04StructuredStatement(newBlock),
                 blockIdentifier);
     }
