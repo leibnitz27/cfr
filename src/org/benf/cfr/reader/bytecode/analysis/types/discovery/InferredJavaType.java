@@ -775,11 +775,10 @@ public class InferredJavaType {
         this.value = new IJTInternal_Impl(otherRaw, Source.OPERATION, true);
     }
 
-    public void useInArithOp(InferredJavaType other, boolean forbidBool) {
+    public void useInArithOp(InferredJavaType other, RawJavaType otherRaw, boolean forbidBool) {
         if (this == IGNORE) return;
         if (other == IGNORE) return;
         RawJavaType thisRaw = getRawType();
-        RawJavaType otherRaw = other.getRawType();
         if (thisRaw.getStackType() != otherRaw.getStackType()) {
             // TODO : Might have to be some casting going on.
             // This would never happen in raw bytecode, as everything would have correct intermediate
@@ -811,8 +810,16 @@ public class InferredJavaType {
                 forbidBool = false;
             }
         }
-        lhs.useInArithOp(rhs, forbidBool);
-        rhs.useInArithOp(lhs, forbidBool);
+        lhs.useInArithOp(rhs, rhs.getRawType(), forbidBool);
+        RawJavaType lhsRawType = lhs.getRawType();
+        switch (op) {
+            case SHL:
+            case SHR:
+            case SHRU:
+                lhsRawType = RawJavaType.INT;
+                break;
+        }
+        rhs.useInArithOp(lhs, lhsRawType, forbidBool);
     }
 
     /*

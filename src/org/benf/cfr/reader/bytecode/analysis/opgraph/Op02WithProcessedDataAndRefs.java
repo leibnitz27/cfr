@@ -854,7 +854,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         InferredJavaType inferredJavaType = e.getInferredJavaType();
         if (inferredJavaType.getRawType() == RawJavaType.BOOLEAN) {
             if (inferredJavaType.getSource() == InferredJavaType.Source.LITERAL) {
-                e.getInferredJavaType().useInArithOp(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL), true);
+                e.getInferredJavaType().useInArithOp(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL), RawJavaType.INT, true);
             } else {
                 e = new TernaryExpression(new BooleanExpression(e), Literal.INT_ONE, Literal.INT_ZERO);
             }
@@ -1043,7 +1043,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LSHR:
             case IUSHR:
             case LUSHR: {
-                Expression op = new ArithmeticOperation(getStackRValue(1), getStackRValue(0), ArithOp.getOpFor(instr));
+                Expression lhs = getStackRValue(1);
+                Expression rhs = getStackRValue(0);
+                Expression op = new ArithmeticOperation(lhs, rhs, ArithOp.getOpFor(instr));
                 return new AssignmentSimple(getStackLValue(0), op);
             }
             case IOR:
