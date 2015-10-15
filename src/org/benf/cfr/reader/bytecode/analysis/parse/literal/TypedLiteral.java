@@ -59,6 +59,38 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         }
     }
 
+    private static String doubleName(Object o) {
+        if (!(o instanceof Double)) return o.toString();
+        double d = (Double)o;
+        boolean isNeg = d < 0;
+        if (Double.isInfinite(d)) {
+            return isNeg ? "Double.NEGATIVE_INFINITY" : "Double.POSITIVE_INFINITY";
+        }
+        if (Double.compare(d, Double.MAX_VALUE) == 0) return "Double.MAX_VALUE";
+        if (Double.compare(d, Double.MIN_VALUE) == 0) return "Double.MIN_VALUE";
+        if (Double.compare(d, Double.MIN_NORMAL) == 0) return "Double.MIN_NORMAL";
+        if (Double.isNaN(d)) {
+            return "Double.NaN";
+        }
+        return o.toString();
+    }
+
+    private static String floatName(Object o) {
+        if (!(o instanceof Float)) return o.toString() + "f";
+        float d = (Float)o;
+        boolean isNeg = d < 0;
+        if (Float.isInfinite(d)) {
+            return isNeg ? "Float.NEGATIVE_INFINITY" : "Float.POSITIVE_INFINITY";
+        }
+        if (Float.compare(d, Float.MAX_VALUE) == 0) return "Float.MAX_VALUE";
+        if (Float.compare(d, Float.MIN_VALUE) == 0) return "Float.MIN_VALUE";
+        if (Float.compare(d, Float.MIN_NORMAL) == 0) return "Float.MIN_NORMAL";
+        if (Float.isNaN(d)) {
+            return "Float.NaN";
+        }
+        return o.toString() + "f";
+    }
+
     public boolean getBoolValue() {
         if (type != LiteralType.Integer) throw new IllegalStateException("Expecting integral literal");
         Integer i = (Integer) value;
@@ -187,8 +219,10 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
                 return d.print(methodHandleName(value));
             case Class:
                 return d.dump((JavaTypeInstance) value).print(".class");
+            case Double:
+                return d.print(doubleName(value));
             case Float:
-                return d.print(value.toString()).print("f");
+                return d.print(floatName(value));
             default:
                 return d.print(value.toString());
         }
