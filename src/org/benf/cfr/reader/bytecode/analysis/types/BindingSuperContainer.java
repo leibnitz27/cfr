@@ -27,7 +27,7 @@ public class BindingSuperContainer {
         this.boundSuperRoute = boundSuperRoute;
     }
 
-    public JavaTypeInstance getBoundAssignable(JavaGenericRefTypeInstance assignable, JavaGenericRefTypeInstance superType) {
+    public JavaGenericRefTypeInstance getBoundAssignable(JavaGenericRefTypeInstance assignable, JavaGenericRefTypeInstance superType) {
         JavaRefTypeInstance baseKey = superType.getDeGenerifiedType();
 
         JavaGenericRefTypeInstance reboundBase = boundSuperClasses.get(baseKey);
