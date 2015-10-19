@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.SetFactory;
@@ -370,6 +371,17 @@ public class IterLoopRewriter {
                 return;
             }
         }
+
+        /*
+         * Iterator should either be supplying raw Objects, or be generically typed.
+         * We should check the base type to make sure we're assigning to something that is a base
+         * class of the iterator generic.
+         *
+         * Unfortunately, at the moment, this breaks iterated type hints.
+         */
+        JavaTypeInstance iteratorSourceType = iterSource.getInferredJavaType().getJavaTypeInstance();
+        BindingSuperContainer supers = iteratorSourceType.getBindingSupers();
+        if (!supers.containsBase(TypeConstants.ITERABLE)) return;
 
         /*
          * We shouldn't have to do this, because we should be doing this at a point where we've discovered
