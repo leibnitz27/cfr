@@ -47,6 +47,12 @@ public class MethodPrototype implements TypeUsageCollectable {
          *
          * Strictly speaking, we should check to see if this is a forwarding method, not just check the synthetic flag.
          */
+        /*
+         * SOME methods already have the synthetic args baked into the constructors!!
+         * How do we tell in advance?   It doesn't seem like there's a legit way to do this -
+         * we could check to see if #given args matches #used args, but that would break when
+         * unused args exist!
+         */
         if (constructorFlag.equals(Method.MethodConstructor.ENUM_CONSTRUCTOR) && !synthetic) {
             List<JavaTypeInstance> args2 = ListFactory.newList();
             args2.add(TypeConstants.STRING);
@@ -76,6 +82,11 @@ public class MethodPrototype implements TypeUsageCollectable {
         this.name = name;
         this.fixedName = null;
         this.classFile = classFile;
+    }
+
+    public void unbreakEnumConstructor() {
+        this.args.remove(0);
+        this.args.remove(0);
     }
 
     @Override

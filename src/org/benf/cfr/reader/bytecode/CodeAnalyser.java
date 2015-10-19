@@ -846,7 +846,7 @@ public class CodeAnalyser {
             Op04StructuredStatement.rewriteBadCastChains(options, method, block);
 
             // Tidy variable names
-            Op04StructuredStatement.tidyVariableNames(method, block, bytecodeMeta, comments);
+            Op04StructuredStatement.tidyVariableNames(method, block, bytecodeMeta, comments, cp.getClassCache());
 
             Op04StructuredStatement.miscKeyholeTransforms(block);
 

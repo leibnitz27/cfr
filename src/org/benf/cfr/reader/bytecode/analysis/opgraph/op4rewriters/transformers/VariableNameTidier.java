@@ -20,6 +20,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.Keywords;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -32,15 +33,17 @@ public class VariableNameTidier implements StructuredStatementTransformer {
     // Used for detecting static accesses we can mark as accessible via the simple name.
     private final JavaTypeInstance ownerClassType;
     private final Set<String> bannedNames;
+    private final ClassCache classCache;
 
-    public VariableNameTidier(Method method, Set<String> bannedNames) {
+    public VariableNameTidier(Method method, Set<String> bannedNames, ClassCache classCache) {
         this.method = method;
         this.ownerClassType = method.getClassFile().getClassType();
         this.bannedNames = bannedNames;
+        this.classCache = classCache;
     }
 
-    public VariableNameTidier(Method method) {
-        this(method, new HashSet<String>());
+    public VariableNameTidier(Method method, ClassCache classCache) {
+        this(method, new HashSet<String>(), classCache);
     }
 
     public void transform(Op04StructuredStatement root) {
@@ -201,12 +204,20 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         }
 
         private boolean alreadyDefined(String name) {
+            return alreadyDefined(name, true);
+        }
+
+        private boolean alreadyDefined(String name, boolean checkClassCache ) {
             if (bannedNames.contains(name)) return true;
             for (AtLevel atLevel : scope) {
                 if (atLevel.isDefinedHere(name)) {
                     return true;
                 }
             }
+            /*
+             * And check that it doesn't collide with any of the known class names!
+             */
+            if (checkClassCache && classCache.isClassName(name)) return true;
             return false;
         }
 
@@ -292,7 +303,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         }
 
         public boolean isDefined(String anyNameType) {
-            return alreadyDefined(anyNameType);
+            return alreadyDefined(anyNameType, false);
         }
 
         public void defineHere(LocalVariable localVariable) {

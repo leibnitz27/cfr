@@ -40,13 +40,15 @@ public class EnumClassRewriter {
 
         JavaTypeInstance enumType = TypeConstants.ENUM;
 
-        if (!(baseType instanceof JavaGenericRefTypeInstance)) return;
-        JavaGenericRefTypeInstance genericBaseType = (JavaGenericRefTypeInstance) baseType;
-        if (!genericBaseType.getDeGenerifiedType().equals(enumType)) return;
-        // It's an enum type, is it Enum<classType> ?
-        List<JavaTypeInstance> boundTypes = genericBaseType.getGenericTypes();
-        if (boundTypes == null || boundTypes.size() != 1) return;
-        if (!boundTypes.get(0).equals(classType)) return;
+        if (!baseType.equals(enumType)) {
+            if (!(baseType instanceof JavaGenericRefTypeInstance)) return;
+            JavaGenericRefTypeInstance genericBaseType = (JavaGenericRefTypeInstance) baseType;
+            if (!genericBaseType.getDeGenerifiedType().equals(enumType)) return;
+            // It's an enum type, is it Enum<classType> ?
+            List<JavaTypeInstance> boundTypes = genericBaseType.getGenericTypes();
+            if (boundTypes == null || boundTypes.size() != 1) return;
+            if (!boundTypes.get(0).equals(classType)) return;
+        }
 
         EnumClassRewriter c = new EnumClassRewriter(classFile, classType, state);
         c.rewrite();

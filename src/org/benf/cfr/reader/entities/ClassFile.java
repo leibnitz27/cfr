@@ -149,7 +149,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                     }
                 });
 //        tmpMethods = MethodOrdering.sort(tmpMethods);
-        this.methods = tmpMethods;
         if (accessFlags.contains(AccessFlag.ACC_STRICT)) {
             for (Method method : tmpMethods) {
                 method.getAccessFlags().remove(AccessFlagMethod.ACC_STRICT);
@@ -183,6 +182,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             rawSuperClass = (ConstantPoolEntryClass) constantPool.getEntry(superClassIndex);
         }
         this.classSignature = getSignature(constantPool, rawSuperClass, rawInterfaces);
+
+        this.methods = tmpMethods;
 
         // Need to load inner classes asap so we can infer staticness before any analysis
         this.innerClassesByTypeInfo = new LinkedHashMap<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>>();
@@ -238,7 +239,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
 
         /*
-         * If we're NOT renaming duplicate members, do a quick scan to see if any of our methods could benifit from
+         * If we're NOT renaming duplicate members, do a quick scan to see if any of our methods could benefit from
          * it.
          */
         if (!options.getOption(OptionsImpl.RENAME_MEMBERS)) {
@@ -246,8 +247,27 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 addComment(DecompilerComment.RENAME_MEMBERS);
             }
         }
+
+        fixConfusingEnumConstructors();
     }
 
+    /*
+     * This is .... really annoying.  Enums always have missing arguments from the front of their constructors
+     * which we add and make synthetic.  Except when they don't!!!
+     *
+     * Only ever seen on enums which derive Enum directly with no generic behaviour.
+     *
+     * This is a TERRIBLE heuristic for doing this.
+     */
+    private void fixConfusingEnumConstructors() {
+        if (testAccessFlag(AccessFlag.ACC_ENUM) && TypeConstants.ENUM.equals(getBaseClassType())) {
+            List<Method> constructors = getConstructors();
+            for (Method constructor : constructors) {
+                MethodPrototype prototype = constructor.getMethodPrototype();
+                prototype.unbreakEnumConstructor();
+            }
+        }
+    }
 
     /*
      * We might have to correct this, if an assumption has been made based on type name.

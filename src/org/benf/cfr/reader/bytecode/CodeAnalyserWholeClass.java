@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -97,7 +98,7 @@ public class CodeAnalyserWholeClass {
         }
     }
 
-    private static void renameAnonymousScopeHidingVariables(ClassFile classFile) {
+    private static void renameAnonymousScopeHidingVariables(ClassFile classFile, ClassCache classCache) {
         List<ClassFileField> fields = Functional.filter(classFile.getFields(), new Predicate<ClassFileField>() {
             @Override
             public boolean test(ClassFileField in) {
@@ -113,7 +114,7 @@ public class CodeAnalyserWholeClass {
                  * Construct a renamer - gather names from prototype and from locals assigned in the code.
                  * Make sure that they don't hide the outer variable.
                  */
-                ScopeHidingVariableRewriter rewriter = new ScopeHidingVariableRewriter(fields, method);
+                ScopeHidingVariableRewriter rewriter = new ScopeHidingVariableRewriter(fields, method, classCache);
                 rewriter.rewrite(method.getAnalysis());
             }
         }
@@ -394,7 +395,7 @@ public class CodeAnalyserWholeClass {
              * Rename anonymous and method scoped inner variables which inadvertently hide outer class
              * variables.
              */
-            renameAnonymousScopeHidingVariables(classFile);
+            renameAnonymousScopeHidingVariables(classFile, state.getClassCache());
         }
 
 

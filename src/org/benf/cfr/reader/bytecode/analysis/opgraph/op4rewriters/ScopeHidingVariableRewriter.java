@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDefi
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.Predicate;
@@ -32,6 +33,7 @@ import java.util.Set;
 public class ScopeHidingVariableRewriter implements Op04Rewriter {
 
     private final Method method;
+    private final ClassCache classCache;
 
     private final Set<String> outerNames = SetFactory.newSet();
     private final Set<String> usedNames = SetFactory.newSet();
@@ -40,8 +42,9 @@ public class ScopeHidingVariableRewriter implements Op04Rewriter {
      */
     private List<LocalVariable> collisions = ListFactory.newList();
 
-    public ScopeHidingVariableRewriter(List<ClassFileField> fieldVariables, Method method) {
+    public ScopeHidingVariableRewriter(List<ClassFileField> fieldVariables, Method method, ClassCache classCache) {
         this.method = method;
+        this.classCache = classCache;
         MethodPrototype prototype = method.getMethodPrototype();
         for (ClassFileField field : fieldVariables) {
             String fieldName = field.getFieldName();
@@ -79,7 +82,7 @@ public class ScopeHidingVariableRewriter implements Op04Rewriter {
 
         if (collisions.isEmpty()) return;
 
-        VariableNameTidier variableNameTidier = new VariableNameTidier(method);
+        VariableNameTidier variableNameTidier = new VariableNameTidier(method, classCache);
         variableNameTidier.renameToAvoidHiding(usedNames, collisions);
     }
 
