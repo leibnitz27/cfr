@@ -128,7 +128,7 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverExAgg, recover1, recover2, recover3};
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recover1, recover2, recoverExAgg, recover3 };
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
