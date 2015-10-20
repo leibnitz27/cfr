@@ -381,7 +381,7 @@ public class IterLoopRewriter {
          */
         JavaTypeInstance iteratorSourceType = iterSource.getInferredJavaType().getJavaTypeInstance();
         BindingSuperContainer supers = iteratorSourceType.getBindingSupers();
-        if (!supers.containsBase(TypeConstants.ITERABLE)) return;
+        if (supers != null && !supers.containsBase(TypeConstants.ITERABLE)) return;
 
         /*
          * We shouldn't have to do this, because we should be doing this at a point where we've discovered
