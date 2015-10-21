@@ -15,6 +15,10 @@ public class AttributeFactory {
         ConstantPoolEntryUTF8 name = (ConstantPoolEntryUTF8) cp.getEntry(nameIndex);
         String attributeName = name.getValue();
 
+        /*
+         * This absolutely could be replaced with a string switch, but I'm sticking to j6,
+         * as I want to mandate the minimum sane requirements.
+         */
         if (AttributeCode.ATTRIBUTE_NAME.equals(attributeName)) {
             // Code attribute needs the signature of the method, so that we have type information for the
             // local variables.

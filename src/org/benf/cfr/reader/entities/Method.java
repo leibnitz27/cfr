@@ -80,6 +80,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         this.accessFlags = AccessFlagMethod.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
         this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
         short nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
+        String initialName = cp.getUTF8Entry(nameIndex).getValue();
+
         short numAttributes = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
@@ -91,7 +93,6 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
 
 
-        String initialName = cp.getUTF8Entry(nameIndex).getValue();
 
         MethodConstructor methodConstructor = MethodConstructor.NOT;
         if (initialName.equals(MiscConstants.INIT_METHOD)) {
