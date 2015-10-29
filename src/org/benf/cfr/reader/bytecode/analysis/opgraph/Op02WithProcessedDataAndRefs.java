@@ -1539,6 +1539,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 StackType t1 = a.getJavaTypeInstance().getStackType();
                 StackType t2 = b.getJavaTypeInstance().getStackType();
                 if (t1 == t2) {
+                    if (t1.isClosed()) return true;
                     if (livenessClashes.isEmpty()) return true;
                     if (livenessClashes.contains(a.getIdx())) {
                         return false;
@@ -1833,7 +1834,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                         // this is /definitely/ not right.... but it works.  Revisit.
                         if (livenessClashes.contains(slot.getIdx())) {
                             if (!innerslotkey.equals(slotkey)) {
-                                return;
+                                StackType s1 = innerslotkey.getFirst().getJavaTypeInstance().getStackType();
+                                StackType s2 = slotkey.getFirst().getJavaTypeInstance().getStackType();
+                                if (!(s1 == s2 && s1.isClosed())) {
+                                    return;
+                                }
                             }
                         }
                         if (combinedMap.containsKey(innerslotkey)) return;

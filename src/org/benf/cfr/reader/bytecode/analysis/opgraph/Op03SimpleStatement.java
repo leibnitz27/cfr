@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.NarrowingTypeRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.*;
@@ -4018,6 +4019,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement statement : statements) {
             statement.rewrite(rewriter);
         }
+    }
+
+    public static void narrowAssignmentTypes(Method method, List<Op03SimpleStatement> statements) {
+        NarrowingTypeRewriter narrowingTypeRewriter = new NarrowingTypeRewriter();
+        narrowingTypeRewriter.rewrite(method, statements);
     }
 
     @Override

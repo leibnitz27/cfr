@@ -775,6 +775,15 @@ public class CodeAnalyser {
          */
         Op03SimpleStatement.replaceStackVarsWithLocals(op03SimpleParseNodes);
 
+        /*
+         * We might have eliminated temporaries which caused potential type clashes.
+         * If so, we MIGHT find ourselves having an assignment where we are needlessly
+         * upcasting. (i.e. (effectively final) Object x = new Random()).
+         *
+         * Re-scan assignments - see if we can narrow types.
+         */
+        Op03SimpleStatement.narrowAssignmentTypes(method, op03SimpleParseNodes);
+
         if (options.getOption(OptionsImpl.SHOW_INFERRABLE, classFileVersion)) {
             Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new ExplicitTypeCallRewriter());
         }

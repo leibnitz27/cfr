@@ -12,4 +12,6 @@ public abstract class AbstractAssignmentExpression extends AbstractExpression {
     public abstract boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp);
 
     public abstract ArithmeticPostMutationOperation getPostMutation();
+
+    public abstract LValue getUpdatedLValue();
 }

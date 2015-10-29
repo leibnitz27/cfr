@@ -73,7 +73,8 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
         lValueUsageCollector.collect(mutated);
     }
 
-    public LValue getMutated() {
+    @Override
+    public LValue getUpdatedLValue() {
         return mutated;
     }
 

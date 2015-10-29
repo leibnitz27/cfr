@@ -45,7 +45,8 @@ public class InferredJavaType {
         GENERICCALL,
         EXCEPTION,
         STRING_TRANSFORM,
-        IMPROVED_ITERATION
+        IMPROVED_ITERATION,
+        RESOLVE_CLASH
     }
 
 
@@ -158,10 +159,10 @@ public class InferredJavaType {
              */
             Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = getMatches(clashes);
             if (matches.isEmpty()) {
-                return new IJTInternal_Impl(TypeConstants.OBJECT, Source.UNKNOWN, true);
+                return new IJTInternal_Impl(TypeConstants.OBJECT, Source.RESOLVE_CLASH, true);
             }
             if (matches.size() == 1) {
-                return new IJTInternal_Impl(matches.keySet().iterator().next(), Source.UNKNOWN, true);
+                return new IJTInternal_Impl(matches.keySet().iterator().next(), Source.RESOLVE_CLASH, true);
             }
             return new IJTInternal_Clash(clashes);
         }
@@ -545,6 +546,11 @@ public class InferredJavaType {
                 value.markClashState(ClashState.Resolved);
             }
         }
+    }
+
+    public void forceType(JavaTypeInstance type, boolean ignoreLockIfResolveClash) {
+        boolean ignoreLock = (value.isLocked() && value.getSource() == Source.RESOLVE_CLASH);
+        value.forceType(type, ignoreLock);
     }
 
     public boolean isClash() {

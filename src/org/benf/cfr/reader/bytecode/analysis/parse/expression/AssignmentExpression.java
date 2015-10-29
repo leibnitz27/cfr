@@ -84,6 +84,11 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
     }
 
     @Override
+    public LValue getUpdatedLValue() {
+        return lValue;
+    }
+
+    @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         lValueUsageCollector.collect(lValue);
         rValue.collectUsedLValues(lValueUsageCollector);

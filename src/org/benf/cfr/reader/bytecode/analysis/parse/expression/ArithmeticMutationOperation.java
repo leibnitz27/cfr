@@ -76,6 +76,11 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
     }
 
     @Override
+    public LValue getUpdatedLValue() {
+        return mutated;
+    }
+
+    @Override
     public ArithmeticPostMutationOperation getPostMutation() {
         return new ArithmeticPostMutationOperation(mutated, op);
     }

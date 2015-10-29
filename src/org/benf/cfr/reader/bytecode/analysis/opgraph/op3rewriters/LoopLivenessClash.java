@@ -67,6 +67,10 @@ public class LoopLivenessClash {
         }
 
         /*
+         * If we're iterating using an object, we're NOT strictly wrong, though could surely do better.
+         */
+//        if (iterType == TypeConstants.OBJECT) return false;
+        /*
          * We're not interating over the right thing.
          */
         LocalVariable lvIter = (LocalVariable)iterator;

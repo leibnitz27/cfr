@@ -34,6 +34,11 @@ public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentE
     }
 
     @Override
+    public LValue getUpdatedLValue() {
+        return mutated;
+    }
+
+    @Override
     public Precedence getPrecedence() {
         return Precedence.UNARY_POST;
     }

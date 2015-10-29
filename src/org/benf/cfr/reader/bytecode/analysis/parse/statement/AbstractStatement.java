@@ -54,7 +54,7 @@ public abstract class AbstractStatement implements Statement {
 
     @Override
     public Expression getRValue() {
-        throw new ConfusedCFRException("Not appropriate here.");
+        return null;
     }
 
     protected Statement getTargetStatement(int idx) {
