@@ -2343,7 +2343,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     Expression rhs = assignmentSimple.getRValue();
                     LValueUsageCollectorSimple lValueUsageCollector = new LValueUsageCollectorSimple();
                     rhs.collectUsedLValues(lValueUsageCollector);
-                    if (SSAIdentifierUtils.isMovableUnder(lValueUsageCollector.getUsedLValues(), start.ssaIdentifiers, current.ssaIdentifiers)) {
+                    if (SSAIdentifierUtils.isMovableUnder(lValueUsageCollector.getUsedLValues(), lValue, start.ssaIdentifiers, current.ssaIdentifiers)) {
                         return current;
                     } else {
                         logger.info("** incompatible sources");
