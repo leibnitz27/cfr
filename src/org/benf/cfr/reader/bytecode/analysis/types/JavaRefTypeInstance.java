@@ -98,6 +98,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             tmp.put(supr, null);
             routes.put(supr, BindingSuperContainer.Route.EXTENSION);
         }
+        tmp.put(this, null);
 
         this.cachedBindingSupers = new BindingSuperContainer(null, tmp, routes);
     }
