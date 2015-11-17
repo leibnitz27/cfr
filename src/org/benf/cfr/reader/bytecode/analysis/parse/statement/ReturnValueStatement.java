@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericPlaceholderTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -61,7 +62,18 @@ public class ReturnValueStatement extends ReturnStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredReturn(rvalue, fnReturnType);
+        /*
+         * Create explicit cast - a bit late in the day - but we don't always know about int types
+         * until now.
+         */
+        Expression rvalueUse = rvalue;
+        if (fnReturnType instanceof RawJavaType) {
+            if (!rvalue.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(fnReturnType, null)) {
+                InferredJavaType inferredJavaType = new InferredJavaType(fnReturnType, InferredJavaType.Source.FUNCTION, true);
+                rvalueUse = new CastExpression(inferredJavaType, rvalue, true);
+            }
+        }
+        return new StructuredReturn(rvalueUse, fnReturnType);
     }
 
     @Override

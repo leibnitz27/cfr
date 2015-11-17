@@ -242,42 +242,4 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
 
-    public static RawJavaType getMaximalJavaTypeForStackType(StackType stackType) {
-        switch (stackType) {
-            case INT:
-                return RawJavaType.INT;
-            case FLOAT:
-                return RawJavaType.FLOAT;
-            case REF:
-                return RawJavaType.REF;
-            case RETURNADDRESS:
-                return RawJavaType.RETURNADDRESS;
-            case RETURNADDRESSORREF:
-                return RawJavaType.RETURNADDRESSORREF;
-            case LONG:
-                return RawJavaType.LONG;
-            case DOUBLE:
-                return RawJavaType.DOUBLE;
-            default:
-                throw new ConfusedCFRException("Unexpected stacktype.");
-        }
-    }
-
-    public static Map<String, RawJavaType> rawJavaTypeMap;
-
-    public static RawJavaType getByName(String name) {
-        if (rawJavaTypeMap == null) {
-            rawJavaTypeMap = MapFactory.newMap();
-            for (RawJavaType typ : RawJavaType.values()) {
-                rawJavaTypeMap.put(typ.getName(), typ);
-            }
-        }
-        RawJavaType res = rawJavaTypeMap.get(name);
-        if (res == null) {
-            throw new ConfusedCFRException("No RawJavaType '" + name + "'");
-        }
-        return res;
-    }
-
-
 }
