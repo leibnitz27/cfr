@@ -635,6 +635,9 @@ public class FinalAnalyzer {
                         if (linNext.getBlockIdentifiers().contains(tryBlockIdentifier)) arg2.enqueue(linNext);
                     }
                 } else {
+                    if (arg1.getStatement() instanceof CaseStatement) {
+                        arg1 = arg1.getTargets().get(0);
+                    }
                     exitPaths.add(arg1);
                 }
             }
