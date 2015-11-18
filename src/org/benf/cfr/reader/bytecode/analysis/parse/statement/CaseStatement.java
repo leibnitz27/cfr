@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCase;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -70,6 +71,11 @@ public class CaseStatement extends AbstractStatement {
 
     public BlockIdentifier getCaseBlock() {
         return caseBlock;
+    }
+
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        return false;
     }
 
     @Override
