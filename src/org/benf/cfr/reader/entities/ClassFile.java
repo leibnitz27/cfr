@@ -242,7 +242,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
          * If we're NOT renaming duplicate members, do a quick scan to see if any of our methods could benefit from
          * it.
          */
-        if (!options.getOption(OptionsImpl.RENAME_MEMBERS)) {
+        if (!options.getOption(OptionsImpl.RENAME_DUP_MEMBERS)) {
             if (MemberNameResolver.verifySingleClassNames(this)) {
                 addComment(DecompilerComment.RENAME_MEMBERS);
             }
@@ -290,12 +290,12 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return usePath;
     }
 
-    private void addComment(DecompilerComment comment) {
+    public void addComment(DecompilerComment comment) {
         if (decompilerComments == null) decompilerComments = new DecompilerComments();
         decompilerComments.addComment(comment);
     }
 
-    private void addComment(String comment) {
+    public void addComment(String comment) {
         if (decompilerComments == null) decompilerComments = new DecompilerComments();
         decompilerComments.addComment(comment);
     }
@@ -420,7 +420,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             boolean warnAmbig = false;
             for (Map<JavaTypeInstance, ClassFileField> typeMap : fieldsByName.values()) {
                 if (typeMap.size() > 1) {
-                    if (constantPool.getDCCommonState().getOptions().getOption(OptionsImpl.RENAME_MEMBERS)) {
+                    if (constantPool.getDCCommonState().getOptions().getOption(OptionsImpl.RENAME_DUP_MEMBERS)) {
                         for (ClassFileField field : typeMap.values()) {
                             field.getField().setDisambiguate();
                         }

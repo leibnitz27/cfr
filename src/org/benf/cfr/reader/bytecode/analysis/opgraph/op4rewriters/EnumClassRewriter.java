@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
@@ -21,11 +22,14 @@ import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperEnum;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
+import org.benf.cfr.reader.util.output.IllegalIdentifierReplacement;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class EnumClassRewriter {
 
@@ -58,12 +62,14 @@ public class EnumClassRewriter {
     private final JavaTypeInstance classType;
     private final DCCommonState state;
     private final InferredJavaType clazzIJT;
+    private final Options options;
 
 
     public EnumClassRewriter(ClassFile classFile, JavaTypeInstance classType, DCCommonState state) {
         this.classFile = classFile;
         this.classType = classType;
         this.state = state;
+        this.options = state.getOptions();
         this.clazzIJT = new InferredJavaType(classType, InferredJavaType.Source.UNKNOWN, true);
     }
 
@@ -129,6 +135,62 @@ public class EnumClassRewriter {
             entries.add(Pair.make(entry.getKey(), entry.getValue().getData()));
         }
         classFile.setDumpHelper(new ClassFileDumperEnum(state, entries));
+
+        /*
+         * Check for illegal identifiers - if there are any, either flag it, or rename.
+         * NB: We need a second pass if we're renaming.
+         */
+        boolean rename_members = options.getOption(OptionsImpl.RENAME_ENUM_MEMBERS);
+
+        if (rename_members) {
+
+            Set<String> fieldNames = SetFactory.newSet(Functional.map(classFile.getFields(), new UnaryFunction<ClassFileField, String>() {
+                @Override
+                public String invoke(ClassFileField arg) {
+                    return arg.getFieldName();
+                }
+            }));
+
+            List<Pair<StaticVariable, String>> renames = ListFactory.newList();
+
+            for (Pair<StaticVariable, AbstractConstructorInvokation> entry : entries) {
+                StaticVariable sv = entry.getFirst();
+                AbstractConstructorInvokation aci = entry.getSecond();
+                String name = sv.getFieldName();
+
+                /*
+                 * Two things are going on here - is it illegal?  Should it be renamed?
+                 */
+                Expression expectedNameExp = aci.getArgs().get(0);
+                String expectedName = name;
+                if (expectedNameExp.getInferredJavaType().getJavaTypeInstance() == TypeConstants.STRING) {
+                    if (expectedNameExp instanceof Literal) {
+                        Object expectedValue = ((Literal) expectedNameExp).getValue().getValue();
+                        if (expectedValue instanceof String) {
+                            expectedName = QuotingUtils.unquoteString((String) expectedValue);
+                        }
+                    }
+                }
+
+                if (!name.equals(expectedName)) {
+                    if (!IllegalIdentifierReplacement.isIllegal(expectedName)) {
+                        renames.add(Pair.make(sv, expectedName));
+                    }
+                }
+            }
+
+            for (Pair<StaticVariable, String> rename : renames) {
+                String newName = rename.getSecond();
+                StaticVariable sv = rename.getFirst();
+                if (fieldNames.contains(newName)) {
+                    classFile.addComment("Tried to rename field '" + sv.getFieldName() + "' to '" + newName + "' but it's alread used.");
+                    continue;
+                }
+                fieldNames.remove(sv.getFieldName());
+                fieldNames.add(newName);
+                sv.getClassFileField().overrideName(newName);
+            }
+        }
 
         return true;
     }

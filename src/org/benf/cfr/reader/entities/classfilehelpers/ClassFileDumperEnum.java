@@ -82,6 +82,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
             dumpImports(d, classFile);
         }
 
+        dumpComments(classFile, d);
         dumpAnnotations(classFile, d);
         dumpHeader(classFile, innerClass, d);
         d.print("{\n");

@@ -42,7 +42,7 @@ public class MutableOptions implements Options {
     public <T> T getOption(PermittedOptionProvider.ArgumentParam<T, Void> option) {
         String override = overrides.get(option.getName());
         if (override != null) {
-            return option.getFn().invoke(override, null);
+            return option.getFn().invoke(override, null, this);
         }
         return delegate.getOption(option);
     }
@@ -51,7 +51,7 @@ public class MutableOptions implements Options {
     public <T, A> T getOption(PermittedOptionProvider.ArgumentParam<T, A> option, A arg) {
         String override = overrides.get(option.getName());
         if (override != null) {
-            return option.getFn().invoke(override, arg);
+            return option.getFn().invoke(override, arg, this);
         }
         return delegate.getOption(option, arg);
     }

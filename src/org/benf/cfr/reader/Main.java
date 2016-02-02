@@ -9,7 +9,6 @@ import org.benf.cfr.reader.state.ClassFileSourceImpl;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.getopt.BadParametersException;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -38,7 +37,7 @@ public class Main {
             if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
                 c.loadInnerClasses(dcCommonState);
             }
-            if (options.getOption(OptionsImpl.RENAME_MEMBERS)) {
+            if (options.getOption(OptionsImpl.RENAME_DUP_MEMBERS)) {
                 MemberNameResolver.resolveNames(dcCommonState, ListFactory.newList(dcCommonState.getClassCache().getLoadedTypes()));
             }
 
@@ -106,9 +105,11 @@ public class Main {
                 }
             });
             /*
-             * If resolving names, we need a first pass......
+             * If resolving names, we need a first pass...... otherwise foreign referents will
+             * not see the renaming, depending on order of class files....
              */
-            if (options.getOption(OptionsImpl.RENAME_MEMBERS)) {
+            if (options.getOption(OptionsImpl.RENAME_DUP_MEMBERS) ||
+                options.getOption(OptionsImpl.RENAME_ENUM_MEMBERS)) {
                 MemberNameResolver.resolveNames(dcCommonState, types);
             }
             for (JavaTypeInstance type : types) {

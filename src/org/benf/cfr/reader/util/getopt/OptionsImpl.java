@@ -16,7 +16,7 @@ public class OptionsImpl implements Options {
         }
 
         @Override
-        public Integer invoke(String arg, Void ignore) {
+        public Integer invoke(String arg, Void ignore, Options ignore2) {
             if (arg == null) return defaultValue;
             int x = Integer.parseInt(arg);
             if (x < 0) throw new IllegalArgumentException("required int >= 0");
@@ -37,7 +37,7 @@ public class OptionsImpl implements Options {
 
     private static final OptionDecoder<Troolean> defaultNeitherTrooleanDecoder = new OptionDecoder<Troolean>() {
         @Override
-        public Troolean invoke(String arg, Void ignore) {
+        public Troolean invoke(String arg, Void ignore, Options ignore2) {
             if (arg == null) return Troolean.NEITHER;
             return Troolean.get(Boolean.parseBoolean(arg));
         }
@@ -54,7 +54,7 @@ public class OptionsImpl implements Options {
     };
     private static final OptionDecoder<Boolean> defaultTrueBooleanDecoder = new OptionDecoder<Boolean>() {
         @Override
-        public Boolean invoke(String arg, Void ignore) {
+        public Boolean invoke(String arg, Void ignore, Options ignore2) {
             if (arg == null) return true;
             return Boolean.parseBoolean(arg);
         }
@@ -71,7 +71,7 @@ public class OptionsImpl implements Options {
     };
     private static final OptionDecoder<Boolean> defaultFalseBooleanDecoder = new OptionDecoder<Boolean>() {
         @Override
-        public Boolean invoke(String arg, Void ignore) {
+        public Boolean invoke(String arg, Void ignore, Options ignore2) {
             if (arg == null) return false;
             return Boolean.parseBoolean(arg);
         }
@@ -86,9 +86,35 @@ public class OptionsImpl implements Options {
             return "false";
         }
     };
+    private static class DefaultChainBooleanDecoder implements OptionDecoder<Boolean> {
+
+        private final PermittedOptionProvider.Argument<Boolean> chain;
+
+        public DefaultChainBooleanDecoder(PermittedOptionProvider.Argument<Boolean> chain) {
+            this.chain = chain;
+        }
+
+        @Override
+        public String getRangeDescription() {
+            return null;
+        }
+
+        @Override
+        public String getDefaultValue() {
+            return null;
+        }
+
+        @Override
+        public Boolean invoke(String arg, Void arg2, Options options) {
+            if (arg == null) {
+                return options.getOption(chain);
+            }
+            return java.lang.Boolean.parseBoolean(arg);
+        }
+    }
     private static final OptionDecoder<String> defaultNullStringDecoder = new OptionDecoder<String>() {
         @Override
-        public String invoke(String arg, Void ignore) {
+        public String invoke(String arg, Void ignore, Options ignore2) {
             return arg;
         }
 
@@ -115,7 +141,7 @@ public class OptionsImpl implements Options {
         }
 
         @Override
-        public Boolean invoke(String arg, ClassFileVersion classFileVersion) {
+        public Boolean invoke(String arg, ClassFileVersion classFileVersion, Options ignore2) {
             if (arg != null) return Boolean.parseBoolean(arg);
             if (classFileVersion == null) throw new IllegalStateException(); // ho ho ho.
             return (classFileVersion.equalOrLater(versionGreaterThanOrEqual)) ? resultIfGreaterThanOrEqual : !resultIfGreaterThanOrEqual;
@@ -287,14 +313,20 @@ public class OptionsImpl implements Options {
             "jarfilter", defaultNullStringDecoder,
             "Substring regex - analyse only classes where the fqn matches this pattern. (when analysing jar).");
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
-            "renamedupmembers", defaultFalseBooleanDecoder,
+            "rename", defaultFalseBooleanDecoder,
+            "Synonym for 'renamedupmembers' + 'renameillegalidents' + 'renameenummembers'");
+    public static final PermittedOptionProvider.Argument<Boolean> RENAME_DUP_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
+            "renamedupmembers", new DefaultChainBooleanDecoder(RENAME_MEMBERS),
             "Rename ambiguous/duplicate fields.  Note - this WILL break reflection based access, so is not automatically enabled.");
     public static final PermittedOptionProvider.Argument<Integer> RENAME_SMALL_MEMBERS = new PermittedOptionProvider.Argument<Integer>(
             "renamesmallmembers", new DefaultingIntDecoder(0),
             "Rename small members.  Note - this WILL break reflection based access, so is not automatically enabled.");
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_ILLEGAL_IDENTS = new PermittedOptionProvider.Argument<Boolean>(
-            "renameillegalidents", defaultFalseBooleanDecoder,
+            "renameillegalidents", new DefaultChainBooleanDecoder(RENAME_MEMBERS),
             "Rename identifiers which are not valid java identifiers.  Note - this WILL break reflection based access, so is not automatically enabled.");
+    public static final PermittedOptionProvider.Argument<Boolean> RENAME_ENUM_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
+            "renameenumidents", new DefaultChainBooleanDecoder(RENAME_MEMBERS),
+            "Rename ENUM identifiers which do not match their 'expected' string names.  Note - this WILL break reflection based access, so is not automatically enabled.");
     public static final PermittedOptionProvider.Argument<Integer> AGGRESSIVE_SIZE_REDUCTION_THRESHOLD = new PermittedOptionProvider.Argument<Integer>(
             "aggressivesizethreshold", new DefaultingIntDecoder(15000),
             "Opcode count at which to trigger aggressive reductions");
@@ -324,12 +356,12 @@ public class OptionsImpl implements Options {
 
     @Override
     public <T> T getOption(PermittedOptionProvider.ArgumentParam<T, Void> option) {
-        return option.getFn().invoke(opts.get(option.getName()), null);
+        return option.getFn().invoke(opts.get(option.getName()), null, this);
     }
 
     @Override
     public <T, A> T getOption(PermittedOptionProvider.ArgumentParam<T, A> option, A arg) {
-        return option.getFn().invoke(opts.get(option.getName()), arg);
+        return option.getFn().invoke(opts.get(option.getName()), arg, this);
     }
 
     @Override
@@ -360,7 +392,8 @@ public class OptionsImpl implements Options {
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
-                    FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_MEMBERS, RENAME_SMALL_MEMBERS,  RENAME_ILLEGAL_IDENTS,
+                    FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
+                    RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS,
                     AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP);
         }
 

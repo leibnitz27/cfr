@@ -121,6 +121,7 @@ public class GetOptParser {
         Map<String, OptData> optTypeMap = buildOptTypeMap(optionProvider);
         Map<String, String> res = MapFactory.newMap();
         List<String> positional = ListFactory.newList();
+        Options optionsSample = new OptionsImpl("", "", res);
         for (int x = 0; x < in.length; ++x) {
             if (in[x].startsWith("--")) {
                 String name = in[x].substring(2);
@@ -136,7 +137,7 @@ public class GetOptParser {
                     res.put(name, in[++x]);
                     // invoke, to test that this is a valid argument early.
                     try {
-                        optData.getArgument().getFn().invoke(res.get(name), null);
+                        optData.getArgument().getFn().invoke(res.get(name), null, optionsSample);
                     } catch (Exception e) {
                         throw new BadParametersException(e.toString(), optData.getArgument());
                     }
