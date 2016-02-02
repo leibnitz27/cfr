@@ -115,7 +115,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
 
     @Override
     public RawJavaType getRawTypeOfSimpleType() {
-        return underlyingType.getRawTypeOfSimpleType();
+        return RawJavaType.REF;
     }
 
     @Override
