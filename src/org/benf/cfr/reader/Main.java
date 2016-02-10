@@ -18,7 +18,7 @@ import java.util.List;
 
 public class Main {
 
-    public static void doClass(DCCommonState dcCommonState, String path) {
+    public static void doClass(DCCommonState dcCommonState, String path, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
         IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         Dumper d = new ToStringDumper(); // sentinel dumper.
@@ -50,7 +50,7 @@ public class Main {
             TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
             c.collectTypeUsages(collectingDumper);
 
-            d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
+            d = dumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 
             String methname = options.getOption(OptionsImpl.METHODNAME);
             if (methname == null) {
@@ -83,7 +83,7 @@ public class Main {
         }
     }
 
-    public static void doJar(DCCommonState dcCommonState, String path) {
+    public static void doJar(DCCommonState dcCommonState, String path, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
         IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         SummaryDumper summaryDumper = null;
@@ -91,7 +91,7 @@ public class Main {
         try {
             final Predicate<String> matcher = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.JAR_FILTER), true);
             silent = options.getOption(OptionsImpl.SILENT);
-            summaryDumper = DumperFactory.getSummaryDumper(options);
+            summaryDumper = dumperFactory.getSummaryDumper(options);
             summaryDumper.notify("Summary for " + path);
             summaryDumper.notify(MiscConstants.CFR_HEADER_BRA + " " + MiscConstants.CFR_VERSION);
             if (!silent) {
@@ -130,7 +130,7 @@ public class Main {
 
                     TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
                     c.collectTypeUsages(collectingDumper);
-                    d = DumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
+                    d = dumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 
                     c.dump(d);
                     d.print("\n");
@@ -175,10 +175,12 @@ public class Main {
         String path = options.getOption(OptionsImpl.FILENAME);
         String type = options.getOption(OptionsImpl.ANALYSE_AS);
         if (type == null) type = dcCommonState.detectClsJar(path);
+
+        DumperFactory dumperFactory = new DumperFactoryImpl();
         if (type.equals("jar")) {
-            doJar(dcCommonState, path);
+            doJar(dcCommonState, path, dumperFactory);
         } else {
-            doClass(dcCommonState, path);
+            doClass(dcCommonState, path, dumperFactory);
         }
 
     }

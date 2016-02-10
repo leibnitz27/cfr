@@ -7,21 +7,9 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.io.IOException;
 
-public class DumperFactory {
+public interface DumperFactory {
 
-    public static Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-        if (!options.optionIsSet(OptionsImpl.OUTPUT_DIR)) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump);
-
-        return new FileDumper(options.getOption(OptionsImpl.OUTPUT_DIR), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
-    }
-
-    /*
-     * A summary dumper will receive errors.  Generally, it's only of value when dumping jars to file.
-     */
-    public static SummaryDumper getSummaryDumper(Options options) {
-        if (!options.optionIsSet(OptionsImpl.OUTPUT_DIR)) return new NopSummaryDumper();
-
-        return new FileSummaryDumper(options.getOption(OptionsImpl.OUTPUT_DIR));
-    }
+    Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump);
+    SummaryDumper getSummaryDumper(Options options);
 
 }
