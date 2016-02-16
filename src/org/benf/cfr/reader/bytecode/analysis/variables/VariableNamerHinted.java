@@ -111,8 +111,9 @@ public class VariableNamerHinted implements VariableNamer {
         int start = 2;
         String prefix = name;
         if (m.matches()) {
-            prefix = m.group(0);
-            start = Integer.parseInt(m.group(1));
+            prefix = m.group(1);
+            String numPart = m.group(2);
+            start = Integer.parseInt(numPart);
             start++;
         }
         do {
