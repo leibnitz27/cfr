@@ -50,11 +50,15 @@ public class AttributeStackMapTable extends Attribute {
     private final List<StackMapFrame> stackMapFrames;
 
     public AttributeStackMapTable(ByteData raw, ConstantPool cp) {
-        this.length = 0;
+        this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
         this.valid = false;
         this.stackMapFrames = null;
     }
 
+    /*
+     * NB : Currently unused - until I actually make use of this, doesn't seem worth consuming the
+     * memory.
+     */
     public AttributeStackMapTable(ByteData raw, ConstantPool cp, ClassFileVersion classFileVersion) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
         int numEntries = raw.getU2At(OFFSET_OF_NUMBER_OF_ENTRIES);
