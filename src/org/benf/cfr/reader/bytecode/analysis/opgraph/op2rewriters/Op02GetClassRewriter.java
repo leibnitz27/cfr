@@ -51,7 +51,7 @@ public class Op02GetClassRewriter {
 
     private boolean isGetClass(Op02WithProcessedDataAndRefs item) {
         ConstantPoolEntry[] cpEntries = item.getCpEntries();
-        if(cpEntries.length == 0) return false;
+        if(cpEntries == null || cpEntries.length == 0) return false;
         ConstantPoolEntry entry = cpEntries[0];
         if (!(entry instanceof ConstantPoolEntryMethodRef)) return false;
         ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef)entry;
