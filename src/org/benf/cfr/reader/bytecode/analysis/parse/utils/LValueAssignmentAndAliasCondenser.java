@@ -110,7 +110,6 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         // We're saying we can replace lValue with res.
         // This is only valid if res has a single possible value in ssaIdentifiers, and it's the same as in replacementIdentifiers.
         Expression res = pair.expression;
-        Expression prev = null;
 
         if (replacementIdentifiers != null) {
             LValueUsageCollectorSimple lvcInSource = new LValueUsageCollectorSimple();
@@ -183,14 +182,20 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             aliasReplacements.remove(stackSSALabel);
         }
 
-        do {
+
+        Expression prev = null;
+        if (res instanceof StackValue && ((StackValue) res).getStackValue() == stackSSALabel) {
+            prev = res;
+        }
+        // res not null on entry, prev guaranteed to be initialised.
+        while (res != null && res != prev) {
             prev = res;
             if (cache.containsKey(res)) {
                 res = cache.get(res);
                 prev = res;
             }
             res = res.replaceSingleUsageLValues(this, ssaIdentifiers, lvSc);
-        } while (res != null && res != prev);
+        }
 
         cache.put(new StackValue(stackSSALabel), prev);
 
