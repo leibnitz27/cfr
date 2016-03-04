@@ -148,6 +148,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         this.containedStatement = newStatement;
     }
 
+    private void markAgreedNop() {
+        this.isNop = true;
+    }
+
+
     @Override
     public void nopOut() {
         if (this.isNop) {
@@ -160,8 +165,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
             this.sources.clear();
             this.containedStatement = new Nop();
-            this.isNop = true;
             containedStatement.setContainer(this);
+            markAgreedNop();
             return;
         }
 
@@ -169,7 +174,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             throw new ConfusedCFRException("Trying to nopOut a node with multiple targets");
         }
         this.containedStatement = new Nop();
-        this.isNop = true;
         containedStatement.setContainer(this);
         // And, replace all parents of this with its' target.
         Op03SimpleStatement target = targets.get(0);
@@ -180,6 +184,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         target.replaceSingleSourceWith(this, sources);
         sources.clear();
         targets.clear();
+        markAgreedNop();
     }
 
     /*
@@ -192,7 +197,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     @Override
     public void nopOutConditional() {
         this.containedStatement = new Nop();
-        this.isNop = true;
         containedStatement.setContainer(this);
         for (int i = 1; i < targets.size(); ++i) {
             Op03SimpleStatement dropTarget = targets.get(i);
@@ -207,6 +211,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
         // And replace the sources (in one go).
         target.replaceSingleSourceWith(this, sources);
+        sources.clear();
+        targets.clear();
+        markAgreedNop();
     }
 
     public void clear() {
@@ -270,7 +277,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (this.firstStatementInThisBlock == null) this.firstStatementInThisBlock = other3.firstStatementInThisBlock;
     }
 
-    public boolean isNop() {
+    // Not just a nop, but a nop we've determined we want to remove.
+    public boolean isAgreedNop() {
         return isNop;
     }
 
@@ -545,7 +553,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             newEnd.addTarget(target);
         }
         this.containedStatement = new Nop();
-        this.isNop = true;
+        this.sources.clear();
+        this.targets.clear();
+        markAgreedNop();
         return result;
     }
 
@@ -1043,7 +1053,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     effect = true;
                     do {
                         x--;
-                    } while (statements.get(x).isNop() && x > 0);
+                    } while (statements.get(x).isAgreedNop() && x > 0);
                 }
             } while (retry);
         }
@@ -3395,7 +3405,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         List<Op03SimpleStatement> flushNops = ListFactory.newList();
         for (int l = statements.size(); x < l; ++x) {
             Op03SimpleStatement statement = statements.get(x);
-            if (statement.isNop()) {
+            if (statement.isAgreedNop()) {
                 flushNops.add(statement);
                 continue;
             }

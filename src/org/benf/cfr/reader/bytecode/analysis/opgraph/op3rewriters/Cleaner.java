@@ -78,9 +78,14 @@ public class Cleaner {
         boolean nonNopSeen = false;
         List<Op03SimpleStatement> result = ListFactory.newList();
         for (Op03SimpleStatement statement : statements) {
-            if (!statement.isNop() || !nonNopSeen) {
+            boolean thisIsNop = statement.isAgreedNop();
+            if (!nonNopSeen) {
                 result.add(statement);
-                if (!statement.isNop()) nonNopSeen = true;
+                if (!thisIsNop) nonNopSeen = true;
+            } else {
+                if (!thisIsNop) {
+                    result.add(statement);
+                }
             }
         }
         // Sort result by existing index.

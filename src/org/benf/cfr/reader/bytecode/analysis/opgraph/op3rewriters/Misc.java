@@ -137,7 +137,7 @@ public class Misc {
         boolean foundLast = false;
 
         for (int x = first; x < afterEnd; ++x) {
-            if (reachableNodes.contains(x) || statements.get(x).isNop()) {
+            if (reachableNodes.contains(x) || statements.get(x).isAgreedNop()) {
                 if (foundLast) {
 //                    return afterEnd - 1;
                     throw new CannotPerformDecode("reachable test BLOCK was exited and re-entered.");

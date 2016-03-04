@@ -134,6 +134,12 @@ public class FinalAnalyzer {
         Set<Op03SimpleStatement> catchBlocksToNop = SetFactory.newOrderedSet();
 
         Set<BlockIdentifier> blocksToRemoveCompletely = SetFactory.newSet();
+
+        Set<Op03SimpleStatement> protectedStatements = SetFactory.newSet();
+        for (Result result : results) {
+            protectedStatements.add(result.getAfterEnd());
+            protectedStatements.add(result.getStart());
+        }
         /*
          * We need to pick an exemplar for the finally body, and insert it after the final, outermost catch.
          */
@@ -224,8 +230,15 @@ public class FinalAnalyzer {
                         catchBlocksToNop.add(tgt);
                     }
                 }
+                // Can't nop out as we may be referring to
+                // this as part of results.
+                if (protectedStatements.contains(peerTry)) {
+                    peerTry.replaceStatement(new Nop());
+                } else {
+                    peerTry.nopOut();
+                }
 
-                peerTry.nopOut();
+
                 if (peerSet.equals(originalTryGroupPeers)) {
                     //throw new IllegalStateException();
                     peerTry.getBlockIdentifiers().add(tryBlockIdentifier);
