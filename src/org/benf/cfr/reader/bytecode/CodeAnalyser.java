@@ -293,6 +293,9 @@ public class CodeAnalyser {
 
         // These are 'processed' exceptions, which we can use to lay out code.
         ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, options, cp, method);
+        if (exceptions.RemovedLoopingExceptions()) {
+            comments.addComment(DecompilerComment.LOOPING_EXCEPTIONS);
+        }
 
 //        RawCombinedExceptions rawCombinedExceptions = new RawCombinedExceptions(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
 
@@ -462,6 +465,15 @@ public class CodeAnalyser {
 
         // Rewrite new / constructor pairs.
         AnonymousClassUsage anonymousClassUsage = new AnonymousClassUsage();
+        /*
+         * Check for usage of stackValues which don't have SSA data - this means they're used
+         * in an uninitialised context. (see proof_wrong_path).
+         *
+         * If that's the case, they must have been used after new, but before init (which is naughty).
+         *
+         */
+
+
         Op03SimpleStatement.condenseConstruction(dcCommonState, method, op03SimpleParseNodes, anonymousClassUsage);
         LValueProp.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);

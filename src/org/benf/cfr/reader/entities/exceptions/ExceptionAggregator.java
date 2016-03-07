@@ -26,6 +26,7 @@ public class ExceptionAggregator {
     private final Options options;
     private final boolean aggressivePrune;
     private final boolean aggressiveAggregate;
+    private final boolean removedLoopingExceptions;
 
 
     private static class CompareExceptionTablesByRange implements Comparator<ExceptionTableEntry> {
@@ -174,7 +175,13 @@ public class ExceptionAggregator {
         this.aggressivePrune = options.getOption(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE;
         this.aggressiveAggregate = options.getOption(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG) == Troolean.TRUE;
 
-        rawExceptions = Functional.filter(rawExceptions, new ValidException());
+        List<ExceptionTableEntry> tmpExceptions = Functional.filter(rawExceptions, new ValidException());
+        boolean removedLoopingExceptions = false;
+        if (tmpExceptions.size() != rawExceptions.size()) {
+            rawExceptions = tmpExceptions;
+            removedLoopingExceptions = true;
+        }
+        this.removedLoopingExceptions = removedLoopingExceptions;
         if (rawExceptions.isEmpty()) return;
 
 //        for (int x=0, len=rawExceptions.size();x<len;++x) {
@@ -428,5 +435,9 @@ public class ExceptionAggregator {
                 continue;
             }
         }
+    }
+
+    public boolean RemovedLoopingExceptions() {
+        return removedLoopingExceptions;
     }
 }
