@@ -2431,17 +2431,33 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
      * PROBLEM : what if a store is a common target of a goto after two JSR targets?
      */
     public static boolean processJSR(List<Op02WithProcessedDataAndRefs> ops) {
+        List<Op02WithProcessedDataAndRefs> jsrInstrs = justJSRs(ops);
+        if (jsrInstrs.isEmpty()) return false;
+        processJSRs(jsrInstrs, ops);
+        return true;
+    }
+
+    private static List<Op02WithProcessedDataAndRefs> justJSRs(List<Op02WithProcessedDataAndRefs> ops) {
         List<Op02WithProcessedDataAndRefs> jsrInstrs = Functional.filter(ops, new Predicate<Op02WithProcessedDataAndRefs>() {
             @Override
             public boolean test(Op02WithProcessedDataAndRefs in) {
                 return isJSR(in);
             }
         });
-        if (jsrInstrs.isEmpty()) return false;
-        return processJSRs(jsrInstrs, ops);
+        return jsrInstrs;
     }
 
     private static boolean processJSRs(List<Op02WithProcessedDataAndRefs> jsrs, List<Op02WithProcessedDataAndRefs> ops) {
+        /*
+         * Very dirty hack. eg: X)JSR_Y -> Y)JSR_Z -> Z)SWAP -> STORE_n -> RET_n
+         */
+        boolean result = false;
+        for (final Op02WithProcessedDataAndRefs jsr : jsrs) {
+            // Try to model behaviour.  This is a very weak solution.
+            result |= SimulateJSR(jsr, ops);
+        }
+        if (result) jsrs = justJSRs(jsrs);
+
         // Find the common start instructions for a JSR (i.e. pull out the set of all targets for the JSRs
         // Then, for each of these, find out if it's possible to get BACK to the JSR instruction without
         // RETTING.  If that's the case, the JSR has been used as a loop, and we need to treat it as if it's just a
@@ -2452,9 +2468,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 return arg.getTargets().get(0);
             }
         });
-        boolean result = false;
         Set<Op02WithProcessedDataAndRefs> inlineCandidates = SetFactory.newSet();
-        for (final Op02WithProcessedDataAndRefs target : targets.keySet()) {
+        handledJSR : for (final Op02WithProcessedDataAndRefs target : targets.keySet()) {
             GraphVisitor<Op02WithProcessedDataAndRefs> gv = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(target.getTargets(), new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                 @Override
                 public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
@@ -2472,12 +2487,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             if (gv.wasAborted()) continue;
             // Otherwise, this set of nodes is in the subroutine.
             Set<Op02WithProcessedDataAndRefs> nodes = SetFactory.newSet(gv.getVisitedNodes());
-            // Verify that none of these nodes has a parent NOT in the set!
-            for (Op02WithProcessedDataAndRefs node : nodes) {
-                if (!nodes.containsAll(node.getSources())) {
-                    continue;
-                }
-            }
+//            // Verify that none of these nodes has a parent NOT in the set!
+//            for (Op02WithProcessedDataAndRefs node : nodes) {
+//                if (!nodes.containsAll(node.getSources())) {
+//                    continue handledJSR;
+//                }
+//            }
             // explicitly add the JSR start to the nodes.
             nodes.add(target);
             // Have any of these nodes already been marked as candidates?
@@ -2544,7 +2559,136 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             inlineReplaceJSR(jsr, ops);
         }
 
+        // result not used for anything any more - remove?
         return result;
+    }
+
+    // A very simple (and impossibly naive VM simulator which can only step over deliberate JSR obfuscations).
+    // the only thing we allow on the operand stack is RETADDR.
+    private static boolean SimulateJSR(Op02WithProcessedDataAndRefs start, List<Op02WithProcessedDataAndRefs> ops) {
+        Op02WithProcessedDataAndRefs currInstr = start;
+        Stack<Op02WithProcessedDataAndRefs> stackJumpLocs = StackFactory.newStack();
+        Map<Integer, Op02WithProcessedDataAndRefs> stackJumpLocLocals = MapFactory.newMap();
+        List<Op02WithProcessedDataAndRefs> processed = ListFactory.newList();
+        Op02WithProcessedDataAndRefs afterThis = null;
+        // ShitSim(TM)(C)(R).
+        // We're never going to be able to generally model this, but we can catch some cases.
+        while (true) {
+            switch (currInstr.getInstr()) {
+                case JSR:
+                case JSR_W:
+                    stackJumpLocs.push(currInstr);
+                    break;
+                case GOTO:
+                case GOTO_W:
+                case NOP:
+                    break;
+                case ASTORE_0:
+                    if (stackJumpLocs.empty()) return false;
+                    stackJumpLocLocals.put(0, stackJumpLocs.pop());
+                    break;
+                case ASTORE_1:
+                    if (stackJumpLocs.empty()) return false;
+                    stackJumpLocLocals.put(1, stackJumpLocs.pop());
+                    break;
+                case ASTORE_2:
+                    if (stackJumpLocs.empty()) return false;
+                    stackJumpLocLocals.put(2, stackJumpLocs.pop());
+                    break;
+                case ASTORE_3:
+                    if (stackJumpLocs.empty()) return false;
+                    stackJumpLocLocals.put(2, stackJumpLocs.pop());
+                    break;
+                case ASTORE:
+                    if (stackJumpLocs.empty()) return false;
+                    stackJumpLocLocals.put(currInstr.getInstrArgU1(0), stackJumpLocs.pop());
+                    break;
+                case ASTORE_WIDE:
+                    if (stackJumpLocs.empty()) return false;
+                    stackJumpLocLocals.put(currInstr.getInstrArgShort(1), stackJumpLocs.pop());
+                    break;
+                case POP:
+                    if (stackJumpLocs.empty()) return false;
+                    stackJumpLocs.pop();
+                    break;
+                case POP2:
+                    if (stackJumpLocs.size() < 2) return false;
+                    stackJumpLocs.pop();
+                    stackJumpLocs.pop();
+                    break;
+                case DUP:
+                    if (stackJumpLocs.empty()) return false;
+                    Op02WithProcessedDataAndRefs tmp = stackJumpLocs.pop();
+                    stackJumpLocs.push(tmp);
+                    stackJumpLocs.push(tmp);
+                    break;
+                case SWAP:
+                    if (stackJumpLocs.size() < 2) return false;
+                    {
+                        Op02WithProcessedDataAndRefs tmp1 = stackJumpLocs.pop();
+                        Op02WithProcessedDataAndRefs tmp2 = stackJumpLocs.pop();
+                        stackJumpLocs.push(tmp1);
+                        stackJumpLocs.push(tmp2);
+                    }
+                    break;
+                case RET:
+                case RET_WIDE: {
+                    int idx = currInstr.getInstr() == JVMInstr.RET ? currInstr.getInstrArgU1(0) : currInstr.getInstrArgShort(1);
+                    afterThis = stackJumpLocLocals.get(idx);
+                    if (afterThis == null) return false;
+                    break;
+                }
+                default:
+                    return false;
+            }
+            processed.add(currInstr);
+            if (afterThis != null) break;
+            if (currInstr.targets.size() != 1) return false;
+            currInstr = currInstr.targets.get(0);
+            if (currInstr.sources.size() != 1) return false;
+        }
+        // In order to keep the locals in EXACTLY the state they're supposed to be, for every populated local
+        // we have to reproduce, with the same target after it in list order.
+        // though, if we're relying on magic behaviour from reading JSRs stored at random local locations, we're
+        // very unlikely to ever successfully decompile it.
+        //
+        // Cheap, but wrong, pass 1.  If it turns out that this was the original JSR, we can now replace that with
+        // a GOTO, and replace our RET with a GOTO after original.
+        if (afterThis == start) {
+            Op02WithProcessedDataAndRefs[] remaining = stackJumpLocs.toArray(new Op02WithProcessedDataAndRefs[stackJumpLocs.size()]);
+            // Check that if we're visiting any JSRS in order, they're the same order as those left on the stack.
+            // we can ignore any not on the stack, and nop them (as gotos).
+            int remainIdx = 0;
+            List<Op02WithProcessedDataAndRefs> canGoto = ListFactory.newList();
+            // (skipping one we want to remove).
+            for (int x=1, len=processed.size();x<len;++x) {
+                Op02WithProcessedDataAndRefs node = processed.get(x);
+                if (isJSR(node)) {
+                    if (remainIdx < remaining.length && node == remaining[remainIdx]) {
+                        remainIdx++;
+                        continue;
+                    }
+                }
+                canGoto.add(node);
+            }
+            // If we didn't see the ones we require in required order, we have to abort.
+            if (remainIdx != remaining.length) return false;
+            for (Op02WithProcessedDataAndRefs remove : canGoto) {
+                remove.instr = JVMInstr.GOTO;
+            }
+
+            int idxStart = ops.indexOf(start);
+            Op02WithProcessedDataAndRefs afterStart = ops.get(idxStart+1);
+            start.instr = JVMInstr.GOTO;
+            currInstr.instr = JVMInstr.GOTO;
+            currInstr.addTarget(afterStart);
+            afterStart.addSource(currInstr);
+            // We need to walk the instructions we've processed in order - if they're JSRs, make sure they're in the
+            // same order as 'remaining', and anything else gets removed.
+
+            return true;
+        }
+        return false;
     }
 
     private static void inlineReplaceJSR(Op02WithProcessedDataAndRefs jsrCall, List<Op02WithProcessedDataAndRefs> ops) {
