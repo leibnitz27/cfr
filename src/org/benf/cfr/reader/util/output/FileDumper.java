@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.io.*;
 
@@ -21,10 +22,6 @@ public class FileDumper extends StreamDumper {
 
     private File mkFilename(String dir, Pair<String, String> names, JavaTypeInstance type, SummaryDumper summaryDumper) {
         String packageName = names.getFirst();
-        String outDir = dir;
-        if (!packageName.isEmpty()) {
-            outDir = outDir + File.separator + packageName.replace(".", File.separator);
-        }
         String className = names.getSecond();
         if (className.length() > MAX_FILE_LEN_MINUS_EXT) {
             /*
@@ -33,12 +30,13 @@ public class FileDumper extends StreamDumper {
             className = className.substring(0, TRUNC_PREFIX_LEN) + "_cfr_" + (truncCount++);
             summaryDumper.notify("Class name " + names.getSecond() + " was shortened to " + className + " due to filesystem limitations.");
         }
+
         return new File(dir + File.separator + packageName.replace(".", File.separator) +
                 ((packageName.length() == 0) ? "" : File.separator) +
                 className + ".java");
     }
 
-    public FileDumper(String dir, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
+    public FileDumper(String dir, boolean clobber, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
         super(typeUsageInformation, options, illegalIdentifierDump);
         this.type = type;
         this.summaryDumper = summaryDumper;
@@ -48,6 +46,9 @@ public class FileDumper extends StreamDumper {
             File parent = file.getParentFile();
             if (!parent.exists() && !parent.mkdirs()) {
                 throw new IllegalStateException("Couldn't create dir: " + parent);
+            }
+            if (file.exists() && !clobber) {
+                throw new CannotCreate("File already exists, and option '" + OptionsImpl.CLOBBER_FILES.getName() + "' not set");
             }
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
         } catch (FileNotFoundException e) {

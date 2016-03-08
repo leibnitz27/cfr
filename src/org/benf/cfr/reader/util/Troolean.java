@@ -12,4 +12,15 @@ public enum Troolean {
         if (a == null) return NEITHER;
         return a ? TRUE : FALSE;
     }
+
+    public boolean boolValue(boolean ifNeither) {
+        switch (this) {
+            case TRUE:
+                return true;
+            case FALSE:
+                return false;
+            default:
+                return ifNeither;
+        }
+    }
 }

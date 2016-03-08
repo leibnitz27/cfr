@@ -48,6 +48,10 @@ public interface Dumper {
     boolean canEmitClass(JavaTypeInstance type);
 
     public static class CannotCreate extends RuntimeException {
+        public CannotCreate(String s) {
+            super(s);
+        }
+
         public CannotCreate(Throwable throwable) {
             super(throwable);
         }

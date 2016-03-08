@@ -269,7 +269,13 @@ public class OptionsImpl implements Options {
             "Recover type hints for iterators from first pass.");
     public static final PermittedOptionProvider.Argument<String> OUTPUT_DIR = new PermittedOptionProvider.Argument<String>(
             "outputdir", defaultNullStringDecoder,
+            "Decompile to files in [directory] (outputpath + clobber) (historic compatibility)");
+    public static final PermittedOptionProvider.Argument<String> OUTPUT_PATH = new PermittedOptionProvider.Argument<String>(
+            "outputpath", defaultNullStringDecoder,
             "Decompile to files in [directory]");
+    public static final PermittedOptionProvider.Argument<Troolean> CLOBBER_FILES = new PermittedOptionProvider.Argument<Troolean>(
+            "clobber", defaultNeitherTrooleanDecoder,
+            "Overwrite files when using outputpath");
     public static final PermittedOptionProvider.Argument<Integer> SHOWOPS = new PermittedOptionProvider.Argument<Integer>(
             "showops", default0intDecoder,
             "Show some (cryptic!) debug");
@@ -387,7 +393,8 @@ public class OptionsImpl implements Options {
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
-                    DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR, JAR_FILTER,
+                    DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
+                    OUTPUT_PATH, CLOBBER_FILES, JAR_FILTER,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES, SHOW_INFERRABLE,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
