@@ -683,7 +683,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         LValue l2 = a2.getCreatedLValue();
         if (!r2.equals(new LValueExpression(l1))) return;
 
-        stm1.nopOut();
 
         Expression newRhs = null;
         if (r1 instanceof ArithmeticOperation && ((ArithmeticOperation) r1).isMutationOf(l1)) {
@@ -691,8 +690,17 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             AbstractMutatingAssignmentExpression me = ar1.getMutationOf(l1);
             newRhs = me;
         }
+
         if (newRhs == null) newRhs = new AssignmentExpression(l1, r1);
+        /*
+         * But only if we have enough type information to know this is ok.
+         */
+        if (newRhs.getInferredJavaType().getJavaTypeInstance() != l2.getInferredJavaType().getJavaTypeInstance()) {
+            return;
+        }
+
         stm2.replaceStatement(new AssignmentSimple(l2, newRhs));
+        stm1.nopOut();
     }
 
 
