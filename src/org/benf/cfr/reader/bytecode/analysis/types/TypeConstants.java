@@ -10,6 +10,7 @@ public interface TypeConstants {
     public final static JavaRefTypeInstance ITERABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Iterable", "Iterable", OBJECT);
     public final static JavaRefTypeInstance CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.io.Closeable", "Closeable", OBJECT);
     public final static JavaRefTypeInstance THROWABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Throwable", "Throwable", OBJECT);
+    public final static JavaRefTypeInstance SUPPLIER = JavaRefTypeInstance.createTypeConstant("java.util.function.Supplier", "Object");
 
     public final static String boxingNameBoolean = "java.lang.Boolean";
     public final static String boxingNameByte = "java.lang.Byte";
@@ -30,6 +31,7 @@ public interface TypeConstants {
     public final static String objectName = "java.lang.Object";
 
     public final static String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
+    public final static String supplierName = "java.util.function.Supplier";
 
     // Path, because we actually want to load the class - could we get away with a hardcoded ref type as above?
     public final static String runtimeExceptionPath = "java/lang/RuntimeException.class";

@@ -64,10 +64,11 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
      */
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        expression = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         if (expression instanceof DynamicInvokation) {
-            return rewriteDynamicExpression((DynamicInvokation) expression);
+            expression = rewriteDynamicExpression((DynamicInvokation) expression);
         }
-        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        Expression res = expression;
         if (res instanceof CastExpression) {
             Expression child = ((CastExpression) res).getChild();
             if (child instanceof LambdaExpressionCommon) {
@@ -206,7 +207,21 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
 //            throw new IllegalStateException("Can't find lambda target " + lambdaFn);
         }
         for (int x = 0, len = curriedArgs.size(); x < len; ++x) {
-            curriedArgs.set(x, CastExpression.removeImplicit(curriedArgs.get(x)));
+            /*
+             * If a curried arg is a supplier, and not an LValue, then there needs to be an explicit cast in place.
+             *
+             */
+            Expression curriedArg = curriedArgs.get(x);
+            JavaTypeInstance curriedArgType = curriedArg.getInferredJavaType().getJavaTypeInstance();
+            if (curriedArgType.getDeGenerifiedType().equals(TypeConstants.SUPPLIER)) {
+                if (curriedArg instanceof CastExpression) {
+                    CastExpression castExpression = (CastExpression)curriedArg;
+                    curriedArg = new CastExpression(curriedArg.getInferredJavaType(), castExpression.getChild(), true);
+                } else if (!(curriedArg instanceof LValueExpression)) {
+                    curriedArg = new CastExpression(curriedArg.getInferredJavaType(), curriedArg, true);
+                }
+            }
+            curriedArgs.set(x, CastExpression.removeImplicit(curriedArg));
         }
         if (this.typeInstance.equals(lambdaTypeRefLocation) && lambdaMethod.testAccessFlag(AccessFlagMethod.ACC_SYNTHETIC)) {
             try {
