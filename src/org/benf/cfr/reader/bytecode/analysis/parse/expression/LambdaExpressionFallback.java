@@ -16,6 +16,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.StringUtils;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -98,7 +99,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
 
     @Override
     public Precedence getPrecedence() {
-        return Precedence.PAREN_SUB_MEMBER;
+        return Precedence.LAMBDA;
     }
 
     @Override
@@ -119,7 +120,8 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
             }
             if (multi) d.print(")");
             if (instance) {
-                d.print(" -> ").dump(curriedArgs.get(0)).print('.').print(lambdaFnName);
+                d = d.print(" -> ");
+                curriedArgs.get(0).dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE).print('.').print(lambdaFnName);
             } else {
                 d.print(" -> ").dump(callClassType).print('.').print(lambdaFnName);
             }

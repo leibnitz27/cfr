@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.expression.misc;
 public enum Precedence {
     HIGHEST(true),
     PAREN_SUB_MEMBER(true),
+    LAMBDA(true),
     UNARY_POST(false),
     UNARY_OTHER(false),
     MUL_DIV_MOD(true),
