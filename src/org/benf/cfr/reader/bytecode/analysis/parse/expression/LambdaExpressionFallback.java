@@ -52,7 +52,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
                 }
                 break;
             case 1:
-                isColon = targetFnArgTypes.size() == 1 && instance;
+                isColon = targetFnArgTypes.size() <= 1 && instance;
                 break;
         }
         this.colon = isColon;
@@ -97,6 +97,8 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
         return this;
     }
 
+    // Special precedence level - otherwise we lose the extra brackets in test Saturn.
+    // ((Supplier<Saturn>)Saturn::new)::get;
     @Override
     public Precedence getPrecedence() {
         return Precedence.LAMBDA;
@@ -106,7 +108,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
     public Dumper dumpInner(Dumper d) {
         if (colon) {
             if (instance) {
-                d.dump(curriedArgs.get(0)).print("::").print(lambdaFnName);
+                curriedArgs.get(0).dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE).print("::").print(lambdaFnName);
             } else {
                 d.dump(callClassType).print("::").print(lambdaFnName);
             }
