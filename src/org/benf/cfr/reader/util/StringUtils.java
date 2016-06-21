@@ -22,6 +22,11 @@ public class StringUtils {
         return false;
     }
 
+    public static boolean space(boolean first, Dumper d) {
+        if (!first) d.print(" ");
+        return false;
+    }
+
     public static String join(String[] in, String sep) {
         StringBuilder sb = new StringBuilder();
         boolean first = true;

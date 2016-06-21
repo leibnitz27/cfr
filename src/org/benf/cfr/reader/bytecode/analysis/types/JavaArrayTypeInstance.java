@@ -1,9 +1,15 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
+
+import java.util.List;
 
 public class JavaArrayTypeInstance implements JavaTypeInstance {
     private final int dimensions;
@@ -13,6 +19,84 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     public JavaArrayTypeInstance(int dimensions, JavaTypeInstance underlyingType) {
         this.dimensions = dimensions;
         this.underlyingType = underlyingType;
+    }
+
+    private class Annotated implements JavaAnnotatedTypeInstance {
+        private final List<List<AnnotationTableTypeEntry>> entries;
+        private final JavaAnnotatedTypeInstance annotatedUnderlyingType;
+
+        public Annotated() {
+            entries = ListFactory.newList();
+            for (int x=0;x<dimensions;++x) {
+                entries.add(ListFactory.<AnnotationTableTypeEntry>newList());
+            }
+            annotatedUnderlyingType = underlyingType.getAnnotatedInstance();
+        }
+
+        @Override
+        public Dumper dump(Dumper d) {
+            annotatedUnderlyingType.dump(d);
+            boolean isFirst = !entries.get(0).isEmpty();
+            for (List<AnnotationTableTypeEntry> entry : entries) {
+                if (!entry.isEmpty()) {
+                    isFirst = StringUtils.space(isFirst, d);
+                    for (AnnotationTableTypeEntry oneEntry : entry) {
+                        oneEntry.dump(d);
+                        d.print(' ');
+                    }
+                }
+                d.print("[]");
+            }
+            return d;
+        }
+
+        @Override
+        public JavaAnnotatedTypeIterator pathIterator() {
+            return new Iterator();
+        }
+
+        private class Iterator implements JavaAnnotatedTypeIterator {
+            private int curIdx;
+
+            private Iterator() {
+                curIdx = 0;
+            }
+
+            private Iterator(int idx) {
+                curIdx = idx;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveArray() {
+                if (curIdx+1 < dimensions) return new Iterator(curIdx+1);
+                return annotatedUnderlyingType.pathIterator();
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveBound() {
+                return null;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveNested() {
+                return null;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveParameterized(int index) {
+                return null;
+            }
+
+            @Override
+            public void apply(AnnotationTableTypeEntry entry) {
+                entries.get(curIdx).add(entry);
+            }
+        }
+    }
+
+    @Override
+    public JavaAnnotatedTypeInstance getAnnotatedInstance() {
+        return new Annotated();
     }
 
     @Override
@@ -149,4 +233,5 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     public String suggestVarName() {
         return "arr" + underlyingType.suggestVarName();
     }
+
 }

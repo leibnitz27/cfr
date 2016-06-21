@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -26,6 +28,65 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
         } else {
             return underlyingType;
         }
+    }
+
+    @Override
+    public JavaAnnotatedTypeInstance getAnnotatedInstance() {
+        return new Annotated();
+    }
+
+    private class Annotated implements JavaAnnotatedTypeInstance {
+        private final List<AnnotationTableTypeEntry> entries = ListFactory.newList();
+        private final JavaAnnotatedTypeInstance underlyingAnnotated;
+
+        private Annotated() {
+            underlyingAnnotated = underlyingType.getAnnotatedInstance();
+        }
+
+        @Override
+        public JavaAnnotatedTypeIterator pathIterator() {
+            return new Iterator();
+        }
+
+        @Override
+        public Dumper dump(Dumper d) {
+            for (AnnotationTableTypeEntry entry : entries) {
+                entry.dump(d);
+                d.print(' ');
+            }
+            d.print("? ").print(wildcardType.toString()).print(' ');
+            underlyingAnnotated.dump(d);
+            return d;
+        }
+
+        private class Iterator implements JavaAnnotatedTypeIterator {
+
+            @Override
+            public JavaAnnotatedTypeIterator moveArray() {
+                return this; // Not right
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveBound() {
+                return underlyingAnnotated.pathIterator();
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveNested() {
+                return this; // Not right
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveParameterized(int index) {
+                return this; // Not right
+            }
+
+            @Override
+            public void apply(AnnotationTableTypeEntry entry) {
+                entries.add(entry);
+            }
+        }
+
     }
 
     @Override

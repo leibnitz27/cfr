@@ -30,10 +30,7 @@ import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 import org.benf.cfr.reader.util.output.StdIODumper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class CodeAnalyser {
@@ -251,7 +248,7 @@ public class CodeAnalyser {
         }
 
         Dumper debugDumper = new StdIODumper(new TypeUsageInformationEmpty(), options, new IllegalIdentifierDump.Nop());
-        Map<Integer, Integer> lutByOffset = new HashMap<Integer, Integer>();
+        SortedMap<Integer, Integer> lutByOffset = new TreeMap<Integer, Integer>();
         Map<Integer, Integer> lutByIdx = new HashMap<Integer, Integer>();
         int idx2 = 0;
         int offset2 = -1;
@@ -334,7 +331,8 @@ public class CodeAnalyser {
 
         long codeLength = originalCodeAttribute.getCodeLength();
         op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, dcCommonState, options);
-        lutByOffset = null; // No longer valid.
+        // lutByOffset is no longer valid at this point, but we might still need it to determine variable lifetime (i.e what
+        // was the instruction BEFORE this one)
 
         /*
          * Now we know what's covered by exceptions, we can see if we can remove intermediate stores, which significantly complicate
@@ -881,6 +879,11 @@ public class CodeAnalyser {
              * Now finally run some extra checks to spot wierdness.
              */
             Op04StructuredStatement.applyChecker(new LooseCatchChecker(), block, comments);
+
+            /*
+             * And apply any type annotations we can.
+             */
+            Op04StructuredStatement.applyTypeAnnotations(originalCodeAttribute, block, lutByOffset);
         }
 
         // Only check for type clashes on first pass.

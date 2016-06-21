@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -21,6 +23,60 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     @Override
     public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder) {
         return genericTypeBinder.getBindingFor(this);
+    }
+
+    @Override
+    public JavaAnnotatedTypeInstance getAnnotatedInstance() {
+        return new Annotated();
+    }
+
+    private class Annotated implements JavaAnnotatedTypeInstance {
+        private final List<AnnotationTableTypeEntry> entries = ListFactory.newList();
+
+        @Override
+        public JavaAnnotatedTypeIterator pathIterator() {
+            return new Iterator();
+        }
+
+        @Override
+        public Dumper dump(Dumper d) {
+            if (!entries.isEmpty()) {
+                for (AnnotationTableTypeEntry entry : entries) {
+                    entry.dump(d);
+                    d.print(' ');
+                }
+            }
+            d.print(className);
+            return d;
+        }
+
+        private class Iterator implements JavaAnnotatedTypeIterator {
+
+            @Override
+            public JavaAnnotatedTypeIterator moveArray() {
+                return this;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveBound() {
+                return this;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveNested() {
+                return this;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveParameterized(int index) {
+                return this;
+            }
+
+            @Override
+            public void apply(AnnotationTableTypeEntry entry) {
+                entries.add(entry);
+            }
+        }
     }
 
     @Override

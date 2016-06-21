@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -71,8 +72,27 @@ public enum RawJavaType implements JavaTypeInstance {
         this(name, suggestedVarName, stackType, usableType, null, false, objectType);
     }
 
+
+
     public String getName() {
         return name;
+    }
+
+    @Override
+    public JavaAnnotatedTypeInstance getAnnotatedInstance() {
+        return new Annotated();
+    }
+
+    private class Annotated implements JavaAnnotatedTypeInstance {
+        @Override
+        public JavaAnnotatedTypeIterator pathIterator() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Dumper dump(Dumper d) {
+            return d;
+        }
     }
 
     @Override

@@ -26,6 +26,9 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.attributes.Attribute;
+import org.benf.cfr.reader.entities.attributes.AttributeCode;
+import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleTypeAnnotations;
 import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -676,6 +679,13 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         if (variableNameTidier.isClassRenamed()) {
             comments.addComment(DecompilerComment.CLASS_RENAMED);
         }
+    }
+
+    public static void applyTypeAnnotations(AttributeCode code, Op04StructuredStatement root, SortedMap<Integer, Integer> instrsByOffset) {
+        AttributeRuntimeVisibleTypeAnnotations typeAnnotations = code.getRuntimeVisibleTypeAnnotations();
+        if (typeAnnotations == null) return;
+        TypeAnnotationTransformer transformer = new TypeAnnotationTransformer(typeAnnotations, instrsByOffset);
+        transformer.transform(root);
     }
 
     public static void removePointlessReturn(Op04StructuredStatement root) {

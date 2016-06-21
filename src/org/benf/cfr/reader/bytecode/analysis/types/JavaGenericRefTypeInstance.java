@@ -3,6 +3,8 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.ComparableUnderEC;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.DefaultEquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -44,6 +46,71 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
         typeUsageCollector.collectRefType(typeInstance);
         for (JavaTypeInstance genericType : genericTypes) {
             typeUsageCollector.collect(genericType);
+        }
+    }
+
+    @Override
+    public JavaAnnotatedTypeInstance getAnnotatedInstance() {
+        JavaAnnotatedTypeInstance typeAnnotated = typeInstance.getAnnotatedInstance();
+        List<JavaAnnotatedTypeInstance> genericTypeAnnotated = ListFactory.newList();
+        for (JavaTypeInstance genericType : genericTypes) {
+            genericTypeAnnotated.add(genericType.getAnnotatedInstance());
+        }
+        return new Annotated(typeAnnotated, genericTypeAnnotated);
+    }
+
+    private class Annotated implements JavaAnnotatedTypeInstance {
+        JavaAnnotatedTypeInstance typeAnnotated;
+        List<JavaAnnotatedTypeInstance> genericTypeAnnotated;
+
+        private Annotated(JavaAnnotatedTypeInstance typeAnnotated, List<JavaAnnotatedTypeInstance> genericTypeAnnotated) {
+            this.typeAnnotated = typeAnnotated;
+            this.genericTypeAnnotated = genericTypeAnnotated;
+        }
+
+        @Override
+        public JavaAnnotatedTypeIterator pathIterator() {
+            return new Iterator();
+        }
+
+        @Override
+        public Dumper dump(Dumper d) {
+            typeAnnotated.dump(d).print('<');
+            boolean first = true;
+            for (JavaAnnotatedTypeInstance type : genericTypeAnnotated) {
+                first = StringUtils.comma(first, d);
+                type.dump(d);
+            }
+            d.print('>');
+            return d;
+        }
+
+        private class Iterator implements JavaAnnotatedTypeIterator {
+
+            @Override
+            public JavaAnnotatedTypeIterator moveArray() {
+                return typeAnnotated.pathIterator().moveArray();
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveBound() {
+                return typeAnnotated.pathIterator().moveBound();
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveNested() {
+                return typeAnnotated.pathIterator().moveNested();
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveParameterized(int index) {
+                return genericTypeAnnotated.get(index).pathIterator();
+            }
+
+            @Override
+            public void apply(AnnotationTableTypeEntry entry) {
+                typeAnnotated.pathIterator().apply(entry);
+            }
         }
     }
 

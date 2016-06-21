@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -23,6 +24,7 @@ import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 
@@ -330,6 +332,11 @@ public class WildcardMatch {
 
         @Override
         public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        }
+
+        @Override
+        public JavaAnnotatedTypeInstance getAnnotatedCreationType() {
+            throw new UnsupportedOperationException();
         }
 
         @Override

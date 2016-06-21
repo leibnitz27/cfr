@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.lvalue;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariableDefault;
@@ -23,6 +24,8 @@ public class LocalVariable extends AbstractLValue {
     private final int idx;
     private final Ident ident;
     private boolean guessedFinal;
+    private final int originalRawOffset;
+    private JavaAnnotatedTypeInstance customCreationType;
 
     public LocalVariable(int stackPosition, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType) {
         super(inferredJavaType);
@@ -30,6 +33,7 @@ public class LocalVariable extends AbstractLValue {
         this.idx = stackPosition;
         this.ident = ident;
         this.guessedFinal = false;
+        this.originalRawOffset = originalRawOffset;
     }
 
     public LocalVariable(String name, InferredJavaType inferredJavaType) {
@@ -38,6 +42,11 @@ public class LocalVariable extends AbstractLValue {
         this.idx = -1;
         this.ident = null;
         this.guessedFinal = false;
+        this.originalRawOffset = -1;
+    }
+
+    public int getOriginalRawOffset() {
+        return originalRawOffset;
     }
 
     @Override
@@ -55,9 +64,20 @@ public class LocalVariable extends AbstractLValue {
         guessedFinal = true;
     }
 
+    // Mutation hack :( we need to be able (without affecting any analysis) to inform the creation
+    // about annotations.
+    public void setCustomCreationType(JavaAnnotatedTypeInstance customCreationType) {
+        this.customCreationType = customCreationType;
+    }
+
+    @Override
+    public JavaAnnotatedTypeInstance getAnnotatedCreationType() {
+        return customCreationType;
+    }
+
     /*
-         * Can't modify, so deep clone is this.
-         */
+     * Can't modify, so deep clone is this.
+     */
     @Override
     public LValue deepClone(CloneHelper cloneHelper) {
         return this;

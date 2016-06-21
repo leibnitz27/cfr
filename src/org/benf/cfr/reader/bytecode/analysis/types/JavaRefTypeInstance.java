@@ -1,19 +1,21 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
-import org.benf.cfr.reader.util.CannotLoadClassException;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.annotation.Nullable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
@@ -54,6 +56,86 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         }
         this.innerClassInfo = new RefTypeInnerClassInfo(knownOuter);
         this.shortName = innerSub;
+    }
+
+    @Override
+    public JavaAnnotatedTypeInstance getAnnotatedInstance() {
+        JavaRefTypeInstance rti = this;
+        JavaAnnotatedTypeInstance prev = null;
+        do {
+            InnerClassInfo ici = rti.getInnerClassHereInfo();
+            boolean isInner = ici.isInnerClass();
+            prev = new Annotated(prev, rti, isInner);
+            if (isInner) {
+                rti = ici.getOuterClass();
+            } else {
+                rti = null;
+            }
+        } while (rti != null);
+        return prev;
+    }
+
+    private static class Annotated implements JavaAnnotatedTypeInstance {
+        private final List<AnnotationTableTypeEntry> entries = ListFactory.newList();
+        private final JavaAnnotatedTypeInstance inner;
+        private final JavaRefTypeInstance outerThis;
+        private final boolean isInner;
+
+        private Annotated(JavaAnnotatedTypeInstance inner, JavaRefTypeInstance outerThis, boolean isInner) {
+            this.inner = inner;
+            this.outerThis = outerThis;
+            this.isInner = isInner;
+        }
+
+        public JavaAnnotatedTypeIterator pathIterator() {
+            return new Iterator();
+        }
+
+        @Override
+        public Dumper dump(Dumper d) {
+            if (!entries.isEmpty()) {
+                if (isInner) d.print(' ');
+                for (AnnotationTableTypeEntry entry : entries) {
+                    entry.dump(d);
+                    d.print(' ');
+                }
+            }
+            d.print(outerThis.getRawShortName());
+            if (inner != null) {
+                d.print('.');
+                inner.dump(d);
+            }
+            return d;
+        }
+
+        private class Iterator implements JavaAnnotatedTypeIterator {
+            // Return this - wrong, but tolerable.
+            @Override
+            public JavaAnnotatedTypeIterator moveArray() {
+                return this;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveBound() {
+                return this;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveNested() {
+                return inner.pathIterator();
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveParameterized(int index) {
+                return this;
+            }
+
+            @Override
+            public void apply(AnnotationTableTypeEntry entry) {
+                entries.add(entry);
+            }
+        }
+
     }
 
     @Override

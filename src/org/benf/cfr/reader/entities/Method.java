@@ -136,6 +136,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
         collector.collectFrom(getAttributeByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
         if (codeAttribute != null) {
+            codeAttribute.collectTypeUsages(collector);
             codeAttribute.analyse().collectTypeUsages(collector);
         }
         collector.collect(localClasses.keySet());

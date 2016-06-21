@@ -23,45 +23,52 @@ public class AttributeFactory {
             // Code attribute needs the signature of the method, so that we have type information for the
             // local variables.
             return new AttributeCode(raw, cp, classFileVersion);
-        } else if (AttributeLocalVariableTable.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeLocalVariableTable(raw, cp);
-        } else if (AttributeSignature.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeSignature(raw, cp);
-        } else if (AttributeConstantValue.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeConstantValue(raw, cp);
-        } else if (AttributeLineNumberTable.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeLineNumberTable(raw, cp);
-        } else if (AttributeExceptions.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeExceptions(raw, cp);
-        } else if (AttributeDeprecated.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeDeprecated(raw, cp);
-        } else if (AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeRuntimeVisibleAnnotations(raw, cp);
-        } else if (AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeRuntimeInvisibleAnnotations(raw, cp);
-        } else if (AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeRuntimeVisibleParameterAnnotations(raw, cp);
-        } else if (AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeRuntimeInvisibleParameterAnnotations(raw, cp);
-        } else if (AttributeSourceFile.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeSourceFile(raw, cp);
-        } else if (AttributeInnerClasses.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeInnerClasses(raw, cp);
-        } else if (AttributeBootstrapMethods.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeBootstrapMethods(raw, cp);
-        } else if (AttributeAnnotationDefault.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeAnnotationDefault(raw, cp);
-        } else if (AttributeLocalVariableTypeTable.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeLocalVariableTypeTable(raw, cp);
-        } else if (AttributeStackMapTable.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeStackMapTable(raw, cp);
-        } else if (AttributeSynthetic.ATTRIBUTE_NAME.equals(attributeName)) {
-            return new AttributeSynthetic(raw, cp);
-        } else {
-            return new AttributeUnknown(raw, attributeName);
-            //throw new IllegalStateException(attributeName);
         }
 
+        try {
+            if (AttributeLocalVariableTable.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeLocalVariableTable(raw, cp);
+            } else if (AttributeSignature.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeSignature(raw, cp);
+            } else if (AttributeConstantValue.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeConstantValue(raw, cp);
+            } else if (AttributeLineNumberTable.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeLineNumberTable(raw, cp);
+            } else if (AttributeExceptions.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeExceptions(raw, cp);
+            } else if (AttributeDeprecated.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeDeprecated(raw, cp);
+            } else if (AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeRuntimeVisibleAnnotations(raw, cp);
+            } else if (AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeRuntimeVisibleTypeAnnotations(raw, cp);
+            } else if (AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeRuntimeInvisibleTypeAnnotations(raw, cp);
+            } else if (AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeRuntimeInvisibleAnnotations(raw, cp);
+            } else if (AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeRuntimeVisibleParameterAnnotations(raw, cp);
+            } else if (AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeRuntimeInvisibleParameterAnnotations(raw, cp);
+            } else if (AttributeSourceFile.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeSourceFile(raw, cp);
+            } else if (AttributeInnerClasses.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeInnerClasses(raw, cp);
+            } else if (AttributeBootstrapMethods.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeBootstrapMethods(raw, cp);
+            } else if (AttributeAnnotationDefault.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeAnnotationDefault(raw, cp);
+            } else if (AttributeLocalVariableTypeTable.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeLocalVariableTypeTable(raw, cp);
+            } else if (AttributeStackMapTable.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeStackMapTable(raw, cp);
+            } else if (AttributeSynthetic.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeSynthetic(raw, cp);
+            }
+        } catch (Exception e) {
+            // Can't handle it? Continue and process as an unknown attribute.
+        }
+        return new AttributeUnknown(raw, attributeName);
     }
 
     public static UnaryFunction<ByteData, Attribute> getBuilder(ConstantPool cp, ClassFileVersion classFileVersion) {

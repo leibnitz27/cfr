@@ -7,12 +7,15 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AttributeCode extends Attribute {
     public static final String ATTRIBUTE_NAME = "Code";
@@ -25,7 +28,7 @@ public class AttributeCode extends Attribute {
     private final short maxLocals;
     private final int codeLength;
     private final List<ExceptionTableEntry> exceptionTableEntries;
-    private final List<Attribute> attributes;
+    private final Map<String, Attribute> attributes;
     private final ConstantPool cp;
     private final ByteData rawData;
 
@@ -78,7 +81,8 @@ public class AttributeCode extends Attribute {
         tmpAttributes.ensureCapacity(numAttributes);
         ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
                 AttributeFactory.getBuilder(cp, classFileVersion));
-        this.attributes = tmpAttributes;
+        this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
+
         this.rawData = raw.getOffsetData(OFFSET_OF_CODE);
         this.codeAnalyser = new CodeAnalyser(this);
     }
@@ -95,18 +99,24 @@ public class AttributeCode extends Attribute {
         return cp;
     }
 
+    private <T extends Attribute> T getAttributeByName(String name) {
+        Attribute attribute = attributes.get(name);
+        if (attribute == null) return null;
+        @SuppressWarnings("unchecked")
+        T tmp = (T) attribute;
+        return tmp;
+    }
+
     public AttributeLocalVariableTable getLocalVariableTable() {
-        for (Attribute attribute : attributes) {
-            if (attribute instanceof AttributeLocalVariableTable) return (AttributeLocalVariableTable) attribute;
-        }
-        return null;
+        return getAttributeByName(AttributeLocalVariableTable.ATTRIBUTE_NAME);
     }
 
     public AttributeLineNumberTable getLineNumberTable() {
-        for (Attribute attribute : attributes) {
-            if (attribute instanceof AttributeLineNumberTable) return (AttributeLineNumberTable) attribute;
-        }
-        return null;
+        return getAttributeByName(AttributeLineNumberTable.ATTRIBUTE_NAME);
+    }
+
+    public AttributeRuntimeVisibleTypeAnnotations getRuntimeVisibleTypeAnnotations() {
+        return getAttributeByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME);
     }
 
     public ByteData getRawData() {
@@ -144,5 +154,10 @@ public class AttributeCode extends Attribute {
         return ATTRIBUTE_NAME;
     }
 
-
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        for (Attribute attribute : attributes.values()) {
+            attribute.collectTypeUsages(collector);
+        }
+    }
 }
