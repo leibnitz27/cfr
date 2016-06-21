@@ -7,6 +7,8 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 public interface JavaTypeInstance {
 
+    // This returns an annotation wrapper over the type - it is much heavier, so we don't
+    // do it unless necessary.
     JavaAnnotatedTypeInstance getAnnotatedInstance();
 
     StackType getStackType();

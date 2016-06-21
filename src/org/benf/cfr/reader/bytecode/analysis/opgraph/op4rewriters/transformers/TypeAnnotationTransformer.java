@@ -77,7 +77,7 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
          * get anything created here.
          */
         List<LValue> createdHere = stm.findCreatedHere();
-        if (createdHere.isEmpty()) return;
+        if (createdHere == null || createdHere.isEmpty()) return;
 
         for (LValue lValue : createdHere) {
             if (lValue instanceof LocalVariable) {
