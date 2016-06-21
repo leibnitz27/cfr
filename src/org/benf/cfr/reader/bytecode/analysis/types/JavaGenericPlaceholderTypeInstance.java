@@ -5,6 +5,7 @@ import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -50,28 +51,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
             return d;
         }
 
-        private class Iterator implements JavaAnnotatedTypeIterator {
-
-            @Override
-            public JavaAnnotatedTypeIterator moveArray() {
-                return this;
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveBound() {
-                return this;
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveNested() {
-                return this;
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveParameterized(int index) {
-                return this;
-            }
-
+        private class Iterator extends JavaAnnotatedTypeIterator.BaseAnnotatedTypeIterator {
             @Override
             public void apply(AnnotationTableTypeEntry entry) {
                 entries.add(entry);

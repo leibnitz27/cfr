@@ -15,7 +15,6 @@ import org.benf.cfr.reader.util.output.ToStringDumper;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
@@ -111,22 +110,22 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         private class Iterator implements JavaAnnotatedTypeIterator {
             // Return this - wrong, but tolerable.
             @Override
-            public JavaAnnotatedTypeIterator moveArray() {
+            public JavaAnnotatedTypeIterator moveArray(DecompilerComments comments) {
                 return this;
             }
 
             @Override
-            public JavaAnnotatedTypeIterator moveBound() {
+            public JavaAnnotatedTypeIterator moveBound(DecompilerComments comments) {
                 return this;
             }
 
             @Override
-            public JavaAnnotatedTypeIterator moveNested() {
+            public JavaAnnotatedTypeIterator moveNested(DecompilerComments comments) {
                 return inner.pathIterator();
             }
 
             @Override
-            public JavaAnnotatedTypeIterator moveParameterized(int index) {
+            public JavaAnnotatedTypeIterator moveParameterized(int index, DecompilerComments comments) {
                 return this;
             }
 

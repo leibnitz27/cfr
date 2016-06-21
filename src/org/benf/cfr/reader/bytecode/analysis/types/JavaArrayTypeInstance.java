@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeIn
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -55,7 +56,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
             return new Iterator();
         }
 
-        private class Iterator implements JavaAnnotatedTypeIterator {
+        private class Iterator extends JavaAnnotatedTypeIterator.BaseAnnotatedTypeIterator {
             private int curIdx;
 
             private Iterator() {
@@ -67,24 +68,9 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
             }
 
             @Override
-            public JavaAnnotatedTypeIterator moveArray() {
+            public JavaAnnotatedTypeIterator moveArray(DecompilerComments comments) {
                 if (curIdx+1 < dimensions) return new Iterator(curIdx+1);
                 return annotatedUnderlyingType.pathIterator();
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveBound() {
-                return null;
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveNested() {
-                return null;
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveParameterized(int index) {
-                return null;
             }
 
             @Override

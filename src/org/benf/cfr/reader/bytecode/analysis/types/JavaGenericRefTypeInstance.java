@@ -8,6 +8,7 @@ import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.StringUtils;
@@ -85,25 +86,25 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
             return d;
         }
 
-        private class Iterator implements JavaAnnotatedTypeIterator {
+        private class Iterator extends JavaAnnotatedTypeIterator.BaseAnnotatedTypeIterator {
 
             @Override
-            public JavaAnnotatedTypeIterator moveArray() {
-                return typeAnnotated.pathIterator().moveArray();
+            public JavaAnnotatedTypeIterator moveArray(DecompilerComments comments) {
+                return typeAnnotated.pathIterator().moveArray(comments);
             }
 
             @Override
-            public JavaAnnotatedTypeIterator moveBound() {
-                return typeAnnotated.pathIterator().moveBound();
+            public JavaAnnotatedTypeIterator moveBound(DecompilerComments comments) {
+                return typeAnnotated.pathIterator().moveBound(comments);
             }
 
             @Override
-            public JavaAnnotatedTypeIterator moveNested() {
-                return typeAnnotated.pathIterator().moveNested();
+            public JavaAnnotatedTypeIterator moveNested(DecompilerComments comments) {
+                return typeAnnotated.pathIterator().moveNested(comments);
             }
 
             @Override
-            public JavaAnnotatedTypeIterator moveParameterized(int index) {
+            public JavaAnnotatedTypeIterator moveParameterized(int index, DecompilerComments comments) {
                 return genericTypeAnnotated.get(index).pathIterator();
             }
 

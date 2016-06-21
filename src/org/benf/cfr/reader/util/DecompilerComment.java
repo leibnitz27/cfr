@@ -23,6 +23,7 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment RENAME_MEMBERS = new DecompilerComment("Duplicate member names - consider using --" + OptionsImpl.RENAME_DUP_MEMBERS.getName() + " true");
     public static DecompilerComment ILLEGAL_IDENTIFIERS = new DecompilerComment("Illegal identifiers - consider using --" + OptionsImpl.RENAME_ILLEGAL_IDENTS.getName() + " true");
     public static DecompilerComment WHOLE_CLASS_EXCEPTION = new DecompilerComment("Exception performing whole class analysis.");
+    public static DecompilerComment BAD_ANNOTATION = new DecompilerComment("Issues handling annotations - annotations may be inaccurate");
 
     private final String comment;
     private final String summaryMessage;

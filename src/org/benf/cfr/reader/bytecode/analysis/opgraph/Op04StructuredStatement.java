@@ -681,10 +681,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
-    public static void applyTypeAnnotations(AttributeCode code, Op04StructuredStatement root, SortedMap<Integer, Integer> instrsByOffset) {
+    public static void applyTypeAnnotations(AttributeCode code, Op04StructuredStatement root, SortedMap<Integer, Integer> instrsByOffset,
+                                            DecompilerComments comments) {
         AttributeRuntimeVisibleTypeAnnotations typeAnnotations = code.getRuntimeVisibleTypeAnnotations();
         if (typeAnnotations == null) return;
-        TypeAnnotationTransformer transformer = new TypeAnnotationTransformer(typeAnnotations, instrsByOffset);
+        TypeAnnotationTransformer transformer = new TypeAnnotationTransformer(typeAnnotations, instrsByOffset, comments);
         transformer.transform(root);
     }
 

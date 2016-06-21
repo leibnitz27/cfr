@@ -5,6 +5,7 @@ import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
@@ -59,26 +60,11 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
             return d;
         }
 
-        private class Iterator implements JavaAnnotatedTypeIterator {
+        private class Iterator extends JavaAnnotatedTypeIterator.BaseAnnotatedTypeIterator {
 
             @Override
-            public JavaAnnotatedTypeIterator moveArray() {
-                return this; // Not right
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveBound() {
+            public JavaAnnotatedTypeIterator moveBound(DecompilerComments comments) {
                 return underlyingAnnotated.pathIterator();
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveNested() {
-                return this; // Not right
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveParameterized(int index) {
-                return this; // Not right
             }
 
             @Override

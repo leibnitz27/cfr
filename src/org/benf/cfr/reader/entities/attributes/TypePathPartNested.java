@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaAnnotatedTypeIterator;
+import org.benf.cfr.reader.util.DecompilerComments;
 
 public class TypePathPartNested implements TypePathPart {
     public static TypePathPartNested INSTANCE = new TypePathPartNested();
@@ -9,7 +10,7 @@ public class TypePathPartNested implements TypePathPart {
     }
 
     @Override
-    public JavaAnnotatedTypeIterator apply(JavaAnnotatedTypeIterator it) {
-        return it.moveNested();
+    public JavaAnnotatedTypeIterator apply(JavaAnnotatedTypeIterator it, DecompilerComments comments) {
+        return it.moveNested(comments);
     }
 }

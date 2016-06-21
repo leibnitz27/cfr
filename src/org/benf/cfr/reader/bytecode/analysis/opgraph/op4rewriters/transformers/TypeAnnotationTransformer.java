@@ -14,12 +14,11 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaAnnotatedTypeIterator;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleTypeAnnotations;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
-import org.benf.cfr.reader.entities.attributes.TypePath;
 import org.benf.cfr.reader.entities.attributes.TypePathPart;
+import org.benf.cfr.reader.util.DecompilerComments;
 
 import java.util.List;
 import java.util.SortedMap;
@@ -28,10 +27,12 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
 
     private final AttributeRuntimeVisibleTypeAnnotations typeAnnotations;
     private final SortedMap<Integer, Integer> instrsByOffset;
+    private final DecompilerComments comments;
 
-    public TypeAnnotationTransformer(AttributeRuntimeVisibleTypeAnnotations typeAnnotations, SortedMap<Integer, Integer> instrsByOffset) {
+    public TypeAnnotationTransformer(AttributeRuntimeVisibleTypeAnnotations typeAnnotations, SortedMap<Integer, Integer> instrsByOffset, DecompilerComments comments) {
         this.typeAnnotations = typeAnnotations;
         this.instrsByOffset = instrsByOffset;
+        this.comments = comments;
     }
 
     public void transform(Op04StructuredStatement root) {
@@ -103,7 +104,7 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
                 for (AnnotationTableTypeEntry<TypeAnnotationTargetInfo.TypeAnnotationLocalVarTarget> entry : entries) {
                     JavaAnnotatedTypeIterator iterator = annotatedTypeInstance.pathIterator();
                     for (TypePathPart part : entry.getTypePath().segments) {
-                        iterator = part.apply(iterator);
+                        iterator = part.apply(iterator, comments);
                     }
                     iterator.apply(entry);
                 }
