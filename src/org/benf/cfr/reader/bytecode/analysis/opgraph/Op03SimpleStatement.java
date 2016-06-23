@@ -3183,10 +3183,22 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }));
         if (tryBlocks.isEmpty()) return;
         for (Op03SimpleStatement statement : allStatements) {
+            for (BlockIdentifier ident : tryBlocks) {
+                if (!statement.containedInBlocks.contains(ident) && statement.sources.contains(statement.linearlyPrevious) && statement.linearlyPrevious.containedInBlocks.contains(ident)) {
+                    statement.addPossibleExitFor(ident);
+                }
+            }
             statement.containedInBlocks.addAll(tryBlocks);
         }
+    }
 
-
+    private Set<BlockIdentifier> possibleExitsFor = null;
+    private void addPossibleExitFor(BlockIdentifier ident) {
+        if (possibleExitsFor == null) possibleExitsFor = SetFactory.newSet();
+        possibleExitsFor.add(ident);
+    }
+    public boolean isPossibleExitFor(BlockIdentifier ident) {
+        return possibleExitsFor != null && possibleExitsFor.contains(ident);
     }
 
     // Up to now, try and catch blocks, while related, are treated in isolation.

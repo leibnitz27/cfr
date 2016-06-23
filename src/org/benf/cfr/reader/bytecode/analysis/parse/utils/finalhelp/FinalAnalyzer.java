@@ -636,26 +636,41 @@ public class FinalAnalyzer {
          *
          * A JSR counts :(
          */
+        // Note attempts - this is a terrible heuristic - try once without checking 'isPossibleExitFor',
+        // but fall back.
         final Set<Op03SimpleStatement> exitPaths = SetFactory.newOrderedSet();
-        GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(in.getTargets().get(0), new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
-            @Override
-            public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                if (arg1.getBlockIdentifiers().contains(tryBlockIdentifier)) {
-                    arg2.enqueue(arg1.getTargets());
-                    // This seems like an awful hack, but allows us to handle try blocks which jump between each other
-                    Op03SimpleStatement linNext = arg1.getLinearlyNext();
-                    if (linNext != null) {
-                        if (linNext.getBlockIdentifiers().contains(tryBlockIdentifier)) arg2.enqueue(linNext);
+        for (int attempt = 0;attempt < 2;++attempt) {
+            final int attemptCopy = attempt;
+            GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(in.getTargets().get(0), new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
+                @Override
+                public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+                    if (arg1.getBlockIdentifiers().contains(tryBlockIdentifier)) {
+                        if (arg1.isPossibleExitFor(tryBlockIdentifier)) {
+                            if (attemptCopy == 1) exitPaths.add(arg1);
+                        }
+                        arg2.enqueue(arg1.getTargets());
+                        // This seems like an awful hack, but allows us to handle try blocks which jump between each other
+                        Op03SimpleStatement linNext = arg1.getLinearlyNext();
+                        if (linNext != null) {
+                            if (linNext.getBlockIdentifiers().contains(tryBlockIdentifier)) {
+                                arg2.enqueue(linNext);
+                            } else {
+                                //                            if (arg1.getStatement() instanceof ThrowStatement) {
+                                //                                exitPaths.add(arg1);
+                                //                            }
+                            }
+                        }
+                    } else {
+                        if (arg1.getStatement() instanceof CaseStatement) {
+                            arg1 = arg1.getTargets().get(0);
+                        }
+                        exitPaths.add(arg1);
                     }
-                } else {
-                    if (arg1.getStatement() instanceof CaseStatement) {
-                        arg1 = arg1.getTargets().get(0);
-                    }
-                    exitPaths.add(arg1);
                 }
-            }
-        });
-        gv.process();
+            });
+            gv.process();
+            if (!exitPaths.isEmpty()) break;
+        }
 
         /*
          * VERY (too much so, this won't catch everything) special case - IFF the finally code body is a single
