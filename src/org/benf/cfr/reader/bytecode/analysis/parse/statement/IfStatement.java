@@ -128,6 +128,14 @@ public class IfStatement extends GotoStatement {
         return Pair.make(knownIfBlock, knownElseBlock);
     }
 
+    public BlockIdentifier getKnownIfBlock() {
+        return knownIfBlock;
+    }
+
+    public boolean hasElseBlock() {
+        return knownElseBlock != null;
+    }
+
     public void optimiseForTypes() {
         condition = condition.optimiseForType();
     }

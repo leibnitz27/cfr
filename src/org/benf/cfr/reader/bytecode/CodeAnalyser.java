@@ -763,6 +763,10 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
 
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
+            // Before we handle anonymous blocks - see if we can convert any non-else if statements, which
+            // Jump to a Goto Out of try, to just be an anonymous break to after that try statement.
+            // op03SimpleParseNodes = Op03SimpleStatement.convertIndirectTryLeavesToAnonymousBreaks(op03SimpleParseNodes);
+
             Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         }
 
@@ -812,6 +816,12 @@ public class CodeAnalyser {
         }
 
         Cleaner.reindexInPlace(op03SimpleParseNodes);
+        /*
+         * Join up separated blocks.  Note that this is a bit dangerous, so we should only enable it
+         * If we have to.
+         */
+        //Op03SimpleStatement.rejoinBlocks2(op03SimpleParseNodes);
+
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         Op04StructuredStatement.tidyEmptyCatch(block);

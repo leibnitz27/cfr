@@ -3966,6 +3966,27 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    /*
+     * and this is an even more aggressive version - simply walk the code in order (yes, it needs to be ordered
+     * at this point), and fill in any missing blocks.
+     */
+    public static void rejoinBlocks2(List<Op03SimpleStatement> statements) {
+        Map<BlockIdentifier, Integer> lastSeen = MapFactory.newMap();
+        for (int x=0, len=statements.size();x<len;++x) {
+            Op03SimpleStatement stm = statements.get(x);
+            for (BlockIdentifier identifier : stm.getBlockIdentifiers()) {
+
+                Integer prev = lastSeen.get(identifier)  ;
+                if (prev != null && prev < x-1) {
+                    for (int y=prev+1;y<x;++y) {
+                        statements.get(y).getBlockIdentifiers().add(identifier);
+                    }
+                }
+                lastSeen.put(identifier, x);
+            }
+        }
+    }
+
     private static void removePointlessSwitchDefault(Op03SimpleStatement swtch) {
         SwitchStatement switchStatement = (SwitchStatement) swtch.getStatement();
         BlockIdentifier switchBlock = switchStatement.getSwitchBlock();
@@ -4000,6 +4021,37 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement swtch : switches) {
             removePointlessSwitchDefault(swtch);
         }
+    }
+
+    public static List<Op03SimpleStatement> convertIndirectTryLeavesToAnonymousBreaks(List<Op03SimpleStatement> statements) {
+        Set<BlockIdentifier> blocksToRemoveCompletely = SetFactory.newSet();
+
+        for (Op03SimpleStatement in : statements) {
+            Statement statement = in.getStatement();
+            if (!(statement instanceof IfStatement)) continue;
+            IfStatement ifStatement = (IfStatement) statement;
+            if (ifStatement.hasElseBlock()) continue;
+            Op03SimpleStatement afterIf = in.targets.get(1);
+            Statement indirect = afterIf.getStatement();
+            if (indirect.getClass() != GotoStatement.class) continue;
+            GotoStatement gotoStatement = (GotoStatement) indirect;
+            if (gotoStatement.getJumpType() != JumpType.GOTO_OUT_OF_TRY) continue;
+            Op03SimpleStatement eventualTarget = afterIf.targets.get(0);
+            ifStatement.setJumpType(JumpType.BREAK_ANONYMOUS);
+            in.replaceTarget(afterIf, eventualTarget);
+            afterIf.removeSource(in);
+            eventualTarget.addSource(in);
+            blocksToRemoveCompletely.add(ifStatement.getKnownIfBlock());
+            ifStatement.setKnownBlocks(null, null);
+        }
+
+        if (blocksToRemoveCompletely.isEmpty()) return statements;
+
+        for (Op03SimpleStatement stm : statements) {
+            stm.getBlockIdentifiers().removeAll(blocksToRemoveCompletely);
+        }
+        statements = Cleaner.removeUnreachableCode(statements, false);
+        return statements;
     }
 
     public static void labelAnonymousBlocks(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
