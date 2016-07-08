@@ -39,10 +39,14 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
                 value.getInferredJavaType().useAsWithoutCasting((RawJavaType) allocatedType);
             }
         }
+        // This is only true if the target array has the correct arity.
+        // See ArrayTest18.
         for (Expression value : values) {
-            if (value instanceof NewAnonymousArray) {
-                NewAnonymousArray newAnonymousArrayInner = (NewAnonymousArray) value;
-                newAnonymousArrayInner.isCompletelyAnonymous = true;
+            if (numDims > 1) {
+                if (value instanceof NewAnonymousArray) {
+                    NewAnonymousArray newAnonymousArrayInner = (NewAnonymousArray) value;
+                    newAnonymousArrayInner.isCompletelyAnonymous = true;
+                }
             }
             this.values.add(value);
         }
