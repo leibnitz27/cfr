@@ -97,12 +97,6 @@ public class GetOptParser {
         System.err.println("java --jar cfr_" + MiscConstants.CFR_VERSION + ".jar class_or_jar_file [method] [options]\n");
     }
 
-    public <T> void showHelp(PermittedOptionProvider permittedOptionProvider) {
-        printErrHeader();
-        printUsage();
-        System.err.println(getHelp(permittedOptionProvider));
-    }
-
     public <T> void showHelp(PermittedOptionProvider permittedOptionProvider, Exception e) {
         printErrHeader();
         printUsage();
