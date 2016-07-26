@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.util;
 
 public interface MiscConstants {
-    public static final String CFR_VERSION = "0_115";
+    public static final String CFR_VERSION = "0_116";
     public static final String CFR_HEADER_BRA = "Decompiled with CFR";
 
     public static final String INIT_METHOD = "<init>";
@@ -12,5 +12,6 @@ public interface MiscConstants {
     public static final String INNER_CLASS_SEP_STR = "$";
 
     public static final String DESERIALISE_LAMBDA_METHOD = "$deserializeLambda$";
+    public static final String SCALA_SERIAL_VERSION = "serialVersionUID";
     public static final String GET_CLASS_NAME = "getClass";
 }

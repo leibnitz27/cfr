@@ -249,6 +249,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
 
         fixConfusingEnumConstructors();
+
+        if (options.getOption(OptionsImpl.ELIDE_SCALA)) {
+            elideScala();
+        }
     }
 
     /*
@@ -266,6 +270,21 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 MethodPrototype prototype = constructor.getMethodPrototype();
                 prototype.unbreakEnumConstructor();
             }
+        }
+    }
+
+    /*
+     * Bit of tidying - scala contains loads of serialVersionUid and ScalaSignatures - which don't add anything
+     * and just make things harder to read.
+     *
+     * Ideally this would live elsewhere - but most scala functions are implemented as anonymous inners,
+     * and that's not caught by the whole class options.
+     */
+    private void elideScala() {
+        try {
+            ClassFileField f = getFieldByName(MiscConstants.SCALA_SERIAL_VERSION, RawJavaType.LONG);
+            f.markHidden();
+        } catch (Exception e) {
         }
     }
 
