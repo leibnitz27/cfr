@@ -5,9 +5,7 @@ import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GetOptParser {
 
@@ -52,7 +50,16 @@ public class GetOptParser {
             max = len > max ? len : max;
         }
         max += 4;
-        for (PermittedOptionProvider.ArgumentParam param : permittedOptionProvider.getArguments()) {
+        List<? extends PermittedOptionProvider.ArgumentParam<?, ?>> args = permittedOptionProvider.getArguments();
+        Collections.sort(args, new Comparator<PermittedOptionProvider.ArgumentParam<?, ?>>() {
+            @Override
+            public int compare(PermittedOptionProvider.ArgumentParam<?, ?> a1, PermittedOptionProvider.ArgumentParam<?, ?> a2) {
+                if (a1.getName().equals("help")) return 1;
+                if (a2.getName().equals("help")) return -1;
+                return a1.getName().compareTo(a2.getName());
+            }
+        });
+        for (PermittedOptionProvider.ArgumentParam param : args) {
             if (!param.isHidden()) {
                 String name = param.getName();
                 int pad = max - name.length();
