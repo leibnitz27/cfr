@@ -12,10 +12,23 @@ public class AnnotationTableEntry implements TypeUsageCollectable {
     private final JavaTypeInstance clazz;
     // Sorted map to make ordering predictable.
     private final Map<String, ElementValue> elementValueMap;
+    private boolean hidden;
 
     public AnnotationTableEntry(JavaTypeInstance clazz, Map<String, ElementValue> elementValueMap) {
         this.clazz = clazz;
         this.elementValueMap = elementValueMap;
+    }
+
+    public void setHidden() {
+        hidden = true;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public JavaTypeInstance getClazz() {
+        return clazz;
     }
 
     public Dumper dump(Dumper d) {

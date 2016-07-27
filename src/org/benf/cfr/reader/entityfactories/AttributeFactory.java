@@ -64,6 +64,10 @@ public class AttributeFactory {
                 return new AttributeStackMapTable(raw, cp);
             } else if (AttributeSynthetic.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeSynthetic(raw, cp);
+            } else if (AttributeScalaSig.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeScalaSig(raw, cp);
+            } else if (AttributeScala.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeScala(raw, cp);
             }
         } catch (Exception e) {
             // Can't handle it? Continue and process as an unknown attribute.

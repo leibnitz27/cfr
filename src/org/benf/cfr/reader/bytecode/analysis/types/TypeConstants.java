@@ -11,6 +11,7 @@ public interface TypeConstants {
     public final static JavaRefTypeInstance CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.io.Closeable", "Closeable", OBJECT);
     public final static JavaRefTypeInstance THROWABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Throwable", "Throwable", OBJECT);
     public final static JavaRefTypeInstance SUPPLIER = JavaRefTypeInstance.createTypeConstant("java.util.function.Supplier", "Object");
+    public final static JavaRefTypeInstance SCALA_SIGNATURE = JavaRefTypeInstance.createTypeConstant("scala.reflect.ScalaSignature", "Object");
 
     public final static String boxingNameBoolean = "java.lang.Boolean";
     public final static String boxingNameByte = "java.lang.Byte";

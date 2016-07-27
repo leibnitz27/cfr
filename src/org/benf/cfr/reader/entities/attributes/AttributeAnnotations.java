@@ -1,11 +1,14 @@
 package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.annotations.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -33,19 +36,28 @@ public abstract class AttributeAnnotations extends Attribute implements TypeUsag
         }
     }
 
-    public List<AnnotationTableEntry> getAnnotationTableEntryList() {
-        return annotationTableEntryList;
+    public void hide(final JavaTypeInstance type) {
+        List<AnnotationTableEntry> hideThese = Functional.filter(annotationTableEntryList, new Predicate<AnnotationTableEntry>() {
+            @Override
+            public boolean test(AnnotationTableEntry in) {
+                return in.getClazz().equals(type);
+            }
+        });
+        for (AnnotationTableEntry hide : hideThese) {
+            hide.setHidden();
+        }
     }
 
     @Override
     public Dumper dump(Dumper d) {
         for (AnnotationTableEntry annotationTableEntry : annotationTableEntryList) {
-            annotationTableEntry.dump(d);
-            d.newln();
+            if (!annotationTableEntry.isHidden()) {
+                annotationTableEntry.dump(d);
+                d.newln();
+            }
         }
         return d;
     }
-
 
     @Override
     public long getRawByteLength() {

@@ -286,6 +286,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             f.markHidden();
         } catch (Exception e) {
         }
+        // If it's there.  Don't have a flag to hide attributes (should do, really).
+        AttributeRuntimeVisibleAnnotations annotations = getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
+        if (annotations != null) {
+            annotations.hide(TypeConstants.SCALA_SIGNATURE);
+        }
     }
 
     /*

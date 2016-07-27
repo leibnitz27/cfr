@@ -353,7 +353,7 @@ public class OptionsImpl implements Options {
             "Pull code into case statements agressively.");
     public static final PermittedOptionProvider.Argument<Boolean> ELIDE_SCALA = new PermittedOptionProvider.Argument<Boolean>(
             "elidescala", defaultFalseBooleanDecoder,
-            "Elide scala serialVersionUID.");
+            "Elide things which aren't helpful in scala output (serialVersionUID, @ScalaSignature).");
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
         this.opts = new HashMap<String, String>(opts);
