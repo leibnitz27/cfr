@@ -34,6 +34,10 @@ public class DCCommonState {
         classFileSource.informAnalysisRelativePathDetail(classFile.getUsePath(), classFile.getFilePath());
     }
 
+    public String getPossiblyRenamedFileFromClassFileSource(String name) {
+        return classFileSource.getPossiblyRenamedPath(name);
+    }
+
     public Set<String> getCouldNotLoadClasses() {
         return couldNotLoadClasses;
     }
@@ -60,7 +64,8 @@ public class DCCommonState {
 
     public List<JavaTypeInstance> explicitlyLoadJar(String path) {
         List<JavaTypeInstance> output = ListFactory.newList();
-        for (String classPath : classFileSource.addJar(path)) {
+        Collection<String> classPaths = classFileSource.addJar(path);
+        for (String classPath : classPaths) {
             // Redundant test as we're defending against a bad implementation.
             if (classPath.toLowerCase().endsWith(".class")) {
                 output.add(classCache.getRefClassFor(classPath.substring(0, classPath.length() - 6)));

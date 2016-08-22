@@ -2,12 +2,24 @@ package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.state.CaseSensitiveFileSystemHelper;
 import org.benf.cfr.reader.state.TypeUsageInformation;
-import org.benf.cfr.reader.util.Troolean;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
+import java.util.List;
+import java.util.Set;
+
 public class DumperFactoryImpl implements DumperFactory {
+    private final boolean checkDupes;
+    private Set<String> seen = SetFactory.newSet();
+    private boolean seenCaseDupe = false;
+
+
+    public DumperFactoryImpl(Options options) {
+        this.checkDupes = CaseSensitiveFileSystemHelper.IsCaseSensitive() && !options.getOption(OptionsImpl.CASE_INSENSITIVE_FS_RENAME);
+    }
 
     private static Pair<String, Boolean> getPathAndClobber(Options options) {
         Troolean clobber = options.getOption(OptionsImpl.CLOBBER_FILES);
@@ -20,14 +32,30 @@ public class DumperFactoryImpl implements DumperFactory {
         return null;
     }
 
-
-
     public Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         Pair<String, Boolean> targetInfo = getPathAndClobber(options);
 
         if (targetInfo == null) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump);
 
-        return new FileDumper(targetInfo.getFirst(), targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
+        FileDumper res =  new FileDumper(targetInfo.getFirst(), targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
+        if (checkDupes) {
+            if (seen.add(res.getFileName().toLowerCase())) {
+                seenCaseDupe = true;
+            }
+        }
+        return res;
+    }
+
+    private class AdditionalComments implements DecompilerCommentSource {
+        @Override
+        public List<DecompilerComment> getComments() {
+            if (seenCaseDupe) {
+                List<DecompilerComment> res = ListFactory.newList();
+                res.add(DecompilerComment.CASE_CLASH_FS);
+                return res;
+            }
+            return null;
+        }
     }
 
     /*
@@ -38,7 +66,7 @@ public class DumperFactoryImpl implements DumperFactory {
 
         if (targetInfo == null) return new NopSummaryDumper();
 
-        return new FileSummaryDumper(targetInfo.getFirst());
+        return new FileSummaryDumper(targetInfo.getFirst(), options, new AdditionalComments());
     }
 
 }

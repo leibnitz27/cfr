@@ -16,4 +16,8 @@ public class NopSummaryDumper implements SummaryDumper {
     @Override
     public void close() {
     }
+
+    @Override
+    public void NotifyAdditionalAtEnd() {
+    }
 }

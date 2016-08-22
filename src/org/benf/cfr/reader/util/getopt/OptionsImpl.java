@@ -354,6 +354,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> ELIDE_SCALA = new PermittedOptionProvider.Argument<Boolean>(
             "elidescala", defaultFalseBooleanDecoder,
             "Elide things which aren't helpful in scala output (serialVersionUID, @ScalaSignature).");
+    public static final PermittedOptionProvider.Argument<Boolean> CASE_INSENSITIVE_FS_RENAME = new PermittedOptionProvider.Argument<Boolean>(
+            "caseinsensitivefs", defaultFalseBooleanDecoder,
+            "Cope with case insensitive file systems by renaming colliding classes.");
 
     public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
         this.opts = new HashMap<String, String>(opts);
@@ -402,7 +405,7 @@ public class OptionsImpl implements Options {
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
                     RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS,
-                    AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA);
+                    AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA, CASE_INSENSITIVE_FS_RENAME);
         }
 
         @Override

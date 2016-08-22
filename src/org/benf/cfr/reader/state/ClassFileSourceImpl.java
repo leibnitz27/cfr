@@ -2,10 +2,8 @@ package org.benf.cfr.reader.state;
 
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.StringUtils;
+import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
@@ -20,6 +18,9 @@ import java.util.zip.ZipFile;
 public class ClassFileSourceImpl implements ClassFileSource {
 
     private Map<String, String> classToPathMap;
+    // replace with BiDiMap
+    private Map<String, String> classCollisionRenamerLCToReal;
+    private Map<String, String> classCollisionRenamerRealToLC;
     private final Options options;
     /*
      * Initialisation info
@@ -63,12 +64,30 @@ public class ClassFileSourceImpl implements ClassFileSource {
         return bytes;
     }
 
-
+    @Override
+    public String getPossiblyRenamedPath(String path) {
+        if (classCollisionRenamerRealToLC == null) return path;
+        String res = classCollisionRenamerRealToLC.get(path + ".class");
+        if (res == null) return path;
+        return res.substring(0, res.length()-6);
+    }
 
     @Override
-    public Pair<byte [], String> getClassFileContent(final String path) throws IOException {
+    public Pair<byte [], String> getClassFileContent(final String inputPath) throws IOException {
         Map<String, String> classPathFiles = getClassPathClasses();
-        String jarName = classPathFiles.get(path);
+
+        String jarName = classPathFiles.get(inputPath);
+
+        // If path is an alias due to case insensitivity, restore to the correct name here, before
+        // accessing zipfile.
+        String path = inputPath;
+        if (classCollisionRenamerLCToReal != null) {
+            String actualName = classCollisionRenamerLCToReal.get(path);
+            if (actualName != null) {
+                path = actualName;
+            }
+        }
+
         ZipFile zipFile = null;
 
         try {
@@ -100,10 +119,15 @@ public class ClassFileSourceImpl implements ClassFileSource {
             }
 
             byte[] content = getBytesFromFile(is, length);
-            return Pair.make(content, usePath);
+            return Pair.make(content, inputPath);
         } finally {
             if (zipFile != null) zipFile.close();
         }
+    }
+
+    @Override
+    public Collection<DecompilerComment> getSummaryComments() {
+        return null;
     }
 
     public Collection<String> addJar(String jarPath) {
@@ -119,21 +143,57 @@ public class ClassFileSourceImpl implements ClassFileSource {
             throw new ConfusedCFRException("Failed to load jar " + jarPath);
         }
 
-        List<String> output = ListFactory.newList();
+        Set<String> dedup = null;
+        if (classCollisionRenamerLCToReal != null) {
+            final Map<String, List<String>> map = Functional.groupToMapBy(thisJar.keySet(), new UnaryFunction<String, String>() {
+                @Override
+                public String invoke(String arg) {
+                    return arg.toLowerCase();
+                }
+            });
+            dedup = SetFactory.newSet(Functional.filter(map.keySet(), new Predicate<String>() {
+                @Override
+                public boolean test(String in) {
+                    return map.get(in).size() > 1;
+                }
+            }));
+        }
+
+        List < String > output = ListFactory.newList();
         for (Map.Entry<String, String> entry : thisJar.entrySet()) {
             String classPath = entry.getKey();
             if (classPath.toLowerCase().endsWith(".class")) {
+                // nb : entry.value will always be the jar here, but ....
+                if (classCollisionRenamerLCToReal != null) {
+                    String renamed = addDedupName(classPath, dedup, classCollisionRenamerLCToReal);
+                    classCollisionRenamerRealToLC.put(classPath, renamed);
+                    classPath = renamed;
+                }
                 classToPathMap.put(classPath, entry.getValue());
                 output.add(classPath);
-//                output.add(classCache.getRefClassFor(classPath.substring(0, classPath.length() - 6)));
             }
         }
         return output;
 
     }
 
+    private static String addDedupName(String potDup, Set<String> collisions, Map<String, String> data) {
+        String n = potDup.toLowerCase();
+        String name = n.substring(0, n.length()-6);
+        int next = 0;
+        if (!collisions.contains(n)) return potDup;
+        String testName = name + "_" + next + ".class";
+        while (data.containsKey(testName)) {
+            testName = name + "_" + ++next + ".class";
+        }
+        data.put(testName, potDup);
+        return testName;
+    }
+
     private Map<String, String> getClassPathClasses() {
         if (classToPathMap == null) {
+            boolean renameCase = (options.getOption(OptionsImpl.CASE_INSENSITIVE_FS_RENAME));
+
             boolean dump = options.getOption(OptionsImpl.DUMP_CLASS_PATH);
 
             classToPathMap = MapFactory.newMap();
@@ -145,6 +205,11 @@ public class ClassFileSourceImpl implements ClassFileSource {
             if (null != extraClassPath) {
                 classPath = classPath + File.pathSeparatorChar + extraClassPath;
             }
+            if (renameCase) {
+                classCollisionRenamerLCToReal = MapFactory.newMap();
+                classCollisionRenamerRealToLC = MapFactory.newMap();
+            }
+
             String[] classPaths = classPath.split("" + File.pathSeparatorChar);
             for (String path : classPaths) {
                 if (dump) {

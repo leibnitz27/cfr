@@ -93,7 +93,7 @@ public class PluginRunner {
         public SummaryDumper getSummaryDumper(Options options) {
             if (!options.optionIsSet(OptionsImpl.OUTPUT_DIR)) return new NopSummaryDumper();
 
-            return new FileSummaryDumper(options.getOption(OptionsImpl.OUTPUT_DIR));
+            return new FileSummaryDumper(options.getOption(OptionsImpl.OUTPUT_DIR), options, null);
         }
     }
 

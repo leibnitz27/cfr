@@ -4,7 +4,7 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-public class DecompilerComment implements Dumpable {
+public class    DecompilerComment implements Dumpable {
 
     public static DecompilerComment UNABLE_TO_STRUCTURE = new DecompilerComment("Unable to fully structure code", true);
     public static DecompilerComment AGGRESSIVE_TOPOLOGICAL_SORT = new DecompilerComment("Enabled aggressive block sorting");
@@ -24,6 +24,7 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment ILLEGAL_IDENTIFIERS = new DecompilerComment("Illegal identifiers - consider using --" + OptionsImpl.RENAME_ILLEGAL_IDENTS.getName() + " true");
     public static DecompilerComment WHOLE_CLASS_EXCEPTION = new DecompilerComment("Exception performing whole class analysis.");
     public static DecompilerComment BAD_ANNOTATION = new DecompilerComment("Issues handling annotations - annotations may be inaccurate");
+    public static DecompilerComment CASE_CLASH_FS = new DecompilerComment("Classes with case insensitive name clashes seen, and your FS appears to be case insensitive - consider using --" + OptionsImpl.CASE_INSENSITIVE_FS_RENAME.getName() + " true");
 
     private final String comment;
     private final String summaryMessage;

@@ -112,6 +112,11 @@ public class Main {
                 options.getOption(OptionsImpl.RENAME_ENUM_MEMBERS)) {
                 MemberNameResolver.resolveNames(dcCommonState, types);
             }
+            /*
+             * If we're working on a case insensitive file system (OH COME ON!) then make sure that
+             * we don't have any collisions.
+             */
+
             for (JavaTypeInstance type : types) {
                 Dumper d = new ToStringDumper();  // Sentinel dumper.
                 try {
@@ -149,7 +154,10 @@ public class Main {
             System.err.println(err);
             if (summaryDumper != null) summaryDumper.notify(err);
         } finally {
-            if (summaryDumper != null) summaryDumper.close();
+            if (summaryDumper != null) {
+                summaryDumper.NotifyAdditionalAtEnd();
+                summaryDumper.close();
+            }
         }
     }
 
@@ -176,7 +184,7 @@ public class Main {
         String type = options.getOption(OptionsImpl.ANALYSE_AS);
         if (type == null) type = dcCommonState.detectClsJar(path);
 
-        DumperFactory dumperFactory = new DumperFactoryImpl();
+        DumperFactory dumperFactory = new DumperFactoryImpl(options);
         if (type.equals("jar")) {
             doJar(dcCommonState, path, dumperFactory);
         } else {

@@ -33,6 +33,12 @@ public class ClassCache {
     }
 
     public JavaRefTypeInstance getRefClassFor(String rawClassName) {
+        /*
+         * If the path (or pseudopath) has been renamed because it's a collision,
+         * we need to replace with the deduplicated version - otherwise the file
+         * will not match the type.
+         */
+        rawClassName = dcCommonState.getPossiblyRenamedFileFromClassFileSource(rawClassName);
         String name = ClassNameUtils.convertFromPath(rawClassName);
         JavaRefTypeInstance typeInstance = refClassTypeCache.get(name);
         if (typeInstance == null) {
