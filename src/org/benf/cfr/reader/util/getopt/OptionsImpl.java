@@ -112,6 +112,7 @@ public class OptionsImpl implements Options {
             return java.lang.Boolean.parseBoolean(arg);
         }
     }
+
     private static final OptionDecoder<String> defaultNullStringDecoder = new OptionDecoder<String>() {
         @Override
         public String invoke(String arg, Void ignore, Options ignore2) {
