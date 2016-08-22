@@ -38,6 +38,7 @@ public class ClassCache {
          * we need to replace with the deduplicated version - otherwise the file
          * will not match the type.
          */
+        rawClassName = ClassNameUtils.convertToPath(rawClassName);
         rawClassName = dcCommonState.getPossiblyRenamedFileFromClassFileSource(rawClassName);
         String name = ClassNameUtils.convertFromPath(rawClassName);
         JavaRefTypeInstance typeInstance = refClassTypeCache.get(name);
