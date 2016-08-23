@@ -125,11 +125,6 @@ public class ClassFileSourceImpl implements ClassFileSource {
         }
     }
 
-    @Override
-    public Collection<DecompilerComment> getSummaryComments() {
-        return null;
-    }
-
     public Collection<String> addJar(String jarPath) {
         // Make sure classpath is scraped first, so we'll overwrite it.
         getClassPathClasses();

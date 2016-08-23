@@ -17,7 +17,4 @@ public interface ClassFileSource {
 
     // Return file content, plus location it came from (to be fed back to informAnalysis...)
     Pair<byte[], String> getClassFileContent(final String path) throws IOException;
-
-    Collection<DecompilerComment> getSummaryComments();
-
 }
