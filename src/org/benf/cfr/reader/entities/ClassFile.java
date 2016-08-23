@@ -332,13 +332,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return decompilerComments;
     }
 
-    private void getAllCps(Set<ConstantPool> tgt) {
-        tgt.add(constantPool);
-        for (Pair<InnerClassAttributeInfo, ClassFile> pair : innerClassesByTypeInfo.values()) {
-            pair.getSecond().getAllCps(tgt);
-        }
-    }
-
     public List<JavaTypeInstance> getAllClassTypes() {
         List<JavaTypeInstance> res = ListFactory.newList();
         getAllClassTypes(res);
