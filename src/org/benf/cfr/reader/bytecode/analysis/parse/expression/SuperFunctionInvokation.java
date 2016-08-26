@@ -7,20 +7,23 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
+import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
 public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
+    private final boolean isOnInterface;
 
-    public SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls) {
+    public SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls, boolean isOnInterface) {
         super(cp, function, object, args, nulls);
+        this.isOnInterface = isOnInterface;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new SuperFunctionInvokation(getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), cloneHelper.replaceOrClone(getArgs()), getNulls());
+        return new SuperFunctionInvokation(getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), cloneHelper.replaceOrClone(getArgs()), getNulls(), isOnInterface);
     }
 
     public boolean isEmptyIgnoringSynthetics() {
@@ -29,6 +32,14 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
             if (!prototype.isHiddenArg(i)) return false;
         }
         return true;
+    }
+
+    @Override
+    public void collectTypeUsages(TypeUsageCollector collector) {
+        if (isOnInterface) {
+            collector.collect(getFunction().getClassEntry().getTypeInstance());
+        }
+        super.collectTypeUsages(collector);
     }
 
     @Override
@@ -43,6 +54,11 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
         if (methodPrototype.getName().equals(MiscConstants.INIT_METHOD)) {
             d.print("super(");
         } else {
+            // Let there now be a rant about how default methods on super classes allowed
+            // multiple inheritance to sneak in by the back door.  Seriously, what?!
+            if (isOnInterface) {
+                d.dump(getFunction().getClassEntry().getTypeInstance()).print(".");
+            }
             d.print("super.").print(methodPrototype.getFixedName()).print("(");
         }
         boolean first = true;

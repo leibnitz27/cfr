@@ -340,8 +340,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          */
         methodPrototype.tightenArgs(object, args);
 
+        boolean superOnInterface = false;
+        if (isSuper) {
+            JavaTypeInstance superContainer = function.getClassEntry().getTypeInstance();
+            JavaTypeInstance baseType = thisCallerMethod.getClassFile().getBaseClassType();
+            superOnInterface = !baseType.equals(superContainer);
+        }
+
         AbstractMemberFunctionInvokation funcCall = isSuper ?
-                new SuperFunctionInvokation(cp, function, object, args, nulls) :
+                new SuperFunctionInvokation(cp, function, object, args, nulls, superOnInterface) :
                 new MemberFunctionInvokation(cp, function, object, special, args, nulls);
 
 //        InferredJavaType inferredJavaType = object.getInferredJavaType();
