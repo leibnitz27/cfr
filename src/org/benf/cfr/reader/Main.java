@@ -181,13 +181,13 @@ public class Main {
         ClassFileSource classFileSource = new ClassFileSourceImpl(options);
         DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
         String path = options.getOption(OptionsImpl.FILENAME);
-        String type = options.getOption(OptionsImpl.ANALYSE_AS);
+        AnalysisType type = options.getOption(OptionsImpl.ANALYSE_AS);
         if (type == null) type = dcCommonState.detectClsJar(path);
 
         DumperFactory dumperFactory = new DumperFactoryImpl(options);
-        if (type.equals("jar")) {
+        if (type == AnalysisType.JAR) {
             doJar(dcCommonState, path, dumperFactory);
-        } else {
+        } if (type == AnalysisType.CLASS) {
             doClass(dcCommonState, path, dumperFactory);
         }
 

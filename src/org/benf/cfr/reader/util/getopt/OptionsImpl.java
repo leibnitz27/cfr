@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.getopt;
 
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
 
@@ -34,6 +35,29 @@ public class OptionsImpl implements Options {
         }
     }
     private static final OptionDecoder<Integer> default0intDecoder = new DefaultingIntDecoder(0);
+
+    private static class DefaultNullEnumDecoder<EnumType extends Enum> implements OptionDecoder<EnumType> {
+        private final Class<EnumType> clazz;
+
+        public DefaultNullEnumDecoder(Class<EnumType> clazz) {
+            this.clazz = clazz;
+        }
+
+        @Override
+        public String getRangeDescription() {
+            return "One of " + Arrays.toString(clazz.getEnumConstants());
+        }
+
+        @Override
+        public String getDefaultValue() {
+            return null;
+        }
+
+        @Override
+        public EnumType invoke(String arg1, Void arg2, Options arg3) {
+            return (EnumType)Enum.valueOf(clazz, arg1);
+        }
+    }
 
     private static final OptionDecoder<Troolean> defaultNeitherTrooleanDecoder = new OptionDecoder<Troolean>() {
         @Override
@@ -313,8 +337,8 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Integer> FORCE_PASS = new PermittedOptionProvider.Argument<Integer>(
             "recpass", default0intDecoder,
             "Decompile specifically with recovery options from pass #X. (really only useful for debugging)", true);
-    public static final PermittedOptionProvider.Argument<String> ANALYSE_AS = new PermittedOptionProvider.Argument<String>(
-            "analyseas", defaultNullStringDecoder,
+    public static final PermittedOptionProvider.Argument<AnalysisType> ANALYSE_AS = new PermittedOptionProvider.Argument<AnalysisType>(
+            "analyseas", new DefaultNullEnumDecoder<AnalysisType>(AnalysisType.class),
             "Force file to be analysed as 'jar' or 'class'");
     public static final PermittedOptionProvider.Argument<String> JAR_FILTER = new PermittedOptionProvider.Argument<String>(
             "jarfilter", defaultNullStringDecoder,

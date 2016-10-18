@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -117,8 +118,8 @@ public class DCCommonState {
     }
 
     // No fancy file identification right now, just very very simple.
-    public String detectClsJar(String path) {
-        if (path.toLowerCase().endsWith(".jar")) return "jar";
-        return "class";
+    public AnalysisType detectClsJar(String path) {
+        if (path.toLowerCase().endsWith(".jar")) return AnalysisType.JAR;
+        return AnalysisType.CLASS;
     }
 }

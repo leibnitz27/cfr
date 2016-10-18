@@ -154,6 +154,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 method.getAccessFlags().remove(AccessFlagMethod.ACC_STRICT);
             }
         }
+
         if (!options.getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS)) {
             for (Method method : tmpMethods) {
                 if (IllegalIdentifierReplacement.isIllegalMethodName(method.getName())) {
