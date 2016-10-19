@@ -55,6 +55,7 @@ public class OptionsImpl implements Options {
 
         @Override
         public EnumType invoke(String arg1, Void arg2, Options arg3) {
+            if (arg1 == null) return null;
             return (EnumType)Enum.valueOf(clazz, arg1);
         }
     }
