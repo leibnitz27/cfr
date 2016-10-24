@@ -85,6 +85,11 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     }
 
     @Override
+    public boolean isScopeBlock() {
+        return false;
+    }
+
+    @Override
     public List<LValue> findCreatedHere() {
         return null;
     }

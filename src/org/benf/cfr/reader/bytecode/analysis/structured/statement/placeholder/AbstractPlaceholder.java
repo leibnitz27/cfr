@@ -47,6 +47,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
+    public boolean isScopeBlock() {
+        return false;
+    }
+
+    @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
         throw new UnsupportedOperationException();
     }

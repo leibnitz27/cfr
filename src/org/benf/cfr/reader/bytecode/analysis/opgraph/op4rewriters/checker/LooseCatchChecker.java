@@ -15,7 +15,7 @@ public class LooseCatchChecker implements Op04Checker {
         if (looseCatch) return in;
         if (in instanceof StructuredCatch) {
             // Then we require the scope above this to be a try, otherwise it's an issue.
-            StructuredStatement outer = scope.getInnermost();
+            StructuredStatement outer = scope.get(1);
             if (!(outer instanceof StructuredTry)) {
                 looseCatch = true;
                 return in;

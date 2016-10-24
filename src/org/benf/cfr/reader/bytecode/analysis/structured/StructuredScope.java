@@ -26,9 +26,9 @@ public class StructuredScope {
         }
     }
 
-    public StructuredStatement getInnermost() {
+    public StructuredStatement get(int skipN) {
         if (scope.isEmpty()) return null;
-        return scope.getFirst().statement;
+        return scope.get(skipN).statement;
     }
 
     public void setNextAtThisLevel(StructuredStatement statement, int next) {
@@ -42,7 +42,10 @@ public class StructuredScope {
     public Set<Op04StructuredStatement> getNextFallThrough(StructuredStatement structuredStatement) {
         Op04StructuredStatement current = structuredStatement.getContainer();
         Set<Op04StructuredStatement> res = SetFactory.newSet();
+        int idx = -1;
         for (AtLevel atLevel : scope) {
+            idx++;
+            if (idx == 0 && atLevel.statement == structuredStatement) continue;
             if (atLevel.statement instanceof Block) {
                 if (atLevel.next != -1) {
                     res.addAll(((Block) atLevel.statement).getNextAfter(atLevel.next));

@@ -368,33 +368,26 @@ public class Block extends AbstractStructuredStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
+    public boolean isScopeBlock() {
+        return true;
+    }
 
-        scope.add(this);
-        try {
-            for (int x = 0, len = containedStatements.size(); x < len; ++x) {
-                Op04StructuredStatement structuredBlock = containedStatements.get(x);
-                scope.setNextAtThisLevel(this, x < len - 1 ? x + 1 : -1);
-                structuredBlock.transform(transformer, scope);
-            }
-        } finally {
-            scope.remove(this);
+    @Override
+    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
+        for (int x = 0, len = containedStatements.size(); x < len; ++x) {
+            Op04StructuredStatement structuredBlock = containedStatements.get(x);
+            scope.setNextAtThisLevel(this, x < len - 1 ? x + 1 : -1);
+            structuredBlock.transform(transformer, scope);
         }
     }
 
     @Override
     public void transformStructuredChildrenInReverse(StructuredStatementTransformer transformer, StructuredScope scope) {
-
-        scope.add(this);
-        try {
-            int last = containedStatements.size() - 1;
-            for (int x = last; x>=0; --x) {
-                Op04StructuredStatement structuredBlock = containedStatements.get(x);
-                scope.setNextAtThisLevel(this, x < last ? x + 1 : -1);
-                structuredBlock.transform(transformer, scope);
-            }
-        } finally {
-            scope.remove(this);
+        int last = containedStatements.size() - 1;
+        for (int x = last; x>=0; --x) {
+            Op04StructuredStatement structuredBlock = containedStatements.get(x);
+            scope.setNextAtThisLevel(this, x < last ? x + 1 : -1);
+            structuredBlock.transform(transformer, scope);
         }
     }
 

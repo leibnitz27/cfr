@@ -43,13 +43,13 @@ public class StructuredFinally extends AbstractStructuredStatement {
     }
 
     @Override
+    public boolean isScopeBlock() {
+        return true;
+    }
+
+    @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
-        scope.add(this);
-        try {
-            catchBlock.transform(transformer, scope);
-        } finally {
-            scope.remove(this);
-        }
+        catchBlock.transform(transformer, scope);
     }
 
     @Override

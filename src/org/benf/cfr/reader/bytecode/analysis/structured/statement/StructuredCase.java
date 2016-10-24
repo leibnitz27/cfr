@@ -109,11 +109,6 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
-        getBody().transform(transformer, scope);
-    }
-
-    @Override
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
         getBody().linearizeStatementsInto(out);

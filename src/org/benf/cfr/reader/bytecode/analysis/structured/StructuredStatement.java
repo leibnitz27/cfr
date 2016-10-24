@@ -54,6 +54,8 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
 
     boolean canDefine(LValue scopedEntity);
 
+    boolean isScopeBlock();
+
     boolean inlineable();
 
     Op04StructuredStatement getInline();

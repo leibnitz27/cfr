@@ -55,13 +55,8 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
-        scope.add(this);
-        try {
-            getBody().transform(transformer, scope);
-        } finally {
-            scope.remove(this);
-        }
+    public boolean isScopeBlock() {
+        return true;
     }
 
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {

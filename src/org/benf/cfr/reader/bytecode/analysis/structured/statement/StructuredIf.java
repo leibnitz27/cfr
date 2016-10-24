@@ -76,14 +76,14 @@ public class StructuredIf extends AbstractStructuredStatement implements CanRemo
     }
 
     @Override
+    public boolean isScopeBlock() {
+        return true;
+    }
+
+    @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
-        scope.add(this);
-        try {
-            ifTaken.transform(transformer, scope);
-            if (elseBlock != null) elseBlock.transform(transformer, scope);
-        } finally {
-            scope.remove(this);
-        }
+        ifTaken.transform(transformer, scope);
+        if (elseBlock != null) elseBlock.transform(transformer, scope);
     }
 
     @Override

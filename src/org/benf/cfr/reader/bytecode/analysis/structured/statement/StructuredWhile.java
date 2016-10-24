@@ -44,13 +44,8 @@ public class StructuredWhile extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
-        scope.add(this);
-        try {
-            getBody().transform(transformer, scope);
-        } finally {
-            scope.remove(this);
-        }
+    public boolean isScopeBlock() {
+        return true;
     }
 
     @Override
