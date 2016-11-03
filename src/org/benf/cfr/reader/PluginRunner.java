@@ -8,11 +8,15 @@ import org.benf.cfr.reader.state.ClassFileSourceImpl;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class PluginRunner {
@@ -40,16 +44,25 @@ public class PluginRunner {
         return this.dcCommonState.getOptions();
     }
 
-    public void addJarPaths(String[] jarPaths) {
+    public List<List<String>> addJarPaths(String[] jarPaths) {
+        List<List<String>> res = new ArrayList<List<String>>();
         for (String jarPath : jarPaths) {
-            addJarPath(jarPath);
+            res.add(addJarPath(jarPath));
         }
+        return res;
     }
 
-    public void addJarPath(String jarPath) {
+    public List<String> addJarPath(String jarPath) {
         try {
-            dcCommonState.explicitlyLoadJar(jarPath);
+            List<JavaTypeInstance> types = dcCommonState.explicitlyLoadJar(jarPath);
+            return Functional.map(types, new UnaryFunction<JavaTypeInstance, String>() {
+                @Override
+                public String invoke(JavaTypeInstance arg) {
+                    return arg.getRawName();
+                }
+            });
         } catch (Exception e) {
+            return new ArrayList<String>();
         }
     }
 
