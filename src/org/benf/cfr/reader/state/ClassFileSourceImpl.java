@@ -217,8 +217,11 @@ public class ClassFileSourceImpl implements ClassFileSource {
                             System.out.println(" (Directory)");
                         }
                         // Load all the jars in that directory.
-                        for (File file : f.listFiles()) {
-                            processClassPathFile(file, file.getAbsolutePath(), classToPathMap, dump);
+                        File[] files = f.listFiles();
+                        if (files != null) {
+                            for (File file : files) {
+                                processClassPathFile(file, file.getAbsolutePath(), classToPathMap, dump);
+                            }
                         }
                     } else {
                         processClassPathFile(f, path, classToPathMap, dump);
