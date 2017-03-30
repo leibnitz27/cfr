@@ -437,7 +437,9 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 List<Op03SimpleStatement> targets = o3current.getTargets();
                 if (targets.size() != 1) return null;
                 o3current = targets.get(0);
-                if (o3current == start) return null;
+                if (o3current == start) {
+                    return null;
+                }
             }
         }
 
