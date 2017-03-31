@@ -482,9 +482,12 @@ public class FinalAnalyzer {
                 }
 
             }
+            Set<Op03SimpleStatement> checkSources = SetFactory.newSet();
+
             for (Op03SimpleStatement remove : toRemove) {
                 for (Op03SimpleStatement source : remove.getSources()) {
                     source.getTargets().remove(remove);
+                    checkSources.add(source);
                 }
                 for (Op03SimpleStatement target : remove.getTargets()) {
                     target.getSources().remove(remove);
@@ -493,6 +496,26 @@ public class FinalAnalyzer {
                 remove.getTargets().clear();
                 remove.nopOut();
             }
+            /*
+             * Make sure we haven't badly unlinked any sources.
+             */
+            for (Op03SimpleStatement source : checkSources) {
+                if (source.getTargets().size() != 1) continue;
+                int orig = allStatements.indexOf(source);
+                Op03SimpleStatement origTarget = source.getTargets().get(0);
+                int origTargetIdx = allStatements.indexOf(origTarget);
+                if (origTargetIdx <= orig + 1) continue;
+                /*
+                 * Add a (possibly redundant) intermediate goto.
+                 */
+                Op03SimpleStatement tmpJump = new Op03SimpleStatement(source.getBlockIdentifiers(), new GotoStatement(), source.getIndex().justAfter());
+                source.replaceTarget(origTarget, tmpJump);
+                tmpJump.addSource(source);
+                tmpJump.addTarget(origTarget);
+                origTarget.replaceSource(source, tmpJump);
+                allStatements.add(tmpJump);
+            }
+
             if (afterEnd != null) {
                 List<Op03SimpleStatement> endSources = ListFactory.newList(afterEnd.getSources());
                 for (Op03SimpleStatement source : endSources) {
