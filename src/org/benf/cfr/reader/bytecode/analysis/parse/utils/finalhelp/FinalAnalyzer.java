@@ -360,33 +360,26 @@ public class FinalAnalyzer {
                          * It's not in the block....
                          *
                          */
-
                         endRewrite.addSource(newOp);
                         newTgt = endRewrite;
-                        // allow.
-//                        newTgt = tgt;
-//                        while (newTgt.getStatement().getClass() == GotoStatement.class) {
-//                            newTgt = newTgt.getTargets().get(0);
-//                        }
-//                        newTgt.addSource(newOp);
                     } else {
                         if (!(newOp.getStatement() instanceof JumpingStatement)) {
                             continue;
                         }
-                        if (tgt.getIndex().isBackJumpFrom(endRewrite)) {
+//                        if (tgt.getIndex().isBackJumpFrom(endRewrite)) {
                             newTgt = tgt;
                             tgt.addSource(newOp);
-                        } else {
-                            endRewrite.addSource(newOp);
-                            newOp.addTarget(endRewrite);
-
-
-                            if (!endRewrite.getTargets().contains(tgt)) {
-                                endRewrite.addTarget(tgt);
-                                tgt.addSource(endRewrite);
-                            }
-                            continue;
-                        }
+//                        } else {
+//                            endRewrite.addSource(newOp);
+//                            newOp.addTarget(endRewrite);
+//
+//
+//                            if (!endRewrite.getTargets().contains(tgt)) {
+//                                endRewrite.addTarget(tgt);
+//                                tgt.addSource(endRewrite);
+//                            }
+//                            continue;
+//                        }
                     }
                 }
                 newOp.addTarget(newTgt);
