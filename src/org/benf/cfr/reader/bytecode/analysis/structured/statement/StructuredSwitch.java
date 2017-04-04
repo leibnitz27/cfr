@@ -50,6 +50,11 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
     }
 
     @Override
+    public boolean supportsBreak() {
+        return true;
+    }
+
+    @Override
     public boolean isProperlyStructured() {
         return true;
     }

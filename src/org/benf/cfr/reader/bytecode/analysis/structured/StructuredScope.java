@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.structured;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredSynchronized;
@@ -37,6 +38,18 @@ public class StructuredScope {
             throw new IllegalStateException();
         }
         atLevel.next = next;
+    }
+
+    public BlockIdentifier getContinueBlock() {
+        for (AtLevel atLevel : scope) {
+            Op04StructuredStatement stm = atLevel.statement.getContainer();
+            StructuredStatement stmt = stm.getStatement();
+            if (stmt.supportsBreak()) {
+                if (!stmt.supportsContinueBreak()) return null;
+                return stmt.getBreakableBlockOrNull();
+            }
+        }
+        return null;
     }
 
     public Set<Op04StructuredStatement> getNextFallThrough(StructuredStatement structuredStatement) {

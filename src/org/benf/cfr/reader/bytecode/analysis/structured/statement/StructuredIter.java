@@ -72,6 +72,17 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
         return block;
     }
 
+
+    @Override
+    public boolean supportsContinueBreak() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsBreak() {
+        return true;
+    }
+
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         // While it's not strictly speaking 2 blocks, we can model it as the statement / definition

@@ -703,6 +703,13 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    /*
+     * If a break falls out into another break, or a continue falls out into the end of a loop, they don't need to
+     * be there.
+     */
+    public static void removePointlessControlFlow(Op04StructuredStatement root) {
+        new ControlFlowCleaningTransformer().transform(root);
+    }
 
     public static void tidyTypedBooleans(Op04StructuredStatement root) {
         new TypedBooleanTidier().transform(root);

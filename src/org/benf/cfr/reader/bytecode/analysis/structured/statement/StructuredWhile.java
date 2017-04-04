@@ -49,8 +49,18 @@ public class StructuredWhile extends AbstractStructuredBlockStatement {
     }
 
     @Override
+    public boolean supportsContinueBreak() {
+        return true;
+    }
+
+    @Override
     public BlockIdentifier getBreakableBlockOrNull() {
         return block;
+    }
+
+    @Override
+    public boolean supportsBreak() {
+        return true;
     }
 
     @Override

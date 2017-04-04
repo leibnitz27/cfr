@@ -90,6 +90,16 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     }
 
     @Override
+    public boolean supportsContinueBreak() {
+        return false;
+    }
+
+    @Override
+    public boolean supportsBreak() {
+        return false;
+    }
+
+    @Override
     public List<LValue> findCreatedHere() {
         return null;
     }

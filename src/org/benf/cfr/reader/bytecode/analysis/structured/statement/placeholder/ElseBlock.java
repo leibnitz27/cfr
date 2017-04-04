@@ -13,4 +13,14 @@ public class ElseBlock extends AbstractPlaceholder {
         }
         return false;
     }
+
+    @Override
+    public boolean supportsContinueBreak() {
+        return false;
+    }
+
+    @Override
+    public boolean supportsBreak() {
+        return false;
+    }
 }

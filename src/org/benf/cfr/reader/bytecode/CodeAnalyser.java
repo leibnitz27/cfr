@@ -831,6 +831,7 @@ public class CodeAnalyser {
         Op04StructuredStatement.removeStructuredGotos(block);
         Op04StructuredStatement.removePointlessBlocks(block);
         Op04StructuredStatement.removePointlessReturn(block);
+        Op04StructuredStatement.removePointlessControlFlow(block);
         Op04StructuredStatement.removePrimitiveDeconversion(options, method, block);
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
             Op04StructuredStatement.insertLabelledBlocks(block);

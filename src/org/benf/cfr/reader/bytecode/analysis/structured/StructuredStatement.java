@@ -54,6 +54,10 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
 
     boolean canDefine(LValue scopedEntity);
 
+    boolean supportsContinueBreak();
+
+    boolean supportsBreak();
+
     boolean isScopeBlock();
 
     boolean inlineable();

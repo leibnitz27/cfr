@@ -24,4 +24,14 @@ public class BeginBlock extends AbstractPlaceholder {
         }
         return false;
     }
+
+    @Override
+    public boolean supportsContinueBreak() {
+        return false;
+    }
+
+    @Override
+    public boolean supportsBreak() {
+        return false;
+    }
 }

@@ -52,6 +52,11 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
     }
 
     @Override
+    public boolean supportsContinueBreak() {
+        return true;
+    }
+
+    @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         if (condition != null) condition.collectUsedLValues(scopeDiscoverer);
         getBody().traceLocalVariableScope(scopeDiscoverer);
@@ -81,6 +86,11 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
     @Override
     public BlockIdentifier getBreakableBlockOrNull() {
         return block;
+    }
+
+    @Override
+    public boolean supportsBreak() {
+        return true;
     }
 
     @Override
