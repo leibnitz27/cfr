@@ -2256,6 +2256,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         // Yep, this is it.
                         Op03SimpleStatement yStatement = zStatement.targets.get(0);
 
+                        if (yStatement == zStatement) continue;
+
                         // Order is important.
                         aStatement.replaceTarget(xStatement, yStatement);
                         aStatement.replaceTarget(zStatement, xStatement);
