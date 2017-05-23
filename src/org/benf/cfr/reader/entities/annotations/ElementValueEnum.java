@@ -22,4 +22,9 @@ public class ElementValueEnum implements ElementValue {
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(type);
     }
+
+    @Override
+    public ElementValue withTypeHint(JavaTypeInstance hint) {
+        return this;
+    }
 }

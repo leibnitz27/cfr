@@ -20,4 +20,9 @@ public class ElementValueClass implements ElementValue {
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(classType);
     }
+
+    @Override
+    public ElementValue withTypeHint(JavaTypeInstance hint) {
+        return this;
+    }
 }

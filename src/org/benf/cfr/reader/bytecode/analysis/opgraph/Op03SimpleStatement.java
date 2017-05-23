@@ -3561,13 +3561,20 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         TryStatement tryStatementInner = (TryStatement) tryStatement.getStatement();
         BlockIdentifier tryBlockIdent = tryStatementInner.getBlockIdentifier();
 
+        Op03SimpleStatement lastStatement = null;
         Op03SimpleStatement currentStatement = tryStatement.targets.get(0);
         int x = in.indexOf(currentStatement);
+
+        List<Op03SimpleStatement> jumps = ListFactory.newList();
 
         while (currentStatement.getBlockIdentifiers().contains(tryBlockIdent)) {
             ++x;
             if (x >= in.size()) {
                 return;
+            }
+            lastStatement = currentStatement;
+            if (currentStatement.getStatement() instanceof JumpingStatement) {
+                jumps.add(currentStatement);
             }
             currentStatement = in.get(x);
         }
@@ -3629,7 +3636,39 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     if (!source.getBlockIdentifiers().contains(tryBlockIdent)) break mainloop;
                 }
             }
+            lastStatement = currentStatement;
+            if (currentStatement.getStatement() instanceof JumpingStatement) {
+                jumps.add(currentStatement);
+            }
             currentStatement = nextStatement;
+        }
+        if (lastStatement != null &&  lastStatement.getTargets().isEmpty()) {
+            // We have opportunity to rescan and see if there is a UNIQUE forward jump out.
+            Set<Op03SimpleStatement> outTargets = SetFactory.newSet();
+            for (Op03SimpleStatement jump : jumps) {
+                JumpingStatement jumpingStatement = (JumpingStatement)jump.getStatement();
+                // This is ugly.  I'm sure I do it elsewhere.   Refactor.
+                int idx = jumpingStatement.isConditional() ? 1 : 0;
+                if (idx >= jump.getTargets().size()) return; // can't happen.
+                Op03SimpleStatement jumpTarget = jump.getTargets().get(idx);
+                if (jumpTarget.getIndex().isBackJumpFrom(jump)) continue;
+                if (jumpTarget.getBlockIdentifiers().contains(tryBlockIdent)) continue;
+                outTargets.add(jumpTarget);
+            }
+            if (outTargets.size() == 1) {
+                Op03SimpleStatement replace = outTargets.iterator().next();
+                Op03SimpleStatement newJump = new Op03SimpleStatement(lastStatement.getBlockIdentifiers(), new GotoStatement(), lastStatement.getIndex().justAfter());
+                newJump.addTarget(replace);
+                replace.addSource(newJump);
+                for (Op03SimpleStatement jump : jumps) {
+                    if (jump.getTargets().contains(replace)) {
+                        jump.replaceTarget(replace, newJump);
+                        newJump.addSource(jump);
+                        replace.removeSource(jump);
+                    }
+                }
+                in.add(in.indexOf(lastStatement)+1, newJump);
+            }
         }
     }
 

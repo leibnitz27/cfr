@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities.annotations;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -30,5 +31,10 @@ public class ElementValueArray implements ElementValue {
         for (ElementValue e : content) {
             e.collectTypeUsages(collector);
         }
+    }
+
+    @Override
+    public ElementValue withTypeHint(JavaTypeInstance hint) {
+        return this;
     }
 }
