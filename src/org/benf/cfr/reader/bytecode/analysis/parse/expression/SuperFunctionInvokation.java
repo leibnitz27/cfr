@@ -15,15 +15,27 @@ import java.util.List;
 
 public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
     private final boolean isOnInterface;
+    private final JavaTypeInstance typeName;
 
     public SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls, boolean isOnInterface) {
         super(cp, function, object, args, nulls);
         this.isOnInterface = isOnInterface;
+        this.typeName = null;
+    }
+
+    private SuperFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls, boolean isOnInterface, JavaTypeInstance name) {
+        super(cp, function, object, args, nulls);
+        this.isOnInterface = isOnInterface;
+        this.typeName = name;
+    }
+
+    public SuperFunctionInvokation withCustomName(JavaTypeInstance name) {
+        return new SuperFunctionInvokation(getCp(), getFunction(), getObject(), getArgs(), getNulls(), isOnInterface, name);
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new SuperFunctionInvokation(getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), cloneHelper.replaceOrClone(getArgs()), getNulls(), isOnInterface);
+        return new SuperFunctionInvokation(getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), cloneHelper.replaceOrClone(getArgs()), getNulls(), isOnInterface, typeName);
     }
 
     public boolean isEmptyIgnoringSynthetics() {
@@ -39,6 +51,7 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
         if (isOnInterface) {
             collector.collect(getFunction().getClassEntry().getTypeInstance());
         }
+        collector.collect(typeName);
         super.collectTypeUsages(collector);
     }
 
@@ -59,6 +72,9 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
             if (isOnInterface) {
                 d.dump(getFunction().getClassEntry().getTypeInstance()).print(".");
             }
+            if (this.typeName != null) {
+                d.dump(this.typeName).print(".");
+            }
             d.print("super.").print(methodPrototype.getFixedName()).print("(");
         }
         boolean first = true;
@@ -77,6 +93,4 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
     public String getName() {
         return "super";
     }
-
-
 }

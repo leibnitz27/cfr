@@ -26,10 +26,12 @@ import org.benf.cfr.reader.entities.AccessFlagMethod;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.SetUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -112,9 +114,8 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
     private static final String POST_INC = "postinc";
     private static final String PRE_DEC = "predec";
     private static final String POST_DEC = "postdec";
-
-    private static final String FUNCCALL1 = "funccall1";
-    private static final String FUNCCALL2 = "funccall2";
+    private static final String SUPER_INVOKE = "superinv";
+    private static final String SUPER_RETINVOKE = "superretinv";
 
     private static boolean validRelationship(JavaTypeInstance type1, JavaTypeInstance type2) {
         Set<JavaTypeInstance> parents1 = SetFactory.newSet();
@@ -187,6 +188,11 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                           List<Expression> appliedArgs, List<LocalVariable> methodArgs) {
         WildcardMatch wcm = new WildcardMatch();
 
+        List<Expression> methodExprs = new ArrayList<Expression>();
+        for (int x=1;x<methodArgs.size();++x) {
+            methodExprs.add(new LValueExpression(methodArgs.get(x)));
+        }
+
         // Try dealing with the class of access$000 etc which are simple accessors / mutators.
         Matcher<StructuredStatement> matcher = new MatchSequence(
                 new BeginBlock(null),
@@ -235,6 +241,12 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                         ),
                         new ResetAfterTest(wcm, POST_DEC,
                                 new StructuredReturn(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
+                        ),
+                        new ResetAfterTest(wcm, SUPER_INVOKE,
+                                new StructuredExpressionStatement(wcm.getSuperFunction("super", methodExprs), false)
+                        ),
+                        new ResetAfterTest(wcm, SUPER_RETINVOKE,
+                                new StructuredReturn(wcm.getSuperFunction("super", methodExprs), null)
                         )
                 ),
                 new EndBlock(null)
@@ -291,54 +303,14 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         } else if (matchType.equals(POST_INC)) {
             Expression res = new ArithmeticPostMutationOperation(accessorMatchCollector.lValue, ArithOp.PLUS);
             return cloneHelper.replaceOrClone(res);
+        } else if (matchType.equals(SUPER_INVOKE) || matchType.equals(SUPER_RETINVOKE)) {
+            SuperFunctionInvokation invoke = (SuperFunctionInvokation) accessorMatchCollector.rValue;
+            SuperFunctionInvokation newInvoke = (SuperFunctionInvokation) cloneHelper.replaceOrClone(invoke);
+            newInvoke = newInvoke.withCustomName(otherType);
+            return newInvoke;
         } else {
             throw new IllegalStateException();
         }
-
-//        Map<LValue, LValue> lValueReplacements = MapFactory.newMap();
-//        Map<Expression, Expression> expressionReplacements = MapFactory.newMap();
-//
-//        /*
-//         * TODO : I think I'm over thinking this.  I can just replace args with supplied values!!!
-//         */
-//
-//
-//
-//        if (!isStatic) {
-//            /*
-//             * Verify that arg0 is the foreign type
-//             */
-//            if (appliedArgs.isEmpty()) return null;
-//            if (!appliedArgs.get(0).getInferredJavaType().getJavaTypeInstance().equals(otherType)) return null;
-//            /*
-//             * replace arg(0) with appliedargs(0).
-//             */
-//            Expression arg0 = appliedArgs.get(0);
-//            if (!(arg0 instanceof LValueExpression)) return null;
-//            lValueReplacements.put(methodArgs.get(0), ((LValueExpression) arg0).getLValue());
-//        }
-//
-//        CloneHelper cloneHelper = new CloneHelper(expressionReplacements, lValueReplacements);
-//        if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
-//            int rValue = isStatic ? 0 : 1;
-//            if (appliedArgs.size() != (rValue + 1)) return null;
-//            expressionReplacements.put(new LValueExpression(methodArgs.get(rValue)), appliedArgs.get(rValue));
-//
-//            AssignmentExpression assignmentExpression = new AssignmentExpression(accessorMatchCollector.lValue, accessorMatchCollector.rValue, true);
-//            return cloneHelper.replaceOrClone(assignmentExpression);
-//        } else if (matchType.equals(RETURN_LVALUE)) {
-//            return cloneHelper.replaceOrClone(new LValueExpression(accessorMatchCollector.lValue));
-//        } else if (matchType.equals(PRE_DEC)) {
-//            return null;
-//        } else if (matchType.equals(PRE_INC)) {
-//            return null;
-//        } else if (matchType.equals(POST_DEC)) {
-//            return null;
-//        } else if (matchType.equals(POST_INC)) {
-//            return null;
-//        } else {
-//            throw new IllegalStateException();
-//        }
     }
 
     private class AccessorMatchCollector extends AbstractMatchResultIterator {
@@ -363,6 +335,9 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
             this.lValue = wcm.getLValueWildCard("lvalue").getMatch();
             if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
                 this.rValue = wcm.getExpressionWildCard("rvalue").getMatch();
+            }
+            if (matchType.equals(SUPER_INVOKE) || matchType.equals(SUPER_RETINVOKE)) {
+                this.rValue = wcm.getSuperFunction("super").getMatch();
             }
         }
     }
