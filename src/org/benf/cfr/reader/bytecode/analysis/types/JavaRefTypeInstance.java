@@ -33,9 +33,17 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
          * without it being an inner class.
          */
         if (className.contains(MiscConstants.INNER_CLASS_SEP_STR)) {
-            String outer = className.substring(0, className.lastIndexOf(MiscConstants.INNER_CLASS_SEP_CHAR));
-            JavaRefTypeInstance outerClassTmp = dcCommonState.getClassCache().getRefClassFor(outer);
-            innerClassInfo = new RefTypeInnerClassInfo(outerClassTmp);
+            int idx = className.lastIndexOf(MiscConstants.INNER_CLASS_SEP_CHAR);
+            if (idx == className.length()-1) {
+                /*
+                 * if this is the case, it's likely to be a non-inner scala class.....
+                 * Would be nice to have a better way to verify though.
+                 */
+            } else {
+                String outer = className.substring(0, idx);
+                JavaRefTypeInstance outerClassTmp = dcCommonState.getClassCache().getRefClassFor(outer);
+                innerClassInfo = new RefTypeInnerClassInfo(outerClassTmp);
+            }
         }
         this.className = className;
         this.shortName = getShortName(className, innerClassInfo);
@@ -401,14 +409,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     private static String getShortName(String fullClassName, InnerClassInfo innerClassInfo) {
         if (innerClassInfo.isInnerClass()) {
-            String outerName = innerClassInfo.getOuterClass().className;
-            if (fullClassName.startsWith(outerName) && fullClassName.length() == outerName.length() + 1) {
-                // A peculiar scala edge case - something that appears to be inner not being.
-                // Still not quite right, as this leads to Future.Future$.MODULE$, where it should be
-                // Future$.MODULE$
-            } else {
-                fullClassName = fullClassName.replace(MiscConstants.INNER_CLASS_SEP_CHAR, '.');
-            }
+            fullClassName = fullClassName.replace(MiscConstants.INNER_CLASS_SEP_CHAR, '.');
         }
         int idxlast = fullClassName.lastIndexOf('.');
         String partname = idxlast == -1 ? fullClassName : fullClassName.substring(idxlast + 1);
