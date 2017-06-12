@@ -584,7 +584,22 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         final int ARG_OFFSET = 3;
         List<JavaTypeInstance> argTypes = prototype.getArgs();
         ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
-        if ((bootstrapArguments.length + ARG_OFFSET) != argTypes.size()) {
+
+        boolean countMismatch = (bootstrapArguments.length + ARG_OFFSET) != argTypes.size();
+
+        JavaTypeInstance last = argTypes.get(argTypes.size()-1);
+        boolean maybeVarArgs = last.getNumArrayDimensions() == 1;
+        if (maybeVarArgs) {
+            if (countMismatch) {
+                return getVarArgs(last, bootstrapArguments);
+            }
+            TypedLiteral val = getBootstrapArg(bootstrapArguments, bootstrapArguments.length-1, cp);
+            if (val.getInferredJavaType().getJavaTypeInstance().getNumArrayDimensions() != last.getNumArrayDimensions()) {
+                return getVarArgs(last, bootstrapArguments);
+            }
+        }
+
+        if (countMismatch) {
             throw new IllegalStateException("Dynamic invoke arg count mismatch " + bootstrapArguments.length + "(+3) vs " + argTypes.size());
         }
 
@@ -599,6 +614,19 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             callargs.add(new Literal(typedLiteral));
         }
 
+        return callargs;
+    }
+
+    private List<Expression> getVarArgs(JavaTypeInstance last, ConstantPoolEntry[] bootstrapArguments) {
+        List<Expression> content = ListFactory.newList();
+        for (int i=0;i<bootstrapArguments.length;++i) {
+            TypedLiteral typedLiteral = getBootstrapArg(bootstrapArguments, i, cp);
+            content.add(new Literal(typedLiteral));
+        }
+        InferredJavaType arrayType = new InferredJavaType(last.getArrayStrippedType(), InferredJavaType.Source.UNKNOWN);
+        Expression res = new NewAnonymousArray(arrayType, 1, content, false);
+        List<Expression> callargs = ListFactory.newList();
+        callargs.add(res);
         return callargs;
     }
 
