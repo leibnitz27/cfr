@@ -19,6 +19,8 @@ import java.util.Set;
 
 public class BooleanExpression extends AbstractExpression implements ConditionalExpression {
     private Expression inner;
+    public static final ConditionalExpression TRUE = new BooleanExpression(Literal.TRUE);
+    public static final ConditionalExpression FALSE = new BooleanExpression(Literal.FALSE);
 
     public BooleanExpression(Expression inner) {
         super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
@@ -26,4 +27,8 @@ public class ExpressionReplacingRewriter extends AbstractExpressionRewriter {
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
 
+    @Override
+    public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        return (ConditionalExpression) rewriteExpression((Expression)expression, ssaIdentifiers, statementContainer, flags);
+    }
 }

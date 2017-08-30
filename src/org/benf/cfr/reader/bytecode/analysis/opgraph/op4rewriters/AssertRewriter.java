@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.InfiniteAssertRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
@@ -196,7 +198,17 @@ public class AssertRewriter {
         for (Method method : methods) {
             if (!method.hasCodeAttribute()) continue;
 
-            List<StructuredStatement> statements = MiscStatementTools.linearise(method.getAnalysis());
+            Op04StructuredStatement top = method.getAnalysis();
+            if (top == null) continue;
+            /*
+             * Pre-transform a couple of particularly horrible samples.
+             * (where the assertion gets moved into a while block test).
+             * See InfiniteAssert tests.
+             */
+            handleInfiniteAsserts(top);
+
+            List<StructuredStatement> statements = MiscStatementTools.linearise(top);
+
             if (statements == null) continue;
 
             MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(statements);
@@ -210,6 +222,11 @@ public class AssertRewriter {
 
         }
 
+    }
+
+    private void handleInfiniteAsserts(Op04StructuredStatement statements) {
+        InfiniteAssertRewriter rewriter = new InfiniteAssertRewriter(assertionStatic);
+        rewriter.transform(statements);
     }
 
     private class AssertUseCollector extends AbstractMatchResultIterator {
