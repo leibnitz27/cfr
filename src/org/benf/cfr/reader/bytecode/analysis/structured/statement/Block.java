@@ -33,6 +33,14 @@ public class Block extends AbstractStructuredStatement {
 
     private final static LinkedList<Op04StructuredStatement> emptyBlockStatements = ListFactory.newLinkedList();
 
+    public Block(Op04StructuredStatement statement) {
+        LinkedList<Op04StructuredStatement> stm = new LinkedList<Op04StructuredStatement>();
+        stm.add(statement);
+        this.containedStatements = stm;
+        this.indenting = false;
+        this.blockIdentifier = null;
+    }
+
     public Block(LinkedList<Op04StructuredStatement> containedStatements, boolean indenting) {
         this(containedStatements, indenting, null);
     }
@@ -41,6 +49,13 @@ public class Block extends AbstractStructuredStatement {
         this.containedStatements = containedStatements;
         this.indenting = indenting;
         this.blockIdentifier = blockIdentifier;
+    }
+
+    public void addStatement(Op04StructuredStatement stm) {
+        if (containedStatements == emptyBlockStatements) {
+            containedStatements = new LinkedList<Op04StructuredStatement>();
+        }
+        containedStatements.add(stm);
     }
 
     public static Block getEmptyBlock() {

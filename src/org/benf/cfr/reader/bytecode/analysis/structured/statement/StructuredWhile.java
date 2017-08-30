@@ -96,5 +96,7 @@ public class StructuredWhile extends AbstractStructuredBlockStatement {
         return true;
     }
 
-
+    public ConditionalExpression getCondition() {
+        return condition;
+    }
 }
