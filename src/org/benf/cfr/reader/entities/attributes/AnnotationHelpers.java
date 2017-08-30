@@ -58,7 +58,9 @@ public class AnnotationHelpers {
                 RawJavaType rawJavaType = ConstantPoolUtils.decodeRawJavaType(c);
                 ConstantPoolEntry constantPoolEntry = cp.getEntry(raw.getS2At(offset));
                 TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntry(cp, constantPoolEntry);
-                return new Pair<Long, ElementValue>(offset + 2, new ElementValueConst(typedLiteral));
+                ElementValue value = new ElementValueConst(typedLiteral);
+                value = value.withTypeHint(rawJavaType);
+                return new Pair<Long, ElementValue>(offset + 2, value);
             }
             case 's': {
                 ConstantPoolEntry constantPoolEntry = cp.getEntry(raw.getS2At(offset));
