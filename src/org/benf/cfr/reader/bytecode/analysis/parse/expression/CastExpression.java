@@ -76,6 +76,10 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         while (castType instanceof JavaWildcardTypeInstance) {
             castType = ((JavaWildcardTypeInstance) castType).getUnderlyingType();
         }
+        if (castType.getInnerClassHereInfo().isAnonymousClass()) {
+            d.dump(child);
+            return d;
+        }
         JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
         if (childType == RawJavaType.BOOLEAN &&
                 !(RawJavaType.BOOLEAN.implicitlyCastsTo(castType, null))) {
