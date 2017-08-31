@@ -40,22 +40,14 @@ public class EnumClassRewriter {
         if (!options.getOption(OptionsImpl.ENUM_SUGAR, classFileVersion)) return;
 
         JavaTypeInstance classType = classFile.getClassType();
-        JavaTypeInstance baseType = classFile.getBaseClassType();
-
-        JavaTypeInstance enumType = TypeConstants.ENUM;
-
-        if (!baseType.equals(enumType)) {
-            if (!(baseType instanceof JavaGenericRefTypeInstance)) return;
-            JavaGenericRefTypeInstance genericBaseType = (JavaGenericRefTypeInstance) baseType;
-            if (!genericBaseType.getDeGenerifiedType().equals(enumType)) return;
-            // It's an enum type, is it Enum<classType> ?
-            List<JavaTypeInstance> boundTypes = genericBaseType.getGenericTypes();
-            if (boundTypes == null || boundTypes.size() != 1) return;
-            if (!boundTypes.get(0).equals(classType)) return;
+        if (!classFile.getBindingSupers().containsBase(TypeConstants.ENUM)) {
+            return;
         }
 
         EnumClassRewriter c = new EnumClassRewriter(classFile, classType, state);
-        c.rewrite();
+        if (!c.rewrite()) {
+            c.removeAllRemainingSupers();
+        }
     }
 
     private final ClassFile classFile;
@@ -73,6 +65,17 @@ public class EnumClassRewriter {
         this.clazzIJT = new InferredJavaType(classType, InferredJavaType.Source.UNKNOWN, true);
     }
 
+    /*
+     * Derived classes of enums (anonymous classes) still need to be processed.
+     */
+    private void removeAllRemainingSupers() {
+        List<Method> constructors = classFile.getConstructors();
+        EnumAllSuperRewriter enumSuperRewriter = new EnumAllSuperRewriter();
+        for (Method constructor : constructors) {
+            enumSuperRewriter.rewrite(constructor.getAnalysis());
+        }
+    }
+
     private boolean rewrite() {
         // Ok, it's an enum....
         // Verify the static initialiser - for each instance of enm created in there, make sure
@@ -86,7 +89,7 @@ public class EnumClassRewriter {
             staticInit = classFile.getMethodByName(MiscConstants.STATIC_INIT_METHOD).get(0);
         } catch (NoSuchMethodException e) {
             // Should have a static constructor.
-            throw new ConfusedCFRException("No static init method on enum");
+            return false;
         }
 
         Op04StructuredStatement staticInitCode = staticInit.getAnalysis();

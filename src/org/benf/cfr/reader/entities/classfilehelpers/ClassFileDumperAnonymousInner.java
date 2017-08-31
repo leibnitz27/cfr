@@ -1,10 +1,11 @@
 package org.benf.cfr.reader.entities.classfilehelpers;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.StringUtils;
@@ -35,14 +36,8 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         }
 
         if (!isEnum) {
-            ClassSignature signature = classFile.getClassSignature();
-            if (signature.getInterfaces().isEmpty()) {
-                JavaTypeInstance superclass = signature.getSuperClass();
-                d.dump(superclass);
-            } else {
-                JavaTypeInstance interfaceType = signature.getInterfaces().get(0);
-                d.dump(interfaceType);
-            }
+            JavaTypeInstance typeInstance = ClassFile.getAnonymousTypeBase(classFile);
+            d.dump(typeInstance);
         }
         if (!(isEnum && args.isEmpty())) {
             d.print("(");
@@ -68,8 +63,19 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         if (!methods.isEmpty()) {
             for (Method method : methods) {
                 if (method.isHiddenFromDisplay()) continue;
-                // You can't see constructors on anonymous inner classes.
-                if (method.isConstructor()) continue;
+                // Constructors on anonymous inners don't have arguments.
+                // (the initializer block ends up getting dumped into the first constructor).
+                if (method.isConstructor()) {
+                    AttributeCode anonymousConstructor = method.getCodeAttribute();
+                    if (anonymousConstructor != null) {
+                        // But we don't bother dumping if it's empty...
+                        Op04StructuredStatement stm = anonymousConstructor.analyse();
+                        if (!stm.isEmptyInitialiser()) {
+                            anonymousConstructor.dump(d);
+                        }
+                    }
+                    continue;
+                }
                 d.newln();
                 method.dump(d, true);
             }

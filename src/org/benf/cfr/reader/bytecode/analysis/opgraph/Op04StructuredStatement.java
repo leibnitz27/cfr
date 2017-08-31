@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
@@ -20,6 +21,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscov
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
@@ -211,6 +214,25 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         structuredStatement.traceLocalVariableScope(scopeDiscoverer);
+    }
+
+    // Look, this is a bit hideous.  But it doesn't seem worth extending the interfaces / visiting.
+    public boolean isEmptyInitialiser() {
+        List<StructuredStatement> stms = ListFactory.newList();
+        this.linearizeStatementsInto(stms);
+        for (StructuredStatement stm : stms) {
+            if (stm instanceof BeginBlock) continue;
+            if (stm instanceof EndBlock) continue;
+            if (stm instanceof StructuredComment) continue;
+            if (stm instanceof StructuredExpressionStatement) {
+                Expression expression  =((StructuredExpressionStatement)stm).getExpression();
+                if (expression instanceof SuperFunctionInvokation) {
+                    if (((SuperFunctionInvokation)expression).isInit()) continue;
+                }
+            }
+            return false;
+        }
+        return true;
     }
 
     /* 

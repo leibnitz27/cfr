@@ -1013,4 +1013,16 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     public List<ConstructorInvokationAnonymousInner> getAnonymousUsages() {
         return anonymousUsages;
     }
+
+    // More of an extension method really :)
+    public static JavaTypeInstance getAnonymousTypeBase(ClassFile classFile) {
+        ClassSignature signature = classFile.getClassSignature();
+        if (signature.getInterfaces().isEmpty()) {
+            JavaTypeInstance superclass = signature.getSuperClass();
+            return superclass;
+        } else {
+            JavaTypeInstance interfaceType = signature.getInterfaces().get(0);
+            return interfaceType;
+        }
+    }
 }

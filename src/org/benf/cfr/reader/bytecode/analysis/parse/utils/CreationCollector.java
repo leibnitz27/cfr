@@ -169,14 +169,21 @@ public class CreationCollector {
                 ClassFile classFile = constructorInvokationAnonymousInner.getClassFile();
                 if (classFile != null) {
                     anonymousClassUsage.note(classFile, constructorInvokationAnonymousInner);
-                }
+                    /*
+                     * And we take a best guess at the type of the anonymous class - it's either the interface
+                     * or the concrete class the anonymous type is derived from.
+                     */
+                    JavaTypeInstance anonymousTypeBase = ClassFile.getAnonymousTypeBase(classFile);
+                    inferredJavaType.forceDelegate(new InferredJavaType(anonymousTypeBase, InferredJavaType.Source.UNKNOWN));
+                } else {
 
-                BindingSuperContainer bindingSuperContainer = lValueType.getBindingSupers();
-                // This may be null, if we simply don't have the information present.
-                if (bindingSuperContainer != null) {
-                    JavaTypeInstance bestGuess = bindingSuperContainer.getMostLikelyAnonymousType(lValueType);
-                    // We don't want to FORCE the delegate, just allow it to be cast back to the most likely type...
-                    inferredJavaType.forceDelegate(new InferredJavaType(bestGuess, InferredJavaType.Source.UNKNOWN));
+                    BindingSuperContainer bindingSuperContainer = lValueType.getBindingSupers();
+                    // This may be null, if we simply don't have the information present.
+                    if (bindingSuperContainer != null) {
+                        JavaTypeInstance bestGuess = bindingSuperContainer.getMostLikelyAnonymousType(lValueType);
+                        // We don't want to FORCE the delegate, just allow it to be cast back to the most likely type...
+                        inferredJavaType.forceDelegate(new InferredJavaType(bestGuess, InferredJavaType.Source.UNKNOWN));
+                    }
                 }
             } else {
                 constructorInvokation = new ConstructorInvokationSimple(

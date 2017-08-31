@@ -55,6 +55,10 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
         super.collectTypeUsages(collector);
     }
 
+    public boolean isInit() {
+        return getMethodPrototype().getName().equals(MiscConstants.INIT_METHOD);
+    }
+
     @Override
     public Precedence getPrecedence() {
         return Precedence.PAREN_SUB_MEMBER;
