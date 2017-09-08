@@ -2815,8 +2815,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return result;
     }
 
-    public static boolean classifyAnonymousBlockGotos(List<Op03SimpleStatement> in) {
+    public static boolean classifyAnonymousBlockGotos(List<Op03SimpleStatement> in, boolean agressive) {
         boolean result = false;
+        int agressiveOffset = agressive ? 1 : 0;
 
         /*
          * Now, finally, for each unclassified goto, see if we can mark it as a break out of an anonymous block.
@@ -2832,7 +2833,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 if (isForwardJump) {
                     Set<BlockIdentifier> targetBlocks = targetStatement.getBlockIdentifiers();
                     Set<BlockIdentifier> srcBlocks = statement.getBlockIdentifiers();
-                    if (targetBlocks.size() < srcBlocks.size() && srcBlocks.containsAll(targetBlocks)) {
+                    if (targetBlocks.size() < srcBlocks.size() + agressiveOffset  && srcBlocks.containsAll(targetBlocks)) {
                         /*
                          * Remove all the switch blocks from srcBlocks.
                          */
@@ -2845,7 +2846,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                                 return true;
                             }
                         });
-                        if (targetBlocks.size() < srcBlocks.size() && srcBlocks.containsAll(targetBlocks)) {
+                        if (targetBlocks.size() < srcBlocks.size() + agressiveOffset && srcBlocks.containsAll(targetBlocks)) {
                             /*
                              * Break out of an anonymous block
                              */
@@ -4113,7 +4114,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Set<Op03SimpleStatement> targets = SetFactory.newOrderedSet();
         for (Op03SimpleStatement anonBreak : anonBreaks) {
             JumpingStatement jumpingStatement = (JumpingStatement) anonBreak.getStatement();
-            targets.add((Op03SimpleStatement) jumpingStatement.getJumpTarget().getContainer());
+            Op03SimpleStatement anonBreakTarget = (Op03SimpleStatement) jumpingStatement.getJumpTarget().getContainer();
+            if (anonBreakTarget.getStatement() instanceof AnonBreakTarget) continue;
+            targets.add(anonBreakTarget);
         }
 
         int idx = 0;

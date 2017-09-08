@@ -670,6 +670,19 @@ lbl10: // 1 sources:
             ifBlockLabel = elseBlockLabel;
             elseBlockLabel = null;
         } else {
+            // If there are any prior jumps INTO this block, we can't mark it as this will cause anonymous blocks
+            // to be misclassified.
+            if (!maybeSimpleIfElse) {
+                // Should not need this condition - but we may have already done some work above :(
+                for (Op03SimpleStatement stm : ifBranch) {
+                    for (Op03SimpleStatement source : stm.getSources()) {
+                        if (source.getIndex().isBackJumpFrom(ifStatement)) {
+                            // Nope - we'd end up creating a bad structure.
+                            return false;
+                        }
+                    }
+                }
+            }
             Misc.markWholeBlock(ifBranch, ifBlockLabel);
         }
 

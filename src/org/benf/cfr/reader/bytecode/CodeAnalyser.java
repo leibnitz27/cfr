@@ -701,7 +701,7 @@ public class CodeAnalyser {
         //
         Op03SimpleStatement.classifyGotos(op03SimpleParseNodes);
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
-            Op03SimpleStatement.classifyAnonymousBlockGotos(op03SimpleParseNodes);
+            Op03SimpleStatement.classifyAnonymousBlockGotos(op03SimpleParseNodes, false);
         }
         //
         // By this point, we've tried to classify ternaries.  We could try pushing some literals
@@ -815,7 +815,19 @@ public class CodeAnalyser {
             }
         }
 
+
+        // If there are any anonymous gotos left, then we try (very much hail-mary) to convert.
+        if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
+            // Before we handle anonymous blocks - see if we can convert any non-else if statements, which
+            // Jump to a Goto Out of try, to just be an anonymous break to after that try statement.
+            // op03SimpleParseNodes = Op03SimpleStatement.convertIndirectTryLeavesToAnonymousBreaks(op03SimpleParseNodes);
+            Op03SimpleStatement.classifyAnonymousBlockGotos(op03SimpleParseNodes, true);
+
+            Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+        }
+
         Cleaner.reindexInPlace(op03SimpleParseNodes);
+
         /*
          * Join up separated blocks.  Note that this is a bit dangerous, so we should only enable it
          * If we have to.
