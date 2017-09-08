@@ -7,6 +7,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -15,9 +18,13 @@ public class ArithmeticMonOperation extends AbstractExpression {
     private Expression lhs;
     private final ArithOp op;
 
+    private static InferredJavaType inferredType(InferredJavaType orig) {
+        if (orig.getJavaTypeInstance() != RawJavaType.BOOLEAN) return orig;
+        return new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.OPERATION);
+    }
+
     public ArithmeticMonOperation(Expression lhs, ArithOp op) {
-        // Type won't change over monop (??)
-        super(lhs.getInferredJavaType());
+        super(inferredType(lhs.getInferredJavaType()));
         this.lhs = lhs;
         this.op = op;
     }
