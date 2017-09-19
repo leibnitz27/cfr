@@ -192,7 +192,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
             boolean dump = options.getOption(OptionsImpl.DUMP_CLASS_PATH);
 
             classToPathMap = MapFactory.newMap();
-            String classPath = System.getProperty("java.class.path") + ":" + System.getProperty("sun.boot.class.path");
+            String classPath = System.getProperty("java.class.path") + File.pathSeparatorChar + System.getProperty("sun.boot.class.path");
             if (dump) {
                 System.out.println("/* ClassPath Diagnostic - searching :" + classPath);
             }
