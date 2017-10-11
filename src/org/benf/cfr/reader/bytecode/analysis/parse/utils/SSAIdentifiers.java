@@ -94,6 +94,12 @@ public class SSAIdentifiers<KEYTYPE> {
         return changed;
     }
 
+    public void fixHere(Set<KEYTYPE> fixed) {
+        for (KEYTYPE fix : fixed) {
+            fixedHere.put(fix, fix);
+        }
+    }
+
     public Set<KEYTYPE> getFixedHere() {
         return fixedHere.keySet();
     }

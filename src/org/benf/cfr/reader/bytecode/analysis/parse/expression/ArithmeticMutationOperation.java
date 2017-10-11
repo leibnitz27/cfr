@@ -13,6 +13,8 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Set;
+
 public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpression {
     private LValue mutated;
     private final ArithOp op;
@@ -50,6 +52,9 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
+        Set fixed = statementContainer.getSSAIdentifiers().getFixedHere();
+        // anything in fixed CANNOT be assigned to inside rvalue.
+        lValueRewriter = lValueRewriter.getWithFixed(fixed);
         mutation = mutation.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;
     }

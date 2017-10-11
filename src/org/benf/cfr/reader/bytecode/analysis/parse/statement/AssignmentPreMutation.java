@@ -14,6 +14,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpr
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Set;
+
 /**
  * In an assignment prechange, the LHS is by definition equal to the RHS after the statement.
  * I.e. x = ++x;
@@ -107,7 +109,17 @@ public class AssignmentPreMutation extends AbstractAssignment {
 
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
+        // If a premutation would have its RHS replaced with an rvalue that has a different version
+        // of its own ssa identifier, this is invalid.
+        // a += 2
+        // b = a
+        // a += b
+        // IS NOT
+        // a += (b = (a+=2))
         lvalue = lvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+        Set fixed = getContainer().getSSAIdentifiers().getFixedHere();
+        // anything in fixed CANNOT be assigned to inside rvalue.
+        lValueRewriter = lValueRewriter.getWithFixed(fixed);
         rvalue = (AbstractAssignmentExpression) rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
     }
 

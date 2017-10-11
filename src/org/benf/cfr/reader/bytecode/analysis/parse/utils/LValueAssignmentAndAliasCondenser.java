@@ -10,10 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
-import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
@@ -91,6 +88,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             rvalue = assignmentExpression.getrValue();
         }
         return res;
+    }
+
+    @Override
+    public LValueRewriter getWithFixed(Set fixed) {
+        return this;
     }
 
     public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> lvSc) {
@@ -267,6 +269,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         );
 
         @Override
+        public LValueRewriter getWithFixed(Set fixed) {
+            return this;
+        }
+
+        @Override
         public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
             if (!(lValue instanceof StackSSALabel)) return null;
             StackSSALabel stackSSALabel = (StackSSALabel) lValue;
@@ -408,6 +415,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
+        public LValueRewriter getWithFixed(Set fixed) {
+            return this;
+        }
+
+        @Override
         public boolean explicitlyReplaceThisLValue(LValue lValue) {
             return true;
         }
@@ -464,12 +476,20 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
     }
 
+    private static final Set<SSAIdent> emptyFixed = SetFactory.newSet();
 
     public class MutationRewriterSecondPass implements LValueRewriter<Statement> {
+        private final Set<SSAIdent> fixed;
         private final Map<VersionedLValue, StatementContainer> mutableReplacable;
 
         private MutationRewriterSecondPass(Map<VersionedLValue, StatementContainer> mutableReplacable) {
             this.mutableReplacable = mutableReplacable;
+            this.fixed = emptyFixed;
+        }
+
+        private MutationRewriterSecondPass(Map<VersionedLValue, StatementContainer> mutableReplacable, Set<SSAIdent> fixed) {
+            this.mutableReplacable = mutableReplacable;
+            this.fixed = fixed;
         }
 
         @Override
@@ -480,18 +500,30 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 StatementContainer canReplaceIn = mutableReplacable.get(versionedLValue);
                 if (canReplaceIn == statementContainer) {
                     ExpressionStatement replaceWith = mutableFound.get(versionedLValue);
-                    if (replaceWith.statementContainer == statementContainer) return null;
+                    StatementContainer<Statement> replacement = replaceWith.statementContainer;
+                    if (replacement == statementContainer) return null;
+
+                    SSAIdentifiers previousIdents = replacement.getSSAIdentifiers();
+                    Set fixedPrevious = previousIdents.getFixedHere();
+                    if (SetUtil.hasIntersection(this.fixed, fixedPrevious)) {
+                        return null;
+                    }
 
                     // Only the first time.
                     mutableReplacable.remove(versionedLValue);
-                    replaceWith.statementContainer.nopOut();
-                    SSAIdentifiers previousIdents = replaceWith.statementContainer.getSSAIdentifiers();
+                    replacement.nopOut();
                     SSAIdentifiers currentIdents = statementContainer.getSSAIdentifiers();
                     currentIdents.setKnownIdentifierOnEntry(lValue, previousIdents.getSSAIdentOnEntry(lValue));
+                    currentIdents.fixHere(previousIdents.getFixedHere());
                     return replaceWith.expression;
                 }
             }
             return null;
+        }
+
+        @Override
+        public LValueRewriter getWithFixed(Set fixed) {
+            return new MutationRewriterSecondPass(this.mutableReplacable, SetFactory.newSet(this.fixed, fixed));
         }
 
         @Override

@@ -10,10 +10,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /*
  * A first pass of lvalue collapsing.
@@ -135,6 +135,11 @@ public class LValuePropSimple {
                         @Override
                         public void checkPostConditions(LValue lValue, Expression rValue) {
 
+                        }
+
+                        @Override
+                        public LValueRewriter getWithFixed(Set fixed) {
+                            return this;
                         }
                     };
 
