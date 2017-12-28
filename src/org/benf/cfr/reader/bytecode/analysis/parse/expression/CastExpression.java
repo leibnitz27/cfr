@@ -24,6 +24,11 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
 
     public CastExpression(InferredJavaType knownType, Expression child) {
         super(knownType);
+        InferredJavaType childInferredJavaType = child.getInferredJavaType();
+        if (knownType.getJavaTypeInstance() == RawJavaType.LONG &&
+            childInferredJavaType.getJavaTypeInstance() == RawJavaType.BOOLEAN) {
+            childInferredJavaType.forceType(RawJavaType.INT, true);
+        }
         this.child = child;
         this.forced = false;
     }
