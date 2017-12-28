@@ -9,10 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
-import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaWildcardTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.Troolean;
@@ -28,6 +25,11 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         if (knownType.getJavaTypeInstance() == RawJavaType.LONG &&
             childInferredJavaType.getJavaTypeInstance() == RawJavaType.BOOLEAN) {
             childInferredJavaType.forceType(RawJavaType.INT, true);
+        }
+        RawJavaType knownTypeRawType = knownType.getRawType();
+        if (childInferredJavaType.getRawType() == RawJavaType.BOOLEAN && knownTypeRawType != RawJavaType.BOOLEAN && knownTypeRawType.getStackType() == StackType.INT) {
+            Expression tmp = new TernaryExpression(new BooleanExpression(child), Literal.INT_ONE, Literal.INT_ZERO);
+            child = tmp;
         }
         this.child = child;
         this.forced = false;
@@ -85,15 +87,7 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
             d.dump(child);
             return d;
         }
-        JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
-        if (childType == RawJavaType.BOOLEAN &&
-                !(RawJavaType.BOOLEAN.implicitlyCastsTo(castType, null))) {
-            // This is ugly.  Unfortunately, it's necessary (currently!) as we don't have an extra pass to
-            // transform invalid casts like this.
-            d.print("(").dump(castType).print(")");
-            child.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
-            d.print(" ? 1 : 0");
-        } else if (castType == RawJavaType.NULL) {
+        if (castType == RawJavaType.NULL) {
             child.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         } else {
             d.print("(").dump(castType).print(")");
