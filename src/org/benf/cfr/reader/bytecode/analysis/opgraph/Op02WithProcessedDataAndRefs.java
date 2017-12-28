@@ -1113,7 +1113,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case D2L: {
                 LValue lValue = getStackLValue(0);
                 lValue.getInferredJavaType().useAsWithCast(instr.getRawJavaType());
-                return new AssignmentSimple(lValue, getStackRValue(0));
+                StackValue rValue = getStackRValue(0);
+                return new AssignmentSimple(lValue, new CastExpression(new InferredJavaType(instr.getRawJavaType(), InferredJavaType.Source.INSTRUCTION), rValue));
             }
             case INSTANCEOF:
                 return new AssignmentSimple(getStackLValue(0), new InstanceOfExpression(getStackRValue(0), cpEntries[0]));

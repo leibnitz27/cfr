@@ -117,12 +117,12 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
             if (classFile != null) {
                 // this now seems rather pointless, as it's passing the type to GET the type!
                 Field field = classFile.getFieldByName(name, fieldRef.getJavaTypeInstance()).getField();
-                return new InferredJavaType(field.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
+                return new InferredJavaType(field.getJavaTypeInstance(), InferredJavaType.Source.FIELD, true);
             }
         } catch (CannotLoadClassException e) {
         } catch (NoSuchFieldException ignore) {
         }
-        return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD);
+        return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD, true);
     }
 
     @Override
