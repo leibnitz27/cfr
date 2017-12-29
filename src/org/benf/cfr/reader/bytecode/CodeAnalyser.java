@@ -865,7 +865,7 @@ public class CodeAnalyser {
             // Replace with a more generic interface, etc.
 
             new SwitchStringRewriter(options, classFileVersion).rewrite(block);
-            new SwitchEnumRewriter(dcCommonState, classFileVersion).rewrite(block);
+            new SwitchEnumRewriter(dcCommonState, classFileVersion, blockIdentifierFactory).rewrite(block);
 
             // These should logically be here, but the current versions are better!!
             //        new ArrayIterRewriter(cfrState).rewrite(block);

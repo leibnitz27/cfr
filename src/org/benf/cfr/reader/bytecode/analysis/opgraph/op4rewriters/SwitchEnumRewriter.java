@@ -9,6 +9,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
@@ -33,11 +35,13 @@ import java.util.Map;
 public class SwitchEnumRewriter implements Op04Rewriter {
     private final DCCommonState dcCommonState;
     private final ClassFileVersion classFileVersion;
+    private final BlockIdentifierFactory blockIdentifierFactory;
     private final static JavaTypeInstance expectedLUTType = new JavaArrayTypeInstance(1, RawJavaType.INT);
 
-    public SwitchEnumRewriter(DCCommonState dcCommonState, ClassFileVersion classFileVersion) {
+    public SwitchEnumRewriter(DCCommonState dcCommonState, ClassFileVersion classFileVersion, BlockIdentifierFactory blockIdentifierFactory) {
         this.dcCommonState = dcCommonState;
         this.classFileVersion = classFileVersion;
+        this.blockIdentifierFactory = blockIdentifierFactory;
     }
 
     @Override
@@ -54,25 +58,55 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                 return in.getClass() == StructuredSwitch.class;
             }
         });
-        MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(switchStatements);
-
         WildcardMatch wcm = new WildcardMatch();
 
-        Matcher<StructuredStatement> m = new ResetAfterTest(wcm,
-                new CollectMatch("switch", new StructuredSwitch(
-                        new ArrayIndex(
-                                new LValueExpression(wcm.getLValueWildCard("lut")),
-                                wcm.getMemberFunction("fncall", "ordinal", wcm.getExpressionWildCard("object"))),
-                        null, wcm.getBlockIdentifier("block"))));
+        if (!switchStatements.isEmpty()) {
+            MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(switchStatements);
+
+            Matcher<StructuredStatement> m = new ResetAfterTest(wcm,
+                    new CollectMatch("switch", new StructuredSwitch(
+                            new ArrayIndex(
+                                    new LValueExpression(wcm.getLValueWildCard("lut")),
+                                    wcm.getMemberFunction("fncall", "ordinal", wcm.getExpressionWildCard("object"))),
+                            null, wcm.getBlockIdentifier("block"))));
 
 
-        SwitchEnumMatchResultCollector matchResultCollector = new SwitchEnumMatchResultCollector(wcm);
-        while (mi.hasNext()) {
-            mi.advance();
-            matchResultCollector.clear();
-            if (m.match(mi, matchResultCollector)) {
-                tryRewrite(matchResultCollector);
-                mi.rewind1();
+            SwitchEnumMatchResultCollector matchResultCollector = new SwitchEnumMatchResultCollector(wcm);
+            while (mi.hasNext()) {
+                mi.advance();
+                matchResultCollector.clear();
+                if (m.match(mi, matchResultCollector)) {
+                    tryRewrite(matchResultCollector, false);
+                    mi.rewind1();
+                }
+            }
+        }
+
+        // We also have the vanishingly unlikely but quite silly case of switching on a literal with no content.
+        // See switchTest23
+        List<StructuredStatement> expressionStatements = Functional.filter(structuredStatements, new Predicate<StructuredStatement>() {
+            @Override
+            public boolean test(StructuredStatement in) {
+                return in.getClass() == StructuredExpressionStatement.class;
+                }
+        });
+        if (!expressionStatements.isEmpty()) {
+            Matcher<StructuredStatement> mInline = new ResetAfterTest(wcm,
+                    new CollectMatch("bodylessswitch", new StructuredExpressionStatement(
+                            new ArrayIndex(
+                                    new LValueExpression(wcm.getLValueWildCard("lut")),
+                                    wcm.getMemberFunction("fncall", "ordinal", wcm.getExpressionWildCard("object"))),
+                            true)));
+
+            MatchIterator<StructuredStatement> mi2 = new MatchIterator<StructuredStatement>(expressionStatements);
+            SwitchEnumMatchResultCollector matchResultCollector2 = new SwitchEnumMatchResultCollector(wcm);
+            while (mi2.hasNext()) {
+                mi2.advance();
+                matchResultCollector2.clear();
+                if (mInline.match(mi2, matchResultCollector2)) {
+                    tryRewrite(matchResultCollector2, true);
+                    mi2.rewind1();
+                }
             }
         }
     }
@@ -99,8 +133,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 }
 
      */
-    private void tryRewrite(SwitchEnumMatchResultCollector mrc) {
-        StructuredSwitch structuredSwitch = mrc.getStructuredSwitch();
+    private void tryRewrite(SwitchEnumMatchResultCollector mrc, boolean expression) {
         LValue lookupTable = mrc.getLookupTable();
         Expression enumObject = mrc.getEnumObject();
 
@@ -216,50 +249,64 @@ public class SwitchEnumRewriter implements Op04Rewriter {
          *
          * We can only do the rewrite if ALL the entries in the case list are in the map we found above.
          */
-        Op04StructuredStatement switchBlock = structuredSwitch.getBody();
-        StructuredStatement switchBlockStatement = switchBlock.getStatement();
-        if (!(switchBlockStatement instanceof Block)) {
-            throw new IllegalStateException("Inside switch should be a block");
-        }
+        StructuredStatement structuredStatement = null;
+        StructuredSwitch newSwitch = null;
+        if (!expression) {
+            StructuredSwitch structuredSwitch = mrc.getStructuredSwitch();
+            structuredStatement = structuredSwitch;
+            Op04StructuredStatement switchBlock = structuredSwitch.getBody();
+            StructuredStatement switchBlockStatement = switchBlock.getStatement();
+            if (!(switchBlockStatement instanceof Block)) {
+                throw new IllegalStateException("Inside switch should be a block");
+            }
 
-        Block block = (Block) switchBlockStatement;
-        List<Op04StructuredStatement> caseStatements = block.getBlockStatements();
+            Block block = (Block) switchBlockStatement;
+            List<Op04StructuredStatement> caseStatements = block.getBlockStatements();
 
         /*
          * If we can match every one of the ordinals, we replace the statement.
          */
-        LinkedList<Op04StructuredStatement> newBlockContent = ListFactory.newLinkedList();
-        InferredJavaType inferredJavaType = enumObject.getInferredJavaType();
-        for (Op04StructuredStatement caseOuter : caseStatements) {
-            StructuredStatement caseInner = caseOuter.getStatement();
-            if (!(caseInner instanceof StructuredCase)) {
-                return;
-            }
-            StructuredCase caseStmt = (StructuredCase) caseInner;
-            List<Expression> values = caseStmt.getValues();
-            List<Expression> newValues = ListFactory.newList();
-            for (Expression value : values) {
-                Integer iVal = getIntegerFromLiteralExpression(value);
-                if (iVal == null) {
+            LinkedList<Op04StructuredStatement> newBlockContent = ListFactory.newLinkedList();
+            InferredJavaType inferredJavaType = enumObject.getInferredJavaType();
+            for (Op04StructuredStatement caseOuter : caseStatements) {
+                StructuredStatement caseInner = caseOuter.getStatement();
+                if (!(caseInner instanceof StructuredCase)) {
                     return;
                 }
-                StaticVariable enumVal = reverseLut.get(iVal);
-                if (enumVal == null) {
-                    return;
+                StructuredCase caseStmt = (StructuredCase) caseInner;
+                List<Expression> values = caseStmt.getValues();
+                List<Expression> newValues = ListFactory.newList();
+                for (Expression value : values) {
+                    Integer iVal = getIntegerFromLiteralExpression(value);
+                    if (iVal == null) {
+                        return;
+                    }
+                    StaticVariable enumVal = reverseLut.get(iVal);
+                    if (enumVal == null) {
+                        return;
+                    }
+                    newValues.add(new LValueExpression(enumVal));
                 }
-                newValues.add(new LValueExpression(enumVal));
+                StructuredCase replacement = new StructuredCase(newValues, inferredJavaType, caseStmt.getBody(), caseStmt.getBlockIdentifier(), true);
+                newBlockContent.add(new Op04StructuredStatement(replacement));
             }
-            StructuredCase replacement = new StructuredCase(newValues, inferredJavaType, caseStmt.getBody(), caseStmt.getBlockIdentifier(), true);
-            newBlockContent.add(new Op04StructuredStatement(replacement));
+            Block replacementBlock = new Block(newBlockContent, block.isIndenting());
+            newSwitch = new StructuredSwitch(
+                    enumObject,
+                    new Op04StructuredStatement(replacementBlock),
+                    structuredSwitch.getBlockIdentifier());
+        } else {
+            structuredStatement = mrc.getStructuredExpressionStatement();
+            LinkedList<Op04StructuredStatement> tmp = new LinkedList<Op04StructuredStatement>();
+            tmp.add(new Op04StructuredStatement(new StructuredComment("Empty switch")));
+            newSwitch = new StructuredSwitch(
+                    enumObject,
+                    new Op04StructuredStatement(new Block(tmp, true)),
+                    blockIdentifierFactory.getNextBlockIdentifier(BlockType.SWITCH));
         }
-        Block replacementBlock = new Block(newBlockContent, block.isIndenting());
 
-        StructuredSwitch newSwitch = new StructuredSwitch(
-                enumObject,
-                new Op04StructuredStatement(replacementBlock),
-                structuredSwitch.getBlockIdentifier());
 
-        structuredSwitch.getContainer().replaceContainedStatement(newSwitch);
+        structuredStatement.getContainer().replaceContainedStatement(newSwitch);
         enumLutClass.markHiddenInnerClass();
     }
 
@@ -282,6 +329,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         private LValue lookupTable;
         private Expression enumObject;
         private StructuredSwitch structuredSwitch;
+        private StructuredExpressionStatement structuredExpressionStatement;
 
         private SwitchEnumMatchResultCollector(WildcardMatch wcm) {
             this.wcm = wcm;
@@ -297,6 +345,8 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         public void collectStatement(String name, StructuredStatement statement) {
             if (name.equals("switch")) {
                 structuredSwitch = (StructuredSwitch) statement;
+            } else if (name.equals("bodylessswitch")) {
+                structuredExpressionStatement = (StructuredExpressionStatement)statement;
             }
         }
 
@@ -316,6 +366,10 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
         public StructuredSwitch getStructuredSwitch() {
             return structuredSwitch;
+        }
+
+        public StructuredExpressionStatement getStructuredExpressionStatement() {
+            return structuredExpressionStatement;
         }
     }
 
