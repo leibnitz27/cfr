@@ -5,10 +5,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -76,6 +79,17 @@ public class Literal extends AbstractExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        if (value.getType() == TypedLiteral.LiteralType.Class) {
+            Object x = value.getValue();
+            if (x instanceof JavaTypeInstance) {
+                JavaTypeInstance lValueType = (JavaTypeInstance)x;
+                InnerClassInfo innerClassInfo = lValueType.getInnerClassHereInfo();
+
+                if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnonymousClass()) {
+                    lValueUsageCollector.collect(new SentinelLocalClassLValue(lValueType));
+                }
+            }
+        }
     }
 
     public TypedLiteral getValue() {
