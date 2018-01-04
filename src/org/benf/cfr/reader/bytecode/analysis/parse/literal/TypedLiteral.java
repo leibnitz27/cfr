@@ -175,11 +175,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             if (diff <= 2) longString = "0x" + hexTest;
         }
 
-        if (l > Integer.MAX_VALUE || l < Integer.MIN_VALUE) {
-            return longString + "L";
-        } else {
-            return longString;
-        }
+        return longString + "L";
     }
 
     private static String methodHandleName(Object o) {
@@ -207,6 +203,9 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
                     case BOOLEAN:
                         return d.print(boolName(value));
                     default:
+                        // It's tempting to add "(byte)/(short)" here, but JLS 5.2 specifically states that compile time
+                        // narrowing of constants for assignment is not necessary.
+                        // (but it is for calls, eg NarrowingTestXX).
                         return d.print(integerName(value));
                 }
             case Long:
