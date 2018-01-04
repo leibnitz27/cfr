@@ -826,6 +826,7 @@ public class CodeAnalyser {
             Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         }
 
+        op03SimpleParseNodes = Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new BadNarrowingArgRewriter());
         Cleaner.reindexInPlace(op03SimpleParseNodes);
 
         /*
@@ -892,6 +893,8 @@ public class CodeAnalyser {
             // After the final boxing rewrite, go back and check for inconvertible type cast
             // chains.  (BoxingTest37b)
             Op04StructuredStatement.rewriteBadCastChains(options, method, block);
+            // Or narrowing casts which are no longer needed because boxed assignments allow them.
+            Op04StructuredStatement.rewriteNarrowingAssignments(options, method, block);
 
             // Tidy variable names
             Op04StructuredStatement.tidyVariableNames(method, block, bytecodeMeta, comments, cp.getClassCache());

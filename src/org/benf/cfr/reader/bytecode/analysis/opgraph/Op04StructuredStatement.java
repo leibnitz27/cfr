@@ -15,6 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvok
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscovererImpl;
@@ -1021,6 +1022,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void rewriteBadCastChains(Options options, Method method, Op04StructuredStatement root) {
         root.transform(new ExpressionRewriterTransformer(new BadCastChainRewriter()), new StructuredScope());
+    }
+
+    public static void rewriteNarrowingAssignments(Options options, Method method, Op04StructuredStatement root) {
+        new NarrowingAssignmentRewriter().rewrite(root);
     }
 
     public static void replaceNestedSyntheticOuterRefs(Op04StructuredStatement root) {

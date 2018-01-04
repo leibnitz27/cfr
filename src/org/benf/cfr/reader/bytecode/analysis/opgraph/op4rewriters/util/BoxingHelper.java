@@ -6,25 +6,28 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvo
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.Set;
 
 public class BoxingHelper {
     private static Set<Pair<String, String>> unboxing = SetFactory.newSet(
-            Pair.make("java.lang.Integer", "intValue"),
-            Pair.make("java.lang.Long", "longValue"),
-            Pair.make("java.lang.Double", "doubleValue"),
-            Pair.make("java.lang.Short", "shortValue"),
-            Pair.make("java.lang.Boolean", "booleanValue")
+            Pair.make(TypeConstants.boxingNameInt, "intValue"),
+            Pair.make(TypeConstants.boxingNameLong, "longValue"),
+            Pair.make(TypeConstants.boxingNameDouble, "doubleValue"),
+            Pair.make(TypeConstants.boxingNameShort, "shortValue"),
+            Pair.make(TypeConstants.boxingNameByte, "byteValue"),
+            Pair.make(TypeConstants.boxingNameBoolean, "booleanValue")
     );
 
     private static Set<Pair<String, String>> boxing = SetFactory.newSet(
-            Pair.make("java.lang.Integer", "valueOf"),
-            Pair.make("java.lang.Long", "valueOf"),
-            Pair.make("java.lang.Double", "valueOf"),
-            Pair.make("java.lang.Short", "valueOf"),
-            Pair.make("java.lang.Boolean", "valueOf")
+            Pair.make(TypeConstants.boxingNameInt, "valueOf"),
+            Pair.make(TypeConstants.boxingNameLong, "valueOf"),
+            Pair.make(TypeConstants.boxingNameDouble, "valueOf"),
+            Pair.make(TypeConstants.boxingNameShort, "valueOf"),
+            Pair.make(TypeConstants.boxingNameByte, "valueOf"),
+            Pair.make(TypeConstants.boxingNameBoolean, "valueOf")
     );
 
 
