@@ -365,6 +365,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> STATIC_INIT_RETURN = new PermittedOptionProvider.Argument<Boolean>(
             "staticinitreturn", defaultTrueBooleanDecoder,
             "Try to remove return from static init");
+    public static final PermittedOptionProvider.Argument<Boolean> USE_NAME_TABLE = new PermittedOptionProvider.Argument<Boolean>(
+            "usenametable", defaultTrueBooleanDecoder,
+            "Use local variable name table if present");
     public static final PermittedOptionProvider.Argument<String> FILENAME = new PermittedOptionProvider.Argument<String>(
             "filename", defaultNullStringDecoder,
             "Name of file to analyse.");
@@ -430,7 +433,7 @@ public class OptionsImpl implements Options {
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
-                    RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS,
+                    RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS, USE_NAME_TABLE,
                     AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA, CASE_INSENSITIVE_FS_RENAME);
         }
 

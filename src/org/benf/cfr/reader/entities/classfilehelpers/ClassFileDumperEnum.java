@@ -101,7 +101,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {
             for (Method method : methods) {
-                if (method.isHiddenFromDisplay()) continue;
+                if (method.hiddenState() != Method.Visibility.Visible) continue;
                 d.newln();
                 method.dump(d, true);
             }

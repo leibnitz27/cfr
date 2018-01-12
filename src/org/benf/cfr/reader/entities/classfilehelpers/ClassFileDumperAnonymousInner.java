@@ -62,7 +62,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {
             for (Method method : methods) {
-                if (method.isHiddenFromDisplay()) continue;
+                if (method.hiddenState() != Method.Visibility.Visible) continue;
                 // Constructors on anonymous inners don't have arguments.
                 // (the initializer block ends up getting dumped into the first constructor).
                 if (method.isConstructor()) {

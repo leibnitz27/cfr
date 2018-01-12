@@ -77,7 +77,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {
             for (Method method : methods) {
-                if (method.isHiddenFromDisplay()) {
+                if (method.hiddenState() != Method.Visibility.Visible) {
                     continue;
                 }
                 if (!first) {

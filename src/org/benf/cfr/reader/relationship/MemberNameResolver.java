@@ -21,7 +21,10 @@ public class MemberNameResolver {
         MemberInfo memberInfo = new MemberInfo(oneClassFile);
 
         for (Method method : oneClassFile.getMethods()) {
-            if (method.isHiddenFromDisplay() || method.testAccessFlag(AccessFlagMethod.ACC_BRIDGE) ||
+            // Visibility also captures information about bridge / synthetic, but we still want to skip them
+            // here, even if that's been altered.
+            if (method.hiddenState() != Method.Visibility.Visible ||
+                method.testAccessFlag(AccessFlagMethod.ACC_BRIDGE) ||
                 method.testAccessFlag(AccessFlagMethod.ACC_SYNTHETIC)) {
                 continue;
             }
@@ -261,7 +264,7 @@ public class MemberNameResolver {
 
         private void add(MethodKey key1, JavaTypeInstance key2, Method method, boolean fromParent) {
             Map<JavaTypeInstance, Collection<Method>> methods = knownMethods.get(key1);
-            if (method.isHiddenFromDisplay()) return;
+            if (method.hiddenState() != Method.Visibility.Visible) return;
             if (fromParent && !methods.containsKey(key2) && !methods.isEmpty()) {
                 // This is ok if key2 is covariant to an existing key.
                 if (methods.keySet().size() == 1) {

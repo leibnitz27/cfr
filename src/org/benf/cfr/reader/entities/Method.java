@@ -50,6 +50,13 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         }
     }
 
+    public enum Visibility
+    {
+        Visible,
+        HiddenSynthetic,
+        HiddenBridge
+    }
+
     private static final long OFFSET_OF_ACCESS_FLAGS = 0;
     private static final long OFFSET_OF_NAME_INDEX = 2;
     private static final long OFFSET_OF_DESCRIPTOR_INDEX = 4;
@@ -66,7 +73,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final VariableNamer variableNamer;
     private final MethodPrototype methodPrototype;
     private final ClassFile classFile;
-    private boolean hidden;
+    private Visibility hidden;
     private DecompilerComments comments;
     private final Map<JavaRefTypeInstance, String> localClasses = MapFactory.newLinkedMap();
     private boolean isOverride;
@@ -79,6 +86,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         this.classFile = classFile;
         this.accessFlags = AccessFlagMethod.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
         this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
+        this.hidden = Visibility.Visible;
         short nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
         String initialName = cp.getUTF8Entry(nameIndex).getValue();
 
@@ -116,14 +124,19 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             this.codeAttribute = (AttributeCode) codeAttribute;
             // This rigamarole is neccessary because we don't provide the factory for the code attribute enough information
             // get get the Method (this).
-            this.variableNamer = VariableNamerFactory.getNamer(this.codeAttribute.getLocalVariableTable(), cp);
+            AttributeLocalVariableTable variableTable = options.getOption(OptionsImpl.USE_NAME_TABLE)
+                    ? this.codeAttribute.getLocalVariableTable() : null;
+            this.variableNamer = VariableNamerFactory.getNamer(variableTable, cp);
             this.codeAttribute.setMethod(this);
         }
 
         this.methodPrototype = generateMethodPrototype(initialName);
         if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
+                // javac only ever generates bridges into instances,
+                // however kotlin loses useful info if we hide them.
+                !accessFlags.contains(AccessFlagMethod.ACC_STATIC) &&
                 options.getOption(OptionsImpl.HIDE_BRIDGE_METHODS)) {
-            this.hidden = true;
+            this.hidden = Visibility.HiddenBridge;
         }
     }
 
@@ -148,10 +161,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     public void hideSynthetic() {
-        this.hidden = true;
+        this.hidden = Visibility.HiddenSynthetic;
     }
 
-    public boolean isHiddenFromDisplay() {
+    public Visibility hiddenState() {
         return hidden;
     }
 
