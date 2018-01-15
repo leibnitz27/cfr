@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
@@ -256,6 +257,10 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
             }
 
             if (creationContainer != null) {
+                // Could make use of the fact that if something here is void, we've obviously screwed up.
+//                if (scopedEntity.getInferredJavaType().getJavaTypeInstance() == RawJavaType.VOID) {
+//                    throw new ConfusedCFRException("Void");
+//                }
                 creationContainer.getStatement().markCreator(scopedEntity);
             }
         }

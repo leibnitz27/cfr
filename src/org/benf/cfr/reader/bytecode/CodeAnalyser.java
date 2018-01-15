@@ -64,32 +64,6 @@ public class CodeAnalyser {
         this.method = method;
     }
 
-    private static class AnalysisResult {
-        public DecompilerComments comments;
-        public Op04StructuredStatement code;
-        public AnonymousClassUsage anonymousClassUsage;
-        public boolean failed;
-        public boolean exception;
-
-        private AnalysisResult(DecompilerComments comments, Op04StructuredStatement code, AnonymousClassUsage anonymousClassUsage) {
-            this.anonymousClassUsage = anonymousClassUsage;
-            this.comments = comments;
-            this.code = code;
-            boolean failed = false;
-            boolean exception = false;
-            for (DecompilerComment comment : comments.getCommentCollection()) {
-                if (comment.isFailed()) {
-                    failed = true;
-                }
-                if (comment.isException()) {
-                    exception = true;
-                }
-            }
-            this.failed = failed;
-            this.exception = exception;
-        }
-    }
-
     private static final RecoveryOptions recover0 = new RecoveryOptions(
             new RecoveryOption.TrooleanRO(OptionsImpl.RECOVER_TYPECLASHES, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.LIVENESS_CLASH)),
             new RecoveryOption.TrooleanRO(OptionsImpl.USE_RECOVERED_ITERATOR_TYPE_HINTS, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.ITERATED_TYPE_HINTS)),
@@ -154,37 +128,37 @@ public class CodeAnalyser {
 
             res = getAnalysisOrWrapFail(0, instrs, dcCommonState, options, null, bytecodeMeta);
 
-            if (res.failed && options.getOption(OptionsImpl.RECOVER)) {
+            if (res.isFailed() && options.getOption(OptionsImpl.RECOVER)) {
                 int passIdx = 1;
                 for (RecoveryOptions recoveryOptions : recoveryOptionsArr) {
                     RecoveryOptions.Applied applied = recoveryOptions.apply(dcCommonState, options, bytecodeMeta);
                     if (!applied.valid) continue;
                     AnalysisResult nextRes = getAnalysisOrWrapFail(passIdx++, instrs, dcCommonState, applied.options, applied.comments, bytecodeMeta);
                     if (nextRes != null) {
-                        if (res.failed && nextRes.failed) {
+                        if (res.isFailed() && nextRes.isFailed()) {
                             // If they both failed, only replace if the later failure is not an exception.
                             // (or if the earlier one is).
-                            if (res.exception || !nextRes.exception) res = nextRes;
+                            if (res.isThrown() || !nextRes.isThrown()) res = nextRes;
                         } else {
                             res = nextRes;
                         }
                     }
-                    if (res.failed) continue;
+                    if (res.isFailed()) continue;
                     break;
                 }
             }
         }
 
-        if (res.comments != null) {
-            method.setComments(res.comments);
+        if (res.getComments() != null) {
+            method.setComments(res.getComments());
         }
 
         /*
          * Take the anonymous usages from the selected result.
          */
-        res.anonymousClassUsage.useNotes();
+        res.getAnonymousClassUsage().useNotes();
 
-        analysed = res.code;
+        analysed = res.getCode();
         return analysed;
     }
 
@@ -215,13 +189,10 @@ public class CodeAnalyser {
     private AnalysisResult getAnalysisOrWrapFail(int passIdx, List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState commonState, Options options, List<DecompilerComment> extraComments, BytecodeMeta bytecodeMeta) {
         try {
             AnalysisResult res = getAnalysisInner(instrs, commonState, options, bytecodeMeta, passIdx);
-            if (extraComments != null) res.comments.addComments(extraComments);
+            if (extraComments != null) res.getComments().addComments(extraComments);
             return res;
         } catch (RuntimeException e) {
-            Op04StructuredStatement coderes = new Op04StructuredStatement(new StructuredFakeDecompFailure(e));
-            DecompilerComments comments = new DecompilerComments();
-            comments.addComment(new DecompilerComment("Exception decompiling", e));
-            return new AnalysisResult(comments, coderes, new AnonymousClassUsage());
+            return new AnalysisResultFromException(e);
         }
     }
 
@@ -919,7 +890,7 @@ public class CodeAnalyser {
             }
         }
 
-        return new AnalysisResult(comments, block, anonymousClassUsage);
+        return new AnalysisResultSuccessful(comments, block, anonymousClassUsage);
     }
 
 

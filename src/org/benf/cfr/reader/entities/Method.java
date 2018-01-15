@@ -124,8 +124,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             this.codeAttribute = (AttributeCode) codeAttribute;
             // This rigamarole is neccessary because we don't provide the factory for the code attribute enough information
             // get get the Method (this).
-            AttributeLocalVariableTable variableTable = options.getOption(OptionsImpl.USE_NAME_TABLE)
-                    ? this.codeAttribute.getLocalVariableTable() : null;
+            AttributeLocalVariableTable variableTable = options.getOption(OptionsImpl.USE_NAME_TABLE) ? this.codeAttribute.getLocalVariableTable() : null;
             this.variableNamer = VariableNamerFactory.getNamer(variableTable, cp);
             this.codeAttribute.setMethod(this);
         }
