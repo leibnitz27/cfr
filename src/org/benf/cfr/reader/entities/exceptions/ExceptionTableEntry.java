@@ -13,23 +13,23 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
     private static final int OFFSET_INDEX_HANDLER = 4;
     private static final int OFFSET_CATCH_TYPE = 6;
 
-    private final short bytecode_index_from;        // [ a
-    private final short bytecode_index_to;          // ) b    st a <= x < b
-    private final short bytecode_index_handler;
-    private final short catch_type;
+    private final int bytecode_index_from;        // [ a
+    private final int bytecode_index_to;          // ) b    st a <= x < b
+    private final int bytecode_index_handler;
+    private final int catch_type;
 
     private final int priority;
 
     public ExceptionTableEntry(ByteData raw, int priority) {
         this(
-                raw.getS2At(OFFSET_INDEX_FROM),
-                raw.getS2At(OFFSET_INDEX_TO),
-                raw.getS2At(OFFSET_INDEX_HANDLER),
-                raw.getS2At(OFFSET_CATCH_TYPE),
+                raw.getU2At(OFFSET_INDEX_FROM),
+                raw.getU2At(OFFSET_INDEX_TO),
+                raw.getU2At(OFFSET_INDEX_HANDLER),
+                raw.getU2At(OFFSET_CATCH_TYPE),
                 priority);
     }
 
-    public ExceptionTableEntry(short from, short to, short handler, short catchType, int priority) {
+    public ExceptionTableEntry(int from, int to, int handler, int catchType, int priority) {
         this.bytecode_index_from = from;
         this.bytecode_index_to = to;
         this.bytecode_index_handler = handler;
@@ -53,23 +53,23 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         }
     }
 
-    public ExceptionTableEntry copyWithRange(short from, short to) {
+    public ExceptionTableEntry copyWithRange(int from, int to) {
         return new ExceptionTableEntry(from, to, this.bytecode_index_handler, this.catch_type, this.priority);
     }
 
-    public short getBytecodeIndexFrom() {
+    public int getBytecodeIndexFrom() {
         return bytecode_index_from;
     }
 
-    public short getBytecodeIndexTo() {
+    public int getBytecodeIndexTo() {
         return bytecode_index_to;
     }
 
-    public short getBytecodeIndexHandler() {
+    public int getBytecodeIndexHandler() {
         return bytecode_index_handler;
     }
 
-    public short getCatchType() {
+    public int getCatchType() {
         return catch_type;
     }
 

@@ -23,10 +23,10 @@ public class AttributeExceptions extends Attribute {
 
     public AttributeExceptions(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        short numExceptions = raw.getS2At(OFFSET_OF_NUMBER_OF_EXCEPTIONS);
+        int numExceptions = raw.getU2At(OFFSET_OF_NUMBER_OF_EXCEPTIONS);
         long offset = OFFSET_OF_EXCEPTION_TABLE;
         for (int x = 0; x < numExceptions; ++x, offset += 2) {
-            exceptionClassList.add(cp.getClassEntry(raw.getS2At(offset)));
+            exceptionClassList.add(cp.getClassEntry(raw.getU2At(offset)));
         }
     }
 

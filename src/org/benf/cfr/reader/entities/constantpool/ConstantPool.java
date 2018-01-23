@@ -27,7 +27,7 @@ public class ConstantPool {
     private final int idx = sidx++;
     private static int sidx = 0;
 
-    public ConstantPool(ClassFile classFile, DCCommonState dcCommonState, ByteData raw, short count) {
+    public ConstantPool(ClassFile classFile, DCCommonState dcCommonState, ByteData raw, int count) {
         this.classFile = classFile;
         this.options = dcCommonState.getOptions();
         ArrayList<ConstantPoolEntry> res = new ArrayList<ConstantPoolEntry>();
@@ -49,10 +49,10 @@ public class ConstantPool {
         return isLoaded;
     }
 
-    private long processRaw(ByteData raw, short count, List<ConstantPoolEntry> tgt) {
+    private long processRaw(ByteData raw, int count, List<ConstantPoolEntry> tgt) {
         OffsettingByteData data = raw.getOffsettingOffsetData(0);
         logger.info("Processing " + count + " constpool entries.");
-        for (short x = 0; x < count; ++x) {
+        for (int x = 0; x < count; ++x) {
             ConstantPoolEntry.Type type = ConstantPoolEntry.Type.get(data.getS1At(0));
             ConstantPoolEntry cpe;
             switch (type) {

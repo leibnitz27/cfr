@@ -240,9 +240,9 @@ public class ExceptionAggregator {
          */
 
         // Need to build up an interval tree for EACH exception handler type
-        Map<Short, List<ExceptionTableEntry>> grouped = Functional.groupToMapBy(rawExceptions, new UnaryFunction<ExceptionTableEntry, Short>() {
+        Map<Integer, List<ExceptionTableEntry>> grouped = Functional.groupToMapBy(rawExceptions, new UnaryFunction<ExceptionTableEntry, Integer>() {
             @Override
-            public Short invoke(ExceptionTableEntry arg) {
+            public Integer invoke(ExceptionTableEntry arg) {
                 return arg.getCatchType();
             }
         });
@@ -251,9 +251,9 @@ public class ExceptionAggregator {
         for (List<ExceptionTableEntry> list : grouped.values()) {
             IntervalCount intervalCount = new IntervalCount();
             for (ExceptionTableEntry e : list) {
-                short from = e.getBytecodeIndexFrom();
-                short to = e.getBytecodeIndexTo();
-                Pair<Short, Short> res = intervalCount.generateNonIntersection(from, to);
+                int from = e.getBytecodeIndexFrom();
+                int to = e.getBytecodeIndexTo();
+                Pair<Integer, Integer> res = intervalCount.generateNonIntersection(from, to);
                 if (res == null) continue;
                 processedExceptions.add(new ExceptionTableEntry(res.getFirst(), res.getSecond(), e.getBytecodeIndexHandler(), e.getCatchType(), e.getPriority()));
             }
@@ -294,7 +294,7 @@ public class ExceptionAggregator {
          * actually are one range.
          *
          */
-        Map<Short, ByTarget> byTargetMap = MapFactory.newMap();
+        Map<Integer, ByTarget> byTargetMap = MapFactory.newMap();
         for (ByTarget t : byTargetList) {
             byTargetMap.put(t.entries.get(0).getBytecodeIndexHandler(), t);
         }

@@ -16,7 +16,7 @@ public class AttributeConstantValue extends Attribute {
 
     public AttributeConstantValue(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        this.value = cp.getEntry(raw.getS2At(OFFSET_OF_REMAINDER));
+        this.value = cp.getEntry(raw.getU2At(OFFSET_OF_REMAINDER));
     }
 
     @Override

@@ -17,10 +17,10 @@ public class VariableNamerHinted implements VariableNamer {
     private final VariableNamer missingNamer = new VariableNamerDefault();
 
     private final OrderLocalVariables orderLocalVariable = new OrderLocalVariables();
-    private final Map<Short, TreeSet<LocalVariableEntry>> localVariableEntryTreeSet =
-            MapFactory.newLazyMap(new UnaryFunction<Short, TreeSet<LocalVariableEntry>>() {
+    private final Map<Integer, TreeSet<LocalVariableEntry>> localVariableEntryTreeSet =
+            MapFactory.newLazyMap(new UnaryFunction<Integer, TreeSet<LocalVariableEntry>>() {
                 @Override
-                public TreeSet<LocalVariableEntry> invoke(Short arg) {
+                public TreeSet<LocalVariableEntry> invoke(Integer arg) {
                     return new TreeSet<LocalVariableEntry>(orderLocalVariable);
                 }
             });
@@ -41,7 +41,7 @@ public class VariableNamerHinted implements VariableNamer {
     public NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition) {
         originalRawOffset += 2;
 
-        short sstackPos = (short) stackPosition;
+        int sstackPos = (int) stackPosition;
         if (!localVariableEntryTreeSet.containsKey(sstackPos)) {
             return missingNamer.getName(0, ident, sstackPos);
         }

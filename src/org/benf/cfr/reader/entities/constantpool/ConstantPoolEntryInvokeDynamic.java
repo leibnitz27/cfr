@@ -10,13 +10,13 @@ public class ConstantPoolEntryInvokeDynamic extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_BOOTSTRAP_METHOD_ATTR_INDEX = 1;
     private static final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
 
-    private final short bootstrapMethodAttrIndex;
-    private final short nameAndTypeIndex;
+    private final int bootstrapMethodAttrIndex;
+    private final int nameAndTypeIndex;
 
     public ConstantPoolEntryInvokeDynamic(ConstantPool cp, ByteData data) {
         super(cp);
-        this.bootstrapMethodAttrIndex = data.getS2At(OFFSET_OF_BOOTSTRAP_METHOD_ATTR_INDEX);
-        this.nameAndTypeIndex = data.getS2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
+        this.bootstrapMethodAttrIndex = data.getU2At(OFFSET_OF_BOOTSTRAP_METHOD_ATTR_INDEX);
+        this.nameAndTypeIndex = data.getU2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
     }
 
     @Override
@@ -29,7 +29,7 @@ public class ConstantPoolEntryInvokeDynamic extends AbstractConstantPoolEntry {
         d.print(this.toString());
     }
 
-    public short getBootstrapMethodAttrIndex() {
+    public int getBootstrapMethodAttrIndex() {
         return bootstrapMethodAttrIndex;
     }
 

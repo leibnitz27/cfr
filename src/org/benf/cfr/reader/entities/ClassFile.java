@@ -42,8 +42,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
 
     // Members
-    private final short minorVer;
-    private final short majorVer;
+    private final int minorVer;
+    private final int majorVer;
     private final ConstantPool constantPool;
     private final Set<AccessFlag> accessFlags;
     private final List<ClassFileField> fields;
@@ -89,11 +89,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         int magic = data.getS4At(OFFSET_OF_MAGIC);
         if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe for class file '" + usePath + "'");
 
-        minorVer = data.getS2At(OFFSET_OF_MINOR);
-        majorVer = data.getS2At(OFFSET_OF_MAJOR);
+        minorVer = data.getU2At(OFFSET_OF_MINOR);
+        majorVer = data.getU2At(OFFSET_OF_MAJOR);
         ClassFileVersion classFileVersion = new ClassFileVersion(majorVer, minorVer);
         final ClassFileVersion cfv = classFileVersion;
-        short constantPoolCount = data.getS2At(OFFSET_OF_CONSTANT_POOL_COUNT);
+        int constantPoolCount = data.getU2At(OFFSET_OF_CONSTANT_POOL_COUNT);
         this.constantPool = new ConstantPool(this, dcCommonState, data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
         final long OFFSET_OF_ACCESS_FLAGS = OFFSET_OF_CONSTANT_POOL + constantPool.getRawByteLength();
         final long OFFSET_OF_THIS_CLASS = OFFSET_OF_ACCESS_FLAGS + 2;
@@ -101,17 +101,18 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         final long OFFSET_OF_INTERFACES_COUNT = OFFSET_OF_SUPER_CLASS + 2;
         final long OFFSET_OF_INTERFACES = OFFSET_OF_INTERFACES_COUNT + 2;
 
-        short numInterfaces = data.getS2At(OFFSET_OF_INTERFACES_COUNT);
+        int numInterfaces = data.getU2At(OFFSET_OF_INTERFACES_COUNT);
         ArrayList<ConstantPoolEntryClass> tmpInterfaces = new ArrayList<ConstantPoolEntryClass>();
-        ContiguousEntityFactory.buildSized(data.getOffsetData(OFFSET_OF_INTERFACES), numInterfaces, 2, tmpInterfaces,
+        ContiguousEntityFactory.buildSized(data.getOffsetData(OFFSET_OF_INTERFACES), (short)numInterfaces, 2, tmpInterfaces,
                 new UnaryFunction<ByteData, ConstantPoolEntryClass>() {
                     @Override
                     public ConstantPoolEntryClass invoke(ByteData arg) {
-                        return (ConstantPoolEntryClass) constantPool.getEntry(arg.getS2At(0));
+                        int offset = arg.getU2At(0);
+                        return (ConstantPoolEntryClass) constantPool.getEntry(offset);
                     }
                 }
         );
-        thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getS2At(OFFSET_OF_THIS_CLASS));
+        thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getU2At(OFFSET_OF_THIS_CLASS));
 
 //        if (configCallback != null) {
 //            configCallback.configureWith(this);
@@ -119,11 +120,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         this.rawInterfaces = tmpInterfaces;
 
 
-        accessFlags = AccessFlag.build(data.getS2At(OFFSET_OF_ACCESS_FLAGS));
+        accessFlags = AccessFlag.build(data.getU2At(OFFSET_OF_ACCESS_FLAGS));
 
         final long OFFSET_OF_FIELDS_COUNT = OFFSET_OF_INTERFACES + 2 * numInterfaces;
         final long OFFSET_OF_FIELDS = OFFSET_OF_FIELDS_COUNT + 2;
-        final short numFields = data.getS2At(OFFSET_OF_FIELDS_COUNT);
+        final int numFields = data.getU2At(OFFSET_OF_FIELDS_COUNT);
         List<Field> tmpFields = ListFactory.newList();
         final long fieldsLength = ContiguousEntityFactory.build(data.getOffsetData(OFFSET_OF_FIELDS), numFields, tmpFields,
                 new UnaryFunction<ByteData, Field>() {
@@ -139,7 +140,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         final long OFFSET_OF_METHODS_COUNT = OFFSET_OF_FIELDS + fieldsLength;
         final long OFFSET_OF_METHODS = OFFSET_OF_METHODS_COUNT + 2;
-        final short numMethods = data.getS2At(OFFSET_OF_METHODS_COUNT);
+        final int numMethods = data.getU2At(OFFSET_OF_METHODS_COUNT);
         List<Method> tmpMethods = new ArrayList<Method>(numMethods);
         final long methodsLength = ContiguousEntityFactory.build(data.getOffsetData(OFFSET_OF_METHODS), numMethods, tmpMethods,
                 new UnaryFunction<ByteData, Method>() {
@@ -166,7 +167,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         final long OFFSET_OF_ATTRIBUTES_COUNT = OFFSET_OF_METHODS + methodsLength;
         final long OFFSET_OF_ATTRIBUTES = OFFSET_OF_ATTRIBUTES_COUNT + 2;
-        final short numAttributes = data.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
+        final int numAttributes = data.getU2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
         ContiguousEntityFactory.build(data.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
@@ -176,7 +177,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         AccessFlag.applyAttributes(attributes, accessFlags);
 
-        short superClassIndex = data.getS2At(OFFSET_OF_SUPER_CLASS);
+        int superClassIndex = data.getU2At(OFFSET_OF_SUPER_CLASS);
         if (superClassIndex == 0) {
             rawSuperClass = null;
         } else {

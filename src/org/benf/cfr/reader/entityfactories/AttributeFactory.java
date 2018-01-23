@@ -11,7 +11,7 @@ public class AttributeFactory {
     private static final long OFFSET_OF_ATTRIBUTE_NAME_INDEX = 0;
 
     public static Attribute build(ByteData raw, ConstantPool cp, ClassFileVersion classFileVersion) {
-        final short nameIndex = raw.getS2At(OFFSET_OF_ATTRIBUTE_NAME_INDEX);
+        final int nameIndex = raw.getU2At(OFFSET_OF_ATTRIBUTE_NAME_INDEX);
         ConstantPoolEntryUTF8 name = (ConstantPoolEntryUTF8) cp.getEntry(nameIndex);
         String attributeName = name.getValue();
 

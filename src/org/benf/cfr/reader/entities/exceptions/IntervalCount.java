@@ -7,15 +7,15 @@ import org.benf.cfr.reader.util.MapFactory;
 import java.util.*;
 
 public class IntervalCount {
-    private final TreeMap<Short, Boolean> op = MapFactory.newTreeMap();
+    private final TreeMap<Integer, Boolean> op = MapFactory.newTreeMap();
 
     // Maintains a half open interval
     // x, true ... something started at x.
     // x, false .. something ended including x-1.
-    public Pair<Short, Short> generateNonIntersection(Short from, Short to) {
+    public Pair<Integer, Integer> generateNonIntersection(Integer from, Integer to) {
         if (to < from) return null;
 
-        Map.Entry<Short, Boolean> prevEntry = op.floorEntry(from);
+        Map.Entry<Integer, Boolean> prevEntry = op.floorEntry(from);
         Boolean previous = prevEntry == null ? null : prevEntry.getValue();
         boolean braOutside = previous == null || (!previous);
 
@@ -27,7 +27,7 @@ public class IntervalCount {
              * If the new exception entry is entirely subsumed within from -> next ket, then we have
              * a totally redundant exception entry.
              */
-            Map.Entry<Short, Boolean> nextEntry = op.ceilingEntry((short) (from + 1));
+            Map.Entry<Integer, Boolean> nextEntry = op.ceilingEntry(from + 1);
             if (nextEntry == null) {
                 throw new IllegalStateException("Internal exception pattern invalid");
             }
@@ -39,13 +39,13 @@ public class IntervalCount {
             }
         }
 
-        NavigableMap<Short, Boolean> afterMap = op.tailMap(from, false);
+        NavigableMap<Integer, Boolean> afterMap = op.tailMap(from, false);
 
-        Set<Map.Entry<Short, Boolean>> afterSet = afterMap.entrySet();
-        Iterator<Map.Entry<Short, Boolean>> afterIter = afterSet.iterator();
+        Set<Map.Entry<Integer, Boolean>> afterSet = afterMap.entrySet();
+        Iterator<Map.Entry<Integer, Boolean>> afterIter = afterSet.iterator();
         while (afterIter.hasNext()) {
-            Map.Entry<Short, Boolean> next = afterIter.next();
-            Short end = next.getKey();
+            Map.Entry<Integer, Boolean> next = afterIter.next();
+            Integer end = next.getKey();
             boolean isKet = Boolean.FALSE == next.getValue();
             if (end > to) {
                 if (isKet) {

@@ -8,8 +8,8 @@ import java.util.*;
 public class IntervalOverlapper {
 
 
-    private final NavigableMap<Short, Set<ExceptionTableEntry>> starts = MapFactory.newTreeMap();
-    private final NavigableMap<Short, Set<ExceptionTableEntry>> ends = MapFactory.newTreeMap();
+    private final NavigableMap<Integer, Set<ExceptionTableEntry>> starts = MapFactory.newTreeMap();
+    private final NavigableMap<Integer, Set<ExceptionTableEntry>> ends = MapFactory.newTreeMap();
 
 
     public IntervalOverlapper(List<ExceptionTableEntry> entries) {
@@ -33,23 +33,23 @@ public class IntervalOverlapper {
 
     /* This is hideous - O(N^2). */
     private void processEntry(ExceptionTableEntry e) {
-        final short from = e.getBytecodeIndexFrom();
-        final short to = e.getBytecodeIndexTo();
+        final int from = e.getBytecodeIndexFrom();
+        final int to = e.getBytecodeIndexTo();
 
         // TODO : This won't ignore 0-2 if we already have 0-7
 
         // Get the set that started before the start and end before the end.
-        NavigableMap<Short, Set<ExceptionTableEntry>> startedBeforeStart = starts.headMap(from, false);
-        NavigableMap<Short, Set<ExceptionTableEntry>> endsBeforeEnd = ends.headMap(to, false);
-        NavigableMap<Short, Set<ExceptionTableEntry>> endsInside = endsBeforeEnd.tailMap(from, false);
+        NavigableMap<Integer, Set<ExceptionTableEntry>> startedBeforeStart = starts.headMap(from, false);
+        NavigableMap<Integer, Set<ExceptionTableEntry>> endsBeforeEnd = ends.headMap(to, false);
+        NavigableMap<Integer, Set<ExceptionTableEntry>> endsInside = endsBeforeEnd.tailMap(from, false);
         // Anything that's in the values of endsInside, AND the values of startedBeforeStart, is 'bad'.
         // We'll remove them from BOTH starts and ends, split them up, and then add them back again.
         Set<ExceptionTableEntry> overlapStartsBefore = raze(endsInside.values());
         overlapStartsBefore.retainAll(raze(startedBeforeStart.values()));
 
-        NavigableMap<Short, Set<ExceptionTableEntry>> endsAfterEnd = ends.tailMap(to, false);
-        NavigableMap<Short, Set<ExceptionTableEntry>> startedAfterStart = starts.tailMap(from, false);
-        NavigableMap<Short, Set<ExceptionTableEntry>> startsInside = startedAfterStart.headMap(to, false);
+        NavigableMap<Integer, Set<ExceptionTableEntry>> endsAfterEnd = ends.tailMap(to, false);
+        NavigableMap<Integer, Set<ExceptionTableEntry>> startedAfterStart = starts.tailMap(from, false);
+        NavigableMap<Integer, Set<ExceptionTableEntry>> startsInside = startedAfterStart.headMap(to, false);
 
         Set<ExceptionTableEntry> overlapEndsAfter = raze(startsInside.values());
         overlapEndsAfter.retainAll(raze(endsAfterEnd.values()));
@@ -59,14 +59,14 @@ public class IntervalOverlapper {
             return;
         }
 
-        short currentFrom;
-        short currentTo;
-        short remainingBlockStart = from;
-        short remainingBlockTo = to;
+        int currentFrom;
+        int currentTo;
+        int remainingBlockStart = from;
+        int remainingBlockTo = to;
         List<ExceptionTableEntry> output = ListFactory.newList();
         // by definition, startsbefore and endsafter won't overlap.
         if (!overlapStartsBefore.isEmpty()) {
-            Set<Short> blockEnds = new TreeSet<Short>();
+            Set<Integer> blockEnds = new TreeSet<Integer>();
             for (ExceptionTableEntry e2 : overlapStartsBefore) {
                 blockEnds.add(e2.getBytecodeIndexTo());
                 starts.get(e2.getBytecodeIndexFrom()).remove(e2);
@@ -74,54 +74,54 @@ public class IntervalOverlapper {
             }
             // Divide e into start->ends[0], ends[0]->ends[1], ends[1] -> ends[2], etc.
             currentFrom = from;
-            for (Short end : blockEnds) {
-                ExceptionTableEntry out = e.copyWithRange(currentFrom, (short) (end));
+            for (Integer end : blockEnds) {
+                ExceptionTableEntry out = e.copyWithRange(currentFrom,(end));
                 addEntry(out);
                 output.add(out);
-                currentFrom = (short) (end);
+                currentFrom = (end);
             }
             remainingBlockStart = currentFrom;
-            blockEnds.add((short) (from));
+            blockEnds.add((from));
             for (ExceptionTableEntry e2 : overlapStartsBefore) {
                 currentFrom = e2.getBytecodeIndexFrom();
-                for (Short end : blockEnds) {
+                for (Integer end : blockEnds) {
                     if (end > e2.getBytecodeIndexTo()) break;
-                    ExceptionTableEntry out = e2.copyWithRange(currentFrom, (short) (end));
+                    ExceptionTableEntry out = e2.copyWithRange(currentFrom, (end));
                     addEntry(out);
                     output.add(out);
-                    currentFrom = (short) (end);
+                    currentFrom = (end);
                 }
             }
 
         }
 
         if (!overlapEndsAfter.isEmpty()) {
-            Set<Short> blockStarts = new TreeSet<Short>();
+            Set<Integer> blockStarts = new TreeSet<Integer>();
             for (ExceptionTableEntry e2 : overlapStartsBefore) {
                 blockStarts.add(e2.getBytecodeIndexFrom());
                 starts.get(e2.getBytecodeIndexFrom()).remove(e2);
                 ends.get(e2.getBytecodeIndexTo()).remove(e2);
             }
-            List<Short> revBlockStarts = ListFactory.newList(blockStarts);
+            List<Integer> revBlockStarts = ListFactory.newList(blockStarts);
             currentTo = to;
             for (int x = revBlockStarts.size() - 1; x >= 0; --x) {
-                Short start = revBlockStarts.get(x);
+                Integer start = revBlockStarts.get(x);
                 ExceptionTableEntry out = e.copyWithRange(start, currentTo);
                 addEntry(out);
                 output.add(out);
-                currentTo = (short) (start);
+                currentTo = (start);
             }
             remainingBlockTo = currentTo;
-            revBlockStarts.add((short) (to));
+            revBlockStarts.add((to));
             for (ExceptionTableEntry e2 : overlapStartsBefore) {
                 currentTo = e2.getBytecodeIndexTo();
                 for (int x = revBlockStarts.size() - 1; x >= 0; --x) {
-                    Short start = revBlockStarts.get(x);
+                    Integer start = revBlockStarts.get(x);
                     if (start <= e2.getBytecodeIndexFrom()) break;
                     ExceptionTableEntry out = e.copyWithRange(start, currentTo);
                     addEntry(out);
                     output.add(out);
-                    currentTo = (short) (start);
+                    currentTo = (start);
                 }
             }
         }

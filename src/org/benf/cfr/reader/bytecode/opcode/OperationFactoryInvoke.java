@@ -22,7 +22,7 @@ public class OperationFactoryInvoke extends OperationFactoryDefault {
     public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
         byte[] args = bd.getBytesAt(LENGTH_OF_DATA, 1);
         int[] targetOffsets = null; // we know the nextr instr, it's our successor (after the invoke returns).
-        ConstantPoolEntry[] cpEntries = new ConstantPoolEntry[]{cp.getEntry(bd.getS2At(OFFSET_OF_METHOD_INDEX))};
+        ConstantPoolEntry[] cpEntries = new ConstantPoolEntry[]{cp.getEntry(bd.getU2At(OFFSET_OF_METHOD_INDEX))};
 
 
         return new Op01WithProcessedDataAndByteJumps(instr, args, targetOffsets, offset, cpEntries);

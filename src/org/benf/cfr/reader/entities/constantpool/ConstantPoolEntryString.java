@@ -16,7 +16,7 @@ public class ConstantPoolEntryString extends AbstractConstantPoolEntry implement
 
     public ConstantPoolEntryString(ConstantPool cp, ByteData data) {
         super(cp);
-        this.stringIndex = data.getS2At(OFFSET_OF_STRING_INDEX);
+        this.stringIndex = data.getU2At(OFFSET_OF_STRING_INDEX);
     }
 
     @Override

@@ -9,14 +9,14 @@ public class ConstantPoolEntryNameAndType extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_NAME_INDEX = 1;
     private static final long OFFSET_OF_DESCRIPTOR_INDEX = 3;
 
-    private final short nameIndex;
-    private final short descriptorIndex;
+    private final int nameIndex;
+    private final int descriptorIndex;
     private StackDelta[] stackDelta = new StackDelta[2];
 
     public ConstantPoolEntryNameAndType(ConstantPool cp, ByteData data) {
         super(cp);
-        this.nameIndex = data.getS2At(OFFSET_OF_NAME_INDEX);
-        this.descriptorIndex = data.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
+        this.nameIndex = data.getU2At(OFFSET_OF_NAME_INDEX);
+        this.descriptorIndex = data.getU2At(OFFSET_OF_DESCRIPTOR_INDEX);
     }
 
     @Override

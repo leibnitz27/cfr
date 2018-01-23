@@ -24,8 +24,8 @@ public class AttributeCode extends Attribute {
     private static final long OFFSET_OF_MAX_STACK = 6;
 
     private final int length;
-    private final short maxStack;
-    private final short maxLocals;
+    private final int maxStack;
+    private final int maxLocals;
     private final int codeLength;
     private final List<ExceptionTableEntry> exceptionTableEntries;
     private final Map<String, Attribute> attributes;
@@ -42,8 +42,8 @@ public class AttributeCode extends Attribute {
         long OFFSET_OF_CODE_LENGTH = 10;
         long OFFSET_OF_CODE = 14;
 
-        short maxStack = 0;
-        short maxLocals = 0;
+        int maxStack = 0;
+        int maxLocals = 0;
         int codeLength = 0;
         if (classFileVersion.before(ClassFileVersion.JAVA_1_0)) {
             OFFSET_OF_MAX_LOCALS = 7;
@@ -55,8 +55,8 @@ public class AttributeCode extends Attribute {
             codeLength = raw.getU2At(OFFSET_OF_CODE_LENGTH);
 
         } else {
-            maxStack = raw.getS2At(OFFSET_OF_MAX_STACK);
-            maxLocals = raw.getS2At(OFFSET_OF_MAX_LOCALS);
+            maxStack = raw.getU2At(OFFSET_OF_MAX_STACK);
+            maxLocals = raw.getU2At(OFFSET_OF_MAX_LOCALS);
             codeLength = raw.getS4At(OFFSET_OF_CODE_LENGTH);
         }
         this.maxStack = maxStack;
@@ -67,7 +67,7 @@ public class AttributeCode extends Attribute {
         final long OFFSET_OF_EXCEPTION_TABLE = OFFSET_OF_EXCEPTION_TABLE_LENGTH + 2;
 
         ArrayList<ExceptionTableEntry> etis = new ArrayList<ExceptionTableEntry>();
-        final short numExceptions = raw.getS2At(OFFSET_OF_EXCEPTION_TABLE_LENGTH);
+        final int numExceptions = raw.getU2At(OFFSET_OF_EXCEPTION_TABLE_LENGTH);
         etis.ensureCapacity(numExceptions);
         final long numBytesExceptionInfo =
                 ContiguousEntityFactory.buildSized(raw.getOffsetData(OFFSET_OF_EXCEPTION_TABLE), numExceptions, 8, etis,
@@ -76,7 +76,7 @@ public class AttributeCode extends Attribute {
 
         final long OFFSET_OF_ATTRIBUTES_COUNT = OFFSET_OF_EXCEPTION_TABLE + numBytesExceptionInfo;
         final long OFFSET_OF_ATTRIBUTES = OFFSET_OF_ATTRIBUTES_COUNT + 2;
-        final short numAttributes = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
+        final int numAttributes = raw.getU2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
         ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
@@ -127,11 +127,11 @@ public class AttributeCode extends Attribute {
         return exceptionTableEntries;
     }
 
-    public short getMaxStack() {
+    public int getMaxStack() {
         return maxStack;
     }
 
-    public short getMaxLocals() {
+    public int getMaxLocals() {
         return maxLocals;
     }
 

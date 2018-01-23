@@ -47,7 +47,7 @@ public class AttributeSignature extends Attribute {
     public AttributeSignature(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
         this.cp = cp;
-        this.signature = cp.getUTF8Entry(raw.getS2At(OFFSET_OF_REMAINDER));
+        this.signature = cp.getUTF8Entry(raw.getU2At(OFFSET_OF_REMAINDER));
     }
 
     @Override

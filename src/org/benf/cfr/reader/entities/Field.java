@@ -38,7 +38,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
 
     private final ConstantPool cp;
     private final long length;
-    private final short descriptorIndex;
+    private final int descriptorIndex;
     private final Set<AccessFlag> accessFlags;
     private final Map<String, Attribute> attributes;
     private final TypedLiteral constantValue;
@@ -48,8 +48,8 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
 
     public Field(ByteData raw, final ConstantPool cp, final ClassFileVersion classFileVersion) {
         this.cp = cp;
-        this.accessFlags = AccessFlag.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
-        short attributes_count = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
+        this.accessFlags = AccessFlag.build(raw.getU2At(OFFSET_OF_ACCESS_FLAGS));
+        int attributes_count = raw.getU2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(attributes_count);
         long attributesLength = ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), attributes_count, tmpAttributes,
@@ -57,8 +57,8 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
 
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         AccessFlag.applyAttributes(attributes, accessFlags);
-        this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
-        short nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
+        this.descriptorIndex = raw.getU2At(OFFSET_OF_DESCRIPTOR_INDEX);
+        int nameIndex = raw.getU2At(OFFSET_OF_NAME_INDEX);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
         Attribute cvAttribute = attributes.get(AttributeConstantValue.ATTRIBUTE_NAME);
         this.fieldName = cp.getUTF8Entry(nameIndex).getValue();

@@ -1,13 +1,13 @@
 package org.benf.cfr.reader.entities.attributes;
 
 public class LocalVariableEntry {
-    private final short startPc;
-    private final short length;
-    private final short nameIndex;
-    private final short descriptorIndex;
-    private final short index;
+    private final int startPc;
+    private final int length;
+    private final int nameIndex;
+    private final int descriptorIndex;
+    private final int index;
 
-    public LocalVariableEntry(short startPc, short length, short nameIndex, short descriptorIndex, short index) {
+    public LocalVariableEntry(int startPc, int length, int nameIndex, int descriptorIndex, int index) {
         this.startPc = startPc;
         this.length = length;
         this.nameIndex = nameIndex;
@@ -15,23 +15,23 @@ public class LocalVariableEntry {
         this.index = index;
     }
 
-    public short getStartPc() {
+    public int getStartPc() {
         return startPc;
     }
 
-    public short getLength() {
+    public int getLength() {
         return length;
     }
 
-    public short getNameIndex() {
+    public int getNameIndex() {
         return nameIndex;
     }
 
-    public short getDescriptorIndex() {
+    public int getDescriptorIndex() {
         return descriptorIndex;
     }
 
-    public short getIndex() {
+    public int getIndex() {
         return index;
     }
 

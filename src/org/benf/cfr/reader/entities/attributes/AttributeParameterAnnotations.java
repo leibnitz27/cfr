@@ -29,7 +29,7 @@ public abstract class AttributeParameterAnnotations extends Attribute implements
         for (int x = 0; x < numParameters; ++x) {
             List<AnnotationTableEntry> annotationTableEntryList = ListFactory.newList();
 
-            short numAnnotations = raw.getS2At(offset);
+            int numAnnotations = raw.getU2At(offset);
             offset += 2;
             for (int y = 0; y < numAnnotations; ++y) {
                 Pair<Long, AnnotationTableEntry> ape = AnnotationHelpers.getAnnotation(raw, offset, cp);

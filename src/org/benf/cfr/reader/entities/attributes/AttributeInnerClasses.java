@@ -51,16 +51,16 @@ public class AttributeInnerClasses extends Attribute {
 
     public AttributeInnerClasses(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        int numberInnerClasses = raw.getS2At(OFFSET_OF_NUMBER_OF_CLASSES);
+        int numberInnerClasses = raw.getU2At(OFFSET_OF_NUMBER_OF_CLASSES);
         long offset = OFFSET_OF_CLASS_ARRAY;
         for (int x = 0; x < numberInnerClasses; ++x) {
-            short innerClassInfoIdx = raw.getS2At(offset);
+            int innerClassInfoIdx = raw.getU2At(offset);
             offset += 2;
-            short outerClassInfoIdx = raw.getS2At(offset);
+            int outerClassInfoIdx = raw.getU2At(offset);
             offset += 2;
-            short innerNameIdx = raw.getS2At(offset);
+            int innerNameIdx = raw.getU2At(offset);
             offset += 2;
-            int innerAccessFlags = raw.getS2At(offset);
+            int innerAccessFlags = raw.getU2At(offset);
             offset += 2;
             Pair<JavaTypeInstance, JavaTypeInstance> innerOuter = getInnerOuter(innerClassInfoIdx, outerClassInfoIdx, cp);
             JavaTypeInstance innerClassType = innerOuter.getFirst();

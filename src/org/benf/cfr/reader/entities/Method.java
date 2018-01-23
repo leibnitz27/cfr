@@ -67,7 +67,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final EnumSet<AccessFlagMethod> accessFlags;
     private final Map<String, Attribute> attributes;
     private MethodConstructor isConstructor;
-    private final short descriptorIndex;
+    private final int descriptorIndex;
     private final AttributeCode codeAttribute;
     private final ConstantPool cp;
     private final VariableNamer variableNamer;
@@ -84,13 +84,13 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
         this.cp = cp;
         this.classFile = classFile;
-        this.accessFlags = AccessFlagMethod.build(raw.getS2At(OFFSET_OF_ACCESS_FLAGS));
-        this.descriptorIndex = raw.getS2At(OFFSET_OF_DESCRIPTOR_INDEX);
+        this.accessFlags = AccessFlagMethod.build(raw.getU2At(OFFSET_OF_ACCESS_FLAGS));
+        this.descriptorIndex = raw.getU2At(OFFSET_OF_DESCRIPTOR_INDEX);
         this.hidden = Visibility.Visible;
-        short nameIndex = raw.getS2At(OFFSET_OF_NAME_INDEX);
+        int nameIndex = raw.getU2At(OFFSET_OF_NAME_INDEX);
         String initialName = cp.getUTF8Entry(nameIndex).getValue();
 
-        short numAttributes = raw.getS2At(OFFSET_OF_ATTRIBUTES_COUNT);
+        int numAttributes = raw.getU2At(OFFSET_OF_ATTRIBUTES_COUNT);
         ArrayList<Attribute> tmpAttributes = new ArrayList<Attribute>();
         tmpAttributes.ensureCapacity(numAttributes);
         long attributesLength = ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
@@ -175,7 +175,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return isConstructor;
     }
 
-    public AttributeSignature getSignatureAttribute() {
+    AttributeSignature getSignatureAttribute() {
         return this.<AttributeSignature>getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
     }
 
@@ -309,7 +309,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return thrownTypes;
     }
 
-    public void dumpSignatureText(boolean asClass, Dumper d) {
+    private void dumpSignatureText(boolean asClass, Dumper d) {
 
         dumpMethodAnnotations(d);
 
@@ -363,7 +363,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return isConstructor.isConstructor();
     }
 
-    public void analyse() {
+    void analyse() {
         try {
             if (codeAttribute != null) {
                 codeAttribute.analyse();
@@ -396,7 +396,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return codeAttribute;
     }
 
-    public void dumpComments(Dumper d) {
+    private void dumpComments(Dumper d) {
         if (comments != null) {
             comments.dump(d);
 

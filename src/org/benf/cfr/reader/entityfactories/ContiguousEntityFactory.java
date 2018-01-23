@@ -11,10 +11,10 @@ import java.util.Map;
 
 public class ContiguousEntityFactory {
 
-    public static<X extends KnowsRawSize> long build(final ByteData raw, short count, List<X> tgt, UnaryFunction<ByteData, X> func)
+    public static<X extends KnowsRawSize> long build(final ByteData raw, int count, List<X> tgt, UnaryFunction<ByteData, X> func)
     {
         OffsettingByteData data = raw.getOffsettingOffsetData(0);
-        for (short x=0;x<count;++x)
+        for (int x=0;x<count;++x)
         {
             X tmp = func.invoke(data);
             tgt.add(tmp);
@@ -23,7 +23,7 @@ public class ContiguousEntityFactory {
         return data.getOffset();
     }
 
-    public static<X> long buildSized(final ByteData raw, short count, int itemLength, List<X> tgt, UnaryFunction<ByteData, X> func)
+    public static<X> long buildSized(final ByteData raw, int count, int itemLength, List<X> tgt, UnaryFunction<ByteData, X> func)
     {
         OffsettingByteData data = raw.getOffsettingOffsetData(0);
         for (short x=0;x<count;++x)

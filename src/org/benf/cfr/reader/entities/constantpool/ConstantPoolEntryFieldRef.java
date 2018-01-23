@@ -10,14 +10,14 @@ public class ConstantPoolEntryFieldRef extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_CLASS_INDEX = 1;
     private static final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
 
-    final short classIndex;
-    final short nameAndTypeIndex;
+    final int classIndex;
+    final int nameAndTypeIndex;
     JavaTypeInstance cachedDecodedType;
 
     public ConstantPoolEntryFieldRef(ConstantPool cp, ByteData data) {
         super(cp);
-        this.classIndex = data.getS2At(OFFSET_OF_CLASS_INDEX);
-        this.nameAndTypeIndex = data.getS2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
+        this.classIndex = data.getU2At(OFFSET_OF_CLASS_INDEX);
+        this.nameAndTypeIndex = data.getU2At(OFFSET_OF_NAME_AND_TYPE_INDEX);
     }
 
     @Override

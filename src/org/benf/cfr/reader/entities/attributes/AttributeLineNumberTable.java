@@ -21,13 +21,13 @@ public class AttributeLineNumberTable extends Attribute {
 
     public AttributeLineNumberTable(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        short numLineNumbers = raw.getS2At(OFFSET_OF_ENTRY_COUNT);
+        int numLineNumbers = raw.getU2At(OFFSET_OF_ENTRY_COUNT);
         if (numLineNumbers * 2 <= length) {
             long offset = OFFSET_OF_ENTRIES;
             for (int x = 0; x < numLineNumbers; ++x, offset += 4) {
-                short startPc = raw.getS2At(offset + 0);
-                short lineNumber = raw.getS2At(offset + 2);
-                entries.put((int) startPc, (int) lineNumber);
+                int startPc = raw.getU2At(offset + 0);
+                int lineNumber = raw.getU2At(offset + 2);
+                entries.put( startPc, lineNumber);
             }
         }
     }

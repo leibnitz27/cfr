@@ -10,12 +10,12 @@ public class ConstantPoolEntryMethodHandle extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_REFERENCE_INDEX = 2;
 
     private final MethodHandleBehaviour referenceKind;
-    private final short referenceIndex;
+    private final int referenceIndex;
 
     public ConstantPoolEntryMethodHandle(ConstantPool cp, ByteData data) {
         super(cp);
         this.referenceKind = MethodHandleBehaviour.decode(data.getS1At(OFFSET_OF_REFERENCE_KIND));
-        this.referenceIndex = data.getS2At(OFFSET_OF_REFERENCE_INDEX);
+        this.referenceIndex = data.getU2At(OFFSET_OF_REFERENCE_INDEX);
     }
 
     @Override

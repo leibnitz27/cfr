@@ -17,14 +17,14 @@ import java.util.Map;
 
 public class ExceptionGroup {
 
-    private short bytecodeIndexFrom;        // [ a
-    private short byteCodeIndexTo;          // ) b    st a <= x < b
-    private short minHandlerStart = Short.MAX_VALUE;
+    private int bytecodeIndexFrom;        // [ a
+    private int byteCodeIndexTo;          // ) b    st a <= x < b
+    private int minHandlerStart = Short.MAX_VALUE;
     private List<Entry> entries = ListFactory.newList();
     private final BlockIdentifier tryBlockIdentifier;
     private final ConstantPool cp;
 
-    public ExceptionGroup(short bytecodeIndexFrom, BlockIdentifier blockIdentifier, ConstantPool cp) {
+    public ExceptionGroup(int bytecodeIndexFrom, BlockIdentifier blockIdentifier, ConstantPool cp) {
         this.bytecodeIndexFrom = bytecodeIndexFrom;
         this.tryBlockIdentifier = blockIdentifier;
         this.cp = cp;
@@ -46,11 +46,11 @@ public class ExceptionGroup {
         this.bytecodeIndexFrom = bytecodeIndexFrom;
     }
 
-    public short getBytecodeIndexFrom() {
+    public int getBytecodeIndexFrom() {
         return bytecodeIndexFrom;
     }
 
-    public short getByteCodeIndexTo() {
+    public int getByteCodeIndexTo() {
         return byteCodeIndexTo;
     }
 
@@ -138,11 +138,11 @@ public class ExceptionGroup {
             this.refType = entry.getCatchType(cp);
         }
 
-        public short getBytecodeIndexTo() {
+        public int getBytecodeIndexTo() {
             return entry.getBytecodeIndexTo();
         }
 
-        public short getBytecodeIndexHandler() {
+        public int getBytecodeIndexHandler() {
             return entry.getBytecodeIndexHandler();
         }
 
@@ -193,9 +193,9 @@ public class ExceptionGroup {
 
     public class ExtenderKey {
         private final JavaRefTypeInstance type;
-        private final short handler;
+        private final int handler;
 
-        public ExtenderKey(JavaRefTypeInstance type, short handler) {
+        public ExtenderKey(JavaRefTypeInstance type, int handler) {
             this.type = type;
             this.handler = handler;
         }
@@ -204,7 +204,7 @@ public class ExceptionGroup {
             return type;
         }
 
-        public short getHandler() {
+        public int getHandler() {
             return handler;
         }
 

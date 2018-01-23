@@ -36,18 +36,18 @@ public class AttributeBootstrapMethods extends Attribute {
     private static List<BootstrapMethodInfo> decodeMethods(ByteData raw, ConstantPool cp) {
 
         List<BootstrapMethodInfo> res = ListFactory.newList();
-        int numMethods = raw.getS2At(OFFSET_OF_NUM_METHODS);
+        int numMethods = raw.getU2At(OFFSET_OF_NUM_METHODS);
         long offset = OFFSET_OF_NUM_METHODS + 2;
         for (int x = 0; x < numMethods; ++x) {
-            short methodRef = raw.getS2At(offset);
+            int methodRef = raw.getU2At(offset);
             ConstantPoolEntryMethodHandle methodHandle = cp.getMethodHandleEntry(methodRef);
 
             offset += 2;
-            short numBootstrapArguments = raw.getS2At(offset);
+            int numBootstrapArguments = raw.getU2At(offset);
             offset += 2;
             ConstantPoolEntry[] bootstrapArguments = new ConstantPoolEntry[numBootstrapArguments];
             for (int y = 0; y < numBootstrapArguments; ++y) {
-                bootstrapArguments[y] = cp.getEntry(raw.getS2At(offset));
+                bootstrapArguments[y] = cp.getEntry(raw.getU2At(offset));
                 offset += 2;
             }
             res.add(new BootstrapMethodInfo(methodHandle, bootstrapArguments, cp));

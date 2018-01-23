@@ -22,9 +22,9 @@ import java.util.Map;
 public class AnnotationHelpers {
 
     public static Pair<Long, AnnotationTableEntry> getAnnotation(ByteData raw, long offset, ConstantPool cp) {
-        ConstantPoolEntryUTF8 typeName = cp.getUTF8Entry(raw.getS2At(offset));
+        ConstantPoolEntryUTF8 typeName = cp.getUTF8Entry(raw.getU2At(offset));
         offset += 2;
-        int numElementPairs = raw.getS2At(offset);
+        int numElementPairs = raw.getU2At(offset);
         offset += 2;
         Map<String, ElementValue> elementValueMap = MapFactory.newLinkedMap();
         for (int x = 0; x < numElementPairs; ++x) {
@@ -34,7 +34,7 @@ public class AnnotationHelpers {
     }
 
     private static long getElementValuePair(ByteData raw, long offset, ConstantPool cp, Map<String, ElementValue> res) {
-        ConstantPoolEntryUTF8 elementName = cp.getUTF8Entry(raw.getS2At(offset));
+        ConstantPoolEntryUTF8 elementName = cp.getUTF8Entry(raw.getU2At(offset));
         offset += 2;
         Pair<Long, ElementValue> elementValueP = getElementValue(raw, offset, cp);
         offset = elementValueP.getFirst();
@@ -56,24 +56,24 @@ public class AnnotationHelpers {
             case 'S':
             case 'Z': {
                 RawJavaType rawJavaType = ConstantPoolUtils.decodeRawJavaType(c);
-                ConstantPoolEntry constantPoolEntry = cp.getEntry(raw.getS2At(offset));
+                ConstantPoolEntry constantPoolEntry = cp.getEntry(raw.getU2At(offset));
                 TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntry(cp, constantPoolEntry);
                 ElementValue value = new ElementValueConst(typedLiteral);
                 value = value.withTypeHint(rawJavaType);
                 return new Pair<Long, ElementValue>(offset + 2, value);
             }
             case 's': {
-                ConstantPoolEntry constantPoolEntry = cp.getEntry(raw.getS2At(offset));
+                ConstantPoolEntry constantPoolEntry = cp.getEntry(raw.getU2At(offset));
                 TypedLiteral typedLiteral = TypedLiteral.getConstantPoolEntryUTF8((ConstantPoolEntryUTF8) constantPoolEntry);
                 return new Pair<Long, ElementValue>(offset + 2, new ElementValueConst(typedLiteral));
             }
             case 'e': {
-                ConstantPoolEntryUTF8 enumClassName = cp.getUTF8Entry(raw.getS2At(offset));
-                ConstantPoolEntryUTF8 enumEntryName = cp.getUTF8Entry(raw.getS2At(offset + 2));
+                ConstantPoolEntryUTF8 enumClassName = cp.getUTF8Entry(raw.getU2At(offset));
+                ConstantPoolEntryUTF8 enumEntryName = cp.getUTF8Entry(raw.getU2At(offset + 2));
                 return new Pair<Long, ElementValue>(offset + 4, new ElementValueEnum(ConstantPoolUtils.decodeTypeTok(enumClassName.getValue(), cp), enumEntryName.getValue()));
             }
             case 'c': {
-                ConstantPoolEntryUTF8 className = cp.getUTF8Entry(raw.getS2At(offset));
+                ConstantPoolEntryUTF8 className = cp.getUTF8Entry(raw.getU2At(offset));
                 String typeName = className.getValue();
                 if (typeName.equals("V")) {
                     return new Pair<Long, ElementValue>(offset + 2, new ElementValueClass(RawJavaType.VOID));
@@ -86,7 +86,7 @@ public class AnnotationHelpers {
                 return new Pair<Long, ElementValue>(ape.getFirst(), new ElementValueAnnotation(ape.getSecond()));
             }
             case '[': {
-                int numArrayEntries = raw.getS2At(offset);
+                int numArrayEntries = raw.getU2At(offset);
                 offset += 2;
                 List<ElementValue> res = ListFactory.newList();
                 for (int x = 0; x < numArrayEntries; ++x) {
@@ -205,7 +205,7 @@ public class AnnotationHelpers {
         JavaTypeInstance type = ConstantPoolUtils.decodeTypeTok(type_entry.getValue(), cp);
 
 
-        int numElementPairs = raw.getS2At(offset);
+        int numElementPairs = raw.getU2At(offset);
         offset += 2;
         Map<String, ElementValue> elementValueMap = MapFactory.newLinkedMap();
         for (int x = 0; x < numElementPairs; ++x) {

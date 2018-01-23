@@ -20,14 +20,14 @@ public class AttributeLocalVariableTable extends Attribute {
 
     public AttributeLocalVariableTable(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        short numLocalVariables = raw.getS2At(OFFSET_OF_ENTRY_COUNT);
+        int numLocalVariables = raw.getU2At(OFFSET_OF_ENTRY_COUNT);
         long offset = OFFSET_OF_ENTRIES;
         for (int x = 0; x < numLocalVariables; ++x) {
-            short startPc = raw.getS2At(offset + 0);
-            short length = raw.getS2At(offset + 2);
-            short nameIndex = raw.getS2At(offset + 4);
-            short descriptorIndex = raw.getS2At(offset + 6);
-            short index = raw.getS2At(offset + 8);
+            int startPc = raw.getU2At(offset + 0);
+            int length = raw.getU2At(offset + 2);
+            int nameIndex = raw.getU2At(offset + 4);
+            int descriptorIndex = raw.getU2At(offset + 6);
+            int index = raw.getU2At(offset + 8);
             localVariableEntryList.add(new LocalVariableEntry(startPc, length, nameIndex, descriptorIndex, index));
             offset += 10;
         }
