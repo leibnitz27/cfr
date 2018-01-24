@@ -2219,7 +2219,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
             List<Pair<Op02WithProcessedDataAndRefs, ExceptionGroup.Entry>> handlerTargets = ListFactory.newList();
             for (ExceptionGroup.Entry exceptionEntry : rawes) {
-                short handler = exceptionEntry.getBytecodeIndexHandler();
+                int handler = exceptionEntry.getBytecodeIndexHandler();
                 int handlerIndex = lutByOffset.get((int) handler);
                 if (handlerIndex <= originalIndex) {
                     // Handle a particularly odd case with Android exceptions.
