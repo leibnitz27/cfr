@@ -46,6 +46,13 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         this.failureName = varName;
     }
 
+    protected AbstractFieldVariable(InferredJavaType type, JavaTypeInstance clazz, ClassFileField classFileField) {
+        super(type);
+        this.classFileField = classFileField;
+        this.owningClass = clazz;
+        this.failureName = null;
+    }
+
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         super.collectTypeUsages(collector);

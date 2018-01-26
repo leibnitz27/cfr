@@ -9,6 +9,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -27,6 +29,11 @@ public class StaticVariable extends AbstractFieldVariable {
     public StaticVariable(InferredJavaType type, JavaTypeInstance clazz, String varName) {
         super(type, clazz, varName);
         this.knownSimple = false;
+    }
+
+    public StaticVariable(ClassFile classFile, ClassFileField classFileField, boolean local) {
+        super(new InferredJavaType(classFileField.getField().getJavaTypeInstance(), InferredJavaType.Source.FIELD, true), classFile.getClassType(), classFileField);
+        this.knownSimple = local;
     }
 
     private StaticVariable(StaticVariable other, boolean knownSimple) {

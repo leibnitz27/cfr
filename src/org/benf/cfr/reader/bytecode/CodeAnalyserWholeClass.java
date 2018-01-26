@@ -5,13 +5,14 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.DeadMethodRemover;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.ConstructorUtils;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.ClassCache;
@@ -23,8 +24,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Analysis which needs to be performed on the whole classfile in one go, once we've
@@ -77,7 +77,6 @@ public class CodeAnalyserWholeClass {
             // Synthetic constructor friends can exist on OUTER classes, when an inner makes a call out.
             removeInnerClassSyntheticConstructorFriends(classFile);
         }
-
     }
 
     private static void replaceNestedSyntheticOuterRefs(ClassFile classFile) {
@@ -316,6 +315,58 @@ public class CodeAnalyserWholeClass {
         }
     }
 
+    private static void relinkConstantStrings(ClassFile classFile, DCCommonState state) {
+        Map<String, Expression> rewrites = new HashMap<String, Expression>();
+        Set<String> dupes = new HashSet<String>();
+        ClassFile currClass = classFile;
+
+        boolean local = true;
+        while (currClass != null) {
+            for (ClassFileField f : currClass.getFields()) {
+                Field field = f.getField();
+                boolean use = field.testAccessFlag(AccessFlag.ACC_STATIC)
+                        && field.testAccessFlag(AccessFlag.ACC_FINAL)
+                        // While it's possible to relink other types, I think the chances of an external
+                        // reference are higher.  Constants abound, and I don't want Months[CUSTOMER_ID].
+                        && field.getJavaTypeInstance() == TypeConstants.STRING;
+                if (!use) continue;
+                Object o = field.getConstantValue().getValue();
+                if (o == null) continue;
+                if (!(o instanceof String)) return; // something pretty wrong here.
+                String val = (String) o;
+                // duplicate value for val? Leave null & poison it.
+                if (rewrites.containsKey(val)) {
+                    dupes.add(val);
+                } else {
+                    rewrites.put(val, new LValueExpression(new StaticVariable(currClass, f, local)));
+                }
+            }
+            if (currClass.isInnerClass()) {
+                JavaTypeInstance parent = currClass.getClassType().getInnerClassHereInfo().getOuterClass();
+                try {
+                    currClass = state.getClassFile(parent);
+                } catch (Exception ignore) {
+                    currClass = null;
+                }
+                local = false;
+            } else {
+                break;
+            }
+        }
+        for (String val : dupes) {
+            rewrites.remove(val);
+        }
+        if (rewrites.isEmpty()) return;
+        Op04Rewriter rewriter = new InlinedConstantRewriter(rewrites);
+
+        for (Method m : classFile.getMethods()) {
+            if (!m.hasCodeAttribute()) return;
+            Op04StructuredStatement code = m.getAnalysis();
+            if (!code.isFullyStructured()) continue;
+            rewriter.rewrite(code);
+        }
+    }
+
     private static void tryRemoveConstructor(ClassFile classFile) {
         List<Method> constructors = classFile.getConstructors();
         if (constructors.size() != 1) return;
@@ -354,7 +405,6 @@ public class CodeAnalyserWholeClass {
             Op04StructuredStatement.removePrimitiveDeconversion(state, m, code);
         }
     }
-
 
     private static void resugarAsserts(ClassFile classFile, Options state) {
         Method staticInit = getStaticConstructor(classFile);
@@ -402,6 +452,12 @@ public class CodeAnalyserWholeClass {
         if (options.getOption(OptionsImpl.REMOVE_DEAD_METHODS)) {
             removeDeadMethods(classFile);
         }
+
+
+        if (options.getOption(OptionsImpl.RELINK_CONSTANT_STRINGS)) {
+            relinkConstantStrings(classFile, state);
+        }
+
 
     }
 }

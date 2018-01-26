@@ -229,6 +229,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> HIDE_BRIDGE_METHODS = new PermittedOptionProvider.Argument<Boolean>(
             "hidebridgemethods", defaultTrueBooleanDecoder,
             "Hide bridge methods");
+    public static final PermittedOptionProvider.Argument<Boolean> RELINK_CONSTANT_STRINGS = new PermittedOptionProvider.Argument<Boolean>(
+            "relinkconststring", defaultTrueBooleanDecoder,
+            "Relink constant strings - if there is a local reference to a string which matches a static final, use the static final.");
     public static final PermittedOptionProvider.Argument<Boolean> LIFT_CONSTRUCTOR_INIT = new PermittedOptionProvider.Argument<Boolean>(
             "liftconstructorinit", defaultTrueBooleanDecoder,
             "Lift initialisation code common to all constructors into member initialisation");
@@ -434,7 +437,8 @@ public class OptionsImpl implements Options {
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
                     RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS, USE_NAME_TABLE,
-                    AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA, CASE_INSENSITIVE_FS_RENAME);
+                    AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA,
+                    CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS);
         }
 
         @Override
