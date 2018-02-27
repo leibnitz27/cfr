@@ -18,6 +18,7 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
+import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.*;
@@ -260,7 +261,9 @@ public class CodeAnalyser {
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
 
         // These are 'processed' exceptions, which we can use to lay out code.
-        ExceptionAggregator exceptions = new ExceptionAggregator(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, options, cp, method);
+        List<ExceptionTableEntry> exceptionTableEntries = originalCodeAttribute.getExceptionTableEntries();
+        if (options.getOption(OptionsImpl.IGNORE_EXCEPTIONS)) exceptionTableEntries = ListFactory.newList();
+        ExceptionAggregator exceptions = new ExceptionAggregator(exceptionTableEntries, blockIdentifierFactory, lutByOffset, lutByIdx, instrs, options, cp, method);
         if (exceptions.RemovedLoopingExceptions()) {
             comments.addComment(DecompilerComment.LOOPING_EXCEPTIONS);
         }

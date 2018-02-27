@@ -284,6 +284,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_RETURNING_IFS = new PermittedOptionProvider.Argument<Troolean>(
             "forcereturningifs", defaultNeitherTrooleanDecoder,
             "Move return up to jump site");
+    public static final PermittedOptionProvider.Argument<Boolean> IGNORE_EXCEPTIONS = new PermittedOptionProvider.Argument<Boolean>(
+            "ignoreexceptions", defaultFalseBooleanDecoder,
+            "Completely ignore exceptions (changes semantics, dangerous!)");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean>(
             "forceexceptionprune", defaultNeitherTrooleanDecoder,
             "Try to extend and merge exceptions more aggressively");
@@ -438,7 +441,7 @@ public class OptionsImpl implements Options {
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
                     RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS, USE_NAME_TABLE,
                     AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA,
-                    CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS);
+                    CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS, IGNORE_EXCEPTIONS);
         }
 
         @Override
