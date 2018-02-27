@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.Construct
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -330,7 +331,8 @@ public class CodeAnalyserWholeClass {
                         // reference are higher.  Constants abound, and I don't want Months[CUSTOMER_ID].
                         && field.getJavaTypeInstance() == TypeConstants.STRING;
                 if (!use) continue;
-                Object o = field.getConstantValue().getValue();
+                TypedLiteral lit = field.getConstantValue();
+                Object o = lit == null ? null : lit.getValue();
                 if (o == null) continue;
                 if (!(o instanceof String)) return; // something pretty wrong here.
                 String val = (String) o;
