@@ -13,6 +13,7 @@ public class    DecompilerComment implements Dumpable {
     public static DecompilerComment RETURNING_IFS = new DecompilerComment("Lifted jumps to return sites");
     public static DecompilerComment PRUNE_EXCEPTIONS = new DecompilerComment("Enabled unnecessary exception pruning");
     public static DecompilerComment COMMENT_MONITORS = new DecompilerComment("Converted monitor instructions to comments");
+    public static DecompilerComment DROP_EXCEPTIONS = new DecompilerComment("WARNING - dropped exception handling.  Behaviour almost certainly changed.");
     public static DecompilerComment PARAMETER_CORRUPTION = new DecompilerComment("WARNING - Possible parameter corruption");
     public static DecompilerComment TRY_BACKEDGE_REMOVED = new DecompilerComment("WARNING - Removed back jump from a try to a catch block - possible behaviour change.");
     public static DecompilerComment LOOPING_EXCEPTIONS = new DecompilerComment("WARNING - Removed try catching itself - possible behaviour change.");

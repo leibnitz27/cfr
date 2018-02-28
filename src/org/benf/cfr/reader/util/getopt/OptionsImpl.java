@@ -284,9 +284,12 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_RETURNING_IFS = new PermittedOptionProvider.Argument<Troolean>(
             "forcereturningifs", defaultNeitherTrooleanDecoder,
             "Move return up to jump site");
+    public static final PermittedOptionProvider.Argument<Boolean> IGNORE_EXCEPTIONS_ALWAYS = new PermittedOptionProvider.Argument<Boolean>(
+            "ignoreexceptionsalways", defaultFalseBooleanDecoder,
+            "Drop exception information (WARNING : changes semantics, dangerous!)");
     public static final PermittedOptionProvider.Argument<Boolean> IGNORE_EXCEPTIONS = new PermittedOptionProvider.Argument<Boolean>(
             "ignoreexceptions", defaultFalseBooleanDecoder,
-            "Completely ignore exceptions (changes semantics, dangerous!)");
+            "Drop exception information if completely stuck (WARNING : changes semantics, dangerous!)");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean>(
             "forceexceptionprune", defaultNeitherTrooleanDecoder,
             "Try to extend and merge exceptions more aggressively");

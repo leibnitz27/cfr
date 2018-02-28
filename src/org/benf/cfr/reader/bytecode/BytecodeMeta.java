@@ -8,6 +8,8 @@ import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.PermittedOptionProvider;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -27,8 +29,10 @@ public class BytecodeMeta {
 
     private final Set<Integer> livenessClashes = SetFactory.newSet();
     private final Map<Integer, JavaTypeInstance> iteratedTypeHints = MapFactory.newMap();
+    private final Options options;
 
-    public BytecodeMeta(List<Op01WithProcessedDataAndByteJumps> op1s, AttributeCode code) {
+    public BytecodeMeta(List<Op01WithProcessedDataAndByteJumps> op1s, AttributeCode code, Options options) {
+        this.options = options;
         int flagCount = CodeInfoFlag.values().length;
         if (!code.getExceptionTableEntries().isEmpty()) flags.add(CodeInfoFlag.USES_EXCEPTIONS);
         for (Op01WithProcessedDataAndByteJumps op : op1s) {
@@ -99,4 +103,12 @@ public class BytecodeMeta {
         return new FlagTest(flag);
     }
 
+    public static UnaryFunction<BytecodeMeta, Boolean> checkParam(final PermittedOptionProvider.Argument<Boolean> param) {
+        return new UnaryFunction<BytecodeMeta, Boolean>() {
+            @Override
+            public Boolean invoke(BytecodeMeta arg) {
+                return arg.options.getOption(param);
+            }
+        };
+    }
 }

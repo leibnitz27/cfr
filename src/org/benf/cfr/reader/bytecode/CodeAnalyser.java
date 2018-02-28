@@ -100,7 +100,11 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recover1, recover2, recoverExAgg, recover3 };
+    private static final RecoveryOptions recoverLast = new RecoveryOptions(recover3,
+            new RecoveryOption.BooleanRO(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS, true, BytecodeMeta.checkParam(OptionsImpl.IGNORE_EXCEPTIONS), DecompilerComment.DROP_EXCEPTIONS)
+    );
+
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recover1, recover2, recoverExAgg, recover3, recoverLast};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
@@ -116,7 +120,7 @@ public class CodeAnalyser {
         /*
          * Very quick scan to check for presence of certain instructions.
          */
-        BytecodeMeta bytecodeMeta = new BytecodeMeta(instrs, originalCodeAttribute);
+        BytecodeMeta bytecodeMeta = new BytecodeMeta(instrs, originalCodeAttribute, options);
 
         if (options.optionIsSet(OptionsImpl.FORCE_PASS)) {
             int pass = options.getOption(OptionsImpl.FORCE_PASS);
@@ -262,7 +266,7 @@ public class CodeAnalyser {
 
         // These are 'processed' exceptions, which we can use to lay out code.
         List<ExceptionTableEntry> exceptionTableEntries = originalCodeAttribute.getExceptionTableEntries();
-        if (options.getOption(OptionsImpl.IGNORE_EXCEPTIONS)) exceptionTableEntries = ListFactory.newList();
+        if (options.getOption(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS)) exceptionTableEntries = ListFactory.newList();
         ExceptionAggregator exceptions = new ExceptionAggregator(exceptionTableEntries, blockIdentifierFactory, lutByOffset, lutByIdx, instrs, options, cp, method);
         if (exceptions.RemovedLoopingExceptions()) {
             comments.addComment(DecompilerComment.LOOPING_EXCEPTIONS);
