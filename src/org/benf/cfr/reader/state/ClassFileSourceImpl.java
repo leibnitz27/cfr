@@ -29,6 +29,10 @@ public class ClassFileSourceImpl implements ClassFileSource {
     private String pathPrefix = "";
     private String classRemovePrefix = "";
 
+    // As it's inside a zip, separator is mandated to be /
+    private static final String jmodClassesPrefix = "classes/";
+    private static final int classesPrefixLen = jmodClassesPrefix.length();
+
 
     public ClassFileSourceImpl(Options options) {
         this.options = options;
@@ -86,6 +90,10 @@ public class ClassFileSourceImpl implements ClassFileSource {
             if (actualName != null) {
                 path = actualName;
             }
+        }
+        if (isJmod(jarName)) {
+            // zip spec mandates/
+            path = jmodClassesPrefix + path;
         }
 
         ZipFile zipFile = null;
@@ -200,6 +208,12 @@ public class ClassFileSourceImpl implements ClassFileSource {
             if (null != extraClassPath) {
                 classPath = classPath + File.pathSeparatorChar + extraClassPath;
             }
+            /*
+             * If the user has java9, then alas rt.jar isn't on the class path any more, and we won't be able to find
+             * base objects.
+             * Cheat, and expect to find a jmod directory.
+             */
+            classPath = classPath + File.pathSeparator + System.getProperty("java.home") + File.separator + "jmods";
             if (renameCase) {
                 classCollisionRenamerLCToReal = MapFactory.newMap();
                 classCollisionRenamerRealToLC = MapFactory.newMap();
@@ -239,8 +253,21 @@ public class ClassFileSourceImpl implements ClassFileSource {
         return classToPathMap;
     }
 
+    private static boolean isJmod(String fileName) {
+        if (fileName == null) return false;
+        return fileName.endsWith(".jmod");
+    }
+
+    private static String deClass(String name) {
+        if (name.startsWith(jmodClassesPrefix)) {
+            return name.substring(classesPrefixLen);
+        }
+        return name;
+    }
+
     private boolean processClassPathFile(File file, String path, Map<String, String> classToPathMap, boolean dump) {
         try {
+            boolean jmod = isJmod(file.getName());
             ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
             try {
                 Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
@@ -249,6 +276,9 @@ public class ClassFileSourceImpl implements ClassFileSource {
                     if (!entry.isDirectory()) {
                         String name = entry.getName();
                         if (name.endsWith(".class")) {
+                            if (jmod) {
+                                name = deClass(name);
+                            }
                             if (dump) {
                                 System.out.println("  " + name);
                             }
