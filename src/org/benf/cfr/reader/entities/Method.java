@@ -315,7 +315,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
         EnumSet<AccessFlagMethod> localAccessFlags = accessFlags;
         if (!asClass) {
-            if (codeAttribute != null && !accessFlags.contains(AccessFlagMethod.ACC_STATIC)) {
+            if (codeAttribute != null && !accessFlags.contains(AccessFlagMethod.ACC_STATIC)
+                    && !accessFlags.contains(AccessFlagMethod.ACC_PRIVATE)) {
                 d.print("default ");
             }
             // Dumping as interface.
