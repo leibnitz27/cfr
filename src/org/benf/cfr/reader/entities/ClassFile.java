@@ -907,7 +907,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             boundSuperCollector.collect((JavaRefTypeInstance) thisType, BindingSuperContainer.Route.IDENTITY);
         }
 
-        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.EXTENSION, SetFactory.<JavaTypeInstance>newSet());
+        JavaTypeInstance base = classSignature.getSuperClass();
+        if (base == null) return new BindingSuperContainer(this, new HashMap<JavaRefTypeInstance, JavaGenericRefTypeInstance>(), new HashMap<JavaRefTypeInstance, BindingSuperContainer.Route>());
+        getBoundSuperClasses2(base, genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.EXTENSION, SetFactory.<JavaTypeInstance>newSet());
         for (JavaTypeInstance interfaceBase : classSignature.getInterfaces()) {
             getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.INTERFACE, SetFactory.<JavaTypeInstance>newSet());
         }
@@ -951,7 +953,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         /*
          * Now, apply this to each of our superclass/interfaces.
          */
-        getBoundSuperClasses2(classSignature.getSuperClass(), genericTypeBinder, boundSuperCollector, route, SetFactory.newSet(seen));
+        JavaTypeInstance base = classSignature.getSuperClass();
+        if (base == null) return;
+        getBoundSuperClasses2(base, genericTypeBinder, boundSuperCollector, route, SetFactory.newSet(seen));
         for (JavaTypeInstance interfaceBase : classSignature.getInterfaces()) {
             getBoundSuperClasses2(interfaceBase, genericTypeBinder, boundSuperCollector, BindingSuperContainer.Route.INTERFACE, SetFactory.newSet(seen));
         }
@@ -974,12 +978,12 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         if (base instanceof JavaRefTypeInstance) {
             // No bindings to do, can't go any further, mark relationship and move on.
+            // No bindings to do, can't go any further, mark relationship and move on.
             boundSuperCollector.collect((JavaRefTypeInstance) base, route);
             ClassFile classFile = ((JavaRefTypeInstance) base).getClassFile();
             if (classFile != null) classFile.getBoundSuperClasses(base, boundSuperCollector, route, seen);
             return;
         }
-
 
         if (!(base instanceof JavaGenericRefTypeInstance)) {
             throw new IllegalStateException("Base class is not generic");
