@@ -162,7 +162,6 @@ public class Main {
     }
 
     public static void main(String[] args) {
-
         GetOptParser getOptParser = new GetOptParser();
 
         Options options = null;

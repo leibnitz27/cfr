@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -28,11 +30,19 @@ public class ClassFileSourceImpl implements ClassFileSource {
     private boolean unexpectedDirectory = false;
     private String pathPrefix = "";
     private String classRemovePrefix = "";
+    private static final Method ReadAllBytes;
+    private static final Method GetPath;
+    private static final Object ReflectiveFs;
+    private static final boolean ReflectionCapable;
+    private static final boolean JrtPresent = CheckJrt();
 
-    // As it's inside a zip, separator is mandated to be /
-    private static final String jmodClassesPrefix = "classes/";
-    private static final int classesPrefixLen = jmodClassesPrefix.length();
-
+    private static boolean CheckJrt() {
+        try {
+            return Object.class.getResource("Object.class").getProtocol().equals("jrt");
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     public ClassFileSourceImpl(Options options) {
         this.options = options;
@@ -91,10 +101,6 @@ public class ClassFileSourceImpl implements ClassFileSource {
                 path = actualName;
             }
         }
-        if (isJmod(jarName)) {
-            // zip spec mandates/
-            path = jmodClassesPrefix + path;
-        }
 
         ZipFile zipFile = null;
 
@@ -114,23 +120,85 @@ public class ClassFileSourceImpl implements ClassFileSource {
                 usePath = pathPrefix + usePath;
             }
             File file = new File(usePath);
+            byte[] content;
             if (file.exists()) {
                 is = new FileInputStream(file);
                 length = file.length();
+                content = getBytesFromFile(is, length);
             } else if (jarName != null) {
                 zipFile = new ZipFile(new File(jarName), ZipFile.OPEN_READ);
                 ZipEntry zipEntry = zipFile.getEntry(path);
                 length = zipEntry.getSize();
                 is = zipFile.getInputStream(zipEntry);
+                content = getBytesFromFile(is, length);
             } else {
-                throw new IOException("No such file");
+                // Fallback - can we get the bytes using a java9 extractor?
+                content = getInternalContent(inputPath);
             }
 
-            byte[] content = getBytesFromFile(is, length);
             return Pair.make(content, inputPath);
         } finally {
             if (zipFile != null) zipFile.close();
         }
+    }
+
+    static {
+        Method readAllBytes = null;
+        Method getPath = null;
+        Object reflectiveFs = null;
+        boolean canReflect = false;
+        try {
+            Class filesClass = Class.forName("java.nio.file.Files");
+            Class fsystemsClass = Class.forName("java.nio.file.FileSystems");
+            Class fsClass = Class.forName("java.nio.file.FileSystem");
+            Class uriClass = Class.forName("java.net.URI");
+            Class pathClass = Class.forName("java.nio.file.Path");
+            readAllBytes = filesClass.getMethod("readAllBytes", pathClass);
+            Method create = uriClass.getMethod("create", String.class);
+            Method getFileSystem = fsystemsClass.getMethod("getFileSystem", uriClass);
+            getPath = fsClass.getMethod("getPath", String.class, String[].class);
+            Object uri = create.invoke(null, "jrt:/");
+            reflectiveFs = getFileSystem.invoke(null, uri);
+            canReflect = true;
+        } catch (Exception e) {
+        }
+        ReadAllBytes = readAllBytes;
+        ReflectiveFs = reflectiveFs;
+        GetPath = getPath;
+        ReflectionCapable = canReflect;
+    }
+    /*
+     * This is a world of hideous disgustingness :)
+     * I want to keep CFR j6 compatible, but the reflection required to use jrt is only present in 8+.
+     * So, use the reflection by reflection ;)
+     */
+    private byte[] getContentByFromReflectedClass(final String inputPath) {
+        if (!ReflectionCapable) return null;
+
+        try {
+            String classPath = inputPath.replace("/", ".").substring(0, inputPath.length() - 6);
+            Class cls = Class.forName(classPath);
+            String name = cls.getSimpleName() + ".class";
+
+            URL url = cls.getResource(name);
+            String protocol = url.getProtocol();
+            // Strictly speaking, we could use this mechanism for pre-9 classes, but it's.... so wrong!
+            if (!protocol.equals("jrt")) return null;
+            String s = "/modules" + url.getPath();
+            Object path = GetPath.invoke(ReflectiveFs, s, new String[0]);
+            Object bytes = ReadAllBytes.invoke(null, path);
+            return (byte[])bytes;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private byte[] getInternalContent(final String inputPath) throws IOException {
+        if (JrtPresent) {
+            byte[] res = getContentByFromReflectedClass(inputPath);
+            if (res != null) return res;
+        }
+        throw new IOException("No such file " + inputPath);
     }
 
     public Collection<String> addJar(String jarPath) {
@@ -213,7 +281,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
              * base objects.
              * Cheat, and expect to find a jmod directory.
              */
-            classPath = classPath + File.pathSeparator + System.getProperty("java.home") + File.separator + "jmods";
+//            classPath = classPath + File.pathSeparator + System.getProperty("java.home") + File.separator + "jmods";
             if (renameCase) {
                 classCollisionRenamerLCToReal = MapFactory.newMap();
                 classCollisionRenamerRealToLC = MapFactory.newMap();
@@ -253,21 +321,8 @@ public class ClassFileSourceImpl implements ClassFileSource {
         return classToPathMap;
     }
 
-    private static boolean isJmod(String fileName) {
-        if (fileName == null) return false;
-        return fileName.endsWith(".jmod");
-    }
-
-    private static String deClass(String name) {
-        if (name.startsWith(jmodClassesPrefix)) {
-            return name.substring(classesPrefixLen);
-        }
-        return name;
-    }
-
     private boolean processClassPathFile(File file, String path, Map<String, String> classToPathMap, boolean dump) {
         try {
-            boolean jmod = isJmod(file.getName());
             ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
             try {
                 Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
@@ -276,9 +331,6 @@ public class ClassFileSourceImpl implements ClassFileSource {
                     if (!entry.isDirectory()) {
                         String name = entry.getName();
                         if (name.endsWith(".class")) {
-                            if (jmod) {
-                                name = deClass(name);
-                            }
                             if (dump) {
                                 System.out.println("  " + name);
                             }
