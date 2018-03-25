@@ -167,6 +167,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
         GetPath = getPath;
         ReflectionCapable = canReflect;
     }
+
     /*
      * This is a world of hideous disgustingness :)
      * I want to keep CFR j6 compatible, but the reflection required to use jrt is only present in 8+.
@@ -178,7 +179,8 @@ public class ClassFileSourceImpl implements ClassFileSource {
         try {
             String classPath = inputPath.replace("/", ".").substring(0, inputPath.length() - 6);
             Class cls = Class.forName(classPath);
-            String name = cls.getSimpleName() + ".class";
+            int idx = inputPath.lastIndexOf("/");
+            String name = idx < 0 ? inputPath : inputPath.substring(idx+1);
 
             URL url = cls.getResource(name);
             String protocol = url.getProtocol();
@@ -189,6 +191,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
             Object bytes = ReadAllBytes.invoke(null, path);
             return (byte[])bytes;
         } catch (Exception e) {
+            System.out.println("Exception " + e);
             return null;
         }
     }
