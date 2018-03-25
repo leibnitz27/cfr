@@ -26,7 +26,7 @@ public class AnnotationHelpers {
         offset += 2;
         int numElementPairs = raw.getU2At(offset);
         offset += 2;
-        Map<String, ElementValue> elementValueMap = MapFactory.newLinkedMap();
+        Map<String, ElementValue> elementValueMap = MapFactory.newOrderedMap();
         for (int x = 0; x < numElementPairs; ++x) {
             offset = getElementValuePair(raw, offset, cp, elementValueMap);
         }
@@ -207,7 +207,7 @@ public class AnnotationHelpers {
 
         int numElementPairs = raw.getU2At(offset);
         offset += 2;
-        Map<String, ElementValue> elementValueMap = MapFactory.newLinkedMap();
+        Map<String, ElementValue> elementValueMap = MapFactory.newOrderedMap();
         for (int x = 0; x < numElementPairs; ++x) {
             offset = getElementValuePair(raw, offset, cp, elementValueMap);
         }

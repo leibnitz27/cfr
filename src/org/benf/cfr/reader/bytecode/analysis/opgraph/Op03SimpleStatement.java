@@ -3185,9 +3185,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }));
         if (tryBlocks.isEmpty()) return;
-        for (Op03SimpleStatement statement : allStatements) {
+
+        List<Op03SimpleStatement> orderedStatements = ListFactory.newList(allStatements);
+        Collections.sort(orderedStatements, new CompareByIndex(false));
+
+        for (Op03SimpleStatement statement : orderedStatements) {
             for (BlockIdentifier ident : tryBlocks) {
-                if (!statement.containedInBlocks.contains(ident) && statement.sources.contains(statement.linearlyPrevious) && statement.linearlyPrevious.containedInBlocks.contains(ident)) {
+                if (!statement.containedInBlocks.contains(ident) &&
+                     statement.sources.contains(statement.linearlyPrevious) &&
+                     statement.linearlyPrevious.containedInBlocks.contains(ident)) {
                     statement.addPossibleExitFor(ident);
                 }
             }
@@ -3197,7 +3203,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     private Set<BlockIdentifier> possibleExitsFor = null;
     private void addPossibleExitFor(BlockIdentifier ident) {
-        if (possibleExitsFor == null) possibleExitsFor = SetFactory.newSet();
+        if (possibleExitsFor == null) possibleExitsFor = SetFactory.newOrderedSet();
         possibleExitsFor.add(ident);
     }
     public boolean isPossibleExitFor(BlockIdentifier ident) {

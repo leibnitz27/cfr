@@ -26,7 +26,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     //
     // Found states that key can be replaced with value.
     //
-    private final Map<StackSSALabel, ExpressionStatement> found = MapFactory.newLinkedMap();
+    private final Map<StackSSALabel, ExpressionStatement> found = MapFactory.newOrderedMap();
     private final Set<StackSSALabel> blacklisted = SetFactory.newOrderedSet();
     //
     // A chain of dup, copy assign can be considered to be an alias set.

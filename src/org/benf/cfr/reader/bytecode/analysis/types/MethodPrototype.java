@@ -216,7 +216,7 @@ public class MethodPrototype implements TypeUsageCollectable {
 //    }
 
     public Map<Slot, SSAIdent> collectInitialSlotUsage(Method.MethodConstructor constructorFlag, SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
-        Map<Slot, SSAIdent> res = MapFactory.newLinkedMap();
+        Map<Slot, SSAIdent> res = MapFactory.newOrderedMap();
         int offset = 0;
         switch (constructorFlag) {
 //            case ENUM_CONSTRUCTOR: {

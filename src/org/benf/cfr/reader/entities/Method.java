@@ -75,7 +75,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final ClassFile classFile;
     private Visibility hidden;
     private DecompilerComments comments;
-    private final Map<JavaRefTypeInstance, String> localClasses = MapFactory.newLinkedMap();
+    private final Map<JavaRefTypeInstance, String> localClasses = MapFactory.newOrderedMap();
     private boolean isOverride;
     private transient Set<JavaTypeInstance> thrownTypes = null;
 

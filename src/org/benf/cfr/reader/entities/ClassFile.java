@@ -428,7 +428,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 JavaTypeInstance fieldType = field.getField().getJavaTypeInstance();
                 Map<JavaTypeInstance, ClassFileField> perNameMap = fieldsByName.get(fieldName);
                 if (perNameMap == null) {
-                    perNameMap = MapFactory.newLinkedMap();
+                    perNameMap = MapFactory.newOrderedMap();
                     fieldsByName.put(fieldName, perNameMap);
                 }
                 perNameMap.put(fieldType, field);

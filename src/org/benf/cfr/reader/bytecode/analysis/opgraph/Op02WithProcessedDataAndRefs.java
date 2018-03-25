@@ -73,7 +73,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private boolean hasCatchParent = false;
 
     private SSAIdentifiers<Slot> ssaIdentifiers;
-    private Map<Integer, Ident> localVariablesBySlot = MapFactory.newLinkedMap();
+    private Map<Integer, Ident> localVariablesBySlot = MapFactory.newOrderedMap();
 
     private Op02WithProcessedDataAndRefs(Op02WithProcessedDataAndRefs other) {
         this.instr = other.instr;
@@ -1826,7 +1826,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
         }
         // Now rationalise this map.
-        final Map<Pair<Slot, SSAIdent>, Ident> combinedMap = MapFactory.newLinkedMap();
+        final Map<Pair<Slot, SSAIdent>, Ident> combinedMap = MapFactory.newOrderedMap();
 
         final IdentFactory identFactory = new IdentFactory();
         for (Map.Entry<Slot, Set<SSAIdent>> entry : poisoned.entrySet()) {

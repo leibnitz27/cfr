@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class SSAIdentifierFactory<KEYTYPE> {
     private final Map<KEYTYPE, Integer> nextIdentFor = MapFactory.newLazyMap(
-            MapFactory.<KEYTYPE, Integer>newLinkedMap(),
+            MapFactory.<KEYTYPE, Integer>newOrderedMap(),
             new UnaryFunction<KEYTYPE, Integer>() {
                 @Override
                 public Integer invoke(KEYTYPE ignore) {

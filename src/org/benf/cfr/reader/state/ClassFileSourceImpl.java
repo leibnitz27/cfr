@@ -212,7 +212,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
         if (!file.exists()) {
             throw new ConfusedCFRException("No such jar file " + jarPath);
         }
-        Map<String, String> thisJar = MapFactory.newLinkedMap();
+        Map<String, String> thisJar = MapFactory.newOrderedMap();
         if (!processClassPathFile(file, jarPath, thisJar, false)) {
             throw new ConfusedCFRException("Failed to load jar " + jarPath);
         }

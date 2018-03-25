@@ -287,7 +287,7 @@ public class Misc {
             }
         }
 
-        public Set<Op03SimpleStatement> privGetBlockReachable() {
+        private Set<Op03SimpleStatement> privGetBlockReachable() {
             GraphVisitorDFS<Op03SimpleStatement> reachableInBlock = new GraphVisitorDFS<Op03SimpleStatement>(
                     start,
                     this
@@ -301,7 +301,7 @@ public class Misc {
             return r.privGetBlockReachable();
         }
 
-        public Pair<Set<Op03SimpleStatement>, Set<Op03SimpleStatement>> privGetBlockReachableAndExits() {
+        private Pair<Set<Op03SimpleStatement>, Set<Op03SimpleStatement>> privGetBlockReachableAndExits() {
             GraphVisitorDFS<Op03SimpleStatement> reachableInBlock = new GraphVisitorDFS<Op03SimpleStatement>(
                     start,
                     this

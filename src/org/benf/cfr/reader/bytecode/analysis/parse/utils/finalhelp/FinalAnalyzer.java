@@ -92,7 +92,7 @@ public class FinalAnalyzer {
 
         peerTries.add(in);
         Set<Result> results = SetFactory.newOrderedSet();
-        Set<Op03SimpleStatement> peerTrySeen = SetFactory.newSet();
+        Set<Op03SimpleStatement> peerTrySeen = SetFactory.newOrderedSet();
         while (peerTries.hasNext()) {
             Op03SimpleStatement tryS = peerTries.removeNext();
             if (!peerTrySeen.add(tryS)) {
@@ -195,7 +195,7 @@ public class FinalAnalyzer {
                      * any removed inner.
                      */
                     List<Op03SimpleStatement> catchSources = tgt.getSources();
-                    final Set<BlockIdentifier> unionBlocks = SetFactory.newSet();
+                    final Set<BlockIdentifier> unionBlocks = SetFactory.newOrderedSet();
                     for (Op03SimpleStatement catchSource : catchSources) {
                         unionBlocks.addAll(catchSource.getBlockIdentifiers());
                     }
@@ -203,7 +203,7 @@ public class FinalAnalyzer {
                      * Now, find the blocks that tgt THINKS it's in which are not in this, and remove them from tgt,
                      * AND from every statement that belongs to tgt.
                      */
-                    final Set<BlockIdentifier> previousTgtBlocks = SetFactory.newSet(tgt.getBlockIdentifiers());
+                    final Set<BlockIdentifier> previousTgtBlocks = SetFactory.newOrderedSet(tgt.getBlockIdentifiers());
                     previousTgtBlocks.removeAll(unionBlocks);
                     /*
                      * The remainder are the blocks we SHOULD NO LONGER be in.
@@ -300,7 +300,7 @@ public class FinalAnalyzer {
         newFinallyBody.add(finallyOp);
 
         extraBlocks.add(finallyBlock);
-        Map<Op03SimpleStatement, Op03SimpleStatement> old2new = MapFactory.newMap();
+        Map<Op03SimpleStatement, Op03SimpleStatement> old2new = MapFactory.newOrderedMap();
         for (Op03SimpleStatement old : oldFinallyBody) {
             Statement statement = old.getStatement();
             Set<BlockIdentifier> newblocks = SetFactory.newOrderedSet(old.getBlockIdentifiers());
@@ -475,7 +475,7 @@ public class FinalAnalyzer {
                 }
 
             }
-            Set<Op03SimpleStatement> checkSources = SetFactory.newSet();
+            Set<Op03SimpleStatement> checkSources = SetFactory.newOrderedSet();
 
             for (Op03SimpleStatement remove : toRemove) {
                 for (Op03SimpleStatement source : remove.getSources()) {
@@ -618,7 +618,7 @@ public class FinalAnalyzer {
         List<Op03SimpleStatement> targets = in.getTargets();
         List<Op03SimpleStatement> catchStarts = Functional.filter(targets, new TypeFilter<CatchStatement>(CatchStatement.class));
         Set<Op03SimpleStatement> possibleCatches = SetFactory.newOrderedSet();
-        Set<Op03SimpleStatement> recTries = SetFactory.newSet();
+        Set<Op03SimpleStatement> recTries = SetFactory.newOrderedSet();
         for (Op03SimpleStatement catchS : catchStarts) {
             CatchStatement catchStatement = (CatchStatement) catchS.getStatement();
             List<ExceptionGroup.Entry> exceptions = catchStatement.getExceptions();
@@ -692,6 +692,10 @@ public class FinalAnalyzer {
          * VERY (too much so, this won't catch everything) special case - IFF the finally code body is a single
          * MONITOREXIT statement, AND none of the exitpaths are, then they might have been rolled into the try body.
          */
+//        List<Op03SimpleStatement> tmp = ListFactory.newList(exitPaths);
+//        Collections.sort(tmp, new CompareByIndex());
+//        exitPaths.clear();
+//        exitPaths.addAll(tmp);
 
         /*
          * See if this block jumps into any peerTries, in which case we add them to peerTries.
@@ -736,7 +740,7 @@ public class FinalAnalyzer {
 
                 boolean ok = false;
                 boolean allowDirect = !legitExitStart.getStatement().canThrow(ExceptionCheckSimple.INSTANCE);
-                Set<Op03SimpleStatement> addPeerTries = SetFactory.newSet();
+                Set<Op03SimpleStatement> addPeerTries = SetFactory.newOrderedSet();
                 if (allowDirect) {
                     ok = true;
                     for (Op03SimpleStatement target : legitExitStart.getTargets()) {
@@ -905,7 +909,7 @@ public class FinalAnalyzer {
          * that way we can look at the exits from this block and easily see
          * which is in a finally
          */
-        Map<Op03SimpleStatement, Result> matchedFinallyBlockMap = MapFactory.newMap();
+        Map<Op03SimpleStatement, Result> matchedFinallyBlockMap = MapFactory.newOrderedMap();
         for (Result res : possibleFinallyBlocks) {
             for (Op03SimpleStatement b : res.getToRemove()) {
                 matchedFinallyBlockMap.put(b, res);

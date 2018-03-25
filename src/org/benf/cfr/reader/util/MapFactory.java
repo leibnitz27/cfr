@@ -9,6 +9,10 @@ public class MapFactory {
         return new HashMap<X, Y>();
     }
 
+    public static <X extends Object, Y extends Object> Map<X, Y> newOrderedMap() {
+        return new LinkedHashMap<X, Y>();
+    }
+
     public static <X extends Object, Y extends Object> Map<X, Y> newIdentityMap() {
         return new IdentityHashMap<X, Y>();
     }
@@ -17,16 +21,12 @@ public class MapFactory {
         return new TreeMap<X, Y>();
     }
 
-    public static <X extends Object, Y extends Object> Map<X, Y> newLinkedMap() {
-        return new LinkedHashMap<X, Y>();
-    }
-
     public static <X extends Object, Y extends Object> Map<X, Y> newLazyMap(UnaryFunction<X, Y> factory) {
         return new LazyMap<X, Y>(MapFactory.<X, Y>newMap(), factory);
     }
 
     public static <X extends Object, Y extends Object> Map<X, Y> newLinkedLazyMap(UnaryFunction<X, Y> factory) {
-        return new LazyMap<X, Y>(MapFactory.<X, Y>newLinkedMap(), factory);
+        return new LazyMap<X, Y>(MapFactory.<X, Y>newOrderedMap(), factory);
     }
 
     public static <X extends Object, Y extends Object> Map<X, Y> newLazyMap(Map<X, Y> base, UnaryFunction<X, Y> factory) {
