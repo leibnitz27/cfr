@@ -202,19 +202,20 @@ public class CodeAnalyserWholeClass {
          * have the outer arg, but we can't verify that they assign to the field.
          */
         FieldVariable foundOuterThis = null;
+        ClassFileField classFileField = null;
         for (Method method : classFile.getConstructors()) {
             if (ConstructorUtils.isDelegating(method)) continue;
             FieldVariable outerThis = Op04StructuredStatement.findInnerClassOuterThis(method, method.getAnalysis());
             if (outerThis == null) return;
             if (foundOuterThis == null) {
                 foundOuterThis = outerThis;
-            } else if (foundOuterThis != outerThis) {
+                classFileField = foundOuterThis.getClassFileField();
+            } else if (classFileField != outerThis.getClassFileField()) {
                 return;
             }
         }
         if (foundOuterThis == null) return;
 
-        ClassFileField classFileField = foundOuterThis.getClassFileField();
         classFileField.markHidden();
         classFileField.markSyntheticOuterRef();
 
