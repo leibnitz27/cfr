@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -15,6 +16,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssi
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDefinition;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.*;
@@ -37,7 +39,7 @@ public class NonStaticLifter {
 
     public void liftNonStatics() {
 
-        // All uninitialised static fields, in definition order.
+        // All uninitialised non-static fields, in definition order.
         LinkedList<ClassFileField> classFileFields = new LinkedList<ClassFileField>(Functional.filter(classFile.getFields(), new Predicate<ClassFileField>() {
             @Override
             public boolean test(ClassFileField in) {
@@ -164,6 +166,15 @@ public class NonStaticLifter {
                 if (usedIdx >= thisIdx) return false;
                 if (usedClassFileField.getInitialValue() == null) return false;
                 continue;
+            }
+            if (usedLValue instanceof LocalVariable) {
+                // The only localVariable we can get away with here is 'this'.
+
+                LocalVariable variable = (LocalVariable)usedLValue;
+                if (variable.getInferredJavaType().getJavaTypeInstance() == this.classFile.getClassType() &&
+                    variable.getName().getStringName().equals(MiscConstants.THIS)) {
+                    continue;
+                }
             }
             // Other lvalue - can't allow.
             return false;

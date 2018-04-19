@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -55,7 +56,7 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
         if (prototype.isInnerOuterThis() && prototype.isHiddenArg(0) && args.size() > 0) {
             Expression a1 = args.get(0);
 
-            test : if (!a1.toString().equals("this")) {
+            test : if (!a1.toString().equals(MiscConstants.THIS)) {
                 if (a1 instanceof LValueExpression) {
                     LValue lValue = ((LValueExpression) a1).getLValue();
                     if (lValue instanceof FieldVariable) {

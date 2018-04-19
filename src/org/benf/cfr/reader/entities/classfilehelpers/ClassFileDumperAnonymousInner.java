@@ -31,7 +31,14 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
             return d;
         }
 
+        /*
+         * Why might we try to emit an anonymous class twice?  If it's been declared in a field initialiser
+         * it'll be expanded into copies in constructors.
+         *
+         * If we've FAILED to re-gather into the field initialiser, we'll be here.
+         */
         if (!d.canEmitClass(classFile.getClassType())) {
+            d.print("/* invalid duplicate definition of identical inner class */");
             return d;
         }
 

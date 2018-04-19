@@ -103,6 +103,21 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null) return false;
+
+        if (!(o instanceof ConstructorInvokationAnonymousInner)) return false;
+        ConstructorInvokationAnonymousInner other = (ConstructorInvokationAnonymousInner) o;
+
+        // This is particularly hairy - two identical looking anonymous classes ARE NOT THE SAME.
+        if (getClassFile() != other.getClassFile()) return false;
+        if (!getTypeInstance().equals(other.getTypeInstance())) return false;
+        if (!getArgs().equals(other.getArgs())) return false;
+        return true;
+    }
+
+    @Override
     public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
         if (!(o instanceof ConstructorInvokationAnonymousInner)) return false;
         if (!super.equivalentUnder(o, constraint)) return false;

@@ -59,6 +59,8 @@ public enum AccessFlag {
     }
 
     public static void applyAttributes(Map<String, Attribute> attributeMap, Set<AccessFlag> accessFlagSet) {
-        if (attributeMap.containsKey(AttributeSynthetic.ATTRIBUTE_NAME)) accessFlagSet.add(ACC_SYNTHETIC);
+        if (attributeMap.containsKey(AttributeSynthetic.ATTRIBUTE_NAME)) {
+            accessFlagSet.add(ACC_SYNTHETIC);
+        }
     }
 }
