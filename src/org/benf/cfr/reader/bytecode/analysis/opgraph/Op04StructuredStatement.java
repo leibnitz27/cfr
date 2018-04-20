@@ -989,7 +989,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      */
     public static void fixInnerClassConstructorSyntheticOuterArgs(ClassFile classFile, Method method, Op04StructuredStatement root) {
         if (classFile.isInnerClass()) {
-            removeSyntheticConstructorOuterArgs(method, root, !classFile.testAccessFlag(AccessFlag.ACC_STATIC));
+            boolean instance = !classFile.testAccessFlag(AccessFlag.ACC_STATIC);
+            removeSyntheticConstructorOuterArgs(method, root, instance);
         }
     }
 

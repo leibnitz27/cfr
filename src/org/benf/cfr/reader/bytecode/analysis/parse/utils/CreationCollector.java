@@ -165,6 +165,10 @@ public class CreationCollector {
                         inferredJavaType,
                         memberFunctionInvokation.getArgs(),
                         dcCommonState, lValueType);
+                /*
+                 * Since java9, see https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8034044
+                 * inner classes have lost their lovely static attribute.  This is a giant pain.
+                 */
                 constructorInvokation = constructorInvokationAnonymousInner;
                 ClassFile classFile = constructorInvokationAnonymousInner.getClassFile();
                 if (classFile != null) {

@@ -36,6 +36,8 @@ public class AttributeFactory {
                 return new AttributeLineNumberTable(raw, cp);
             } else if (AttributeExceptions.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeExceptions(raw, cp);
+            } else if (AttributeEnclosingMethod.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeEnclosingMethod(raw, cp);
             } else if (AttributeDeprecated.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeDeprecated(raw, cp);
             } else if (AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {

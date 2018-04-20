@@ -5,11 +5,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokat
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Triplet;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerDefault;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.classfilehelpers.*;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
-import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
+import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
@@ -629,6 +629,48 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return thisClass;
     }
 
+    /*
+     *
+     */
+    private boolean isInferredAnonymousStatic(JavaTypeInstance thisType, JavaTypeInstance innerType) {
+        if (!innerType.getInnerClassHereInfo().isAnonymousClass()) return false;
+
+        boolean j8orLater = classFileVersion.equalOrLater(ClassFileVersion.JAVA_8);
+        if (!j8orLater) return false;
+        
+        JavaRefTypeInstance containing = thisType.getInnerClassHereInfo().getOuterClass();
+        // if the containing class is a static class, so is this.
+
+        if (containing.getClassFile().getAccessFlags().contains(AccessFlag.ACC_STATIC)) {
+            return true;
+        }
+
+        AttributeEnclosingMethod encloser = getAttributeByName(AttributeEnclosingMethod.ATTRIBUTE_NAME);
+        if (encloser == null) return false;
+        int classIndex = encloser.getClassIndex();
+        if (classIndex == 0) return false;
+        ConstantPoolEntryClass encloserClass = constantPool.getClassEntry(classIndex);
+        JavaTypeInstance encloserType = encloserClass.getTypeInstance();
+        if (encloserType != containing) return false;
+        int methodIndex = encloser.getMethodIndex();
+        if (methodIndex == 0) return false;
+        ConstantPoolEntryNameAndType nameAndType = constantPool.getNameAndTypeEntry(methodIndex);
+        ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
+        String name = nameAndType.getName().getValue();
+        VariableNamer fakeNamer = new VariableNamerDefault();
+
+        MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, containing, name, /* interfaceMethod */ false, Method.MethodConstructor.NOT, descriptor, constantPool, false /* we can't tell */, false, fakeNamer);
+
+        try {
+            Method m = containing.getClassFile().getMethodByPrototype(basePrototype);
+            if (m.getAccessFlags().contains(AccessFlagMethod.ACC_STATIC)) {
+                return true;
+            }
+        } catch (NoSuchMethodException e) {
+        }
+        return false;
+    }
+
     // just after construction
     public void loadInnerClasses(DCCommonState dcCommonState) {
         Options options = dcCommonState.getOptions();
@@ -639,7 +681,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
         List<InnerClassAttributeInfo> innerClassAttributeInfoList = attributeInnerClasses.getInnerClassAttributeInfoList();
 
-        JavaTypeInstance thisType = thisClass.getTypeInstance();
+        final JavaTypeInstance thisType = thisClass.getTypeInstance();
 
 
         for (InnerClassAttributeInfo innerClassAttributeInfo : innerClassAttributeInfoList) {
@@ -650,6 +692,14 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 JavaTypeInstance outerType = innerClassAttributeInfo.getOuterClassInfo();
                 if (outerType == null || outerType == thisType) {
                     accessFlags.addAll(innerClassAttributeInfo.getAccessFlags());
+                    // But if it's J9+, we're crippled by https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8034044
+                    // which removes the static marker on anonymous classes.
+                    // Why am I checking j8+? BECAUSE java 9.0.4 SAYS J8. FFS.
+                    if (!accessFlags.contains(AccessFlag.ACC_STATIC)) {
+                        if (isInferredAnonymousStatic(thisType, innerType)) {
+                            accessFlags.add(AccessFlag.ACC_STATIC);
+                        }
+                    }
                     // A public class can be marked as protected "as an inner class".
                     sanitiseAccessPermissions();
                 }
