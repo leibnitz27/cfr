@@ -85,6 +85,14 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
         return mutated;
     }
 
+    public ArithOp getOp() {
+        return op;
+    }
+
+    public Expression getMutation() {
+        return mutation;
+    }
+
     @Override
     public ArithmeticPostMutationOperation getPostMutation() {
         return new ArithmeticPostMutationOperation(mutated, op);

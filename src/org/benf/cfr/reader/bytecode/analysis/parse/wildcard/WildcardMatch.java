@@ -18,14 +18,12 @@ import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeIn
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.Predicate;
-import org.benf.cfr.reader.util.Troolean;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.lang.ref.Reference;
 import java.util.*;
 
 /**
@@ -46,6 +44,7 @@ public class WildcardMatch {
     private Map<String, BlockIdentifierWildcard> blockIdentifierWildcardMap = MapFactory.newMap();
     private Map<String, ListWildcard> listMap = MapFactory.newMap();
     private Map<String, StaticVariableWildcard> staticVariableWildcardMap = MapFactory.newMap();
+    private Map<String, ArithmeticMutationWildcard> arithMutationMap = MapFactory.newMap();
     private Map<String, ConstructorInvokationSimpleWildcard> constructorWildcardMap = MapFactory.newMap();
     private Map<String, ConstructorInvokationAnonymousInnerWildcard> constructorAnonymousWildcardMap = MapFactory.newMap();
     private Map<String, CastExpressionWildcard> castWildcardMap = MapFactory.newMap();
@@ -74,6 +73,7 @@ public class WildcardMatch {
         reset(castWildcardMap.values());
         reset(conditionalWildcardMap.values());
         reset(blockWildcardMap.values());
+        reset(arithMutationMap.values());
     }
 
     public BlockWildcard getBlockWildcard(String name) {
@@ -100,6 +100,22 @@ public class WildcardMatch {
 
         res = new ConditionalExpressionWildcard();
         conditionalWildcardMap.put(name, res);
+        return res;
+    }
+
+    public ArithmeticMutationWildcard getArithmeticMutationWildcard(String name) {
+        return getArithmeticMutationWildcard(name, Optional.<LValue>empty(), Optional.<Expression>empty(), Optional.<ArithOp>empty());
+    }
+
+    public ArithmeticMutationWildcard getArithmeticMutationWildcard(String name, LValue lhs, Expression rhs) {
+        return getArithmeticMutationWildcard(name, Optional.of(lhs), Optional.of(rhs), Optional.<ArithOp>empty());
+    }
+
+    public ArithmeticMutationWildcard getArithmeticMutationWildcard(String name, Optional<LValue> lhs, Optional<Expression> rhs, Optional<ArithOp> op) {
+        ArithmeticMutationWildcard res = arithMutationMap.get(name);
+        if (res != null) return res;
+        res = new ArithmeticMutationWildcard(lhs, rhs, op);
+        arithMutationMap.put(name, res);
         return res;
     }
 
@@ -954,6 +970,49 @@ public class WildcardMatch {
             return true;
         }
     }
+
+    public class ArithmeticMutationWildcard extends AbstractBaseExpressionWildcard implements Wildcard<ArithmeticMutationOperation> {
+        private final OptionalMatch<LValue> lhs;
+        private final OptionalMatch<Expression> rhs;
+        private final OptionalMatch<ArithOp> op;
+        private ArithmeticMutationOperation match;
+
+        public ArithmeticMutationWildcard(Optional<LValue> lhs, Optional<Expression> rhs, Optional<ArithOp> op) {
+            this.lhs = new OptionalMatch<LValue>(lhs);
+            this.rhs = new OptionalMatch<Expression>(rhs);
+            this.op = new OptionalMatch<ArithOp>(op);
+        }
+
+        @Override
+        public ArithmeticMutationOperation getMatch() {
+            return null;
+        }
+
+        public OptionalMatch<ArithOp> getOp() {
+            return op;
+        }
+
+        @Override
+        public void resetMatch() {
+            lhs.reset();
+            rhs.reset();
+            op.reset();
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null) return false;
+            if (!(o instanceof ArithmeticMutationOperation)) return false;
+            ArithmeticMutationOperation other = (ArithmeticMutationOperation)o;
+
+            if (!lhs.match(other.getUpdatedLValue())) return false;
+            if (!rhs.match(other.getMutation())) return false;
+            if (!op.match(other.getOp())) return false;
+            match = other;
+            return true;
+        }
+    }
+
 
 
     public class CastExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<CastExpression> {

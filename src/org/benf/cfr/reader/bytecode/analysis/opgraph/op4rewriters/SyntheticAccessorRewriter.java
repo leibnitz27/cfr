@@ -110,6 +110,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
     private static final String RETURN_LVALUE = "returnlvalue";
     private static final String MUTATION1 = "mutation1";
     private static final String MUTATION2 = "mutation2";
+    private static final String MUTATION3 = "mutation3";
     private static final String PRE_INC = "preinc";
     private static final String POST_INC = "postinc";
     private static final String PRE_DEC = "predec";
@@ -208,6 +209,10 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                 new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
                                 new StructuredReturn(wcm.getExpressionWildCard("rvalue"), null)
                         )),
+                        // Java9 compiler inlines += etc....
+                        new ResetAfterTest(wcm, MUTATION3,
+                                new StructuredReturn(wcm.getArithmeticMutationWildcard("mutation", wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")), null)
+                        ),
                         new ResetAfterTest(wcm, PRE_INC,
                                 new StructuredReturn(new ArithmeticPreMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), null)
                         ),
@@ -216,6 +221,9 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                         ),
                         new ResetAfterTest(wcm, POST_INC,
                                 new StructuredReturn(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.PLUS), null)
+                        ),
+                        new ResetAfterTest(wcm, POST_DEC,
+                                new StructuredReturn(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
                         ),
                         new ResetAfterTest(wcm, POST_INC,
                                 new MatchSequence(
@@ -238,9 +246,6 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
                                         new StructuredExpressionStatement(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), false),
                                         new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                                 )
-                        ),
-                        new ResetAfterTest(wcm, POST_DEC,
-                                new StructuredReturn(new ArithmeticPostMutationOperation(wcm.getLValueWildCard("lvalue"), ArithOp.MINUS), null)
                         ),
                         new ResetAfterTest(wcm, SUPER_INVOKE,
                                 new StructuredExpressionStatement(wcm.getSuperFunction("super", methodExprs), false)
@@ -289,6 +294,9 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
             AssignmentExpression assignmentExpression = new AssignmentExpression(accessorMatchCollector.lValue, accessorMatchCollector.rValue);
             return cloneHelper.replaceOrClone(assignmentExpression);
+        } else if (matchType.equals(MUTATION3)) {
+            Expression mutation = new ArithmeticMutationOperation(accessorMatchCollector.lValue, accessorMatchCollector.rValue, accessorMatchCollector.op);
+            return cloneHelper.replaceOrClone(mutation);
         } else if (matchType.equals(RETURN_LVALUE)) {
             return cloneHelper.replaceOrClone(new LValueExpression(accessorMatchCollector.lValue));
         } else if (matchType.equals(PRE_DEC)) {
@@ -318,6 +326,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         String matchType;
         LValue lValue;
         Expression rValue;
+        ArithOp op;
 
         @Override
         public void clear() {
@@ -335,6 +344,10 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
             this.lValue = wcm.getLValueWildCard("lvalue").getMatch();
             if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
                 this.rValue = wcm.getExpressionWildCard("rvalue").getMatch();
+            }
+            if (matchType.equals(MUTATION3)) {
+                this.rValue = wcm.getExpressionWildCard("rvalue").getMatch();
+                this.op = wcm.getArithmeticMutationWildcard( "mutation").getOp().getMatch();
             }
             if (matchType.equals(SUPER_INVOKE) || matchType.equals(SUPER_RETINVOKE)) {
                 this.rValue = wcm.getSuperFunction("super").getMatch();
