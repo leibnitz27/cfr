@@ -3,13 +3,11 @@ package org.benf.cfr.reader.bytecode.analysis.structured;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredSynchronized;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredTry;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 public class StructuredScope {
@@ -27,8 +25,21 @@ public class StructuredScope {
         }
     }
 
+    public List<Op04StructuredStatement> getPrecedingInblock(int skipN, int back) {
+        if (skipN >= scope.size()) return null;
+        AtLevel level = scope.get(skipN);
+        StructuredStatement stm = level.statement;
+        if (stm instanceof Block) {
+            Block block = (Block)stm;
+            int end = level.next - 1;
+            int start = Math.max(end - back, 0);
+            return block.getBlockStatements().subList(start, end);
+        }
+        return ListFactory.newList();
+    }
+
     public StructuredStatement get(int skipN) {
-        if (scope.isEmpty()) return null;
+        if (skipN >= scope.size()) return null;
         return scope.get(skipN).statement;
     }
 

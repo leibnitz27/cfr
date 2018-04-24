@@ -20,7 +20,8 @@ public enum AccessFlagMethod {
     ACC_NATIVE("native"),
     ACC_ABSTRACT("abstract"),
     ACC_STRICT("strictfp"),
-    ACC_SYNTHETIC("/* synthetic */");
+    ACC_SYNTHETIC("/* synthetic */"),
+    ACC_FAKE_END_RESOURCE("/* end resource */");
 
     private final String name;
 

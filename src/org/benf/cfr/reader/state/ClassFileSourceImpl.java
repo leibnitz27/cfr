@@ -191,7 +191,6 @@ public class ClassFileSourceImpl implements ClassFileSource {
             Object bytes = ReadAllBytes.invoke(null, path);
             return (byte[])bytes;
         } catch (Exception e) {
-            System.out.println("Exception " + e);
             return null;
         }
     }

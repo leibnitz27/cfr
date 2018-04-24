@@ -359,7 +359,7 @@ public class Block extends AbstractStructuredStatement {
                             finished = true;
                         }
                     } else if (next.getStatement() instanceof StructuredFinally) {
-                        structuredTry.addFinally(next.nopThisAndReplace());
+                        structuredTry.setFinally(next.nopThisAndReplace());
                         if (x < size) {
                             next = containedStatements.get(x);
                         } else {

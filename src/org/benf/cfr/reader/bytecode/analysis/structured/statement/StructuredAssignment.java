@@ -26,18 +26,22 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
 
     private LValue lvalue;
     private Expression rvalue;
-    boolean isCreator;
+    private boolean creator;
 
     public StructuredAssignment(LValue lvalue, Expression rvalue) {
         this.lvalue = lvalue;
         this.rvalue = rvalue;
-        this.isCreator = false;
+        this.creator = false;
     }
 
-    public StructuredAssignment(LValue lvalue, Expression rvalue, boolean isCreator) {
+    public StructuredAssignment(LValue lvalue, Expression rvalue, boolean creator) {
         this.lvalue = lvalue;
         this.rvalue = rvalue;
-        this.isCreator = isCreator;
+        this.creator = creator;
+    }
+
+    public boolean isCreator(LValue lvalue) {
+        return creator && this.lvalue.equals(lvalue);
     }
 
     @Override
@@ -48,7 +52,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
 
     @Override
     public Dumper dump(Dumper dumper) {
-        if (isCreator) {
+        if (creator) {
             if (lvalue.isFinal()) dumper.print("final ");
             LValue.Creation.dump(dumper, lvalue).print(" ");
         }
@@ -80,7 +84,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
             if (!localVariable.equals(lvalue)) {
                 throw new IllegalArgumentException("Being asked to mark creator for wrong variable");
             }
-            isCreator = true;
+            creator = true;
             InferredJavaType inferredJavaType = localVariable.getInferredJavaType();
             if (inferredJavaType.isClash()) {
                 inferredJavaType.collapseTypeClash();
@@ -90,7 +94,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
 
     @Override
     public List<LValue> findCreatedHere() {
-        if (isCreator) {
+        if (creator) {
             return ListFactory.newList(lvalue);
         } else {
             return null;

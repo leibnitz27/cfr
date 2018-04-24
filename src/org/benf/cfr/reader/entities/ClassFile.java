@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Triplet;
@@ -753,6 +754,21 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         analysePassOuterFirst(dcCommonState);
     }
 
+    private void analyseSyntheticTags(Method method, Options options) {
+        try {
+            Op04StructuredStatement code = method.getAnalysis();
+            if (code == null) return;
+            if (options.getOption(OptionsImpl.REWRITE_TRY_RESOURCES, getClassFileVersion())) {
+                boolean isResourceRelease = Op04StructuredStatement.isTryWithResourceSynthetic(method, code);
+                if (isResourceRelease) {
+                    method.getAccessFlags().add(AccessFlagMethod.ACC_FAKE_END_RESOURCE);
+                }
+            }
+        } catch (Exception e) {
+            // ignore.
+        }
+    }
+
     private void analyseOverrides() {
         try {
             BindingSuperContainer bindingSuperContainer = getBindingSupers();
@@ -816,7 +832,23 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             analyseInnerClassesPass1(state);
         }
 
-        for (Method method : methods) {
+        /*
+         * While we're going to consider the methods in order, analyse synthetic methods first
+         * so that we can tag them.
+         */
+        Pair<List<Method>, List<Method>> partition = Functional.partition(methods, new Predicate<Method>() {
+            @Override
+            public boolean test(Method x) {
+                return x.getAccessFlags().contains(AccessFlagMethod.ACC_SYNTHETIC);
+            }
+        });
+        // Analyse synthetic methods.
+        for (Method method : partition.getFirst()) {
+            method.analyse();
+            analyseSyntheticTags(method, options);
+        }
+        // Non synthetics.
+        for (Method method : partition.getSecond()) {
             method.analyse();
         }
 

@@ -208,6 +208,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> COLLECTION_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
             "Re-sugar collection based iteration");
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> REWRITE_TRY_RESOURCES = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "tryresources", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true),
+            "Reconstruct try-with-resources");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> REWRITE_LAMBDAS = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodelambdas", new VersionSpecificDefaulter(ClassFileVersion.JAVA_8, true),
             "Re-build lambda functions");
@@ -444,7 +447,7 @@ public class OptionsImpl implements Options {
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
                     RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS, USE_NAME_TABLE,
                     AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA,
-                    CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS, IGNORE_EXCEPTIONS);
+                    CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS, REWRITE_TRY_RESOURCES, IGNORE_EXCEPTIONS);
         }
 
         @Override

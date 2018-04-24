@@ -852,6 +852,9 @@ public class CodeAnalyser {
 
             // Now we've got everything nicely block structured, we can have an easier time
             Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory);
+            if (options.getOption(OptionsImpl.REWRITE_TRY_RESOURCES, classFileVersion)) {
+                Op04StructuredStatement.removeEndResource(method.getClassFile(), block);
+            }
 
             // Done by wholeClass analyser.
             //        Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);

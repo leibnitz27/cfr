@@ -22,7 +22,9 @@ public class MatchSequence implements Matcher<StructuredStatement> {
         MatchIterator<StructuredStatement> mi = matchIterator.copy();
 
         for (Matcher<StructuredStatement> matcher : inner) {
-            if (!matcher.match(mi, matchResultCollector)) return false;
+            if (!matcher.match(mi, matchResultCollector)) {
+                return false;
+            }
         }
 
         matchIterator.advanceTo(mi);

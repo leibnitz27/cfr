@@ -22,17 +22,35 @@ public class StructuredTry extends AbstractStructuredStatement {
     private List<Op04StructuredStatement> catchBlocks = ListFactory.newList();
     private Op04StructuredStatement finallyBlock;
     private final BlockIdentifier tryBlockIdentifier;
+    private List<Op04StructuredStatement> resourceBlock;
 
     public StructuredTry(ExceptionGroup exceptionGroup, Op04StructuredStatement tryBlock, BlockIdentifier tryBlockIdentifier) {
         this.exceptionGroup = exceptionGroup;
         this.tryBlock = tryBlock;
         this.finallyBlock = null;
         this.tryBlockIdentifier = tryBlockIdentifier;
+        this.resourceBlock = null;
+    }
+
+    public void setResources(List<StructuredAssignment> resources) {
+        List<Op04StructuredStatement> resourceStatements = ListFactory.newList();
+        for (StructuredAssignment resource : resources) {
+            resourceStatements.add(new Op04StructuredStatement(resource));
+        }
+        this.resourceBlock = resourceStatements;
     }
 
     @Override
     public Dumper dump(Dumper dumper) {
         dumper.print("try ");
+        if (resourceBlock != null) {
+            dumper.print("(");
+            for (Op04StructuredStatement resource : resourceBlock) {
+                resource.dump(dumper);
+            }
+            dumper.removePendingCarriageReturn();
+            dumper.print(")");
+        }
         tryBlock.dump(dumper);
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             catchBlock.dump(dumper);
@@ -48,6 +66,7 @@ public class StructuredTry extends AbstractStructuredStatement {
         collector.collectFrom(tryBlock);
         collector.collectFrom(catchBlocks);
         collector.collectFrom(finallyBlock);
+        collector.collectFrom(resourceBlock);
     }
 
     @Override
@@ -64,7 +83,7 @@ public class StructuredTry extends AbstractStructuredStatement {
         catchBlocks.add(catchStatement);
     }
 
-    public void addFinally(Op04StructuredStatement finallyBlock) {
+    public void setFinally(Op04StructuredStatement finallyBlock) {
         this.finallyBlock = finallyBlock;
     }
 
@@ -79,6 +98,11 @@ public class StructuredTry extends AbstractStructuredStatement {
 
     @Override
     public void transformStructuredChildren(StructuredStatementTransformer transformer, StructuredScope scope) {
+        if (resourceBlock != null) {
+            for (Op04StructuredStatement resource : resourceBlock) {
+                resource.transform(transformer, scope);
+            }
+        }
         tryBlock.transform(transformer, scope);
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             catchBlock.transform(transformer, scope);
@@ -91,6 +115,12 @@ public class StructuredTry extends AbstractStructuredStatement {
     @Override
     public void linearizeInto(List<StructuredStatement> out) {
         out.add(this);
+        if (resourceBlock != null) {
+            // TODO: Synthetic 'resource' markers?
+            for (Op04StructuredStatement resource : resourceBlock) {
+                out.add(resource.getStatement());
+            }
+        }
         tryBlock.linearizeStatementsInto(out);
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             catchBlock.linearizeStatementsInto(out);
@@ -103,6 +133,12 @@ public class StructuredTry extends AbstractStructuredStatement {
 
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
+        if (resourceBlock != null) {
+            scopeDiscoverer.enterBlock(this);
+            for (Op04StructuredStatement resource : resourceBlock) {
+                resource.traceLocalVariableScope(scopeDiscoverer);
+            }
+        }
         tryBlock.traceLocalVariableScope(scopeDiscoverer);
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             catchBlock.traceLocalVariableScope(scopeDiscoverer);
@@ -110,10 +146,18 @@ public class StructuredTry extends AbstractStructuredStatement {
         if (finallyBlock != null) {
             finallyBlock.traceLocalVariableScope(scopeDiscoverer);
         }
+        if (resourceBlock != null) {
+            scopeDiscoverer.leaveBlock(this);
+        }
     }
 
     @Override
     public boolean isRecursivelyStructured() {
+        if (resourceBlock != null) {
+            for (Op04StructuredStatement resource: resourceBlock) {
+                if (!resource.isFullyStructured()) return false;
+            }
+        }
         if (!tryBlock.isFullyStructured()) return false;
         for (Op04StructuredStatement catchBlock : catchBlocks) {
             if (!catchBlock.isFullyStructured()) return false;
@@ -122,6 +166,10 @@ public class StructuredTry extends AbstractStructuredStatement {
             if (!finallyBlock.isFullyStructured()) return false;
         }
         return true;
+    }
+
+    public Op04StructuredStatement getFinallyBlock() {
+        return finallyBlock;
     }
 
     @Override
@@ -152,6 +200,7 @@ public class StructuredTry extends AbstractStructuredStatement {
     }
 
     private boolean isJustTryCatchThrow() {
+        if (resourceBlock != null) return false;
         if (finallyBlock != null) return false;
         if (catchBlocks.size() != 1) return false;
         Op04StructuredStatement catchBlock = catchBlocks.get(0);
