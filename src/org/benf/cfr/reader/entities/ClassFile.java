@@ -1060,7 +1060,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         if (base instanceof JavaRefTypeInstance) {
             // No bindings to do, can't go any further, mark relationship and move on.
-            // No bindings to do, can't go any further, mark relationship and move on.
             boundSuperCollector.collect((JavaRefTypeInstance) base, route);
             ClassFile classFile = ((JavaRefTypeInstance) base).getClassFile();
             if (classFile != null) classFile.getBoundSuperClasses(base, boundSuperCollector, route, seen);

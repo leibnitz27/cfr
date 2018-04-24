@@ -2,7 +2,6 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
@@ -13,11 +12,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
-import org.benf.cfr.reader.bytecode.analysis.types.*;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.AccessFlagMethod;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.SetFactory;
@@ -30,12 +24,15 @@ import java.util.Set;
 /*
  * Java 9 has made try-with-resources much cleaner.
  */
-public class TryResourcesJ9Transformer implements StructuredStatementTransformer {
+public abstract class TryResourcesTransformerBase implements StructuredStatementTransformer {
 
-    private ClassFile classFile;
+    private final ClassFile classFile;
 
-    public void transform(ClassFile classFile, Op04StructuredStatement root) {
+    protected TryResourcesTransformerBase(ClassFile classFile) {
         this.classFile = classFile;
+    }
+
+    public void transform(Op04StructuredStatement root) {
         StructuredScope structuredScope = new StructuredScope();
         root.transform(this, structuredScope);
     }
@@ -68,8 +65,9 @@ public class TryResourcesJ9Transformer implements StructuredStatementTransformer
         autoAssign.nopOut();
         structuredTry.setFinally(null);
         structuredTry.setResources(Collections.singletonList(assign));
-        resourceMatch.resourceMethod.hideSynthetic();
-        return;
+        if (resourceMatch.resourceMethod != null) {
+            resourceMatch.resourceMethod.hideSynthetic();
+        }
     }
 
     private Op04StructuredStatement findAutoclosableAssignment(List<Op04StructuredStatement> preceeding, LValue resource) {
@@ -94,6 +92,10 @@ public class TryResourcesJ9Transformer implements StructuredStatementTransformer
         return null;
     }
 
+    protected ClassFile getClassFile() {
+        return classFile;
+    }
+
     private static class LValueUsageCheckingRewriter extends AbstractExpressionRewriter {
         final Set<LValue> used = SetFactory.newSet();
         @Override
@@ -113,62 +115,9 @@ public class TryResourcesJ9Transformer implements StructuredStatementTransformer
     // close(exception, autoclosable)
     //
     // we can lift the autocloseable into the try.
-    private ResourceMatch findResourceFinally(Op04StructuredStatement finallyBlock) {
-        if (finallyBlock == null) return null;
-        StructuredFinally finalli = (StructuredFinally)finallyBlock.getStatement();
-        Op04StructuredStatement content = finalli.getCatchBlock();
+    protected abstract ResourceMatch findResourceFinally(Op04StructuredStatement finallyBlock);
 
-        WildcardMatch wcm = new WildcardMatch();                                             
-        List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(content);
-        if (structuredStatements == null) return null;
-
-        InferredJavaType inferredThrowable = new InferredJavaType(TypeConstants.THROWABLE, InferredJavaType.Source.LITERAL, true);
-        InferredJavaType inferredAutoclosable = new InferredJavaType(TypeConstants.AUTOCLOSABLE, InferredJavaType.Source.LITERAL, true);
-        JavaTypeInstance clazzType = classFile.getClassType();
-        
-        Matcher<StructuredStatement> m = new ResetAfterTest(wcm, new MatchOneOf(
-                new MatchSequence(
-                        new BeginBlock(null),
-                        new StructuredIf(new ComparisonOperation(wcm.getExpressionWildCard("resource"), Literal.NULL, CompOp.NE), null),
-                        new BeginBlock(null),
-                        new MatchOneOf(
-                                new StructuredExpressionStatement(wcm.getStaticFunction("fn", clazzType, RawJavaType.VOID, null,new CastExpression(inferredThrowable, new LValueExpression(wcm.getLValueWildCard("throwable"))), new CastExpression(inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
-                                new StructuredExpressionStatement(wcm.getStaticFunction("fn2", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new CastExpression(inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
-                                new StructuredExpressionStatement(wcm.getStaticFunction("fn3", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new LValueExpression(wcm.getLValueWildCard("resource"))), false)
-                        ),
-                        new EndBlock(null),
-                        new EndBlock(null)
-                ),
-                new MatchSequence(
-                    new BeginBlock(null),
-                    new MatchOneOf(
-                            new StructuredExpressionStatement(wcm.getStaticFunction("fn", clazzType, RawJavaType.VOID, null,new CastExpression(inferredThrowable, new LValueExpression(wcm.getLValueWildCard("throwable"))), new CastExpression(inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
-                            new StructuredExpressionStatement(wcm.getStaticFunction("fn2", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new CastExpression(inferredAutoclosable, new LValueExpression(wcm.getLValueWildCard("resource")))), false),
-                            new StructuredExpressionStatement(wcm.getStaticFunction("fn3", clazzType, RawJavaType.VOID, null,new LValueExpression(wcm.getLValueWildCard("throwable")), new LValueExpression(wcm.getLValueWildCard("resource"))), false)
-                    ),
-                    new EndBlock(null)
-                )
-        ));
-        MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
-
-        TryResourcesMatchResultCollector collector = new TryResourcesMatchResultCollector();
-        mi.advance();
-        boolean res = m.match(mi, collector);
-        if (!res) return null;
-
-        MethodPrototype prototype = collector.fn.getMethodPrototype();
-        Method resourceMethod = null;
-        try {
-            resourceMethod = classFile.getMethodByPrototype(prototype);
-        } catch (NoSuchMethodException e) {
-        }
-        if (resourceMethod == null) return null;
-        if (!resourceMethod.getAccessFlags().contains(AccessFlagMethod.ACC_FAKE_END_RESOURCE)) return null;
-
-        return new ResourceMatch(resourceMethod, collector.resource, collector.throwable);
-    }
-
-    private static class ResourceMatch
+    protected static class ResourceMatch
     {
         final Method resourceMethod;
         final LValue resource;
@@ -181,7 +130,7 @@ public class TryResourcesJ9Transformer implements StructuredStatementTransformer
         }
     }
 
-    private static class TryResourcesMatchResultCollector implements MatchResultCollector {
+    protected static class TryResourcesMatchResultCollector implements MatchResultCollector {
         StaticFunctionInvokation fn;
         LValue resource;
         LValue throwable;
@@ -202,14 +151,20 @@ public class TryResourcesJ9Transformer implements StructuredStatementTransformer
 
         }
 
+        private StaticFunctionInvokation getFn(WildcardMatch wcm, String name) {
+            WildcardMatch.StaticFunctionInvokationWildcard staticFunction = wcm.getStaticFunction(name);
+            if (staticFunction == null) return null;
+            return staticFunction.getMatch();
+        }
+
         @Override
         public void collectMatches(String name, WildcardMatch wcm) {
-            fn = wcm.getStaticFunction("fn").getMatch();
+            fn = getFn(wcm, "fn");
             if (fn == null) {
-                fn = wcm.getStaticFunction("fn2").getMatch();
+                fn = getFn(wcm, "fn2");
             }
             if (fn == null) {
-                fn = wcm.getStaticFunction("fn3").getMatch();
+                fn = getFn(wcm, "fn3");
             }
             resource = wcm.getLValueWildCard("resource").getMatch();
             throwable = wcm.getLValueWildCard("throwable").getMatch();

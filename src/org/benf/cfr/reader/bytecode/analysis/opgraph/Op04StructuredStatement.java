@@ -15,7 +15,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvok
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscovererImpl;
@@ -30,7 +29,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.*;
-import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleTypeAnnotations;
 import org.benf.cfr.reader.state.ClassCache;
@@ -727,7 +725,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     public static void removeEndResource(ClassFile classFile, Op04StructuredStatement root) {
-        new TryResourcesJ9Transformer().transform(classFile, root);
+        // Note - this is not in Java9 CODE per se, it's if it's been compiled by the J9 compiler.
+        new TryResourcesTransformerJ9(classFile).transform(root);
+        new TryResourcesTransformerJ7(classFile).transform(root);
     }
 
     /*
