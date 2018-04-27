@@ -64,6 +64,9 @@ public class StructuredStatementExpression extends AbstractExpression {
         return Precedence.WEAKEST;
     }
 
+    public StructuredStatement getContent() {
+        return content;
+    }
 
     @Override
     public Dumper dumpInner(Dumper d) {

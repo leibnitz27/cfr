@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.LinkedList;
@@ -64,8 +65,9 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
             innerBlock.replaceContainedStatement(inner);
         }
         Block block = (Block) inner;
-        if (block.isJustOneStatement()) {
-            Op04StructuredStatement singleStatement = block.getSingleStatement();
+        Optional<Op04StructuredStatement> maybeStatement = block.getMaybeJustOneStatement();
+        if (maybeStatement.isSet()) {
+            Op04StructuredStatement singleStatement = maybeStatement.getValue();
             StructuredStatement stm = singleStatement.getStatement();
             boolean canRemove = true;
             if (stm instanceof StructuredBreak) {

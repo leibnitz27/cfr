@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -15,6 +16,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.Be
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -147,25 +149,24 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
-    public boolean isJustOneStatement() {
-        int count = 0;
+    // Super gross.
+    public Pair<Boolean, Op04StructuredStatement> getOneStatementIfPresent() {
+        Op04StructuredStatement res = null;
         for (Op04StructuredStatement statement : containedStatements) {
-            // TODO:  This is awful.
             if (!(statement.getStatement() instanceof StructuredComment)) {
-                count++;
+                if (res == null) {
+                    res = statement;
+                } else {
+                    return Pair.make(Boolean.FALSE, null);
+                }
             }
         }
-        return count == 1;
+        return Pair.make(res==null, res);
     }
 
-    public Op04StructuredStatement getSingleStatement() {
-        for (Op04StructuredStatement statement : containedStatements) {
-            // TODO:  This is awful.
-            if (!(statement.getStatement() instanceof StructuredComment)) {
-                return statement;
-            }
-        }
-        throw new IllegalStateException();
+    public Optional<Op04StructuredStatement> getMaybeJustOneStatement() {
+        Pair<Boolean, Op04StructuredStatement> tmp = getOneStatementIfPresent();
+        return tmp.getSecond() == null ? Optional.<Op04StructuredStatement>empty() : Optional.of(tmp.getSecond());
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.LinkedList;
@@ -81,12 +82,13 @@ public class UnstructuredIf extends AbstractUnStructuredStatement {
         StructuredStatement elseStmt = elseBlock.getStatement();
         if (!(elseStmt instanceof Block)) return elseBlock;
         Block block = (Block) elseStmt;
-        if (!block.isJustOneStatement()) {
+        Optional<Op04StructuredStatement> maybeStatement = block.getMaybeJustOneStatement();
+        if (!maybeStatement.isSet()) {
 //            Dumper d = new Dumper();
 //            block.dump(d);
             return elseBlock;
         }
-        Op04StructuredStatement inner = block.getSingleStatement();
+        Op04StructuredStatement inner = maybeStatement.getValue();
         if (inner.getStatement() instanceof StructuredIf) {
             return inner;
         }

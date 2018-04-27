@@ -15,6 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.S
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Collection;
@@ -95,8 +96,9 @@ public class StructuredCatch extends AbstractStructuredStatement {
         StructuredStatement statement = catchBlock.getStatement();
         if (!(statement instanceof Block)) return false;
         Block block = (Block) statement;
-        if (!block.isJustOneStatement()) return false;
-        StructuredStatement inBlock = block.getSingleStatement().getStatement();
+        Optional<Op04StructuredStatement> maybeStatement = block.getMaybeJustOneStatement();
+        if (!maybeStatement.isSet()) return false;
+        StructuredStatement inBlock = maybeStatement.getValue().getStatement();
         StructuredThrow test = new StructuredThrow(new LValueExpression(catching));
         return (test.equals(inBlock));
     }

@@ -78,7 +78,9 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
             d.dump(lValue);
         }
         if (multi) d.print(")");
-        return d.print(" -> ").dump(result);
+        d.print(" -> ").dump(result);
+        d.removePendingCarriageReturn();
+        return d;
     }
 
     @Override
@@ -87,6 +89,10 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
 
     public List<LValue> getArgs() {
         return args;
+    }
+
+    public Expression getResult() {
+        return result;
     }
 
     @Override
