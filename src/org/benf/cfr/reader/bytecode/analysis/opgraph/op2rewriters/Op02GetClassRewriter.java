@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.bootstrap.BootstrapMethodInfo;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryInvokeDynamic;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -36,7 +37,9 @@ public class Op02GetClassRewriter {
         if (pop.getInstr() != JVMInstr.POP) return;
         Op02WithProcessedDataAndRefs getClass = getSinglePrev(pop);
         if (getClass == null) return;
-        if (!isGetClass(getClass)) return;
+        if (!(isGetClass(getClass) || isRequireNonNull(getClass))) {
+            return;
+        }
 
         Op02WithProcessedDataAndRefs dup = getSinglePrev(getClass);
         if (dup == null) return;
@@ -61,6 +64,24 @@ public class Op02GetClassRewriter {
         if (methodPrototype.getArgs().size() != 0) return false;
         if (!methodPrototype.getReturnType().getDeGenerifiedType().getRawName().equals(TypeConstants.className))
             return false;
+        return true;
+    }
+
+    private boolean isRequireNonNull(Op02WithProcessedDataAndRefs item) {
+        ConstantPoolEntry[] cpEntries = item.getCpEntries();
+        if(cpEntries == null || cpEntries.length == 0) return false;
+        ConstantPoolEntry entry = cpEntries[0];
+        if (!(entry instanceof ConstantPoolEntryMethodRef)) return false;
+        ConstantPoolEntryMethodRef function = (ConstantPoolEntryMethodRef)entry;
+        ConstantPoolEntryClass classEntry = function.getClassEntry();
+        String className = classEntry.getTypeInstance().getRawName();
+        if (!className.equals(TypeConstants.objectsName)) return false;
+        MethodPrototype methodPrototype = function.getMethodPrototype();
+        if (!methodPrototype.getName().equals(MiscConstants.REQUIRE_NON_NULL)) return false;
+        if (methodPrototype.getArgs().size() != 1) return false;
+        if (!methodPrototype.getReturnType().getDeGenerifiedType().equals(TypeConstants.OBJECT)) {
+            return false;
+        }
         return true;
     }
 

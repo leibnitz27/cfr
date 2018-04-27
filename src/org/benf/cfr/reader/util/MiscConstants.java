@@ -14,4 +14,5 @@ public interface MiscConstants {
     public static final String DESERIALISE_LAMBDA_METHOD = "$deserializeLambda$";
     public static final String SCALA_SERIAL_VERSION = "serialVersionUID";
     public static final String GET_CLASS_NAME = "getClass";
+    public static final String REQUIRE_NON_NULL = "requireNonNull";
 }
