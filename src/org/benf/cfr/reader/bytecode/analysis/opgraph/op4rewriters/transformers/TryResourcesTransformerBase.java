@@ -12,8 +12,12 @@ import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.SetUtil;
 
@@ -68,6 +72,67 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
         if (resourceMatch.resourceMethod != null) {
             resourceMatch.resourceMethod.hideSynthetic();
         }
+        rewriteException(structuredTry, scope, preceeding);
+    }
+
+    // And if this looks like
+    // Exception exception
+    // try() {
+    //   X
+    // }  catch (Exception e) {
+    //   exception = e;
+    //   throw e;
+    // }
+    // Then we can remove everything except try() { X }.
+    private void rewriteException(StructuredTry structuredTry, StructuredScope scope, List<Op04StructuredStatement> preceeding) {
+        List<Op04StructuredStatement> catchBlocks = structuredTry.getCatchBlocks();
+        if (catchBlocks.size() != 1) return;
+        Op04StructuredStatement catchBlock = catchBlocks.get(0);
+
+        Op04StructuredStatement exceptionDeclare = null;
+        LValue tempThrowable = null;
+        for (int x=preceeding.size()-1;x >= 0;--x) {
+            Op04StructuredStatement stm = preceeding.get(x);
+            StructuredStatement structuredStatement = stm.getStatement();
+            if (structuredStatement.isScopeBlock()) return;
+            if (structuredStatement instanceof StructuredAssignment) {
+                StructuredAssignment ass = (StructuredAssignment)structuredStatement;
+                LValue lvalue = ass.getLvalue();
+                if (!ass.isCreator(lvalue)) return;
+                if (!ass.getRvalue().equals(Literal.NULL)) return;
+                if (!lvalue.getInferredJavaType().getJavaTypeInstance().equals(TypeConstants.THROWABLE)) return;
+                exceptionDeclare = stm;
+                tempThrowable = lvalue;
+                break;
+            }
+        }
+        if (exceptionDeclare == null) return;
+
+        List<StructuredStatement> catchContent = ListFactory.newList();
+        catchBlock.linearizeStatementsInto(catchContent);
+
+        WildcardMatch wcm = new WildcardMatch();
+
+        WildcardMatch.LValueWildcard exceptionWildCard = wcm.getLValueWildCard("exception");
+        Matcher<StructuredStatement> matcher = new MatchSequence(
+                new StructuredCatch(null, null, exceptionWildCard, null),
+                new BeginBlock(null),
+                new StructuredAssignment(tempThrowable, new LValueExpression(exceptionWildCard)),
+                new StructuredThrow( new LValueExpression(exceptionWildCard)),
+                new EndBlock(null)
+        );
+
+        MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(catchContent);
+
+        MatchResultCollector collector = new EmptyMatchResultCollector();
+        mi.advance();
+        if (!matcher.match(mi, collector)) return;
+        LValue caught = wcm.getLValueWildCard("exception").getMatch();
+        if (!caught.getInferredJavaType().getJavaTypeInstance().equals(TypeConstants.THROWABLE)) return;
+
+        exceptionDeclare.nopOut();
+        structuredTry.clearCatchBlocks();
+
     }
 
     private Op04StructuredStatement findAutoclosableAssignment(List<Op04StructuredStatement> preceeding, LValue resource) {

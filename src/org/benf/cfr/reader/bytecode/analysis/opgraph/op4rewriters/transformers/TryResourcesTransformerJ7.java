@@ -34,10 +34,6 @@ public class TryResourcesTransformerJ7 extends TryResourcesTransformerBase {
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(content);
         if (structuredStatements == null) return null;
 
-        InferredJavaType inferredThrowable = new InferredJavaType(TypeConstants.THROWABLE, InferredJavaType.Source.LITERAL, true);
-        InferredJavaType inferredAutoclosable = new InferredJavaType(TypeConstants.AUTO_CLOSEABLE, InferredJavaType.Source.LITERAL, true);
-        JavaTypeInstance clazzType = getClassFile().getClassType();
-
         Matcher<StructuredStatement> subMatch = new MatchSequence(
                 new BeginBlock(null),
                 new StructuredIf(new ComparisonOperation(new LValueExpression(wcm.getLValueWildCard("throwable")), Literal.NULL, CompOp.NE), null),
@@ -82,8 +78,6 @@ public class TryResourcesTransformerJ7 extends TryResourcesTransformerBase {
         // Because we don't have an explicit close method, we need to check types of arguments.
         // resource must cast back to AutoClosable.
         // except, prior to J9, closable didn't inherit from Autoclosable, so test for closable.
-        BindingSuperContainer bindingSupers = resource.getInferredJavaType().getJavaTypeInstance().getBindingSupers();
-        boolean isClosable =  bindingSupers.containsBase(TypeConstants.CLOSEABLE) || bindingSupers.containsBase(TypeConstants.AUTO_CLOSEABLE);
         return new ResourceMatch(null, resource, throwable);
     }
 

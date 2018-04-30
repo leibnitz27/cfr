@@ -40,6 +40,14 @@ public class StructuredTry extends AbstractStructuredStatement {
         this.resourceBlock = resourceStatements;
     }
 
+    public List<Op04StructuredStatement> getCatchBlocks() {
+        return catchBlocks;
+    }
+
+    public void clearCatchBlocks() {
+        catchBlocks.clear();;
+    }
+
     @Override
     public Dumper dump(Dumper dumper) {
         dumper.print("try ");
