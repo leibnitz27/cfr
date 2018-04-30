@@ -105,6 +105,19 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
         if (initial != null) {
             LValue lValue = initial.getCreatedLValue();
             Expression expression = initial.getRValue();
+            Expression rhs = expression;
+            LValue lv2 = lValue;
+            do {
+                scopeDiscoverer.collect(lv2);
+                if (rhs instanceof AssignmentExpression) {
+                    AssignmentExpression assignmentExpression = (AssignmentExpression) rhs;
+                    lv2 = assignmentExpression.getlValue();
+                    rhs = assignmentExpression.getrValue();
+                } else {
+                    lv2 = null;
+                    rhs = null;
+                }
+            } while (lv2 != null);
             lValue.collectLValueAssignments(expression, this.getContainer(), scopeDiscoverer);
         }
         getBody().traceLocalVariableScope(scopeDiscoverer);
