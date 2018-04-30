@@ -24,6 +24,7 @@ import org.benf.cfr.reader.util.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Similar to the static lifter, however this has to cope with the possibility that EVERY constructor
@@ -40,7 +41,7 @@ public class NonStaticLifter {
     public void liftNonStatics() {
 
         // All uninitialised non-static fields, in definition order.
-        LinkedList<ClassFileField> classFileFields = new LinkedList<ClassFileField>(Functional.filter(classFile.getFields(), new Predicate<ClassFileField>() {
+        Pair<List<ClassFileField>, List<ClassFileField>> fields =  Functional.partition(classFile.getFields(), new Predicate<ClassFileField>() {
             @Override
             public boolean test(ClassFileField in) {
                 if (in.getField().testAccessFlag(AccessFlag.ACC_STATIC)) return false;
@@ -49,7 +50,12 @@ public class NonStaticLifter {
                 // exactly the same as the one we're lifting, or we abort.
                 return true;
             }
-        }));
+        });
+        LinkedList<ClassFileField> classFileFields = new LinkedList<ClassFileField>(fields.getFirst());
+        Map<String, ClassFileField> other = MapFactory.newMap();
+        for (ClassFileField otherField : fields.getSecond()) {
+            other.put(otherField.getFieldName(), otherField);
+        }
         if (classFileFields.isEmpty()) return;
         Map<String, Pair<Integer, ClassFileField>> fieldMap = MapFactory.newMap();
         for (int x = 0, len = classFileFields.size(); x < len; ++x) {
@@ -107,8 +113,9 @@ public class NonStaticLifter {
          */
         int numConstructors = constructorCodeList.size();
         final List<Op04StructuredStatement> constructorCode = constructorCodeList.get(0);
+        if (constructorCode.isEmpty()) return; // can't happen.
+        Set<Expression> usedFvs = SetFactory.newSet();
         for (int x = 0; x < minSize; ++x) {
-            if (constructorCode.isEmpty()) return; // can't happen.
             StructuredStatement s1 = constructorCode.get(x).getStatement();
             for (int y = 1; y < numConstructors; ++y) {
                 StructuredStatement sOther = constructorCodeList.get(y).get(x).getStatement();
@@ -123,14 +130,25 @@ public class NonStaticLifter {
             StructuredAssignment structuredAssignment = (StructuredAssignment) s1;
             LValue lValue = structuredAssignment.getLvalue();
             if (!(lValue instanceof FieldVariable)) return;
-            if (!fromThisClass((FieldVariable) lValue)) return;
+            FieldVariable fieldVariable = (FieldVariable) lValue;
+            if (!fromThisClass(fieldVariable)) return;
 
             /*
              * Ok, every field before this (which has been initialised) is usable.  But nothing else....
+             * Unless it's synthetic!
              */
-            if (!tryLift((FieldVariable) lValue, structuredAssignment.getRvalue(), fieldMap)) {
+            Expression rValue = structuredAssignment.getRvalue();
+            if (!tryLift(fieldVariable, rValue, fieldMap, usedFvs)) {
+                ClassFileField f = other.get(fieldVariable.getFieldName());
+                if (f == null) return;
+                Field field = f.getField();
+                if (field.testAccessFlag(AccessFlag.ACC_SYNTHETIC) && !field.testAccessFlag(AccessFlag.ACC_STATIC)) {
+                    // we can't mark it as liftable, but we shouldn't block on it.
+                    continue;
+                }
                 return;
             }
+            usedFvs.add(fieldVariable.getObject());
             for (List<Op04StructuredStatement> constructorCodeLst1 : constructorCodeList) {
                 constructorCodeLst1.get(x).nopOut();
             }
@@ -143,11 +161,18 @@ public class NonStaticLifter {
         return fv.getOwningClassType().equals(classFile.getClassType());
     }
 
-    private boolean tryLift(FieldVariable lValue, Expression rValue, Map<String, Pair<Integer, ClassFileField>> fieldMap) {
+    private boolean tryLift(FieldVariable lValue, Expression rValue, Map<String, Pair<Integer, ClassFileField>> fieldMap,
+                            Set<Expression> usedFvs) {
         Pair<Integer, ClassFileField> thisField = fieldMap.get(lValue.getFieldName());
         if (thisField == null) return false;
         ClassFileField classFileField = thisField.getSecond();
-        int thisIdx = thisField.getFirst();
+        if (!hasLegitArgs(rValue, usedFvs)) return false;
+        // Ok, it doesn't use anything it shouldn't - change the initialiser.
+        classFileField.setInitialValue(rValue);
+        return true;
+    }
+
+    private boolean hasLegitArgs(Expression rValue, Set<Expression> usedFvs) {
         LValueUsageCollectorSimple usageCollector = new LValueUsageCollectorSimple();
         rValue.collectUsedLValues(usageCollector);
         for (LValue usedLValue : usageCollector.getUsedLValues()) {
@@ -156,15 +181,7 @@ public class NonStaticLifter {
                 continue;
             }
             if (usedLValue instanceof FieldVariable) {
-                // Is it a) defined before b) already has value?
-                FieldVariable usedFieldVariable = (FieldVariable) usedLValue;
-                if (!fromThisClass(usedFieldVariable)) return false;
-                Pair<Integer, ClassFileField> usedField = fieldMap.get(usedFieldVariable.getFieldName());
-                if (usedField == null) return false;
-                ClassFileField usedClassFileField = usedField.getSecond();
-                int usedIdx = usedField.getFirst();
-                if (usedIdx >= thisIdx) return false;
-                if (usedClassFileField.getInitialValue() == null) return false;
+                if (!usedFvs.contains(((FieldVariable) usedLValue).getObject())) return false;
                 continue;
             }
             if (usedLValue instanceof LocalVariable) {
@@ -179,8 +196,6 @@ public class NonStaticLifter {
             // Other lvalue - can't allow.
             return false;
         }
-        // Ok, it doesn't use anything it shouldn't - change the initialiser.
-        classFileField.setInitialValue(rValue);
         return true;
     }
 
