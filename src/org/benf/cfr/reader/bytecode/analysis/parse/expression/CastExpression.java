@@ -127,7 +127,9 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof CastExpression)) return false;
-        return child.equals(((CastExpression) o).child);
+        CastExpression other = (CastExpression) o;
+        if (!getInferredJavaType().getJavaTypeInstance().equals(other.getInferredJavaType().getJavaTypeInstance())) return false;
+        return child.equals(other.child);
     }
 
     @Override

@@ -6,6 +6,7 @@ import java.util.List;
 
 public class DecodedSwitchEntry {
     private final List<Integer> value;
+    // TODO : Not useful past 0p01->Op02 stage.  Create a different interface.
     private final int bytecodeTarget;
 
     public DecodedSwitchEntry(List<Integer> value, int bytecodeTarget) {
@@ -32,5 +33,9 @@ public class DecodedSwitchEntry {
         }
         sb.append(" -> ").append(bytecodeTarget);
         return sb.toString();
+    }
+
+    public boolean hasDefault() {
+        return value.contains(null);
     }
 }

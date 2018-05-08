@@ -17,6 +17,10 @@ public class MapFactory {
         return new IdentityHashMap<X, Y>();
     }
 
+    public static <X extends Object, Y extends Object> Map<X, Y> newIdentityLazyMap(UnaryFunction<X, Y> factory) {
+        return new LazyMap<X, Y>(MapFactory.<X, Y>newIdentityMap(), factory);
+    }
+
     public static <X extends Object, Y extends Object> TreeMap<X, Y> newTreeMap() {
         return new TreeMap<X, Y>();
     }

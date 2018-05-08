@@ -396,14 +396,7 @@ public class CodeAnalyser {
         // We then see if we can infer information from RHS <- LHS re generics, but make sure that we
         // don't do it over aggressively (see UntypedMapTest);
         GenericInferer.inferGenericObjectInfoFromCalls(op03SimpleParseNodes);
-
-        // Expand raw switch statements into more useful ones.
-        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, options);
-        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
-
-        // Remove 2nd (+) jumps in pointless jump chains.
-        Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
-
+        
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         if (aggressiveSizeReductions) {
@@ -416,6 +409,15 @@ public class CodeAnalyser {
         LValueProp.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
+        // Before we expand raw switches, try to spot a particularly nasty pattern that kotlin
+        // generates for string switches.
+        KotlinSwitchHandler.extractStringSwitches(method, op03SimpleParseNodes, bytecodeMeta);
+        // Expand raw switch statements into more useful ones.
+        SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, options);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
+
+        // Remove 2nd (+) jumps in pointless jump chains.
+        Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
         // Try to eliminate catch temporaries.
         op03SimpleParseNodes = Op03SimpleStatement.eliminateCatchTemporaries(op03SimpleParseNodes);
@@ -843,7 +845,7 @@ public class CodeAnalyser {
 
             // Replace with a more generic interface, etc.
 
-            new SwitchStringRewriter(options, classFileVersion).rewrite(block);
+            new SwitchStringRewriter(options, classFileVersion, bytecodeMeta).rewrite(block);
             new SwitchEnumRewriter(dcCommonState, classFileVersion, blockIdentifierFactory).rewrite(block);
 
             // These should logically be here, but the current versions are better!!

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
+import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
@@ -29,15 +30,19 @@ import java.util.Map;
 public class SwitchStringRewriter implements Op04Rewriter {
     private final Options options;
     private final ClassFileVersion classFileVersion;
+    private final BytecodeMeta bytecodeMeta;
 
-    public SwitchStringRewriter(Options options, ClassFileVersion classFileVersion) {
+    public SwitchStringRewriter(Options options, ClassFileVersion classFileVersion, BytecodeMeta bytecodeMeta) {
         this.options = options;
         this.classFileVersion = classFileVersion;
+        this.bytecodeMeta = bytecodeMeta;
     }
 
     @Override
     public void rewrite(Op04StructuredStatement root) {
-        if (!options.getOption(OptionsImpl.STRING_SWITCH, classFileVersion)) return;
+        if (!(options.getOption(OptionsImpl.STRING_SWITCH, classFileVersion)
+              || bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.STRING_SWITCHES))
+           ) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;
