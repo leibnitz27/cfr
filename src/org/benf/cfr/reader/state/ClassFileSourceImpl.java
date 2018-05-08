@@ -150,10 +150,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
             String protocol = url.getProtocol();
             // Strictly speaking, we could use this mechanism for pre-9 classes, but it's.... so wrong!
             if (!protocol.equals("jrt")) return null;
-
-            ClassLoader cl = ClassLoader.getSystemClassLoader();
-            if(cl == null) return null;
-
+            
             URLConnection uc;
             InputStream is;
             try {
