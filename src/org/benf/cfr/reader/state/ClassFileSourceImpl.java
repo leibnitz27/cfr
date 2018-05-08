@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -30,10 +31,6 @@ public class ClassFileSourceImpl implements ClassFileSource {
     private boolean unexpectedDirectory = false;
     private String pathPrefix = "";
     private String classRemovePrefix = "";
-    private static final Method ReadAllBytes;
-    private static final Method GetPath;
-    private static final Object ReflectiveFs;
-    private static final boolean ReflectionCapable;
     private static final boolean JrtPresent = CheckJrt();
 
     private static boolean CheckJrt() {
@@ -142,40 +139,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
         }
     }
 
-    static {
-        Method readAllBytes = null;
-        Method getPath = null;
-        Object reflectiveFs = null;
-        boolean canReflect = false;
-        try {
-            Class filesClass = Class.forName("java.nio.file.Files");
-            Class fsystemsClass = Class.forName("java.nio.file.FileSystems");
-            Class fsClass = Class.forName("java.nio.file.FileSystem");
-            Class uriClass = Class.forName("java.net.URI");
-            Class pathClass = Class.forName("java.nio.file.Path");
-            readAllBytes = filesClass.getMethod("readAllBytes", pathClass);
-            Method create = uriClass.getMethod("create", String.class);
-            Method getFileSystem = fsystemsClass.getMethod("getFileSystem", uriClass);
-            getPath = fsClass.getMethod("getPath", String.class, String[].class);
-            Object uri = create.invoke(null, "jrt:/");
-            reflectiveFs = getFileSystem.invoke(null, uri);
-            canReflect = true;
-        } catch (Exception e) {
-        }
-        ReadAllBytes = readAllBytes;
-        ReflectiveFs = reflectiveFs;
-        GetPath = getPath;
-        ReflectionCapable = canReflect;
-    }
-
-    /*
-     * This is a world of hideous disgustingness :)
-     * I want to keep CFR j6 compatible, but the reflection required to use jrt is only present in 8+.
-     * So, use the reflection by reflection ;)
-     */
     private byte[] getContentByFromReflectedClass(final String inputPath) {
-        if (!ReflectionCapable) return null;
-
         try {
             String classPath = inputPath.replace("/", ".").substring(0, inputPath.length() - 6);
             Class cls = Class.forName(classPath);
@@ -186,13 +150,34 @@ public class ClassFileSourceImpl implements ClassFileSource {
             String protocol = url.getProtocol();
             // Strictly speaking, we could use this mechanism for pre-9 classes, but it's.... so wrong!
             if (!protocol.equals("jrt")) return null;
-            String s = "/modules" + url.getPath();
-            Object path = GetPath.invoke(ReflectiveFs, s, new String[0]);
-            Object bytes = ReadAllBytes.invoke(null, path);
-            return (byte[])bytes;
+
+            ClassLoader cl = ClassLoader.getSystemClassLoader();
+            if(cl == null) return null;
+
+            URLConnection uc;
+            InputStream is;
+            try {
+                uc = url.openConnection();
+                uc.connect();
+                is = uc.getInputStream();
+            } catch(IOException ioe) {
+                return null;
+            }
+
+            int len = uc.getContentLength();
+
+            if(len >= 0) {
+                byte[] b = new byte[len];
+                int i = len;
+                while(i > 0) {
+                    if(i < (i -= is.read(b, len - i, i))) i = -1;
+                }
+                if(i == 0) return b;
+            }
         } catch (Exception e) {
             return null;
         }
+        return null;
     }
 
     private byte[] getInternalContent(final String inputPath) throws IOException {
