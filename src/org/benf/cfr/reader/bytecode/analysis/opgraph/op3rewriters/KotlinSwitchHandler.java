@@ -56,30 +56,33 @@ public class KotlinSwitchHandler {
      * Instead, try to spot this pattern EXPLICITLY, and split it up into two switch statements, thus
      * rebuilding COIN code!
      */
-    public static void extractStringSwitches(Method method, List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
+    public static List<Op03SimpleStatement> extractStringSwitches(Method method, List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
         List<Op03SimpleStatement> switchStatements = Functional.filter(in, new TypeFilter<RawSwitchStatement>(RawSwitchStatement.class));
+        boolean action = false;
         for (Op03SimpleStatement swatch : switchStatements) {
-            extractStringSwitch(swatch, in, bytecodeMeta);
+            action |= extractStringSwitch(swatch, in, bytecodeMeta);
         }
+        if (!action) return in;
+        return Cleaner.sortAndRenumber(in);
     }
 
     // Everything except the default action should have a set of
     //   if (str.equals("aa")) goto IMPL1;
     // Note that we are dealing with RAW switches here, so have to decode default information manually.
-    private static void extractStringSwitch(Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
+    private static boolean extractStringSwitch(Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
         RawSwitchStatement rawSwitchStatement = (RawSwitchStatement)swatch.getStatement();
         Expression switchOn = rawSwitchStatement.getSwitchOn();
 
         WildcardMatch wcm = new WildcardMatch();
         WildcardMatch.ExpressionWildcard testObj = wcm.getExpressionWildCard("obj");
         WildcardMatch.MemberFunctionInvokationWildcard test = wcm.getMemberFunction("test", "hashCode", testObj);
-        if (!test.equals(switchOn)) return;
+        if (!test.equals(switchOn)) return false;
 
         Expression obj = testObj.getMatch();
         DecodedSwitch switchData = rawSwitchStatement.getSwitchData();
         List<DecodedSwitchEntry> jumpTargets = switchData.getJumpTargets();
         List<Op03SimpleStatement> targets = swatch.getTargets();
-        if (jumpTargets.size() != targets.size()) return;
+        if (jumpTargets.size() != targets.size()) return false;
         int defaultBranchIdx = -1;
         for (int x=0;x<jumpTargets.size();++x) {
             if (jumpTargets.get(x).hasDefault()) {
@@ -87,7 +90,7 @@ public class KotlinSwitchHandler {
                 break;
             }
         }
-        if (defaultBranchIdx == -1) return;
+        if (defaultBranchIdx == -1) return false;
         Op03SimpleStatement defaultTarget = targets.get(defaultBranchIdx);
 
         IfStatement testIf = new IfStatement(new ComparisonOperation(wcm.getMemberFunction("equals", "equals", obj,
@@ -124,7 +127,7 @@ public class KotlinSwitchHandler {
                     if (currentCaseLoc.getTargets().get(0) == defaultTarget) {
                         break;
                     } else {
-                        return;
+                        return false;
                     }
                 }
                 wcm.reset();
@@ -150,7 +153,7 @@ public class KotlinSwitchHandler {
                     }
                 }
                 if (nextCaseLoc == null) {
-                    return;
+                    return false;
                 }
                 if (nextCaseLoc == defaultTarget) {
                     break;
@@ -221,7 +224,7 @@ public class KotlinSwitchHandler {
         List<Op03SimpleStatement> secondSwitchTargets = ListFactory.newList(reTargets.keySet());
         Collections.sort(secondSwitchTargets, new CompareByIndex());
         Op03SimpleStatement firstCase2 = secondSwitchTargets.get(0);
-        int instrIdx = in.indexOf(firstCase2);
+
         /*
          * Build a new switch entry for each of the remapped one.
          */
@@ -261,7 +264,7 @@ public class KotlinSwitchHandler {
         }
         secondarySwitchStm.addTarget(defaultTarget);
         defaultTarget.addSource(secondarySwitchStm);
-        in.add(instrIdx, secondarySwitchStm);
+        in.add(secondarySwitchStm);
 
         // Place a nop at the end of the first switch.
         Op03SimpleStatement nopHolder = new Op03SimpleStatement(firstCase2.getBlockIdentifiers(), new Nop(), secondarySwitchStm.getIndex().justBefore());
@@ -281,12 +284,12 @@ public class KotlinSwitchHandler {
                 newJmp.addSource(from);
                 newJmp.addTarget(nopHolder);
                 // Super inefficient.  Should sort after.
-                in.add(in.indexOf(from) + 1, newJmp);
+                in.add(newJmp);
                 nopHolder.addSource(newJmp);
             }
         }
 
-        in.add(instrIdx, nopHolder);
+        in.add(nopHolder);
         nopHolder.addTarget(secondarySwitchStm);
         secondarySwitchStm.addSource(nopHolder);
         defaultTarget.removeSource(swatch);
@@ -305,8 +308,9 @@ public class KotlinSwitchHandler {
         init.addTarget(swatch);
         swatch.getSources().clear();
         swatch.addSource(init);
-        in.add(in.indexOf(swatch), init);
+        in.add(init);
         bytecodeMeta.set(BytecodeMeta.CodeInfoFlag.STRING_SWITCHES);
+        return true;
     }
 
     private static class DistinctSwitchTarget {
