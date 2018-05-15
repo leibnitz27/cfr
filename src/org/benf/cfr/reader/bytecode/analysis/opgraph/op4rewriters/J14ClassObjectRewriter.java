@@ -112,7 +112,7 @@ public class J14ClassObjectRewriter {
                                 classType,
                                 TypeConstants.CLASS,
                                 null,
-                                ListFactory.<Expression>newList(wcm.getExpressionWildCard("classString")))
+                                ListFactory.<Expression>newImmutableList(wcm.getExpressionWildCard("classString")))
                         ),
                 staticExpression);
 

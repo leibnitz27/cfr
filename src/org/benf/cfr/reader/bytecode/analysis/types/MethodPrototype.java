@@ -422,7 +422,7 @@ public class MethodPrototype implements TypeUsageCollectable {
             throw new ConfusedCFRException("expr arg size mismatch");
         }
         if (object != null && classFile != null && !MiscConstants.INIT_METHOD.equals(name)) {
-            object.getInferredJavaType().noteUseAs(classFile.getClassType());
+            object.getInferredJavaType().collapseTypeClash().noteUseAs(classFile.getClassType());
         }
 
 

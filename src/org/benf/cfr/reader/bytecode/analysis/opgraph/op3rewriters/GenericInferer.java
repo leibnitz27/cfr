@@ -6,10 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ExpressionStatement;
-import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericPlaceholderTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 

@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.MutableOptions;
 import org.benf.cfr.reader.util.getopt.Options;
 
@@ -13,11 +12,11 @@ public class RecoveryOptions {
     private final List<RecoveryOption<?>> recoveryOptions;
 
     public RecoveryOptions(RecoveryOption<?>... recoveryOptions) {
-        this.recoveryOptions = ListFactory.newList(recoveryOptions);
+        this.recoveryOptions = ListFactory.newImmutableList(recoveryOptions);
     }
 
     public RecoveryOptions(RecoveryOptions prev, RecoveryOption<?>... recoveryOptions) {
-        List<RecoveryOption<?>> recoveryOptionList = ListFactory.newList(recoveryOptions);
+        List<RecoveryOption<?>> recoveryOptionList = ListFactory.newImmutableList(recoveryOptions);
         this.recoveryOptions = ListFactory.newList();
         this.recoveryOptions.addAll(prev.recoveryOptions);
         this.recoveryOptions.addAll(recoveryOptionList);

@@ -6,7 +6,6 @@ import org.benf.cfr.reader.util.functors.BinaryProcedure;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 public class GraphVisitorDFS<T> implements GraphVisitor<T> {
@@ -18,7 +17,7 @@ public class GraphVisitorDFS<T> implements GraphVisitor<T> {
     private boolean aborted = false;
 
     public GraphVisitorDFS(T first, BinaryProcedure<T, GraphVisitor<T>> callee) {
-        this.start = ListFactory.newList(first);
+        this.start = ListFactory.newImmutableList(first);
         this.callee = callee;
     }
 

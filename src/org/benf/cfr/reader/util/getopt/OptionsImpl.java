@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.util.getopt;
 
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
 
@@ -433,7 +432,7 @@ public class OptionsImpl implements Options {
         @Override
         @SuppressWarnings("unchecked")
         public List<? extends ArgumentParam<?, ?>> getArguments() {
-            return ListFactory.newList(SHOWOPS, ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, ARRAY_ITERATOR,
+            return ListFactory.newImmutableList(SHOWOPS, ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,

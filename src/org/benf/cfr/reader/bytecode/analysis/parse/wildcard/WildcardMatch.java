@@ -21,9 +21,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.lang.ref.Reference;
 import java.util.*;
 
 /**
@@ -236,7 +234,7 @@ public class WildcardMatch {
     }
 
     public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, Expression object, Expression... args) {
-        return getMemberFunction(name, methodname, false, object, ListFactory.<Expression>newList(args));
+        return getMemberFunction(name, methodname, false, object, ListFactory.<Expression>newImmutableList(args));
     }
 
     /* When matching a function invokation, we don't really have all the details to construct a plausible
@@ -256,7 +254,7 @@ public class WildcardMatch {
     }
 
     public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, JavaTypeInstance returnType, String methodname, Expression... args) {
-        return getStaticFunction(name, clazz, returnType, methodname, ListFactory.<Expression>newList(args));
+        return getStaticFunction(name, clazz, returnType, methodname, ListFactory.<Expression>newImmutableList(args));
     }
 
     /* When matching a function invokation, we don't really have all the details to construct a plausible

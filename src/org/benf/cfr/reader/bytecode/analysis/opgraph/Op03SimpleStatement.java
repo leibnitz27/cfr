@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheckImpl;
@@ -1354,8 +1355,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         AssignmentSimple a2 = (AssignmentSimple)stm2;
         LValue lv = a1.getCreatedLValue();
         if (!lv.equals(a2.getCreatedLValue())) return false;
-        Expression e1 = a1.getRValue();
-        Expression e2 = a2.getRValue();
         ConditionalExpression condition = innerIf.getCondition().getNegated();
         condition = condition.simplify();
         ifStatement.replaceStatement(new AssignmentSimple(lv, new TernaryExpression(condition, a1.getRValue(), a2.getRValue())));
@@ -1452,7 +1451,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         IfStatement if2 = (IfStatement) ifStatement2.containedStatement;
         IfStatement if3 = (IfStatement) ifStatement3.containedStatement;
 
-        ConditionalExpression newCond = new BooleanExpression(new TernaryExpression(
+        ConditionalExpression newCond = new BooleanExpression(
+                new TernaryExpression(
                 if1.getCondition().getNegated().simplify(),
                 if2.getCondition().getNegated().simplify(),
                 if3.getCondition().getNegated().simplify())).getNegated();

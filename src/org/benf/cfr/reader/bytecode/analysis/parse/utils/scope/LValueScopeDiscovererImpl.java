@@ -87,6 +87,10 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
 
     @Override
     public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value) {
+
+        // Ensure type clashes are collapsed, otherwise PairTest3 gets duplicate definitions.
+        localVariable.getInferredJavaType().collapseTypeClash();
+
         // Note that just because two local variables in the same scope have the same name, they're not NECESSARILY
         // the same variable - if we've reused a stack location, and don't have any naming hints, the name will have
         // been re-used.  This is why we also have to verify that the type of the new assignment is the same as the type
@@ -303,7 +307,7 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
             if (previousDef != null) return;
 
             // If it's out of scope, we have a variable defined but only assigned in an inner scope, but used in the
-            // outer scope later!
+            // outer scope later.... or EARLIER. (PairTest3b)
             InferredJavaType inferredJavaType = lValue.getInferredJavaType();
             ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, inferredJavaType, name);
             earliestDefinition.put(name, scopeDefinition);

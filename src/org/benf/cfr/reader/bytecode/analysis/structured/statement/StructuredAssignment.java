@@ -95,7 +95,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
     @Override
     public List<LValue> findCreatedHere() {
         if (creator) {
-            return ListFactory.newList(lvalue);
+            return ListFactory.newImmutableList(lvalue);
         } else {
             return null;
         }

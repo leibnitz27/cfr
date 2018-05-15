@@ -1,7 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.types.discovery;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import com.sun.tools.internal.ws.wsdl.document.soap.SOAPUse;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.*;
@@ -46,6 +47,7 @@ public class InferredJavaType {
         EXCEPTION,
         STRING_TRANSFORM,
         IMPROVED_ITERATION,
+        TERNARY,
         RESOLVE_CLASH
     }
 
@@ -59,37 +61,39 @@ public class InferredJavaType {
     }
 
     private interface IJTInternal {
-        public RawJavaType getRawType();
+        RawJavaType getRawType();
 
-        public JavaTypeInstance getJavaTypeInstance();
+        JavaTypeInstance getJavaTypeInstance();
 
-        public Source getSource();
+        Source getSource();
 
-        public int getLocalId();
+        int getLocalId();
 
-        public int getFinalId();
+        int getFinalId();
 
-        public ClashState getClashState();
+        boolean usesFinalId(int id);
 
-        public void collapseTypeClash();
+        ClashState getClashState();
 
-        public void mkDelegate(IJTInternal newDelegate);
+        void collapseTypeClash();
 
-        public void forceType(JavaTypeInstance rawJavaType, boolean ignoreLock);
+        void mkDelegate(IJTInternal newDelegate);
 
-        public void markKnownBaseClass(JavaTypeInstance knownBase);
+        void forceType(JavaTypeInstance rawJavaType, boolean ignoreLock);
 
-        public JavaTypeInstance getKnownBaseType();
+        void markKnownBaseClass(JavaTypeInstance knownBase);
 
-        public void markClashState(ClashState newClashState);
+        JavaTypeInstance getKnownBaseType();
 
-        public boolean isLocked();
+        void markClashState(ClashState newClashState);
 
-        public IJTInternal getFirstLocked();
+        boolean isLocked();
 
-        public int getTaggedBytecodeLocation();
+        IJTInternal getFirstLocked();
 
-        public void setTaggedBytecodeLocation(int location);
+        int getTaggedBytecodeLocation();
+
+        void setTaggedBytecodeLocation(int location);
     }
 
     private static class IJTInternal_Clash implements IJTInternal {
@@ -107,25 +111,23 @@ public class InferredJavaType {
             this.clashes = ListFactory.newList(clashes);
         }
 
-        private static Map<JavaTypeInstance, JavaGenericRefTypeInstance> getMatches(List<IJTInternal> clashes) {
-            Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = MapFactory.newMap();
-            {
-                IJTInternal clash = clashes.get(0);
-                JavaTypeInstance clashType = clash.getJavaTypeInstance();
-                BindingSuperContainer otherSupers = clashType.getBindingSupers();
-                if (otherSupers != null) {
-                    Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
-                    matches.putAll(boundSupers);
-                }
+        private static Map<JavaTypeInstance, JavaGenericRefTypeInstance> getClashMatches(List<IJTInternal> clashes) {
+            List<JavaTypeInstance> clashTypes = ListFactory.newList();
+            for (IJTInternal clash : clashes) {
+                clashTypes.add(clash.getJavaTypeInstance());
             }
+            return getMatches(clashTypes);
+        }
+
+        private static Map<JavaTypeInstance, JavaGenericRefTypeInstance> getMatches(List<JavaTypeInstance> clashes) {
+            Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = getBoundSuperClasses(clashes.get(0));
             for (int x = 1, len = clashes.size(); x < len; ++x) {
-                IJTInternal clash = clashes.get(x);
-                JavaTypeInstance clashType = clash.getJavaTypeInstance();
+                JavaTypeInstance clashType = clashes.get(x);
                 BindingSuperContainer otherSupers = clashType.getBindingSupers();
                 if (otherSupers == null) {
                     continue;
                 }
-                Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
+                Map<? extends JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
                 Iterator<Map.Entry<JavaTypeInstance, JavaGenericRefTypeInstance>> iterator = matches.entrySet().iterator();
                 while (iterator.hasNext()) {
                     Map.Entry<JavaTypeInstance, JavaGenericRefTypeInstance> entry = iterator.next();
@@ -140,16 +142,12 @@ public class InferredJavaType {
         private static IJTInternal mkClash(IJTInternal delegate1, IJTInternal delegate2) {
             List<IJTInternal> clashes = ListFactory.newList();
             if (delegate1 instanceof IJTInternal_Clash) {
-                for (IJTInternal clash : ((IJTInternal_Clash) delegate1).clashes) {
-                    clashes.add(clash);
-                }
+                clashes.addAll(((IJTInternal_Clash) delegate1).clashes);
             } else {
                 clashes.add(delegate1);
             }
             if (delegate2 instanceof IJTInternal_Clash) {
-                for (IJTInternal clash : ((IJTInternal_Clash) delegate2).clashes) {
-                    clashes.add(clash);
-                }
+                clashes.addAll(((IJTInternal_Clash) delegate2).clashes);
             } else {
                 clashes.add(delegate2);
             }
@@ -157,9 +155,15 @@ public class InferredJavaType {
             /*
              * Find the common ancestors amongst the clashes.
              */
-            Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = getMatches(clashes);
+            Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = getClashMatches(clashes);
             if (matches.isEmpty()) {
-                return new IJTInternal_Impl(TypeConstants.OBJECT, Source.RESOLVE_CLASH, true);
+                // If there's nothing, then try actually collapsing, which has better logic, however prefers
+                // concrete classes, so 2 lists would collapse to AbstractList.
+                IJTInternal_Clash tmp = new IJTInternal_Clash(clashes);
+                tmp.collapseTypeClash(false);
+                if (tmp.resolved) {
+                    return new IJTInternal_Impl(tmp.getJavaTypeInstance(), Source.RESOLVE_CLASH, true);
+                }
             }
             if (matches.size() == 1) {
                 return new IJTInternal_Impl(matches.keySet().iterator().next(), Source.RESOLVE_CLASH, true);
@@ -169,13 +173,41 @@ public class InferredJavaType {
 
         @Override
         public void collapseTypeClash() {
-            if (resolved) return;
+            collapseTypeClash(true);
+        }
 
+        private boolean collapseTypeClash(boolean force) {
+            if (resolved) return true;
+
+            List<JavaTypeInstance> clashTypes = ListFactory.newList();
+            int arraySize = clashes.get(0).getJavaTypeInstance().getNumArrayDimensions();
+            for (IJTInternal clash : clashes) {
+                JavaTypeInstance clashType = clash.getJavaTypeInstance();
+                if (clashType.getNumArrayDimensions() != arraySize) arraySize = -1;
+                clashTypes.add(clashType);
+            }
+            if (arraySize == 1) {
+                for (int x=0;x<clashTypes.size();++x) {
+                    clashTypes.set(x, clashTypes.get(x).removeAnArrayIndirection());
+                }
+            }
+            Pair<Boolean, JavaTypeInstance> newlyResolved = collapseTypeClash2(clashTypes);
+            if (newlyResolved == null) return false;
+
+            // Ignore the first part of the pair - we have to resolve here, so do our best.
+            if (!newlyResolved.getFirst() && !force) return false;
+            resolved = true;
+            type = newlyResolved.getSecond();
+            if (arraySize == 1) {
+                type = new JavaArrayTypeInstance(1, type);
+            }
+            return true;
+        }
+
+        private static Pair<Boolean, JavaTypeInstance> collapseTypeClash2(List<JavaTypeInstance> clashes) {
             Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = getMatches(clashes);
             if (matches.isEmpty()) {
-                type = TypeConstants.OBJECT;
-                resolved = true;
-                return;
+                return Pair.<Boolean, JavaTypeInstance>make(false, TypeConstants.OBJECT);
             }
 
             /*
@@ -183,40 +215,73 @@ public class InferredJavaType {
              *
              * We now want to remove any which are less derived.
              */
-            List<JavaTypeInstance> poss = ListFactory.newList(matches.keySet());
-            boolean effect = true;
-            do {
-                effect = false;
-                for (JavaTypeInstance pos : poss) {
-                    BindingSuperContainer superContainer = pos.getBindingSupers();
-                    if (superContainer == null) continue;
-                    Set<JavaRefTypeInstance> supers = SetFactory.newSet(superContainer.getBoundSuperClasses().keySet());
-                    // but don't remove the actual type.
-                    supers.remove(pos);
-                    if (poss.removeAll(supers)) {
-                        effect = true;
-                        break;
-                    }
-                }
-            } while (effect);
+            List<JavaTypeInstance> poss = getMostDerivedType(matches.keySet());
             /*
              * If we still have >1 left, we have to pick one.  Prefer a base class to an interface?
              */
-            JavaTypeInstance oneClash = clashes.get(0).getJavaTypeInstance();
-            Map<JavaRefTypeInstance, BindingSuperContainer.Route> routes = oneClash.getBindingSupers().getBoundSuperRoute();
+            JavaTypeInstance oneClash = clashes.get(0);
+            Map<? extends JavaTypeInstance, BindingSuperContainer.Route> routes = oneClash.getBindingSupers().getBoundSuperRoute();
             if (poss.isEmpty()) {
                 // If we ended up with nothing, we've been stupidly aggressive.  Take a guess.
                 poss = ListFactory.newList(matches.keySet());
             }
             for (JavaTypeInstance pos : poss) {
                 if (BindingSuperContainer.Route.EXTENSION == routes.get(pos)) {
-                    type = pos;
-                    resolved = true;
-                    return;
+                    return Pair.<Boolean, JavaTypeInstance>make(true, pos);
                 }
             }
-            type = poss.get(0);
-            resolved = true;
+            JavaTypeInstance result = poss.get(0);
+
+            JavaGenericRefTypeInstance rhs = matches.get(result);
+            betterGen : if (rhs != null) {
+                // See PairTest3.
+                JavaTypeInstance bindingFor = GenericTypeBinder.extractBindings(rhs, oneClash).getBindingFor(rhs);
+                if (bindingFor != null) {
+                    if (bindingFor instanceof JavaGenericRefTypeInstance) {
+                        JavaGenericRefTypeInstance genericBindingFor = (JavaGenericRefTypeInstance) bindingFor;
+                        List<List<JavaTypeInstance>> clashSubs = ListFactory.newList();
+                        for (JavaTypeInstance typ : genericBindingFor.getGenericTypes()) {
+                            clashSubs.add(ListFactory.newList(typ));
+                        }
+                        for (int i = 1; i < clashes.size(); ++i) {
+                            JavaTypeInstance bindingFor2 = GenericTypeBinder.extractBindings(rhs, clashes.get(i)).getBindingFor(rhs);
+                            if (!(bindingFor2 instanceof JavaGenericRefTypeInstance)) {
+                                break betterGen;
+                            }
+                            JavaGenericRefTypeInstance gr2 = (JavaGenericRefTypeInstance)bindingFor2;
+                            List<JavaTypeInstance> thisClashSubs = gr2.getGenericTypes();
+                            if (thisClashSubs.size() != clashSubs.size()) {
+                                break betterGen;
+                            }
+                            for (int j=0;j<clashSubs.size();++j) {
+                                List<JavaTypeInstance> clashSubsPosn = clashSubs.get(j);
+                                if (!clashSubsPosn.get(0).equals(thisClashSubs.get(j))) {
+                                    clashSubsPosn.add(thisClashSubs.get(j));
+                                }
+                            }
+                        }
+                        List<JavaTypeInstance> resolvedSubs = ListFactory.newList();
+                        //noinspection ForLoopReplaceableByForEach
+                        for (int i = 0;i < clashSubs.size();++i) {
+                            List<JavaTypeInstance> posSub = clashSubs.get(i);
+                            if (posSub.size() == 1) {
+                                resolvedSubs.add(posSub.get(0));
+                            } else {
+                                /*
+                                 * Let's recurse again!
+                                 */
+                                JavaTypeInstance reRes = InferredJavaType.mkClash(posSub).collapseTypeClash().getJavaTypeInstance();
+                                resolvedSubs.add(reRes);
+                            }
+                        }
+                        bindingFor = new JavaGenericRefTypeInstance(genericBindingFor.getTypeInstance(), resolvedSubs);
+
+                        result = bindingFor;
+                    }
+                }
+            }
+
+            return Pair.make(true, result);
         }
 
         @Override
@@ -255,6 +320,16 @@ public class InferredJavaType {
         @Override
         public int getFinalId() {
             return id;
+        }
+
+        @Override
+        public boolean usesFinalId(int id) {
+            if (this.id == id) return true;
+            if (resolved) return false;
+            for (IJTInternal internal : clashes) {
+                if (internal.usesFinalId(id)) return true;
+            }
+            return false;
         }
 
         @Override
@@ -320,6 +395,26 @@ public class InferredJavaType {
             }
         }
 
+    }
+
+    private static List<JavaTypeInstance> getMostDerivedType(Set<JavaTypeInstance> types) {
+        List<JavaTypeInstance> poss = ListFactory.newList(types);
+        boolean effect;
+        do {
+            effect = false;
+            for (JavaTypeInstance pos : poss) {
+                BindingSuperContainer superContainer = pos.getBindingSupers();
+                if (superContainer == null) continue;
+                Set<? extends JavaTypeInstance> supers = SetFactory.newSet(superContainer.getBoundSuperClasses().keySet());
+                // but don't remove the actual type.
+                supers.remove(pos);
+                if (poss.removeAll(supers)) {
+                    effect = true;
+                    break;
+                }
+            }
+        } while (effect);
+        return poss;
     }
 
     private static class IJTInternal_Impl implements IJTInternal {
@@ -404,6 +499,15 @@ public class InferredJavaType {
                 return delegate.getFinalId();
             } else {
                 return id;
+            }
+        }
+
+        @Override
+        public boolean usesFinalId(int id) {
+            if (isDelegate) {
+                return delegate.usesFinalId(id);
+            } else {
+                return this.id == id;
             }
         }
 
@@ -512,12 +616,36 @@ public class InferredJavaType {
         value = clash;
     }
 
+    private static InferredJavaType mkClash(List<JavaTypeInstance> types) {
+        JavaTypeInstance[] arr = types.toArray(new JavaTypeInstance[0]);
+        return mkClash(arr);
+    }
+
+    public static InferredJavaType combineOrClash(InferredJavaType t1, InferredJavaType t2) {
+        if (t1.getJavaTypeInstance().equals(t2.getJavaTypeInstance())) {
+            t1.chain(t2);
+            return t1;
+        }
+
+        return mkClash(t1.getJavaTypeInstance(), t2.getJavaTypeInstance());
+    }
+
     public static InferredJavaType mkClash(JavaTypeInstance... types) {
         List<IJTInternal> ints = ListFactory.newList();
         for (JavaTypeInstance type : types) {
             ints.add(new IJTInternal_Impl(type, Source.UNKNOWN, false));
         }
         return new InferredJavaType(new IJTInternal_Clash(ints));
+    }
+
+    private static Map<JavaTypeInstance, JavaGenericRefTypeInstance> getBoundSuperClasses(JavaTypeInstance clashType) {
+        Map<JavaTypeInstance, JavaGenericRefTypeInstance> matches = MapFactory.newMap();
+        BindingSuperContainer otherSupers = clashType.getBindingSupers();
+        if (otherSupers != null) {
+            Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
+            matches.putAll(boundSupers);
+        }
+        return matches;
     }
 
     public Source getSource() {
@@ -541,13 +669,14 @@ public class InferredJavaType {
     public void noteUseAs(JavaTypeInstance type) {
         if (value.getClashState() == ClashState.Clash) {
             BindingSuperContainer bindingSuperContainer = getJavaTypeInstance().getBindingSupers();
-            if (bindingSuperContainer.containsBase(type.getDeGenerifiedType())) {
+            if (bindingSuperContainer != null && bindingSuperContainer.containsBase(type.getDeGenerifiedType())) {
                 value.forceType(type, false);
                 value.markClashState(ClashState.Resolved);
             }
         }
     }
 
+    @SuppressWarnings("unused")
     public void forceType(JavaTypeInstance type, boolean ignoreLockIfResolveClash) {
         boolean ignoreLock = (value.isLocked() && value.getSource() == Source.RESOLVE_CLASH);
         value.forceType(type, ignoreLock);
@@ -557,8 +686,9 @@ public class InferredJavaType {
         return value.getClashState() == ClashState.Clash;
     }
 
-    public void collapseTypeClash() {
+    public InferredJavaType collapseTypeClash() {
         value.collapseTypeClash();
+        return this;
     }
 
     public int getLocalId() {
@@ -576,7 +706,7 @@ public class InferredJavaType {
     /*
      * For now, we know these two bases are identical.
      */
-    private boolean checkGenericCompatibility(JavaGenericRefTypeInstance thisType, JavaGenericRefTypeInstance otherType) {
+    private static boolean checkGenericCompatibility(JavaGenericRefTypeInstance thisType, JavaGenericRefTypeInstance otherType) {
         List<JavaTypeInstance> thisTypes = thisType.getGenericTypes();
         List<JavaTypeInstance> otherTypes = otherType.getGenericTypes();
         if (thisTypes.size() != otherTypes.size()) return true; // lost already.
@@ -594,7 +724,15 @@ public class InferredJavaType {
         return checkBaseCompatibility(getJavaTypeInstance(), otherType);
     }
 
-    private boolean checkBaseCompatibility(JavaTypeInstance thisType, JavaTypeInstance otherType) {
+    @SuppressWarnings("SimplifiableIfStatement")
+    private static boolean checkBaseCompatibility(JavaTypeInstance thisType, JavaTypeInstance otherType) {
+
+        if (thisType instanceof JavaArrayTypeInstance && otherType instanceof JavaArrayTypeInstance) {
+            if (otherType.getNumArrayDimensions() == thisType.getNumArrayDimensions()) {
+                thisType = thisType.getArrayStrippedType();
+                otherType = otherType.getArrayStrippedType();
+            }
+        }
 
         if (thisType instanceof JavaGenericPlaceholderTypeInstance || otherType instanceof JavaGenericPlaceholderTypeInstance) {
             return (thisType.equals(otherType));
@@ -674,7 +812,7 @@ public class InferredJavaType {
     }
 
     private static void mkDelegate(IJTInternal a, IJTInternal b) {
-        if (a.getFinalId() != b.getFinalId()) {
+        if (!b.usesFinalId(a.getFinalId())) {
             a.mkDelegate(b);
         }
     }
@@ -734,7 +872,6 @@ public class InferredJavaType {
 
         InferredJavaType litType = null;
         InferredJavaType betterType = null;
-        Expression litExp = null;
         BoolPair whichLit = BoolPair.get(
                 a.getSource() == InferredJavaType.Source.LITERAL,
                 b.getSource() == InferredJavaType.Source.LITERAL);
@@ -950,9 +1087,7 @@ public class InferredJavaType {
     // Ok - this type has failed - has there been any useful known base?
     public void applyKnownBaseType() {
         JavaTypeInstance type = value.getKnownBaseType();
-        if (type == null) {
-            return;
-        } else {
+        if (type != null) {
             value.forceType(type, false);
         }
     }

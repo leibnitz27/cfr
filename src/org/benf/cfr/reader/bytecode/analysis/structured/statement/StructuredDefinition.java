@@ -68,7 +68,7 @@ public class StructuredDefinition extends AbstractStructuredStatement {
 
     @Override
     public List<LValue> findCreatedHere() {
-        return ListFactory.newList(scopedEntity);
+        return ListFactory.newImmutableList(scopedEntity);
     }
 
     @Override

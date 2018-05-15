@@ -20,7 +20,7 @@ public class CompoundStatement extends AbstractStatement {
     private List<Statement> statements;
 
     public CompoundStatement(Statement... statements) {
-        this.statements = ListFactory.newList(statements);
+        this.statements = ListFactory.newImmutableList(statements);
     }
 
     @Override

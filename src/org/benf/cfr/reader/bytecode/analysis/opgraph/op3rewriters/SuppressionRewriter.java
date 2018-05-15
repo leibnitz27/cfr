@@ -10,15 +10,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /*
@@ -97,7 +92,7 @@ public class SuppressionRewriter {
         Statement suppression = new ExpressionStatement(
                 wcm.getMemberFunction("suppress", "addSuppressed", false,
                         new LValueExpression(wcm.getLValueWildCard("suppressor")),
-                        ListFactory.<Expression>newList(
+                        ListFactory.<Expression>newImmutableList(
                                 new CastExpression(new InferredJavaType(TypeConstants.THROWABLE, InferredJavaType.Source.EXPRESSION), new LValueExpression(caught))
                         )
                 )

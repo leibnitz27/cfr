@@ -96,7 +96,7 @@ public class ArrayIterRewriter implements Op04Rewriter {
                                         new CollectMatch("for", new StructuredFor(
                                                 new ComparisonOperation(i$, len$, CompOp.LT),
                                                 new AssignmentSimple(i$_lv, new Literal(TypedLiteral.getInt(0))),
-                                                ListFactory.<AbstractAssignmentExpression>newList(new ArithmeticPreMutationOperation(i$_lv, ArithOp.PLUS)),
+                                                ListFactory.<AbstractAssignmentExpression>newImmutableList(new ArithmeticPreMutationOperation(i$_lv, ArithOp.PLUS)),
                                                 null, wcm.getBlockIdentifier("doblockident")
                                         )),
                                         new BeginBlock(wcm.getBlockWildcard("forblock")),

@@ -7,8 +7,16 @@ public class ListFactory {
         return new ArrayList<X>();
     }
 
-    public static <X extends Object> List<X> newList(X... original) {
+    public static <X extends Object> List<X> newImmutableList(X... original) {
         return Arrays.asList(original);
+    }
+
+    public static <X extends Object> List<X> newList(X... original) {
+        List<X> res = ListFactory.newList();
+        for (X x : original) {
+            res.add(x);
+        }
+        return res;
     }
 
     public static <X extends Object> List<X> newList(Collection<X> original) {

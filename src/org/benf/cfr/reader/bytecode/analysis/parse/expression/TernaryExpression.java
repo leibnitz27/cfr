@@ -10,6 +10,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.CastAction;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -41,14 +43,14 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
     }
 
     private static InferredJavaType inferredType(InferredJavaType a, InferredJavaType b) {
-        // We know these types are the same (any cast will cause a break in the inferred type
-        // chain).
-//        if (RawJavaType.NULL.equals(a)) {
-//            return b;
-//        } else {
-        b.chain(a);
-//        }
-        return a;
+        // This is a hack - we should be able to avoid boxing issues.
+        if (a.getJavaTypeInstance().getStackType() == StackType.REF ||
+            b.getJavaTypeInstance().getStackType() == StackType.REF) {
+            return InferredJavaType.combineOrClash(a, b).collapseTypeClash();
+        } else {
+            a.chain(b);
+            return a;
+        }
     }
 
     public ConditionalExpression getCondition() {

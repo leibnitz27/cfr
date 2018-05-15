@@ -5,7 +5,6 @@ import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
-import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -81,7 +80,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
 
     @Override
     public List<JavaTypeInstance> getGenericTypes() {
-        return ListFactory.<JavaTypeInstance>newList(this);
+        return ListFactory.<JavaTypeInstance>newImmutableList(this);
     }
 
     @Override

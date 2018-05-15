@@ -103,7 +103,6 @@ public class GenericTypeBinder {
         BindingSuperContainer maybeBindingContainer = maybeBound.getBindingSupers();
         JavaTypeInstance boundAssignable = maybeBindingContainer.getBoundAssignable(maybeBoundGeneric, unboundGeneric);
 
-        BindingSuperContainer thisBindingContainer = unbound.getBindingSupers();
         GenericTypeBinder binder = extractBindings(unboundGeneric, boundAssignable);
 
         return binder;

@@ -113,7 +113,7 @@ public class StructuredCatch extends AbstractStructuredStatement {
 
     @Override
     public List<LValue> findCreatedHere() {
-        return ListFactory.newList(catching);
+        return ListFactory.newImmutableList(catching);
     }
 
     @Override
