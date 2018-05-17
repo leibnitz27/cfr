@@ -86,6 +86,11 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                     return res;
                 }
             }
+        } else if (res instanceof MemberFunctionInvokation) {
+            MemberFunctionInvokation invoke = (MemberFunctionInvokation)res;
+            if (invoke.getObject() instanceof LambdaExpressionCommon) {
+                res = invoke.withReplacedObject(new CastExpression(invoke.getObject().getInferredJavaType(), invoke.getObject()));
+            }
         }
         return res;
     }
@@ -120,7 +125,8 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         List<Expression> curriedArgs = dynamicExpression.getDynamicArgs();
         Expression functionCall = dynamicExpression.getInnerInvokation();
         if (functionCall instanceof StaticFunctionInvokation) {
-            return rewriteDynamicExpression(dynamicExpression, (StaticFunctionInvokation) functionCall, curriedArgs);
+            Expression res =  rewriteDynamicExpression(dynamicExpression, (StaticFunctionInvokation) functionCall, curriedArgs);
+            return res;
         }
         return dynamicExpression;
     }

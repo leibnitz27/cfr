@@ -39,7 +39,7 @@ public class MethodOrdering  {
         for (int x=0,len=methods.size();x<len;++x) {
             Method method = methods.get(x);
             boolean hasLineNumber = false;
-            int idx = x;
+            int idx = x - 100000; // Just to force methods WITHOUT data to the start in order.
             AttributeCode codeAttribute = method.getCodeAttribute();
             if (codeAttribute != null) {
                 AttributeLineNumberTable lineNumberTable = codeAttribute.getLineNumberTable();

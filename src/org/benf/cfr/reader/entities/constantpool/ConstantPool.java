@@ -124,6 +124,9 @@ public class ConstantPool {
     public ConstantPoolEntry getEntry(int index) {
         if (index == 0) throw new ConfusedCFRException("Attempt to fetch element 0 from constant pool");
         // NB: Constant pool entries are 1 based.
+        if (index > entries.size()) {
+            throw new IndexOutOfBoundsException("Constant pool has " + entries.size() + " entries - attempted to access entry #" + (index-1));
+        }
         return entries.get(index - 1);
     }
 

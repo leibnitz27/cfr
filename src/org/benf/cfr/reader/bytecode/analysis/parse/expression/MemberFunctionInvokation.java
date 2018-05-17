@@ -32,6 +32,10 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
         return new MemberFunctionInvokation(getCp(), getFunction(), cloneHelper.replaceOrClone(getObject()), special, cloneHelper.replaceOrClone(getArgs()), getNulls());
     }
 
+    public MemberFunctionInvokation withReplacedObject(Expression object) {
+        return new MemberFunctionInvokation(getCp(), getFunction(), object, special, getArgs(), getNulls());
+    }
+
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         super.collectTypeUsages(collector);
