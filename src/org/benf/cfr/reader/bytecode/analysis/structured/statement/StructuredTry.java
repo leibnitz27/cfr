@@ -32,12 +32,18 @@ public class StructuredTry extends AbstractStructuredStatement {
         this.resourceBlock = null;
     }
 
-    public void setResources(List<StructuredAssignment> resources) {
-        List<Op04StructuredStatement> resourceStatements = ListFactory.newList();
-        for (StructuredAssignment resource : resources) {
-            resourceStatements.add(new Op04StructuredStatement(resource));
-        }
-        this.resourceBlock = resourceStatements;
+    public void addResources(List<Op04StructuredStatement> resources) {
+        if (resourceBlock == null) resourceBlock = ListFactory.newList();
+        resourceBlock.addAll(resources);
+    }
+
+    public List<Op04StructuredStatement> getResources() {
+        return resourceBlock;
+    }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public boolean hasResources() {
+        return resourceBlock != null;
     }
 
     public List<Op04StructuredStatement> getCatchBlocks() {
@@ -45,7 +51,7 @@ public class StructuredTry extends AbstractStructuredStatement {
     }
 
     public void clearCatchBlocks() {
-        catchBlocks.clear();;
+        catchBlocks.clear();
     }
 
     @Override
@@ -53,8 +59,11 @@ public class StructuredTry extends AbstractStructuredStatement {
         dumper.print("try ");
         if (resourceBlock != null) {
             dumper.print("(");
+            boolean first = true;
             for (Op04StructuredStatement resource : resourceBlock) {
+                if (!first) dumper.print("     ");
                 resource.dump(dumper);
+                first = false;
             }
             dumper.removePendingCarriageReturn();
             dumper.print(")");
@@ -236,5 +245,9 @@ public class StructuredTry extends AbstractStructuredStatement {
     @Override
     public Op04StructuredStatement getInline() {
         return tryBlock;
+    }
+
+    public void setTryBlock(Op04StructuredStatement tryBlock) {
+        this.tryBlock = tryBlock;
     }
 }

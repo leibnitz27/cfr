@@ -31,15 +31,19 @@ import java.util.Set;
 public abstract class TryResourcesTransformerBase implements StructuredStatementTransformer {
 
     private final ClassFile classFile;
+    private boolean success = false;
 
     protected TryResourcesTransformerBase(ClassFile classFile) {
         this.classFile = classFile;
     }
 
-    public void transform(Op04StructuredStatement root) {
+    public boolean transform(Op04StructuredStatement root) {
         StructuredScope structuredScope = new StructuredScope();
         root.transform(this, structuredScope);
+        return success;
     }
+
+
 
     @Override
     public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
@@ -50,7 +54,9 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
             ResourceMatch match = findResourceFinally(finallyBlock);
             if (match != null) {
                 // Ok, now we have to find the initialisation of the closable.
-                rewriteTry(structuredTry, scope, match);
+                if (rewriteTry(structuredTry, scope, match)) {
+                    success = true;
+                }
             }
         }
         in.transformStructuredChildren(this, scope);
@@ -59,20 +65,20 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
 
     // Now we have to walk back from the try statement, finding the declaration of the resource.
     // the declaration MUST not be initialised from something which is subsequently used before the try statement.
-    private void rewriteTry(StructuredTry structuredTry, StructuredScope scope, ResourceMatch resourceMatch) {
+    private boolean rewriteTry(StructuredTry structuredTry, StructuredScope scope, ResourceMatch resourceMatch) {
         List<Op04StructuredStatement> preceeding = scope.getPrecedingInblock(1, 2);
         // seatch backwards for a definition of resource.
         LValue resource = resourceMatch.resource;
         Op04StructuredStatement autoAssign = findAutoclosableAssignment(preceeding, resource);
-        if (autoAssign == null) return;
+        if (autoAssign == null) return false;
         StructuredAssignment assign = (StructuredAssignment)autoAssign.getStatement();
         autoAssign.nopOut();
         structuredTry.setFinally(null);
-        structuredTry.setResources(Collections.singletonList(assign));
+        structuredTry.addResources(Collections.singletonList(new Op04StructuredStatement(assign)));
         if (resourceMatch.resourceMethod != null) {
             resourceMatch.resourceMethod.hideSynthetic();
         }
-        rewriteException(structuredTry, scope, preceeding);
+        return rewriteException(structuredTry, scope, preceeding);
     }
 
     // And if this looks like
@@ -84,9 +90,9 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
     //   throw e;
     // }
     // Then we can remove everything except try() { X }.
-    private void rewriteException(StructuredTry structuredTry, StructuredScope scope, List<Op04StructuredStatement> preceeding) {
+    private boolean rewriteException(StructuredTry structuredTry, StructuredScope scope, List<Op04StructuredStatement> preceeding) {
         List<Op04StructuredStatement> catchBlocks = structuredTry.getCatchBlocks();
-        if (catchBlocks.size() != 1) return;
+        if (catchBlocks.size() != 1) return false;
         Op04StructuredStatement catchBlock = catchBlocks.get(0);
 
         Op04StructuredStatement exceptionDeclare = null;
@@ -94,19 +100,19 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
         for (int x=preceeding.size()-1;x >= 0;--x) {
             Op04StructuredStatement stm = preceeding.get(x);
             StructuredStatement structuredStatement = stm.getStatement();
-            if (structuredStatement.isScopeBlock()) return;
+            if (structuredStatement.isScopeBlock()) return false;
             if (structuredStatement instanceof StructuredAssignment) {
                 StructuredAssignment ass = (StructuredAssignment)structuredStatement;
                 LValue lvalue = ass.getLvalue();
-                if (!ass.isCreator(lvalue)) return;
-                if (!ass.getRvalue().equals(Literal.NULL)) return;
-                if (!lvalue.getInferredJavaType().getJavaTypeInstance().equals(TypeConstants.THROWABLE)) return;
+                if (!ass.isCreator(lvalue)) return false;
+                if (!ass.getRvalue().equals(Literal.NULL)) return false;
+                if (!lvalue.getInferredJavaType().getJavaTypeInstance().equals(TypeConstants.THROWABLE)) return false;
                 exceptionDeclare = stm;
                 tempThrowable = lvalue;
                 break;
             }
         }
-        if (exceptionDeclare == null) return;
+        if (exceptionDeclare == null) return false;
 
         List<StructuredStatement> catchContent = ListFactory.newList();
         catchBlock.linearizeStatementsInto(catchContent);
@@ -126,13 +132,13 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
 
         MatchResultCollector collector = new EmptyMatchResultCollector();
         mi.advance();
-        if (!matcher.match(mi, collector)) return;
+        if (!matcher.match(mi, collector)) return false;
         LValue caught = wcm.getLValueWildCard("exception").getMatch();
-        if (!caught.getInferredJavaType().getJavaTypeInstance().equals(TypeConstants.THROWABLE)) return;
+        if (!caught.getInferredJavaType().getJavaTypeInstance().equals(TypeConstants.THROWABLE)) return false;
 
         exceptionDeclare.nopOut();
         structuredTry.clearCatchBlocks();
-
+        return true;
     }
 
     private Op04StructuredStatement findAutoclosableAssignment(List<Op04StructuredStatement> preceeding, LValue resource) {

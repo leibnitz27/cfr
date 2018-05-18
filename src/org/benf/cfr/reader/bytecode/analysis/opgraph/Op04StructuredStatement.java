@@ -726,8 +726,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void removeEndResource(ClassFile classFile, Op04StructuredStatement root) {
         // Note - this is not in Java9 CODE per se, it's if it's been compiled by the J9 compiler.
-        new TryResourcesTransformerJ9(classFile).transform(root);
-        new TryResourcesTransformerJ7(classFile).transform(root);
+        boolean s1 = new TryResourcesTransformerJ9(classFile).transform(root);
+        boolean s2 = new TryResourcesTransformerJ7(classFile).transform(root);
+        if (s1 || s2) {
+            new TryResourcesCollapser().transform(root);
+        }
     }
 
     /*
