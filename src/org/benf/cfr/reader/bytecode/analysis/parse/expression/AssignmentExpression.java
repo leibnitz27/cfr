@@ -58,7 +58,7 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        lValue = expressionRewriter.rewriteExpression(lValue, ssaIdentifiers, statementContainer, flags);
+        lValue = expressionRewriter.rewriteExpression(lValue, ssaIdentifiers, statementContainer, ExpressionRewriterFlags.LVALUE);
         rValue = expressionRewriter.rewriteExpression(rValue, ssaIdentifiers, statementContainer, flags);
         return this;
     }
