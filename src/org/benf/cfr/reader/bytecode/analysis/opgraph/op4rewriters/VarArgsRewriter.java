@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.util.ListFactory;
@@ -95,7 +96,9 @@ public class VarArgsRewriter implements Op04Rewriter, ExpressionRewriter {
         List<Expression> anonVals = newAnonymousArray.getValues();
         if (anonVals.size() == 1) {
             Literal nullLit = new Literal(TypedLiteral.getNull());
-            if (anonVals.get(0).equals(nullLit)) return;
+            Expression argument = anonVals.get(0);
+            if (argument.equals(nullLit)) return;
+            if (argument.getInferredJavaType().getJavaTypeInstance() instanceof JavaArrayTypeInstance) return;
         }
 
         args2.addAll(newAnonymousArray.getValues());
