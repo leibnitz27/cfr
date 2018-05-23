@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import com.sun.tools.javah.Gen;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -421,8 +422,14 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (expressions.size() != args.size()) {
             throw new ConfusedCFRException("expr arg size mismatch");
         }
+        JavaTypeInstance classType = null;
+        JavaTypeInstance objecTypeInstance = object == null ? null : object.getInferredJavaType().getJavaTypeInstance();
         if (object != null && classFile != null && !MiscConstants.INIT_METHOD.equals(name)) {
-            object.getInferredJavaType().collapseTypeClash().noteUseAs(classFile.getClassType());
+            classType = classFile.getClassType();
+            if (objecTypeInstance != null && objecTypeInstance.getBindingSupers() != null && objecTypeInstance.getBindingSupers().containsBase(classType)) {
+                classType = objecTypeInstance.getBindingSupers().getBoundSuperForBase(classType);
+            }
+            object.getInferredJavaType().collapseTypeClash().noteUseAs(classType);
         }
 
 
@@ -434,8 +441,11 @@ public class MethodPrototype implements TypeUsageCollectable {
         }
 
         GenericTypeBinder genericTypeBinder = null;
-        if (object != null && object.getInferredJavaType().getJavaTypeInstance() instanceof JavaGenericBaseInstance) {
-            JavaTypeInstance objectType = object.getInferredJavaType().getJavaTypeInstance();
+        if (classType instanceof JavaGenericBaseInstance) {
+            genericTypeBinder = GenericTypeBinder.extractBindings((JavaGenericBaseInstance) classType, objecTypeInstance);
+        } else if (object != null && objecTypeInstance instanceof JavaGenericBaseInstance) {
+            // TODO : Dead code?
+            JavaTypeInstance objectType = objecTypeInstance;
             List<JavaTypeInstance> invokingTypes = ListFactory.newList();
             for (Expression invokingArg : expressions) {
                 invokingTypes.add(invokingArg.getInferredJavaType().getJavaTypeInstance());
@@ -464,13 +474,20 @@ public class MethodPrototype implements TypeUsageCollectable {
             // AARGH.
             JavaTypeInstance exprType = expression.getInferredJavaType().getJavaTypeInstance();
             if (isGenericArg(exprType)) {
+                continue;   
+            }
+            if (exprType == RawJavaType.NULL) {
                 continue;
             }
             if (genericTypeBinder != null) {
                 type = genericTypeBinder.getBindingFor(type);
             }
             if (isGenericArg(type)) {
-                continue;
+                if (type instanceof JavaGenericRefTypeInstance) {
+                    if (((JavaGenericRefTypeInstance) type).hasUnbound()) continue;
+                } else {
+                    continue;
+                }
             }
             expressions.set(x, new CastExpression(new InferredJavaType(type, InferredJavaType.Source.FUNCTION, true), expression));
         }

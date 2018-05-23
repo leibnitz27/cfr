@@ -111,9 +111,9 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public boolean hasForeignUnbound(ConstantPool cp) {
+    public boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard) {
         if (underlyingType instanceof JavaGenericBaseInstance) {
-            return ((JavaGenericBaseInstance) underlyingType).hasForeignUnbound(cp);
+            return ((JavaGenericBaseInstance) underlyingType).hasForeignUnbound(cp, depth, noWildcard);
         }
         return false;
     }

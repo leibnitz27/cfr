@@ -148,7 +148,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         boolean ignore = false;
         if (argType instanceof JavaGenericBaseInstance) {
             // TODO : Should check flag for ignore bad generics?
-            ignore |= ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp);
+            ignore |= ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp, 0, false);
         }
                 /*
                  * Lambda types will always look wrong.

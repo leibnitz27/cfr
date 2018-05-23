@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractConstructorInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
@@ -24,15 +25,15 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
         this.cp = cp;
     }
 
-    private boolean hasIllegalGenerics(JavaTypeInstance javaTypeInstance) {
+    private boolean hasIllegalGenerics(JavaTypeInstance javaTypeInstance, boolean constructor) {
         if (!(javaTypeInstance instanceof JavaGenericBaseInstance)) return false;
         JavaGenericBaseInstance genericBaseInstance = (JavaGenericBaseInstance) javaTypeInstance;
-        return genericBaseInstance.hasForeignUnbound(cp);
+        return genericBaseInstance.hasForeignUnbound(cp, 0, constructor);
     }
 
-    private void maybeRewriteExpressionType(InferredJavaType inferredJavaType) {
+    private void maybeRewriteExpressionType(InferredJavaType inferredJavaType, boolean constructor) {
         JavaTypeInstance javaTypeInstance = inferredJavaType.getJavaTypeInstance();
-        if (hasIllegalGenerics(javaTypeInstance)) {
+        if (hasIllegalGenerics(javaTypeInstance, constructor)) {
             JavaTypeInstance deGenerified = javaTypeInstance.getDeGenerifiedType();
             inferredJavaType.deGenerify(deGenerified);
         }
@@ -42,7 +43,7 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
         List<JavaTypeInstance> list = abstractFunctionInvokation.getExplicitGenerics();
         if (list == null) return;
         for (JavaTypeInstance type : list) {
-            if (hasIllegalGenerics(type)) {
+            if (hasIllegalGenerics(type, false)) {
                 abstractFunctionInvokation.setExplicitGenerics(null);
                 return;
             }
@@ -60,7 +61,7 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
         if (expression instanceof AbstractFunctionInvokation) {
             maybeRewriteExplicitCallTyping((AbstractFunctionInvokation)expression);
         }
-        maybeRewriteExpressionType(expression.getInferredJavaType());
+        maybeRewriteExpressionType(expression.getInferredJavaType(), expression instanceof AbstractConstructorInvokation);
         return expression;
     }
 
@@ -70,14 +71,9 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
         return res;
     }
 
-//    @Override
-//    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-//        return expression;
-//    }
-
     @Override
     public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        maybeRewriteExpressionType(lValue.getInferredJavaType());
+        maybeRewriteExpressionType(lValue.getInferredJavaType(), false);
         return lValue;
     }
 

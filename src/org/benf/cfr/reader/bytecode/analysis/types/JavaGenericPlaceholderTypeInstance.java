@@ -84,10 +84,12 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     @Override
-    public boolean hasForeignUnbound(ConstantPool cp) {
+    public boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard) {
         // can't do reference equality on cp, because some types might come from the second load.
         // This needs reworking.
-        if (className.equals(MiscConstants.UNBOUND_GENERIC)) return true;
+        if (className.equals(MiscConstants.UNBOUND_GENERIC)) {
+            return depth == 0 || noWildcard;
+        }
         return !cp.equals(this.cp);
     }
 

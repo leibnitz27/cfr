@@ -5,17 +5,17 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import java.util.List;
 
 public interface JavaGenericBaseInstance extends JavaTypeInstance {
-    public JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder);
+    JavaTypeInstance getBoundInstance(GenericTypeBinder genericTypeBinder);
 
-    public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target);
+    boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target);
 
-    public boolean hasUnbound();
+    boolean hasUnbound();
 
-    public boolean hasL01Wildcard();
+    boolean hasL01Wildcard();
 
-    public JavaTypeInstance getWithoutL01Wildcard();
+    JavaTypeInstance getWithoutL01Wildcard();
 
-    public boolean hasForeignUnbound(ConstantPool cp);
+    boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard);
 
-    public List<JavaTypeInstance> getGenericTypes();
+    List<JavaTypeInstance> getGenericTypes();
 }

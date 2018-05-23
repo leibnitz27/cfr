@@ -176,7 +176,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
                 boolean ignore = false;
                 if (argType instanceof JavaGenericBaseInstance) {
                     // TODO : Should check flag for ignore bad generics?
-                    ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(function.getCp());
+                    ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(function.getCp(), 0, false);
                 }
                 /*
                  * Lambda types will always look wrong.

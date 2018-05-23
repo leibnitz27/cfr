@@ -121,11 +121,12 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
     }
 
     @Override
-    public boolean hasForeignUnbound(ConstantPool cp) {
+    public boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard) {
         if (!hasUnbound) return false;
+        depth++;
         for (JavaTypeInstance type : genericTypes) {
             if (type instanceof JavaGenericBaseInstance) {
-                if (((JavaGenericBaseInstance) type).hasForeignUnbound(cp)) return true;
+                if (((JavaGenericBaseInstance) type).hasForeignUnbound(cp, depth, noWildcard)) return true;
             }
         }
         return false;
