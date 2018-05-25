@@ -340,6 +340,12 @@ public class ClassFileSourceImpl implements ClassFileSource {
         new Configurator().configureWith(usePath, specPath);
     }
 
+    public String adjustInputPath(String inputPath) {
+        if (!unexpectedDirectory) return inputPath;
+        if (inputPath.startsWith(pathPrefix)) inputPath = inputPath.substring(pathPrefix.length());
+        return inputPath;
+    }
+
     private class Configurator {
 
         private Configurator() {

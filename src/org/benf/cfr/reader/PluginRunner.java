@@ -91,30 +91,37 @@ public class PluginRunner {
     private class PluginDumperFactory implements DumperFactory {
 
         private final StringBuilder outBuffer;
+        private final Options options;
 
-        public PluginDumperFactory(StringBuilder out) {
+        public PluginDumperFactory(StringBuilder out, Options options) {
             this.outBuffer = out;
+            this.options = options;
         }
 
-        public Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+        public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
             return new StringStreamDumper(outBuffer, typeUsageInformation, options);
         }
 
         /*
          * A summary dumper will receive errors.  Generally, it's only of value when dumping jars to file.
          */
-        public SummaryDumper getSummaryDumper(Options options) {
+        public SummaryDumper getSummaryDumper() {
             if (!options.optionIsSet(OptionsImpl.OUTPUT_DIR)) return new NopSummaryDumper();
 
             return new FileSummaryDumper(options.getOption(OptionsImpl.OUTPUT_DIR), options, null);
+        }
+
+        @Override
+        public ProgressDumper getProgressDumper() {
+            return ProgressDumperNop.INSTANCE;
         }
     }
 
     public String getDecompilationFor(String classFilePath) {
         try {
             StringBuilder output = new StringBuilder();
-            DumperFactory dumperFactory = new PluginDumperFactory(output);
-            Main.doClass(dcCommonState, classFilePath, dumperFactory);
+            DumperFactory dumperFactory = new PluginDumperFactory(output, dcCommonState.getOptions());
+            Main.doClass(dcCommonState, classFilePath, false, dumperFactory);
             return output.toString();
         } catch (Exception e) {
             return e.toString();
@@ -122,7 +129,7 @@ public class PluginRunner {
     }
 
     private static DCCommonState initDCState(Map<String, String> optionsMap, ClassFileSource classFileSource) {
-        OptionsImpl options = new OptionsImpl(null, null, optionsMap);
+        OptionsImpl options = new OptionsImpl(optionsMap);
         if (classFileSource == null) classFileSource = new ClassFileSourceImpl(options);
         DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
         return dcCommonState;

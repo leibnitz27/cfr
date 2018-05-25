@@ -119,7 +119,8 @@ public class DCCommonState {
 
     // No fancy file identification right now, just very very simple.
     public AnalysisType detectClsJar(String path) {
-        if (path.toLowerCase().endsWith(".jar")) return AnalysisType.JAR;
+        String lcPath = path.toLowerCase();
+        if (lcPath.endsWith(".jar") || lcPath.endsWith(".war")) return AnalysisType.JAR;
         return AnalysisType.CLASS;
     }
 }

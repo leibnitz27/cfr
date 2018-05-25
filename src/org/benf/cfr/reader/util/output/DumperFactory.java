@@ -9,7 +9,8 @@ import java.io.IOException;
 
 public interface DumperFactory {
 
-    Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump);
-    SummaryDumper getSummaryDumper(Options options);
+    Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump);
+    ProgressDumper getProgressDumper();
+    SummaryDumper getSummaryDumper();
 
 }

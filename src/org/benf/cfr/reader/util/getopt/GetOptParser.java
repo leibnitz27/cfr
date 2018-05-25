@@ -84,9 +84,9 @@ public class GetOptParser {
         return optTypeMap;
     }
 
-    public <T> T parse(String[] args, GetOptSinkFactory<T> getOptSinkFactory) {
+    public <T> Pair<List<String>, T> parse(String[] args, GetOptSinkFactory<T> getOptSinkFactory) {
         Pair<List<String>, Map<String, String>> processed = process(args, getOptSinkFactory);
-        List<String> positional = processed.getFirst();
+        final List<String> positional = processed.getFirst();
         Map<String, String> named = processed.getSecond();
         /*
          * A bit of a hack, but if no positional arguments are specified, and 'help' is, then
@@ -95,7 +95,12 @@ public class GetOptParser {
         if (positional.isEmpty() && named.containsKey(OptionsImpl.HELP.getName())) {
             positional.add("ignoreMe.class");
         }
-        return getOptSinkFactory.create(positional, named);
+        T res = getOptSinkFactory.create(named);
+
+        if (positional.size() == 0) {
+            throw new IllegalArgumentException("Insufficient unqualified parameters - provide at least filename.");
+        }
+        return Pair.make(positional, res);
     }
 
     private static void printErrHeader() {
@@ -139,7 +144,7 @@ public class GetOptParser {
         Map<String, OptData> optTypeMap = buildOptTypeMap(optionProvider);
         Map<String, String> res = MapFactory.newMap();
         List<String> positional = ListFactory.newList();
-        Options optionsSample = new OptionsImpl("", "", res);
+        Options optionsSample = new OptionsImpl(res);
         for (int x = 0; x < in.length; ++x) {
             if (in[x].startsWith(argPrefix)) {
                 String name = in[x].substring(2);

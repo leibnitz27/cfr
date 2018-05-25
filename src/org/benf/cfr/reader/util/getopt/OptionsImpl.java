@@ -7,7 +7,6 @@ import java.util.*;
 public class OptionsImpl implements Options {
     private final Map<String, String> opts;
 
-
     private static class DefaultingIntDecoder implements OptionDecoder<Integer> {
         final Integer defaultValue;
 
@@ -38,7 +37,7 @@ public class OptionsImpl implements Options {
     private static class DefaultNullEnumDecoder<EnumType extends Enum> implements OptionDecoder<EnumType> {
         private final Class<EnumType> clazz;
 
-        public DefaultNullEnumDecoder(Class<EnumType> clazz) {
+        DefaultNullEnumDecoder(Class<EnumType> clazz) {
             this.clazz = clazz;
         }
 
@@ -79,8 +78,7 @@ public class OptionsImpl implements Options {
     private static final OptionDecoder<Boolean> defaultTrueBooleanDecoder = new OptionDecoder<Boolean>() {
         @Override
         public Boolean invoke(String arg, Void ignore, Options ignore2) {
-            if (arg == null) return true;
-            return Boolean.parseBoolean(arg);
+            return arg == null || Boolean.parseBoolean(arg);
         }
 
         @Override
@@ -96,8 +94,7 @@ public class OptionsImpl implements Options {
     private static final OptionDecoder<Boolean> defaultFalseBooleanDecoder = new OptionDecoder<Boolean>() {
         @Override
         public Boolean invoke(String arg, Void ignore, Options ignore2) {
-            if (arg == null) return false;
-            return Boolean.parseBoolean(arg);
+            return arg != null && Boolean.parseBoolean(arg);
         }
 
         @Override
@@ -114,7 +111,7 @@ public class OptionsImpl implements Options {
 
         private final PermittedOptionProvider.Argument<Boolean> chain;
 
-        public DefaultChainBooleanDecoder(PermittedOptionProvider.Argument<Boolean> chain) {
+        DefaultChainBooleanDecoder(PermittedOptionProvider.Argument<Boolean> chain) {
             this.chain = chain;
         }
 
@@ -157,8 +154,8 @@ public class OptionsImpl implements Options {
 
     private static class VersionSpecificDefaulter implements OptionDecoderParam<Boolean, ClassFileVersion> {
 
-        public ClassFileVersion versionGreaterThanOrEqual;
-        public boolean resultIfGreaterThanOrEqual;
+        ClassFileVersion versionGreaterThanOrEqual;
+        boolean resultIfGreaterThanOrEqual;
 
         private VersionSpecificDefaulter(ClassFileVersion versionGreaterThanOrEqual, boolean resultIfGreaterThanOrEqual) {
             this.versionGreaterThanOrEqual = versionGreaterThanOrEqual;
@@ -169,7 +166,7 @@ public class OptionsImpl implements Options {
         public Boolean invoke(String arg, ClassFileVersion classFileVersion, Options ignore2) {
             if (arg != null) return Boolean.parseBoolean(arg);
             if (classFileVersion == null) throw new IllegalStateException(); // ho ho ho.
-            return (classFileVersion.equalOrLater(versionGreaterThanOrEqual)) ? resultIfGreaterThanOrEqual : !resultIfGreaterThanOrEqual;
+            return (classFileVersion.equalOrLater(versionGreaterThanOrEqual)) == resultIfGreaterThanOrEqual;
         }
 
         @Override
@@ -215,7 +212,10 @@ public class OptionsImpl implements Options {
             "Re-build lambda functions");
     public static final PermittedOptionProvider.Argument<Boolean> DECOMPILE_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean>(
             "innerclasses", defaultTrueBooleanDecoder,
-            "Decompile innter classes");
+            "Decompile inner classes");
+    public static final PermittedOptionProvider.Argument<Boolean> SKIP_BATCH_INNER_CLASSES = new PermittedOptionProvider.Argument<Boolean>(
+            "skipbatchinnerclasses", defaultTrueBooleanDecoder,
+            "When processing many files, skip inner classes, as they will be processed as part of outer classes anyway.  If false, you will see inner classes as separate entities also.");
     public static final PermittedOptionProvider.Argument<Boolean> HIDE_UTF8 = new PermittedOptionProvider.Argument<Boolean>(
             "hideutf", defaultTrueBooleanDecoder,
             "Hide UTF8 characters - quote them instead of showing the raw characters");
@@ -355,7 +355,7 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<String> JAR_FILTER = new PermittedOptionProvider.Argument<String>(
             "jarfilter", defaultNullStringDecoder,
             "Substring regex - analyse only classes where the fqn matches this pattern. (when analysing jar).");
-    public static final PermittedOptionProvider.Argument<Boolean> RENAME_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
+    static final PermittedOptionProvider.Argument<Boolean> RENAME_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
             "rename", defaultFalseBooleanDecoder,
             "Synonym for 'renamedupmembers' + 'renameillegalidents' + 'renameenummembers'");
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_DUP_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
@@ -379,9 +379,6 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> USE_NAME_TABLE = new PermittedOptionProvider.Argument<Boolean>(
             "usenametable", defaultTrueBooleanDecoder,
             "Use local variable name table if present");
-    public static final PermittedOptionProvider.Argument<String> FILENAME = new PermittedOptionProvider.Argument<String>(
-            "filename", defaultNullStringDecoder,
-            "Name of file to analyse.");
     public static final PermittedOptionProvider.Argument<String> METHODNAME = new PermittedOptionProvider.Argument<String>(
             "methodname", defaultNullStringDecoder,
             "Name of method to analyse.");
@@ -398,10 +395,8 @@ public class OptionsImpl implements Options {
             "caseinsensitivefs", defaultFalseBooleanDecoder,
             "Cope with case insensitive file systems by renaming colliding classes.");
 
-    public OptionsImpl(String fileName, String methodName, Map<String, String> opts) {
+    public OptionsImpl(Map<String, String> opts) {
         this.opts = new HashMap<String, String>(opts);
-        this.opts.put(FILENAME.getName(), fileName);
-        this.opts.put(METHODNAME.getName(), methodName);
     }
 
     @Override
@@ -446,27 +441,12 @@ public class OptionsImpl implements Options {
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
                     RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS, USE_NAME_TABLE,
                     AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA,
-                    CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS, REWRITE_TRY_RESOURCES, IGNORE_EXCEPTIONS);
+                    CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS, REWRITE_TRY_RESOURCES, IGNORE_EXCEPTIONS, METHODNAME, SKIP_BATCH_INNER_CLASSES);
         }
 
         @Override
-        public Options create(List<String> args, Map<String, String> opts) {
-            String fname = null;
-            String methodName = null;
-            // Handle positional arguments - only filename and method - everything else is
-            // handled by PermittedOptionProviders.
-            switch (args.size()) {
-                case 2:
-                    methodName = args.get(1);
-                case 1:
-                    fname = args.get(0);
-                    break;
-                case 0:
-                    throw new IllegalArgumentException("Insufficient unqualified parameters - provide at least filename.");
-                default:
-                    throw new IllegalArgumentException("Too many unqualified parameters. (" + StringUtils.join(args, ", ") + ")");
-            }
-            return new OptionsImpl(fname, methodName, opts);
+        public Options create(Map<String, String> opts) {
+            return new OptionsImpl(opts);
         }
     }
 

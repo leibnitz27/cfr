@@ -1,6 +1,6 @@
 package org.benf.cfr.reader;
 
-import org.benf.cfr.reader.api.ClassFileSource;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
@@ -18,7 +18,7 @@ import java.util.List;
 
 public class Main {
 
-    public static void doClass(DCCommonState dcCommonState, String path, DumperFactory dumperFactory) {
+    public static void doClass(DCCommonState dcCommonState, String path, boolean skipInnerClass, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
         IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         Dumper d = new ToStringDumper(); // sentinel dumper.
@@ -26,6 +26,8 @@ public class Main {
             SummaryDumper summaryDumper = new NopSummaryDumper();
             ClassFile c = dcCommonState.getClassFileMaybePath(path);
             dcCommonState.configureWith(c);
+            if (skipInnerClass && c.isInnerClass()) return;
+            dumperFactory.getProgressDumper().analysingType(c.getClassType());
 
             // This may seem odd, but we want to make sure we're analysing the version
             // from the cache.  Because we might have been fed a random filename
@@ -50,7 +52,7 @@ public class Main {
             TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
             c.collectTypeUsages(collectingDumper);
 
-            d = dumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
+            d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 
             String methname = options.getOption(OptionsImpl.METHODNAME);
             if (methname == null) {
@@ -91,7 +93,7 @@ public class Main {
         try {
             final Predicate<String> matcher = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.JAR_FILTER), true);
             silent = options.getOption(OptionsImpl.SILENT);
-            summaryDumper = dumperFactory.getSummaryDumper(options);
+            summaryDumper = dumperFactory.getSummaryDumper();
             summaryDumper.notify("Summary for " + path);
             summaryDumper.notify(MiscConstants.CFR_HEADER_BRA + " " + MiscConstants.CFR_VERSION);
             if (!silent) {
@@ -117,6 +119,7 @@ public class Main {
              * we don't have any collisions.
              */
 
+            ProgressDumper progressDumper = dumperFactory.getProgressDumper();
             for (JavaTypeInstance type : types) {
                 Dumper d = new ToStringDumper();  // Sentinel dumper.
                 try {
@@ -125,7 +128,7 @@ public class Main {
                     // an inner class, rather than using the name, as scala tends to abuse '$'.
                     if (c.isInnerClass()) { d = null; continue; }
                     if (!silent) {
-                        System.err.println("Processing " + type.getRawName());
+                        progressDumper.analysingType(type);
                     }
                     if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
                         c.loadInnerClasses(dcCommonState);
@@ -135,7 +138,7 @@ public class Main {
 
                     TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
                     c.collectTypeUsages(collectingDumper);
-                    d = dumperFactory.getNewTopLevelDumper(options, c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
+                    d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 
                     c.dump(d);
                     d.print("\n");
@@ -165,30 +168,42 @@ public class Main {
         GetOptParser getOptParser = new GetOptParser();
 
         Options options = null;
+        List<String> files = null;
         try {
-            options = getOptParser.parse(args, OptionsImpl.getFactory());
+            Pair<List<String>, Options> processedArgs = getOptParser.parse(args, OptionsImpl.getFactory());
+            files = processedArgs.getFirst();
+            options = processedArgs.getSecond();
         } catch (Exception e) {
             getOptParser.showHelp(OptionsImpl.getFactory(), e);
             System.exit(1);
         }
 
-        if (options.optionIsSet(OptionsImpl.HELP) || options.getOption(OptionsImpl.FILENAME) == null) {
+        if (options.optionIsSet(OptionsImpl.HELP) || files.isEmpty()) {
             getOptParser.showOptionHelp(OptionsImpl.getFactory(), options, OptionsImpl.HELP);
             return;
         }
 
-        ClassFileSource classFileSource = new ClassFileSourceImpl(options);
+        ClassFileSourceImpl classFileSource = new ClassFileSourceImpl(options);
         DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
-        String path = options.getOption(OptionsImpl.FILENAME);
-        AnalysisType type = options.getOption(OptionsImpl.ANALYSE_AS);
-        if (type == null) type = dcCommonState.detectClsJar(path);
-
         DumperFactory dumperFactory = new DumperFactoryImpl(options);
-        if (type == AnalysisType.JAR) {
-            doJar(dcCommonState, path, dumperFactory);
-        } if (type == AnalysisType.CLASS) {
-            doClass(dcCommonState, path, dumperFactory);
-        }
 
+        boolean skipInnerClass = files.size() > 1 && options.getOption(OptionsImpl.SKIP_BATCH_INNER_CLASSES);
+        /*
+         * There's an interesting question here - do we want to skip inner classes, if we've been given a wildcard?
+         * (or a wildcard expanded by the operating system).
+         */
+        for (String path : files) {
+            path = classFileSource.adjustInputPath(path);
+
+            AnalysisType type = options.getOption(OptionsImpl.ANALYSE_AS);
+            if (type == null) type = dcCommonState.detectClsJar(path);
+
+            if (type == AnalysisType.JAR) {
+                doJar(dcCommonState, path, dumperFactory);
+            }
+            if (type == AnalysisType.CLASS) {
+                doClass(dcCommonState, path, skipInnerClass, dumperFactory);
+            }
+        }
     }
 }

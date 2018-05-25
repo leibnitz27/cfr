@@ -15,10 +15,18 @@ public class DumperFactoryImpl implements DumperFactory {
     private final boolean checkDupes;
     private Set<String> seen = SetFactory.newSet();
     private boolean seenCaseDupe = false;
+    private final Options options;
+    private final ProgressDumper progressDumper;
 
 
     public DumperFactoryImpl(Options options) {
         this.checkDupes = CaseSensitiveFileSystemHelper.IsCaseSensitive() && !options.getOption(OptionsImpl.CASE_INSENSITIVE_FS_RENAME);
+        this.options = options;
+        if (!options.getOption(OptionsImpl.SILENT) && (options.optionIsSet(OptionsImpl.OUTPUT_DIR) || options.optionIsSet(OptionsImpl.OUTPUT_PATH))) {
+            progressDumper = new ProgressDumperStdErr();
+        } else {
+            progressDumper = ProgressDumperNop.INSTANCE;
+        }
     }
 
     private static Pair<String, Boolean> getPathAndClobber(Options options) {
@@ -32,7 +40,7 @@ public class DumperFactoryImpl implements DumperFactory {
         return null;
     }
 
-    public Dumper getNewTopLevelDumper(Options options, JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+    public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         Pair<String, Boolean> targetInfo = getPathAndClobber(options);
 
         if (targetInfo == null) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump);
@@ -61,7 +69,7 @@ public class DumperFactoryImpl implements DumperFactory {
     /*
      * A summary dumper will receive errors.  Generally, it's only of value when dumping jars to file.
      */
-    public SummaryDumper getSummaryDumper(Options options) {
+    public SummaryDumper getSummaryDumper() {
         Pair<String, Boolean> targetInfo = getPathAndClobber(options);
 
         if (targetInfo == null) return new NopSummaryDumper();
@@ -69,4 +77,8 @@ public class DumperFactoryImpl implements DumperFactory {
         return new FileSummaryDumper(targetInfo.getFirst(), options, new AdditionalComments());
     }
 
+    @Override
+    public ProgressDumper getProgressDumper() {
+        return progressDumper;
+    }
 }
