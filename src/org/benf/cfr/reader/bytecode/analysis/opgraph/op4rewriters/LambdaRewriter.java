@@ -134,12 +134,15 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
     private static class CannotDelambaException extends IllegalStateException {
     }
 
-    private static LocalVariable getLocalVariable(Expression e) {
-        if (!(e instanceof LValueExpression)) throw new CannotDelambaException();
-        LValueExpression lValueExpression = (LValueExpression) e;
-        LValue lValue = lValueExpression.getLValue();
-        if (!(lValue instanceof LocalVariable)) throw new CannotDelambaException();
-        return (LocalVariable) lValue;
+    private static Expression getLambdaVariable(Expression e) {
+        if (e instanceof LValueExpression) {
+            LValueExpression lValueExpression = (LValueExpression) e;
+            LValue lValue = lValueExpression.getLValue();
+            if (!(lValue instanceof LocalVariable)) throw new CannotDelambaException();
+            return new LValueExpression(lValue);
+        }
+        if (e instanceof NewObjectArray) return e;
+        throw new CannotDelambaException();
     }
 
     private Expression rewriteDynamicExpression(Expression dynamicExpression, StaticFunctionInvokation functionInvokation, List<Expression> curriedArgs) {
@@ -240,9 +243,9 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                  * \arg0 ... arg(n-1) -> curriedArgs, arg0 ... arg(n-1)
                  * where curriedArgs will lose first arg if instance method.
                  */
-                List<LValue> replacementParameters = ListFactory.newList();
+                List<Expression> replacementParameters = ListFactory.newList();
                 for (int n = instance ? 1 : 0, m = curriedArgs.size(); n < m; ++n) {
-                    replacementParameters.add(getLocalVariable(curriedArgs.get(n)));
+                    replacementParameters.add(getLambdaVariable(curriedArgs.get(n)));
                 }
                 List<LValue> anonymousLambdaArgs = ListFactory.newList();
                 List<LocalVariable> originalParameters = lambdaMethod.getMethodPrototype().getComputedParameters();
@@ -252,7 +255,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                     String name = original.getName().getStringName();
                     LocalVariable tmp = new LocalVariable(name, new InferredJavaType(targetFnArgTypes.get(n), InferredJavaType.Source.EXPRESSION));
                     anonymousLambdaArgs.add(tmp);
-                    replacementParameters.add(tmp);
+                    replacementParameters.add(new LValueExpression(tmp));
                 }
                 // getParameters(lambdaMethod.getConstructorFlag());
 
@@ -262,7 +265,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                  */
                 if (originalParameters.size() != replacementParameters.size()) throw new CannotDelambaException();
 
-                Map<LValue, LValue> rewrites = MapFactory.newMap();
+                Map<LValue, Expression> rewrites = MapFactory.newMap();
                 for (int x = 0; x < originalParameters.size(); ++x) {
                     rewrites.put(originalParameters.get(x), replacementParameters.get(x));
                 }
@@ -288,6 +291,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                 lambdaMethod.hideSynthetic();
                 return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaStatement));
             } catch (CannotDelambaException e) {
+                int x = 1;
             }
         }
 
@@ -296,10 +300,10 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
     }
 
     public static class LambdaInternalRewriter implements ExpressionRewriter {
-        private final Map<LValue, LValue> rewrites;
+        private final Map<LValue, Expression> rewrites;
 
 
-        public LambdaInternalRewriter(Map<LValue, LValue> rewrites) {
+        public LambdaInternalRewriter(Map<LValue, Expression> rewrites) {
             this.rewrites = rewrites;
         }
 
@@ -310,6 +314,11 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
 
         @Override
         public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            if (expression instanceof LValueExpression) {
+                LValue lv = ((LValueExpression) expression).getLValue();
+                Expression rewrite = rewrites.get(lv);
+                if (rewrite != null) return rewrite;
+            }
             return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         }
 
@@ -327,8 +336,11 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
 
         @Override
         public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-            LValue replacement = rewrites.get(lValue);
-            return replacement == null ? lValue : replacement;
+            Expression replacement = rewrites.get(lValue);
+            if (replacement instanceof LValueExpression) {
+                return ((LValueExpression) replacement).getLValue();
+            }
+            return lValue;
         }
 
         @Override
