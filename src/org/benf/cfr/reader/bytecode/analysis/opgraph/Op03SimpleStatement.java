@@ -1159,6 +1159,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 result = true;
             } else if (condenseConditional2_type2(ifStatement, statements)) {
                 result = true;
+            } else if (condenseConditional2_type3(ifStatement, statements)) {
+                result = true;
             }
         }
         return result;
@@ -1324,6 +1326,79 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return true;
     }
 
+    /*
+
+    (b? c : a) || (c ? a : b)
+    proves remarkably painful to structure.
+    CondTest5*
+        
+   S1  if (A) GOTO S4
+   S2  if (B) GOTO S5
+   S3  GOTO Y
+   S4  if (C) goto Y
+   S5  
+         -->
+
+   S1 if (A ? C : !B) GOTO Y
+   S2 GOTO S5
+   S3 NOP // unjoined
+   S4 NOP // unjoined
+
+     */
+    private static boolean condenseConditional2_type3(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> allStatements) {
+        Op03SimpleStatement s1c = ifStatement;
+        Statement s1 = s1c.containedStatement;
+        if (s1.getClass() != IfStatement.class) return false;
+        Op03SimpleStatement s4c = ifStatement.targets.get(1);
+        Op03SimpleStatement s2c = ifStatement.targets.get(0);
+        Statement s2 = s2c.getStatement();
+        if (s2.getClass() != IfStatement.class) return false;
+        Statement s4 = s4c.getStatement();
+        if (s4.getClass() != IfStatement.class) return false;
+        Op03SimpleStatement s3c = s2c.targets.get(0);
+        Statement s3 = s3c.getStatement();
+        if (s3.getClass() != GotoStatement.class) return false;
+
+        Op03SimpleStatement s5c = s2c.targets.get(1);
+        Op03SimpleStatement y = s3c.targets.get(0);
+        if (s4c.targets.get(1) != y) return false;
+        if (s4c.targets.get(0) != s5c) return false;
+        if (s2c.sources.size() != 1) return false;
+        if (s3c.sources.size() != 1) return false;
+        if (s4c.sources.size() != 1) return false;
+        IfStatement is1 = (IfStatement)s1;
+        IfStatement is2 = (IfStatement)s2;
+        IfStatement is4 = (IfStatement)s4;
+        ConditionalExpression cond = new BooleanExpression(new TernaryExpression(is1.getCondition(), is4.getCondition(), is2.getCondition().getNegated()));
+
+        s1c.replaceStatement(new IfStatement(cond));
+        s1c.replaceTarget(s4c,y);
+        y.replaceSource(s4c, s1c);
+
+        // Fix sources / targets.
+        s2c.replaceStatement(new GotoStatement());
+        s2c.removeGotoTarget(s3c);
+        s3c.removeSource(s2c);
+        s3c.clear();
+        s4c.clear();
+
+        // If we know for a fact that the original nodes were laid out linearly, then we can assume fallthrough from
+        // S1 to S5.
+        // This violates the "next is fallthrough" invariant temporarily, and is only ok because we KNOW
+        // we will tidy up immediately.
+        int idx = allStatements.indexOf(s1c);
+        if (allStatements.size() > idx+5
+            && allStatements.get(idx+1) == s2c
+            && allStatements.get(idx+2) == s3c
+            && allStatements.get(idx+3) == s4c
+            && allStatements.get(idx+4) == s5c) {
+            s5c.replaceSource(s2c, s1c);
+            s1c.replaceTarget(s2c, s5c);
+            s2c.clear();
+        }
+
+        return true;
+    }
 
     /*
      * Attempt to find really simple inline ternaries / negations, so we can convert them before conditional rollup.
