@@ -55,7 +55,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     private final Map<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
 
-
     private final Map<String, Attribute> attributes;
     private final ConstantPoolEntryClass thisClass;
     private final ConstantPoolEntryClass rawSuperClass;
@@ -690,20 +689,17 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             if (innerType == null) continue;
 
             if (innerType == thisType) {
-                JavaTypeInstance outerType = innerClassAttributeInfo.getOuterClassInfo();
-                if (outerType == null || outerType == thisType) {
-                    accessFlags.addAll(innerClassAttributeInfo.getAccessFlags());
-                    // But if it's J9+, we're crippled by https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8034044
-                    // which removes the static marker on anonymous classes.
-                    // Why am I checking j8+? BECAUSE java 9.0.4 SAYS J8. FFS.
-                    if (!accessFlags.contains(AccessFlag.ACC_STATIC)) {
-                        if (isInferredAnonymousStatic(thisType, innerType)) {
-                            accessFlags.add(AccessFlag.ACC_STATIC);
-                        }
+                accessFlags.addAll(innerClassAttributeInfo.getAccessFlags());
+                // But if it's J9+, we're crippled by https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8034044
+                // which removes the static marker on anonymous classes.
+                // Why am I checking j8+? BECAUSE java 9.0.4 SAYS J8. FFS.
+                if (!accessFlags.contains(AccessFlag.ACC_STATIC)) {
+                    if (isInferredAnonymousStatic(thisType, innerType)) {
+                        accessFlags.add(AccessFlag.ACC_STATIC);
                     }
-                    // A public class can be marked as protected "as an inner class".
-                    sanitiseAccessPermissions();
                 }
+                // A public class can be marked as protected "as an inner class".
+                sanitiseAccessPermissions();
             }
 
             /*

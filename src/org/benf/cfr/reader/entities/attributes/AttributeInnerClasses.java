@@ -45,7 +45,7 @@ public class AttributeInnerClasses extends Attribute {
         ConstantPoolEntryClass cpecInner = cp.getClassEntry(idxinner);
         ConstantPoolEntryClass cpecOuter = cp.getClassEntry(idxouter);
         JavaTypeInstance innerType = cpecInner.getTypeInstanceKnownOuter(cpecOuter);
-        JavaTypeInstance outerType = cpecInner.getTypeInstanceKnownInner(cpecOuter);
+        JavaTypeInstance outerType = cpecOuter.getTypeInstanceKnownInner(cpecInner);
         return Pair.make(innerType, outerType);
     }
 

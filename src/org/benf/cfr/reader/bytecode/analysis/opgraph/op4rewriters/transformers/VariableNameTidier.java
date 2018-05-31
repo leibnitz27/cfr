@@ -217,7 +217,9 @@ public class VariableNameTidier implements StructuredStatementTransformer {
             /*
              * And check that it doesn't collide with any of the known class names!
              */
-            if (checkClassCache && classCache.isClassName(name)) return true;
+            if (checkClassCache && classCache.isClassName(name)) {
+                return true;
+            }
             return false;
         }
 

@@ -1,5 +1,6 @@
 package org.benf.cfr.reader;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -14,6 +15,8 @@ import org.benf.cfr.reader.util.getopt.GetOptParser;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.*;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class Main {
@@ -25,8 +28,9 @@ public class Main {
         try {
             SummaryDumper summaryDumper = new NopSummaryDumper();
             ClassFile c = dcCommonState.getClassFileMaybePath(path);
-            dcCommonState.configureWith(c);
             if (skipInnerClass && c.isInnerClass()) return;
+
+            dcCommonState.configureWith(c);
             dumperFactory.getProgressDumper().analysingType(c.getClassType());
 
             // This may seem odd, but we want to make sure we're analysing the version
@@ -187,12 +191,42 @@ public class Main {
         DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
         DumperFactory dumperFactory = new DumperFactoryImpl(options);
 
-        boolean skipInnerClass = files.size() > 1 && options.getOption(OptionsImpl.SKIP_BATCH_INNER_CLASSES);
         /*
          * There's an interesting question here - do we want to skip inner classes, if we've been given a wildcard?
          * (or a wildcard expanded by the operating system).
+         *
+         * Assume yes.
          */
+        boolean skipInnerClass = files.size() > 1 && options.getOption(OptionsImpl.SKIP_BATCH_INNER_CLASSES);
+
+        /*
+         * Current weakness is that loading an inner class without seeing its outer class first affects
+         * accuracy of innertype information.
+         *
+         * This is an ugly hack to get around that, but it relies on ordering of processing, which
+         * means it will never multi thread :(((
+         */
+        Pair<List<String>, List<String>> partition = Functional.partition(files, new Predicate<String>() {
+            @Override
+            public boolean test(String in) {
+                return !in.contains(MiscConstants.INNER_CLASS_SEP_STR);
+            }
+        });
+        Collections.sort(partition.getSecond(), new Comparator<String>() {
+                    @Override
+                    public int compare(String s, String t1) {
+                        int x = s.length() - t1.length();
+                        if (x != 0) return x;
+                        return s.compareTo(t1);
+                    }
+                });
+        partition.getFirst().addAll(partition.getSecond());
+        files = partition.getFirst();
+
         for (String path : files) {
+            dcCommonState = new DCCommonState(options, classFileSource);
+            dumperFactory = new DumperFactoryImpl(options);
+
             path = classFileSource.adjustInputPath(path);
 
             AnalysisType type = options.getOption(OptionsImpl.ANALYSE_AS);
