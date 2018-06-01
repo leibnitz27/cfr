@@ -2,17 +2,20 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.NarrowingTypeRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
-import org.benf.cfr.reader.bytecode.analysis.types.*;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheckImpl;
@@ -843,10 +846,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement ass : sas) {
             AssignmentSimple assignmentSimple = (AssignmentSimple) ass.containedStatement;
             LValue lValue = assignmentSimple.getCreatedLValue();
+            if (lValue instanceof FieldVariable) continue;
             Expression rValue = assignmentSimple.getRValue();
             if (rValue.getClass() == LValueExpression.class) {
                 LValueExpression lValueExpression = (LValueExpression) rValue;
-                if (lValueExpression.getLValue().equals(lValue)) {
+                LValue lFromR = lValueExpression.getLValue();
+                if (lFromR.equals(lValue)) {
                     ass.nopOut();
                 }
             }
