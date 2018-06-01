@@ -52,7 +52,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     private final List<Method> methods;
     private Map<String, List<Method>> methodsByName; // Lazily populated if interrogated.
-
+    private final boolean isInnerClass;
     private final Map<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
 
     private final Map<String, Attribute> attributes;
@@ -176,6 +176,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         AccessFlag.applyAttributes(attributes, accessFlags);
+        this.isInnerClass = testIsInnerClass();
 
         int superClassIndex = data.getU2At(OFFSET_OF_SUPER_CLASS);
         if (superClassIndex == 0) {
@@ -383,6 +384,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
     public boolean isInnerClass() {
+        if (isInnerClass) return true;
+        // Sloppy - should be sufficient to rely on above.
         if (thisClass == null) return false;
         return thisClass.getTypeInstance().getInnerClassHereInfo().isInnerClass();
     }
@@ -671,18 +674,24 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return false;
     }
 
-    // just after construction
-    public void loadInnerClasses(DCCommonState dcCommonState) {
-        Options options = dcCommonState.getOptions();
-
-        AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
-        if (attributeInnerClasses == null) {
-            return;
-        }
-        List<InnerClassAttributeInfo> innerClassAttributeInfoList = attributeInnerClasses.getInnerClassAttributeInfoList();
-
+    private boolean testIsInnerClass() {
+        List<InnerClassAttributeInfo> innerClassAttributeInfoList = getInnerClassAttributeInfos();
+        if (innerClassAttributeInfoList == null) return false;
         final JavaTypeInstance thisType = thisClass.getTypeInstance();
 
+        for (InnerClassAttributeInfo innerClassAttributeInfo : innerClassAttributeInfoList) {
+            JavaTypeInstance innerType = innerClassAttributeInfo.getInnerClassInfo();
+            if (innerType == thisType) return true;
+        }
+        return false;
+    }
+
+    // just after construction
+    public void loadInnerClasses(DCCommonState dcCommonState) {
+        List<InnerClassAttributeInfo> innerClassAttributeInfoList = getInnerClassAttributeInfos();
+        if (innerClassAttributeInfoList == null) return;
+
+        final JavaTypeInstance thisType = thisClass.getTypeInstance();
 
         for (InnerClassAttributeInfo innerClassAttributeInfo : innerClassAttributeInfoList) {
             JavaTypeInstance innerType = innerClassAttributeInfo.getInnerClassInfo();
@@ -721,6 +730,15 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             }
 
         }
+    }
+
+    private List<InnerClassAttributeInfo> getInnerClassAttributeInfos() {
+        AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
+        List<InnerClassAttributeInfo> innerClassAttributeInfoList = attributeInnerClasses == null ? null : attributeInnerClasses.getInnerClassAttributeInfoList();
+        if (innerClassAttributeInfoList == null) {
+            return null;
+        }
+        return innerClassAttributeInfoList;
     }
 
     private void analyseInnerClassesPass1(DCCommonState state) {

@@ -205,25 +205,31 @@ public class Main {
          *
          * This is an ugly hack to get around that, but it relies on ordering of processing, which
          * means it will never multi thread :(((
+         *
+         * TODO : Instead, we discard state, which is slower but fractionally less ugly.
+         * improve.
          */
-        Pair<List<String>, List<String>> partition = Functional.partition(files, new Predicate<String>() {
-            @Override
-            public boolean test(String in) {
-                return !in.contains(MiscConstants.INNER_CLASS_SEP_STR);
-            }
-        });
-        Collections.sort(partition.getSecond(), new Comparator<String>() {
-                    @Override
-                    public int compare(String s, String t1) {
-                        int x = s.length() - t1.length();
-                        if (x != 0) return x;
-                        return s.compareTo(t1);
-                    }
-                });
-        partition.getFirst().addAll(partition.getSecond());
-        files = partition.getFirst();
+//        Pair<List<String>, List<String>> partition = Functional.partition(files, new Predicate<String>() {
+//            @Override
+//            public boolean test(String in) {
+//                return !in.contains(MiscConstants.INNER_CLASS_SEP_STR);
+//            }
+//        });
+//        Collections.sort(partition.getSecond(), new Comparator<String>() {
+//                    @Override
+//                    public int compare(String s, String t1) {
+//                        int x = s.length() - t1.length();
+//                        if (x != 0) return x;
+//                        return s.compareTo(t1);
+//                    }
+//                });
+//        partition.getFirst().addAll(partition.getSecond());
+//        files = partition.getFirst();
+        Collections.sort(files);
 
         for (String path : files) {
+            // TODO : We shouldn't have to discard state here.  But we do, because
+            // it causes test fails.  (used class name table retains useful symbols).
             dcCommonState = new DCCommonState(options, classFileSource);
             dumperFactory = new DumperFactoryImpl(options);
 
