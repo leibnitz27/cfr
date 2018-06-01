@@ -26,6 +26,13 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
     public TernaryExpression(ConditionalExpression condition, Expression lhs, Expression rhs) {
         super(inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType()));
         this.condition = condition;
+        if (getInferredJavaType().getJavaTypeInstance().getStackType() != StackType.REF) {
+            if (lhs instanceof Literal) {
+                lhs = ((Literal) lhs).appropriatelyCasted(getInferredJavaType());
+            } else if (rhs instanceof Literal) {
+                rhs = ((Literal) rhs).appropriatelyCasted(getInferredJavaType());
+            }
+        }
         this.lhs = lhs;
         this.rhs = rhs;
     }

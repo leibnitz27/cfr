@@ -12,6 +12,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -90,6 +93,16 @@ public class Literal extends AbstractExpression {
                 }
             }
         }
+    }
+
+    public Expression appropriatelyCasted(InferredJavaType expected) {
+        if (value.getType() != TypedLiteral.LiteralType.Integer) return this;
+        JavaTypeInstance type = expected.getJavaTypeInstance();
+        if (type.getStackType() != StackType.INT) return this;
+        if (type == RawJavaType.SHORT ||
+            type == RawJavaType.BYTE ||
+            type == RawJavaType.CHAR) return new CastExpression(expected, this);
+        return this;
     }
 
     public TypedLiteral getValue() {
