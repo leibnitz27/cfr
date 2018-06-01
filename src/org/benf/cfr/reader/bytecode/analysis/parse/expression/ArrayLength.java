@@ -7,6 +7,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -15,10 +17,14 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 public class ArrayLength extends AbstractExpression {
     private Expression array;
+    private JavaTypeInstance constructionType;
 
     public ArrayLength(Expression array) {
         super(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.INSTRUCTION));
         this.array = array;
+        // We keep track of construction type, because if this array participates
+        // in type clash resolution we'll lose it, which will lead to a bad cast.
+        this.constructionType = array.getInferredJavaType().getJavaTypeInstance();
     }
 
     @Override
@@ -38,7 +44,13 @@ public class ArrayLength extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        array.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
+        // This is a bit of a hack - the alternative is to have a very late
+        // stage transform, which I just dont think is worth the cost right now.
+        Expression expr = array;
+        if (expr.getInferredJavaType().getJavaTypeInstance().getNumArrayDimensions() == 0) {
+            expr = new CastExpression(new InferredJavaType(constructionType, InferredJavaType.Source.UNKNOWN), expr);
+        }
+        expr.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d.print(".length");
     }
 
