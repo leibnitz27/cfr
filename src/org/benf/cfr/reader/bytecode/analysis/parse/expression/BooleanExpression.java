@@ -32,6 +32,10 @@ public class BooleanExpression extends AbstractExpression implements Conditional
         return 1;
     }
 
+    public Expression getInner() {
+        return inner;
+    }
+
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         inner.collectTypeUsages(collector);
