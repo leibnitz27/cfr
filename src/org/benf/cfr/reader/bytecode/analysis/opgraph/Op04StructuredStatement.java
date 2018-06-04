@@ -748,6 +748,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public static void miscKeyholeTransforms(Op04StructuredStatement root) {
         new NakedNullCaster().transform(root);
         new LambdaCleaner().transform(root);
+        new TernaryCastCleaner().transform(root);
     }
 
     public static void prettifyBadLoops(Op04StructuredStatement root) {

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.CastAction;
@@ -24,15 +25,12 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
     private Expression rhs;
 
     public TernaryExpression(ConditionalExpression condition, Expression lhs, Expression rhs) {
-        super(inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType()));
+        this(inferredType(lhs.getInferredJavaType(), rhs.getInferredJavaType()), condition, lhs, rhs);
+    }
+
+    public TernaryExpression(InferredJavaType type, ConditionalExpression condition, Expression lhs, Expression rhs) {
+        super(type);
         this.condition = condition;
-        if (getInferredJavaType().getJavaTypeInstance().getStackType() != StackType.REF) {
-            if (lhs instanceof Literal) {
-                lhs = ((Literal) lhs).appropriatelyCasted(getInferredJavaType());
-            } else if (rhs instanceof Literal) {
-                rhs = ((Literal) rhs).appropriatelyCasted(getInferredJavaType());
-            }
-        }
         this.lhs = lhs;
         this.rhs = rhs;
     }

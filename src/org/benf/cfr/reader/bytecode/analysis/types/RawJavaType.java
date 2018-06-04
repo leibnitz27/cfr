@@ -57,7 +57,6 @@ public enum RawJavaType implements JavaTypeInstance {
         return tgt;
     }
 
-
     private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber, boolean objectType) {
         this.name = name;
         this.stackType = stackType;

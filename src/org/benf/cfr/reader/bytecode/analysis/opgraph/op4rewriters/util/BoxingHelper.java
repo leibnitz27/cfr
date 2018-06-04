@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvo
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.util.SetFactory;
 
@@ -59,4 +60,16 @@ public class BoxingHelper {
         }
         return staticFunctionInvokation;
     }
+
+    public static boolean isBoxedTypeInclNumber(JavaTypeInstance type) {
+        if (RawJavaType.getUnboxedTypeFor(type) != null) return true;
+        if (type.getRawName().equals(TypeConstants.boxingNameNumber)) return true;
+        return false;
+    }
+
+    public static boolean isBoxedType(JavaTypeInstance type) {
+        return (RawJavaType.getUnboxedTypeFor(type) != null);
+    }
+
+
 }

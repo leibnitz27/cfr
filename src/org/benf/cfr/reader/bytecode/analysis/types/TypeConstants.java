@@ -1,42 +1,42 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 public interface TypeConstants {
-    public final static JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant("java.lang.Object", "Object");
-    public final static JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstant("java.lang.Enum", "Enum", OBJECT);
-    public final static JavaRefTypeInstance ASSERTION_ERROR = JavaRefTypeInstance.createTypeConstant("java.lang.AssertionError", "AssertionError", OBJECT);
-    public final static JavaRefTypeInstance CHAR_SEQUENCE = JavaRefTypeInstance.createTypeConstant("java.lang.CharSequence", "CharSequence", OBJECT);
-    public final static JavaRefTypeInstance STRING = JavaRefTypeInstance.createTypeConstant("java.lang.String", "String", OBJECT, CHAR_SEQUENCE);
-    public final static JavaRefTypeInstance CLASS = JavaRefTypeInstance.createTypeConstant("java.lang.Class", "Class", OBJECT);
-    public final static JavaRefTypeInstance ITERABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Iterable", "Iterable", OBJECT);
-    public final static JavaRefTypeInstance CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.io.Closeable", "Closeable", OBJECT);
-    public final static JavaRefTypeInstance THROWABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Throwable", "Throwable", OBJECT);
-    public final static JavaRefTypeInstance AUTO_CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.lang.AutoCloseable", "AutoCloseable");
-    public final static JavaRefTypeInstance SUPPLIER = JavaRefTypeInstance.createTypeConstant("java.util.function.Supplier", "Object");
-    public final static JavaRefTypeInstance SCALA_SIGNATURE = JavaRefTypeInstance.createTypeConstant("scala.reflect.ScalaSignature", "Object");
+    JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant("java.lang.Object", "Object");
+    JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstant("java.lang.Enum", "Enum", OBJECT);
+    JavaRefTypeInstance ASSERTION_ERROR = JavaRefTypeInstance.createTypeConstant("java.lang.AssertionError", "AssertionError", OBJECT);
+    JavaRefTypeInstance CHAR_SEQUENCE = JavaRefTypeInstance.createTypeConstant("java.lang.CharSequence", "CharSequence", OBJECT);
+    JavaRefTypeInstance STRING = JavaRefTypeInstance.createTypeConstant("java.lang.String", "String", OBJECT, CHAR_SEQUENCE);
+    JavaRefTypeInstance CLASS = JavaRefTypeInstance.createTypeConstant("java.lang.Class", "Class", OBJECT);
+    JavaRefTypeInstance ITERABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Iterable", "Iterable", OBJECT);
+    JavaRefTypeInstance CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.io.Closeable", "Closeable", OBJECT);
+    JavaRefTypeInstance THROWABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Throwable", "Throwable", OBJECT);
+    JavaRefTypeInstance AUTO_CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.lang.AutoCloseable", "AutoCloseable");
+    JavaRefTypeInstance SUPPLIER = JavaRefTypeInstance.createTypeConstant("java.util.function.Supplier", "Object");
+    JavaRefTypeInstance SCALA_SIGNATURE = JavaRefTypeInstance.createTypeConstant("scala.reflect.ScalaSignature", "Object");
 
-    public final static String boxingNameBoolean = "java.lang.Boolean";
-    public final static String boxingNameByte = "java.lang.Byte";
-    public final static String boxingNameShort = "java.lang.Short";
-    public final static String boxingNameChar = "java.lang.Character";
-    public final static String boxingNameInt = "java.lang.Integer";
-    public final static String boxingNameLong = "java.lang.Long";
-    public final static String boxingNameFloat = "java.lang.Float";
-    public final static String boxingNameDouble = "java.lang.Double";
-    public final static String boxingNameNumber = "java.lang.Number";
+    String boxingNameBoolean = "java.lang.Boolean";
+    String boxingNameByte = "java.lang.Byte";
+    String boxingNameShort = "java.lang.Short";
+    String boxingNameChar = "java.lang.Character";
+    String boxingNameInt = "java.lang.Integer";
+    String boxingNameLong = "java.lang.Long";
+    String boxingNameFloat = "java.lang.Float";
+    String boxingNameDouble = "java.lang.Double";
+    String boxingNameNumber = "java.lang.Number";
 
-    public final static String objectsName = "java.util.Objects";
-    public final static String throwableName = "java.lang.Throwable";
-    public final static String stringName = "java.lang.String";
-    public final static String charSequenceName = "java.lang.CharSequence";
-    public final static String stringBuilderName = "java.lang.StringBuilder";
-    public final static String stringBufferName = "java.lang.StringBuffer";
-    public final static String className = "java.lang.Class";
-    public final static String objectName = "java.lang.Object";
+    String objectsName = "java.util.Objects";
+    String throwableName = "java.lang.Throwable";
+    String stringName = "java.lang.String";
+    String charSequenceName = "java.lang.CharSequence";
+    String stringBuilderName = "java.lang.StringBuilder";
+    String stringBufferName = "java.lang.StringBuffer";
+    String className = "java.lang.Class";
+    String objectName = "java.lang.Object";
 
-    public final static String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
-    public final static String supplierName = "java.util.function.Supplier";
+    String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
+    String supplierName = "java.util.function.Supplier";
 
     // Path, because we actually want to load the class - could we get away with a hardcoded ref type as above?
-    public final static String runtimeExceptionPath = "java/lang/RuntimeException.class";
+    String runtimeExceptionPath = "java/lang/RuntimeException.class";
 
 }
