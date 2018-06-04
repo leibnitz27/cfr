@@ -160,6 +160,9 @@ public class FinalAnalyzer {
                     continue;
                 }
 
+                if (!(peerTry.getStatement() instanceof TryStatement)) {
+                    continue;
+                }
                 TryStatement peerTryStmt = (TryStatement) peerTry.getStatement();
                 final BlockIdentifier oldBlockIdent = peerTryStmt.getBlockIdentifier();
                 /*
