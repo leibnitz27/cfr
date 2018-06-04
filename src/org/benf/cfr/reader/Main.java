@@ -188,8 +188,8 @@ public class Main {
         }
 
         ClassFileSourceImpl classFileSource = new ClassFileSourceImpl(options);
-        DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
-        DumperFactory dumperFactory = new DumperFactoryImpl(options);
+//        DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
+//        DumperFactory dumperFactory = new DumperFactoryImpl(options);
 
         /*
          * There's an interesting question here - do we want to skip inner classes, if we've been given a wildcard?
@@ -230,8 +230,8 @@ public class Main {
         for (String path : files) {
             // TODO : We shouldn't have to discard state here.  But we do, because
             // it causes test fails.  (used class name table retains useful symbols).
-            dcCommonState = new DCCommonState(options, classFileSource);
-            dumperFactory = new DumperFactoryImpl(options);
+            DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
+            DumperFactory dumperFactory = new DumperFactoryImpl(options);
 
             path = classFileSource.adjustInputPath(path);
 

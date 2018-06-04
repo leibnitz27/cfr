@@ -367,7 +367,7 @@ public class IterLoopRewriter {
             }
             LValue updated = inStatement.getCreatedLValue();
             if (updated == null) continue;
-            if (updated.equals(sugarIter) || updated.equals(iterable)) {
+            if (updated.equals(iterable)) {
                 return;
             }
         }
