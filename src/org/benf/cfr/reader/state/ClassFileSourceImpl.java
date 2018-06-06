@@ -20,6 +20,7 @@ import java.util.zip.ZipFile;
 
 public class ClassFileSourceImpl implements ClassFileSource {
 
+    private final Set<String> explicitJars = SetFactory.newSet();
     private Map<String, String> classToPathMap;
     // replace with BiDiMap
     private Map<String, String> classCollisionRenamerLCToReal;
@@ -116,9 +117,10 @@ public class ClassFileSourceImpl implements ClassFileSource {
                 }
                 usePath = pathPrefix + usePath;
             }
-            File file = new File(usePath);
+            boolean forceJar = explicitJars.contains(jarName);
+            File file = forceJar ? null : new File(usePath);
             byte[] content;
-            if (file.exists()) {
+            if (file != null && file.exists()) {
                 is = new FileInputStream(file);
                 length = file.length();
                 content = getBytesFromFile(is, length);
@@ -193,6 +195,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
         if (!file.exists()) {
             throw new ConfusedCFRException("No such jar file " + jarPath);
         }
+        jarPath = file.getAbsolutePath();
         Map<String, String> thisJar = MapFactory.newOrderedMap();
         if (!processClassPathFile(file, jarPath, thisJar, false)) {
             throw new ConfusedCFRException("Failed to load jar " + jarPath);
@@ -228,8 +231,8 @@ public class ClassFileSourceImpl implements ClassFileSource {
                 output.add(classPath);
             }
         }
+        explicitJars.add(jarPath);
         return output;
-
     }
 
     private static String addDedupName(String potDup, Set<String> collisions, Map<String, String> data) {
@@ -305,7 +308,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
         return classToPathMap;
     }
 
-    private boolean processClassPathFile(File file, String path, Map<String, String> classToPathMap, boolean dump) {
+    private boolean processClassPathFile(final File file, final String path, Map<String, String> classToPathMap, boolean dump) {
         try {
             ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
             try {
