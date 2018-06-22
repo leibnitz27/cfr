@@ -125,5 +125,7 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
         varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, getArgs(), gtb);
     }
 
-
+    public MethodPrototype getConstructorPrototype() {
+        return getMethodPrototype();
+    }
 }

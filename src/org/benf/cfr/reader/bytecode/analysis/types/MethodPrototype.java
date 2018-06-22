@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
-import com.sun.tools.javah.Gen;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -16,13 +15,39 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.annotation.Nullable;
 import org.benf.cfr.reader.util.StringUtils;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class MethodPrototype implements TypeUsageCollectable {
+    public static class ParameterLValue {
+        public LocalVariable localVariable;
+        public HiddenReason hidden;
+
+        public ParameterLValue(LocalVariable localVariable, HiddenReason hidden) {
+            this.localVariable = localVariable;
+            this.hidden = hidden;
+        }
+
+        @Override
+        public String toString() {
+            return "" + localVariable + " [" + hidden + "]";
+        }
+
+        public boolean isHidden() {
+            return hidden != HiddenReason.NotHidden;
+        }
+    }
+
+    public enum HiddenReason
+    {
+        NotHidden,
+        HiddenOuterReference,
+        HiddenCapture
+    }
+
+    private MethodPrototype descriptorProto;
     private final List<FormalTypeParameter> formalTypeParameters;
     private final List<JavaTypeInstance> args;
     private final Set<Integer> hidden = SetFactory.newSet();
@@ -37,7 +62,10 @@ public class MethodPrototype implements TypeUsageCollectable {
     // Synthetic args are arguments which are not VISIBLY present in the method prototype at all, but
     // are nonetheless used by the method body.
     private final List<Slot> syntheticArgs = ListFactory.newList();
-    private transient List<LocalVariable> parameterLValues = null;
+    private final List<Slot> syntheticCaptureArgs = ListFactory.newList();
+    private List<ParameterLValue> parameterLValues = null;
+//    private static int sid = 0;
+//    private final int id = sid++;
 
     public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
         this.formalTypeParameters = formalTypeParameters;
@@ -98,7 +126,12 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     public void hide(int x) {
+//        getParameterLValues().get(x).hidden = HiddenReason.HiddenOuterReferece;  // TODO : No.
         hidden.add(x);
+    }
+
+    public void setDescriptorProto(MethodPrototype descriptorProto) {
+        this.descriptorProto = descriptorProto;
     }
 
     public void setInnerOuterThis() {
@@ -133,18 +166,25 @@ public class MethodPrototype implements TypeUsageCollectable {
 
         List<LocalVariable> parameterLValues = getComputedParameters();
         int argssize = args.size();
-        if (parameterLValues.size() != args.size()) {
-            int x = 1;
-        }
         boolean first = true;
-        for (int i = 0; i < argssize; ++i) {
+        int offset = 0;
+        // TODO : GROSS - refactor the fuck out of this before checkin.
+        for (int i = 0; i < argssize && (offset + i < parameterLValues.size()); ++i) {
             JavaTypeInstance arg = args.get(i);
-            if (hidden.contains(i)) continue;
+            if (getParameterLValues().get(i + offset).hidden != HiddenReason.NotHidden) {
+                offset++;
+                i--;
+                continue;
+            }
+            if (hidden.contains(offset + i)) {
+                continue;
+            }
             first = StringUtils.comma(first, d);
 
-            LocalVariable param = parameterLValues.get(i);
+            int paramIdx = i + offset;
+            LocalVariable param = parameterLValues.get(paramIdx);
             if (param.isFinal()) d.print("final ");
-            annotationsHelper.addAnnotationTextForParameterInto(i, d);
+            annotationsHelper.addAnnotationTextForParameterInto(paramIdx, d);
             if (varargs && (i == argssize - 1)) {
                 if (!(arg instanceof JavaArrayTypeInstance)) {
                     throw new ConfusedCFRException("VARARGS method doesn't have an array as last arg!!");
@@ -162,15 +202,25 @@ public class MethodPrototype implements TypeUsageCollectable {
         return parameterLValues != null;
     }
 
-    public List<LocalVariable> getComputedParameters() {
+    public List<ParameterLValue> getParameterLValues() {
         if (parameterLValues == null) {
             throw new IllegalStateException("Parameters not created");
         }
         return parameterLValues;
     }
 
-    public void setSyntheticConstructorParameters(Method.MethodConstructor constructorFlag, DecompilerComments comments, Map<Integer, JavaTypeInstance> synthetics) {
+    public List<LocalVariable> getComputedParameters() {
+        return Functional.map(getParameterLValues(), new UnaryFunction<ParameterLValue, LocalVariable>() {
+            @Override
+            public LocalVariable invoke(ParameterLValue arg) {
+                return arg.localVariable;
+            }
+        });
+    }
+
+    public void setNonMethodScopedSyntheticConstructorParameters(Method.MethodConstructor constructorFlag, DecompilerComments comments, Map<Integer, JavaTypeInstance> synthetics) {
         syntheticArgs.clear();
+        syntheticCaptureArgs.clear();
 
         int offset = 0;
         switch (constructorFlag) {
@@ -241,9 +291,9 @@ public class MethodPrototype implements TypeUsageCollectable {
         }
         if (!syntheticArgs.isEmpty()) {
             for (Slot synthetic : syntheticArgs) {
-                if (offset != synthetic.getIdx()) {
-                    throw new IllegalStateException("Synthetic arg - offset is " + offset + ", but got " + synthetic.getIdx());
-                }
+//                if (offset != synthetic.getIdx()) {
+//                    throw new IllegalStateException("Synthetic arg - offset is " + offset + ", but got " + synthetic.getIdx());
+//                }
                 res.put(synthetic, ssaIdentifierFactory.getIdent(synthetic));
                 offset += synthetic.getJavaTypeInstance().getStackType().getComputationCategory();
             }
@@ -253,12 +303,18 @@ public class MethodPrototype implements TypeUsageCollectable {
             res.put(tgt, ssaIdentifierFactory.getIdent(tgt));
             offset += arg.getStackType().getComputationCategory();
         }
+        if (!syntheticCaptureArgs.isEmpty()) {
+            for (Slot synthetic : syntheticCaptureArgs) {
+                res.put(synthetic, ssaIdentifierFactory.getIdent(synthetic));
+                offset += synthetic.getJavaTypeInstance().getStackType().getComputationCategory();
+            }
+        }
         return res;
     }
 
     public List<LocalVariable> computeParameters(Method.MethodConstructor constructorFlag, Map<Integer, Ident> slotToIdentMap) {
         if (parameterLValues != null) {
-            return parameterLValues;
+            return getComputedParameters();
         }
 
         parameterLValues = ListFactory.newList();
@@ -278,17 +334,24 @@ public class MethodPrototype implements TypeUsageCollectable {
             // TODO : It's not a valid assumption that synthetic args are at the front!
             for (Slot synthetic : syntheticArgs) {
                 JavaTypeInstance typeInstance = synthetic.getJavaTypeInstance();
-                parameterLValues.add(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true)));
+                parameterLValues.add(new ParameterLValue(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true)), HiddenReason.HiddenOuterReference));
                 offset += typeInstance.getStackType().getComputationCategory();
             }
         }
 
         for (JavaTypeInstance arg : args) {
             Ident ident = slotToIdentMap.get(offset);
-            parameterLValues.add(new LocalVariable(offset, ident, variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)));
+            parameterLValues.add(new ParameterLValue(new LocalVariable(offset, ident, variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)), HiddenReason.NotHidden));
             offset += arg.getStackType().getComputationCategory();
         }
-        return parameterLValues;
+
+        for (Slot synthetic : syntheticCaptureArgs) {
+            JavaTypeInstance typeInstance = synthetic.getJavaTypeInstance();
+            parameterLValues.add(new ParameterLValue(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true)), HiddenReason.HiddenCapture));
+            offset += typeInstance.getStackType().getComputationCategory();
+        }
+
+        return getComputedParameters();
     }
 
     public JavaTypeInstance getReturnType() {
@@ -665,5 +728,121 @@ public class MethodPrototype implements TypeUsageCollectable {
         return true;
     }
 
+    /*
+     * We have an *idea* of what the arguments are from 'args'.  However, the first one (OR TWO) may be implicitly
+     * captured, and the last N may be explicitly captured.
+     *
+     * implicit captures are outer refs etc
+     * explicit captures are
+     */
+    public void setMethodScopedSyntheticConstructorParameters(DecompilerComments comments, NavigableMap<Integer, JavaTypeInstance> missing) {
+        List<Slot> missingList = ListFactory.newList();
+        //
+        int expected = 0;
+        for (Map.Entry<Integer, JavaTypeInstance> missingItem : missing.entrySet()) {
+            Integer thisOffset = missingItem.getKey();
+            JavaTypeInstance type = missingItem.getValue();
+            // If the prototype is completely hosed, we're left with not much good.....
+            while (thisOffset > expected) {
+                missingList.add(new Slot(expected == 0 ? RawJavaType.REF : RawJavaType.NULL, expected++));
+            }
+            missingList.add(new Slot(type, thisOffset));
+            expected = thisOffset + type.getStackType().getComputationCategory();
+        }
+        if (missingList.size() < 2) {
+            return;
+        }
+        boolean handledDescriptor = false;
+        // Can we improve this with a descriptor proto?
+        if (descriptorProto != null) {
+            // Try and line our existing args up with the descriptor proto, then infer synthetic
+            // data from that.
 
+            List<JavaTypeInstance> descriptorArgs = descriptorProto.args;
+            for (int x = 0; x< descriptorArgs.size()- this.args.size(); ++x) {
+
+                if (satisfies(descriptorArgs, x, this.args)) {
+                    // Right... let's take that.
+                    int s = args.size() + x;
+                    args.clear();
+                    args.addAll(descriptorArgs);
+                    for (int y=0;y<x;++y) {
+                        hide(y);
+                    }
+                    for (int y = s;y<args.size();++y) {
+                        hide(y);
+                    }
+                }
+            }
+        }
+
+        // The first element MUST be a reference, which is the implicit 'this'.
+        if (missingList.get(0).getJavaTypeInstance() != RawJavaType.REF) return;
+        Slot removed = missingList.remove(0);
+        // Can we satisfy all of args at 0, or at 1?
+        boolean all0 = satisfiesSlots(missingList, 0, args);
+        boolean all1 = satisfiesSlots(missingList, 1, args);
+        if (all1) {
+            syntheticArgs.add(missingList.remove(0));
+        } else if (!all0) {
+            // Can't find anywhere in usages where args line up - this means we're struggling to reconstruct the
+            // 'real' full signature.
+            // This is very unsatisfactory
+            syntheticArgs.add(missingList.remove(0));
+            int x = 1;
+        }
+        for (int x=args.size();x<missingList.size();++x) {
+            syntheticCaptureArgs.add(missingList.get(x));
+        }
+    }
+
+    private static boolean satisfies(List<JavaTypeInstance> haystack, int start, List<JavaTypeInstance> args) {
+        if (haystack.size() - start < args.size()) return false;
+        for (int x=0;x<args.size();++x) {
+            JavaTypeInstance here = haystack.get(x+start);
+            JavaTypeInstance expected = args.get(x);
+            if (!expected.equals(here)) return false;
+        }
+        return true;
+    }
+
+    private static boolean satisfiesSlots(List<Slot> haystack, int start, List<JavaTypeInstance> args) {
+        List<Slot> originalHaystack = haystack;
+        if (haystack.size() - start < args.size()) return false;
+        for (int x=0;x<args.size();++x) {
+            Slot here = haystack.get(x+start);
+            JavaTypeInstance expected = args.get(x);
+            StackType st1 = here.getJavaTypeInstance().getStackType();
+            StackType st2 = expected.getStackType();
+            if (st1 == st2) continue;
+            if (here.getJavaTypeInstance() == RawJavaType.NULL) {
+                switch (st2.getComputationCategory()) {
+                    case 1:
+                        haystack = ListFactory.newList(haystack);
+                        haystack.set(x + start, new Slot(expected, here.getIdx()));
+                        break;
+                    case 2:
+                        // We didn't know what to insert when we were converting the avaiable
+                        // slots, so we stuck in two nulls - now we realise this is a category
+                        // 2 argument.
+                        if (haystack.size() > x+start+1) {
+                            Slot here2 = haystack.get(x+start+1);
+                            if (here2.getJavaTypeInstance() == RawJavaType.NULL) {
+                                haystack = ListFactory.newList(haystack);
+                                haystack.remove(x+start+1);
+                                break;
+                            }
+                        }
+                        return false;
+                }
+                continue;
+            }
+            return false;
+        }
+        if (haystack != originalHaystack) {
+            originalHaystack.clear();
+            originalHaystack.addAll(haystack);
+        }
+        return true;
+    }
 }

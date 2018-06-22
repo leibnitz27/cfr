@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.types.discovery;
 
-import com.sun.tools.internal.ws.wsdl.document.soap.SOAPUse;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.*;

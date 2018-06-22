@@ -21,11 +21,9 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
 import java.util.*;
 
-public class Op03Blocks {
+import static org.benf.cfr.reader.util.SetUtil.getSingle;
 
-    private static <T> T getSingle(Set<T> in) {
-        return in.iterator().next();
-    }
+public class Op03Blocks {
 
     private static List<Block3> doTopSort(List<Block3> in) {
         /*

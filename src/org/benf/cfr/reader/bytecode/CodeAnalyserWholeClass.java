@@ -18,9 +18,7 @@ import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.MiscConstants;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -124,8 +122,11 @@ public class CodeAnalyserWholeClass {
      * Fix references to this$x etc
      */
     private static void fixInnerClassConstructorSyntheticOuterArgs(ClassFile classFile) {
-        for (Method method : classFile.getConstructors()) {
-            Op04StructuredStatement.fixInnerClassConstructorSyntheticOuterArgs(classFile, method, method.getAnalysis());
+        if (classFile.isInnerClass()) {
+            Set<MethodPrototype> processed = SetFactory.newSet();
+            for (Method method : classFile.getConstructors()) {
+                Op04StructuredStatement.fixInnerClassConstructorSyntheticOuterArgs(classFile, method, method.getAnalysis(), processed);
+            }
         }
     }
 

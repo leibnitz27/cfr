@@ -48,7 +48,7 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
                 if (lValue instanceof FieldVariable) {
                     try {
                         FieldVariable fieldVariable = (FieldVariable)lValue;
-                        ClassFileField classField = classFile.getFieldByName(fieldVariable.getFieldName(), fieldVariable.getInferredJavaType().getJavaTypeInstance());
+                        ClassFileField classField = classFile.getFieldByName(fieldVariable.getRawFieldName(), fieldVariable.getInferredJavaType().getJavaTypeInstance());
                         Field field = classField.getField();
                         // Don't continue if it's not final + synthetic?
                         // it's a bad match, so we don't want to try for a later one.

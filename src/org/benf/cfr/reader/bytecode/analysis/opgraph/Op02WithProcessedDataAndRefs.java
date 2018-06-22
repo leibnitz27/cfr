@@ -880,7 +880,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         int slot = storageTypeAndIdx.getSecond();
         Ident ident = localVariablesBySlot.get(slot);
 
-        return new AssignmentSimple(getStackLValue(0), new LValueExpression(variableFactory.localVariable(slot, ident, originalRawOffset)));
+        LValue lValue = variableFactory.localVariable(slot, ident, originalRawOffset);
+        return new AssignmentSimple(getStackLValue(0), new LValueExpression(lValue));
     }
 
     private static Expression ensureNonBool(Expression e) {
@@ -1515,13 +1516,44 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     private static void assignSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, Options options) {
-        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements, bytecodeMeta, options);
+        NavigableMap<Integer, JavaTypeInstance> missing = assignIdentsAndGetMissingMap(ssaIdentifierFactory, method, statements, bytecodeMeta, options, true);
+
+        if (missing.isEmpty()) return;
+
+        if (!method.getConstructorFlag().isConstructor()) {
+            throw new IllegalStateException("Invisible function parameters on a non-constructor");
+        }
+        /*
+         * our signature doesn't match the actual arguments.
+         * If our constructor is that of a method scoped class, there will be a this pointer,
+         * followed by an optional outer ref, followed by actual args, followed by captured
+         * args.
+         */
+        JavaTypeInstance classType = method.getClassFile().getClassType();
+        if (classType.getInnerClassHereInfo().isMethodScopedClass()) {
+            missing = assignIdentsAndGetMissingMap(ssaIdentifierFactory, method, statements, bytecodeMeta, options, false);
+            method.getMethodPrototype().setMethodScopedSyntheticConstructorParameters(comments, missing);
+            assignIdentsAndGetMissingMap(ssaIdentifierFactory, method, statements, bytecodeMeta, options, true);
+
+        } else {
+            /*
+             * The (now known) missing arguments should be in the first available slots.
+             * Add them to the method prototype, and re-scan.
+             */
+            method.getMethodPrototype().setNonMethodScopedSyntheticConstructorParameters(method.getConstructorFlag(), comments, missing);
+        }
+
+        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements, bytecodeMeta, options, true);
+    }
+
+    private static NavigableMap<Integer, JavaTypeInstance> assignIdentsAndGetMissingMap(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, Options options, boolean useProtoArgs) {
+        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements, bytecodeMeta, options, useProtoArgs);
 
         /*
          * We can walk all the reads to see if there are any reads of 'uninitialised' slots.
          * These are masking hidden parameters. (usually synthetic ones?).
          */
-        Map<Integer, JavaTypeInstance> missing = MapFactory.newTreeMap();
+        NavigableMap<Integer, JavaTypeInstance> missing = MapFactory.newTreeMap();
 
         for (Op02WithProcessedDataAndRefs op02 : statements) {
             Pair<JavaTypeInstance, Integer> load = op02.getRetrieveType();
@@ -1532,23 +1564,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 missing.put(load.getSecond(), load.getFirst());
             }
         }
-
-        if (missing.isEmpty()) return;
-
-        if (!method.getConstructorFlag().isConstructor()) {
-            throw new IllegalStateException("Invisible function parameters on a non-constructor");
-        }
-
-        /*
-         * The (now known) missing arguments should be in the first available slots.
-         * Add them to the method prototype, and re-scan.
-         */
-        method.getMethodPrototype().setSyntheticConstructorParameters(method.getConstructorFlag(), comments, missing);
-
-        assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements, bytecodeMeta, options);
+        return missing;
     }
 
-    public static void assignSSAIdentifiersInner(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, Options options) {
+    public static void assignSSAIdentifiersInner(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, Options options, boolean useProtoArgs) {
 
         /*
          * before we do anything, we need to generate identifiers for the parameters.
@@ -1558,7 +1577,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          */
         // pos 329 idx 185 TODO
 
-        Map<Slot, SSAIdent> idents = method.getMethodPrototype().collectInitialSlotUsage(method.getConstructorFlag(), ssaIdentifierFactory);
+        Map<Slot, SSAIdent> idents = useProtoArgs ? method.getMethodPrototype().collectInitialSlotUsage(method.getConstructorFlag(), ssaIdentifierFactory) :
+                MapFactory.<Slot, SSAIdent>newMap();
 
         for (Op02WithProcessedDataAndRefs statement : statements) {
             statement.collectLocallyMutatedVariables(ssaIdentifierFactory);

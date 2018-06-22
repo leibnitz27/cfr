@@ -86,6 +86,13 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         return classFileField.getFieldName();
     }
 
+    public String getRawFieldName() {
+        if (classFileField == null) {
+            return failureName;
+        }
+        return classFileField.getRawFieldName();
+    }
+
     public ClassFileField getClassFileField() {
         return classFileField;
     }

@@ -17,6 +17,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -151,10 +152,6 @@ public class CreationCollector {
             AbstractConstructorInvokation constructorInvokation = null;
             InnerClassInfo innerClassInfo = lValueType.getInnerClassHereInfo();
 
-            if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnonymousClass()) {
-                method.markUsedLocalClassType(lValueType);
-            }
-
             if (innerClassInfo.isAnonymousClass()) {
                 /* anonymous inner class - so we need to match the arguments we're deliberately passing
                  * (i.e. the ones which are being passed into the constructor for the base of the anonymous
@@ -189,12 +186,28 @@ public class CreationCollector {
                         inferredJavaType.forceDelegate(new InferredJavaType(bestGuess, InferredJavaType.Source.UNKNOWN));
                     }
                 }
-            } else {
-                constructorInvokation = new ConstructorInvokationSimple(
+            }
+
+            if (constructorInvokation == null) {
+                ConstructorInvokationSimple cis = new ConstructorInvokationSimple(
                         memberFunctionInvokation,
                         inferredJavaType,
                         memberFunctionInvokation.getArgs());
+
+                constructorInvokation = cis;
+
+                if (innerClassInfo.isMethodScopedClass()) {
+                    // TODO:  Feels like the concept of anonymousClassUsage and methodScopedClass
+                    // can be run together in the method, NOT in the class.
+                    method.markUsedLocalClassType(lValueType);
+                    try {
+                        ClassFile cls = dcCommonState.getClassFile(lValueType);
+                        anonymousClassUsage.noteMethodClass(cls, cis);
+                    } catch (CannotLoadClassException e) {
+                    }
+                }
             }
+
 
             AssignmentSimple replacement = new AssignmentSimple(lValue, constructorInvokation);
 

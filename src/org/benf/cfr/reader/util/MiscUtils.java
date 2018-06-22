@@ -1,7 +1,5 @@
 package org.benf.cfr.reader.util;
 
-import sun.misc.Regexp;
-
 import java.util.regex.Pattern;
 
 public class MiscUtils {

@@ -59,9 +59,13 @@ public class ClassFileField {
         overriddenName = override;
     }
 
+    public String getRawFieldName() {
+        return field.getFieldName();
+    }
+
     public String getFieldName() {
         if (overriddenName != null) return overriddenName;
-        return field.getFieldName();
+        return getRawFieldName();
     }
 
     public void dump(Dumper d) {

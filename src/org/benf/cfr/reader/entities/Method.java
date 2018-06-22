@@ -67,7 +67,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final long length;
     private final EnumSet<AccessFlagMethod> accessFlags;
     private final Map<String, Attribute> attributes;
-    private MethodConstructor isConstructor;
+    private final MethodConstructor isConstructor;
     private final int descriptorIndex;
     private final AttributeCode codeAttribute;
     private final ConstantPool cp;
@@ -250,6 +250,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         List<JavaTypeInstance> signatureArgs = signature.getArgs();
         if (signatureArgs.size() != descriptorArgs.size() - 1) {
             // It's not the known issue, can't really deal with it.
+            signature.setDescriptorProto(descriptor);
             return signature;
         }
         for (int x = 0; x < signatureArgs.size(); ++x) {

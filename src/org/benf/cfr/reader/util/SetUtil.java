@@ -63,4 +63,8 @@ public class SetUtil {
         }
         return res;
     }
+
+    public static <X> X getSingle(Set<? extends X> a) {
+        return a.iterator().next();
+    }
 }

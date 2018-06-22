@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode;
 
-import com.sun.tools.javac.comp.Infer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;

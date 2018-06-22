@@ -8,10 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscState
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
@@ -35,6 +32,7 @@ import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -921,7 +919,106 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         applyLValueReplacer(replacements, root);
     }
 
-    private static void removeSyntheticConstructorOuterArgs(Method method, Op04StructuredStatement root, boolean isInstance) {
+    private static void removeMethodScopedSyntheticConstructorOuterArgs(Method method, Op04StructuredStatement root, Set<MethodPrototype> processed) {
+        final MethodPrototype prototype = method.getMethodPrototype();
+
+        if (!processed.add(prototype)) return;
+        
+        // A local class can have both synthetic parameters AND real ones....
+        List<MethodPrototype.ParameterLValue> vars = prototype.getParameterLValues();
+        if (vars.isEmpty()) return;
+
+        List<ConstructorInvokationSimple> usages = method.getClassFile().getMethodUsages();
+        if (usages.isEmpty()) return;
+
+        /*
+         * Make sure this usage is appropriate to *THIS* constructor.
+         */
+        class CaptureExpression {
+            private int idx;
+
+            private CaptureExpression(int idx) {
+                this.idx = idx;
+            }
+
+            private Set<Expression> captures = new HashSet<Expression>();
+        }
+
+        Map<MethodPrototype, MethodPrototype> protos = new IdentityHashMap<MethodPrototype, MethodPrototype>();
+        Map<MethodPrototype.ParameterLValue, CaptureExpression> captured = MapFactory.newIdentityMap();
+
+        /*
+         * Note that we're aggregating the captures from ALL constructors into a single map.
+         */
+        for (ConstructorInvokationSimple usage : usages) {
+            List<Expression> args = usage.getArgs();
+            MethodPrototype proto = usage.getConstructorPrototype();
+            protos.put(proto, proto);
+            for (int x=0;x<vars.size();++x) {
+                MethodPrototype.ParameterLValue var = vars.get(x);
+                if (var.isHidden() || proto.isHiddenArg(x)) {
+                    CaptureExpression capture = captured.get(var);
+                    if (capture == null) {
+                        capture = new CaptureExpression(x);
+                        captured.put(var, capture);
+                    }
+                    capture.captures.add(args.get(x));
+                }
+            }
+        }
+
+        // A method scoped class may have more than one constructor.
+        // We need to correctly link to the /relevant/ one. :(
+        MethodPrototype callProto = null;
+        switch (protos.size()) {
+            case 0:
+                return;
+            case 1:
+                callProto = SetUtil.getSingle(protos.keySet());
+                break;
+            default:
+                for (MethodPrototype proto : protos.keySet()) {
+                    if (proto.equalsMatch(prototype)) {
+                        if (callProto == null) {
+                            callProto = proto;
+                        } else {
+                            return;
+                        }
+                    }
+                }
+        }
+        if (callProto == null) return;
+        
+        ClassFile classFile = method.getClassFile();
+
+        for (int x=0;x<vars.size();++x) {
+            MethodPrototype.ParameterLValue parameterLValue = vars.get(x);
+            CaptureExpression captureExpression = captured.get(parameterLValue);
+
+            if (captureExpression == null || captureExpression.captures.size() != 1) continue;
+
+            Expression expr = captureExpression.captures.iterator().next();
+            if (!(expr instanceof LValueExpression)) continue;
+
+            LValue lValueArg = ((LValueExpression) expr).getLValue();
+            if (!(lValueArg instanceof LocalVariable)) continue;
+            LocalVariable localVariable = (LocalVariable) lValueArg;
+
+            if (parameterLValue.hidden == MethodPrototype.HiddenReason.HiddenOuterReference) {
+                if (prototype.isInnerOuterThis()) {
+                    if (prototype.isHiddenArg(captureExpression.idx)) {
+                        callProto.hide(captureExpression.idx);
+                    }
+                } else {
+                    hideField(root, callProto, classFile, captureExpression.idx, parameterLValue.localVariable, lValueArg, localVariable);
+                }
+            } else if (parameterLValue.hidden == MethodPrototype.HiddenReason.HiddenCapture || callProto.isHiddenArg(x)) {
+                hideField(root, callProto, classFile, captureExpression.idx, parameterLValue.localVariable, lValueArg, localVariable);
+            }
+        }
+    }
+
+    private static void removeAnonymousSyntheticConstructorOuterArgs(Method method, Op04StructuredStatement root, boolean isInstance) {
         MethodPrototype prototype = method.getMethodPrototype();
         List<LocalVariable> vars = prototype.getComputedParameters();
         if (vars.isEmpty()) return;
@@ -937,53 +1034,57 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
         ConstructorInvokationAnonymousInner usage = usages.size() == 1 ? usages.get(0) : null;
 
+        if (usage == null) return;
         /* If this inner class is an anonymous inner class, it could capture outer locals directly.
          * for all the other members - we'll search for any private final members which are initialised in the constructor
          * and alias those members to the argument that called them.
          */
-        if (usage != null) {
-            List<Expression> actualArgs = usage.getArgs();
-            if (actualArgs.size() != vars.size()) {
-                // can't handle this.  It's probably an enum synthetic.
-                return;
-            }
-            int start = isInstance ? 1 : 0;
-            for (int x = start, len = vars.size(); x < len; ++x) {
-                LocalVariable protoVar = vars.get(x);
-                Expression arg = actualArgs.get(x);
+        List<Expression> actualArgs = usage.getArgs();
+        if (actualArgs.size() != vars.size()) {
+            // can't handle this.  It's probably an enum synthetic.
+            return;
+        }
+        int start = isInstance ? 1 : 0;
+        ClassFile classFile = method.getClassFile();
+        for (int x = start, len = vars.size(); x < len; ++x) {
+            LocalVariable protoVar = vars.get(x);
+            Expression arg = actualArgs.get(x);
 
-                arg = CastExpression.removeImplicit(arg);
-                /*
-                 * For this to be a captured variable, it needs to not be computed - i.e. an Lvalue.
-                 */
-                if (!(arg instanceof LValueExpression)) continue;
-                LValue lValueArg = ((LValueExpression) arg).getLValue();
-                String name = null;
-                if (!(lValueArg instanceof LocalVariable)) continue;
-                LocalVariable localVariable = (LocalVariable) lValueArg;
+            arg = CastExpression.removeImplicit(arg);
+            /*
+             * For this to be a captured variable, it needs to not be computed - i.e. an Lvalue.
+             */
+            if (!(arg instanceof LValueExpression)) continue;
+            LValue lValueArg = ((LValueExpression) arg).getLValue();
+            if (!(lValueArg instanceof LocalVariable)) continue;
+            LocalVariable localVariable = (LocalVariable) lValueArg;
 
-                InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(method.getClassFile(), protoVar);
-                innerClassConstructorRewriter.rewrite(root);
-                FieldVariable matchedField = innerClassConstructorRewriter.getMatchedField();
-                if (matchedField != null) {
-                    // Nop out the assign statement, rename the field, hide the argument.
-                    innerClassConstructorRewriter.getAssignmentStatement().getContainer().nopOut();
-                    // We need to link the name to the outer variable in such a way that if that changes name,
-                    // we don't lose it.
-                    //
-                    // Once this has occurred, there's a possibility that we may have caused collisions
-                    // between these renamed members and locals in other code.
-                    ClassFileField classFileField = matchedField.getClassFileField();
-                    classFileField.overrideName(localVariable.getName().getStringName());
-                    classFileField.markSyntheticOuterRef();
-                    classFileField.markHidden();
-                    prototype.hide(x);
-                    lValueArg.markFinal();
-                }
-            }
+            hideField(root, prototype, classFile, x, protoVar, lValueArg, localVariable);
         }
 
         applyLValueReplacer(replacements, root);
+    }
+
+    private static void hideField(Op04StructuredStatement root, MethodPrototype prototype, ClassFile classFile, int x, LocalVariable protoVar, LValue lValueArg, LocalVariable localVariable) {
+        InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(classFile, protoVar);
+        innerClassConstructorRewriter.rewrite(root);
+        FieldVariable matchedField = innerClassConstructorRewriter.getMatchedField();
+        if (matchedField == null) {
+            return;
+        }
+        // Nop out the assign statement, rename the field, hide the argument.
+        innerClassConstructorRewriter.getAssignmentStatement().getContainer().nopOut();
+        // We need to link the name to the outer variable in such a way that if that changes name,
+        // we don't lose it.
+        //
+        // Once this has occurred, there's a possibility that we may have caused collisions
+        // between these renamed members and locals in other code.
+        ClassFileField classFileField = matchedField.getClassFileField();
+        classFileField.overrideName(localVariable.getName().getStringName());
+        classFileField.markSyntheticOuterRef();
+        classFileField.markHidden();
+        prototype.hide(x);
+        lValueArg.markFinal();
     }
 
     private static void applyLValueReplacer(Map<LValue, LValue> replacements, Op04StructuredStatement root) {
@@ -996,13 +1097,13 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     /*
      * Remove (and rewrite) references to this$x
      */
-    public static void fixInnerClassConstructorSyntheticOuterArgs(ClassFile classFile, Method method, Op04StructuredStatement root) {
+    public static void fixInnerClassConstructorSyntheticOuterArgs(ClassFile classFile, Method method, Op04StructuredStatement root, Set<MethodPrototype> processed) {
         if (classFile.isInnerClass()) {
             boolean instance = !classFile.testAccessFlag(AccessFlag.ACC_STATIC);
-            removeSyntheticConstructorOuterArgs(method, root, instance);
+            removeAnonymousSyntheticConstructorOuterArgs(method, root, instance);
+            removeMethodScopedSyntheticConstructorOuterArgs(method, root, processed);
         }
     }
-
 
     public static void inlineSyntheticAccessors(DCCommonState state, Method method, Op04StructuredStatement root) {
         JavaTypeInstance classType = method.getClassFile().getClassType();

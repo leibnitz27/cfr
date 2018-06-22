@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Triplet;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
@@ -416,7 +417,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             fieldsByName = MapFactory.newMap();
             if (testIllegal) {
                 for (ClassFileField field : fields) {
-                    String rawFieldName = field.getFieldName();
+                    String rawFieldName = field.getRawFieldName();
                     // Check illegality on RAW field name, as otherwise unicode is already quoted.
                     if (IllegalIdentifierReplacement.isIllegal(rawFieldName)) {
                         illegal = true;
@@ -1106,12 +1107,34 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     private List<ConstructorInvokationAnonymousInner> anonymousUsages = ListFactory.newList();
 
+    private List<ConstructorInvokationSimple> methodUsages = ListFactory.newList();
+
     public void noteAnonymousUse(ConstructorInvokationAnonymousInner anoynmousInner) {
         anonymousUsages.add(anoynmousInner);
     }
 
+    public void noteMethodUse(ConstructorInvokationSimple constructorCall) {
+        List<Method> constructors = getConstructors();
+        MethodPrototype needle = constructorCall.getConstructorPrototype();
+        List<Method> matching = ListFactory.newList();
+        for (Method constructor : constructors) {
+            MethodPrototype check = constructor.getMethodPrototype();
+//            if (check.isApproxMatch(needle)) {
+//                matching.add(constructor);
+//            }
+        }
+
+//        if (
+
+        methodUsages.add(constructorCall);
+    }
+
     public List<ConstructorInvokationAnonymousInner> getAnonymousUsages() {
         return anonymousUsages;
+    }
+
+    public List<ConstructorInvokationSimple> getMethodUsages() {
+        return methodUsages;
     }
 
     // More of an extension method really :)
