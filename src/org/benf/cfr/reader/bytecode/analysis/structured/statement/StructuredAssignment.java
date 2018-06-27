@@ -77,7 +77,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
     }
 
     @Override
-    public void markCreator(LValue scopedEntity) {
+    public void markCreator(LValue scopedEntity, StatementContainer<StructuredStatement> hint) {
 
         if (scopedEntity instanceof LocalVariable) {
             LocalVariable localVariable = (LocalVariable) scopedEntity;

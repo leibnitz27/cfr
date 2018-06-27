@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -48,7 +49,7 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
 
     void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer);
 
-    void markCreator(LValue scopedEntity);
+    void markCreator(LValue scopedEntity, StatementContainer<StructuredStatement> hint);
 
     boolean alwaysDefines(LValue scopedEntity);
 

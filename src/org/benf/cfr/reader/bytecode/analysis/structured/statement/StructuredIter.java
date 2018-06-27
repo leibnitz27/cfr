@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -93,7 +94,7 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public void markCreator(LValue scopedEntity) {
+    public void markCreator(LValue scopedEntity, StatementContainer<StructuredStatement> hint) {
         // we're always creator.  But we could verify additionally.
         creator = true;
     }

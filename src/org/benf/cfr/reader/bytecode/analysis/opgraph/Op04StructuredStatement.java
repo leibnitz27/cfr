@@ -820,6 +820,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
 
         @Override
+        public void mark(StatementContainer<StructuredStatement> mark) {
+        }
+
+        @Override
         public void collect(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
             collect(lValue);
         }

@@ -14,6 +14,8 @@ public interface LValueScopeDiscoverer extends LValueUsageCollector, LValueAssig
 
     void leaveBlock(StructuredStatement structuredStatement);
 
+    void mark(StatementContainer<StructuredStatement> mark);
+
     void collect(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value);
 
     void collectMultiUse(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value);
@@ -23,5 +25,4 @@ public interface LValueScopeDiscoverer extends LValueUsageCollector, LValueAssig
     void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value);
 
     void collect(LValue lValue);
-
 }

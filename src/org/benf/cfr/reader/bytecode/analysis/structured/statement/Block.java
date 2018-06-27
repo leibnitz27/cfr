@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -464,6 +465,7 @@ public class Block extends AbstractStructuredStatement {
         scopeDiscoverer.enterBlock(this);
 
         for (Op04StructuredStatement item : containedStatements) {
+            scopeDiscoverer.mark(item);
             item.traceLocalVariableScope(scopeDiscoverer);
         }
         scopeDiscoverer.leaveBlock(this);
@@ -473,8 +475,16 @@ public class Block extends AbstractStructuredStatement {
      * This variable has been defined in an ENCLOSED scope, but used at this level.
      */
     @Override
-    public void markCreator(LValue scopedEntity) {
-        containedStatements.addFirst(new Op04StructuredStatement(new StructuredDefinition(scopedEntity)));
+    public void markCreator(LValue scopedEntity, StatementContainer<StructuredStatement> hint) {
+        Op04StructuredStatement declaration = new Op04StructuredStatement(new StructuredDefinition(scopedEntity));
+        if (hint != null) {
+            int idx = containedStatements.indexOf(hint);
+            if (idx != -1) {
+                containedStatements.add(idx, declaration);
+                return;
+            }
+        }
+        containedStatements.addFirst(declaration);
     }
 
     @Override

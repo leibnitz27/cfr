@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
@@ -70,7 +71,7 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     }
 
     @Override
-    public void markCreator(LValue scopedEntity) {
+    public void markCreator(LValue scopedEntity, StatementContainer<StructuredStatement> hint) {
         throw new IllegalArgumentException("Shouldn't be calling markCreator on " + this);
     }
 
