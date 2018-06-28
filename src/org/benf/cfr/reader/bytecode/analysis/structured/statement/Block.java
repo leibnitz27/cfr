@@ -225,6 +225,7 @@ public class Block extends AbstractStructuredStatement {
 
     public void extractLabelledBlocks() {
         Iterator<Op04StructuredStatement> iterator = containedStatements.descendingIterator();
+        List<Op04StructuredStatement> newEntries = ListFactory.newList();
         while (iterator.hasNext()) {
             Op04StructuredStatement stm = iterator.next();
             StructuredStatement statement = stm.getStatement();
@@ -250,7 +251,7 @@ public class Block extends AbstractStructuredStatement {
                         innerIdents,
                         nested
                 );
-                containedStatements.addFirst(newStm);
+                newEntries.add(newStm);
 
                 List<Op04StructuredStatement> sources = stm.getSources();
                 /*
@@ -274,6 +275,9 @@ public class Block extends AbstractStructuredStatement {
                 // But be paranoid.
                 stm.replaceStatement(new StructuredComment(""));
             }
+        }
+        for (Op04StructuredStatement entry : newEntries) {
+            containedStatements.addFirst(entry);
         }
     }
 

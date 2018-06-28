@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
 
@@ -10,9 +9,8 @@ public class IntervalOverlapper {
 
     private final NavigableMap<Integer, Set<ExceptionTableEntry>> starts = MapFactory.newTreeMap();
     private final NavigableMap<Integer, Set<ExceptionTableEntry>> ends = MapFactory.newTreeMap();
-
-
-    public IntervalOverlapper(List<ExceptionTableEntry> entries) {
+    
+    IntervalOverlapper(List<ExceptionTableEntry> entries) {
         // Should do this in a builder not in a constructor... eww.
         processEntries(entries);
     }
@@ -23,9 +21,11 @@ public class IntervalOverlapper {
         }
     }
 
-    private static <X> Set<X> raze(Collection<Set<X>> in) {
+    //Apache Harmony throws an NPE when calling methods on value set of a blank map
+    private static <X> Set<X> razeValues(NavigableMap<?, Set<X>> map) {
         Set<X> res = SetFactory.newSet();
-        for (Set<X> i : in) {
+        if (map.isEmpty()) return res;
+        for (Set<X> i : map.values()) {
             res.addAll(i);
         }
         return res;
@@ -44,15 +44,15 @@ public class IntervalOverlapper {
         NavigableMap<Integer, Set<ExceptionTableEntry>> endsInside = endsBeforeEnd.tailMap(from, false);
         // Anything that's in the values of endsInside, AND the values of startedBeforeStart, is 'bad'.
         // We'll remove them from BOTH starts and ends, split them up, and then add them back again.
-        Set<ExceptionTableEntry> overlapStartsBefore = raze(endsInside.values());
-        overlapStartsBefore.retainAll(raze(startedBeforeStart.values()));
+        Set<ExceptionTableEntry> overlapStartsBefore = razeValues(endsInside);
+        overlapStartsBefore.retainAll(razeValues(startedBeforeStart));
 
         NavigableMap<Integer, Set<ExceptionTableEntry>> endsAfterEnd = ends.tailMap(to, false);
         NavigableMap<Integer, Set<ExceptionTableEntry>> startedAfterStart = starts.tailMap(from, false);
         NavigableMap<Integer, Set<ExceptionTableEntry>> startsInside = startedAfterStart.headMap(to, false);
 
-        Set<ExceptionTableEntry> overlapEndsAfter = raze(startsInside.values());
-        overlapEndsAfter.retainAll(raze(endsAfterEnd.values()));
+        Set<ExceptionTableEntry> overlapEndsAfter = razeValues(startsInside);
+        overlapEndsAfter.retainAll(razeValues(endsAfterEnd));
 
         if (overlapEndsAfter.isEmpty() && overlapStartsBefore.isEmpty()) {
             addEntry(e);
@@ -131,12 +131,12 @@ public class IntervalOverlapper {
         output.add(out);
     }
 
-    void addEntry(ExceptionTableEntry e) {
+    private void addEntry(ExceptionTableEntry e) {
         add(starts, e.getBytecodeIndexFrom(), e);
         add(ends, e.getBytecodeIndexTo(), e);
     }
 
-    <A, B> void add(NavigableMap<A, Set<B>> m, A k, B v) {
+    private <A, B> void add(NavigableMap<A, Set<B>> m, A k, B v) {
         Set<B> b = m.get(k);
         if (b == null) {
             b = SetFactory.newSet();
@@ -146,6 +146,6 @@ public class IntervalOverlapper {
     }
 
     public List<ExceptionTableEntry> getExceptions() {
-        return ListFactory.newList(raze(starts.values()));
+        return ListFactory.newList(razeValues(starts));
     }
 }
