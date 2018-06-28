@@ -226,10 +226,10 @@ public class Main {
 //        partition.getFirst().addAll(partition.getSecond());
 //        files = partition.getFirst();
         Collections.sort(files);
-
         for (String path : files) {
             // TODO : We shouldn't have to discard state here.  But we do, because
             // it causes test fails.  (used class name table retains useful symbols).
+            classFileSource.clearConfiguration();
             DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
             DumperFactory dumperFactory = new DumperFactoryImpl(options);
 

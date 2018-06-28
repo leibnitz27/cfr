@@ -349,6 +349,11 @@ public class ClassFileSourceImpl implements ClassFileSource {
         return inputPath;
     }
 
+    public void clearConfiguration() {
+        unexpectedDirectory = false;
+        pathPrefix = null;
+    }
+
     private class Configurator {
 
         private Configurator() {
