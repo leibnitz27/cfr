@@ -11,12 +11,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import static org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils.getPackageAndClassNames;
 
 public class ClassFileSourceImpl implements ClassFileSource {
 
@@ -33,6 +36,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
     private String pathPrefix = "";
     private String classRemovePrefix = "";
     private static final boolean JrtPresent = CheckJrt();
+    private static Map<String, String> packMap =  JrtPresent ? getPackageToModuleMap() : new HashMap<String, String>();
 
     private static boolean CheckJrt() {
         try {
@@ -141,37 +145,83 @@ public class ClassFileSourceImpl implements ClassFileSource {
         }
     }
 
+    // Remember, we're in java 6 ;)
+    private static Map<String, String> getPackageToModuleMap() {
+        Map<String, String> mapRes = MapFactory.newMap();
+        try {
+            Class moduleLayer = Class.forName("java.lang.ModuleLayer");
+            Method method = moduleLayer.getMethod("boot");
+            Object res = method.invoke(null);
+            Method modulesMeth = res.getClass().getMethod("modules");
+            Object modules = modulesMeth.invoke(res);
+            Set set = (Set)modules;
+            Method getPackagesMethod = Class.forName("java.lang.Module").getMethod("getPackages");
+            Method getNameMethod = Class.forName("java.lang.Module").getMethod("getName");
+            for (Object module : set) {
+                Object res2 = getPackagesMethod.invoke(module);
+                Set<String> m1 = (Set<String>)res2;
+                String name = (String)getNameMethod.invoke(module);
+                for (String packageName : m1) {
+                    mapRes.put(packageName, name);
+                }
+            }
+        } catch (Exception e) {
+        }
+        return mapRes;
+    }
+
     private byte[] getContentByFromReflectedClass(final String inputPath) {
         try {
             String classPath = inputPath.replace("/", ".").substring(0, inputPath.length() - 6);
-            Class cls = Class.forName(classPath);
-            int idx = inputPath.lastIndexOf("/");
-            String name = idx < 0 ? inputPath : inputPath.substring(idx+1);
 
-            URL url = cls.getResource(name);
+            Pair<String, String> packageAndClassNames = getPackageAndClassNames(classPath);
+
+            String packageName = packageAndClassNames.getFirst();
+            String moduleName = packMap.get(packageName);
+            URL url = null;
+
+            if (moduleName == null) {
+                // So - going down this branch will trigger a class load, which will cause
+                // static initialisers to be run.
+                // This is expensive, but normally tolerable, except that there is a javafx
+                // static initialiser which crashes the VM if called unexpectedly!
+                Class cls;
+                try {
+                    cls = Class.forName(classPath);
+                } catch (IllegalStateException e) {
+                    return null;
+                }
+                int idx = inputPath.lastIndexOf("/");
+                String name = idx < 0 ? inputPath : inputPath.substring(idx + 1);
+
+                url = cls.getResource(name);
+            } else {
+                url = new URL("jrt:/" + moduleName + "/" + inputPath);
+            }
+
             String protocol = url.getProtocol();
             // Strictly speaking, we could use this mechanism for pre-9 classes, but it's.... so wrong!
             if (!protocol.equals("jrt")) return null;
-            
+
             URLConnection uc;
             InputStream is;
             try {
                 uc = url.openConnection();
                 uc.connect();
                 is = uc.getInputStream();
-            } catch(IOException ioe) {
+            } catch (IOException ioe) {
                 return null;
             }
 
             int len = uc.getContentLength();
 
-            if(len >= 0) {
+            if (len >= 0) {
                 byte[] b = new byte[len];
                 int i = len;
-                while(i > 0) {
-                    if(i < (i -= is.read(b, len - i, i))) i = -1;
+                while (i > 0) {
+                    if (i < (i -= is.read(b, len - i, i))) i = -1;
                 }
-                if(i == 0) return b;
+                if (i == 0) return b;
             }
         } catch (Exception e) {
             return null;
