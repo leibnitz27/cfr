@@ -145,27 +145,36 @@ public class ClassFileSourceImpl implements ClassFileSource {
         }
     }
 
-    // Remember, we're in java 6 ;)
+    /*
+     * There are costs associated in the Class.forName method of finding the URL for a class -
+     * notably the running of the static initialiser.
+     *
+     * We can avoid that by knowing what packages are in what modules, and skipping for those.
+     */
     private static Map<String, String> getPackageToModuleMap() {
         Map<String, String> mapRes = MapFactory.newMap();
         try {
-            Class moduleLayer = Class.forName("java.lang.ModuleLayer");
-            Method method = moduleLayer.getMethod("boot");
-            Object res = method.invoke(null);
-            Method modulesMeth = res.getClass().getMethod("modules");
-            Object modules = modulesMeth.invoke(res);
-            Set set = (Set)modules;
-            Method getPackagesMethod = Class.forName("java.lang.Module").getMethod("getPackages");
-            Method getNameMethod = Class.forName("java.lang.Module").getMethod("getName");
-            for (Object module : set) {
-                Object res2 = getPackagesMethod.invoke(module);
-                Set<String> m1 = (Set<String>)res2;
-                String name = (String)getNameMethod.invoke(module);
-                for (String packageName : m1) {
-                    mapRes.put(packageName, name);
+            Class moduleLayerClass = Class.forName("java.lang.ModuleLayer");
+            Method bootMethod = moduleLayerClass.getMethod("boot");
+            Object boot = bootMethod.invoke(null);
+            Method modulesMeth = boot.getClass().getMethod("modules");
+            Object modules = modulesMeth.invoke(boot);
+            Class moduleClass = Class.forName("java.lang.Module");
+            Method getPackagesMethod = moduleClass.getMethod("getPackages");
+            Method getNameMethod = moduleClass.getMethod("getName");
+            for (Object module : (Set)modules) {
+                Set<String> packageNames = (Set<String>)getPackagesMethod.invoke(module);
+                String moduleName = (String)getNameMethod.invoke(module);
+                for (String packageName : packageNames) {
+                    if (mapRes.containsKey(packageName)) {
+                        mapRes.put(packageName, null);
+                    } else {
+                        mapRes.put(packageName, moduleName);
+                    }
                 }
             }
         } catch (Exception e) {
+            // Ignore and return anything we have.
         }
         return mapRes;
     }
@@ -178,43 +187,50 @@ public class ClassFileSourceImpl implements ClassFileSource {
 
             String packageName = packageAndClassNames.getFirst();
             String moduleName = packMap.get(packageName);
-            URL url = null;
 
-            if (moduleName == null) {
-                // So - going down this branch will trigger a class load, which will cause
-                // static initialisers to be run.
-                // This is expensive, but normally tolerable, except that there is a javafx
-                // static initialiser which crashes the VM if called unexpectedly!
-                Class cls;
-                try {
-                    cls = Class.forName(classPath);
-                } catch (IllegalStateException e) {
-                    return null;
-                }
-                int idx = inputPath.lastIndexOf("/");
-                String name = idx < 0 ? inputPath : inputPath.substring(idx + 1);
-
-                url = cls.getResource(name);
-            } else {
-                url = new URL("jrt:/" + moduleName + "/" + inputPath);
+            if (moduleName != null) {
+                byte[] res = getUrlContent(new URL("jrt:/" + moduleName + "/" + inputPath));
+                if (res != null) return res;
             }
 
-            String protocol = url.getProtocol();
-            // Strictly speaking, we could use this mechanism for pre-9 classes, but it's.... so wrong!
-            if (!protocol.equals("jrt")) return null;
-
-            URLConnection uc;
-            InputStream is;
+            // Going down this branch will trigger a class load, which will cause
+            // static initialisers to be run.
+            // This is expensive, but normally tolerable, except that there is a javafx
+            // static initialiser which crashes the VM if called unexpectedly!
+            Class cls;
             try {
-                uc = url.openConnection();
-                uc.connect();
-                is = uc.getInputStream();
-            } catch (IOException ioe) {
+                cls = Class.forName(classPath);
+            } catch (IllegalStateException e) {
                 return null;
             }
+            int idx = inputPath.lastIndexOf("/");
+            String name = idx < 0 ? inputPath : inputPath.substring(idx + 1);
 
-            int len = uc.getContentLength();
+            return getUrlContent(cls.getResource(name));
+        } catch (Exception e) {
+            // This exception handler doesn't add anything.
+            return null;
+        }
+    }
 
+    private byte[] getUrlContent(URL url) {
+        String protocol = url.getProtocol();
+        // Strictly speaking, we could use this mechanism for pre-9 classes, but it's.... so wrong!
+        if (!protocol.equals("jrt")) return null;
+
+        InputStream is;
+        int len = -1;
+        try {
+            URLConnection uc;
+            uc = url.openConnection();
+            uc.connect();
+            is = uc.getInputStream();
+            len = uc.getContentLength();
+        } catch (IOException ioe) {
+            return null;
+        }
+
+        try {
             if (len >= 0) {
                 byte[] b = new byte[len];
                 int i = len;
@@ -223,8 +239,8 @@ public class ClassFileSourceImpl implements ClassFileSource {
                 }
                 if (i == 0) return b;
             }
-        } catch (Exception e) {
-            return null;
+        } catch (IOException e) {
+            //
         }
         return null;
     }
