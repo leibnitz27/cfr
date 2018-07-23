@@ -13,8 +13,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverImpl;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscovererImpl;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.AbstractLValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LocalClassScopeDiscoverImpl;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
@@ -32,7 +34,6 @@ import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -801,7 +802,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * (eg remove spurious 'this.', VariableNameTidier).
      */
     public static void discoverVariableScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
-        LValueScopeDiscovererImpl scopeDiscoverer = new LValueScopeDiscovererImpl(method.getMethodPrototype(), variableFactory);
+        AbstractLValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverImpl(method.getMethodPrototype(), variableFactory);
+        root.traceLocalVariableScope(scopeDiscoverer);
+        // We should have found scopes, now update to reflect this.
+        scopeDiscoverer.markDiscoveredCreations();
+    }
+
+    public static void discoverLocalClassScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
+        AbstractLValueScopeDiscoverer scopeDiscoverer = new LocalClassScopeDiscoverImpl(method.getMethodPrototype(), variableFactory);
         root.traceLocalVariableScope(scopeDiscoverer);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
@@ -861,6 +869,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             in.traceLocalVariableScope(this);
             in.transformStructuredChildren(this, scope);
             return in;
+        }
+
+        @Override
+        public boolean descendLambdas() {
+            return false;
         }
     }
 
@@ -1122,7 +1135,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         Options options = state.getOptions();
         if (!options.getOption(OptionsImpl.REWRITE_LAMBDAS, method.getClassFile().getClassFileVersion())) return;
 
-        new LambdaRewriter(state, method.getClassFile()).rewrite(root);
+        new LambdaRewriter(state, method).rewrite(root);
     }
 
     public static void removeUnnecessaryVarargArrays(Options options, Method method, Op04StructuredStatement root) {

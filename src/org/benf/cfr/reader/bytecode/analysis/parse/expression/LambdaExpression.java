@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.StringUtils;
@@ -83,8 +84,21 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
         return d;
     }
 
+    /*
+     * The RHS of a lambda expression has already been fully processed and and does not require further gathering
+     * EXCEPT.... we need to know about local class sentinels.
+     *
+     * So adapt the collector.
+     */
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        // Fugly.  TODO: Fix interface.
+        if (lValueUsageCollector instanceof LValueScopeDiscoverer) {
+            if (((LValueScopeDiscoverer) lValueUsageCollector).descendLambdas()) {
+                LValueScopeDiscoverer discover = (LValueScopeDiscoverer) lValueUsageCollector;
+                result.collectUsedLValues(discover);
+            }
+        }
     }
 
     public List<LValue> getArgs() {

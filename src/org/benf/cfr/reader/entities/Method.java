@@ -156,6 +156,13 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         collector.collectFrom(getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME));
     }
 
+    public boolean copyLocalClassesFrom(Method other) {
+        for (Map.Entry<JavaRefTypeInstance, String> entry : other.localClasses.entrySet()) {
+            markUsedLocalClassType(entry.getKey(), entry.getValue());
+        }
+        return !other.localClasses.isEmpty();
+    }
+
     public Set<AccessFlagMethod> getAccessFlags() {
         return accessFlags;
     }

@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.LocalDeclarationRemover;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -11,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredStatementExpression;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
@@ -31,10 +33,12 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
     private final DCCommonState state;
     private final ClassFile thisClassFile;
     private final JavaTypeInstance typeInstance;
+    private final Method method;
 
-    public LambdaRewriter(DCCommonState state, ClassFile thisClassFile) {
+    public LambdaRewriter(DCCommonState state, Method method) {
         this.state = state;
-        this.thisClassFile = thisClassFile;
+        this.method = method;
+        this.thisClassFile = method.getClassFile();
         this.typeInstance = thisClassFile.getClassType().getDeGenerifiedType();
     }
 
@@ -289,6 +293,21 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                 }
 
                 lambdaMethod.hideSynthetic();
+
+                /*
+                 * Any method scoped classes that were being used in the lambda method now belong to me.
+                 * (maniac laughter).
+                 */
+                boolean copied = method.copyLocalClassesFrom(lambdaMethod);
+                Op04StructuredStatement placeHolder = new Op04StructuredStatement(lambdaStatement);
+
+                /*
+                 * Need to strip out declarations, as we will re-examine scope.
+                 * This is horrid, but necessary to deal with local classes defined inside lambda expressions.
+                 */
+                StructuredScope scope = new StructuredScope();
+                placeHolder.transform(new LocalDeclarationRemover(), scope);
+
                 return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaStatement));
             } catch (CannotDelambaException e) {
                 int x = 1;

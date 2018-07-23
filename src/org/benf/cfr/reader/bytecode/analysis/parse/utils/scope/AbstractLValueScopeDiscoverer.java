@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils.scope;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
@@ -20,28 +22,28 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.*;
 
-public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
+public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscoverer {
 
     /*
      * We keep track of the first definition for a given variable.  If we exit the scope that the variable
      * is defined at (i.e. scope depth goes above) we have to remove all earliest definitions at that level.
      */
-    private final Map<NamedVariable, ScopeDefinition> earliestDefinition = MapFactory.newIdentityMap();
-    private final Map<Integer, Map<NamedVariable, Boolean>> earliestDefinitionsByLevel = MapFactory.newLazyMap(new UnaryFunction<Integer, Map<NamedVariable, Boolean>>() {
+    final Map<NamedVariable, ScopeDefinition> earliestDefinition = MapFactory.newIdentityMap();
+    final Map<Integer, Map<NamedVariable, Boolean>> earliestDefinitionsByLevel = MapFactory.newLazyMap(new UnaryFunction<Integer, Map<NamedVariable, Boolean>>() {
         @Override
         public Map<NamedVariable, Boolean> invoke(Integer arg) {
             return MapFactory.newIdentityMap();
         }
     });
-    private transient int currentDepth = 0;
+    transient int currentDepth = 0;
 
-    private transient Stack<StatementContainer<StructuredStatement>> currentBlock = new Stack<StatementContainer<StructuredStatement>>();
+    transient Stack<StatementContainer<StructuredStatement>> currentBlock = new Stack<StatementContainer<StructuredStatement>>();
 
-    private final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
-    private final VariableFactory variableFactory;
-    private StatementContainer<StructuredStatement> currentMark = null;
+    final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
+    final VariableFactory variableFactory;
+    StatementContainer<StructuredStatement> currentMark = null;
 
-    public LValueScopeDiscovererImpl(MethodPrototype prototype, VariableFactory variableFactory) {
+    AbstractLValueScopeDiscoverer(MethodPrototype prototype, VariableFactory variableFactory) {
         final List<LocalVariable> parameters = prototype.getComputedParameters();
         this.variableFactory = variableFactory;
         for (LocalVariable parameter : parameters) {
@@ -54,6 +56,9 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
     @Override
     public void enterBlock(StructuredStatement structuredStatement) {
         StatementContainer<StructuredStatement> container = structuredStatement.getContainer();
+        if (container == null) {
+            return;
+        }
         currentBlock.push(container);
         currentDepth++;
     }
@@ -65,12 +70,16 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
 
     @Override
     public void leaveBlock(StructuredStatement structuredStatement) {
+        Op04StructuredStatement container = structuredStatement.getContainer();
+        if (container == null) {
+            return;
+        }
         for (NamedVariable definedHere : earliestDefinitionsByLevel.get(currentDepth).keySet()) {
             earliestDefinition.remove(definedHere);
         }
         earliestDefinitionsByLevel.remove(currentDepth);
         StatementContainer<StructuredStatement> oldContainer = currentBlock.pop();
-        if (structuredStatement.getContainer() != oldContainer) {
+        if (container != oldContainer) {
             throw new IllegalStateException();
         }
         currentDepth--;
@@ -89,48 +98,6 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
     @Override
     public void collectMutatedLValue(LValue lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
 
-    }
-
-    @Override
-    public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-
-        // Ensure type clashes are collapsed, otherwise PairTest3 gets duplicate definitions.
-        localVariable.getInferredJavaType().collapseTypeClash();
-
-        // Note that just because two local variables in the same scope have the same name, they're not NECESSARILY
-        // the same variable - if we've reused a stack location, and don't have any naming hints, the name will have
-        // been re-used.  This is why we also have to verify that the type of the new assignment is the same as the type
-        // of the previous one, and kick out the previous (and remove from earlier scopes) if that's the case).
-        NamedVariable name = localVariable.getName();
-        ScopeDefinition previousDef = earliestDefinition.get(name);
-        if (previousDef == null) {
-            // First use is here.
-            JavaTypeInstance type = localVariable.getInferredJavaType().getJavaTypeInstance();
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, type, name, null);
-            earliestDefinition.put(name, scopeDefinition);
-            earliestDefinitionsByLevel.get(currentDepth).put(name, true);
-            discoveredCreations.add(scopeDefinition);
-            return;
-        }
-
-        /*
-         * Else verify type.
-         */
-        JavaTypeInstance oldType = previousDef.getJavaTypeInstance();
-        JavaTypeInstance newType = localVariable.getInferredJavaType().getJavaTypeInstance();
-        if (!oldType.equals(newType)) {
-            earliestDefinitionsByLevel.get(previousDef.getDepth()).remove(previousDef.getName());
-            if (previousDef.getDepth() == currentDepth) {
-                variableFactory.mutatingRenameUnClash(localVariable);
-                name = localVariable.getName();
-            }
-
-            InferredJavaType inferredJavaType = localVariable.getInferredJavaType();
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, inferredJavaType, name);
-            earliestDefinition.put(name, scopeDefinition);
-            earliestDefinitionsByLevel.get(currentDepth).put(name, true);
-            discoveredCreations.add(scopeDefinition);
-        }
     }
 
     private static class ScopeKey {
@@ -300,89 +267,6 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
      *
      */
 
-    @Override
-    public void collect(LValue lValue) {
-        Class<?> lValueClass = lValue.getClass();
-
-        if (lValueClass == LocalVariable.class) {
-            LocalVariable localVariable = (LocalVariable) lValue;
-            NamedVariable name = localVariable.getName();
-            if (name.getStringName().equals(MiscConstants.THIS)) return;
-
-            ScopeDefinition previousDef = earliestDefinition.get(name);
-            // If it's in scope, no problem.
-            if (previousDef != null) return;
-
-            // If it's out of scope, we have a variable defined but only assigned in an inner scope, but used in the
-            // outer scope later.... or EARLIER. (PairTest3b)
-            InferredJavaType inferredJavaType = lValue.getInferredJavaType();
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, inferredJavaType, name);
-            earliestDefinition.put(name, scopeDefinition);
-            earliestDefinitionsByLevel.get(currentDepth).put(name, true);
-            discoveredCreations.add(scopeDefinition);
-        } else if (lValueClass == SentinelLocalClassLValue.class) {
-            SentinelLocalClassLValue localClassLValue = (SentinelLocalClassLValue) lValue;
-
-            NamedVariable name = new SentinelNV(localClassLValue.getLocalClassType());
-
-            ScopeDefinition previousDef = earliestDefinition.get(name);
-            // If it's in scope, no problem.
-            if (previousDef != null) return;
-
-            JavaTypeInstance type = localClassLValue.getLocalClassType();
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, type, name, currentMark);
-            earliestDefinition.put(name, scopeDefinition);
-            earliestDefinitionsByLevel.get(currentDepth).put(name, true);
-            discoveredCreations.add(scopeDefinition);
-
-        }
-    }
-
-    private static class SentinelNV implements NamedVariable {
-        private final JavaTypeInstance typeInstance;
-
-        private SentinelNV(JavaTypeInstance typeInstance) {
-            this.typeInstance = typeInstance;
-        }
-
-        @Override
-        public void forceName(String name) {
-        }
-
-        @Override
-        public String getStringName() {
-            return typeInstance.getRawName();
-        }
-
-        @Override
-        public boolean isGoodName() {
-            return true;
-        }
-
-        @Override
-        public Dumper dump(Dumper d) {
-            return null;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            SentinelNV that = (SentinelNV) o;
-
-            if (typeInstance != null ? !typeInstance.equals(that.typeInstance) : that.typeInstance != null)
-                return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            return typeInstance != null ? typeInstance.hashCode() : 0;
-        }
-    }
-
 //    /*
 //     *
 //     */
@@ -395,7 +279,7 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
 //        public JavaTypeInstance getJavaTypeInstance();
 //    }
 
-    private static class ScopeDefinition {
+    static class ScopeDefinition {
         private final int depth;
         // Keeping this nested scope is woefully inefficient.... fixme.
         private final List<StatementContainer<StructuredStatement>> nestedScope;
@@ -406,8 +290,8 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
         private final NamedVariable name;
         private final ScopeKey scopeKey;
 
-        private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
-                                LValue lValue, InferredJavaType inferredJavaType, NamedVariable name) {
+        ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
+                        LValue lValue, InferredJavaType inferredJavaType, NamedVariable name) {
             this(depth, nestedScope, exactStatement, lValue, getUnclashedType(inferredJavaType), name, null);
         }
 
@@ -418,8 +302,8 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
             return inferredJavaType.getJavaTypeInstance();
         }
 
-        private ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
-                                LValue lValue, JavaTypeInstance type, NamedVariable name, StatementContainer<StructuredStatement> hint) {
+        ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
+                        LValue lValue, JavaTypeInstance type, NamedVariable name, StatementContainer<StructuredStatement> hint) {
             this.depth = depth;
             Pair< List<StatementContainer<StructuredStatement>>, StatementContainer<StructuredStatement>> adjustedScope = getBestScopeFor(lValue, nestedScope, exactStatement);
             this.nestedScope = adjustedScope.getFirst();
@@ -436,7 +320,7 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
                                      LValue lValue,
                                      Collection<StatementContainer<StructuredStatement>> nestedScope,
                                      StatementContainer<StructuredStatement> exactStatement) {
-            if (nestedScope == null) return Pair.make(null, exactStatement);;
+            if (nestedScope == null) return Pair.make(null, exactStatement);
             List<StatementContainer<StructuredStatement>> scope = ListFactory.newList(nestedScope);
             if (exactStatement != null && exactStatement.getStatement().alwaysDefines(lValue)) return Pair.make(scope, exactStatement);;
             if (scope.isEmpty()) return Pair.make(scope, exactStatement);
@@ -476,7 +360,7 @@ public class LValueScopeDiscovererImpl implements LValueScopeDiscoverer {
             return scopeKey;
         }
 
-        public List<StatementContainer<StructuredStatement>> getNestedScope() {
+        List<StatementContainer<StructuredStatement>> getNestedScope() {
             return nestedScope;
         }
 

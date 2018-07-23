@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -56,6 +57,13 @@ public class StructuredStatementExpression extends AbstractExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
+        // Fugly.  TODO: Fix interface.
+        if (lValueUsageCollector instanceof LValueScopeDiscoverer) {
+            LValueScopeDiscoverer scopeDiscoverer = (LValueScopeDiscoverer) lValueUsageCollector;
+//            scopeDiscoverer.enterBlock(content);
+            content.traceLocalVariableScope(scopeDiscoverer);
+//            scopeDiscoverer.leaveBlock(content);
+        }
     }
 
 

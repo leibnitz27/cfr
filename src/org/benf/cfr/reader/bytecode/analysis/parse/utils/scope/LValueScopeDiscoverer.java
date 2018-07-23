@@ -25,4 +25,6 @@ public interface LValueScopeDiscoverer extends LValueUsageCollector, LValueAssig
     void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value);
 
     void collect(LValue lValue);
+
+    boolean descendLambdas();
 }

@@ -852,12 +852,27 @@ public class CodeAnalyser {
             //        new ArrayIterRewriter(cfrState).rewrite(block);
             //        new LoopIterRewriter(cfrState).rewrite(block);
 
+
             // Now we've got everything nicely block structured, we can have an easier time
+            // We *have* to discover variable scopes BEFORE we rewrite lambdas, because
+            // otherwise we have to perform some seriously expensive scope rewriting to
+            // understand the scope of variables declared inside lambda expressions, which otherwise
+            // are completely free.
+            //
+            // The downside of this is local classes inside lambdas are not handled correctly.
+            // We therefore need a SEPARATE pass, post lambda, to ensure that local classes are
+            // correctly processed.
             Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory);
             if (options.getOption(OptionsImpl.REWRITE_TRY_RESOURCES, classFileVersion)) {
                 Op04StructuredStatement.removeEndResource(method.getClassFile(), block);
             }
 
+            Op04StructuredStatement.rewriteLambdas(dcCommonState, method, block);
+            // Now lambdas have been rewritten, reprocess ONLY to insert local class
+            // definitions.
+            // Note that local class definitions are removed at the point of lambda rewrite.
+            Op04StructuredStatement.discoverLocalClassScopes(method, block, variableFactory);
+                                            
             // Done by wholeClass analyser.
             //        Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);
 
@@ -866,8 +881,6 @@ public class CodeAnalyser {
             if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
                 if (this.method.isConstructor()) Op04StructuredStatement.removeConstructorBoilerplate(block);
             }
-
-            Op04StructuredStatement.rewriteLambdas(dcCommonState, method, block);
 
             // Some misc translations.
             Op04StructuredStatement.removeUnnecessaryVarargArrays(options, method, block);
