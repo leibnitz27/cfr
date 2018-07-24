@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -17,10 +18,12 @@ import java.util.Vector;
 
 public class StructuredAssert extends AbstractStructuredStatement {
 
-    ConditionalExpression conditionalExpression;
+    private ConditionalExpression conditionalExpression;
+    private Expression arg;
 
-    public StructuredAssert(ConditionalExpression conditionalExpression) {
+    public StructuredAssert(ConditionalExpression conditionalExpression, Expression arg) {
         this.conditionalExpression = conditionalExpression;
+        this.arg = arg;
     }
 
     @Override
@@ -30,7 +33,12 @@ public class StructuredAssert extends AbstractStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("assert (").dump(conditionalExpression).print(")").endCodeln();
+        dumper.print("assert (").dump(conditionalExpression).print(")");
+        if (arg != null) {
+            dumper.print(" : ").dump(arg);
+        }
+        dumper.endCodeln();
+        return dumper;
     }
 
     @Override

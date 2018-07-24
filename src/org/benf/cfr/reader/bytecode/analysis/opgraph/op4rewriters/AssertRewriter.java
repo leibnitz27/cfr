@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.InfiniteAssertRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
@@ -246,12 +247,21 @@ public class AssertRewriter {
 
         @Override
         public void collectStatement(String name, StructuredStatement statement) {
+            WildcardMatch.ConstructorInvokationSimpleWildcard constructor = wcm.getConstructorSimpleWildcard("exception");
+            List<Expression> args = constructor.getMatch().getArgs();
+            Expression arg = args.size() > 0 ? args.get(0) : null;
+            if (arg != null) {
+                // We can remove a spurious cast to Object.
+                if (arg instanceof CastExpression && arg.getInferredJavaType().getJavaTypeInstance() == TypeConstants.OBJECT) {
+                    arg = ((CastExpression) arg).getChild();
+                }
+            }
             if (name.equals("ass1") || name.equals("ass1b")) {
                 StructuredIf ifStatement = (StructuredIf) statement;
                 ConditionalExpression condition = wcm.getConditionalExpressionWildcard("condition").getMatch();
                 if (name.equals("ass1")) condition = new NotOperation(condition);
                 condition = condition.simplify();
-                StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(condition));
+                StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(condition,arg));
                 ifStatement.getContainer().replaceContainedStatement(structuredAssert);
             } else if (name.equals("ass2")) {
                 if (ass2throw == null) throw new IllegalStateException();
@@ -262,14 +272,14 @@ public class AssertRewriter {
                 if (conditionalExpression == null)
                     conditionalExpression = new BooleanExpression(new Literal(TypedLiteral.getBoolean(0)));
                 // The if statement becomes an assert conditjon, the throw statement becomes the content of the if block.
-                StructuredStatement structuredAssert = new StructuredAssert(conditionalExpression);
+                StructuredStatement structuredAssert = new StructuredAssert(conditionalExpression,arg);
                 ifStatement.getContainer().replaceContainedStatement(structuredAssert);
                 ass2throw.getContainer().replaceContainedStatement(ifStatement.getIfTaken().getStatement());
             } else if (name.equals("ass2throw")) {
                 ass2throw = statement;
             } else if (name.equals("assonly")) {
                 StructuredIf ifStatement = (StructuredIf) statement;
-                StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(new BooleanExpression(Literal.FALSE)));
+                StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(new BooleanExpression(Literal.FALSE),arg));
                 ifStatement.getContainer().replaceContainedStatement(structuredAssert);
             }
         }
