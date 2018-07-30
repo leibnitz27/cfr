@@ -163,6 +163,15 @@ public class AssertRewriter {
                                 new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
                                 new EndBlock(null)
                         )),
+                        new CollectMatch("ass1c", new MatchSequence(
+                                new StructuredIf(new NotOperation(new BooleanExpression(new LValueExpression(assertionStatic))), null ),
+                                new BeginBlock(null),
+                                new StructuredIf(wcm1.getConditionalExpressionWildcard("condition"), null ),
+                                new BeginBlock(null),
+                                new StructuredThrow(wcm1.getConstructorSimpleWildcard("exception", TypeConstants.ASSERTION_ERROR)),
+                                new EndBlock(null) ,
+                                new EndBlock(null)
+                        )),
                         new CollectMatch("ass2", new MatchSequence(
                                 new MatchOneOf(
                                         new StructuredIf(
@@ -256,10 +265,10 @@ public class AssertRewriter {
                     arg = ((CastExpression) arg).getChild();
                 }
             }
-            if (name.equals("ass1") || name.equals("ass1b")) {
+            if (name.equals("ass1") || name.equals("ass1b") || name.equals("ass1c")) {
                 StructuredIf ifStatement = (StructuredIf) statement;
                 ConditionalExpression condition = wcm.getConditionalExpressionWildcard("condition").getMatch();
-                if (name.equals("ass1")) condition = new NotOperation(condition);
+                if (name.equals("ass1") || name.equals("ass1c")) condition = new NotOperation(condition);
                 condition = condition.simplify();
                 StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(condition,arg));
                 ifStatement.getContainer().replaceContainedStatement(structuredAssert);
