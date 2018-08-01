@@ -3883,6 +3883,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         } else {
             variableAss = start;
             monitorExit = start.targets.get(0);
+            if (monitorExit.targets.size() != 1) return false;
             rethrow = monitorExit.targets.get(0);
         }
 
