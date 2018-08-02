@@ -153,15 +153,15 @@ public class StructuredTry extends AbstractStructuredStatement {
         if (resourceBlock != null) {
             scopeDiscoverer.enterBlock(this);
             for (Op04StructuredStatement resource : resourceBlock) {
-                resource.traceLocalVariableScope(scopeDiscoverer);
+                scopeDiscoverer.processOp04Statement(resource);
             }
         }
-        tryBlock.traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(tryBlock);
         for (Op04StructuredStatement catchBlock : catchBlocks) {
-            catchBlock.traceLocalVariableScope(scopeDiscoverer);
+            scopeDiscoverer.processOp04Statement(catchBlock);
         }
         if (finallyBlock != null) {
-            finallyBlock.traceLocalVariableScope(scopeDiscoverer);
+            scopeDiscoverer.processOp04Statement(finallyBlock);
         }
         if (resourceBlock != null) {
             scopeDiscoverer.leaveBlock(this);

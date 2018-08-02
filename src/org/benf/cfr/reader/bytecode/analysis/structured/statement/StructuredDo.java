@@ -59,7 +59,7 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         if (condition != null) condition.collectUsedLValues(scopeDiscoverer);
-        getBody().traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(getBody());
     }
 
     @Override

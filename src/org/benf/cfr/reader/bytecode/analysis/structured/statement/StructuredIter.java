@@ -89,7 +89,7 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
         scopeDiscoverer.enterBlock(this);
         list.collectUsedLValues(scopeDiscoverer);
         iterator.collectLValueAssignments(null, this.getContainer(), scopeDiscoverer);
-        getBody().traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(getBody());
         scopeDiscoverer.leaveBlock(this);
     }
 

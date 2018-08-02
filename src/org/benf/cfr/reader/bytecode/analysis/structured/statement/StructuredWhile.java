@@ -72,7 +72,7 @@ public class StructuredWhile extends AbstractStructuredBlockStatement {
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         condition.collectUsedLValues(scopeDiscoverer);
-        getBody().traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(getBody());
     }
 
     @Override

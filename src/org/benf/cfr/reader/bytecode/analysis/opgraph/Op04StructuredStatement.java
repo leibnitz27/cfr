@@ -210,10 +210,6 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return targets.get(idx).instrIndex.toString();
     }
 
-    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
-        structuredStatement.traceLocalVariableScope(scopeDiscoverer);
-    }
-
     // Look, this is a bit hideous.  But it doesn't seem worth extending the interfaces / visiting.
     public boolean isEmptyInitialiser() {
         List<StructuredStatement> stms = ListFactory.newList();
@@ -803,14 +799,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      */
     public static void discoverVariableScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
         AbstractLValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverImpl(method.getMethodPrototype(), variableFactory);
-        root.traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(root);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
     }
 
     public static void discoverLocalClassScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
         AbstractLValueScopeDiscoverer scopeDiscoverer = new LocalClassScopeDiscoverImpl(method.getMethodPrototype(), variableFactory);
-        root.traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(root);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
     }
@@ -818,6 +814,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     public static class LValueTypeClashCheck implements LValueScopeDiscoverer, StructuredStatementTransformer {
 
         Set<Integer> clashes = SetFactory.newSet();
+
+        @Override
+        public void processOp04Statement(Op04StructuredStatement statement) {
+            statement.getStatement().traceLocalVariableScope(this);
+        }
 
         @Override
         public void enterBlock(StructuredStatement structuredStatement) {
@@ -879,7 +880,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static boolean checkTypeClashes(Op04StructuredStatement block, BytecodeMeta bytecodeMeta) {
         LValueTypeClashCheck clashCheck = new LValueTypeClashCheck();
-        block.traceLocalVariableScope(clashCheck);
+        clashCheck.processOp04Statement(block);
         if (!clashCheck.clashes.isEmpty()) {
             bytecodeMeta.informLivenessClashes(clashCheck.clashes);
             return true;

@@ -1,6 +1,5 @@
 package org.benf.cfr.reader;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -9,6 +8,7 @@ import org.benf.cfr.reader.relationship.MemberNameResolver;
 import org.benf.cfr.reader.state.ClassFileSourceImpl;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageCollectorImpl;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
@@ -16,7 +16,6 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.*;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class Main {
@@ -53,7 +52,7 @@ public class Main {
             /*
              * Perform a pass to determine what imports / classes etc we used / failed.
              */
-            TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
+            TypeUsageCollector collectingDumper = new TypeUsageCollectorImpl(c);
             c.collectTypeUsages(collectingDumper);
 
             d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
@@ -140,7 +139,7 @@ public class Main {
                     // THEN analyse.
                     c.analyseTop(dcCommonState);
 
-                    TypeUsageCollector collectingDumper = new TypeUsageCollector(c);
+                    TypeUsageCollector collectingDumper = new TypeUsageCollectorImpl(c);
                     c.collectTypeUsages(collectingDumper);
                     d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 

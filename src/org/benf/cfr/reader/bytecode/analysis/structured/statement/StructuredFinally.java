@@ -80,7 +80,7 @@ public class StructuredFinally extends AbstractStructuredStatement {
 
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
-        catchBlock.traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(catchBlock);
     }
 
 

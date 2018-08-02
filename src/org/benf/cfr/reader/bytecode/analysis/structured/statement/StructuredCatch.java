@@ -109,7 +109,7 @@ public class StructuredCatch extends AbstractStructuredStatement {
         if (catching instanceof LocalVariable) {
             scopeDiscoverer.collectLocalVariableAssignment((LocalVariable) catching, this.getContainer(), null);
         }
-        catchBlock.traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(catchBlock);
     }
 
     @Override

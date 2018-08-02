@@ -64,6 +64,11 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
     }
 
     @Override
+    public void processOp04Statement(Op04StructuredStatement statement) {
+        statement.getStatement().traceLocalVariableScope(this);
+    }
+
+    @Override
     public void mark(StatementContainer<StructuredStatement> mark) {
         currentMark = mark;
     }

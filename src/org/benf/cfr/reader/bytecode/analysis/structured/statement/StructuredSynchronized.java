@@ -62,7 +62,7 @@ public class StructuredSynchronized extends AbstractStructuredBlockStatement {
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         monitor.collectUsedLValues(scopeDiscoverer);
-        getBody().traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(getBody());
     }
 
     @Override

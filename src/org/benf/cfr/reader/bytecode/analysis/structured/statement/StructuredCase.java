@@ -119,8 +119,7 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
         for (Expression expression : values) {
             expression.collectUsedLValues(scopeDiscoverer);
         }
-
-        getBody().traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(getBody());
     }
 
     @Override

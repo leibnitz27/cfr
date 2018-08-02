@@ -99,9 +99,9 @@ public class StructuredIf extends AbstractStructuredStatement implements CanRemo
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         conditionalExpression.collectUsedLValues(scopeDiscoverer);
-        ifTaken.traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(ifTaken);
         if (elseBlock != null) {
-            elseBlock.traceLocalVariableScope(scopeDiscoverer);
+            scopeDiscoverer.processOp04Statement(elseBlock);
         }
     }
 

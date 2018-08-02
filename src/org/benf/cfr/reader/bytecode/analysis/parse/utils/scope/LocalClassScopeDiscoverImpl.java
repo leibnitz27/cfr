@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils.scope;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -7,13 +8,25 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
+import org.benf.cfr.reader.state.AbstractTypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.state.TypeUsageCollectorImpl;
+import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Collection;
+import java.util.Map;
+
 public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
+    private final TypeUsageSpotter typeSpotter = new TypeUsageSpotter();
+
     public LocalClassScopeDiscoverImpl(MethodPrototype prototype, VariableFactory variableFactory) {
         super(prototype, variableFactory);
     }
@@ -64,6 +77,17 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
     }
 
     @Override
+    public void processOp04Statement(Op04StructuredStatement statement) {
+        StructuredStatement stm = statement.getStatement();
+        // TODO : We correctly descend lambdas.  But what if there's an local class of a local
+        // class whose type escapes?  (InnerClassTest52).
+        // This is horrid - we need to search EVERYWHERE in each method scoped
+        // class we use, to see if it needs to be lifted.
+//        stm.collectTypeUsages(typeSpotter);
+        stm.traceLocalVariableScope(this);
+    }
+
+    @Override
     public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value) {
     }
 
@@ -79,8 +103,10 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
             ScopeDefinition previousDef = earliestDefinition.get(name);
             // If it's in scope, no problem.
             if (previousDef != null) return;
-
             JavaTypeInstance type = localClassLValue.getLocalClassType();
+
+            StatementContainer<StructuredStatement> typeSeen = typeSpotter.seenTypes.get(type);
+
             ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, type, name, currentMark);
             earliestDefinition.put(name, scopeDefinition);
             earliestDefinitionsByLevel.get(currentDepth).put(name, true);
@@ -95,4 +121,26 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
     public boolean descendLambdas() {
         return true;
     }
+
+    class TypeUsageSpotter extends AbstractTypeUsageCollector {
+        private final Map<JavaTypeInstance, StatementContainer<StructuredStatement>> seenTypes = MapFactory.newMap();
+
+        @Override
+        public void collectRefType(JavaRefTypeInstance type) {
+            collect(type);
+        }
+
+        @Override
+        public void collect(JavaTypeInstance type) {
+             if (!currentBlock.isEmpty() && !seenTypes.containsKey(type)) {
+                 seenTypes.put(type, currentBlock.peek());
+             }
+        }
+
+        @Override
+        public TypeUsageInformation getTypeUsageInformation() {
+            throw new IllegalStateException();
+        }
+    }
+
 }

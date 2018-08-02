@@ -119,7 +119,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
             } while (lv2 != null);
             lValue.collectLValueAssignments(expression, this.getContainer(), scopeDiscoverer);
         }
-        getBody().traceLocalVariableScope(scopeDiscoverer);
+        scopeDiscoverer.processOp04Statement(getBody());
         scopeDiscoverer.leaveBlock(this);
     }
 

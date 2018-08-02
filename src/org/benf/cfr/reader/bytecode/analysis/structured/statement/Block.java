@@ -470,7 +470,7 @@ public class Block extends AbstractStructuredStatement {
 
         for (Op04StructuredStatement item : containedStatements) {
             scopeDiscoverer.mark(item);
-            item.traceLocalVariableScope(scopeDiscoverer);
+            scopeDiscoverer.processOp04Statement(item);
         }
         scopeDiscoverer.leaveBlock(this);
     }
