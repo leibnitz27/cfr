@@ -1123,6 +1123,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
+    public static void tidyAnonymousConstructors(Op04StructuredStatement root) {
+        root.transform(new ExpressionRewriterTransformer(new AnonymousClassConstructorRewriter()), new StructuredScope());
+    }
+
     public static void inlineSyntheticAccessors(DCCommonState state, Method method, Op04StructuredStatement root) {
         JavaTypeInstance classType = method.getClassFile().getClassType();
         new SyntheticAccessorRewriter(state, classType).rewrite(root);

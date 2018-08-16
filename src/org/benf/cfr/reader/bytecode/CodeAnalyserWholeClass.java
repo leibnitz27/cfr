@@ -11,7 +11,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.*;
@@ -55,6 +54,8 @@ public class CodeAnalyserWholeClass {
         if (options.getOption(OptionsImpl.SUGAR_ASSERTS)) {
             resugarAsserts(classFile, options);
         }
+
+        tidyAnonymousConstructors(classFile);
 
         if (options.getOption(OptionsImpl.LIFT_CONSTRUCTOR_INIT)) {
             liftStaticInitialisers(classFile, options);
@@ -126,6 +127,16 @@ public class CodeAnalyserWholeClass {
             Set<MethodPrototype> processed = SetFactory.newSet();
             for (Method method : classFile.getConstructors()) {
                 Op04StructuredStatement.fixInnerClassConstructorSyntheticOuterArgs(classFile, method, method.getAnalysis(), processed);
+            }
+        }
+    }
+
+    private static void tidyAnonymousConstructors(ClassFile classFile) {
+        for (Method method : classFile.getMethods()) {
+            if (method.hasCodeAttribute()) {
+                Op04StructuredStatement code = method.getAnalysis();
+                Op04StructuredStatement.tidyAnonymousConstructors(code);
+                //code.
             }
         }
     }

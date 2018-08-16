@@ -69,6 +69,16 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
     public Dumper dumpInner(Dumper d) {
 
         // We need the inner classes on the anonymous class (!)
+        MethodPrototype prototype = improveMethodPrototype(d);
+
+        ClassFileDumperAnonymousInner cfd = new ClassFileDumperAnonymousInner();
+        List<Expression> args = getArgs();
+        cfd.dumpWithArgs(classFile, prototype, args, false, d);
+        d.removePendingCarriageReturn();
+        return d;
+    }
+
+    private MethodPrototype improveMethodPrototype(Dumper d) {
         ConstantPool cp = constructorInvokation.getCp();
 
         ClassFile anonymousClassFile = null;
@@ -83,17 +93,12 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         }
 
         d.print("new ");
-        ClassFileDumperAnonymousInner cfd = new ClassFileDumperAnonymousInner();
-        List<Expression> args = getArgs();
         MethodPrototype prototype = this.constructorInvokation.getMethodPrototype();
         try {
             if (classFile != null) prototype = classFile.getMethodByPrototype(prototype).getMethodPrototype();
         } catch (NoSuchMethodException e) {
         }
-
-        cfd.dumpWithArgs(classFile, prototype, args, false, d);
-        d.removePendingCarriageReturn();
-        return d;
+        return prototype;
     }
 
     public Dumper dumpForEnum(Dumper d) {
