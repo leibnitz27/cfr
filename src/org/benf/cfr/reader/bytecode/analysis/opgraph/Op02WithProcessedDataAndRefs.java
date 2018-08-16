@@ -1521,7 +1521,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         if (missing.isEmpty()) return;
 
         if (!method.getConstructorFlag().isConstructor()) {
-            throw new IllegalStateException("Invisible function parameters on a non-constructor");
+            throw new IllegalStateException("Invisible function parameters on a non-constructor (or reads of uninitialised local variables).");
         }
         /*
          * our signature doesn't match the actual arguments.
