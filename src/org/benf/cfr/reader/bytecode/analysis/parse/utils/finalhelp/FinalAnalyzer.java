@@ -504,7 +504,12 @@ public class FinalAnalyzer {
                 /*
                  * Add a (possibly redundant) intermediate goto.
                  */
-                Op03SimpleStatement tmpJump = new Op03SimpleStatement(source.getBlockIdentifiers(), new GotoStatement(), source.getIndex().justAfter());
+                Set<BlockIdentifier> blockIdentifiers = source.getBlockIdentifiers();
+                if (source.getStatement() instanceof CatchStatement) {
+                    blockIdentifiers = SetFactory.newSet(blockIdentifiers);
+                    blockIdentifiers.add(((CatchStatement)source.getStatement()).getCatchBlockIdent());
+                }
+                Op03SimpleStatement tmpJump = new Op03SimpleStatement(blockIdentifiers, new GotoStatement(), source.getIndex().justAfter());
                 source.replaceTarget(origTarget, tmpJump);
                 tmpJump.addSource(source);
                 tmpJump.addTarget(origTarget);
