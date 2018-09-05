@@ -35,6 +35,7 @@ public interface TypeConstants {
 
     String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
     String supplierName = "java.util.function.Supplier";
+    String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
 
     // Path, because we actually want to load the class - could we get away with a hardcoded ref type as above?
     String runtimeExceptionPath = "java/lang/RuntimeException.class";

@@ -189,6 +189,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGBUILDER = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "stringbuilder", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
             "Convert new Stringbuilder().add.add.add to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGCONCATFACTORY = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "stringconcat", new VersionSpecificDefaulter(ClassFileVersion.JAVA_9, true),
+            "Convert new Stringbuilder().add.add.add to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ENUM_SWITCH = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodeenumswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
             "Re-sugar switch on enum - see " + CFR_WEBSITE + "switch-on-enum.html");
@@ -434,7 +437,7 @@ public class OptionsImpl implements Options {
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     OUTPUT_PATH, CLOBBER_FILES, JAR_FILTER,
-                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SILENT, RECOVER, ECLIPSE, OVERRIDES, SHOW_INFERRABLE,
+                    SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SUGAR_STRINGCONCATFACTORY, SILENT, RECOVER, ECLIPSE, OVERRIDES, SHOW_INFERRABLE,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
