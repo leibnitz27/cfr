@@ -422,6 +422,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case BOOTSTRAP: {
                 callargs = buildInvokeBootstrapArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
                 List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
+                if (dynamicInvokeType == DynamicInvokeType.UNKNOWN) {
+                    List<JavaTypeInstance> typeArgs = dynamicPrototype.getArgs();
+                    if (typeArgs.size() == dynamicArgs.size()) {
+                        // Infer arg types from dynamic args.
+                        dynamicPrototype.tightenArgs(null, dynamicArgs);
+                    }
+                }
                 callargs.addAll(dynamicArgs);
                 Expression funcCall = new StaticFunctionInvokation(methodRef, callargs);
                 if (stackProduced.size() == 0) {
