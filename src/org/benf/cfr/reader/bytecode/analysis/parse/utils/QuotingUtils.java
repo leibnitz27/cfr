@@ -59,7 +59,11 @@ public class QuotingUtils {
         return s;
     }
 
-    public static String addQuotes(String s) {
-        return "\"" + s + "\"";
+    public static String addQuotes(String s, boolean singleIsChar)
+    {
+        if (singleIsChar && s.length() == 1) {
+            return "'" + s + "'";
+        }
+        return '"' + s + '"';
     }
 }

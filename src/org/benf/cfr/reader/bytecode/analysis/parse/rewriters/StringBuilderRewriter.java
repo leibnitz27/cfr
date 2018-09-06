@@ -83,9 +83,10 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                     // We've illegally run out of arguments.  Can't handle this.
                     return null;
                 }
-                toks.add(args.get(argIdx++));
+                Expression arg = tryRemoveCast(args.get(argIdx++));
+                toks.add(arg);
             } else {
-                toks.add(new Literal(TypedLiteral.getString(QuotingUtils.addQuotes(tok))));
+                toks.add(new Literal(TypedLiteral.getString(QuotingUtils.addQuotes(tok, false))));
             }
         }
         // Or rewrite genStringConcat to not expect arg in reverse!
@@ -132,12 +133,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                         memberFunctionInvokation.getArgs().size() == 1) {
                     lhs = memberFunctionInvokation.getObject();
                     Expression e = memberFunctionInvokation.getAppropriatelyCastArgument(0);
-                    if (e instanceof CastExpression) {
-                        Expression ce = ((CastExpression) e).getChild();
-                        if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance(), null)) {
-                            e = ce;
-                        }
-                    }
+                    e = tryRemoveCast(e);
                     reverseAppendChain.add(e);
                 } else {
                     return null;
@@ -157,12 +153,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                             String typeName = e.getInferredJavaType().getJavaTypeInstance().getRawName();
                             if (typeName.equals(TypeConstants.stringName)) {
                                 // Could also do it for type sequences, but .....
-                                if (e instanceof CastExpression) {
-                                    Expression ce = ((CastExpression) e).getChild();
-                                    if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance(), null)) {
-                                        e = ce;
-                                    }
-                                }
+                                e = tryRemoveCast(e);
                                 reverseAppendChain.add(e);
                             } else {
                                 return null;
@@ -180,6 +171,16 @@ public class StringBuilderRewriter implements ExpressionRewriter {
             }
         } while (lhs != null);
         return null;
+    }
+
+    private Expression tryRemoveCast(Expression e) {
+        if (e instanceof CastExpression) {
+            Expression ce = ((CastExpression) e).getChild();
+            if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance(), null)) {
+                e = ce;
+            }
+        }
+        return e;
     }
 
     private Expression genStringConcat(List<Expression> revList) {
