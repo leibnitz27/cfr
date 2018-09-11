@@ -392,7 +392,7 @@ public class LoopIdentifier {
                     }
                 });
                 if (!internalTryBlocks.containsAll(tryBlocks)) break innerShutLoop;
-                while (currentIdx < statements.size() - 1 && statements.get(currentIdx).getBlockIdentifiers().contains(catchBlockIdent)) {
+                while (currentIdx < statements.size() && statements.get(currentIdx).getBlockIdentifiers().contains(catchBlockIdent)) {
                     currentIdx++;
                 }
                 lastPostBlock = currentIdx;
@@ -402,12 +402,25 @@ public class LoopIdentifier {
                 if (!lastJump.getTargets().contains(start)) {
                     throw new ConfusedCFRException("Nonsensical loop would be emitted - failure");
                 }
-                final Op03SimpleStatement afterNewJump = statements.get(lastPostBlock);
-                // Find after statement.  Insert a jump forward (out) here, and then insert
-                // a synthetic lastJump.  The previous lastJump should now jump to our synthetic
-                // We can insert a BACK jump to lastJump's target
-                //
-                Op03SimpleStatement newBackJump = new Op03SimpleStatement(afterNewJump.getBlockIdentifiers(), new GotoStatement(), afterNewJump.getIndex().justBefore());
+
+                Op03SimpleStatement newBackJump ;
+                Op03SimpleStatement afterNewJump = null;
+                if (lastPostBlock >= statements.size()) {
+                    final Op03SimpleStatement beforeNewJump = statements.get(lastPostBlock-1);
+                    // Find after statement.  Insert a jump forward (out) here, and then insert
+                    // a synthetic lastJump.  The previous lastJump should now jump to our synthetic
+                    // We can insert a BACK jump to lastJump's target
+                    //
+                    newBackJump = new Op03SimpleStatement(SetFactory.<BlockIdentifier>newSet(), new GotoStatement(), beforeNewJump.getIndex().justAfter());
+                } else {
+                    afterNewJump = statements.get(lastPostBlock);
+                    // Find after statement.  Insert a jump forward (out) here, and then insert
+                    // a synthetic lastJump.  The previous lastJump should now jump to our synthetic
+                    // We can insert a BACK jump to lastJump's target
+                    //
+                    newBackJump = new Op03SimpleStatement(afterNewJump.getBlockIdentifiers(), new GotoStatement(), afterNewJump.getIndex().justBefore());
+                }
+
                 newBackJump.addTarget(start);
                 newBackJump.addSource(lastJump);
                 lastJump.replaceTarget(start, newBackJump);
@@ -417,7 +430,7 @@ public class LoopIdentifier {
                  * into a goto (actually a break, but that will happen later).  Otherwise, it will be fine.
                  */
                 Op03SimpleStatement preNewJump = statements.get(lastPostBlock - 1);
-                if (afterNewJump.getSources().contains(preNewJump)) {
+                if (afterNewJump != null && afterNewJump.getSources().contains(preNewJump)) {
                     Op03SimpleStatement interstit = new Op03SimpleStatement(preNewJump.getBlockIdentifiers(), new GotoStatement(), newBackJump.getIndex().justBefore());
                     preNewJump.replaceTarget(afterNewJump, interstit);
                     afterNewJump.replaceSource(preNewJump, interstit);
