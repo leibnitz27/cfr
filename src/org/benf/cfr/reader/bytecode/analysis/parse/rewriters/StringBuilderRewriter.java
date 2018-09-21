@@ -48,9 +48,27 @@ public class StringBuilderRewriter implements ExpressionRewriter {
                     && invokation.getClazz().getRawName().equals(TypeConstants.stringConcatFactoryName)) {
                 Expression result = extractStringConcat(invokation);
                 if (result != null) return result;
+            } else if ("makeConcat".equals(invokation.getName())
+                    && invokation.getClazz().getRawName().equals(TypeConstants.stringConcatFactoryName)) {
+                Expression result = extractStringConcatSimple(invokation);
+                if (result != null) return result;
             }
         }
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+    }
+
+    private Expression extractStringConcatSimple(StaticFunctionInvokation staticFunctionInvokation) {
+        List<Expression> args = staticFunctionInvokation.getArgs();
+        // Amazingly, "" + foo generates a stringconcat, even though it's a 1 arg one!
+        if (args.size() < 1) return null;
+        List<Expression> tmp = ListFactory.newList(args);
+        Collections.reverse(tmp);
+        for (int x=0;x<tmp.size();++x) {
+            tmp.set(x, tryRemoveCast(tmp.get(x)));
+        }
+        Expression res = genStringConcat(tmp);
+        staticFunctionInvokation.getInferredJavaType().forceDelegate(res.getInferredJavaType());
+        return res;
     }
 
     private Expression extractStringConcat(StaticFunctionInvokation staticFunctionInvokation) {
@@ -186,8 +204,25 @@ public class StringBuilderRewriter implements ExpressionRewriter {
     private Expression genStringConcat(List<Expression> revList) {
 
         JavaTypeInstance lastType = revList.get(revList.size() - 1).getInferredJavaType().getJavaTypeInstance();
-        if (lastType instanceof RawJavaType) {
-            revList.add(new Literal(TypedLiteral.getString("\"\"")));
+        if (lastType != TypeConstants.STRING) {
+            boolean needed = true;
+            // If it's a primitive, we can't have 1 + 1 + "" in indyland.
+            if (lastType instanceof RawJavaType || RawJavaType.getUnboxedTypeFor(lastType) != null) {
+                if (revList.size() > 1 &&
+                        revList.get(revList.size() - 2).getInferredJavaType().getJavaTypeInstance() == TypeConstants.STRING) {
+                    needed = false;
+                }
+            } else {
+                for (Expression e : revList) {
+                    if (e.getInferredJavaType().getJavaTypeInstance() == TypeConstants.STRING) {
+                        needed = false;
+                        break;
+                    }
+                }
+            }
+            if (needed) {
+                revList.add(new Literal(TypedLiteral.getString("\"\"")));
+            }
         }
 
         int x = revList.size() - 1;
