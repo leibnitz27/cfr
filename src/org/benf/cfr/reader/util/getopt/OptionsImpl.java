@@ -191,7 +191,7 @@ public class OptionsImpl implements Options {
             "Convert new Stringbuilder().add.add.add to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGCONCATFACTORY = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "stringconcat", new VersionSpecificDefaulter(ClassFileVersion.JAVA_9, true),
-            "Convert new Stringbuilder().add.add.add to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
+            "Convert usages of StringConcatFactor to string + string + string - see " + CFR_WEBSITE + "java9stringconcat.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ENUM_SWITCH = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodeenumswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
             "Re-sugar switch on enum - see " + CFR_WEBSITE + "switch-on-enum.html");
