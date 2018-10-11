@@ -19,12 +19,18 @@ public class MiscUtils {
             };
         }
 
+        final boolean positive = !pat.startsWith("!");
+        if (!positive) {
+            pat = pat.substring(1);
+        }
+
         if (anywhere) pat = "^.*" + pat + ".*$";
         final Pattern p = Pattern.compile(pat);
         return new Predicate<String>() {
             @Override
             public boolean test(String in) {
-                return p.matcher(in).matches();
+                boolean matches = p.matcher(in).matches();
+                return positive == matches;
             }
         };
     }
