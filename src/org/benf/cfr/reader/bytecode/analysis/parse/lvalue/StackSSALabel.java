@@ -43,6 +43,16 @@ public class StackSSALabel extends AbstractLValue {
     }
 
     @Override
+    public void markVar() {
+
+    }
+
+    @Override
+    public boolean isVar() {
+        return false;
+    }
+
+    @Override
     public Precedence getPrecedence() {
         return Precedence.HIGHEST;
     }

@@ -24,7 +24,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
     private final String failureName; // if we can't get the classfileField.
     private final JavaTypeInstance owningClass;
 
-    public AbstractFieldVariable(ConstantPoolEntry field) {
+    AbstractFieldVariable(ConstantPoolEntry field) {
         super(getFieldType((ConstantPoolEntryFieldRef) field));
         ConstantPoolEntryFieldRef fieldRef = (ConstantPoolEntryFieldRef) field;
         this.classFileField = getField(fieldRef);
@@ -32,21 +32,21 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         this.owningClass = fieldRef.getClassEntry().getTypeInstance();
     }
 
-    protected AbstractFieldVariable(AbstractFieldVariable other) {
+    AbstractFieldVariable(AbstractFieldVariable other) {
         super(other.getInferredJavaType());
         this.classFileField = other.classFileField;
         this.failureName = other.failureName;
         this.owningClass = other.owningClass;
     }
 
-    protected AbstractFieldVariable(InferredJavaType type, JavaTypeInstance clazz, String varName) {
+    AbstractFieldVariable(InferredJavaType type, JavaTypeInstance clazz, String varName) {
         super(type);
         this.classFileField = null;
         this.owningClass = clazz;
         this.failureName = varName;
     }
 
-    protected AbstractFieldVariable(InferredJavaType type, JavaTypeInstance clazz, ClassFileField classFileField) {
+    AbstractFieldVariable(InferredJavaType type, JavaTypeInstance clazz, ClassFileField classFileField) {
         super(type);
         this.classFileField = classFileField;
         this.owningClass = clazz;
@@ -67,6 +67,16 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
 
     @Override
     public boolean isFinal() {
+        return false;
+    }
+
+    @Override
+    public void markVar() {
+
+    }
+
+    @Override
+    public boolean isVar() {
         return false;
     }
 
@@ -123,7 +133,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
     }
 
 
-    static InferredJavaType getFieldType(ConstantPoolEntryFieldRef fieldRef) {
+    private static InferredJavaType getFieldType(ConstantPoolEntryFieldRef fieldRef) {
         String name = fieldRef.getLocalName();
         JavaRefTypeInstance ref = (JavaRefTypeInstance) fieldRef.getClassEntry().getTypeInstance();
         try {
@@ -133,7 +143,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
                 Field field = classFile.getFieldByName(name, fieldRef.getJavaTypeInstance()).getField();
                 return new InferredJavaType(field.getJavaTypeInstance(), InferredJavaType.Source.FIELD, true);
             }
-        } catch (CannotLoadClassException e) {
+        } catch (CannotLoadClassException ignore) {
         } catch (NoSuchFieldException ignore) {
         }
         return new InferredJavaType(fieldRef.getJavaTypeInstance(), InferredJavaType.Source.FIELD, true);
@@ -148,7 +158,6 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
 
         if (!getFieldName().equals(that.getFieldName())) return false;
         if (owningClass != null ? !owningClass.equals(that.owningClass) : that.owningClass != null) return false;
-
         return true;
     }
 

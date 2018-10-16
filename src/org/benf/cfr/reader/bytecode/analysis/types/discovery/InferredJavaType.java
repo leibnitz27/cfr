@@ -47,7 +47,8 @@ public class InferredJavaType {
         STRING_TRANSFORM,
         IMPROVED_ITERATION,
         TERNARY,
-        RESOLVE_CLASH
+        RESOLVE_CLASH,
+        FORCE_TARGET_TYPE
     }
 
 
@@ -93,6 +94,10 @@ public class InferredJavaType {
         int getTaggedBytecodeLocation();
 
         void setTaggedBytecodeLocation(int location);
+
+        void shallowSetCanBeVar();
+
+        void confirmVarIfPossible();
     }
 
     private static class IJTInternal_Clash implements IJTInternal {
@@ -175,8 +180,18 @@ public class InferredJavaType {
             collapseTypeClash(true);
         }
 
-        private boolean collapseTypeClash(boolean force) {
-            if (resolved) return true;
+        @Override
+        public void shallowSetCanBeVar() {
+            // ignore.
+        }
+
+        @Override
+        public void confirmVarIfPossible() {
+            // ignore.
+        }
+
+        private void collapseTypeClash(boolean force) {
+            if (resolved) return;
 
             List<JavaTypeInstance> clashTypes = ListFactory.newList();
             int arraySize = clashes.get(0).getJavaTypeInstance().getNumArrayDimensions();
@@ -191,16 +206,15 @@ public class InferredJavaType {
                 }
             }
             Pair<Boolean, JavaTypeInstance> newlyResolved = collapseTypeClash2(clashTypes);
-            if (newlyResolved == null) return false;
+            if (newlyResolved == null) return;
 
             // Ignore the first part of the pair - we have to resolve here, so do our best.
-            if (!newlyResolved.getFirst() && !force) return false;
+            if (!newlyResolved.getFirst() && !force) return;
             resolved = true;
             type = newlyResolved.getSecond();
             if (arraySize == 1) {
                 type = new JavaArrayTypeInstance(1, type);
             }
-            return true;
         }
 
         private static Pair<Boolean, JavaTypeInstance> collapseTypeClash2(List<JavaTypeInstance> clashes) {
@@ -226,7 +240,7 @@ public class InferredJavaType {
             }
             for (JavaTypeInstance pos : poss) {
                 if (BindingSuperContainer.Route.EXTENSION == routes.get(pos)) {
-                    return Pair.<Boolean, JavaTypeInstance>make(true, pos);
+                    return Pair.make(true, pos);
                 }
             }
             JavaTypeInstance result = poss.get(0);
@@ -433,7 +447,7 @@ public class InferredJavaType {
         // When delegating
         private IJTInternal delegate;
 
-
+        private Troolean canBeVar = Troolean.FALSE;
 
         private IJTInternal_Impl(JavaTypeInstance type, Source source, boolean locked) {
             this.type = type;
@@ -512,6 +526,23 @@ public class InferredJavaType {
 
         public int getLocalId() {
             return id;
+        }
+
+        @Override
+        public void shallowSetCanBeVar() {
+            canBeVar = Troolean.NEITHER;
+        }
+
+        @Override
+        public void confirmVarIfPossible() {
+            if (canBeVar != Troolean.FALSE) {
+                canBeVar = Troolean.TRUE;
+                isDelegate = false;
+                return;
+            }
+            if (isDelegate) {
+                delegate.confirmVarIfPossible();
+            }
         }
 
         public ClashState getClashState() {
@@ -1126,9 +1157,6 @@ public class InferredJavaType {
             return CastAction.None;
         }
         if (thisRaw.getStackType() == StackType.INT) {
-            if (otherRaw.getStackType() != StackType.INT) {
-                throw new IllegalStateException();
-            }
             return chainIntegralTypes(other);
         }
         throw new ConfusedCFRException("Don't know how to tighten from " + thisRaw + " to " + otherRaw);
@@ -1139,6 +1167,13 @@ public class InferredJavaType {
         return value.getRawType();
     }
 
+    public void shallowSetCanBeVar() {
+        value.shallowSetCanBeVar();
+    }
+
+    public void confirmVarIfPossible() {
+        value.confirmVarIfPossible();
+    }
 //    public String getCastString() {
 //        return value.getJavaTypeInstance().toString();
 //    }

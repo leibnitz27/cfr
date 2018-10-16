@@ -25,6 +25,10 @@ public class SetFactory {
         return res;
     }
 
+    public static <X extends Object> Set<X> newIdentitySet() {
+        return Collections.newSetFromMap(new IdentityHashMap<X, Boolean>());
+    }
+
     public static <X extends Object> Set<X> newSet(X... content) {
         Set<X> res = new HashSet<X>();
         Collections.addAll(res, content);

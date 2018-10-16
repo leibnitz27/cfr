@@ -18,6 +18,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -176,6 +177,16 @@ public class CreationCollector {
                      */
                     JavaTypeInstance anonymousTypeBase = ClassFile.getAnonymousTypeBase(classFile);
                     inferredJavaType.forceDelegate(new InferredJavaType(anonymousTypeBase, InferredJavaType.Source.UNKNOWN));
+                    /*
+                     * However, if we're in java 10 or higher, this anonymous class could be being referred to as var.
+                     * this matters because we can do
+                     *
+                     * var x = new Object(){int bob = 3};
+                     * x.bob;
+                     */
+                    if (classFile.getClassFileVersion().equalOrLater(ClassFileVersion.JAVA_10)) {
+                        inferredJavaType.shallowSetCanBeVar();
+                    }
                 } else {
 
                     BindingSuperContainer bindingSuperContainer = lValueType.getBindingSupers();

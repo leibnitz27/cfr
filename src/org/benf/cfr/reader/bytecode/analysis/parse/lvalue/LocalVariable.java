@@ -24,6 +24,7 @@ public class LocalVariable extends AbstractLValue {
     private final int idx;
     private final Ident ident;
     private boolean guessedFinal;
+    private boolean guessedVar;
     private final int originalRawOffset;
     private JavaAnnotatedTypeInstance customCreationType;
 
@@ -33,6 +34,7 @@ public class LocalVariable extends AbstractLValue {
         this.idx = stackPosition;
         this.ident = ident;
         this.guessedFinal = false;
+        this.guessedVar = false;
         this.originalRawOffset = originalRawOffset;
     }
 
@@ -42,6 +44,7 @@ public class LocalVariable extends AbstractLValue {
         this.idx = -1;
         this.ident = null;
         this.guessedFinal = false;
+        this.guessedVar = false;
         this.originalRawOffset = -1;
     }
 
@@ -62,6 +65,16 @@ public class LocalVariable extends AbstractLValue {
     @Override
     public void markFinal() {
         guessedFinal = true;
+    }
+
+    @Override
+    public void markVar() {
+        guessedVar = true;
+    }
+
+    @Override
+    public boolean isVar() {
+        return guessedVar;
     }
 
     // Mutation hack :( we need to be able (without affecting any analysis) to inform the creation
@@ -149,7 +162,7 @@ public class LocalVariable extends AbstractLValue {
     @Override
     public int hashCode() {
         int result = name.hashCode();
-        result = 31 * result + (int) idx;
+        result = 31 * result + idx;
         if (ident != null) result = 31 * result + ident.hashCode();
         return result;
     }

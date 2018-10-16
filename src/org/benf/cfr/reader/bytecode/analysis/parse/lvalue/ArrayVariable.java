@@ -33,6 +33,16 @@ public class ArrayVariable extends AbstractLValue {
     }
 
     @Override
+    public void markVar() {
+
+    }
+
+    @Override
+    public boolean isVar() {
+        return false;
+    }
+
+    @Override
     public LValue deepClone(CloneHelper cloneHelper) {
         return new ArrayVariable((ArrayIndex) cloneHelper.replaceOrClone(arrayIndex));
     }

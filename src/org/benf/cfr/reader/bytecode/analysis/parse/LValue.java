@@ -37,14 +37,23 @@ public interface LValue extends DumpableWithPrecedence, DeepCloneable<LValue>, T
 
     boolean isFinal();
 
-    public static class Creation {
+    void markVar();
+
+    boolean isVar();
+
+    class Creation {
         public static Dumper dump(Dumper d, LValue lValue) {
             JavaAnnotatedTypeInstance annotatedCreationType = lValue.getAnnotatedCreationType();
             if (annotatedCreationType != null) {
                 annotatedCreationType.dump(d);
             } else {
-                JavaTypeInstance t = lValue.getInferredJavaType().getJavaTypeInstance();
-                d.dump(t);
+                if (lValue.isVar()) {
+                    d.print("var");
+                } else {
+                    InferredJavaType inferredJavaType = lValue.getInferredJavaType();
+                    JavaTypeInstance t = inferredJavaType.getJavaTypeInstance();
+                    d.dump(t);
+                }
             }
             return d;
         }

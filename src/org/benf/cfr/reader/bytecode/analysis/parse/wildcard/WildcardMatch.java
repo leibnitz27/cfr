@@ -341,6 +341,16 @@ public class WildcardMatch {
         }
 
         @Override
+        public void markVar() {
+
+        }
+
+        @Override
+        public boolean isVar() {
+            return false;
+        }
+
+        @Override
         public void collectTypeUsages(TypeUsageCollector collector) {
         }
 

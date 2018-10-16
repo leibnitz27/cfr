@@ -8,8 +8,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
-import org.benf.cfr.reader.entities.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -47,7 +49,7 @@ public class FieldVariable extends AbstractFieldVariable {
     /*
      * This will only be meaningful after the inner class constructor transformation.
      */
-    public boolean isOuterRef() {
+    private boolean isOuterRef() {
         ClassFileField classFileField = getClassFileField();
         return classFileField != null && classFileField.isSyntheticOuterRef();
     }
@@ -76,7 +78,14 @@ public class FieldVariable extends AbstractFieldVariable {
         if (isOuterRef() && objectIsThis()) {
             return d.identifier(getFieldName());
         } else {
-            object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
+            // TODO : DO NOT CHECK IN MOVE TO PASS.
+            // TOOD : THIS IS WRONG
+//            if ( this.getOwningClassType() != object.getInferredJavaType().getJavaTypeInstance()) {
+//                CastExpression c = new CastExpression(new InferredJavaType(this.getOwningClassType(), InferredJavaType.Source.UNKNOWN), object);
+//                d.dump(c);
+//            } else {
+                object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
+//            }
             return d.print(".").identifier(getFieldName());
         }
     }

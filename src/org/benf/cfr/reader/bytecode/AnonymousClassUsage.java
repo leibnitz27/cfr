@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.bytecode;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractConstructorInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -8,7 +7,6 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.ListFactory;
 
 import java.util.List;
-import java.util.Map;
 
 /*
  * Usage of anonymous classes currently requires decorating those classes once we've determined the code that's
@@ -27,7 +25,11 @@ public class AnonymousClassUsage {
         localNoted.add(Pair.make(classFile, constructorInvokation));
     }
 
-    public void useNotes() {
+    public boolean isEmpty() {
+        return noted.isEmpty() && localNoted.isEmpty();
+    }
+
+    void useNotes() {
         for (Pair<ClassFile, ConstructorInvokationAnonymousInner> note : noted) {
             note.getFirst().noteAnonymousUse(note.getSecond());
         }

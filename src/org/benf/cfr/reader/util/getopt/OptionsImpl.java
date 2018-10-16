@@ -54,6 +54,8 @@ public class OptionsImpl implements Options {
         @Override
         public EnumType invoke(String arg1, Void arg2, Options arg3) {
             if (arg1 == null) return null;
+            // javac6 needs this ;)
+            //noinspection RedundantCast
             return (EnumType)Enum.valueOf(clazz, arg1);
         }
     }
@@ -94,7 +96,7 @@ public class OptionsImpl implements Options {
     private static final OptionDecoder<Boolean> defaultFalseBooleanDecoder = new OptionDecoder<Boolean>() {
         @Override
         public Boolean invoke(String arg, Void ignore, Options ignore2) {
-            return arg != null && Boolean.parseBoolean(arg);
+            return Boolean.parseBoolean(arg);
         }
 
         @Override
@@ -316,9 +318,6 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> CLOBBER_FILES = new PermittedOptionProvider.Argument<Troolean>(
             "clobber", defaultNeitherTrooleanDecoder,
             "Overwrite files when using outputpath");
-    public static final PermittedOptionProvider.Argument<Integer> SHOWOPS = new PermittedOptionProvider.Argument<Integer>(
-            "showops", default0intDecoder,
-            "Show some (cryptic!) debug");
     public static final PermittedOptionProvider.Argument<Boolean> SILENT = new PermittedOptionProvider.Argument<Boolean>(
             "silent", defaultFalseBooleanDecoder,
             "Don't display state while decompiling");
@@ -358,7 +357,7 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<String> JAR_FILTER = new PermittedOptionProvider.Argument<String>(
             "jarfilter", defaultNullStringDecoder,
             "Substring regex - analyse only classes where the fqn matches this pattern. (when analysing jar).");
-    static final PermittedOptionProvider.Argument<Boolean> RENAME_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
+    private static final PermittedOptionProvider.Argument<Boolean> RENAME_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
             "rename", defaultFalseBooleanDecoder,
             "Synonym for 'renamedupmembers' + 'renameillegalidents' + 'renameenummembers'");
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_DUP_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
@@ -430,7 +429,7 @@ public class OptionsImpl implements Options {
         @Override
         @SuppressWarnings("unchecked")
         public List<? extends ArgumentParam<?, ?>> getArguments() {
-            return ListFactory.newImmutableList(SHOWOPS, ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, ARRAY_ITERATOR,
+            return ListFactory.newImmutableList(ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,

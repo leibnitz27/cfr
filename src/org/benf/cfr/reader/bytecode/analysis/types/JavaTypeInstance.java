@@ -13,29 +13,29 @@ public interface JavaTypeInstance {
 
     StackType getStackType();
 
-    public boolean isComplexType();
+    boolean isComplexType();
 
-    public boolean isUsableType();
+    boolean isUsableType();
 
     /*
      * TODO : Doesn't feel like this is right, it ignores array dimensionality.
      */
-    public RawJavaType getRawTypeOfSimpleType();
+    RawJavaType getRawTypeOfSimpleType();
 
     /*
      * Again, can't we already be sure we have an array type here?
      * TODO : Doesn't feel right.
      */
-    public JavaTypeInstance removeAnArrayIndirection();
+    JavaTypeInstance removeAnArrayIndirection();
 
-    public JavaTypeInstance getArrayStrippedType();
+    JavaTypeInstance getArrayStrippedType();
 
     /*
      * This will return a type stripped of ALL generic information
      *
      * i.e. Set<Set<?>> -> Set
      */
-    public JavaTypeInstance getDeGenerifiedType();
+    JavaTypeInstance getDeGenerifiedType();
 
     /*
      * This will return a 'minimally' degenerified type - i.e. just enough to
@@ -45,30 +45,30 @@ public interface JavaTypeInstance {
      */
 //    public JavaTypeInstance getMinimallyDeGenerifiedType();
 
-    public int getNumArrayDimensions();
+    int getNumArrayDimensions();
 
-    public String getRawName();
+    String getRawName();
 
     //    public boolean isInnerClassOf(JavaTypeInstance possibleParent);
     // Get info about this class as an inner class, not inner classes of this.....
-    public InnerClassInfo getInnerClassHereInfo();
+    InnerClassInfo getInnerClassHereInfo();
 
-    public BindingSuperContainer getBindingSupers();
+    BindingSuperContainer getBindingSupers();
 
-    public boolean implicitlyCastsTo(JavaTypeInstance other, GenericTypeBinder gtb);
+    boolean implicitlyCastsTo(JavaTypeInstance other, GenericTypeBinder gtb);
 
     /*
      * Boxing relies on this bad implementation.... :P
      */
-    public boolean impreciseCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb);
+    boolean impreciseCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb);
 
-    public boolean correctCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb);
+    boolean correctCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb);
 
-    public String suggestVarName();
+    String suggestVarName();
 
-    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation);
+    void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation);
 
-    public void collectInto(TypeUsageCollector typeUsageCollector);
+    void collectInto(TypeUsageCollector typeUsageCollector);
 
-    public boolean isObject();
+    boolean isObject();
 }

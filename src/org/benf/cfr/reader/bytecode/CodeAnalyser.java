@@ -10,13 +10,12 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExplicitTypeCallRew
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.XorRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredFakeDecompFailure;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -35,16 +34,6 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public class CodeAnalyser {
-
-    private static final int SHOW_L2_RAW = 1;
-    private static final int SHOW_L2_OPS = 2;
-    private static final int SHOW_L3_RAW = 3;
-    private static final int SHOW_L3_ORDERED = 4;
-    private static final int SHOW_L3_CAUGHT = 5;
-    private static final int SHOW_L3_JUMPS = 6;
-    private static final int SHOW_L3_LOOPS1 = 7;
-    private static final int SHOW_L3_EXCEPTION_BLOCKS = 8;
-    private static final int SHOW_L4_FINAL_OP3 = 9;
 
     private final static Logger logger = LoggerFactory.create(CodeAnalyser.class);
 
@@ -208,10 +197,7 @@ public class CodeAnalyser {
      */
     private AnalysisResult getAnalysisInner(List<Op01WithProcessedDataAndByteJumps> instrs, DCCommonState dcCommonState, Options options, BytecodeMeta bytecodeMeta, int passIdx) {
 
-
         boolean willSort = options.getOption(OptionsImpl.FORCE_TOPSORT) == Troolean.TRUE;
-
-        int showOpsLevel = options.getOption(OptionsImpl.SHOWOPS);
 
         ClassFile classFile = method.getClassFile();
         ClassFileVersion classFileVersion = classFile.getClassFileVersion();
@@ -273,12 +259,6 @@ public class CodeAnalyser {
         }
 
 //        RawCombinedExceptions rawCombinedExceptions = new RawCombinedExceptions(originalCodeAttribute.getExceptionTableEntries(), blockIdentifierFactory, lutByOffset, lutByIdx, instrs, cp);
-
-        if (showOpsLevel == SHOW_L2_RAW) {
-            debugDumper.print("Op2 statements:\n");
-            debugDumper.dump(op2list);
-            debugDumper.newln().newln();
-        }
         //
         // We know the ranges covered by each exception handler - insert try / catch statements around
         // these ranges.
@@ -329,12 +309,6 @@ public class CodeAnalyser {
         // stacks.
         Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
 
-        if (showOpsLevel == SHOW_L2_OPS) {
-            debugDumper.print("Op2 statements:\n");
-            debugDumper.dump(op2list);
-            debugDumper.newln().newln();
-        }
-
         /* Extra fun.  A ret can have a jump back to the instruction immediately following the JSR that called it.
          * So we have to search for RET instructions, then for each of them find any JSRs which could call it, and add
          * a branch from that RET to the JSR.
@@ -368,22 +342,6 @@ public class CodeAnalyser {
         List<Op03SimpleStatement> op03SimpleParseNodes = Op02WithProcessedDataAndRefs.convertToOp03List(op2list, method, variableFactory, blockIdentifierFactory, dcCommonState, typeHintRecovery);
         // Renumber, just in case JSR stage (or something) has left bad labellings.
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
-
-
-        if (showOpsLevel == SHOW_L3_RAW) {
-            debugDumper.print("Raw Op3 statements:\n");
-            for (Op03SimpleStatement node : op03SimpleParseNodes) {
-                node.dumpInner(debugDumper);
-            }
-            debugDumper.print("\n\n");
-        }
-
-        if (showOpsLevel == SHOW_L3_ORDERED) {
-            debugDumper.newln().newln();
-            debugDumper.print("Linked Op3 statements:\n");
-            op03SimpleParseNodes.get(0).dump(debugDumper);
-            debugDumper.print("\n\n");
-        }
 
         // Expand any 'multiple' statements (eg from dups)
         Misc.flattenCompoundStatements(op03SimpleParseNodes);
@@ -430,14 +388,6 @@ public class CodeAnalyser {
         if (options.getOption(OptionsImpl.COMMENT_MONITORS)) {
             Op03SimpleStatement.commentMonitors(op03SimpleParseNodes);
         }
-
-
-        if (showOpsLevel == SHOW_L3_CAUGHT) {
-            debugDumper.newln().newln();
-            debugDumper.print("After catchblocks.:\n");
-            op03SimpleParseNodes.get(0).dump(debugDumper);
-        }
-
 
         //      Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
 
@@ -541,7 +491,7 @@ public class CodeAnalyser {
         logger.info("sugarAnyonymousArrays");
         AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
 
-        boolean reloop = false;
+        boolean reloop;
         do {
             Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes, true);
 
@@ -572,12 +522,6 @@ public class CodeAnalyser {
         Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes, false);
 
         Op03SimpleStatement.optimiseForTypes(op03SimpleParseNodes);
-
-        if (showOpsLevel == SHOW_L3_JUMPS) {
-            debugDumper.newln().newln();
-            debugDumper.print("After jumps.:\n");
-            op03SimpleParseNodes.get(0).dump(debugDumper);
-        }
 
         // If statements which end up jumping to the final return can really confuse loop detection, so we want
         // to remove them.
@@ -612,20 +556,8 @@ public class CodeAnalyser {
             Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, false);
         }
 
-        if (showOpsLevel == SHOW_L3_LOOPS1) {
-            debugDumper.newln().newln();
-            debugDumper.print("After loops.:\n");
-            op03SimpleParseNodes.get(0).dump(debugDumper);
-        }
-
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
         op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
-
-        if (showOpsLevel == SHOW_L3_EXCEPTION_BLOCKS) {
-            debugDumper.newln().newln();
-            debugDumper.print("After exception.:\n");
-            op03SimpleParseNodes.get(0).dump(debugDumper);
-        }
 
         // Perform this before simple forward if detection, as it allows us to not have to consider
         // gotos which have been relabelled as continue/break.
@@ -717,29 +649,12 @@ public class CodeAnalyser {
         logger.info("removePointlessSwitchDefaults");
         Op03SimpleStatement.removePointlessSwitchDefaults(op03SimpleParseNodes);
 
-
-//        dumper.print("Raw Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
-
         logger.info("removeUselessNops");
         op03SimpleParseNodes = Op03SimpleStatement.removeUselessNops(op03SimpleParseNodes);
-//
-//        dumper.print("Raw Op3 statements:\n");
-//        for (Op03SimpleStatement node : op03SimpleParseNodes) {
-//            node.dumpInner(dumper);
-//        }
 
         Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new StringBuilderRewriter(options, classFileVersion));
         Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new XorRewriter());
-//        dumper.print("Final Op3 statements:\n");
-//        op03SimpleParseNodes.get(0).dump(dumper);
 
-
-        if (showOpsLevel == SHOW_L4_FINAL_OP3) {
-            debugDumper.newln().newln();
-            debugDumper.print("Final Op3 statements:\n");
-            op03SimpleParseNodes.get(0).dump(debugDumper);
-        }
         op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
 
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
@@ -749,13 +664,6 @@ public class CodeAnalyser {
 
             Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         }
-
-//        if (passIdx == 0) {
-//            if (Op03SimpleStatement.checkTypeClashes(op03SimpleParseNodes, bytecodeMeta)) {
-//                comments.addComment(DecompilerComment.TYPE_CLASHES);
-//                triggerRecovery = true;
-//            }
-//        }
 
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes, true);
         Op03SimpleStatement.extractExceptionMiddle(op03SimpleParseNodes);
@@ -852,6 +760,11 @@ public class CodeAnalyser {
             //        new ArrayIterRewriter(cfrState).rewrite(block);
             //        new LoopIterRewriter(cfrState).rewrite(block);
 
+
+            // Just prior to variable scopes, if we've got any anonymous classes, and we're J10+,
+            // then see if we are addressing non-existent content of anonymous objects.
+            // If we are, this indicates that var was used.
+            Op04StructuredStatement.detectAnonymousVar(method, block, anonymousClassUsage, classFile);
 
             // Now we've got everything nicely block structured, we can have an easier time
             // We *have* to discover variable scopes BEFORE we rewrite lambdas, because

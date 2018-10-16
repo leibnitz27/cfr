@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
+import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.Op04Checker;
@@ -81,6 +82,15 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         this.structuredStatement = structuredStatement;
         this.blockMembership = blockSet(blockMembership);
         structuredStatement.setContainer(this);
+    }
+
+    /*
+     * If we've got any anonymous classes, and we're J10+,
+     * then see if we are addressing non-existent content of anonymous objects.
+     * If we are, this indicates that var was used.
+     */
+    public static void detectAnonymousVar(Method method, Op04StructuredStatement block, AnonymousClassUsage anonymousClassUsage, ClassFile classFile) {
+        new FieldTypeUsageRewriter(anonymousClassUsage, classFile).transform(block);
     }
 
     // TODO: This isn't quite right.  Should actually be removing the node.

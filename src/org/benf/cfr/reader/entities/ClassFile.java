@@ -408,56 +408,16 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return formalTypeParameters != null && !formalTypeParameters.isEmpty();
     }
 
+    public boolean hasField(String name) {
+        if (fieldsByName == null) {
+            calculateFieldsByName();
+        }
+        return fieldsByName.containsKey(name);
+    }
 
     public ClassFileField getFieldByName(String name, JavaTypeInstance type) throws NoSuchFieldException {
         if (fieldsByName == null) {
-            Options options = constantPool.getDCCommonState().getOptions();
-            boolean testIllegal = !options.getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS);
-            boolean illegal = false;
-            fieldsByName = MapFactory.newMap();
-            if (testIllegal) {
-                for (ClassFileField field : fields) {
-                    String rawFieldName = field.getRawFieldName();
-                    // Check illegality on RAW field name, as otherwise unicode is already quoted.
-                    if (IllegalIdentifierReplacement.isIllegal(rawFieldName)) {
-                        illegal = true;
-                        break;
-                    }
-                }
-            }
-            int smallMemberThreshold = options.getOption(OptionsImpl.RENAME_SMALL_MEMBERS);
-            boolean renameSmallMembers = smallMemberThreshold > 0;
-            for (ClassFileField field : fields) {
-                String fieldName = field.getFieldName();
-                JavaTypeInstance fieldType = field.getField().getJavaTypeInstance();
-                Map<JavaTypeInstance, ClassFileField> perNameMap = fieldsByName.get(fieldName);
-                if (perNameMap == null) {
-                    perNameMap = MapFactory.newOrderedMap();
-                    fieldsByName.put(fieldName, perNameMap);
-                }
-                perNameMap.put(fieldType, field);
-                if (renameSmallMembers && fieldName.length() <= smallMemberThreshold) {
-                    field.getField().setDisambiguate();
-                }
-            }
-            boolean warnAmbig = false;
-            for (Map<JavaTypeInstance, ClassFileField> typeMap : fieldsByName.values()) {
-                if (typeMap.size() > 1) {
-                    if (constantPool.getDCCommonState().getOptions().getOption(OptionsImpl.RENAME_DUP_MEMBERS)) {
-                        for (ClassFileField field : typeMap.values()) {
-                            field.getField().setDisambiguate();
-                        }
-                    } else {
-                        warnAmbig = true;
-                    }
-                }
-            }
-            if (warnAmbig) {
-                addComment(DecompilerComment.RENAME_MEMBERS);
-            }
-            if (illegal) {
-                addComment(DecompilerComment.ILLEGAL_IDENTIFIERS);
-            }
+            calculateFieldsByName();
         }
         Map<JavaTypeInstance, ClassFileField> fieldsByType = fieldsByName.get(name);
         if (fieldsByType == null || fieldsByType.isEmpty()) { // can't be empty, but....
@@ -469,6 +429,56 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             return fieldsByType.values().iterator().next();
         }
         return field;
+    }
+
+    private void calculateFieldsByName() {
+        Options options = constantPool.getDCCommonState().getOptions();
+        boolean testIllegal = !options.getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS);
+        boolean illegal = false;
+        fieldsByName = MapFactory.newMap();
+        if (testIllegal) {
+            for (ClassFileField field : fields) {
+                String rawFieldName = field.getRawFieldName();
+                // Check illegality on RAW field name, as otherwise unicode is already quoted.
+                if (IllegalIdentifierReplacement.isIllegal(rawFieldName)) {
+                    illegal = true;
+                    break;
+                }
+            }
+        }
+        int smallMemberThreshold = options.getOption(OptionsImpl.RENAME_SMALL_MEMBERS);
+        boolean renameSmallMembers = smallMemberThreshold > 0;
+        for (ClassFileField field : fields) {
+            String fieldName = field.getFieldName();
+            JavaTypeInstance fieldType = field.getField().getJavaTypeInstance();
+            Map<JavaTypeInstance, ClassFileField> perNameMap = fieldsByName.get(fieldName);
+            if (perNameMap == null) {
+                perNameMap = MapFactory.newOrderedMap();
+                fieldsByName.put(fieldName, perNameMap);
+            }
+            perNameMap.put(fieldType, field);
+            if (renameSmallMembers && fieldName.length() <= smallMemberThreshold) {
+                field.getField().setDisambiguate();
+            }
+        }
+        boolean warnAmbig = false;
+        for (Map<JavaTypeInstance, ClassFileField> typeMap : fieldsByName.values()) {
+            if (typeMap.size() > 1) {
+                if (constantPool.getDCCommonState().getOptions().getOption(OptionsImpl.RENAME_DUP_MEMBERS)) {
+                    for (ClassFileField field : typeMap.values()) {
+                        field.getField().setDisambiguate();
+                    }
+                } else {
+                    warnAmbig = true;
+                }
+            }
+        }
+        if (warnAmbig) {
+            addComment(DecompilerComment.RENAME_MEMBERS);
+        }
+        if (illegal) {
+            addComment(DecompilerComment.ILLEGAL_IDENTIFIERS);
+        }
     }
 
     public List<ClassFileField> getFields() {
@@ -1012,7 +1022,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
 
         return boundSuperCollector.getBoundSupers();
-
     }
 
     public void getBoundSuperClasses(JavaTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector, BindingSuperContainer.Route route, Set<JavaTypeInstance> seen) {
