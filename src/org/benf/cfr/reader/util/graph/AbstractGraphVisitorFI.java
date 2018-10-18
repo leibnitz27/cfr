@@ -3,7 +3,6 @@ package org.benf.cfr.reader.util.graph;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.SetFactory;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
-import org.benf.cfr.reader.util.functors.UnaryProcedure;
 
 import java.util.Collection;
 import java.util.LinkedList;

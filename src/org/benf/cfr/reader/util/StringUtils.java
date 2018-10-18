@@ -3,7 +3,6 @@ package org.benf.cfr.reader.util;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Collection;
-import java.util.List;
 
 public class StringUtils {
 

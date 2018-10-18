@@ -140,7 +140,6 @@ public class Op02RedundantStoreRewriter {
                 if (laststore[fetchidx] <= lastCutOff) loadsSinceStore[fetchidx] = 0;
                 loadsSinceStore[fetchidx]++;
                 lastload[fetchidx] = x;
-                continue;
             }
         }
         if (nopCount > 0) {

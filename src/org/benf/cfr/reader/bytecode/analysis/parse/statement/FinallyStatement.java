@@ -4,14 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredFinally;
-import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
-
-import java.util.List;
 
 public class FinallyStatement extends AbstractStatement {
     private BlockIdentifier finallyBlockIdent;

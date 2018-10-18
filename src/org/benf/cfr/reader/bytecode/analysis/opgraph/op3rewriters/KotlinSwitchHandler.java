@@ -15,7 +15,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitch;
 import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
-import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.MapFactory;
@@ -56,7 +55,7 @@ public class KotlinSwitchHandler {
      * Instead, try to spot this pattern EXPLICITLY, and split it up into two switch statements, thus
      * rebuilding COIN code!
      */
-    public static List<Op03SimpleStatement> extractStringSwitches(Method method, List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
+    public static List<Op03SimpleStatement> extractStringSwitches(List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
         List<Op03SimpleStatement> switchStatements = Functional.filter(in, new TypeFilter<RawSwitchStatement>(RawSwitchStatement.class));
         boolean action = false;
         for (Op03SimpleStatement swatch : switchStatements) {

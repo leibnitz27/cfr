@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.entities.attributes;
 
-import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.ListFactory;

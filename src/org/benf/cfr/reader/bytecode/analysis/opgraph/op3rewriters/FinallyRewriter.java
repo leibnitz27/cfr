@@ -46,7 +46,7 @@ public class FinallyRewriter {
         } while (continueLoop);
     }
 
-    public static Set<BlockIdentifier> getBlocksAffectedByFinally(List<Op03SimpleStatement> statements) {
+    static Set<BlockIdentifier> getBlocksAffectedByFinally(List<Op03SimpleStatement> statements) {
         Set<BlockIdentifier> res = SetFactory.newSet();
         for (Op03SimpleStatement stm : statements) {
             if (stm.getStatement() instanceof TryStatement) {

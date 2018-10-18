@@ -5,7 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -17,17 +16,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredBreak;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredContinue;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaAnnotatedTypeIterator;
-import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
-import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
-import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleTypeAnnotations;
-import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
-import org.benf.cfr.reader.entities.attributes.TypePathPart;
-import org.benf.cfr.reader.util.DecompilerComments;
 
-import java.util.List;
 import java.util.Set;
-import java.util.SortedMap;
 
 public class ControlFlowCleaningTransformer implements StructuredStatementTransformer, ExpressionRewriter {
 

@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnNothingStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnStatement;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.getopt.Options;

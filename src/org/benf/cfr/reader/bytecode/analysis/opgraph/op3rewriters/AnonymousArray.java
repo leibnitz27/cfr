@@ -22,7 +22,7 @@ import java.util.List;
 public class AnonymousArray {
 
 
-    private static boolean resugarAnonymousArray(Op03SimpleStatement newArray, List<Op03SimpleStatement> statements) {
+    private static boolean resugarAnonymousArray(Op03SimpleStatement newArray) {
         Statement stm = newArray.getStatement();
         if (!(stm instanceof AssignmentSimple)) {
             return false;
@@ -53,7 +53,7 @@ public class AnonymousArray {
         Op03SimpleStatement next = newArray;
         List<Expression> anon = ListFactory.newList();
         List<Op03SimpleStatement> anonAssigns = ListFactory.newList();
-        Expression arrayExpression = null;
+        Expression arrayExpression;
         if (array instanceof StackSSALabel) {
             arrayExpression = new StackValue((StackSSALabel) array);
         } else {
@@ -80,7 +80,7 @@ public class AnonymousArray {
         newArray.replaceStatement(replacement);
         if (array instanceof StackSSALabel) {
             StackEntry arrayStackEntry = ((StackSSALabel) array).getStackEntry();
-            for (Op03SimpleStatement create : anonAssigns) {
+            for (Op03SimpleStatement ignored : anonAssigns) {
                 arrayStackEntry.decrementUsage();
             }
         }
@@ -106,7 +106,7 @@ public class AnonymousArray {
      * array definition!)
      */
     public static void resugarAnonymousArrays(List<Op03SimpleStatement> statements) {
-        boolean success = false;
+        boolean success;
         do {
             List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
             // filter for structure now
@@ -123,7 +123,7 @@ public class AnonymousArray {
             });
             success = false;
             for (Op03SimpleStatement assignment : assignments) {
-                success |= resugarAnonymousArray(assignment, statements);
+                success |= resugarAnonymousArray(assignment);
             }
             if (success) {
                 LValueProp.condenseLValues(statements);

@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.Predicate;
 
 import java.util.Collections;

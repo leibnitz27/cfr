@@ -34,7 +34,7 @@ public class GenericInferer {
             return binder != null;
         }
 
-        public GenericInferData mergeWith(GenericInferData other) {
+        GenericInferData mergeWith(GenericInferData other) {
             if (!isValid()) return this;
             if (!other.isValid()) return other;
 
@@ -49,7 +49,7 @@ public class GenericInferer {
          * Ordinarily just return the binder.  however if there are any arguments that have ONLY EVER been 'null',
          * we can make use of that.
          */
-        public GenericTypeBinder getTypeBinder() {
+        GenericTypeBinder getTypeBinder() {
             if (nullPlaceholders != null && !nullPlaceholders.isEmpty()) {
                 for (JavaGenericPlaceholderTypeInstance onlyNull : nullPlaceholders) {
                     binder.suggestOnlyNullBinding(onlyNull);
@@ -59,7 +59,7 @@ public class GenericInferer {
         }
     }
 
-    static GenericInferData getGtbNullFiltered(MemberFunctionInvokation m) {
+    private static GenericInferData getGtbNullFiltered(MemberFunctionInvokation m) {
         List<Expression> args = m.getArgs();
         GenericTypeBinder res =  m.getMethodPrototype().getTypeBinderFor(args);
         List<Boolean> nulls = m.getNulls();
@@ -103,7 +103,7 @@ public class GenericInferer {
                     memberFunctionInvokations.add((MemberFunctionInvokation) e);
                 }
             } else if (contained instanceof AssignmentSimple) {
-                Expression e = ((AssignmentSimple) contained).getRValue();
+                Expression e = contained.getRValue();
                 if (e instanceof MemberFunctionInvokation) {
                     memberFunctionInvokations.add((MemberFunctionInvokation) e);
                 }
@@ -119,7 +119,6 @@ public class GenericInferer {
 
         invokationGroup:
         for (Map.Entry<Integer, List<MemberFunctionInvokation>> entry : byTypKey.entrySet()) {
-            Integer key = entry.getKey();
             List<MemberFunctionInvokation> invokations = entry.getValue();
             if (invokations.isEmpty()) continue;
 
@@ -130,7 +129,7 @@ public class GenericInferer {
             if (!genericType.hasUnbound()) continue;
 
             GenericInferData inferData = getGtbNullFiltered(invokations.get(0));
-            if (!inferData.isValid()) continue invokationGroup;
+            if (!inferData.isValid()) continue;
             for (int x = 1, len = invokations.size(); x < len; ++x) {
                 GenericInferData inferData1 = getGtbNullFiltered(invokations.get(x));
                 inferData = inferData.mergeWith(inferData1);

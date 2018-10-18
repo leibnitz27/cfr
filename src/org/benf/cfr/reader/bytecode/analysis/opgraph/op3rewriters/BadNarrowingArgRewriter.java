@@ -11,8 +11,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 
-import java.util.concurrent.ExecutorService;
-
 public class BadNarrowingArgRewriter extends AbstractExpressionRewriter {
     private class InternalBadNarrowingRewriter extends AbstractExpressionRewriter {
         @Override

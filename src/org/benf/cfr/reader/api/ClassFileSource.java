@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.api;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.util.DecompilerComment;
 
 import java.io.IOException;
 import java.util.Collection;

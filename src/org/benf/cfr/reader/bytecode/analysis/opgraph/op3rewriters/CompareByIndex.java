@@ -24,6 +24,7 @@ public class CompareByIndex implements Comparator<Op03SimpleStatement> {
         if (res == 0) {
             throw new ConfusedCFRException("Can't sort instructions:\n" + a + "\n" + b);
         }
+        //noinspection ComparatorMethodParameterNotUsed
         return res;
     }
 }

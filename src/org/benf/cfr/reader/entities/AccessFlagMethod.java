@@ -6,7 +6,6 @@ import org.benf.cfr.reader.entities.attributes.AttributeSynthetic;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 public enum AccessFlagMethod {
     ACC_PUBLIC("public"),

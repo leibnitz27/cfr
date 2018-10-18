@@ -1,7 +1,5 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
-import org.benf.cfr.reader.util.annotation.Nullable;
-
 import java.util.Set;
 
 public interface InnerClassInfo {

@@ -5,9 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.SetFactory;
-import org.benf.cfr.reader.util.TypeUsageCollectable;
 
-import java.util.Collection;
 import java.util.Set;
 
 public class TypeUsageCollectorImpl extends AbstractTypeUsageCollector {

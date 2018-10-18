@@ -203,7 +203,7 @@ public class InlineDeAssigner {
         rewrite(deassigner, container, added);
     }
 
-    public static boolean extractAssignments(List<Op03SimpleStatement> statements) {
+    public static void extractAssignments(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> newStatements = ListFactory.newList();
         for (Op03SimpleStatement statement : statements) {
             if (statement.getSources().size() != 1) continue;
@@ -211,15 +211,15 @@ public class InlineDeAssigner {
             Class<? extends Statement> clazz = stmt.getClass();
             if (clazz == AssignmentSimple.class) {
                 deAssign((AssignmentSimple) stmt, statement, newStatements);
-            } else if (clazz == WhileStatement.class) {
+            } else //noinspection StatementWithEmptyBody
+                if (clazz == WhileStatement.class) {
                 // skip. (just looks better!)
             } else {
                 deAssign(statement, newStatements);
             }
         }
-        if (newStatements.isEmpty()) return false;
+        if (newStatements.isEmpty()) return;
         statements.addAll(newStatements);
         Cleaner.sortAndRenumberInPlace(statements);
-        return true;
     }
 }

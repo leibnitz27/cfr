@@ -35,23 +35,23 @@ public class ConditionalRewriter {
     }
 
     public static void identifyNonjumpingConditionals(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
-        boolean success = false;
+        boolean success;
         Set<Op03SimpleStatement> ignoreTheseJumps = SetFactory.newSet();
         do {
             success = false;
             List<Op03SimpleStatement> forwardIfs = Functional.filter(statements, new IsForwardIf());
             Collections.reverse(forwardIfs);
             for (Op03SimpleStatement forwardIf : forwardIfs) {
-                if (considerAsTrivialIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
+                if (considerAsTrivialIf(forwardIf, statements) ||
                         considerAsSimpleIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps) ||
-                        considerAsDexIf(forwardIf, statements, blockIdentifierFactory, ignoreTheseJumps)) {
+                        considerAsDexIf(forwardIf, statements)) {
                     success = true;
                 }
             }
         } while (success);
     }
 
-    private static boolean considerAsTrivialIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps) {
+    private static boolean considerAsTrivialIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements) {
         Op03SimpleStatement takenTarget = ifStatement.getTargets().get(1);
         Op03SimpleStatement notTakenTarget = ifStatement.getTargets().get(0);
         int idxTaken = statements.indexOf(takenTarget);
@@ -94,7 +94,7 @@ public class ConditionalRewriter {
  *
  * Which, in turn, may allow us to make some more interesting choices later.
  */
-    private static boolean considerAsDexIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory, Set<Op03SimpleStatement> ignoreTheseJumps) {
+    private static boolean considerAsDexIf(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> statements) {
         Statement innerStatement = ifStatement.getStatement();
         if (innerStatement.getClass() != IfStatement.class) {
             return false;
@@ -324,7 +324,6 @@ lbl10: // 1 sources:
         int maybeElseEndIdx = -1;
         Op03SimpleStatement maybeElseEnd = null;
         boolean maybeSimpleIfElse = false;
-        boolean extractCommonEnd = false;
         GotoStatement leaveIfBranchGoto = null;
         Op03SimpleStatement leaveIfBranchHolder = null;
         List<Op03SimpleStatement> ifBranch = ListFactory.newList();
@@ -503,7 +502,6 @@ lbl10: // 1 sources:
                      */
                     Statement mGotoStatement = statementCurrent.getStatement();
                     if (!(mGotoStatement.getClass() == GotoStatement.class)) return false;
-                    GotoStatement gotoStatement = (GotoStatement) mGotoStatement;
                     // It's unconditional, and it's a forward jump.
                     if (statementCurrent.getTargets().get(0) == maybeElseEnd) {
                         idxEnd = idxCurrent;
@@ -656,7 +654,6 @@ lbl10: // 1 sources:
             leaveIfBranchGoto = null;
             List<Op03SimpleStatement> oldIfBranch = ifBranch;
             ifBranch = elseBranch;
-            elseBranch = null;
             Collections.sort(ifBranch, new CompareByIndex());
             Op03SimpleStatement last = ifBranch.get(ifBranch.size()-1);
             InstrIndex fromHere = last.getIndex().justAfter();

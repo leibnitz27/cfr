@@ -5,7 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.Set;
 import java.util.Vector;
 
 public class UnstructuredAnonymousBreak extends AbstractUnStructuredStatement {

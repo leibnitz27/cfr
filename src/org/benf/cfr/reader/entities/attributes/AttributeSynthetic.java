@@ -1,11 +1,8 @@
 package org.benf.cfr.reader.entities.attributes;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
-import org.benf.cfr.reader.util.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
-
-import java.util.List;
 
 public class AttributeSynthetic extends Attribute {
     public final static String ATTRIBUTE_NAME = "Synthetic";

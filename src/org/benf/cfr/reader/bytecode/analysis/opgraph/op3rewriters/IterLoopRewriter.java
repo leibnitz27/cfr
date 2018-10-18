@@ -50,13 +50,13 @@ public class IterLoopRewriter {
  *
  * TODO : The tests in here are very rigid (and gross!), and need loosening up when it's working.
  */
-    private static boolean rewriteArrayForLoop(final Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
+    private static void rewriteArrayForLoop(final Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
 
         /*
          * loop should have one back-parent.
          */
         Op03SimpleStatement preceeding = Misc.findSingleBackSource(loop);
-        if (preceeding == null) return false;
+        if (preceeding == null) return;
 
         ForStatement forStatement = (ForStatement) loop.getStatement();
 
@@ -64,16 +64,16 @@ public class IterLoopRewriter {
 
         if (!wildcardMatch.match(
                 new AssignmentSimple(wildcardMatch.getLValueWildCard("iter"), new Literal(TypedLiteral.getInt(0))),
-                forStatement.getInitial())) return false;
+                forStatement.getInitial())) return;
 
         LValue originalLoopVariable = wildcardMatch.getLValueWildCard("iter").getMatch();
 
         // Assignments are fiddly, as they can be assignmentPreChange or regular Assignment.
         List<AbstractAssignmentExpression> assignments = forStatement.getAssignments();
-        if (assignments.size() != 1) return false;
+        if (assignments.size() != 1) return;
         AbstractAssignmentExpression assignment = assignments.get(0);
         boolean incrMatch = assignment.isSelfMutatingOp1(originalLoopVariable, ArithOp.PLUS);
-        if (!incrMatch) return false;
+        if (!incrMatch) return;
 
         /*
          * Potential problem is if the condition has been rolled in with another - we need to find the LHS of a deep
@@ -87,7 +87,7 @@ public class IterLoopRewriter {
                         new LValueExpression(originalLoopVariable),
                         new LValueExpression(wildcardMatch.getLValueWildCard("bound")),
                         CompOp.LT), condpr.getFirst())) {
-            return false;
+            return;
         }
 
         LValue originalLoopBound = wildcardMatch.getLValueWildCard("bound").getMatch();
@@ -96,7 +96,7 @@ public class IterLoopRewriter {
         // TODO: Let's just check the single backref from the for loop test.
         if (!wildcardMatch.match(
                 new AssignmentSimple(originalLoopBound, new ArrayLength(new LValueExpression(wildcardMatch.getLValueWildCard("array")))),
-                preceeding.getStatement())) return false;
+                preceeding.getStatement())) return;
 
         LValue originalArray = wildcardMatch.getLValueWildCard("array").getMatch();
 
@@ -142,7 +142,7 @@ public class IterLoopRewriter {
             // if ((i = a[x]) > 3).  This is why we've avoided pushing that down. :(
             Set<Expression> poison = SetFactory.<Expression>newSet(new LValueExpression(originalLoopVariable));
             if (!Misc.findHiddenIter(loopStart.getStatement(), sugariterWC, arrIndex, poison)) {
-                return false;
+                return;
             }
             hiddenIter = true;
         }
@@ -172,13 +172,13 @@ public class IterLoopRewriter {
             inStatement.collectLValueUsage(usageCollector);
             for (LValue cantUse : cantUpdate) {
                 if (usageCollector.isUsed(cantUse)) {
-                    return false;
+                    return;
                 }
             }
             LValue updated = inStatement.getCreatedLValue();
             if (updated == null) continue;
             if (cantUpdate.contains(updated)) {
-                return false;
+                return;
             }
         }
 
@@ -218,7 +218,7 @@ public class IterLoopRewriter {
                 });
         graphVisitor.process();
         if (res.get()) {
-            return false;
+            return;
         }
 
 
@@ -239,9 +239,8 @@ public class IterLoopRewriter {
                 Misc.replaceHiddenIter(loopStart.getStatement(), sugariterWC.getMatch(), arrIndex);
                 // This is an infrequent op, and we want to preserve sort
                 statements.add(statements.indexOf(realLoopStart), loopStart);
-            } else {
-                // Nothing to do - pretend we nopped it out!
             }
+            // otherwise nothing to do - pretend we nopped it out!
         } else {
             if (hiddenIter) {
                 /*
@@ -257,7 +256,6 @@ public class IterLoopRewriter {
             prepreceeding.nopOut();
         }
 
-        return true;
     }
 
 
@@ -276,6 +274,7 @@ public class IterLoopRewriter {
      *   [a] = [x].next();
      * }
      */
+    @SuppressWarnings("StatementWithEmptyBody")
     private static void rewriteIteratorWhileLoop(final Op03SimpleStatement loop, List<Op03SimpleStatement> statements) {
         WhileStatement whileStatement = (WhileStatement) loop.getStatement();
 
@@ -312,7 +311,6 @@ public class IterLoopRewriter {
         }
         // for the 'non-taken' branch of the test, we expect to find an assignment to a value.
         // TODO : This can be pushed into the loop, as long as it's not after a conditional.
-        boolean isCastExpression = false;
         boolean hiddenIter = false;
         WildcardMatch.LValueWildcard sugariterWC = wildcardMatch.getLValueWildCard("sugariter");
         Expression nextCall = wildcardMatch.getMemberFunction("nextfn", "next", new LValueExpression(wildcardMatch.getLValueWildCard("iterable")));
@@ -324,7 +322,6 @@ public class IterLoopRewriter {
                         wildcardMatch.getCastExpressionWildcard("cast", nextCall)),
                 loopStart.getStatement())) {
             // It's a cast expression - so we know that there's a type we might be able to push back up.
-            isCastExpression = true;
         } else {
             // Try seeing if it's a hidden iter, which has been pushed inside a conditional
             Set<Expression> poison = SetFactory.<Expression>newSet(new LValueExpression(iterable));

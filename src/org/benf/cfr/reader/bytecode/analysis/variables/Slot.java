@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.variables;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 
 public class Slot {
     private final JavaTypeInstance javaTypeInstance;

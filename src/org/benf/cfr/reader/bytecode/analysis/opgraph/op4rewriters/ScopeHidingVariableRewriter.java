@@ -6,14 +6,11 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscState
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDefinition;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.ClassCache;
-import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.Predicate;
 import org.benf.cfr.reader.util.SetFactory;
 
 import java.util.List;

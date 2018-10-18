@@ -369,7 +369,7 @@ public class CodeAnalyser {
 
         // Before we expand raw switches, try to spot a particularly nasty pattern that kotlin
         // generates for string switches.
-        op03SimpleParseNodes = KotlinSwitchHandler.extractStringSwitches(method, op03SimpleParseNodes, bytecodeMeta);
+        op03SimpleParseNodes = KotlinSwitchHandler.extractStringSwitches(op03SimpleParseNodes, bytecodeMeta);
         // Expand raw switch statements into more useful ones.
         SwitchReplacer.replaceRawSwitches(method, op03SimpleParseNodes, blockIdentifierFactory, options);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);

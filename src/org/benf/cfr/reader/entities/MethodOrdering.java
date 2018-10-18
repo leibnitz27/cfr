@@ -5,7 +5,6 @@ import org.benf.cfr.reader.entities.attributes.AttributeLineNumberTable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /*

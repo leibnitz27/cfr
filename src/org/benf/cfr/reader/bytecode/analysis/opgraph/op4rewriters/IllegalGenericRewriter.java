@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractConstructorInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
