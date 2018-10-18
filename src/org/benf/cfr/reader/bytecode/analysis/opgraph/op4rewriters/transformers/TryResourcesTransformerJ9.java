@@ -72,11 +72,7 @@ public class TryResourcesTransformerJ9 extends TryResourcesTransformerBase {
         if (!res) return null;
 
         MethodPrototype prototype = collector.fn.getMethodPrototype();
-        Method resourceMethod = null;
-        try {
-            resourceMethod = getClassFile().getMethodByPrototype(prototype);
-        } catch (NoSuchMethodException e) {
-        }
+        Method resourceMethod = getClassFile().getMethodByPrototypeOrNull(prototype);
         if (resourceMethod == null) return null;
         if (!resourceMethod.getAccessFlags().contains(AccessFlagMethod.ACC_FAKE_END_RESOURCE)) return null;
 

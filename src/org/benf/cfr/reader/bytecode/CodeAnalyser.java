@@ -764,7 +764,7 @@ public class CodeAnalyser {
             // Just prior to variable scopes, if we've got any anonymous classes, and we're J10+,
             // then see if we are addressing non-existent content of anonymous objects.
             // If we are, this indicates that var was used.
-            Op04StructuredStatement.detectAnonymousVar(method, block, anonymousClassUsage, classFile);
+            Op04StructuredStatement.rewriteExplicitTypeUsages(method, block, anonymousClassUsage, classFile);
 
             // Now we've got everything nicely block structured, we can have an easier time
             // We *have* to discover variable scopes BEFORE we rewrite lambdas, because

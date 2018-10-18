@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ResourceReleaseDetector;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
@@ -34,31 +35,16 @@ public class TryResourcesTransformerJ7 extends TryResourcesTransformerBase {
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(content);
         if (structuredStatements == null) return null;
 
-        Matcher<StructuredStatement> subMatch = new MatchSequence(
-                new BeginBlock(null),
-                new StructuredIf(new ComparisonOperation(new LValueExpression(wcm.getLValueWildCard("throwable")), Literal.NULL, CompOp.NE), null),
-                new BeginBlock(null),
-                new StructuredTry(null, null, null),
-                new BeginBlock(null),
-                new StructuredExpressionStatement(wcm.getMemberFunction("m1", "close", new LValueExpression(wcm.getLValueWildCard("resource"))), false),
-                new EndBlock(null),
-                new StructuredCatch(null, null, wcm.getLValueWildCard("caught"), null),
-                new BeginBlock(null),
-                new StructuredExpressionStatement(wcm.getMemberFunction("addsupp", "addSuppressed", new LValueExpression(wcm.getLValueWildCard("throwable")), new LValueExpression(wcm.getLValueWildCard("caught"))), false),
-                new EndBlock(null),
-                new EndBlock(null),
-                new ElseBlock(),
-                new BeginBlock(null),
-                new StructuredExpressionStatement(wcm.getMemberFunction("m1", "close", new LValueExpression(wcm.getLValueWildCard("resource"))), false),
-                new EndBlock(null),
-                new EndBlock(null)
-        );
+        WildcardMatch.LValueWildcard throwableLValue = wcm.getLValueWildCard("throwable");
+        WildcardMatch.LValueWildcard autoclose = wcm.getLValueWildCard("resource");
+
+        Matcher<StructuredStatement> subMatch = ResourceReleaseDetector.getStructuredStatementMatcher(wcm, throwableLValue, autoclose);
 
         Matcher<StructuredStatement> m = new MatchOneOf(
                 new ResetAfterTest(wcm,
                     new MatchSequence(
                         new BeginBlock(null),
-                        new StructuredIf(new ComparisonOperation(new LValueExpression(wcm.getLValueWildCard("resource")), Literal.NULL, CompOp.NE), null),
+                        new StructuredIf(new ComparisonOperation(new LValueExpression(autoclose), Literal.NULL, CompOp.NE), null),
                         subMatch,
                         new EndBlock(null)
                     )
@@ -80,5 +66,4 @@ public class TryResourcesTransformerJ7 extends TryResourcesTransformerBase {
         // except, prior to J9, closable didn't inherit from Autoclosable, so test for closable.
         return new ResourceMatch(null, resource, throwable);
     }
-
 }

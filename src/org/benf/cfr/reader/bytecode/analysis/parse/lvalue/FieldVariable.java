@@ -35,6 +35,11 @@ public class FieldVariable extends AbstractFieldVariable {
         this.object = cloneHelper.replaceOrClone(other.object);
     }
 
+    private FieldVariable(FieldVariable other, Expression object) {
+        super(other);
+        this.object = object;
+    }
+
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         super.collectTypeUsages(collector);
@@ -46,6 +51,9 @@ public class FieldVariable extends AbstractFieldVariable {
         return new FieldVariable(this, cloneHelper);
     }
 
+    public FieldVariable withReplacedObject(Expression object) {
+        return new FieldVariable(this, object);
+    }
     /*
      * This will only be meaningful after the inner class constructor transformation.
      */

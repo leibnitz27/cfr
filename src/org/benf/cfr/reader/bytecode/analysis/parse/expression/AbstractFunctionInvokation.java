@@ -15,7 +15,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression {
     private final ConstantPoolEntryMethodRef function;
     private final MethodPrototype methodPrototype;
 
-    protected AbstractFunctionInvokation(ConstantPoolEntryMethodRef function, InferredJavaType inferredJavaType) {
+    AbstractFunctionInvokation(ConstantPoolEntryMethodRef function, InferredJavaType inferredJavaType) {
         super(inferredJavaType);
         this.function = function;
         this.methodPrototype = function.getMethodPrototype();
@@ -37,7 +37,7 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression {
         return methodPrototype.getName();
     }
 
-    public String getFixedName() {
+    String getFixedName() {
         return methodPrototype.getFixedName();
     }
 

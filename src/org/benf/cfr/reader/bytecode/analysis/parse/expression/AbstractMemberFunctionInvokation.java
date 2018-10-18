@@ -29,7 +29,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
     private Expression object;
     private final List<Boolean> nulls;
 
-    public AbstractMemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls) {
+    AbstractMemberFunctionInvokation(ConstantPool cp, ConstantPoolEntryMethodRef function, Expression object, List<Expression> args, List<Boolean> nulls) {
         super(function,
                 new InferredJavaType(
                 function.getMethodPrototype().getReturnType(
@@ -148,17 +148,17 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         boolean ignore = false;
         if (argType instanceof JavaGenericBaseInstance) {
             // TODO : Should check flag for ignore bad generics?
-            ignore |= ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp, 0, false);
+            ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp, 0, false);
         }
                 /*
                  * Lambda types will always look wrong.
                  */
         if (!ignore) {
-            ignore |= arg instanceof LambdaExpression;
-            ignore |= arg instanceof LambdaExpressionFallback;
+            ignore = arg instanceof LambdaExpression ||
+                     arg instanceof LambdaExpressionFallback;
         }
         if (!ignore) {
-            arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
+            return new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);
         }
         return arg;
     }
@@ -177,7 +177,6 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         }
 
         MethodPrototype methodPrototype = getMethodPrototype();
-        BindingSuperContainer bindingSuperContainer = object.getInferredJavaType().getJavaTypeInstance().getBindingSupers();
         GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(args);
 
         boolean callsCorrectEntireMethod = overloadMethodSet.callsCorrectEntireMethod(args, gtb);
@@ -261,6 +260,4 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         if (!constraint.equivalent(args, other.args)) return false;
         return true;
     }
-
-
 }

@@ -89,8 +89,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * then see if we are addressing non-existent content of anonymous objects.
      * If we are, this indicates that var was used.
      */
-    public static void detectAnonymousVar(Method method, Op04StructuredStatement block, AnonymousClassUsage anonymousClassUsage, ClassFile classFile) {
-        new FieldTypeUsageRewriter(anonymousClassUsage, classFile).transform(block);
+    public static void rewriteExplicitTypeUsages(Method method, Op04StructuredStatement block, AnonymousClassUsage anonymousClassUsage, ClassFile classFile) {
+        new ObjectTypeUsageRewriter(anonymousClassUsage, classFile).transform(block);
     }
 
     // TODO: This isn't quite right.  Should actually be removing the node.

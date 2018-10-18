@@ -318,6 +318,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return usePath;
     }
 
+    public boolean isInterface() {
+        return accessFlags.contains(AccessFlag.ACC_INTERFACE);
+    }
+
     public void addComment(DecompilerComment comment) {
         if (decompilerComments == null) decompilerComments = new DecompilerComments();
         decompilerComments.addComment(comment);
@@ -560,6 +564,12 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
      * x (Double, int ) matches x (T , int) where T is bound to Double.
      */
     public Method getMethodByPrototype(final MethodPrototype prototype) throws NoSuchMethodException {
+        Method methodMatch = getMethodByPrototypeOrNull(prototype);
+        if (methodMatch != null) return methodMatch;
+        throw new NoSuchMethodException();
+    }
+
+    public Method getMethodByPrototypeOrNull(final MethodPrototype prototype) {
         List<Method> named = getMethodsWithMatchingName(prototype);
         Method methodMatch = null;
         for (Method method : named) {
@@ -569,8 +579,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 methodMatch = method;
             }
         }
-        if (methodMatch != null) return methodMatch;
-        throw new NoSuchMethodException();
+        return methodMatch;
     }
 
     public Method getAccessibleMethodByPrototype(final MethodPrototype prototype, GenericTypeBinder binder, JavaRefTypeInstance accessor) throws NoSuchMethodException {
