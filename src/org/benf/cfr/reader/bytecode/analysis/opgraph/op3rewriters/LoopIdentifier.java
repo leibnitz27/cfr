@@ -186,7 +186,6 @@ public class LoopIdentifier {
                 if (oldEnd.getThisComparisonBlock() == loopBlock) {
                     oldEnd.clearThisComparisonBlock();
                 }
-                return;
             } else if (oldEnd.getTargets().size() == 1 && condition == null) {
                 GotoStatement repl = new GotoStatement();
                 repl.setJumpType(JumpType.CONTINUE);
@@ -194,7 +193,6 @@ public class LoopIdentifier {
                 if (oldEnd.getThisComparisonBlock() == loopBlock) {
                     oldEnd.clearThisComparisonBlock();
                 }
-                return;
             }
         }
     }
@@ -203,9 +201,9 @@ public class LoopIdentifier {
     /*
  * To handle special case tricksiness.
  */
-    private static boolean considerAsPathologicalLoop(final Op03SimpleStatement start, List<Op03SimpleStatement> statements) {
-        if (start.getStatement().getClass() != GotoStatement.class) return false;
-        if (start.getTargets().get(0) != start) return false;
+    private static void considerAsPathologicalLoop(final Op03SimpleStatement start, List<Op03SimpleStatement> statements) {
+        if (start.getStatement().getClass() != GotoStatement.class) return;
+        if (start.getTargets().get(0) != start) return;
         Op03SimpleStatement next = new Op03SimpleStatement(start.getBlockIdentifiers(), new GotoStatement(), start.getIndex().justAfter());
         start.replaceStatement(new CommentStatement("Infinite loop"));
         start.replaceTarget(start, next);
@@ -213,7 +211,6 @@ public class LoopIdentifier {
         next.addSource(start);
         next.addTarget(start);
         statements.add(statements.indexOf(start) + 1, next);
-        return true;
     }
 
     private static BlockIdentifier considerAsDoLoopStart(final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
@@ -375,13 +372,12 @@ public class LoopIdentifier {
 
             final int postBlockIdx = statements.indexOf(postBlock);
             int lastPostBlock = postBlockIdx;
-            innerShutLoop:
             do {
-                if (lastPostBlock + 1 >= statements.size()) break innerShutLoop;
+                if (lastPostBlock + 1 >= statements.size()) break;
 
                 int currentIdx = lastPostBlock + 1;
                 Op03SimpleStatement stm = statements.get(lastPostBlock);
-                if (!(stm.getStatement() instanceof CatchStatement)) break innerShutLoop;
+                if (!(stm.getStatement() instanceof CatchStatement)) break;
 
                 CatchStatement catchStatement = (CatchStatement) stm.getStatement();
                 BlockIdentifier catchBlockIdent = catchStatement.getCatchBlockIdent();
@@ -391,7 +387,7 @@ public class LoopIdentifier {
                         return arg.getTryBlockIdentifier();
                     }
                 });
-                if (!internalTryBlocks.containsAll(tryBlocks)) break innerShutLoop;
+                if (!internalTryBlocks.containsAll(tryBlocks)) break;
                 while (currentIdx < statements.size() && statements.get(currentIdx).getBlockIdentifiers().contains(catchBlockIdent)) {
                     currentIdx++;
                 }
@@ -463,13 +459,13 @@ public class LoopIdentifier {
     }
 
     /* Is the first conditional jump NOT one of the sources of start?
-* Take the target of the first conditional jump - is it somehwhere which is not reachable from
-* any of the forward sources of start without going through start?
-*
-* If so we've probably got a for/while loop.....
-* decode both as a while loop, we can convert it into a for later.
-*/
-    private static BlockIdentifier considerAsWhileLoopStart(final Method method,
+    * Take the target of the first conditional jump - is it somehwhere which is not reachable from
+    * any of the forward sources of start without going through start?
+    *
+    * If so we've probably got a for/while loop.....
+    * decode both as a while loop, we can convert it into a for later.
+    */
+    private static BlockIdentifier considerAsWhileLoopStart(@SuppressWarnings("unused") final Method method,
                                                             final Op03SimpleStatement start, final List<Op03SimpleStatement> statements,
                                                             BlockIdentifierFactory blockIdentifierFactory,
                                                             Map<BlockIdentifier, Op03SimpleStatement> postBlockCache) {
@@ -531,7 +527,6 @@ public class LoopIdentifier {
             backJump.addSource(conditional);
             backJump.addTarget(conditional);
             statements.add(statements.indexOf(conditional) + 1, backJump);
-            conditionalTargets = conditional.getTargets();
             loopBreak = notTaken;
         }
 
@@ -629,7 +624,7 @@ public class LoopIdentifier {
          */
         Op03SimpleStatement afterLastInBlock = (lastIdx + 1) < statements.size() ? statements.get(lastIdx + 1) : null;
         loopBreak = conditional.getTargets().get(1);
-        if (afterLastInBlock != loopBreak) {
+        if (afterLastInBlock != null && afterLastInBlock != loopBreak) {
             Op03SimpleStatement newAfterLast = new Op03SimpleStatement(afterLastInBlock.getBlockIdentifiers(), new GotoStatement(), lastInBlock.getIndex().justAfter());
             conditional.replaceTarget(loopBreak, newAfterLast);
             newAfterLast.addSource(conditional);

@@ -103,7 +103,7 @@ public class Misc {
         private final Set<Integer> reachable;
         private final Map<Op03SimpleStatement, Integer> instrToIdx;
 
-        public GraphVisitorReachableInThese(Set<Integer> reachable, Map<Op03SimpleStatement, Integer> instrToIdx) {
+        GraphVisitorReachableInThese(Set<Integer> reachable, Map<Op03SimpleStatement, Integer> instrToIdx) {
             this.reachable = reachable;
             this.instrToIdx = instrToIdx;
         }
@@ -120,7 +120,7 @@ public class Misc {
     }
 
 
-    public static int getFarthestReachableInRange(List<Op03SimpleStatement> statements, int start, int afterEnd) {
+    static int getFarthestReachableInRange(List<Op03SimpleStatement> statements, int start, int afterEnd) {
         Map<Op03SimpleStatement, Integer> instrToIdx = MapFactory.newMap();
         for (int x = start; x < afterEnd; ++x) {
             Op03SimpleStatement statement = statements.get(x);
@@ -156,7 +156,7 @@ public class Misc {
 
 
 
-    public static Set<Op03SimpleStatement> followNopGotoBackwards(Op03SimpleStatement eventualtarget) {
+    static Set<Op03SimpleStatement> followNopGotoBackwards(Op03SimpleStatement eventualtarget) {
 
         final Set<Op03SimpleStatement> result = SetFactory.newSet();
 
@@ -174,6 +174,7 @@ public class Misc {
                         arg2.enqueue(source);
                     } else if (clazz == IfStatement.class) {
                         if (source.getTargets().size() == 2 &&
+                                // TODO : BUG
                             source.getTargets().get(1) == arg2) {
                             result.add(source);
                         }
@@ -214,7 +215,7 @@ public class Misc {
         } while (true);
     }
 
-    public static void markWholeBlock(List<Op03SimpleStatement> statements, BlockIdentifier blockIdentifier) {
+    static void markWholeBlock(List<Op03SimpleStatement> statements, BlockIdentifier blockIdentifier) {
         Op03SimpleStatement start = statements.get(0);
         start.markFirstStatementInBlock(blockIdentifier);
         for (Op03SimpleStatement statement : statements) {
@@ -223,7 +224,7 @@ public class Misc {
     }
 
 
-    public static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue, Set<Expression> poison) {
+    static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue, Set<Expression> poison) {
         AssignmentExpression needle = new AssignmentExpression(lValue, rValue);
         NOPSearchingExpressionRewriter finder = new NOPSearchingExpressionRewriter(needle, poison);
 
@@ -231,7 +232,7 @@ public class Misc {
         return finder.isFound();
     }
 
-    public static void replaceHiddenIter(Statement statement, LValue lValue, Expression rValue) {
+    static void replaceHiddenIter(Statement statement, LValue lValue, Expression rValue) {
         AssignmentExpression needle = new AssignmentExpression(lValue, rValue);
         ExpressionReplacingRewriter finder = new ExpressionReplacingRewriter(needle, new LValueExpression(lValue));
 
@@ -247,7 +248,7 @@ public class Misc {
     }
 
 
-    public static BlockIdentifier findOuterBlock(BlockIdentifier b1, BlockIdentifier b2, List<Op03SimpleStatement> statements) {
+    static BlockIdentifier findOuterBlock(BlockIdentifier b1, BlockIdentifier b2, List<Op03SimpleStatement> statements) {
         for (Op03SimpleStatement s : statements) {
             Set<BlockIdentifier> contained = s.getBlockIdentifiers();
             if (contained.contains(b1)) {
@@ -310,7 +311,7 @@ public class Misc {
             return Pair.make(found,exits);
         }
 
-        public static Pair<Set<Op03SimpleStatement>, Set<Op03SimpleStatement>> getBlockReachableAndExits(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
+        static Pair<Set<Op03SimpleStatement>, Set<Op03SimpleStatement>> getBlockReachableAndExits(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
             GraphVisitorBlockReachable r = new GraphVisitorBlockReachable(start, blockIdentifier);
             return r.privGetBlockReachableAndExits();
         }
@@ -318,7 +319,7 @@ public class Misc {
     }
 
 
-    public static Set<Op03SimpleStatement> collectAllSources(Collection<Op03SimpleStatement> statements) {
+    static Set<Op03SimpleStatement> collectAllSources(Collection<Op03SimpleStatement> statements) {
         Set<Op03SimpleStatement> result = SetFactory.newSet();
         for (Op03SimpleStatement statement : statements) {
             result.addAll(statement.getSources());

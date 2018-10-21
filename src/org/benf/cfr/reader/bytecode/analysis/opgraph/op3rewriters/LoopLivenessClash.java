@@ -33,7 +33,6 @@ public class LoopLivenessClash {
 
         JavaGenericRefTypeInstance iterType = bindingSuperContainer.getBoundSuperForBase(TypeConstants.ITERABLE);
         GenericTypeBinder typeBinder = GenericTypeBinder.extractBindings(iterType,generic);
-        if (typeBinder == null) return null;
         JavaGenericRefTypeInstance boundIterable = iterType.getBoundInstance(typeBinder);
         List<JavaTypeInstance> iterBindings = boundIterable.getGenericTypes();
         if (iterBindings.size() != 1) return null;
@@ -51,9 +50,9 @@ public class LoopLivenessClash {
         InferredJavaType inferredListType = forIterStatement.getList().getInferredJavaType();
         JavaTypeInstance listType = inferredListType.getJavaTypeInstance();
         // Figure out the iterable type - if we have an array / list.
-        JavaTypeInstance listIterType = null;
+        JavaTypeInstance listIterType;
         if (listType instanceof JavaArrayTypeInstance) {
-            listIterType = ((JavaArrayTypeInstance)listType).removeAnArrayIndirection();
+            listIterType = listType.removeAnArrayIndirection();
         } else {
             listIterType = getIterableIterType(listType);
         }

@@ -37,16 +37,16 @@ public class RemoveDeterministicJumps {
         return statements;
     }
 
-    private static boolean propagateLiteralReturn(Method method, Op03SimpleStatement original, Map<LValue, Literal> display) {
+    private static boolean propagateLiteralReturn(@SuppressWarnings("unused") Method method,
+                                                  Op03SimpleStatement original, Map<LValue, Literal> display) {
         Op03SimpleStatement current = original;
         Set<Op03SimpleStatement> seen = SetFactory.newSet();
-        boolean canRewrite = true;
         int nAssigns = 0;
 
         boolean adjustedOrig = false;
         int nAssignsAtAdjust = 0;
         do {
-            if (current.getSources().size() != 1) canRewrite = false;
+            if (current.getSources().size() != 1) break;
             if (!seen.add(current)) return false; // Hit a cycle, can't help.
             Class<?> cls = current.getStatement().getClass();
             List<Op03SimpleStatement> curTargets = current.getTargets();
@@ -203,7 +203,7 @@ public class RemoveDeterministicJumps {
  * return temp3;
  *
  */
-    private static boolean propagateLiteralReturn(Method method, Op03SimpleStatement original, final Op03SimpleStatement orignext, final LValue originalLValue, final Expression originalRValue, Map<LValue, Literal> display) {
+    private static boolean propagateLiteralReturn(@SuppressWarnings("unused") Method method, Op03SimpleStatement original, final Op03SimpleStatement orignext, final LValue originalLValue, final Expression originalRValue, Map<LValue, Literal> display) {
         Op03SimpleStatement current = orignext;
         Set<Op03SimpleStatement> seen = SetFactory.newSet();
         do {

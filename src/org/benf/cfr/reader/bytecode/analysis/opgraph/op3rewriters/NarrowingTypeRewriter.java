@@ -29,7 +29,7 @@ import java.util.Map;
  * If an object is effectively-type-final (assigned type is guaranteed), retype it.
  */
 public class NarrowingTypeRewriter {
-    public final static JavaTypeInstance BAD_SENTINEL = new JavaWildcardTypeInstance(null, null);
+    private final static JavaTypeInstance BAD_SENTINEL = new JavaWildcardTypeInstance(null, null);
 
     private static JavaTypeInstance getListType(Expression e) {
         if (e == null) return BAD_SENTINEL;
@@ -104,7 +104,7 @@ public class NarrowingTypeRewriter {
             }
         }
 
-        public Map<LocalVariable, JavaTypeInstance> getUsable() {
+        Map<LocalVariable, JavaTypeInstance> getUsable() {
             Map<LocalVariable, JavaTypeInstance> res = MapFactory.newMap();
             for (Map.Entry<LocalVariable, JavaTypeInstance> entry : usable.entrySet()) {
                 if (entry.getValue() != BAD_SENTINEL) {
