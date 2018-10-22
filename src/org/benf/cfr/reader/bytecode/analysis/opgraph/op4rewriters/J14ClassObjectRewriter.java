@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchSequence;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.ExpressionRewriterTransformer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
@@ -16,10 +18,12 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredCatch;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredThrow;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredTry;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -75,9 +79,6 @@ import java.util.Set;
 public class J14ClassObjectRewriter {
     private final ClassFile classFile;
     private final DCCommonState state;
-    private final static JavaRefTypeInstance CLASSNOTFOUND_EXCEPTION = JavaRefTypeInstance.createTypeConstant("java.lang.ClassNotFoundException", "ClassNotFoundException");
-    private final static JavaRefTypeInstance NOCLASSDEFFOUND_ERROR = JavaRefTypeInstance.createTypeConstant("java.lang.NoClassDefFoundError", "NoClassDefFoundError");
-    private final static JavaRefTypeInstance CLASS = JavaRefTypeInstance.createTypeConstant("java.lang.Class", "Class");
 
     public J14ClassObjectRewriter(ClassFile classFile, DCCommonState state) {
         this.classFile = classFile;
@@ -103,7 +104,7 @@ public class J14ClassObjectRewriter {
 
 
         final WildcardMatch wcm = new WildcardMatch();
-        final WildcardMatch.StaticVariableWildcard staticVariable = wcm.getStaticVariable("classVar", classType, new InferredJavaType(CLASS, InferredJavaType.Source.TEST));
+        final WildcardMatch.StaticVariableWildcard staticVariable = wcm.getStaticVariable("classVar", classType, new InferredJavaType(TypeConstants.CLASS, InferredJavaType.Source.TEST));
         LValueExpression staticExpression = new LValueExpression(staticVariable);
         Expression test = new TernaryExpression(
                 new ComparisonOperation(staticExpression, Literal.NULL, CompOp.EQ),
@@ -152,7 +153,7 @@ public class J14ClassObjectRewriter {
             try {
                 ClassFileField fileField = classFile.getFieldByName(hideThis.getFirst(), hideThis.getSecond());
                 fileField.markHidden();
-            } catch (NoSuchFieldException e) {
+            } catch (NoSuchFieldException ignore) {
             }
         }
     }
@@ -179,13 +180,13 @@ public class J14ClassObjectRewriter {
                         new BeginBlock(null),
                         new StructuredTry(null, null, null),
                         new BeginBlock(null),
-                        new StructuredReturn(wcm1.getStaticFunction("forName", CLASS, null, "forName", new LValueExpression(arg)), CLASS),
+                        new StructuredReturn(wcm1.getStaticFunction("forName",TypeConstants.CLASS, null, "forName", new LValueExpression(arg)), TypeConstants.CLASS),
                         new EndBlock(null),
                         new StructuredCatch(null, null, null, null),
                         new BeginBlock(null),
                         new StructuredThrow(
                                 wcm1.getMemberFunction("initCause", "initCause",
-                                        wcm1.getConstructorSimpleWildcard("nocd", NOCLASSDEFFOUND_ERROR),
+                                        wcm1.getConstructorSimpleWildcard("nocd", TypeConstants.NOCLASSDEFFOUND_ERROR),
                                         wcm1.getExpressionWildCard("throwable"))
                         ),
                         new EndBlock(null),

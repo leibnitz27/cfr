@@ -85,7 +85,7 @@ public class AttributeFactory {
         private final ConstantPool cp;
         private final ClassFileVersion classFileVersion;
 
-        public AttributeBuilder(ConstantPool cp, ClassFileVersion classFileVersion) {
+        AttributeBuilder(ConstantPool cp, ClassFileVersion classFileVersion) {
             this.cp = cp;
             this.classFileVersion = classFileVersion;
         }

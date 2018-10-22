@@ -5,10 +5,10 @@ import org.benf.cfr.reader.util.MapFactory;
 
 import java.util.Map;
 
-public class GraphConversionHelper<X extends Graph<X>, Y extends MutableGraph<Y>> {
+class GraphConversionHelper<X extends Graph<X>, Y extends MutableGraph<Y>> {
     private final Map<X, Y> correspondance;
 
-    public GraphConversionHelper() {
+    GraphConversionHelper() {
         this.correspondance = MapFactory.newMap();
     }
 
@@ -19,7 +19,7 @@ public class GraphConversionHelper<X extends Graph<X>, Y extends MutableGraph<Y>
         return value;
     }
 
-    public void patchUpRelations() {
+    void patchUpRelations() {
         for (Map.Entry<X, Y> entry : correspondance.entrySet()) {
             X orig = entry.getKey();
             Y newnode = entry.getValue();
@@ -34,7 +34,7 @@ public class GraphConversionHelper<X extends Graph<X>, Y extends MutableGraph<Y>
         }
     }
 
-    public void registerOriginalAndNew(X original, Y newnode) {
+    void registerOriginalAndNew(X original, Y newnode) {
         correspondance.put(original, newnode);
     }
 }

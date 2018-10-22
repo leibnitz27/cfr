@@ -4,5 +4,5 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.S
 import org.benf.cfr.reader.util.DecompilerComments;
 
 public interface Op04Checker extends StructuredStatementTransformer {
-    public void commentInto(DecompilerComments comments);
+    void commentInto(DecompilerComments comments);
 }

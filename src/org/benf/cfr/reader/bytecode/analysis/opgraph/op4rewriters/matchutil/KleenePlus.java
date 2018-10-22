@@ -6,8 +6,4 @@ public class KleenePlus extends KleeneN {
     public KleenePlus(Matcher<StructuredStatement> inner) {
         super(1, inner);
     }
-
-    public KleenePlus(Matcher<StructuredStatement>... matchers) {
-        super(1, matchers);
-    }
 }

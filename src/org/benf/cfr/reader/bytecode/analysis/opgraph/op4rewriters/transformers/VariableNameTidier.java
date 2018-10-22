@@ -142,7 +142,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                     structuredScopeWithVars.defineHere(in, (LocalVariable) scopedEntity);
                 }
                 if (scopedEntity instanceof SentinelLocalClassLValue) {
-                    structuredScopeWithVars.defineLocalClassHere(in, (SentinelLocalClassLValue) scopedEntity);
+                    structuredScopeWithVars.defineLocalClassHere((SentinelLocalClassLValue) scopedEntity);
                 }
             }
         }
@@ -243,7 +243,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
             return " class!" + in;
         }
 
-        public void defineLocalClassHere(StructuredStatement statement, SentinelLocalClassLValue localVariable) {
+        void defineLocalClassHere(SentinelLocalClassLValue localVariable) {
             JavaTypeInstance type = localVariable.getLocalClassType();
             String name = type.suggestVarName(); // But upper case first char.
             if (name == null) name = type.getRawName().replace('.', '_'); // mad fallback.
@@ -274,7 +274,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
             classRenamed = true;
         }
 
-        public void defineHere(StructuredStatement statement, LocalVariable localVariable) {
+        void defineHere(StructuredStatement statement, LocalVariable localVariable) {
 
             NamedVariable namedVariable = localVariable.getName();
             if (!namedVariable.isGoodName()) {
@@ -300,15 +300,15 @@ public class VariableNameTidier implements StructuredStatementTransformer {
             defineHere(localVariable);
         }
 
-        public void markInitiallyDefined(Set<String> names) {
+        void markInitiallyDefined(Set<String> names) {
             for (String name : names) scope.getFirst().defineHere(name);
         }
 
-        public boolean isDefined(String anyNameType) {
+        boolean isDefined(String anyNameType) {
             return alreadyDefined(anyNameType, false);
         }
 
-        public void defineHere(LocalVariable localVariable) {
+        void defineHere(LocalVariable localVariable) {
 
             /* Check if it's already defined
              *
@@ -345,11 +345,11 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                 return statement.toString();
             }
 
-            public boolean isDefinedHere(String name) {
+            boolean isDefinedHere(String name) {
                 return definedHere.contains(name);
             }
 
-            public void defineHere(String name) {
+            void defineHere(String name) {
                 definedHere.add(name);
             }
         }

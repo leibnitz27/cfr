@@ -107,7 +107,6 @@ public class VarArgsRewriter implements Op04Rewriter, ExpressionRewriter {
             args.clear();
             args.addAll(args2);
         }
-        int x = 1;
     }
 
 }

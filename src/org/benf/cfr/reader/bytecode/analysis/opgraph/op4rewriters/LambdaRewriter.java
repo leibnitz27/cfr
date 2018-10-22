@@ -211,10 +211,10 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         /* Now, we can call the synthetic function directly and emit it, or we could inline the synthetic, and no
          * longer emit it.
          */
-        Method lambdaMethod = null;
+        Method lambdaMethod;
         try {
             lambdaMethod = classFile.getMethodByPrototype(lambdaFn);
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException ignore) {
             // This might happen if you're using a JRE which doesn't have support classes, etc.
             return dynamicExpression;
 //            throw new IllegalStateException("Can't find lambda target " + lambdaFn);
@@ -298,6 +298,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                  * Any method scoped classes that were being used in the lambda method now belong to me.
                  * (maniac laughter).
                  */
+                //noinspection unused
                 boolean copied = method.copyLocalClassesFrom(lambdaMethod);
                 Op04StructuredStatement placeHolder = new Op04StructuredStatement(lambdaStatement);
 
@@ -309,8 +310,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                 placeHolder.transform(new LocalDeclarationRemover(), scope);
 
                 return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaStatement));
-            } catch (CannotDelambaException e) {
-                int x = 1;
+            } catch (CannotDelambaException ignore) {
             }
         }
 
@@ -321,8 +321,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
     public static class LambdaInternalRewriter implements ExpressionRewriter {
         private final Map<LValue, Expression> rewrites;
 
-
-        public LambdaInternalRewriter(Map<LValue, Expression> rewrites) {
+        LambdaInternalRewriter(Map<LValue, Expression> rewrites) {
             this.rewrites = rewrites;
         }
 

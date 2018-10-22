@@ -12,6 +12,7 @@ import org.benf.cfr.reader.util.SetFactory;
 import java.util.Set;
 
 public class BoxingHelper {
+    @SuppressWarnings("unchecked")
     private static Set<Pair<String, String>> unboxing = SetFactory.newSet(
             Pair.make(TypeConstants.boxingNameInt, "intValue"),
             Pair.make(TypeConstants.boxingNameLong, "longValue"),
@@ -21,6 +22,7 @@ public class BoxingHelper {
             Pair.make(TypeConstants.boxingNameBoolean, "booleanValue")
     );
 
+    @SuppressWarnings("unchecked")
     private static Set<Pair<String, String>> boxing = SetFactory.newSet(
             Pair.make(TypeConstants.boxingNameInt, "valueOf"),
             Pair.make(TypeConstants.boxingNameLong, "valueOf"),

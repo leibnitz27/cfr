@@ -31,7 +31,6 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
     @Override
     public void rewrite(Op04StructuredStatement root) {
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
-        if (root == null) return;
 
         WildcardMatch wcm1 = new WildcardMatch();
 
@@ -40,7 +39,7 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
 
         /* The first usage of this variable needs to be an assignment to a final synthetic member */
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
-        ConstructResultCollector collector = new ConstructResultCollector(wcm1);
+        ConstructResultCollector collector = new ConstructResultCollector();
         while (mi.hasNext()) {
             mi.advance();
             if (m.match(mi, collector)) {
@@ -56,7 +55,7 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
                             assignmentStatement = collector.assignmentStatement;
                             matchedField = (FieldVariable) lValue;
                         }
-                    } catch (NoSuchFieldException e) {
+                    } catch (NoSuchFieldException ignore) {
                     }
                 }
                 return;
@@ -74,11 +73,9 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
 
     private static class ConstructResultCollector extends AbstractMatchResultIterator {
 
-        private final WildcardMatch wcm;
         private StructuredStatement assignmentStatement;
 
-        private ConstructResultCollector(WildcardMatch wcm) {
-            this.wcm = wcm;
+        private ConstructResultCollector() {
         }
 
         @Override

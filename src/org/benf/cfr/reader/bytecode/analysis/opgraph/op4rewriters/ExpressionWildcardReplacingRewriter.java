@@ -13,7 +13,7 @@ public class ExpressionWildcardReplacingRewriter extends AbstractExpressionRewri
     private final Expression search;
     private final NonaryFunction<Expression> replacementFunction;
 
-    public ExpressionWildcardReplacingRewriter(WildcardMatch wildcardMatch, Expression search, NonaryFunction<Expression> replacementFunction) {
+    ExpressionWildcardReplacingRewriter(WildcardMatch wildcardMatch, Expression search, NonaryFunction<Expression> replacementFunction) {
         this.wildcardMatch = wildcardMatch;
         this.search = search;
         this.replacementFunction = replacementFunction;

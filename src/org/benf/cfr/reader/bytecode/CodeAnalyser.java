@@ -756,11 +756,6 @@ public class CodeAnalyser {
             new SwitchStringRewriter(options, classFileVersion, bytecodeMeta).rewrite(block);
             new SwitchEnumRewriter(dcCommonState, classFileVersion, blockIdentifierFactory).rewrite(block);
 
-            // These should logically be here, but the current versions are better!!
-            //        new ArrayIterRewriter(cfrState).rewrite(block);
-            //        new LoopIterRewriter(cfrState).rewrite(block);
-
-
             // Just prior to variable scopes, if we've got any anonymous classes, and we're J10+,
             // then see if we are addressing non-existent content of anonymous objects.
             // If we are, this indicates that var was used.

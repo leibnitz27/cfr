@@ -5,7 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionRepl
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -66,8 +65,7 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
                 wcm1.reset();
                 ConditionalExpression ce = sw.getCondition();
                 if (match1.equals(ce) || match2.equals(ce)) {
-                    replaceThrow(next, stm, ce, sw.getBlock());
-                    continue;
+                    replaceThrow(next, stm, ce);
                 }
                 continue;
             }
@@ -79,9 +77,7 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
                 wcm1.reset();
                 ConditionalExpression ce = sw.getCondition();
                 if (match2.equals(ce)) {
-                    replaceThrow(next, stm, ce, sw.getBlock());
-                    continue;
-
+                    replaceThrow(next, stm, ce);
                 }
                 continue;
             }
@@ -90,7 +86,7 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
     }
 
 
-    private void replaceThrow(Op04StructuredStatement thrw, Op04StructuredStatement whil, ConditionalExpression cond, BlockIdentifier block) {
+    private void replaceThrow(Op04StructuredStatement thrw, Op04StructuredStatement whil, ConditionalExpression cond) {
         whil.getStatement().rewriteExpressions(new ExpressionReplacingRewriter(cond, BooleanExpression.TRUE));
         StructuredStatement throwInner = thrw.getStatement();
         AbstractStructuredBlockStatement sw = (AbstractStructuredBlockStatement)whil.getStatement();

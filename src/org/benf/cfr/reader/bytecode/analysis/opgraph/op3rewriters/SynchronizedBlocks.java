@@ -47,7 +47,7 @@ public class SynchronizedBlocks {
         }
     }
 
-    public static void findSynchronizedRange(final Op03SimpleStatement start, final Expression monitor) {
+    private static void findSynchronizedRange(final Op03SimpleStatement start, final Expression monitor) {
         final Set<Op03SimpleStatement> addToBlock = SetFactory.newSet();
 
         final Set<Op03SimpleStatement> foundExits = SetFactory.newSet();
@@ -106,10 +106,10 @@ public class SynchronizedBlocks {
                                 if (arg1.getTargets().size() == 1) {
                                     arg1 = arg1.getTargets().get(0);
                                     Statement targetStatement = arg1.getStatement();
-                                    if (targetStatement instanceof ReturnStatement ||
-                                            targetStatement instanceof ThrowStatement ||
-                                            targetStatement instanceof Nop ||
-                                            targetStatement instanceof GotoStatement) {
+                                    if (targetStatement instanceof ThrowStatement ||
+                                        targetStatement instanceof ReturnStatement ||
+                                        targetStatement instanceof Nop ||
+                                        targetStatement instanceof GotoStatement) {
                                         // TODO : Should perform a block check on targetStatement.
                                         extraNodes.add(arg1);
                                     }

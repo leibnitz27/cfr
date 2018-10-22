@@ -15,11 +15,6 @@ public class AbstractMatchResultIterator implements MatchResultCollector {
     }
 
     @Override
-    public void collectStatementRange(String name, MatchIterator<StructuredStatement> start, MatchIterator<StructuredStatement> end) {
-
-    }
-
-    @Override
     public void collectMatches(String name, WildcardMatch wcm) {
 
     }

@@ -12,8 +12,8 @@ public class NOPSearchingExpressionRewriter extends AbstractExpressionRewriter {
 
     private final Expression needle;
     private final Set<Expression> poison;
-    transient boolean found = false;
-    transient boolean poisoned = false;
+    private boolean found = false;
+    private boolean poisoned = false;
 
     public NOPSearchingExpressionRewriter(Expression needle, Set<Expression> poison) {
         this.needle = needle;

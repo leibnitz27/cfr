@@ -35,6 +35,7 @@ public class TryResourcesTransformerJ7 extends TryResourcesTransformerBase {
 
         Matcher<StructuredStatement> subMatch = ResourceReleaseDetector.getStructuredStatementMatcher(wcm, throwableLValue, autoclose);
 
+        //noinspection unchecked
         Matcher<StructuredStatement> m = new MatchOneOf(
                 new ResetAfterTest(wcm,
                     new MatchSequence(

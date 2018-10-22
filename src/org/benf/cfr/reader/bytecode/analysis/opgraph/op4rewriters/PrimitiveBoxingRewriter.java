@@ -131,7 +131,7 @@ public class PrimitiveBoxingRewriter implements ExpressionRewriter {
         }
     }
 
-    public Expression removeRedundantCastOnly(Expression in) {
+    private Expression removeRedundantCastOnly(Expression in) {
         if (in instanceof CastExpression) {
             if (((CastExpression) in).isForced()) return in;
             JavaTypeInstance castType = in.getInferredJavaType().getJavaTypeInstance();
@@ -144,10 +144,9 @@ public class PrimitiveBoxingRewriter implements ExpressionRewriter {
     }
 
     public Expression sugarNonParameterBoxing(final Expression in, JavaTypeInstance tgtType) {
-        boolean expectingPrim = tgtType instanceof RawJavaType;
         Expression res = in;
         boolean recast = false;
-        if (in instanceof CastExpression && ((CastExpression) in).couldBeImplicit((GenericTypeBinder) null)) {
+        if (in instanceof CastExpression && ((CastExpression) in).couldBeImplicit(null)) {
             // We can strip this IF it is a cast that could be implicit.
             res = ((CastExpression) in).getChild();
             /*

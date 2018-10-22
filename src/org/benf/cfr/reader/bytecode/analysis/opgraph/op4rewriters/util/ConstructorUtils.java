@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
@@ -24,7 +23,7 @@ public class ConstructorUtils {
             StructuredExpressionStatement structuredExpressionStatement = (StructuredExpressionStatement) structuredStatement;
 
             WildcardMatch wcm1 = new WildcardMatch();
-            StructuredStatement test = new StructuredExpressionStatement(wcm1.getMemberFunction("m", null, true /* this method */, new LValueExpression(wcm1.getLValueWildCard("o")), (List<Expression>) null), false);
+            StructuredStatement test = new StructuredExpressionStatement(wcm1.getMemberFunction("m", null, true /* this method */, new LValueExpression(wcm1.getLValueWildCard("o")), null), false);
             if (test.equals(structuredExpressionStatement)) {
                 MemberFunctionInvokation m = wcm1.getMemberFunction("m").getMatch();
                 MethodPrototype prototype = m.getMethodPrototype();

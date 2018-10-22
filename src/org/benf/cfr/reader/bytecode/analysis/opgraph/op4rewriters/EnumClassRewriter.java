@@ -56,7 +56,7 @@ public class EnumClassRewriter {
     private final Options options;
 
 
-    public EnumClassRewriter(ClassFile classFile, JavaTypeInstance classType, DCCommonState state) {
+    private EnumClassRewriter(ClassFile classFile, JavaTypeInstance classType, DCCommonState state) {
         this.classFile = classFile;
         this.classType = classType;
         this.state = state;
@@ -83,7 +83,7 @@ public class EnumClassRewriter {
         // Nop out this code from the static initialiser.  There MAY be code left, if the enum
         // actually HAD a static initialiser!
 
-        Method staticInit = null;
+        Method staticInit;
         try {
             staticInit = classFile.getMethodByName(MiscConstants.STATIC_INIT_METHOD).get(0);
         } catch (NoSuchMethodException e) {
@@ -99,8 +99,8 @@ public class EnumClassRewriter {
         /*
          * Need to hide all the fields, the 'static values' and 'static valueOf' method.
          */
-        Method valueOf = null;
-        Method values = null;
+        Method valueOf;
+        Method values;
         try {
             valueOf = classFile.getMethodByName("valueOf").get(0);
             values = classFile.getMethodByName("values").get(0);

@@ -25,7 +25,6 @@ import java.util.List;
 public class AssertRewriter {
 
     private final ClassFile classFile;
-    private ClassFileField assertionsDisabledField = null;
     private StaticVariable assertionStatic = null;
 
     public AssertRewriter(ClassFile classFile) {
@@ -79,7 +78,6 @@ public class AssertRewriter {
             }
         }
         if (!matchResultCollector.matched()) return;
-        assertionsDisabledField = matchResultCollector.assertField;
         assertionStatic = matchResultCollector.assertStatic;
 
         /*
@@ -129,7 +127,7 @@ public class AssertRewriter {
         public void collectMatches(String name, WildcardMatch wcm) {
         }
 
-        public boolean matched() {
+        boolean matched() {
             return (assertField != null);
         }
     }

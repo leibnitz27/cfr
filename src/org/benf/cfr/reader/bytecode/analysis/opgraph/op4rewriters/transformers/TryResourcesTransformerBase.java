@@ -33,7 +33,7 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
     private final ClassFile classFile;
     private boolean success = false;
 
-    protected TryResourcesTransformerBase(ClassFile classFile) {
+    TryResourcesTransformerBase(ClassFile classFile) {
         this.classFile = classFile;
     }
 
@@ -48,7 +48,6 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
     @Override
     public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
         if (in instanceof StructuredTry) {
-            Op04StructuredStatement container = in.getContainer();
             StructuredTry structuredTry = (StructuredTry)in;
             Op04StructuredStatement finallyBlock = structuredTry.getFinallyBlock();
             ResourceMatch match = findResourceFinally(finallyBlock);
@@ -78,7 +77,7 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
         if (resourceMatch.resourceMethod != null) {
             resourceMatch.resourceMethod.hideSynthetic();
         }
-        return rewriteException(structuredTry, scope, preceeding);
+        return rewriteException(structuredTry, preceeding);
     }
 
     // And if this looks like
@@ -90,7 +89,7 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
     //   throw e;
     // }
     // Then we can remove everything except try() { X }.
-    private boolean rewriteException(StructuredTry structuredTry, StructuredScope scope, List<Op04StructuredStatement> preceeding) {
+    private boolean rewriteException(StructuredTry structuredTry, List<Op04StructuredStatement> preceeding) {
         List<Op04StructuredStatement> catchBlocks = structuredTry.getCatchBlocks();
         if (catchBlocks.size() != 1) return false;
         Op04StructuredStatement catchBlock = catchBlocks.get(0);
@@ -188,13 +187,13 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
     // we can lift the autocloseable into the try.
     protected abstract ResourceMatch findResourceFinally(Op04StructuredStatement finallyBlock);
 
-    protected static class ResourceMatch
+    static class ResourceMatch
     {
         final Method resourceMethod;
         final LValue resource;
         final LValue throwable;
 
-        public ResourceMatch(Method resourceMethod, LValue resource, LValue throwable) {
+        ResourceMatch(Method resourceMethod, LValue resource, LValue throwable) {
             this.resourceMethod = resourceMethod;
             this.resource = resource;
             this.throwable = throwable;
@@ -214,11 +213,6 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
 
         @Override
         public void collectStatement(String name, StructuredStatement statement) {
-
-        }
-
-        @Override
-        public void collectStatementRange(String name, MatchIterator<StructuredStatement> start, MatchIterator<StructuredStatement> end) {
 
         }
 

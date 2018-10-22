@@ -30,7 +30,7 @@ public class MatchIterator<T> {
         return new MatchIterator<T>(data, idx);
     }
 
-    public void advanceTo(MatchIterator<StructuredStatement> other) {
+    void advanceTo(MatchIterator<StructuredStatement> other) {
         if (data != other.data) throw new IllegalStateException(); // ref check.
         this.idx = other.idx;
     }
@@ -39,12 +39,8 @@ public class MatchIterator<T> {
         return idx < data.size() - 1;
     }
 
-    public boolean isFinished() {
+    private boolean isFinished() {
         return idx >= data.size();
-    }
-
-    public int getRemaining() {
-        return data.size() - idx;
     }
 
     public boolean advance() {

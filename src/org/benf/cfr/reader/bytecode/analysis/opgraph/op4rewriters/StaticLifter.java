@@ -14,7 +14,6 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.Functional;
 import org.benf.cfr.reader.util.Predicate;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -52,12 +51,7 @@ public class StaticLifter {
         List<Op04StructuredStatement> statements = MiscStatementTools.getBlockStatements(staticInit.getAnalysis());
         if (statements == null) return;
 
-        /*
-         * Explicit iterator so we can remove.
-         */
-        Iterator<Op04StructuredStatement> iterator = statements.iterator();
-        while (iterator.hasNext()) {
-            Op04StructuredStatement statement = iterator.next();
+        for (Op04StructuredStatement statement : statements) {
             StructuredStatement structuredStatement = statement.getStatement();
             if (structuredStatement instanceof StructuredComment) continue;
             if (!(structuredStatement instanceof StructuredAssignment)) break;

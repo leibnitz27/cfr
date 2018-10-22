@@ -150,7 +150,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
          *
          * Either way, the accessor method SHOULD be a static synthetic.
          */
-        Method otherMethod = null;
+        Method otherMethod;
         try {
             otherMethod = otherClass.getMethodByPrototype(otherPrototype);
         } catch (NoSuchMethodException e) {
@@ -354,15 +354,15 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         }
     }
 
-    private final String MEM_SUB1 = "msub1";
     private final String STA_SUB1 = "ssub1";
-    private final String MEM_FUN1 = "mfun1";
     private final String STA_FUN1 = "sfun1";
 
     private Expression tryRewriteFunctionCall(List<StructuredStatement> structuredStatements, JavaTypeInstance otherType,
                                               List<Expression> appliedArgs, List<LocalVariable> methodArgs) {
         WildcardMatch wcm = new WildcardMatch();
 
+        String MEM_SUB1 = "msub1";
+        String MEM_FUN1 = "mfun1";
         Matcher<StructuredStatement> matcher = new MatchSequence(
                 new BeginBlock(null),
                 new MatchOneOf(
@@ -413,8 +413,6 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         MemberFunctionInvokation memberFunctionInvokation;
         Expression functionInvokation;
 
-        private boolean isStatic;
-
         @Override
         public void clear() {
 
@@ -431,12 +429,10 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
             if (matchType.equals(STA_FUN1) || matchType.endsWith(STA_SUB1)) {
                 staticFunctionInvokation = wcm.getStaticFunction("func").getMatch();
                 functionInvokation = staticFunctionInvokation;
-                isStatic = true;
             } else {
                 memberFunctionInvokation = wcm.getMemberFunction("func").getMatch();
                 functionInvokation = memberFunctionInvokation;
                 lValue = wcm.getLValueWildCard("lvalue").getMatch();
-                isStatic = false;
             }
         }
     }

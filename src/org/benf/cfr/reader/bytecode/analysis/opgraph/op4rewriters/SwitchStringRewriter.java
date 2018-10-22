@@ -55,6 +55,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
         WildcardMatch wcm2 = new WildcardMatch();
         WildcardMatch wcm3 = new WildcardMatch();
 
+        //noinspection unchecked
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1, new MatchSequence(
                 new CollectMatch("ass1", new StructuredAssignment(wcm1.getLValueWildCard("stringobject"), wcm1.getExpressionWildCard("originalstring"))),
                 new CollectMatch("ass2", new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm1.getExpressionWildCard("defaultintermed"))),

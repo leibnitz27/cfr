@@ -71,7 +71,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                             null, wcm.getBlockIdentifier("block"))));
 
 
-            SwitchEnumMatchResultCollector matchResultCollector = new SwitchEnumMatchResultCollector(wcm);
+            SwitchEnumMatchResultCollector matchResultCollector = new SwitchEnumMatchResultCollector();
             while (mi.hasNext()) {
                 mi.advance();
                 matchResultCollector.clear();
@@ -99,7 +99,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                             true)));
 
             MatchIterator<StructuredStatement> mi2 = new MatchIterator<StructuredStatement>(expressionStatements);
-            SwitchEnumMatchResultCollector matchResultCollector2 = new SwitchEnumMatchResultCollector(wcm);
+            SwitchEnumMatchResultCollector matchResultCollector2 = new SwitchEnumMatchResultCollector();
             while (mi2.hasNext()) {
                 mi2.advance();
                 matchResultCollector2.clear();
@@ -224,7 +224,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                 )
         );
 
-        SwitchForeignEnumMatchResultCollector matchResultCollector = new SwitchForeignEnumMatchResultCollector(wcm1, wcm2);
+        SwitchForeignEnumMatchResultCollector matchResultCollector = new SwitchForeignEnumMatchResultCollector(wcm2);
         boolean matched = false;
         while (mi.hasNext()) {
             mi.advance();
@@ -249,8 +249,8 @@ public class SwitchEnumRewriter implements Op04Rewriter {
          *
          * We can only do the rewrite if ALL the entries in the case list are in the map we found above.
          */
-        StructuredStatement structuredStatement = null;
-        StructuredSwitch newSwitch = null;
+        StructuredStatement structuredStatement;
+        StructuredSwitch newSwitch;
         if (!expression) {
             StructuredSwitch structuredSwitch = mrc.getStructuredSwitch();
             structuredStatement = structuredSwitch;
@@ -324,15 +324,12 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
     private static class SwitchEnumMatchResultCollector extends AbstractMatchResultIterator {
 
-        private final WildcardMatch wcm;
-
         private LValue lookupTable;
         private Expression enumObject;
         private StructuredSwitch structuredSwitch;
         private StructuredExpressionStatement structuredExpressionStatement;
 
-        private SwitchEnumMatchResultCollector(WildcardMatch wcm) {
-            this.wcm = wcm;
+        private SwitchEnumMatchResultCollector() {
         }
 
         @Override
@@ -356,35 +353,32 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             enumObject = wcm.getExpressionWildCard("object").getMatch();
         }
 
-        public LValue getLookupTable() {
+        LValue getLookupTable() {
             return lookupTable;
         }
 
-        public Expression getEnumObject() {
+        Expression getEnumObject() {
             return enumObject;
         }
 
-        public StructuredSwitch getStructuredSwitch() {
+        StructuredSwitch getStructuredSwitch() {
             return structuredSwitch;
         }
 
-        public StructuredExpressionStatement getStructuredExpressionStatement() {
+        StructuredExpressionStatement getStructuredExpressionStatement() {
             return structuredExpressionStatement;
         }
     }
 
     private class SwitchForeignEnumMatchResultCollector extends AbstractMatchResultIterator {
-        private final WildcardMatch wcmOuter;
         private final WildcardMatch wcmCase;
-        private boolean bad;
         private final Map<Integer, StaticVariable> lutValues = MapFactory.newMap();
 
-        private SwitchForeignEnumMatchResultCollector(WildcardMatch wcmOuter, WildcardMatch wcmCase) {
-            this.wcmOuter = wcmOuter;
+        private SwitchForeignEnumMatchResultCollector(WildcardMatch wcmCase) {
             this.wcmCase = wcmCase;
         }
 
-        public Map<Integer, StaticVariable> getLUT() {
+        Map<Integer, StaticVariable> getLUT() {
             return lutValues;
         }
 
@@ -400,15 +394,12 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
         @Override
         public void collectMatches(String name, WildcardMatch wcm) {
-            if (wcm == wcmOuter) {
-
-            } else if (wcm == wcmCase) {
+            if (wcm == wcmCase) {
                 StaticVariable staticVariable = wcm.getStaticVariable("enumval").getMatch();
 
                 Expression exp = wcm.getExpressionWildCard("literal").getMatch();
                 Integer literalInt = getIntegerFromLiteralExpression(exp);
                 if (literalInt == null) {
-                    bad = true;
                     return;
                 }
                 lutValues.put(literalInt, staticVariable);

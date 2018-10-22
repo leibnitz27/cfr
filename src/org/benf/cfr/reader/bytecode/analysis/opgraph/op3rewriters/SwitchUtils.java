@@ -10,8 +10,8 @@ import org.benf.cfr.reader.util.SetUtil;
 
 import java.util.List;
 
-public class SwitchUtils {
-    public static void checkFixNewCase(Op03SimpleStatement possCaseItem, Op03SimpleStatement possCase) {
+class SwitchUtils {
+    static void checkFixNewCase(Op03SimpleStatement possCaseItem, Op03SimpleStatement possCase) {
         if (possCase.getStatement().getClass() != CaseStatement.class) return;
         List<BlockIdentifier> idents = SetUtil.differenceAtakeBtoList(possCaseItem.getBlockIdentifiers(), possCase.getBlockIdentifiers());
         idents = Functional.filter(idents, new Predicate<BlockIdentifier>() {

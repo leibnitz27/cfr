@@ -63,13 +63,13 @@ public class SwitchReplacer {
         for (Op03SimpleStatement switchStatement : switches) {
             // (assign switch block).
             examineSwitchContiguity(switchStatement, in, pullCodeIntoCase);
-            moveJumpsToCaseStatements(switchStatement, in);
+            moveJumpsToCaseStatements(switchStatement);
             moveJumpsToTerminalIfEmpty(switchStatement, in);
         }
 
     }
 
-    public static Op03SimpleStatement replaceRawSwitch(Method method, Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    private static Op03SimpleStatement replaceRawSwitch(@SuppressWarnings("unused") Method method, Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
         List<Op03SimpleStatement> targets = swatch.getTargets();
         RawSwitchStatement switchStatement = (RawSwitchStatement) swatch.getStatement();
         DecodedSwitch switchData = switchStatement.getSwitchData();
@@ -352,8 +352,8 @@ public class SwitchReplacer {
 
 
 
-    private static boolean examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements,
-                                                   boolean pullCodeIntoCase) {
+    private static void examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements,
+                                                boolean pullCodeIntoCase) {
         Set<Op03SimpleStatement> forwardTargets = SetFactory.newSet();
 
         // Create a copy of the targets.  We're going to have to copy because we want to sort.
@@ -383,10 +383,10 @@ public class SwitchReplacer {
             BlockIdentifier caseBlock = caseStatement.getCaseBlock();
 
             int indexLastInThis = Misc.getFarthestReachableInRange(statements, indexThisCase, indexNextCase);
-            if (indexLastInThis != indexNextCase - 1) {
-                // Oh dear.  This is going to need some moving around.
+//            if (indexLastInThis != indexNextCase - 1) {
+//                // Oh dear.  This is going to need some moving around.
 //                throw new ConfusedCFRException("Case statement doesn't cover expected range.");
-            }
+//            }
             indexLastInLastBlock = indexLastInThis;
             for (int y = indexThisCase + 1; y <= indexLastInThis; ++y) {
                 Op03SimpleStatement statement = statements.get(y);
@@ -455,7 +455,6 @@ public class SwitchReplacer {
         // If so, we assume (!!) that's the end, and verify reachability from the start of the last case.
         Op03SimpleStatement lastCase = targets.get(targets.size() - 1);
         int indexLastCase = statements.indexOf(lastCase);
-        int breakTarget = -1;
         BlockIdentifier caseBlock = null;
         int indexLastInThis = 0;
         boolean retieEnd = false;
@@ -477,6 +476,7 @@ public class SwitchReplacer {
                 retieEnd = true;
             }
         }
+        int breakTarget;
         if (forwardTargets.isEmpty()) {
             for (int y = idxFirstCase; y <= indexLastInLastBlock; ++y) {
                 Op03SimpleStatement statement = statements.get(y);
@@ -533,7 +533,7 @@ public class SwitchReplacer {
          * Sanity check:
          * If we've SOMEHOW decided the break target is inside the switch, we're wrong.
          */
-        if (breakStatementTarget.getBlockIdentifiers().contains(switchBlock)) return true;
+        if (breakStatementTarget.getBlockIdentifiers().contains(switchBlock)) return;
 
         /*
          * Follow the graph backwards - anything that's an effective jump to the breakstatementtarget
@@ -556,7 +556,7 @@ public class SwitchReplacer {
                      * Worry with an if statement is if we repoint the wrong target - make sure we only
                      * repoint the jump. (Should roll this into an interface...)
                      */
-                    Op03SimpleStatement originalTarget = null;
+                    Op03SimpleStatement originalTarget;
                     if (jumpingStatement.getClass() == IfStatement.class) {
                         if (breakSource.getTargets().size() != 2) continue;
                         originalTarget = breakSource.getTargets().get(1);
@@ -576,14 +576,13 @@ public class SwitchReplacer {
             }
         }
 
-        return true;
     }
 
     /*
      * If we have jumps from DIFFERENT cases into the start of a new case, we need to make sure that they
      * now refer to the case statement, not the start.
      */
-    private static void moveJumpsToCaseStatements(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
+    private static void moveJumpsToCaseStatements(Op03SimpleStatement switchStatement) {
 
         SwitchStatement switchStmt = (SwitchStatement)switchStatement.getStatement();
         BlockIdentifier switchBlock = switchStmt.getSwitchBlock();
@@ -708,23 +707,6 @@ public class SwitchReplacer {
             }
             inBlock.add(arg1);
             arg2.enqueue(arg1.getTargets());
-        }
-    }
-
-    /*
-     * Handle situation in which default extends such that all the other cases (which break) break into it.
-     * Only necessary if there is a default, and it has content, and it is the last case.
-     * Find egress points for other cases - if they all jump into the same point in the default, we can shrink it back to
-     * there.
-     */
-    public static void tidyOverExtendedDefault(List<Op03SimpleStatement> statements) {
-        List<Op03SimpleStatement> switchStatements = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
-        for (Op03SimpleStatement switchst : switchStatements) {
-            SwitchStatement switchStatement = (SwitchStatement)switchst.getStatement();
-            // Verify that the last target is a default.  If it is, see if
-            // other cases jump into it.
-            // Search backwards from this statement (remaining in switch)
-
         }
     }
 }

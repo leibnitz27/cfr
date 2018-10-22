@@ -17,7 +17,7 @@ public class BadLoopPrettifier implements StructuredStatementTransformer {
         root.transform(this, structuredScope);
     }
 
-    public List<Op04StructuredStatement> getIfBlock(Op04StructuredStatement maybeBlock) {
+    private List<Op04StructuredStatement> getIfBlock(Op04StructuredStatement maybeBlock) {
         StructuredStatement bodyStatement = maybeBlock.getStatement();
         if (!(bodyStatement instanceof Block)) return null;
         Block block = (Block) bodyStatement;

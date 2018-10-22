@@ -97,7 +97,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         this.originalRawOffset = originalRawOffset;
     }
 
-    public void resetStackInfo() {
+    private void resetStackInfo() {
         stackDepthBeforeExecution = -1;
         stackDepthAfterExecution = -1;
         stackConsumed.clear();
@@ -117,7 +117,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         targets.add(node);
     }
 
-    public void removeTarget(Op02WithProcessedDataAndRefs node) {
+    private void removeTarget(Op02WithProcessedDataAndRefs node) {
         if (!targets.remove(node)) {
             throw new ConfusedCFRException("Invalid target, tried to remove " + node + "\nfrom " + this + "\nbut was not a target.");
         }
@@ -194,7 +194,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return cpEntries;
     }
 
-    public void populateStackInfo(StackSim stackSim, Method method, LinkedList<Pair<StackSim, Op02WithProcessedDataAndRefs>> next) {
+    private void populateStackInfo(StackSim stackSim, Method method, LinkedList<Pair<StackSim, Op02WithProcessedDataAndRefs>> next) {
         StackDelta stackDelta = instr.getStackDelta(rawData, cpEntries, stackSim, method);
         if (stackDepthBeforeExecution != -1) {
             /* Catch instructions are funny, as we know we'll get here with 1 thing on the stack. */
@@ -261,7 +261,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
     }
 
-    public ExceptionGroup getSingleExceptionGroup() {
+    private ExceptionGroup getSingleExceptionGroup() {
         if (exceptionGroups.size() != 1) {
             throw new ConfusedCFRException("Only expecting statement to be tagged with 1 exceptionGroup");
         }
@@ -348,16 +348,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         AbstractMemberFunctionInvokation funcCall = isSuper ?
                 new SuperFunctionInvokation(cp, function, object, args, nulls, superOnInterface) :
                 new MemberFunctionInvokation(cp, function, object, special, args, nulls);
-
-//        InferredJavaType inferredJavaType = object.getInferredJavaType();
-//        if (inferredJavaType.getJavaTypeInstance().getInnerClassHereInfo().isAnonymousClass()) {
-//            JavaTypeInstance javaTypeInstance = inferredJavaType.getJavaTypeInstance();
-//            JavaTypeInstance mostLikelyAnonymousType = javaTypeInstance.getBindingSupers().getMostLikelyAnonymousType(javaTypeInstance);
-//            if (mostLikelyAnonymousType != javaTypeInstance) {
-//                InferredJavaType replacement = new InferredJavaType(mostLikelyAnonymousType, InferredJavaType.Source.FUNCTION);
-//                object.getInferredJavaType().forceDelegate(replacement);
-//            }
-//        }
 
         if (object.getInferredJavaType().getJavaTypeInstance() == RawJavaType.NULL) {
             JavaTypeInstance type = methodPrototype.getClassType();
@@ -462,7 +452,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
         dynamicPrototype.tightenArgs(null, dynamicArgs);
 
-        Expression funcCall = null;
+        Expression funcCall;
         switch (bootstrapBehaviour) {
             case INVOKE_STATIC:
                 funcCall = new StaticFunctionInvokation(methodRef, callargs);
@@ -587,6 +577,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return callargs;
     }
 
+    @SuppressWarnings("unused")
     private List<Expression> buildInvokeBootstrapArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef) {
         final int ARG_OFFSET = 3;
         List<JavaTypeInstance> argTypes = prototype.getArgs();
@@ -675,7 +666,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     public Pair<JavaTypeInstance, Integer> getRetrieveType() {
-        JavaTypeInstance type = null;
+        JavaTypeInstance type;
         switch (instr) {
             case ALOAD:
             case ALOAD_0:
@@ -722,7 +713,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             default:
                 return null;
         }
-        int idx = 0;
+        int idx;
         switch (instr) {
             case ALOAD:
             case ILOAD:
@@ -774,7 +765,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     public Pair<JavaTypeInstance, Integer> getStorageType() {
-        JavaTypeInstance type = null;
+        JavaTypeInstance type;
         switch (instr) {
             case ASTORE:
             case ASTORE_0:
@@ -821,7 +812,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             default:
                 return null;
         }
-        int idx = 0;
+        int idx;
         switch (instr) {
             case ASTORE:
             case ISTORE:
@@ -903,7 +894,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return e;
     }
 
-    public Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory, DCCommonState dcCommonState, TypeHintRecovery typeHintRecovery) {
+    private Statement createStatement(final Method method, VariableFactory variableFactory, BlockIdentifierFactory blockIdentifierFactory, DCCommonState dcCommonState, TypeHintRecovery typeHintRecovery) {
         switch (instr) {
             case ALOAD:
             case ILOAD:
@@ -1574,7 +1565,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return missing;
     }
 
-    public static void assignSSAIdentifiersInner(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, Options options, boolean useProtoArgs) {
+    private static void assignSSAIdentifiersInner(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, Options options, boolean useProtoArgs) {
 
         /*
          * before we do anything, we need to generate identifiers for the parameters.
@@ -1657,6 +1648,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
      *
      * Detect that this aliasing is never READ, and therefore these two can be considered to be seperate.
      */
+    @SuppressWarnings("unused")
     private static void removeUnusedSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> op2list) {
         final List<Op02WithProcessedDataAndRefs> endPoints = ListFactory.newList();
         GraphVisitor<Op02WithProcessedDataAndRefs> gv = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(
@@ -1936,7 +1928,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     private static class IdentFactory {
         int nextIdx = 0;
 
-        public Ident getNextIdent(int slot) {
+        Ident getNextIdent(int slot) {
             return new Ident(slot, nextIdx++);
         }
     }
@@ -2004,10 +1996,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             this.triggeringGroup = triggeringGroup;
             this.op = op;
             this.isTry = (op.instr == JVMInstr.FAKE_TRY);
-        }
-
-        public ExceptionGroup getTriggeringGroup() {
-            return triggeringGroup;
         }
 
         public Op02WithProcessedDataAndRefs getOp() {
@@ -2221,7 +2209,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         // they get the correct identifiers
         for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {
             BlockIdentifier tryBlockIdentifier = exceptionGroup.getTryBlockIdentifier();
-            int originalIndex = lutByOffset.get((int) exceptionGroup.getBytecodeIndexFrom());
+            int originalIndex = lutByOffset.get(exceptionGroup.getBytecodeIndexFrom());
             int exclusiveLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, (int) exceptionGroup.getByteCodeIndexTo());
 
 //            System.out.println("Adding try block identifier " + tryBlockIdentifier + "[" + originalIndex + " -> " + inclusiveLastIndex + "]" + exceptionGroup);
@@ -2351,6 +2339,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     op2list.add(preCatchOp);
                 }
 
+                //noinspection ConstantConditions
                 if (preCatchOp == null) {
                     throw new IllegalStateException("Bad precatch op state.");
                 }
@@ -2361,10 +2350,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             tryOp.targets.add(0, startInstruction);
             startInstruction.addSource(tryOp);
             op2list.add(tryOp);
-
-            if (tryOp.sources.isEmpty()) {
-                int x = 1;
-            }
         }
 
         /*
@@ -2508,7 +2493,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return jsrInstrs;
     }
 
-    private static boolean processJSRs(List<Op02WithProcessedDataAndRefs> jsrs, List<Op02WithProcessedDataAndRefs> ops) {
+    private static void processJSRs(List<Op02WithProcessedDataAndRefs> jsrs, List<Op02WithProcessedDataAndRefs> ops) {
         /*
          * Very dirty hack. eg: X)JSR_Y -> Y)JSR_Z -> Z)SWAP -> STORE_n -> RET_n
          */
@@ -2530,7 +2515,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
         });
         Set<Op02WithProcessedDataAndRefs> inlineCandidates = SetFactory.newSet();
-        handledJSR : for (final Op02WithProcessedDataAndRefs target : targets.keySet()) {
+        for (final Op02WithProcessedDataAndRefs target : targets.keySet()) {
             GraphVisitor<Op02WithProcessedDataAndRefs> gv = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(target.getTargets(), new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
                 @Override
                 public void call(Op02WithProcessedDataAndRefs arg1, GraphVisitor<Op02WithProcessedDataAndRefs> arg2) {
@@ -2621,7 +2606,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
 
         // result not used for anything any more - remove?
-        return result;
     }
 
     // A very simple (and impossibly naive VM simulator which can only step over deliberate JSR obfuscations).

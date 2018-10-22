@@ -109,7 +109,7 @@ public class WildcardMatch {
         return getArithmeticMutationWildcard(name, Optional.of(lhs), Optional.of(rhs), Optional.<ArithOp>empty());
     }
 
-    public ArithmeticMutationWildcard getArithmeticMutationWildcard(String name, Optional<LValue> lhs, Optional<Expression> rhs, Optional<ArithOp> op) {
+    private ArithmeticMutationWildcard getArithmeticMutationWildcard(String name, Optional<LValue> lhs, Optional<Expression> rhs, Optional<ArithOp> op) {
         ArithmeticMutationWildcard res = arithMutationMap.get(name);
         if (res != null) return res;
         res = new ArithmeticMutationWildcard(lhs, rhs, op);
@@ -158,7 +158,7 @@ public class WildcardMatch {
         LValueWildcard res = lValueMap.get(name);
         if (res != null) return res;
 
-        res = new LValueWildcard(name, test);
+        res = new LValueWildcard(test);
         lValueMap.put(name, res);
         return res;
     }
@@ -167,7 +167,7 @@ public class WildcardMatch {
         LValueWildcard res = lValueMap.get(name);
         if (res != null) return res;
 
-        res = new LValueWildcard(name, null);
+        res = new LValueWildcard(null);
         lValueMap.put(name, res);
         return res;
     }
@@ -176,7 +176,7 @@ public class WildcardMatch {
         ExpressionWildcard res = expressionMap.get(name);
         if (res != null) return res;
 
-        res = new ExpressionWildcard(name);
+        res = new ExpressionWildcard();
         expressionMap.put(name, res);
         return res;
     }
@@ -190,10 +190,6 @@ public class WildcardMatch {
         return res;
     }
 
-    public CastExpressionWildcard getCastExpressionWildcard(String name) {
-        return castWildcardMap.get(name);
-    }
-
     public NewArrayWildcard getNewArrayWildCard(String name) {
         return getNewArrayWildCard(name, 1, null);
     }
@@ -202,7 +198,7 @@ public class WildcardMatch {
         NewArrayWildcard res = newArrayWildcardMap.get(name);
         if (res != null) return res;
 
-        res = new NewArrayWildcard(name, numSizedDims, numTotalDims);
+        res = new NewArrayWildcard(numSizedDims, numTotalDims);
         newArrayWildcardMap.put(name, res);
         return res;
 
@@ -225,16 +221,12 @@ public class WildcardMatch {
         return memberFunctionMap.get(name);
     }
 
-    public MemberFunctionInvokationWildcard getMemberFunction(String name, boolean isInitMethod, Expression object) {
-        return getMemberFunction(name, null, isInitMethod, object, ListFactory.<Expression>newList());
-    }
-
     public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, Expression object) {
         return getMemberFunction(name, methodname, false, object, ListFactory.<Expression>newList());
     }
 
     public MemberFunctionInvokationWildcard getMemberFunction(String name, String methodname, Expression object, Expression... args) {
-        return getMemberFunction(name, methodname, false, object, ListFactory.<Expression>newImmutableList(args));
+        return getMemberFunction(name, methodname, false, object, ListFactory.newImmutableList(args));
     }
 
     /* When matching a function invokation, we don't really have all the details to construct a plausible
@@ -254,7 +246,7 @@ public class WildcardMatch {
     }
 
     public StaticFunctionInvokationWildcard getStaticFunction(String name, JavaTypeInstance clazz, JavaTypeInstance returnType, String methodname, Expression... args) {
-        return getStaticFunction(name, clazz, returnType, methodname, ListFactory.<Expression>newImmutableList(args));
+        return getStaticFunction(name, clazz, returnType, methodname, ListFactory.newImmutableList(args));
     }
 
     /* When matching a function invokation, we don't really have all the details to construct a plausible
@@ -299,6 +291,7 @@ public class WildcardMatch {
         return res;
     }
 
+    // ListWildcard is a little dodgy - relies on erasure!
     public <T> ListWildcard getList(String name) {
         ListWildcard res = listMap.get(name);
         if (res != null) return res;
@@ -320,13 +313,11 @@ public class WildcardMatch {
     }
 
     public class LValueWildcard extends DebugDumpable implements LValue, Wildcard<LValue> {
-        private final String name;
         private final Predicate<LValue> test;
         private transient LValue matchedValue;
 
 
-        private LValueWildcard(String name, Predicate<LValue> test) {
-            this.name = name;
+        private LValueWildcard(Predicate<LValue> test) {
             this.test = test;
         }
 
@@ -452,7 +443,7 @@ public class WildcardMatch {
     public class StackLabelWildCard extends StackSSALabel implements Wildcard<StackSSALabel> {
         private transient StackSSALabel matchedValue;
 
-        public StackLabelWildCard() {
+        StackLabelWildCard() {
             super(new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.TEST));
         }
 
@@ -562,11 +553,9 @@ public class WildcardMatch {
     }
 
     public class ExpressionWildcard extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
-        private final String name;
         private transient Expression matchedValue;
 
-        public ExpressionWildcard(String name) {
-            this.name = name;
+        ExpressionWildcard() {
         }
 
         @Override
@@ -594,13 +583,11 @@ public class WildcardMatch {
     }
 
     public class NewArrayWildcard extends AbstractBaseExpressionWildcard implements Wildcard<AbstractNewArray> {
-        private final String name;
         private final int numSizedDims;
         private final Integer numTotalDims;
         private transient AbstractNewArray matchedValue;
 
-        public NewArrayWildcard(String name, int numSizedDims, Integer numTotalDims) {
-            this.name = name;
+        NewArrayWildcard(int numSizedDims, Integer numTotalDims) {
             this.numSizedDims = numSizedDims;
             this.numTotalDims = numTotalDims;
         }
@@ -639,7 +626,7 @@ public class WildcardMatch {
         private final List<Expression> args;
         private transient MemberFunctionInvokation matchedValue;
 
-        public MemberFunctionInvokationWildcard(String name, boolean isInitMethod, Expression object, List<Expression> args) {
+        MemberFunctionInvokationWildcard(String name, boolean isInitMethod, Expression object, List<Expression> args) {
             this.name = name;
             this.isInitMethod = isInitMethod;
             this.object = object;
@@ -660,8 +647,8 @@ public class WildcardMatch {
             if (isInitMethod != other.isInitMethod()) return false;
             if (name == null) {
                 // always match.
-            } else {
-                if (!name.equals(other.getName())) return false;
+            } else if (!name.equals(other.getName())) {
+                return false;
             }
             if (!object.equals(other.getObject())) return false;
             List<Expression> otherArgs = other.getArgs();
@@ -693,7 +680,7 @@ public class WildcardMatch {
         private final List<Expression> args;
         private transient SuperFunctionInvokation matchedValue;
 
-        public SuperFunctionInvokationWildcard(List<Expression> args) {
+        SuperFunctionInvokationWildcard(List<Expression> args) {
             this.args = args;
         }
 
@@ -741,7 +728,7 @@ public class WildcardMatch {
         private final List<Expression> args;
         private transient StaticFunctionInvokation matchedValue;
 
-        public StaticFunctionInvokationWildcard(String name, JavaTypeInstance clazz, JavaTypeInstance returnType, List<Expression> args) {
+        StaticFunctionInvokationWildcard(String name, JavaTypeInstance clazz, JavaTypeInstance returnType, List<Expression> args) {
             this.name = name;
             this.clazz = clazz;
             this.args = args;
@@ -790,7 +777,7 @@ public class WildcardMatch {
     public class BlockIdentifierWildcard extends BlockIdentifier implements Wildcard<BlockIdentifier> {
         private BlockIdentifier matchedValue;
 
-        public BlockIdentifierWildcard() {
+        BlockIdentifierWildcard() {
             super(0, null);
         }
 
@@ -862,7 +849,7 @@ public class WildcardMatch {
         private StaticVariable matchedValue;
         private final boolean requireTypeMatch;
 
-        public StaticVariableWildcard(InferredJavaType type, JavaTypeInstance clazz, boolean requireTypeMatch) {
+        StaticVariableWildcard(InferredJavaType type, JavaTypeInstance clazz, boolean requireTypeMatch) {
             super(type, clazz, null);
             this.requireTypeMatch = requireTypeMatch;
         }
@@ -904,7 +891,7 @@ public class WildcardMatch {
         private final JavaTypeInstance clazz;
         private final List<Expression> args;
 
-        public ConstructorInvokationSimpleWildcard(JavaTypeInstance clazz, List<Expression> args) {
+        ConstructorInvokationSimpleWildcard(JavaTypeInstance clazz, List<Expression> args) {
             this.clazz = clazz;
             this.args = args;
         }
@@ -944,7 +931,7 @@ public class WildcardMatch {
         private final JavaTypeInstance clazz;
         private final List<Expression> args;
 
-        public ConstructorInvokationAnonymousInnerWildcard(JavaTypeInstance clazz, List<Expression> args) {
+        ConstructorInvokationAnonymousInnerWildcard(JavaTypeInstance clazz, List<Expression> args) {
             this.clazz = clazz;
             this.args = args;
         }
@@ -983,9 +970,8 @@ public class WildcardMatch {
         private final OptionalMatch<LValue> lhs;
         private final OptionalMatch<Expression> rhs;
         private final OptionalMatch<ArithOp> op;
-        private ArithmeticMutationOperation match;
 
-        public ArithmeticMutationWildcard(Optional<LValue> lhs, Optional<Expression> rhs, Optional<ArithOp> op) {
+        ArithmeticMutationWildcard(Optional<LValue> lhs, Optional<Expression> rhs, Optional<ArithOp> op) {
             this.lhs = new OptionalMatch<LValue>(lhs);
             this.rhs = new OptionalMatch<Expression>(rhs);
             this.op = new OptionalMatch<ArithOp>(op);
@@ -1016,7 +1002,6 @@ public class WildcardMatch {
             if (!lhs.match(other.getUpdatedLValue())) return false;
             if (!rhs.match(other.getMutation())) return false;
             if (!op.match(other.getOp())) return false;
-            match = other;
             return true;
         }
     }
@@ -1029,7 +1014,7 @@ public class WildcardMatch {
 
         private Expression expression;
 
-        public CastExpressionWildcard(JavaTypeInstance clazz, Expression expression) {
+        CastExpressionWildcard(JavaTypeInstance clazz, Expression expression) {
             this.clazz = clazz;
             this.expression = expression;
         }
@@ -1068,7 +1053,7 @@ public class WildcardMatch {
     public class ConditionalExpressionWildcard extends AbstractBaseExpressionWildcard implements ConditionalExpression, Wildcard<ConditionalExpression> {
         private ConditionalExpression matchedValue;
 
-        public ConditionalExpressionWildcard() {
+        ConditionalExpressionWildcard() {
         }
 
         @Override
@@ -1136,7 +1121,7 @@ public class WildcardMatch {
     public class BlockWildcard extends Block implements Wildcard<Block> {
         private Block match;
 
-        public BlockWildcard() {
+        BlockWildcard() {
             super(null, false);
         }
 

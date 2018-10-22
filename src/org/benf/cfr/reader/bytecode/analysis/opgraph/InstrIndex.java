@@ -71,7 +71,7 @@ public class InstrIndex implements Comparable<InstrIndex> {
         return res;
     }
 
-    public boolean directlyPreceeds(InstrIndex other) {
+    boolean directlyPreceeds(InstrIndex other) {
         return this.index == other.index - 1;
     }
 
@@ -95,7 +95,7 @@ public class InstrIndex implements Comparable<InstrIndex> {
     private static class TempRelatives {
         private final LinkedList<InstrIndex> rels = new LinkedList<InstrIndex>();
 
-        public TempRelatives(InstrIndex start) {
+        TempRelatives(InstrIndex start) {
             rels.add(start);
         }
 

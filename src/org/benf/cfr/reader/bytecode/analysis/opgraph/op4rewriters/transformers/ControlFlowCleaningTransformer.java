@@ -26,8 +26,6 @@ public class ControlFlowCleaningTransformer implements StructuredStatementTransf
 
     @Override
     public void handleStatement(StatementContainer statementContainer) {
-        // If we're inside a while loop, then a (direct) continue at the 'notionally last' item has no value.
-        StructuredStatement stm = (StructuredStatement)statementContainer.getStatement();
     }
 
     public void transform(Op04StructuredStatement root) {

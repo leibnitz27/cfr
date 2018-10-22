@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 public class MatchSequence implements Matcher<StructuredStatement> {
 
     private final Matcher<StructuredStatement>[] inner;
+    @SuppressWarnings("unused")
     private final String name;  // useful for breakpointing.
 
     public MatchSequence(Matcher<StructuredStatement>... inner) {
