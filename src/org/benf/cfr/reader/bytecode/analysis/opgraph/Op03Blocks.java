@@ -13,6 +13,7 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheckSimple;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.collections.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -21,7 +22,7 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
 import java.util.*;
 
-import static org.benf.cfr.reader.util.SetUtil.getSingle;
+import static org.benf.cfr.reader.util.collections.SetUtil.getSingle;
 
 public class Op03Blocks {
 

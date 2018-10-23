@@ -1,8 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
 
 import java.util.Collection;
 import java.util.Collections;

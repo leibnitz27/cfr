@@ -4,7 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRef
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
 import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
 
 import java.util.List;
 

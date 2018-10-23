@@ -10,6 +10,9 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollectorImpl;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -20,7 +23,7 @@ import java.util.List;
 
 public class Main {
 
-    public static void doClass(DCCommonState dcCommonState, String path, boolean skipInnerClass, DumperFactory dumperFactory) {
+    static void doClass(DCCommonState dcCommonState, String path, boolean skipInnerClass, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
         IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         Dumper d = new ToStringDumper(); // sentinel dumper.
@@ -36,7 +39,7 @@ public class Main {
             // from the cache.  Because we might have been fed a random filename
             try {
                 c = dcCommonState.getClassFile(c.getClassType());
-            } catch (CannotLoadClassException e) {
+            } catch (CannotLoadClassException ignore) {
             }
 
             if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
@@ -88,11 +91,11 @@ public class Main {
         }
     }
 
-    public static void doJar(DCCommonState dcCommonState, String path, DumperFactory dumperFactory) {
+    private static void doJar(DCCommonState dcCommonState, String path, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
         IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         SummaryDumper summaryDumper = null;
-        boolean silent = true;
+        boolean silent;
         try {
             final Predicate<String> matcher = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.JAR_FILTER), true);
             silent = options.getOption(OptionsImpl.SILENT);
@@ -177,7 +180,7 @@ public class Main {
             files = processedArgs.getFirst();
             options = processedArgs.getSecond();
         } catch (Exception e) {
-            getOptParser.showHelp(OptionsImpl.getFactory(), e);
+            getOptParser.showHelp(e);
             System.exit(1);
         }
 
@@ -187,8 +190,6 @@ public class Main {
         }
 
         ClassFileSourceImpl classFileSource = new ClassFileSourceImpl(options);
-//        DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
-//        DumperFactory dumperFactory = new DumperFactoryImpl(options);
 
         /*
          * There's an interesting question here - do we want to skip inner classes, if we've been given a wildcard?
@@ -208,6 +209,8 @@ public class Main {
          * TODO : Instead, we discard state, which is slower but fractionally less ugly.
          * improve.
          */
+//        DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
+//        DumperFactory dumperFactory = new DumperFactoryImpl(options);
 //        Pair<List<String>, List<String>> partition = Functional.partition(files, new Predicate<String>() {
 //            @Override
 //            public boolean test(String in) {

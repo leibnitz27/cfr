@@ -6,6 +6,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.collections.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
@@ -62,7 +63,7 @@ public class MemberNameResolver {
         for (JavaTypeInstance type : types) {
             try {
                 classFiles.add(dcCommonState.getClassFile(type));
-            } catch (CannotLoadClassException e) {
+            } catch (CannotLoadClassException ignore) {
             }
         }
         /*
@@ -235,7 +236,7 @@ public class MemberNameResolver {
                         return SetFactory.newOrderedSet();
                     }
                 });
-            };
+            }
         });
         private final Set<MethodKey> clashes = SetFactory.newSet();
 
@@ -244,7 +245,7 @@ public class MemberNameResolver {
         }
 
         /* If we're indexing methodkey by name + arg types, we SHOULD not expect to see any collisions, except overrides.
-                 */
+         */
         public void add(Method method) {
             if (method.isConstructor()) return;
 
@@ -281,27 +282,27 @@ public class MemberNameResolver {
             }
         }
 
-        public boolean hasClashes() {
+        boolean hasClashes() {
             return !clashes.isEmpty();
         }
 
-        public Set<MethodKey> getClashes() {
+        Set<MethodKey> getClashes() {
             return clashes;
         }
 
-        public void addClashes(Set<MethodKey> newClashes) {
+        void addClashes(Set<MethodKey> newClashes) {
             clashes.addAll(newClashes);
         }
 
-        public void addClash(MethodKey clash) {
+        void addClash(MethodKey clash) {
             clashes.add(clash);
         }
 
-        public Map<JavaTypeInstance, Collection<Method>> getClashedMethodsFor(MethodKey key) {
+        Map<JavaTypeInstance, Collection<Method>> getClashedMethodsFor(MethodKey key) {
             return knownMethods.get(key);
         }
 
-        public void inheritFrom(MemberInfo base) {
+        void inheritFrom(MemberInfo base) {
             for (Map.Entry<MethodKey, Map<JavaTypeInstance, Collection<Method>>> entry : base.knownMethods.entrySet()) {
                 MethodKey key = entry.getKey();
                 for (Map.Entry<JavaTypeInstance, Collection<Method>> entry2 : entry.getValue().entrySet()) {

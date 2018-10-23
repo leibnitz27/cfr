@@ -6,14 +6,14 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 public interface IllegalIdentifierDump {
     String getLegalIdentifierFor(String identifier);
 
-    public static class Nop implements IllegalIdentifierDump {
+    class Nop implements IllegalIdentifierDump {
         @Override
         public String getLegalIdentifierFor(String identifier) {
             return identifier;
         }
     }
 
-    public static class Factory {
+    class Factory {
         public static IllegalIdentifierDump get(Options options) {
             if (options.getOption(OptionsImpl.RENAME_ILLEGAL_IDENTS)) {
                 return IllegalIdentifierReplacement.getInstance();

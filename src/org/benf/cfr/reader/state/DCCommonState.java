@@ -8,8 +8,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.CannotLoadClassException;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -35,10 +35,11 @@ public class DCCommonState {
         classFileSource.informAnalysisRelativePathDetail(classFile.getUsePath(), classFile.getFilePath());
     }
 
-    public String getPossiblyRenamedFileFromClassFileSource(String name) {
+    String getPossiblyRenamedFileFromClassFileSource(String name) {
         return classFileSource.getPossiblyRenamedPath(name);
     }
 
+    @SuppressWarnings("unused")
     public Set<String> getCouldNotLoadClasses() {
         return couldNotLoadClasses;
     }
@@ -102,7 +103,6 @@ public class DCCommonState {
         // See if this file exists - in which case it's odd.
         File f = new File(pathOrName);
         if (f.exists()) {
-            f = null;
             return getClassFile(pathOrName);
         }
         return getClassFile(ClassNameUtils.convertToPath(pathOrName) + ".class");

@@ -7,7 +7,7 @@ public enum AnalysisType {
 
     private final String suffix;
 
-    private AnalysisType(String suffix) {
+    AnalysisType(String suffix) {
         this.suffix = suffix;
     }
 }

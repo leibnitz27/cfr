@@ -11,8 +11,8 @@ import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.functors.Predicate;
 
 import java.util.LinkedList;
 import java.util.List;

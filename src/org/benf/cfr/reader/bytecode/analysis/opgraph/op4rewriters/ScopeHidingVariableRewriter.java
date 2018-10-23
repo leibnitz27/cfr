@@ -10,8 +10,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.ClassCache;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 
 import java.util.List;
 import java.util.Set;

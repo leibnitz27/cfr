@@ -18,6 +18,11 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDefi
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
 
 import java.util.LinkedList;
 import java.util.List;

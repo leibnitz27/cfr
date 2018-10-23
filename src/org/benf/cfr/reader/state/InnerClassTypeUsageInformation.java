@@ -2,8 +2,8 @@ package org.benf.cfr.reader.state;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +50,7 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
 
     @Override
     public String getName(JavaTypeInstance type) {
+        //noinspection SuspiciousMethodCalls - if it fails it fails....
         String local = localTypeNames.get(type);
         if (local != null) return local;
 

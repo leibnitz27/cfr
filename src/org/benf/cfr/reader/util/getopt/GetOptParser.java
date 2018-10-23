@@ -1,8 +1,8 @@
 package org.benf.cfr.reader.util.getopt;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 
 import java.util.*;
@@ -26,7 +26,7 @@ public class GetOptParser {
             this.name = argument.getName();
         }
 
-        public boolean isFlag() {
+        boolean isFlag() {
             return isFlag;
         }
 
@@ -39,7 +39,7 @@ public class GetOptParser {
         }
     }
 
-    public static String getHelp(PermittedOptionProvider permittedOptionProvider) {
+    private static String getHelp(PermittedOptionProvider permittedOptionProvider) {
         StringBuilder sb = new StringBuilder();
         for (String flag : permittedOptionProvider.getFlags()) {
             sb.append("   --").append(flag).append("\n");
@@ -111,16 +111,14 @@ public class GetOptParser {
         System.err.println("java --jar cfr_" + MiscConstants.CFR_VERSION + ".jar class_or_jar_file [method] [options]\n");
     }
 
-    public <T> void showHelp(PermittedOptionProvider permittedOptionProvider, Exception e) {
+    public void showHelp(Exception e) {
         printErrHeader();
         printUsage();
         System.err.println("Parameter error : " + e.getMessage() + "\n");
         System.err.println("Please specify '--help' to get option list, or '--help optionname' for specifics, eg\n   --help " + OptionsImpl.PULL_CODE_CASE.getName());
-
-//        System.err.println(getHelp(permittedOptionProvider));
     }
 
-    public <T> void showOptionHelp(PermittedOptionProvider permittedOptionProvider, Options options, PermittedOptionProvider.ArgumentParam<String, Void> helpArg) {
+    public void showOptionHelp(PermittedOptionProvider permittedOptionProvider, Options options, PermittedOptionProvider.ArgumentParam<String, Void> helpArg) {
         printErrHeader();
         String relevantOption = options.getOption(helpArg);
         List<? extends PermittedOptionProvider.ArgumentParam<?, ?>> possible = permittedOptionProvider.getArguments();

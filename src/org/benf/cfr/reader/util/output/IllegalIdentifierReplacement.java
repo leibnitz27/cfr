@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.variables.Keywords;
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 
 import java.util.Map;

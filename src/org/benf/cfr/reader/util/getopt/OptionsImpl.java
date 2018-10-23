@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.getopt;
 
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.collections.ListFactory;
 
 import java.util.*;
 

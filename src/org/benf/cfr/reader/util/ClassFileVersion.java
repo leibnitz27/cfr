@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util;
 
+@SuppressWarnings("unused")
 public class ClassFileVersion {
     private final int major;
     private final int minor;

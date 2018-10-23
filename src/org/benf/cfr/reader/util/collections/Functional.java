@@ -1,6 +1,7 @@
-package org.benf.cfr.reader.util;
+package org.benf.cfr.reader.util.collections;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;

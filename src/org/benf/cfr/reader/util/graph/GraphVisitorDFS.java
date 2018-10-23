@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.util.graph;
 
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 
 import java.util.Collection;
@@ -17,6 +17,7 @@ public class GraphVisitorDFS<T> implements GraphVisitor<T> {
     private boolean aborted = false;
 
     public GraphVisitorDFS(T first, BinaryProcedure<T, GraphVisitor<T>> callee) {
+        //noinspection unchecked
         this.start = ListFactory.newImmutableList(first);
         this.callee = callee;
     }

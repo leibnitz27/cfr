@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.util;
+package org.benf.cfr.reader.util.collections;
 
 import java.util.Collection;
 import java.util.List;

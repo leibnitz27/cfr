@@ -5,7 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
-import org.benf.cfr.reader.util.SetUtil;
+import org.benf.cfr.reader.util.collections.SetUtil;
 
 import java.util.HashSet;
 import java.util.Iterator;

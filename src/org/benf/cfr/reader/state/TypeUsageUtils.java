@@ -2,13 +2,13 @@ package org.benf.cfr.reader.state;
 
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.StringUtils;
 
 import java.util.LinkedList;
 
-public class TypeUsageUtils {
-    public static String generateInnerClassShortName(final JavaRefTypeInstance clazz, JavaRefTypeInstance analysisType, boolean prefixAnalysisType) {
+class TypeUsageUtils {
+    static String generateInnerClassShortName(final JavaRefTypeInstance clazz, JavaRefTypeInstance analysisType, boolean prefixAnalysisType) {
         LinkedList<JavaRefTypeInstance> classStack = ListFactory.newLinkedList();
 
         boolean analysisTypeFound = false;

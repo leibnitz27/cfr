@@ -4,7 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokat
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
 
 import java.util.List;
 

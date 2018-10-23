@@ -1,13 +1,14 @@
-package org.benf.cfr.reader.util;
+package org.benf.cfr.reader.util.collections;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class SetFactory {
-    public static <X extends Object> Set<X> newSet() {
+    public static <X> Set<X> newSet() {
         return new HashSet<X>();
     }
 
-    public static <X extends Object> Set<X> newSortedSet() {
+    public static <X> Set<X> newSortedSet() {
         return new TreeSet<X>();
     }
 
@@ -15,35 +16,35 @@ public class SetFactory {
         return EnumSet.copyOf(content);
     }
 
-    public static <X extends Object> Set<X> newSet(Collection<X> content) {
+    public static <X> Set<X> newSet(Collection<X> content) {
         return new HashSet<X>(content);
     }
 
-    public static <X extends Object> Set<X> newSet(Collection<X> content, Collection<X> otherContent) {
+    public static <X> Set<X> newSet(Collection<X> content, Collection<X> otherContent) {
         HashSet<X> res = new HashSet<X>(content);
         res.addAll(otherContent);
         return res;
     }
 
-    public static <X extends Object> Set<X> newIdentitySet() {
+    public static <X> Set<X> newIdentitySet() {
         return Collections.newSetFromMap(new IdentityHashMap<X, Boolean>());
     }
 
-    public static <X extends Object> Set<X> newSet(X... content) {
+    public static <X> Set<X> newSet(X... content) {
         Set<X> res = new HashSet<X>();
         Collections.addAll(res, content);
         return res;
     }
 
-    public static <X extends Object> Set<X> newOrderedSet() {
+    public static <X> Set<X> newOrderedSet() {
         return new LinkedHashSet<X>();
     }
 
-    public static <X extends Object> Set<X> newOrderedSet(Collection<X> content) {
+    public static <X> Set<X> newOrderedSet(Collection<X> content) {
         return new LinkedHashSet<X>(content);
     }
 
-    public static <X extends Object> Set<X> newOrderedSet(X... content) {
+    public static <X> Set<X> newOrderedSet(X... content) {
         Set<X> res = new LinkedHashSet<X>();
         Collections.addAll(res, content);
         return res;

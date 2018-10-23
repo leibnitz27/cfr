@@ -20,7 +20,7 @@ public class FileDumper extends StreamDumper {
     private static final int TRUNC_PREFIX_LEN = 150;
     private static int truncCount = 0;
 
-    private String mkFilename(String dir, Pair<String, String> names, JavaTypeInstance type, SummaryDumper summaryDumper) {
+    private String mkFilename(String dir, Pair<String, String> names, SummaryDumper summaryDumper) {
         String packageName = names.getFirst();
         String className = names.getSecond();
         if (className.length() > MAX_FILE_LEN_MINUS_EXT) {
@@ -36,13 +36,13 @@ public class FileDumper extends StreamDumper {
                 className + ".java";
     }
 
-    public FileDumper(String dir, boolean clobber, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
+    FileDumper(String dir, boolean clobber, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
         super(typeUsageInformation, options, illegalIdentifierDump);
         this.type = type;
         this.summaryDumper = summaryDumper;
         Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(type.getRawName());
         try {
-            String fileName = mkFilename(dir, names, type, summaryDumper);
+            String fileName = mkFilename(dir, names, summaryDumper);
             File file = new File(fileName);
             File parent = file.getParentFile();
             if (!parent.exists() && !parent.mkdirs()) {
@@ -76,7 +76,7 @@ public class FileDumper extends StreamDumper {
         }
     }
 
-    public String getFileName() {
+    String getFileName() {
         return path;
     }
 

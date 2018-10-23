@@ -1,4 +1,4 @@
-package org.benf.cfr.reader.util;
+package org.benf.cfr.reader.util.collections;
 
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -39,8 +39,10 @@ public class LazyMap<X, Y> implements Map<X, Y> {
     public Y get(Object o) {
         Y res = inner.get(o);
         if (res == null) {
-            res = factory.invoke((X) o);
-            inner.put((X) o, res);
+            //noinspection unchecked
+            X x = (X) o;
+            res = factory.invoke(x);
+            inner.put(x, res);
         }
         return res;
     }

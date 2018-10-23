@@ -10,7 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscov
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.functors.Predicate;
 
 import java.util.List;
 

@@ -14,7 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 
 import java.util.List;
 import java.util.Map;

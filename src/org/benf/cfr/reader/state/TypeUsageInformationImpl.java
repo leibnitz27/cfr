@@ -4,7 +4,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
@@ -23,7 +27,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         }
     });
 
-    public TypeUsageInformationImpl(JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes) {
+    TypeUsageInformationImpl(JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes) {
         this.analysisType = analysisType;
         initialiseFrom(usedRefTypes);
     }
@@ -102,7 +106,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
                 private boolean innerClass = false;
                 private JavaRefTypeInstance type;
 
-                public PriClass(JavaRefTypeInstance type) {
+                PriClass(JavaRefTypeInstance type) {
                     if (type.equals(analysisType)) {
                         priType = 0;
                     } else {
@@ -184,11 +188,11 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
 
     @Override
     public String getName(JavaTypeInstance type) {
+        //noinspection SuspiciousMethodCalls
         String res = displayName.get(type);
         if (res == null) {
             // This should not happen.
             return type.getRawName();
-//            throw new IllegalStateException();
         }
         return res;
     }

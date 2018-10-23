@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util;
 
+import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -7,7 +8,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public class DecompilerComments implements Dumpable {
-    Set<DecompilerComment> comments = SetFactory.newOrderedSet();
+    private Set<DecompilerComment> comments = SetFactory.newOrderedSet();
 
     public DecompilerComments() {
     }

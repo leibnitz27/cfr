@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 
 import java.util.Collection;
 import java.util.Set;

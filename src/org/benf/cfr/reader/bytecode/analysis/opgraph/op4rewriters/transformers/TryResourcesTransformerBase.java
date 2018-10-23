@@ -17,9 +17,9 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.En
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.SetFactory;
-import org.benf.cfr.reader.util.SetUtil;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.collections.SetUtil;
 
 import java.util.Collections;
 import java.util.List;

@@ -11,8 +11,8 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredCa
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;

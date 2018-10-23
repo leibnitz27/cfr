@@ -4,9 +4,9 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.CaseStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.Predicate;
-import org.benf.cfr.reader.util.SetUtil;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.functors.Predicate;
+import org.benf.cfr.reader.util.collections.SetUtil;
 
 import java.util.List;
 

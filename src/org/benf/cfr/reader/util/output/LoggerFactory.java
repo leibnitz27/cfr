@@ -10,10 +10,6 @@ public class LoggerFactory {
     private static Handler handler = getHandler();
     private static Level level = Level.WARNING;
 
-    public static void setGlobalLoggingLevel() {
-        level = Level.FINEST;
-    }
-
     private static Handler getHandler() {
         Handler handler = new ConsoleHandler();
         Formatter formatter = new LogFormatter();

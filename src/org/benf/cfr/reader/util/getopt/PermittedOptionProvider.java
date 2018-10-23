@@ -7,17 +7,17 @@ public interface PermittedOptionProvider {
 
     List<? extends ArgumentParam<?, ?>> getArguments();
 
-    public static class ArgumentParam<X, InputType> {
+    class ArgumentParam<X, InputType> {
         private final String name;
         private final OptionDecoderParam<X, InputType> fn;
         private final String help;
         private final boolean hidden;
 
-        public ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help) {
+        ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help) {
             this(name, fn, help, false);
         }
 
-        public ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help, boolean hidden) {
+        ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help, boolean hidden) {
             this.name = name;
             this.fn = fn;
             this.help = help;
@@ -28,17 +28,17 @@ public interface PermittedOptionProvider {
             return name;
         }
 
-        public OptionDecoderParam<X, InputType> getFn() {
+        OptionDecoderParam<X, InputType> getFn() {
             return fn;
         }
 
-        public boolean isHidden() {
+        boolean isHidden() {
             return hidden;
         }
 
-        public String describe() {
+        String describe() {
             StringBuilder sb = new StringBuilder();
-            sb.append("'" + name + "':\n\n");
+            sb.append("'").append(name).append("':\n\n");
             sb.append(help).append('\n');
             String range = fn.getRangeDescription();
             if (range != null && !(range.isEmpty())) sb.append("\nRange : ").append(range).append("\n");
@@ -48,23 +48,23 @@ public interface PermittedOptionProvider {
             return sb.toString();
         }
 
-        public String shortDescribe() {
+        String shortDescribe() {
             StringBuilder sb = new StringBuilder();
             String defaultVal = fn.getDefaultValue();
             String range = fn.getRangeDescription();
             if (range != null && !(range.isEmpty())) sb.append(" (").append(range).append(") ");
             if (defaultVal != null && !(defaultVal.isEmpty()))
-                sb.append(" default: ").append(defaultVal).append("");
+                sb.append(" default: ").append(defaultVal);
             return sb.toString();
         }
     }
 
-    public static class Argument<X> extends ArgumentParam<X, Void> {
-        public Argument(String name, OptionDecoderParam<X, Void> fn, String help, boolean hidden) {
+    class Argument<X> extends ArgumentParam<X, Void> {
+        Argument(String name, OptionDecoderParam<X, Void> fn, String help, boolean hidden) {
             super(name, fn, help, hidden);
         }
 
-        public Argument(String name, OptionDecoderParam<X, Void> fn, String help) {
+        Argument(String name, OptionDecoderParam<X, Void> fn, String help) {
             super(name, fn, help, false);
         }
     }

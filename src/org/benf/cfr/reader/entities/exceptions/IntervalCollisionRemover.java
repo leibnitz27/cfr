@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.entities.exceptions;
 
-import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
 
 import java.util.List;
 import java.util.Map;

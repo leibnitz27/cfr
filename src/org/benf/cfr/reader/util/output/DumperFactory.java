@@ -6,7 +6,9 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 public interface DumperFactory {
 
     Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump);
+
     ProgressDumper getProgressDumper();
+
     SummaryDumper getSummaryDumper();
 
 }

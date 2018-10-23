@@ -10,8 +10,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDefinition;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
-import org.benf.cfr.reader.util.Functional;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.functors.Predicate;
 
 import java.util.List;
 import java.util.Set;

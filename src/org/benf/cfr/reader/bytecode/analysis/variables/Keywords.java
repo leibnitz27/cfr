@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.variables;
 
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 
 import java.util.Set;
 

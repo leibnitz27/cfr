@@ -6,8 +6,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.CatchStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ThrowStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
-import org.benf.cfr.reader.util.ListFactory;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 
 import java.util.LinkedList;
 import java.util.List;

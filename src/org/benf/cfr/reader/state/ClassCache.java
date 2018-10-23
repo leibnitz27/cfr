@@ -1,10 +1,11 @@
 package org.benf.cfr.reader.state;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.bytecode.analysis.types.*;
-import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.util.MapFactory;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
+import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 
 import java.util.Collection;
 import java.util.Map;
@@ -19,7 +20,7 @@ public class ClassCache {
 
     private final DCCommonState dcCommonState;
 
-    public ClassCache(DCCommonState dcCommonState) {
+    ClassCache(DCCommonState dcCommonState) {
         this.dcCommonState = dcCommonState;
         // TODO:  Not sure I need to do this any more.
         add(TypeConstants.ASSERTION_ERROR.getRawName(), TypeConstants.ASSERTION_ERROR);

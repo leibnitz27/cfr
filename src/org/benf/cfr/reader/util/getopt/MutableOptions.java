@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.util.getopt;
 
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.Troolean;
 
 import java.util.Map;

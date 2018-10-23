@@ -1,9 +1,9 @@
-package org.benf.cfr.reader.util;
+package org.benf.cfr.reader.util.collections;
 
 import java.util.Collection;
 
 public class CollectionUtils {
-    public static String join(Collection<? extends Object> in, String sep) {
+    public static String join(Collection<?> in, String sep) {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (Object o : in) {

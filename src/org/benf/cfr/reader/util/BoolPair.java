@@ -11,7 +11,7 @@ public enum BoolPair {
 
     private final int count;
 
-    private BoolPair(int count) {
+    BoolPair(int count) {
         this.count = count;
     }
 

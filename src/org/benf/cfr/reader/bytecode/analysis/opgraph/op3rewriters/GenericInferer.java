@@ -7,7 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvo
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.collections.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.List;

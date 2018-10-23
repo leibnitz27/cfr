@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.util;
 
+import org.benf.cfr.reader.util.functors.Predicate;
+
 import java.util.regex.Pattern;
 
 public class MiscUtils {

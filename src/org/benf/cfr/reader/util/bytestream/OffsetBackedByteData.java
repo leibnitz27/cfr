@@ -4,10 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 
 public class OffsetBackedByteData extends AbstractBackedByteData {
-    final int offset;
-    final byte[] data;
+    private final int offset;
+    private final byte[] data;
 
-    public OffsetBackedByteData(byte[] data, long offset) {
+    OffsetBackedByteData(byte[] data, long offset) {
         this.offset = (int) offset;
         this.data = data;
     }

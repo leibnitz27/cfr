@@ -2,7 +2,7 @@ package org.benf.cfr.reader.bytecode;
 
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.DecompilerComment;
-import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.getopt.MutableOptions;
 import org.benf.cfr.reader.util.getopt.Options;
 

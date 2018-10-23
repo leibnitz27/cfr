@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.entities.exceptions;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.util.MapFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 
 import java.util.*;
 

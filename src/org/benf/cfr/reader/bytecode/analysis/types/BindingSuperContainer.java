@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.util.ListFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
 
 import java.util.List;
 import java.util.Map;

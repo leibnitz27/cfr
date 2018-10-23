@@ -3,6 +3,11 @@ package org.benf.cfr.reader.state;
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -50,20 +55,12 @@ public class ClassFileSourceImpl implements ClassFileSource {
     }
 
     private byte[] getBytesFromFile(InputStream is, long length) throws IOException {
-        // You cannot create an array using a long type.
-        // It needs to be an int type.
-        // Before converting to an int type, check
-        // to ensure that file is not larger than Integer.MAX_VALUE.
-        if (length > Integer.MAX_VALUE) {
-            // File is too large
-        }
-
         // Create the byte array to hold the data
         byte[] bytes = new byte[(int) length];
 
         // Read in the bytes
         int offset = 0;
-        int numRead = 0;
+        int numRead;
         while (offset < bytes.length
                 && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
             offset += numRead;
@@ -106,8 +103,8 @@ public class ClassFileSourceImpl implements ClassFileSource {
         ZipFile zipFile = null;
 
         try {
-            InputStream is = null;
-            long length = 0;
+            InputStream is;
+            long length;
 
             /*
              * NB : pathPrefix will be empty the when we load the 'main' class,
@@ -150,6 +147,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
      *
      * We can avoid that by knowing what packages are in what modules, and skipping for those.
      */
+    @SuppressWarnings("unchecked")
     private static Map<String, String> getPackageToModuleMap() {
         Map<String, String> mapRes = MapFactory.newMap();
         try {
@@ -218,7 +216,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
         if (!protocol.equals("jrt")) return null;
 
         InputStream is;
-        int len = -1;
+        int len;
         try {
             URLConnection uc;
             uc = url.openConnection();
@@ -266,7 +264,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
             throw new ConfusedCFRException("Failed to load jar " + jarPath);
         }
 
-        Set<String> dedup = null;
+        Set<String> dedup;
         if (classCollisionRenamerLCToReal != null) {
             final Map<String, List<String>> map = Functional.groupToMapBy(thisJar.keySet(), new UnaryFunction<String, String>() {
                 @Override
@@ -280,6 +278,8 @@ public class ClassFileSourceImpl implements ClassFileSource {
                     return map.get(in).size() > 1;
                 }
             }));
+        } else {
+            dedup = SetFactory.newSet();
         }
 
         List < String > output = ListFactory.newList();
@@ -452,7 +452,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
             classRemovePrefix = classParts.length == 0 ? "" : (StringUtils.join(classParts, "/") + "/");
         }
 
-        public void configureWith(String usePath, String specPath) {
+        void configureWith(String usePath, String specPath) {
             String path = usePath;
             String actualPath = specPath;
             if (!actualPath.equals(path)) {

@@ -4,7 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.util.SetFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 
 import java.util.Set;
 

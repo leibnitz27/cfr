@@ -6,8 +6,4 @@ public class GraphVisitorFIFO<T> extends AbstractGraphVisitorFI<T> {
     public GraphVisitorFIFO(T first, BinaryProcedure<T, GraphVisitor<T>> callee) {
         super(first, callee);
     }
-
-    protected void internalAdd(T next) {
-        toVisit.add(next);
-    }
 }

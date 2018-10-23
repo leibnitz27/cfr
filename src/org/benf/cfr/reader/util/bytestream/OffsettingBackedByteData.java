@@ -4,11 +4,11 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 
 public class OffsettingBackedByteData extends AbstractBackedByteData implements OffsettingByteData {
-    final byte[] data;
-    final int originalOffset;
-    int mutableOffset;
+    private final byte[] data;
+    private final int originalOffset;
+    private int mutableOffset;
 
-    public OffsettingBackedByteData(byte[] data, long offset) {
+    OffsettingBackedByteData(byte[] data, long offset) {
         this.data = data;
         this.originalOffset = (int) offset;
         this.mutableOffset = 0;
@@ -17,11 +17,6 @@ public class OffsettingBackedByteData extends AbstractBackedByteData implements 
     @Override
     public void advance(long offset) {
         mutableOffset += offset;
-    }
-
-    @Override
-    public void rewind(long offset) {
-        mutableOffset -= offset;
     }
 
     @Override

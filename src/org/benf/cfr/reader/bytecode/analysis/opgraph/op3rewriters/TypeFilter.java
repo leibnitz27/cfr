@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
-import org.benf.cfr.reader.util.Predicate;
+import org.benf.cfr.reader.util.functors.Predicate;
 
 public class TypeFilter<T> implements Predicate<Op03SimpleStatement> {
     private final Class<T> clazz;

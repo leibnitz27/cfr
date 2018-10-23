@@ -10,15 +10,18 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 
 public class LambdaUtils {
 
-    private static TypedLiteral.LiteralType getLiteralType(Expression e) {
+    private static TypedLiteral getTypedLiteral(Expression e) {
         if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
-        TypedLiteral t = ((Literal) e).getValue();
+        return ((Literal) e).getValue();
+    }
+
+    private static TypedLiteral.LiteralType getLiteralType(Expression e) {
+        TypedLiteral t = getTypedLiteral(e);
         return t.getType();
     }
 
     public static ConstantPoolEntryMethodHandle getHandle(Expression e) {
-        if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
-        TypedLiteral t = ((Literal) e).getValue();
+        TypedLiteral t = getTypedLiteral(e);
         if (t.getType() != TypedLiteral.LiteralType.MethodHandle) {
             throw new IllegalArgumentException("Expecting method handle");
         }
@@ -26,8 +29,7 @@ public class LambdaUtils {
     }
 
     private static ConstantPoolEntryMethodType getType(Expression e) {
-        if (!(e instanceof Literal)) throw new IllegalArgumentException("Expecting literal");
-        TypedLiteral t = ((Literal) e).getValue();
+        TypedLiteral t = getTypedLiteral(e);
         if (t.getType() != TypedLiteral.LiteralType.MethodType) {
             throw new IllegalArgumentException("Expecting method type");
         }

@@ -34,6 +34,7 @@ public class Optional<T> {
     }
 
     public static <T> Optional<T> empty() {
+        //noinspection unchecked
         return (Optional<T>)Optional.Empty;
     }
 }
