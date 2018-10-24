@@ -151,7 +151,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         throw new CannotDelambaException();
     }
 
-    private Expression rewriteDynamicExpression(Expression dynamicExpression, StaticFunctionInvokation functionInvokation, List<Expression> curriedArgs) {
+    private Expression rewriteDynamicExpression(DynamicInvokation dynamicExpression, StaticFunctionInvokation functionInvokation, List<Expression> curriedArgs) {
         JavaTypeInstance typeInstance = functionInvokation.getClazz();
         if (!typeInstance.getRawName().equals(TypeConstants.lambdaMetaFactoryName)) return dynamicExpression;
         String functionName = functionInvokation.getName();

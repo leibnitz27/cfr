@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaIntersectionTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.StringUtils;
@@ -73,6 +74,9 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
     public Dumper dumpInner(Dumper d) {
         boolean multi = args.size() != 1;
         boolean first = true;
+        if (getInferredJavaType().getJavaTypeInstance() instanceof JavaIntersectionTypeInstance) {
+            d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
+        }
         if (multi) d.print("(");
         for (LValue lValue : args) {
             first = StringUtils.comma(first, d);

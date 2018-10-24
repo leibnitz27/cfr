@@ -466,7 +466,17 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 throw new UnsupportedOperationException("Only static invoke dynamic calls supported currently. This is " + bootstrapBehaviour);
         }
 
-        funcCall = new DynamicInvokation(new InferredJavaType(callSiteReturnType, InferredJavaType.Source.OPERATION), funcCall, dynamicArgs);
+        JavaTypeInstance lambdaConstructedType = callSiteReturnType;
+        boolean hasMarkers = !markerTypes.isEmpty();
+        if (hasMarkers) {
+            markerTypes.add(0, lambdaConstructedType);
+            lambdaConstructedType = new JavaIntersectionTypeInstance(markerTypes);
+        }
+        InferredJavaType castJavaType = new InferredJavaType(lambdaConstructedType, InferredJavaType.Source.OPERATION);
+        if (hasMarkers) {
+            castJavaType.shallowSetCanBeVar();
+        }
+        funcCall = new DynamicInvokation(castJavaType, funcCall, dynamicArgs);
         if (stackProduced.size() == 0) {
             return new ExpressionStatement(funcCall);
         } else {
@@ -569,6 +579,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         TypedLiteral tlInstantiatedMethodType = getBootstrapArg(bootstrapArguments, 2, cp);
         int iFlags = getBootstrapArg(bootstrapArguments, 3, cp).getIntValue();
         int nextArgIdx = 4;
+        // Really don't understand why serializable is special.....
+        if ((iFlags & FLAG_SERIALIZABLE) != 0) {
+            markerTypes.add(TypeConstants.SERIALIZABLE);
+        }
         if ((iFlags & FLAG_MARKERS ) != 0) {
             int nMarkers = getBootstrapArg(bootstrapArguments, nextArgIdx++, cp).getIntValue();
             for (int x=0;x<nMarkers;++x) {
@@ -576,7 +590,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 if (marker.getType() == TypedLiteral.LiteralType.Class) {
                     JavaTypeInstance classType = marker.getClassValue();
                     markerTypes.add(classType);
-                }
+                } // else ????
             }
         }
 
