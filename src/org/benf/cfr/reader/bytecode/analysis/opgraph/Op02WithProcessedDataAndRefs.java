@@ -409,6 +409,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         DynamicInvokeType dynamicInvokeType = DynamicInvokeType.lookup(methodName);
 
+        List<JavaTypeInstance> markerTypes = ListFactory.newList();
         List<Expression> callargs;
         switch (dynamicInvokeType) {
             case UNKNOWN:
@@ -436,7 +437,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 break;
             case ALTMETAFACTORY_1:
             case ALTMETAFACTORY_2:
-                callargs = buildInvokeDynamicAltMetaFactoryArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
+                callargs = buildInvokeDynamicAltMetaFactoryArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef, markerTypes);
                 break;
             default:
                 throw new IllegalStateException();
@@ -524,8 +525,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return typedLiteral;
     }
 
-    private List<Expression> buildInvokeDynamicAltMetaFactoryArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef) {
-
+    private List<Expression> buildInvokeDynamicAltMetaFactoryArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef, List<JavaTypeInstance> markerTypes) {
+        final int FLAG_BRIDGES = 4;
+        final int FLAG_MARKERS = 2;
+        final int FLAG_SERIALIZABLE = 1;
         /*
          * First 3 arguments to an invoke dynamic are stacked automatically by the JVM.
          *  MethodHandles.Lookup caller,
@@ -564,7 +567,18 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         TypedLiteral tlMethodType = getBootstrapArg(bootstrapArguments, 0, cp);
         TypedLiteral tlImplMethod = getBootstrapArg(bootstrapArguments, 1, cp);
         TypedLiteral tlInstantiatedMethodType = getBootstrapArg(bootstrapArguments, 2, cp);
-        TypedLiteral flags = getBootstrapArg(bootstrapArguments, 3, cp);
+        int iFlags = getBootstrapArg(bootstrapArguments, 3, cp).getIntValue();
+        int nextArgIdx = 4;
+        if ((iFlags & FLAG_MARKERS ) != 0) {
+            int nMarkers = getBootstrapArg(bootstrapArguments, nextArgIdx++, cp).getIntValue();
+            for (int x=0;x<nMarkers;++x) {
+                TypedLiteral marker = getBootstrapArg(bootstrapArguments, nextArgIdx++, cp);
+                if (marker.getType() == TypedLiteral.LiteralType.Class) {
+                    JavaTypeInstance classType = marker.getClassValue();
+                    markerTypes.add(classType);
+                }
+            }
+        }
 
         callargs.add(new Literal(tlMethodType));
         callargs.add(new Literal(tlImplMethod));

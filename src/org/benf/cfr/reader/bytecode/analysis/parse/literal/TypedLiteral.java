@@ -94,10 +94,22 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return (i != 0);
     }
 
+    public int getIntValue() {
+        if (type != LiteralType.Integer) throw new IllegalStateException("Expecting integral literal");
+        Integer i = (Integer) value;
+        return i;
+    }
+
     public Boolean getMaybeBoolValue() {
         if (type != LiteralType.Integer) return null;
         Integer i = (Integer) value;
         return (i == 0) ? Boolean.FALSE : Boolean.TRUE;
+    }
+
+    public JavaTypeInstance getClassValue() {
+        if (type != LiteralType.Class) throw new IllegalStateException("Expecting Class literal");
+        JavaTypeInstance t = (JavaTypeInstance) value;
+        return t;
     }
 
     // fixme - move into QuotingUtils.
