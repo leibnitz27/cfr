@@ -2,13 +2,14 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
-    String name;
-    JavaTypeInstance classBound;
-    JavaTypeInstance interfaceBound;
+    private String name;
+    private JavaTypeInstance classBound;
+    private JavaTypeInstance interfaceBound;
 
     public FormalTypeParameter(String name, JavaTypeInstance classBound, JavaTypeInstance interfaceBound) {
         this.name = name;
@@ -24,6 +25,21 @@ public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(classBound);
         collector.collect(interfaceBound);
+    }
+
+    public void add(FormalTypeParameter other) {
+        JavaTypeInstance typ = classBound == null ? interfaceBound : classBound;
+        JavaTypeInstance otherTyp = other.classBound == null ? other.interfaceBound : other.classBound;
+        if (typ instanceof JavaIntersectionTypeInstance) {
+            typ = ((JavaIntersectionTypeInstance) typ).withPart(otherTyp);
+        } else {
+            typ = new JavaIntersectionTypeInstance(ListFactory.newList(typ, otherTyp));
+        }
+        if (classBound != null) {
+            classBound = typ;
+        } else {
+            interfaceBound = typ;
+        }
     }
 
     @Override

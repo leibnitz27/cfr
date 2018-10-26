@@ -289,7 +289,7 @@ public class CodeAnalyser {
         Op02GetClassRewriter.removeInvokeGetClass(classFile, op2list, GetClassTestInnerConstructor.INSTANCE);
 
         long codeLength = originalCodeAttribute.getCodeLength();
-        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, dcCommonState, options);
+        op2list = Op02WithProcessedDataAndRefs.insertExceptionBlocks(op2list, exceptions, lutByOffset, cp, codeLength, options);
         // lutByOffset is no longer valid at this point, but we might still need it to determine variable lifetime (i.e what
         // was the instruction BEFORE this one)
 
@@ -332,7 +332,7 @@ public class CodeAnalyser {
 
 
         // Discover slot re-use, infer invisible constructor parameters, etc.
-        Op02WithProcessedDataAndRefs.discoverStorageLiveness(method, comments, op2list, bytecodeMeta, options);
+        Op02WithProcessedDataAndRefs.discoverStorageLiveness(method, comments, op2list, bytecodeMeta);
 
         // Create a non final version...
         final VariableFactory variableFactory = new VariableFactory(method);

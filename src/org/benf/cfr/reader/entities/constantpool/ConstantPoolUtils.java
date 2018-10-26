@@ -1,32 +1,28 @@
 package org.benf.cfr.reader.entities.constantpool;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDeltaImpl;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
-import org.benf.cfr.reader.util.output.LoggerFactory;
+import org.benf.cfr.reader.util.collections.ListFactory;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 public class ConstantPoolUtils {
-
-    private static final Logger logger = LoggerFactory.create(ConstantPoolUtils.class);
 
     private static JavaTypeInstance parseRefType(String tok, ConstantPool cp, boolean isTemplate) {
         int idxGen = tok.indexOf('<');
         int idxStart = 0;
 
         if (idxGen != -1) {
-            List<JavaTypeInstance> genericTypes = null;
+            List<JavaTypeInstance> genericTypes;
             String already = "";
-            while (idxGen != -1) {
+            while (true) {
                 String pre = tok.substring(idxStart, idxGen);
                 already += pre;
                 String gen = tok.substring(idxGen + 1, tok.length() - 1);
@@ -41,7 +37,7 @@ public class ConstantPoolUtils {
                     idxGen = tok.indexOf('<', idxStart);
                     if (idxGen == -1) {
                         // Append rest, treat as if no generics.
-                        already += tok.substring(idxStart, tok.length());
+                        already += tok.substring(idxStart);
                         return cp.getClassCache().getRefClassFor(already);
                     }
                     /*
@@ -74,7 +70,7 @@ public class ConstantPoolUtils {
             numArrayDims++;
             c = tok.charAt(++idx);
         }
-        JavaTypeInstance javaTypeInstance = null;
+        JavaTypeInstance javaTypeInstance;
         switch (c) {
             case '*': // wildcard
                 javaTypeInstance = new JavaGenericPlaceholderTypeInstance(MiscConstants.UNBOUND_GENERIC, cp);
@@ -208,8 +204,8 @@ public class ConstantPoolUtils {
         return proto.substring(startidx, curridx);
     }
 
-    private static FormalTypeParameter decodeFormalTypeTok(String tok, ConstantPool cp, int idx) {
-
+    private static FormalTypeParameter decodeFormalTypeTok(String tok, ConstantPool cp) {
+        int idx = 0;
         while (tok.charAt(idx) != ':') {
             idx++;
         }
@@ -229,7 +225,8 @@ public class ConstantPoolUtils {
                 idx++;
                 String interfaceBoundTok = getNextTypeTok(tok, idx);
                 interfaceBound = decodeTypeTok(interfaceBoundTok, cp);
-                idx += interfaceBoundTok.length();
+                // should we ever need it.
+                //idx += interfaceBoundTok.length();
             }
         }
         return new FormalTypeParameter(name, classBound, interfaceBound);
@@ -242,21 +239,10 @@ public class ConstantPoolUtils {
         /*
          * Optional formal type parameters
          */
-        List<FormalTypeParameter> formalTypeParameters = null;
-        if (sig.charAt(curridx) == '<') {
-            formalTypeParameters = ListFactory.newList();
-            curridx++;
-            while (sig.charAt(curridx) != '>') {
-                String formalTypeTok = getNextFormalTypeTok(sig, curridx);
-                FormalTypeParameter formalTypeParameter = decodeFormalTypeTok(formalTypeTok, cp, 0);
-                // Handle odd scala case where we get a blank type parameter.
-                if (!formalTypeParameter.getName().equals("")) {
-                    formalTypeParameters.add(formalTypeParameter);
-                }
-                curridx += formalTypeTok.length();
-            }
-            curridx++;
-        }
+        Pair<Integer, List<FormalTypeParameter>> formalTypeParametersRes = parseFormalTypeParameters(sig, cp, curridx);
+        curridx = formalTypeParametersRes.getFirst();
+        List<FormalTypeParameter> formalTypeParameters = formalTypeParametersRes.getSecond();
+
         /*
          * Superclass signature.
          */
@@ -274,23 +260,41 @@ public class ConstantPoolUtils {
         return new ClassSignature(formalTypeParameters, superClassSignature, interfaceClassSignatures);
     }
 
+    private static Pair<Integer, List<FormalTypeParameter>> parseFormalTypeParameters(String proto, ConstantPool cp, int curridx) {
+        List<FormalTypeParameter> formalTypeParameters = null;
+        FormalTypeParameter last = null;
+        if (proto.charAt(curridx) == '<') {
+            formalTypeParameters = ListFactory.newList();
+            curridx++;
+            while (proto.charAt(curridx) != '>') {
+                String formalTypeTok = getNextFormalTypeTok(proto, curridx);
+                FormalTypeParameter typeTok = decodeFormalTypeTok(formalTypeTok, cp);
+                if (typeTok.getName().equals("")) {
+                    // previous type was an intersection type!
+                    if (last != null) {
+                        last.add(typeTok);
+                    } // else no idea - have to skip.
+                } else {
+                    formalTypeParameters.add(typeTok);
+                    last = typeTok;
+                }
+                curridx += formalTypeTok.length();
+            }
+            curridx++;
+        }
+        return Pair.make(curridx, formalTypeParameters);
+    }
+
     public static MethodPrototype parseJavaMethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, ConstantPoolEntryUTF8 prototype, ConstantPool cp, boolean varargs, boolean synthetic, VariableNamer variableNamer) {
         String proto = prototype.getValue();
         int curridx = 0;
         /*
          * Method is itself generic...
          */
-        List<FormalTypeParameter> formalTypeParameters = null;
-        if (proto.charAt(curridx) == '<') {
-            formalTypeParameters = ListFactory.newList();
-            curridx++;
-            while (proto.charAt(curridx) != '>') {
-                String formalTypeTok = getNextFormalTypeTok(proto, curridx);
-                formalTypeParameters.add(decodeFormalTypeTok(formalTypeTok, cp, 0));
-                curridx += formalTypeTok.length();
-            }
-            curridx++;
-        }
+        Pair<Integer, List<FormalTypeParameter>> formalTypeParametersRes = parseFormalTypeParameters(proto, cp, curridx);
+        curridx = formalTypeParametersRes.getFirst();
+        List<FormalTypeParameter> formalTypeParameters = formalTypeParametersRes.getSecond();
+
         if (proto.charAt(curridx) != '(') throw new ConfusedCFRException("Prototype " + proto + " is invalid");
         curridx++;
         List<JavaTypeInstance> args = ListFactory.newList();
@@ -314,7 +318,7 @@ public class ConstantPoolUtils {
         return res;
     }
 
-    public static Pair<List<JavaTypeInstance>, Integer> parseTypeList(String proto, ConstantPool cp) {
+    private static Pair<List<JavaTypeInstance>, Integer> parseTypeList(String proto, ConstantPool cp) {
         int curridx = 0;
         int len = proto.length();
         List<JavaTypeInstance> res = ListFactory.newList();
@@ -329,7 +333,7 @@ public class ConstantPoolUtils {
     /*
      * could be rephrased in terms of MethodPrototype.
      */
-    public static StackDelta parseMethodPrototype(boolean member, ConstantPoolEntryUTF8 prototype, ConstantPool cp) {
+    static StackDelta parseMethodPrototype(boolean member, ConstantPoolEntryUTF8 prototype, ConstantPool cp) {
         String proto = prototype.getValue();
         int curridx = 1;
         if (!proto.startsWith("(")) throw new ConfusedCFRException("Prototype " + proto + " is invalid");

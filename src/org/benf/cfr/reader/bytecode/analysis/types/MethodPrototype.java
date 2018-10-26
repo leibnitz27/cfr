@@ -28,7 +28,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         public LocalVariable localVariable;
         public HiddenReason hidden;
 
-        public ParameterLValue(LocalVariable localVariable, HiddenReason hidden) {
+        ParameterLValue(LocalVariable localVariable, HiddenReason hidden) {
             this.localVariable = localVariable;
             this.hidden = hidden;
         }
@@ -128,9 +128,9 @@ public class MethodPrototype implements TypeUsageCollectable {
         collector.collectFrom(formalTypeParameters);
     }
 
-    public void hide(int x) {
+    public void hide(int idx) {
 //        getParameterLValues().get(x).hidden = HiddenReason.HiddenOuterReferece;  // TODO : No.
-        hidden.add(x);
+        hidden.add(idx);
     }
 
     public void setDescriptorProto(MethodPrototype descriptorProto) {
@@ -315,6 +315,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         return res;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public List<LocalVariable> computeParameters(Method.MethodConstructor constructorFlag, Map<Integer, Ident> slotToIdentMap) {
         if (parameterLValues != null) {
             return getComputedParameters();
@@ -326,6 +327,7 @@ public class MethodPrototype implements TypeUsageCollectable {
             variableNamer.forceName(slotToIdentMap.get(0), 0, MiscConstants.THIS);
             offset = 1;
         }
+        //noinspection StatementWithEmptyBody
         if (constructorFlag == Method.MethodConstructor.ENUM_CONSTRUCTOR) {
 //            parameterLValues.add(new LocalVariable(offset, new Ident(offset, 0), variableNamer, offset, new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.UNKNOWN, true), false));
 //            offset++;
@@ -366,7 +368,6 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     public String getFixedName() {
-//        return "XXX";
         return fixedName != null ? fixedName : name;
     }
 
@@ -464,25 +465,9 @@ public class MethodPrototype implements TypeUsageCollectable {
 
     }
 
-    public Dumper dumpAppropriatelyCastedArgumentString(Expression expression, int argidx, Dumper d) {
-        return expression.dump(d);
+    public void dumpAppropriatelyCastedArgumentString(Expression expression, Dumper d) {
+        expression.dump(d);
     }
-//    // Saves us using the above if we don't need to create the cast expression.
-//    public Dumper dumpAppropriatelyCastedArgumentString(Expression expression, int argidx, Dumper d) {
-//        JavaTypeInstance type = args.get(argidx);
-//        if (type.isComplexType()) {
-//            return expression.dump(d);
-//        } else {
-//            RawJavaType expectedRawJavaType = type.getRawTypeOfSimpleType();
-//            RawJavaType providedRawJavaType = expression.getInferredJavaType().getRawType();
-//            // Ideally, this would be >= 0, but if we remove an explicit cast, then we might call the wrong method.
-//            if (expectedRawJavaType.compareAllPriorityTo(providedRawJavaType) == 0) {
-//                return expression.dump(d);
-//            }
-//            return d.print("(" + expectedRawJavaType.getCastString() + ")").dump(expression);
-//        }
-//    }
-
 
     public void tightenArgs(Expression object, List<Expression> expressions) {
         if (expressions.size() != args.size()) {
@@ -588,7 +573,6 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     public boolean equalsGeneric(MethodPrototype other, GenericTypeBinder genericTypeBinder) {
-        List<FormalTypeParameter> otherTypeParameters = other.formalTypeParameters;
         List<JavaTypeInstance> otherArgs = other.args;
 
         if (otherArgs.size() != args.size()) {
@@ -738,7 +722,7 @@ public class MethodPrototype implements TypeUsageCollectable {
      * implicit captures are outer refs etc
      * explicit captures are
      */
-    public void setMethodScopedSyntheticConstructorParameters(DecompilerComments comments, NavigableMap<Integer, JavaTypeInstance> missing) {
+    public void setMethodScopedSyntheticConstructorParameters(NavigableMap<Integer, JavaTypeInstance> missing) {
         List<Slot> missingList = ListFactory.newList();
         //
         int expected = 0;
@@ -755,7 +739,6 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (missingList.size() < 2) {
             return;
         }
-        boolean handledDescriptor = false;
         // Can we improve this with a descriptor proto?
         if (descriptorProto != null) {
             // Try and line our existing args up with the descriptor proto, then infer synthetic
@@ -781,6 +764,7 @@ public class MethodPrototype implements TypeUsageCollectable {
 
         // The first element MUST be a reference, which is the implicit 'this'.
         if (missingList.get(0).getJavaTypeInstance() != RawJavaType.REF) return;
+        //noinspection unused
         Slot removed = missingList.remove(0);
         // Can we satisfy all of args at 0, or at 1?
         boolean all0 = satisfiesSlots(missingList, 0, args);
@@ -792,7 +776,6 @@ public class MethodPrototype implements TypeUsageCollectable {
             // 'real' full signature.
             // This is very unsatisfactory
             syntheticArgs.add(missingList.remove(0));
-            int x = 1;
         }
         for (int x=args.size();x<missingList.size();++x) {
             syntheticCaptureArgs.add(missingList.get(x));

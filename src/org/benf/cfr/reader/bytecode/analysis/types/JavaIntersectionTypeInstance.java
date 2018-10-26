@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -15,6 +16,12 @@ public class JavaIntersectionTypeInstance implements JavaTypeInstance {
     public JavaIntersectionTypeInstance(List<JavaTypeInstance> parts) {
         this.parts = parts;
         id = sid++;
+    }
+
+    JavaIntersectionTypeInstance withPart(JavaTypeInstance part) {
+        List<JavaTypeInstance> newParts = ListFactory.newList(parts);
+        newParts.add(part);
+        return new JavaIntersectionTypeInstance(newParts);
     }
 
     @Override

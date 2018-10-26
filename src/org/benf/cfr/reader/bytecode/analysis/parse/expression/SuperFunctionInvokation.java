@@ -88,7 +88,7 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
             Expression arg = args.get(x);
             if (!first) d.print(", ");
             first = false;
-            methodPrototype.dumpAppropriatelyCastedArgumentString(arg, x, d);
+            methodPrototype.dumpAppropriatelyCastedArgumentString(arg, d);
         }
         d.print(")");
         return d;
