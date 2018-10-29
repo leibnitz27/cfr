@@ -441,6 +441,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         JavaTypeInstance lambdaConstructedType = callSiteReturnType;
         boolean hasMarkers = !markerTypes.isEmpty();
+        // If the expected type is already serialisable we don't need to add the marker.
+        // (otherwise eg LambdaTest20 gets spurious intersection cast).
+        if (hasMarkers && markerTypes.contains(TypeConstants.SERIALIZABLE)) {
+            BindingSuperContainer superContainer = callSiteReturnType.getBindingSupers();
+            if (superContainer != null &&
+                superContainer.containsBase(TypeConstants.SERIALIZABLE)) {
+                markerTypes.remove(TypeConstants.SERIALIZABLE);
+            }
+            hasMarkers = !markerTypes.isEmpty();
+        }
         if (hasMarkers) {
             markerTypes.add(0, lambdaConstructedType);
             lambdaConstructedType = new JavaIntersectionTypeInstance(markerTypes);
@@ -555,6 +565,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         int nextArgIdx = 4;
         // Really don't understand why serializable is special.....
         if ((iFlags & FLAG_SERIALIZABLE) != 0) {
+            // But it's useful to check if the 'main' interface is already serializable
+            // as we won't need it if so.
             markerTypes.add(TypeConstants.SERIALIZABLE);
         }
         if ((iFlags & FLAG_MARKERS ) != 0) {
@@ -571,7 +583,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         callargs.add(new Literal(tlMethodType));
         callargs.add(new Literal(tlImplMethod));
         callargs.add(new Literal(tlInstantiatedMethodType));
-
 
         /*
          * We slightly lie about the dynamic arguments, currently, by putting them in a structure which is
