@@ -19,17 +19,17 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.DecompilerComment;
+import org.benf.cfr.reader.util.DecompilerComments;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.LoggerFactory;
-import org.benf.cfr.reader.util.output.StdIODumper;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -105,7 +105,7 @@ public class CodeAnalyser {
         Options options = dcCommonState.getOptions();
         List<Op01WithProcessedDataAndByteJumps> instrs = getInstrs();
 
-        AnalysisResult res = null;
+        AnalysisResult res;
 
         /*
          * Very quick scan to check for presence of certain instructions.
@@ -210,7 +210,6 @@ public class CodeAnalyser {
             comments.addComment("Opcode count of " + instrs.size() + " triggered aggressive code reduction.  Override with --" + OptionsImpl.AGGRESSIVE_SIZE_REDUCTION_THRESHOLD.getName() + ".");
         }
 
-        Dumper debugDumper = new StdIODumper(new TypeUsageInformationEmpty(), options, new IllegalIdentifierDump.Nop());
         SortedMap<Integer, Integer> lutByOffset = new TreeMap<Integer, Integer>();
         Map<Integer, Integer> lutByIdx = new HashMap<Integer, Integer>();
         int idx2 = 0;

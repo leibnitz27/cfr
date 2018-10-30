@@ -30,24 +30,24 @@ import java.util.*;
 
 public class FinalAnalyzer {
     /*
- * This is the INITIAL entry point - i.e. we'll call this once for a finally block.
- * If it's recalled later for a different try in the same block, that try should have already been nopped out.
- */
-    public static boolean identifyFinally(Method method, Op03SimpleStatement in, List<Op03SimpleStatement> allStatements,
-                                          BlockIdentifierFactory blockIdentifierFactory,
-                                          Set<Op03SimpleStatement> analysedTries) {
+     * This is the INITIAL entry point - i.e. we'll call this once for a finally block.
+     * If it's recalled later for a different try in the same block, that try should have already been nopped out.
+     */
+    public static void identifyFinally(Method method, final Op03SimpleStatement in, List<Op03SimpleStatement> allStatements,
+                                       BlockIdentifierFactory blockIdentifierFactory,
+                                       Set<Op03SimpleStatement> analysedTries) {
         // Already modified.
-        if (!(in.getStatement() instanceof TryStatement)) return true;
+        if (!(in.getStatement() instanceof TryStatement)) return;
         analysedTries.add(in);
 
-        TryStatement tryStatement = (TryStatement) in.getStatement();
+        final TryStatement tryStatement = (TryStatement) in.getStatement();
         final BlockIdentifier tryBlockIdentifier = tryStatement.getBlockIdentifier();
 
 
         /*
          * We only need worry about try statements which have a 'Throwable' handler.
          */
-        List<Op03SimpleStatement> targets = in.getTargets();
+        final List<Op03SimpleStatement> targets = in.getTargets();
         List<Op03SimpleStatement> catchStarts = Functional.filter(targets, new TypeFilter<CatchStatement>(CatchStatement.class));
         Set<Op03SimpleStatement> possibleCatches = SetFactory.newOrderedSet();
         for (Op03SimpleStatement catchS : catchStarts) {
@@ -63,21 +63,21 @@ public class FinalAnalyzer {
             }
         }
         if (possibleCatches.isEmpty()) {
-            return false;
+            return;
         }
 
         /*
          * We have to cheat, and assume the 'furthest' throwable on the chain from our exception handlers
          * is the throwable.
          */
-        Op03SimpleStatement possibleFinallyCatch = findPossibleFinallyCatch(possibleCatches, allStatements);
+        Op03SimpleStatement possibleFinallyCatch = findPossibleFinallyCatch(possibleCatches);
 
         /* We've got a possible body for the finally from the catch statement, AND maybe
          * an 'end of try' finally body.
          */
         FinallyCatchBody finallyCatchBody = FinallyCatchBody.build(possibleFinallyCatch, allStatements);
         if (finallyCatchBody == null) {
-            return false;
+            return;
         }
 
         FinallyGraphHelper finallyGraphHelper = new FinallyGraphHelper(finallyCatchBody);
@@ -99,19 +99,19 @@ public class FinalAnalyzer {
             if (!peerTrySeen.add(tryS)) {
                 continue;
             }
-            if (!identifyFinally2(tryS, allStatements, peerTries, finallyGraphHelper, results)) {
-                return false;
+            if (!identifyFinally2(tryS, peerTries, finallyGraphHelper, results, allStatements)) {
+                return;
             }
         }
 
         if (results.isEmpty()) {
             // No finally detected.
-            return false;
+            return;
         }
 
         if (results.size() == 1) {
             // Not worth it!
-            return false;
+            return;
         }
 
         /*
@@ -122,7 +122,7 @@ public class FinalAnalyzer {
         Op03SimpleStatement lastCatch = originalTryTargets.get(originalTryTargets.size() - 1);
         if (!(lastCatch.getStatement() instanceof CatchStatement)) {
             // For a try / finally, we'll still have a pointless catch-rethrow.
-            return false;
+            return;
 //            throw new IllegalStateException("Last target of a try not a catch");
         }
 
@@ -146,8 +146,6 @@ public class FinalAnalyzer {
          */
         final PeerTries.PeerTrySet originalTryGroupPeers = triesByLevel.get(0);
         for (final PeerTries.PeerTrySet peerSet : triesByLevel) {
-            boolean firstTryInBlock = true;
-            boolean artificalTry = true;
 
             for (Op03SimpleStatement peerTry : peerSet.getPeerTries()) {
                 if (peerTry == in) {
@@ -157,7 +155,6 @@ public class FinalAnalyzer {
                     /*
                      * We need to unlink the original from the expected finally catch, but that is it.
                      */
-                    firstTryInBlock = false;
                     continue;
                 }
 
@@ -254,6 +251,11 @@ public class FinalAnalyzer {
                         if (blockIdentifiers.remove(oldBlockIdent)) {
                             if (peerSet == originalTryGroupPeers) {
                                 blockIdentifiers.add(tryBlockIdentifier);
+                                if (arg1.getTargets().contains(in)) {
+                                    arg1.replaceTarget(in, targets.get(0));
+                                    targets.get(0).addSource(arg1);
+                                    in.removeSource(arg1);
+                                }
                             }
                             arg2.enqueue(arg1.getTargets());
                             arg2.enqueue(arg1.getLinearlyNext());
@@ -607,14 +609,13 @@ public class FinalAnalyzer {
         finallyOp.addSource(in);
         allStatements.addAll(newFinallyBody);
 
-        return true;
     }
 
 
-    public static boolean identifyFinally2(final Op03SimpleStatement in, List<Op03SimpleStatement> allStatements,
-                                           PeerTries peerTries,
-                                           FinallyGraphHelper finallyGraphHelper,
-                                           Set<Result> results) {
+    private static boolean identifyFinally2(final Op03SimpleStatement in,
+                                            PeerTries peerTries,
+                                            FinallyGraphHelper finallyGraphHelper,
+                                            Set<Result> results, List<Op03SimpleStatement> all) {
         if (!(in.getStatement() instanceof TryStatement)) return false;
         TryStatement tryStatement = (TryStatement) in.getStatement();
         final BlockIdentifier tryBlockIdentifier = tryStatement.getBlockIdentifier();
@@ -634,6 +635,7 @@ public class FinalAnalyzer {
             for (ExceptionGroup.Entry exception : exceptions) {
                 if (exception.getExceptionGroup().getTryBlockIdentifier() == tryBlockIdentifier) {
                     JavaRefTypeInstance catchType = exception.getCatchType();
+                    // todo - type comparison?
                     if (TypeConstants.throwableName.equals(catchType.getRawName())) {
                         possibleCatches.add(catchS);
                     } else {
@@ -651,7 +653,7 @@ public class FinalAnalyzer {
         }
         boolean result = false;
         for (Op03SimpleStatement recTry : recTries) {
-            result |= identifyFinally2(recTry, allStatements, peerTries, finallyGraphHelper, results);
+            result |= identifyFinally2(recTry, peerTries, finallyGraphHelper, results, all);
         }
 
         /*
@@ -679,11 +681,12 @@ public class FinalAnalyzer {
                         if (linNext != null) {
                             if (linNext.getBlockIdentifiers().contains(tryBlockIdentifier)) {
                                 arg2.enqueue(linNext);
-                            } else {
+                            }
+                            //else {
                                 //                            if (arg1.getStatement() instanceof ThrowStatement) {
                                 //                                exitPaths.add(arg1);
                                 //                            }
-                            }
+                            //}
                         }
                     } else {
                         if (arg1.getStatement() instanceof CaseStatement) {
@@ -986,7 +989,7 @@ public class FinalAnalyzer {
     }
 
 
-    private static Op03SimpleStatement findPossibleFinallyCatch(Set<Op03SimpleStatement> possibleCatches, List<Op03SimpleStatement> allStatements) {
+    private static Op03SimpleStatement findPossibleFinallyCatch(Set<Op03SimpleStatement> possibleCatches) {
         /*
          * This is a hack.
          */
@@ -995,6 +998,4 @@ public class FinalAnalyzer {
         Op03SimpleStatement catchS = tmp.get(tmp.size() - 1);
         return catchS;
     }
-
-
 }
