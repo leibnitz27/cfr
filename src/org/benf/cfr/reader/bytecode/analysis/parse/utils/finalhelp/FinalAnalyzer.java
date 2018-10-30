@@ -99,7 +99,7 @@ public class FinalAnalyzer {
             if (!peerTrySeen.add(tryS)) {
                 continue;
             }
-            if (!identifyFinally2(tryS, peerTries, finallyGraphHelper, results, allStatements)) {
+            if (!identifyFinally2(tryS, peerTries, finallyGraphHelper, results)) {
                 return;
             }
         }
@@ -251,6 +251,8 @@ public class FinalAnalyzer {
                         if (blockIdentifiers.remove(oldBlockIdent)) {
                             if (peerSet == originalTryGroupPeers) {
                                 blockIdentifiers.add(tryBlockIdentifier);
+                                // IF we end up adding a jump from inside the block to the try, we want to jump to the
+                                // first statement instead.
                                 if (arg1.getTargets().contains(in)) {
                                     arg1.replaceTarget(in, targets.get(0));
                                     targets.get(0).addSource(arg1);
@@ -615,7 +617,7 @@ public class FinalAnalyzer {
     private static boolean identifyFinally2(final Op03SimpleStatement in,
                                             PeerTries peerTries,
                                             FinallyGraphHelper finallyGraphHelper,
-                                            Set<Result> results, List<Op03SimpleStatement> all) {
+                                            Set<Result> results) {
         if (!(in.getStatement() instanceof TryStatement)) return false;
         TryStatement tryStatement = (TryStatement) in.getStatement();
         final BlockIdentifier tryBlockIdentifier = tryStatement.getBlockIdentifier();
@@ -653,7 +655,7 @@ public class FinalAnalyzer {
         }
         boolean result = false;
         for (Op03SimpleStatement recTry : recTries) {
-            result |= identifyFinally2(recTry, peerTries, finallyGraphHelper, results, all);
+            result |= identifyFinally2(recTry, peerTries, finallyGraphHelper, results);
         }
 
         /*
