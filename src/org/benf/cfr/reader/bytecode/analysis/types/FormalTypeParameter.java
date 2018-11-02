@@ -28,8 +28,8 @@ public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
     }
 
     public void add(FormalTypeParameter other) {
-        JavaTypeInstance typ = classBound == null ? interfaceBound : classBound;
-        JavaTypeInstance otherTyp = other.classBound == null ? other.interfaceBound : other.classBound;
+        JavaTypeInstance typ = getBound();
+        JavaTypeInstance otherTyp = other.getBound();
         if (typ instanceof JavaIntersectionTypeInstance) {
             typ = ((JavaIntersectionTypeInstance) typ).withPart(otherTyp);
         } else {
@@ -42,9 +42,13 @@ public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
         }
     }
 
+    public JavaTypeInstance getBound() {
+        return classBound == null ? interfaceBound : classBound;
+    }
+
     @Override
     public Dumper dump(Dumper d) {
-        JavaTypeInstance dispInterface = classBound == null ? interfaceBound : classBound;
+        JavaTypeInstance dispInterface = getBound();
         d.print(name);
         if (dispInterface != null) {
             if (!"java.lang.Object".equals(dispInterface.getRawName())) {
