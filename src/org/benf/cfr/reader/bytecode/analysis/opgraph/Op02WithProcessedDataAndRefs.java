@@ -341,9 +341,19 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             superOnInterface = !baseType.equals(superContainer);
         }
 
+        JavaTypeInstance bestType = object.getInferredJavaType().getJavaTypeInstance();
+        if (bestType instanceof JavaGenericPlaceholderTypeInstance) {
+            MethodPrototype callerProto = thisCallerMethod.getMethodPrototype();
+            if (callerProto.hasFormalTypeParameters()) {
+                FormalTypeParameter fmt = callerProto.getFormalParameterMap().get(bestType.getRawName());
+                if (fmt != null) {
+                    bestType = fmt.getBound();
+                }
+            }
+        }
         AbstractMemberFunctionInvokation funcCall = isSuper ?
                 new SuperFunctionInvokation(cp, function, object, args, nulls, superOnInterface) :
-                new MemberFunctionInvokation(cp, function, object, special, args, nulls);
+                new MemberFunctionInvokation(cp, function, object, bestType, special, args, nulls);
 
         if (object.getInferredJavaType().getJavaTypeInstance() == RawJavaType.NULL) {
             JavaTypeInstance type = methodPrototype.getClassType();
@@ -1142,6 +1152,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 // i.e. without generic information.
                 Expression rhs = getStackRValue(0);
                 if (!tgtJavaType.equals(srcJavaType.getDeGenerifiedType())) {
+                    // If we've got a type which is *probably* right - then try to get the best
+                    // type out.
+                    // This is helpful for Intersection types.
+                    JavaTypeInstance implementationOf = srcJavaType.directImplOf(tgtJavaType);
+                    if (implementationOf != null) {
+                        tgtJavaType = implementationOf;
+                    }
                     // We still have a problem here - if we introduce an extra cast, we might not be ABLE
                     // to perform this cast without going via 'Object'.  We just don't know currently.
                     InferredJavaType castType = new InferredJavaType(tgtJavaType, InferredJavaType.Source.EXPRESSION, true);

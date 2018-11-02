@@ -10,8 +10,11 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class ConstantPoolUtils {
 
@@ -21,10 +24,10 @@ public class ConstantPoolUtils {
 
         if (idxGen != -1) {
             List<JavaTypeInstance> genericTypes;
-            String already = "";
+            StringBuilder already = new StringBuilder();
             while (true) {
                 String pre = tok.substring(idxStart, idxGen);
-                already += pre;
+                already.append(pre);
                 String gen = tok.substring(idxGen + 1, tok.length() - 1);
                 Pair<List<JavaTypeInstance>, Integer> genericTypePair = parseTypeList(gen, cp);
                 genericTypes = genericTypePair.getFirst();
@@ -37,8 +40,8 @@ public class ConstantPoolUtils {
                     idxGen = tok.indexOf('<', idxStart);
                     if (idxGen == -1) {
                         // Append rest, treat as if no generics.
-                        already += tok.substring(idxStart);
-                        return cp.getClassCache().getRefClassFor(already);
+                        already.append(tok.substring(idxStart));
+                        return cp.getClassCache().getRefClassFor(already.toString());
                     }
                     /*
                      * At this point we're discarding the outer generics info - that's not good....
@@ -48,7 +51,7 @@ public class ConstantPoolUtils {
                     break;
                 }
             }
-            JavaRefTypeInstance clazzType = cp.getClassCache().getRefClassFor(already);
+            JavaRefTypeInstance clazzType = cp.getClassCache().getRefClassFor(already.toString());
             return new JavaGenericRefTypeInstance(clazzType, genericTypes);
         } else if (isTemplate) {
             return new JavaGenericPlaceholderTypeInstance(tok, cp);
@@ -294,6 +297,15 @@ public class ConstantPoolUtils {
         Pair<Integer, List<FormalTypeParameter>> formalTypeParametersRes = parseFormalTypeParameters(proto, cp, curridx);
         curridx = formalTypeParametersRes.getFirst();
         List<FormalTypeParameter> formalTypeParameters = formalTypeParametersRes.getSecond();
+        Map<String, JavaTypeInstance> ftpMap;
+        if (formalTypeParameters == null) {
+            ftpMap = Collections.emptyMap();
+        } else {
+            ftpMap = MapFactory.newMap();
+            for (FormalTypeParameter ftp : formalTypeParameters) {
+                ftpMap.put(ftp.getName(), ftp.getBound());
+            }
+        }
 
         if (proto.charAt(curridx) != '(') throw new ConfusedCFRException("Prototype " + proto + " is invalid");
         curridx++;
@@ -301,7 +313,11 @@ public class ConstantPoolUtils {
         // could use parseTypeList below.
         while (proto.charAt(curridx) != ')') {
             String typeTok = getNextTypeTok(proto, curridx);
-            args.add(decodeTypeTok(typeTok, cp));
+            JavaTypeInstance type = decodeTypeTok(typeTok, cp);
+            if (type instanceof JavaGenericPlaceholderTypeInstance) {
+                type = ((JavaGenericPlaceholderTypeInstance) type).withBound(ftpMap.get(type.getRawName()));
+            }
+            args.add(type);
             curridx += typeTok.length();
         }
         curridx++;

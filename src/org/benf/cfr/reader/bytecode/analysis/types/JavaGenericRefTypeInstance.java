@@ -253,6 +253,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
     }
 
 
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
         return equivalentUnder(o, DefaultEquivalenceConstraint.INSTANCE);
@@ -343,5 +344,15 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
             }
             return super.equivalent(o1, o2);
         }
+    }
+
+    @Override
+    public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
+        return other == this.getDeGenerifiedType() ? this : null;
+    }
+
+    @Override
+    public JavaTypeInstance directImplOf(JavaTypeInstance other) {
+        return other == this.getDeGenerifiedType() ? this : null;
     }
 }

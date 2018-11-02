@@ -56,7 +56,7 @@ public enum RawJavaType implements JavaTypeInstance {
         return tgt;
     }
 
-    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber, boolean objectType) {
+    RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber, boolean objectType) {
         this.name = name;
         this.stackType = stackType;
         this.usableType = usableType;
@@ -66,11 +66,9 @@ public enum RawJavaType implements JavaTypeInstance {
         this.isObject = objectType;
     }
 
-    private RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, boolean objectType) {
+    RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, boolean objectType) {
         this(name, suggestedVarName, stackType, usableType, null, false, objectType);
     }
-
-
 
     public String getName() {
         return name;
@@ -105,6 +103,16 @@ public enum RawJavaType implements JavaTypeInstance {
 
     @Override
     public boolean isObject() { return isObject; }
+
+    @Override
+    public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
+        return null;
+    }
+
+    @Override
+    public JavaTypeInstance directImplOf(JavaTypeInstance other) {
+        return other == this ? this : null;
+    }
 
     /*
      * Compare integral type priorities.
@@ -195,7 +203,7 @@ public enum RawJavaType implements JavaTypeInstance {
             if (other == TypeConstants.OBJECT) {
                 return true;
             }
-            RawJavaType tgt = getUnboxedTypeFor((JavaRefTypeInstance) other);
+            RawJavaType tgt = getUnboxedTypeFor(other);
             if (tgt == null) {
                 // One final special case.
                 if (other.getRawName().equals(TypeConstants.boxingNameNumber)) {
@@ -212,7 +220,7 @@ public enum RawJavaType implements JavaTypeInstance {
     @Override
     public boolean impreciseCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         if (this.boxedName != null && other instanceof JavaRefTypeInstance) {
-            RawJavaType tgt = getUnboxedTypeFor((JavaRefTypeInstance) other);
+            RawJavaType tgt = getUnboxedTypeFor(other);
             if (tgt == null) {
                 if (other == TypeConstants.OBJECT) {
                     return true;
@@ -220,7 +228,6 @@ public enum RawJavaType implements JavaTypeInstance {
                 if (other.getRawName().equals(TypeConstants.boxingNameNumber)) {
                     return isNumber;
                 }
-//                int x = 1;
                 return false;
             }
             return implicitlyCastsTo(tgt) || tgt.implicitlyCastsTo(this);
@@ -234,7 +241,6 @@ public enum RawJavaType implements JavaTypeInstance {
     public boolean correctCanCastTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         return impreciseCanCastTo(other, gtb);
     }
-
 
     @Override
     public String suggestVarName() {
@@ -258,6 +264,4 @@ public enum RawJavaType implements JavaTypeInstance {
     public String toString() {
         return name;
     }
-
-
 }

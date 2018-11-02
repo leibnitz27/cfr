@@ -136,4 +136,39 @@ public class JavaIntersectionTypeInstance implements JavaTypeInstance {
     public boolean isObject() {
         return true;
     }
+
+    @Override
+    public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
+        JavaTypeInstance degenerifiedOther = other.getDeGenerifiedType();
+
+        for (JavaTypeInstance part : parts) {
+            if (part.getDeGenerifiedType().equals(degenerifiedOther)) {
+                return part.asGenericRefInstance(other);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public JavaTypeInstance directImplOf(JavaTypeInstance other) {
+        for (JavaTypeInstance part : parts) {
+            JavaTypeInstance res = part.directImplOf(other);
+            if (res != null) return res;
+        }
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (JavaTypeInstance t : parts) {
+            if (!first) {
+                sb.append(" & ");
+            }
+            first = false;
+            sb.append(t);
+        }
+        return sb.toString();
+    }
 }

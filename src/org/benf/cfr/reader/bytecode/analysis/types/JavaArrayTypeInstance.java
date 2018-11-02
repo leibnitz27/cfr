@@ -26,7 +26,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         private final List<List<AnnotationTableTypeEntry>> entries;
         private final JavaAnnotatedTypeInstance annotatedUnderlyingType;
 
-        public Annotated() {
+        Annotated() {
             entries = ListFactory.newList();
             for (int x=0;x<dimensions;++x) {
                 entries.add(ListFactory.<AnnotationTableTypeEntry>newList());
@@ -107,7 +107,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         }
     }
 
-    public void toVarargString(Dumper d) {
+    void toVarargString(Dumper d) {
         toCommonString(getNumArrayDimensions() - 1, d);
         d.print(" ...");
     }
@@ -220,4 +220,13 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         return "arr" + underlyingType.suggestVarName();
     }
 
+    @Override
+    public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
+        return null;
+    }
+
+    @Override
+    public JavaTypeInstance directImplOf(JavaTypeInstance other) {
+        return null;
+    }
 }

@@ -71,4 +71,19 @@ public interface JavaTypeInstance {
     void collectInto(TypeUsageCollector typeUsageCollector);
 
     boolean isObject();
+
+    /*
+     * Return either the most appropriate generic ref instance or null.
+     */
+    JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other);
+
+    /*
+     * Does this *directly* implement other?
+     * if so, return actual implementation.
+     *
+     * Particularly useful in pulling a generic implementation of I out of an intersection type.
+     *
+     * Strip generics before calling.
+     */
+    JavaTypeInstance directImplOf(JavaTypeInstance other);
 }

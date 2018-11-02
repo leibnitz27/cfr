@@ -36,6 +36,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
          */
         if (className.contains(MiscConstants.INNER_CLASS_SEP_STR)) {
             int idx = className.lastIndexOf(MiscConstants.INNER_CLASS_SEP_CHAR);
+            //noinspection StatementWithEmptyBody
             if (idx == className.length()-1) {
                 /*
                  * if this is the case, it's likely to be a non-inner scala class.....
@@ -165,7 +166,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         String displayName = this.shortName;
         if (displayName.isEmpty()) return null;
         char[] chars = displayName.toCharArray();
-        int x = 0;
+        int x;
         int len = chars.length;
         for (x = 0; x < len; ++x) {
             char c = chars[x];
@@ -348,6 +349,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         return thisBindingSuper.containsBase(otherRaw);
     }
 
+    @Override
+    public JavaTypeInstance directImplOf(JavaTypeInstance other) {
+        return other == this ? this : null;
+    }
+
     /*
      * Fixme - shouldn't this use binding supercontainer?
      */
@@ -421,6 +427,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     @Override
     public void collectInto(TypeUsageCollector typeUsageCollector) {
         typeUsageCollector.collectRefType(this);
+    }
+
+    @Override
+    public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
+        return null;
     }
 
     private static class RefTypeInnerClassInfo implements InnerClassInfo {
@@ -502,5 +513,4 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             return hideSyntheticThis;
         }
     }
-
 }

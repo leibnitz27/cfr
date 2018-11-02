@@ -133,6 +133,14 @@ public class MethodPrototype implements TypeUsageCollectable {
         hidden.add(idx);
     }
 
+    public Map<String, FormalTypeParameter> getFormalParameterMap() {
+        Map<String, FormalTypeParameter> res = MapFactory.newMap();
+        for (FormalTypeParameter p : formalTypeParameters) {
+            res.put(p.getName(), p);
+        }
+        return res;
+    }
+
     public void setDescriptorProto(MethodPrototype descriptorProto) {
         this.descriptorProto = descriptorProto;
     }
@@ -415,10 +423,7 @@ public class MethodPrototype implements TypeUsageCollectable {
             // we should be able to figure out more information
             // I.e. iterator on List<String> returns Iterator<String>, not Iterator.
 
-            JavaGenericRefTypeInstance genericRefTypeInstance = null;
-            if (thisTypeInstance instanceof JavaGenericRefTypeInstance) {
-                genericRefTypeInstance = (JavaGenericRefTypeInstance) thisTypeInstance;
-            }
+            JavaGenericRefTypeInstance genericRefTypeInstance = thisTypeInstance.asGenericRefInstance(getClassType());
 
             /*
              * Now we need to specialise the method according to the existing specialisation on

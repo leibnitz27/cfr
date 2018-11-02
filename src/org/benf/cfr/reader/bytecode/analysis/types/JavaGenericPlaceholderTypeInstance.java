@@ -14,10 +14,23 @@ import java.util.List;
 public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstance {
     private final String className;
     private final ConstantPool cp;
+    private final JavaTypeInstance bound;
 
     public JavaGenericPlaceholderTypeInstance(String className, ConstantPool cp) {
         this.className = className;
         this.cp = cp;
+        this.bound = null;
+    }
+
+    private JavaGenericPlaceholderTypeInstance(String className, ConstantPool cp, JavaTypeInstance bound) {
+        this.className = className;
+        this.cp = cp;
+        this.bound = bound;
+    }
+
+    public JavaGenericPlaceholderTypeInstance withBound(JavaTypeInstance bound) {
+        if (bound == null) return this;
+        return new JavaGenericPlaceholderTypeInstance(className, cp, bound);
     }
 
     @Override
@@ -144,6 +157,11 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     @Override
+    public JavaTypeInstance directImplOf(JavaTypeInstance other) {
+        return bound == null ? null : bound.directImplOf(other);
+    }
+
+    @Override
     public int hashCode() {
         return 31 + className.hashCode();
     }
@@ -189,6 +207,9 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     public boolean implicitlyCastsTo(JavaTypeInstance other, GenericTypeBinder gtb) {
         if (other == TypeConstants.OBJECT) return true;
         if (other.equals(this)) return true;
+        if (bound != null) {
+            return bound.implicitlyCastsTo(other, gtb);
+        }
         return false;
     }
 
@@ -206,5 +227,10 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     public String suggestVarName() {
         if (className.equals(MiscConstants.UNBOUND_GENERIC)) { return "obj"; }
         return className;
+    }
+
+    @Override
+    public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
+        return null;
     }
 }

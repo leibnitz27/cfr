@@ -6,7 +6,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ExpressionStatement;
-import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericPlaceholderTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.collections.*;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
@@ -109,6 +113,10 @@ public class GenericInferer {
                 }
             }
         }
+        if (memberFunctionInvokations.isEmpty()) {
+            return;
+        }
+
         Map<Integer, List<MemberFunctionInvokation>> byTypKey = MapFactory.newTreeMap();
         Functional.groupToMapBy(memberFunctionInvokations, byTypKey, new UnaryFunction<MemberFunctionInvokation, Integer>() {
             @Override
@@ -123,9 +131,9 @@ public class GenericInferer {
             if (invokations.isEmpty()) continue;
 
             Expression obj0 = invokations.get(0).getObject();
-            JavaTypeInstance type = obj0.getInferredJavaType().getJavaTypeInstance();
-            if (!(type instanceof JavaGenericBaseInstance)) continue;
-            JavaGenericBaseInstance genericType = (JavaGenericBaseInstance) type;
+            JavaTypeInstance objectType = obj0.getInferredJavaType().getJavaTypeInstance();
+            if (!(objectType instanceof JavaGenericBaseInstance)) continue;
+            JavaGenericBaseInstance genericType = (JavaGenericBaseInstance) objectType;
             if (!genericType.hasUnbound()) continue;
 
             GenericInferData inferData = getGtbNullFiltered(invokations.get(0));
@@ -137,8 +145,10 @@ public class GenericInferer {
                     continue invokationGroup;
                 }
             }
+
+            InferredJavaType inferredJavaType = obj0.getInferredJavaType();
             GenericTypeBinder typeBinder = inferData.getTypeBinder();
-            obj0.getInferredJavaType().deGenerify(typeBinder.getBindingFor(obj0.getInferredJavaType().getJavaTypeInstance()));
+            inferredJavaType.deGenerify(typeBinder.getBindingFor(objectType));
         }
     }
 }

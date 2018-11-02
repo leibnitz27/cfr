@@ -228,7 +228,17 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
+    public JavaTypeInstance directImplOf(JavaTypeInstance other) {
+        return underlyingType.directImplOf(other);
+    }
+
+    @Override
     public String suggestVarName() {
+        return null;
+    }
+
+    @Override
+    public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
         return null;
     }
 }
