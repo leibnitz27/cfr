@@ -27,7 +27,7 @@ public enum ArithOp {
     private final boolean temporary;
     private final Precedence precedence;
 
-    private ArithOp(String showAs, boolean temporary, Precedence precedence) {
+    ArithOp(String showAs, boolean temporary, Precedence precedence) {
         this.showAs = showAs;
         this.temporary = temporary;
         this.precedence = precedence;

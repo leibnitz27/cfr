@@ -23,12 +23,12 @@ public enum Precedence {
     private final boolean isLtoR;
     private final boolean commute;
 
-    private Precedence(boolean ltoR) {
+    Precedence(boolean ltoR) {
         this.isLtoR = ltoR;
         this.commute = false;
     }
 
-    private Precedence(boolean ltoR, boolean commute) {
+    Precedence(boolean ltoR, boolean commute) {
         this.isLtoR = ltoR;
         this.commute = commute;
     }

@@ -26,13 +26,13 @@ public class UnstructuredTry extends AbstractUnStructuredStatement {
     }
 
     public StructuredStatement getEmptyTry() {
-        return new StructuredTry(exceptionGroup, new Op04StructuredStatement(Block.getEmptyBlock(true)), exceptionGroup.getTryBlockIdentifier());
+        return new StructuredTry(new Op04StructuredStatement(Block.getEmptyBlock(true)), exceptionGroup.getTryBlockIdentifier());
     }
 
     @Override
     public StructuredStatement claimBlock(Op04StructuredStatement innerBlock, BlockIdentifier blockIdentifier, Vector<BlockIdentifier> blocksCurrentlyIn) {
         if (blockIdentifier == exceptionGroup.getTryBlockIdentifier()) {
-            return new StructuredTry(exceptionGroup, innerBlock, blockIdentifier);
+            return new StructuredTry(innerBlock, blockIdentifier);
         } else {
             return null;
         }

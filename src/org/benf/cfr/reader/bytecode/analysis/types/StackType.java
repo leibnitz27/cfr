@@ -13,12 +13,12 @@ public enum StackType {
     DOUBLE("double", 2, true),
     VOID("void", 0, false);   // not real, but useful.
 
-    private final String name;
     private final int computationCategory;
     private final StackTypes asList;
     private final boolean closed;
+    private final String name;
 
-    private StackType(String name, int computationCategory, boolean closed) {
+    StackType(String name, int computationCategory, boolean closed) {
         this.name = name;
         this.computationCategory = computationCategory;
         this.asList = new StackTypes(this);
@@ -35,5 +35,10 @@ public enum StackType {
 
     public boolean isClosed() {
         return closed;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

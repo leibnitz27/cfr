@@ -21,11 +21,10 @@ public class ExceptionCheckImpl implements ExceptionCheck {
     private final boolean mightUseUnchecked;
     private final boolean missingInfo;
     private final DCCommonState dcCommonState;
-    private final JavaRefTypeInstance runtimeExceptionType;
 
     public ExceptionCheckImpl(DCCommonState dcCommonState, Set<JavaRefTypeInstance> caught) {
         this.dcCommonState = dcCommonState;
-        runtimeExceptionType = dcCommonState.getClassTypeOrNull(TypeConstants.runtimeExceptionPath);
+        JavaRefTypeInstance runtimeExceptionType = dcCommonState.getClassTypeOrNull(TypeConstants.runtimeExceptionPath);
         if (runtimeExceptionType == null) {
             mightUseUnchecked = true;
             missingInfo = true;
@@ -112,7 +111,7 @@ public class ExceptionCheckImpl implements ExceptionCheck {
         if (!(expression instanceof ConstructorInvokationSimple)) return true;
         ConstructorInvokationSimple constructorInvokation = (ConstructorInvokationSimple) expression;
         JavaTypeInstance type = constructorInvokation.getTypeInstance();
-        Map<JavaRefTypeInstance, ?> boundSuperClasses = null;
+        Map<JavaRefTypeInstance, ?> boundSuperClasses;
         try {
             ClassFile classFile = dcCommonState.getClassFile(type);
             if (classFile == null) return true;

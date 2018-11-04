@@ -11,14 +11,12 @@ public class AttributeEnclosingMethod extends Attribute {
     private static final long OFFSET_OF_REMAINDER = 6;
 
     private final int length;
-    private final ConstantPool cp;
 
     private final int classIndex;
     private final int methodIndex;
 
-    public AttributeEnclosingMethod(ByteData raw, ConstantPool cp) {
+    public AttributeEnclosingMethod(ByteData raw) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        this.cp = cp;
         this.classIndex = raw.getU2At(OFFSET_OF_REMAINDER);
         this.methodIndex = raw.getU2At(OFFSET_OF_REMAINDER + 2);
     }

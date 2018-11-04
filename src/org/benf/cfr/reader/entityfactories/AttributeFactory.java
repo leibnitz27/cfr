@@ -37,9 +37,9 @@ public class AttributeFactory {
             } else if (AttributeExceptions.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeExceptions(raw, cp);
             } else if (AttributeEnclosingMethod.ATTRIBUTE_NAME.equals(attributeName)) {
-                return new AttributeEnclosingMethod(raw, cp);
+                return new AttributeEnclosingMethod(raw);
             } else if (AttributeDeprecated.ATTRIBUTE_NAME.equals(attributeName)) {
-                return new AttributeDeprecated(raw, cp);
+                return new AttributeDeprecated(raw);
             } else if (AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeRuntimeVisibleAnnotations(raw, cp);
             } else if (AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {

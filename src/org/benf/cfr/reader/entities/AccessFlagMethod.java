@@ -24,7 +24,7 @@ public enum AccessFlagMethod {
 
     private final String name;
 
-    private AccessFlagMethod(String name) {
+    AccessFlagMethod(String name) {
         this.name = name;
     }
 

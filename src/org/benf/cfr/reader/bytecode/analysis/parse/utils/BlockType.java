@@ -17,7 +17,7 @@ public enum BlockType {
     private final boolean breakable;
     private final boolean isloop;
 
-    private BlockType(boolean breakable, boolean isloop) {
+    BlockType(boolean breakable, boolean isloop) {
         this.breakable = breakable;
         this.isloop = isloop;
     }

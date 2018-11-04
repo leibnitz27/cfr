@@ -65,6 +65,7 @@ public class CreationCollector {
             return lValue;
         }
 
+        @SuppressWarnings("unused")
         private StatementPair<NewObject> getCreation() {
             return creation;
         }
@@ -214,7 +215,7 @@ public class CreationCollector {
                     try {
                         ClassFile cls = dcCommonState.getClassFile(lValueType);
                         anonymousClassUsage.noteMethodClass(cls, cis);
-                    } catch (CannotLoadClassException e) {
+                    } catch (CannotLoadClassException ignore) {
                     }
                 }
             }
@@ -229,8 +230,7 @@ public class CreationCollector {
                 stackEntry.incSourceCount();
             }
             StatementContainer constructionContainer = constructionValue.getLocation();
-//            StatementContainer creationContainer = creationValue.getLocation();
-//            creationContainer.nopOut();
+            //noinspection unchecked
             constructionContainer.replaceStatement(replacement);
         }
 

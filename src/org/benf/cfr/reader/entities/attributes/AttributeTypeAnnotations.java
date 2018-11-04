@@ -82,6 +82,7 @@ public abstract class AttributeTypeAnnotations extends Attribute {
             }
         });
         // Naughty cast, but we know it's true.
+        //noinspection unchecked
         return (List<AnnotationTableTypeEntry<TypeAnnotationTargetInfo.TypeAnnotationLocalVarTarget>>)(Object)entries;
     }
 }

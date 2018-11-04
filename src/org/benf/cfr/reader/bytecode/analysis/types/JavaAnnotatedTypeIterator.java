@@ -12,7 +12,7 @@ public interface JavaAnnotatedTypeIterator {
     JavaAnnotatedTypeIterator moveParameterized(int index, DecompilerComments comments);
     void apply(AnnotationTableTypeEntry entry);
 
-    public abstract class BaseAnnotatedTypeIterator implements JavaAnnotatedTypeIterator {
+    abstract class BaseAnnotatedTypeIterator implements JavaAnnotatedTypeIterator {
         protected void addBadComment(DecompilerComments comments) {
             // If we use this for more, might have to pass in a lambda instead.
             comments.addComment(DecompilerComment.BAD_ANNOTATION);

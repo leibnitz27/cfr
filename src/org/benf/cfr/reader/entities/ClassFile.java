@@ -39,18 +39,14 @@ import java.util.*;
 
 public class ClassFile implements Dumpable, TypeUsageCollectable {
     // Constants
-    private final long OFFSET_OF_MAGIC = 0;
-    private final long OFFSET_OF_MINOR = 4;
-    private final long OFFSET_OF_MAJOR = 6;
-    private final long OFFSET_OF_CONSTANT_POOL_COUNT = 8;
-    private final long OFFSET_OF_CONSTANT_POOL = 10;
+    private static final long OFFSET_OF_MAGIC = 0;
+    private static final long OFFSET_OF_MINOR = 4;
+    private static final long OFFSET_OF_MAJOR = 6;
+    private static final long OFFSET_OF_CONSTANT_POOL_COUNT = 8;
+    private static final long OFFSET_OF_CONSTANT_POOL = 10;
     // From there on, we have to make up the offsets as we go, as the structure
     // is variable.
 
-
-    // Members
-    private final int minorVer;
-    private final int majorVer;
     private final ConstantPool constantPool;
     private final Set<AccessFlag> accessFlags;
     private final List<ClassFileField> fields;
@@ -95,8 +91,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         int magic = data.getS4At(OFFSET_OF_MAGIC);
         if (magic != 0xCAFEBABE) throw new ConfusedCFRException("Magic != Cafebabe for class file '" + usePath + "'");
 
-        minorVer = data.getU2At(OFFSET_OF_MINOR);
-        majorVer = data.getU2At(OFFSET_OF_MAJOR);
+        // Members
+        int minorVer = data.getU2At(OFFSET_OF_MINOR);
+        int majorVer = data.getU2At(OFFSET_OF_MAJOR);
         ClassFileVersion classFileVersion = new ClassFileVersion(majorVer, minorVer);
         final ClassFileVersion cfv = classFileVersion;
         int constantPoolCount = data.getU2At(OFFSET_OF_CONSTANT_POOL_COUNT);
@@ -591,7 +588,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         List<Method> named = getMethodsWithMatchingName(prototype);
         Method methodMatch = null;
         for (Method method : named) {
-            if (!method.isVisibleTo(accessor)) continue;;
+            if (!method.isVisibleTo(accessor)) continue;
             MethodPrototype tgt = method.getMethodPrototype();
             if (tgt.equalsMatch(prototype)) return method;
             if (binder != null) {

@@ -41,12 +41,10 @@ public class AttributeSignature extends Attribute {
     private static final long OFFSET_OF_REMAINDER = 6;
 
     private final int length;
-    private final ConstantPool cp;
     private final ConstantPoolEntryUTF8 signature;
 
     public AttributeSignature(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        this.cp = cp;
         this.signature = cp.getUTF8Entry(raw.getU2At(OFFSET_OF_REMAINDER));
     }
 

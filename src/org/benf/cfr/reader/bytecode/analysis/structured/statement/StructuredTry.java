@@ -3,13 +3,12 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
-import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -17,15 +16,13 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 
 public class StructuredTry extends AbstractStructuredStatement {
-    private final ExceptionGroup exceptionGroup;
     private Op04StructuredStatement tryBlock;
     private List<Op04StructuredStatement> catchBlocks = ListFactory.newList();
     private Op04StructuredStatement finallyBlock;
     private final BlockIdentifier tryBlockIdentifier;
     private List<Op04StructuredStatement> resourceBlock;
 
-    public StructuredTry(ExceptionGroup exceptionGroup, Op04StructuredStatement tryBlock, BlockIdentifier tryBlockIdentifier) {
-        this.exceptionGroup = exceptionGroup;
+    public StructuredTry(Op04StructuredStatement tryBlock, BlockIdentifier tryBlockIdentifier) {
         this.tryBlock = tryBlock;
         this.finallyBlock = null;
         this.tryBlockIdentifier = tryBlockIdentifier;
@@ -96,16 +93,12 @@ public class StructuredTry extends AbstractStructuredStatement {
         return true;
     }
 
-    public void addCatch(Op04StructuredStatement catchStatement) {
+    void addCatch(Op04StructuredStatement catchStatement) {
         catchBlocks.add(catchStatement);
     }
 
     public void setFinally(Op04StructuredStatement finallyBlock) {
         this.finallyBlock = finallyBlock;
-    }
-
-    public void removeFinalJumpsTo(Op04StructuredStatement after) {
-        tryBlock.removeLastGoto(after);
     }
 
     @Override
@@ -193,7 +186,6 @@ public class StructuredTry extends AbstractStructuredStatement {
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         StructuredStatement o = matchIterator.getCurrent();
         if (!(o instanceof StructuredTry)) return false;
-        StructuredTry other = (StructuredTry) o;
         // we don't actually check any equality for a match.
         matchIterator.advance();
         return true;

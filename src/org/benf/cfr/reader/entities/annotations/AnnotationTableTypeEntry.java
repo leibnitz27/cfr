@@ -11,6 +11,7 @@ import java.util.Map;
 public class AnnotationTableTypeEntry<T extends TypeAnnotationTargetInfo> extends AnnotationTableEntry {
 
     private final TypeAnnotationEntryKind kind;
+    @SuppressWarnings("FieldCanBeLocal")
     private final TypeAnnotationLocation location;
 
     private final T targetInfo;

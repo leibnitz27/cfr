@@ -31,7 +31,7 @@ public interface InnerClassInfo {
 
     JavaRefTypeInstance getOuterClass();
 
-    public static InnerClassInfo NOT = new InnerClassInfo() {
+    InnerClassInfo NOT = new InnerClassInfo() {
         @Override
         public boolean isInnerClass() {
             return false;

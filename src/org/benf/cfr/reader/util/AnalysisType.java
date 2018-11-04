@@ -7,6 +7,10 @@ public enum AnalysisType {
 
     private final String suffix;
 
+    public String getSuffix() {
+        return suffix;
+    }
+
     AnalysisType(String suffix) {
         this.suffix = suffix;
     }

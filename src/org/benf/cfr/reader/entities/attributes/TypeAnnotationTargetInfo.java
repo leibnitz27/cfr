@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface TypeAnnotationTargetInfo {
 
-    public class TypeAnnotationParameterTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationParameterTarget implements TypeAnnotationTargetInfo {
         private final short type_parameter_index;
 
         private TypeAnnotationParameterTarget(short type_parameter_index) {
@@ -21,7 +21,7 @@ public interface TypeAnnotationTargetInfo {
         }
     }
 
-    public class TypeAnnotationSupertypeTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationSupertypeTarget implements TypeAnnotationTargetInfo {
         private final int supertype_index;
 
         private TypeAnnotationSupertypeTarget(int supertype_index) {
@@ -36,7 +36,7 @@ public interface TypeAnnotationTargetInfo {
 
     }
 
-    public class TypeAnnotationParameterBoundTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationParameterBoundTarget implements TypeAnnotationTargetInfo {
         private final short type_parameter_index;
         private final short bound_index;
 
@@ -53,14 +53,14 @@ public interface TypeAnnotationTargetInfo {
 
     }
 
-    public class TypeAnnotationEmptyTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationEmptyTarget implements TypeAnnotationTargetInfo {
 
         public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             return Pair.<Long, TypeAnnotationTargetInfo>make(offset, new TypeAnnotationEmptyTarget());
         }
     }
 
-    public class TypeAnnotationFormalParameterTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationFormalParameterTarget implements TypeAnnotationTargetInfo {
         private final short formal_parameter_index;
 
         private TypeAnnotationFormalParameterTarget(short formal_parameter_index) {
@@ -74,7 +74,7 @@ public interface TypeAnnotationTargetInfo {
 
     }
 
-    public class TypeAnnotationThrowsTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationThrowsTarget implements TypeAnnotationTargetInfo {
         private final int throws_type_index;
 
         private TypeAnnotationThrowsTarget(int throws_type_index) {
@@ -90,7 +90,7 @@ public interface TypeAnnotationTargetInfo {
 
     }
 
-    public class LocalVarTarget {
+    class LocalVarTarget {
         private final int start;
         private final int length;
         private final int index;
@@ -106,7 +106,7 @@ public interface TypeAnnotationTargetInfo {
         }
     }
 
-    public class TypeAnnotationLocalVarTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationLocalVarTarget implements TypeAnnotationTargetInfo {
 
         private final List<LocalVarTarget> targets;
 
@@ -138,7 +138,7 @@ public interface TypeAnnotationTargetInfo {
         }
     }
 
-    public class TypeAnnotationCatchTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationCatchTarget implements TypeAnnotationTargetInfo {
         private final int exception_table_index;
 
         private TypeAnnotationCatchTarget(int exception_table_index) {
@@ -152,7 +152,7 @@ public interface TypeAnnotationTargetInfo {
         }
     }
 
-    public class TypeAnnotationOffsetTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationOffsetTarget implements TypeAnnotationTargetInfo {
         private final int offset;
 
         private TypeAnnotationOffsetTarget(int offset) {
@@ -166,7 +166,7 @@ public interface TypeAnnotationTargetInfo {
         }
     }
 
-    public class TypeAnnotationTypeArgumentTarget implements TypeAnnotationTargetInfo {
+    class TypeAnnotationTypeArgumentTarget implements TypeAnnotationTargetInfo {
         private final int offset;
         private final short type_argument_index;
 

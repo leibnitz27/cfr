@@ -43,7 +43,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
         private final boolean isConstructor;
 
-        private MethodConstructor(boolean isConstructor) {
+        MethodConstructor(boolean isConstructor) {
             this.isConstructor = isConstructor;
         }
 

@@ -10,7 +10,7 @@ public enum DynamicInvokeType {
 
     private final String constName;
 
-    private DynamicInvokeType(String constName) {
+    DynamicInvokeType(String constName) {
         this.constName = constName;
     }
 

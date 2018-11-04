@@ -19,6 +19,7 @@ import java.util.Collection;
 public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_CLASS_INDEX = 1;
     private static final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
+    @SuppressWarnings("FieldCanBeLocal")
     private final boolean interfaceMethod;
     private static final VariableNamer fakeNamer = new VariableNamerDefault();
     private MethodPrototype methodPrototype = null;

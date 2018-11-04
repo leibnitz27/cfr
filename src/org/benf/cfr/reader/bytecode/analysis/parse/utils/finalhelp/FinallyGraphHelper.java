@@ -95,11 +95,7 @@ public class FinallyGraphHelper {
             tgtb = filterFalseNegatives(tgtb, null);
 
             if (tgta.size() != tgtb.size()) {
-//                tgta.remove(finalThrowProxy);
-//                tgtb.remove(finallyCatchBody.throwOp);
-                if (tgta.size() != tgtb.size()) {
-                    return Result.FAIL;
-                }
+                return Result.FAIL;
             }
             toRemove.add(a);
 
@@ -136,7 +132,7 @@ public class FinallyGraphHelper {
                     }
                     if ((!matched.containsKey(tgthayx)) && finallyCatchBody.contains(tgthayx)) {
                         matched.put(tgthayx, tgttestx);
-                        pending.add(new Pair(tgttestx, tgthayx));
+                        pending.add(Pair.make(tgttestx, tgthayx));
                     }
                 }
             }

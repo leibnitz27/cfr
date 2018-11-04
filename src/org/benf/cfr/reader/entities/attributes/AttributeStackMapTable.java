@@ -220,7 +220,7 @@ public class AttributeStackMapTable extends Attribute {
         return OFFSET_OF_REMAINDER + length;
     }
 
-    private static interface StackMapFrame {
+    private interface StackMapFrame {
     }
 
     private static class StackMapFrameSameFrame implements StackMapFrame {
@@ -302,7 +302,7 @@ public class AttributeStackMapTable extends Attribute {
     /*
      * Be nice to make this an enum, but we can't as variable info is ... variable.
      */
-    private static interface VerificationInfo {
+    private interface VerificationInfo {
     }
 
     private static class AbstractVerificationInfo implements VerificationInfo {

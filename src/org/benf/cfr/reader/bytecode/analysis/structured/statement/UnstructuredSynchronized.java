@@ -34,7 +34,7 @@ public class UnstructuredSynchronized extends AbstractUnStructuredStatement {
             throw new RuntimeException("MONITOREXIT statement claiming wrong block");
         }
 
-        return new StructuredSynchronized(monitor, blockIdentifier, innerBlock);
+        return new StructuredSynchronized(monitor, innerBlock);
     }
 
 }

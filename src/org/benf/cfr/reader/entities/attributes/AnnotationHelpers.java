@@ -17,9 +17,9 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 import java.util.List;
 import java.util.Map;
 
-public class AnnotationHelpers {
+class AnnotationHelpers {
 
-    public static Pair<Long, AnnotationTableEntry> getAnnotation(ByteData raw, long offset, ConstantPool cp) {
+    static Pair<Long, AnnotationTableEntry> getAnnotation(ByteData raw, long offset, ConstantPool cp) {
         ConstantPoolEntryUTF8 typeName = cp.getUTF8Entry(raw.getU2At(offset));
         offset += 2;
         int numElementPairs = raw.getU2At(offset);
@@ -40,7 +40,7 @@ public class AnnotationHelpers {
         return offset;
     }
 
-    public static Pair<Long, ElementValue> getElementValue(ByteData raw, long offset, ConstantPool cp) {
+    static Pair<Long, ElementValue> getElementValue(ByteData raw, long offset, ConstantPool cp) {
 
         char c = (char) raw.getU1At(offset);
         offset++;
@@ -99,7 +99,7 @@ public class AnnotationHelpers {
         }
     }
 
-    public static Pair<Long, AnnotationTableTypeEntry> getTypeAnnotation(ByteData raw, long offset, ConstantPool cp) {
+    static Pair<Long, AnnotationTableTypeEntry> getTypeAnnotation(ByteData raw, long offset, ConstantPool cp) {
         short targetType = raw.getU1At(offset++);
         TypeAnnotationEntryKind kind;
         switch (targetType) {
@@ -210,13 +210,13 @@ public class AnnotationHelpers {
             offset = getElementValuePair(raw, offset, cp, elementValueMap);
         }
 
-        AnnotationTableTypeEntry res = new AnnotationTableTypeEntry(kind, location, targetInfo, path, type, elementValueMap);
+        AnnotationTableTypeEntry res = new AnnotationTableTypeEntry<TypeAnnotationTargetInfo>(kind, location, targetInfo, path, type, elementValueMap);
 
         return new Pair<Long, AnnotationTableTypeEntry>(offset, res);
     }
 
     // The spec claims that target_info is a union, however localvar_target is a variable length structure....
-    public static Pair<Long, TypeAnnotationTargetInfo> readTypeAnnotationTargetInfo(TypeAnnotationEntryKind kind, ByteData raw, long offset) {
+    private static Pair<Long, TypeAnnotationTargetInfo> readTypeAnnotationTargetInfo(TypeAnnotationEntryKind kind, ByteData raw, long offset) {
         switch (kind) {
             case type_parameter_target:
                 return TypeAnnotationTargetInfo.TypeAnnotationParameterTarget.Read(raw, offset);

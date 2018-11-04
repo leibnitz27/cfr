@@ -82,7 +82,7 @@ public class FinalAnalyzer {
 
         FinallyGraphHelper finallyGraphHelper = new FinallyGraphHelper(finallyCatchBody);
 
-        PeerTries peerTries = new PeerTries(finallyGraphHelper, possibleFinallyCatch);
+        PeerTries peerTries = new PeerTries(possibleFinallyCatch);
 
         /*
          * This IDENTIFIES blocks of code which are the finally attached to this try statement, and

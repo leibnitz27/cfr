@@ -178,7 +178,7 @@ public class J14ClassObjectRewriter {
         Matcher<StructuredStatement> m =
                 new MatchSequence(
                         new BeginBlock(null),
-                        new StructuredTry(null, null, null),
+                        new StructuredTry(null, null),
                         new BeginBlock(null),
                         new StructuredReturn(wcm1.getStaticFunction("forName",TypeConstants.CLASS, null, "forName", new LValueExpression(arg)), TypeConstants.CLASS),
                         new EndBlock(null),

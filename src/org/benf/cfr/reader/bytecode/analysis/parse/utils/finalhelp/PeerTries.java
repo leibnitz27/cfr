@@ -42,7 +42,6 @@ import java.util.*;
  * }
  */
 public class PeerTries {
-    private final FinallyGraphHelper finallyGraphHelper;
     private final Op03SimpleStatement possibleFinallyCatch;
 
     private final Set<Op03SimpleStatement> seenEver = SetFactory.newOrderedSet();
@@ -53,9 +52,9 @@ public class PeerTries {
     /*
      * Best guess using reverse information from the catch block.
      */
-    Set<BlockIdentifier> guessPeerTryBlocks = SetFactory.newOrderedSet();
-    Map<BlockIdentifier, Op03SimpleStatement> guessPeerTryMap = MapFactory.newOrderedMap();
-    Set<Op03SimpleStatement> guessPeerTryStarts = SetFactory.newOrderedSet();
+    private Set<BlockIdentifier> guessPeerTryBlocks = SetFactory.newOrderedSet();
+    private Map<BlockIdentifier, Op03SimpleStatement> guessPeerTryMap = MapFactory.newOrderedMap();
+    private Set<Op03SimpleStatement> guessPeerTryStarts = SetFactory.newOrderedSet();
 
     private final Map<CompositeBlockIdentifierKey, PeerTrySet> triesByLevel = MapFactory.newLazyMap(
             new TreeMap<CompositeBlockIdentifierKey, PeerTrySet>(),
@@ -66,8 +65,7 @@ public class PeerTries {
                 }
             });
 
-    public PeerTries(FinallyGraphHelper finallyGraphHelper, Op03SimpleStatement possibleFinallyCatch) {
-        this.finallyGraphHelper = finallyGraphHelper;
+    PeerTries(Op03SimpleStatement possibleFinallyCatch) {
         this.possibleFinallyCatch = possibleFinallyCatch;
 
         for (Op03SimpleStatement source : possibleFinallyCatch.getSources()) {
@@ -82,19 +80,19 @@ public class PeerTries {
         }
     }
 
-    public Op03SimpleStatement getOriginalFinally() {
+    Op03SimpleStatement getOriginalFinally() {
         return possibleFinallyCatch;
     }
 
-    public Set<BlockIdentifier> getGuessPeerTryBlocks() {
+    Set<BlockIdentifier> getGuessPeerTryBlocks() {
         return guessPeerTryBlocks;
     }
 
-    public Map<BlockIdentifier, Op03SimpleStatement> getGuessPeerTryMap() {
+    Map<BlockIdentifier, Op03SimpleStatement> getGuessPeerTryMap() {
         return guessPeerTryMap;
     }
 
-    public Set<Op03SimpleStatement> getGuessPeerTryStarts() {
+    Set<Op03SimpleStatement> getGuessPeerTryStarts() {
         return guessPeerTryStarts;
     }
 
@@ -112,11 +110,11 @@ public class PeerTries {
         return !toProcess.isEmpty();
     }
 
-    public Op03SimpleStatement removeNext() {
+    Op03SimpleStatement removeNext() {
         return toProcess.removeFirst();
     }
 
-    public List<PeerTrySet> getPeerTryGroups() {
+    List<PeerTrySet> getPeerTryGroups() {
         return ListFactory.newList(triesByLevel.values());
     }
 
@@ -132,7 +130,7 @@ public class PeerTries {
             content.add(op);
         }
 
-        public Collection<Op03SimpleStatement> getPeerTries() {
+        Collection<Op03SimpleStatement> getPeerTries() {
             return content;
         }
 

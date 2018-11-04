@@ -21,11 +21,8 @@ import java.util.*;
 public class ExceptionAggregator {
 
     private final List<ExceptionGroup> exceptionsByRange = ListFactory.newList();
-    private final Method method;
     private final Map<Integer, Integer> lutByOffset;
-    private final Map<Integer, Integer> lutByIdx;
     private final List<Op01WithProcessedDataAndByteJumps> instrs;
-    private final Options options;
     private final boolean aggressivePrune;
     private final boolean aggressiveAggregate;
     private final boolean removedLoopingExceptions;
@@ -163,17 +160,12 @@ public class ExceptionAggregator {
     */
     public ExceptionAggregator(List<ExceptionTableEntry> rawExceptions, BlockIdentifierFactory blockIdentifierFactory,
                                final Map<Integer, Integer> lutByOffset,
-                               final Map<Integer, Integer> lutByIdx,
                                List<Op01WithProcessedDataAndByteJumps> instrs,
                                final Options options,
-                               final ConstantPool cp,
-                               final Method method) {
+                               final ConstantPool cp) {
 
-        this.method = method;
-        this.lutByIdx = lutByIdx;
         this.lutByOffset = lutByOffset;
         this.instrs = instrs;
-        this.options = options;
         this.aggressivePrune = options.getOption(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE;
         this.aggressiveAggregate = options.getOption(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG) == Troolean.TRUE;
 
@@ -201,9 +193,9 @@ public class ExceptionAggregator {
         List<ExceptionTableEntry> extended = ListFactory.newList();
         for (ExceptionTableEntry exceptionTableEntry : rawExceptions) {
 
-            ExceptionTableEntry exceptionTableEntryOrig = exceptionTableEntry;
+            ExceptionTableEntry exceptionTableEntryOrig;
 
-            int indexTo = (int) exceptionTableEntry.getBytecodeIndexTo();
+            int indexTo = exceptionTableEntry.getBytecodeIndexTo();
 
             do {
                 exceptionTableEntryOrig = exceptionTableEntry;

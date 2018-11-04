@@ -11,11 +11,9 @@ public class AttributeDeprecated extends Attribute {
     private static final long OFFSET_OF_REMAINDER = 6;
 
     private final int length;
-    private final ConstantPool cp;
 
-    public AttributeDeprecated(ByteData raw, ConstantPool cp) {
+    public AttributeDeprecated(ByteData raw) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
-        this.cp = cp;
     }
 
     @Override

@@ -26,7 +26,7 @@ public enum AccessFlag {
 
     public final String name;
 
-    private AccessFlag(String name) {
+    AccessFlag(String name) {
         this.name = name;
     }
 

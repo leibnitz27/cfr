@@ -10,5 +10,5 @@ public enum TypeAnnotationEntryKind {
     localvar_target,
     catch_target,
     offset_target,
-    type_argument_target;
+    type_argument_target
 }

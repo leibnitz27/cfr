@@ -5,7 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -15,12 +14,10 @@ import java.util.List;
 
 public class StructuredSynchronized extends AbstractStructuredBlockStatement {
     private Expression monitor;
-    private BlockIdentifier blockIdentifier;
 
-    public StructuredSynchronized(Expression monitor, BlockIdentifier blockIdentifier, Op04StructuredStatement body) {
+    StructuredSynchronized(Expression monitor, Op04StructuredStatement body) {
         super(body);
         this.monitor = monitor;
-        this.blockIdentifier = blockIdentifier;
     }
 
     @Override

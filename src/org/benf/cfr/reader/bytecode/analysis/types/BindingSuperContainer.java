@@ -14,8 +14,9 @@ public class BindingSuperContainer {
         INTERFACE
     }
 
-    public static BindingSuperContainer POISON = new BindingSuperContainer(null, null, null);
+    static BindingSuperContainer POISON = new BindingSuperContainer(null, null, null);
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final ClassFile thisClass;
     private final Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> boundSuperClasses;
     private final Map<JavaRefTypeInstance, Route> boundSuperRoute;

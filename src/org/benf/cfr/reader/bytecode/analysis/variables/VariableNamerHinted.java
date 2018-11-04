@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 
 public class VariableNamerHinted implements VariableNamer {
 
-    private int genIdx = 0;
     private final VariableNamer missingNamer = new VariableNamerDefault();
 
     private final OrderLocalVariables orderLocalVariable = new OrderLocalVariables();
@@ -29,8 +28,7 @@ public class VariableNamerHinted implements VariableNamer {
 
     private final ConstantPool cp;
 
-
-    public VariableNamerHinted(List<LocalVariableEntry> entryList, ConstantPool cp) {
+    VariableNamerHinted(List<LocalVariableEntry> entryList, ConstantPool cp) {
         for (LocalVariableEntry e : entryList) {
             localVariableEntryTreeSet.get(e.getIndex()).add(e);
         }
@@ -60,6 +58,7 @@ public class VariableNamerHinted implements VariableNamer {
             if (IllegalIdentifierReplacement.isIllegal(name)) {
                 namedVariable = new NamedVariableDefault(name);
             } else {
+                int genIdx = 0;
                 namedVariable = new NamedVariableFromHint(name, lve.getIndex(), genIdx);
             }
             cache.put(key, namedVariable);

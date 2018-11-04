@@ -2748,7 +2748,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                                     jumpingStatement.setJumpType(JumpType.CONTINUE);
                                     continue test;
                                 }
-                                ;
                         }
                     }
                     if (targetStatement.getBlockStarted() != null &&

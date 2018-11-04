@@ -16,7 +16,7 @@ public enum CompOp {
     private final String showAs;
     private final Precedence precedence;
 
-    private CompOp(String showAs, Precedence precedence) {
+    CompOp(String showAs, Precedence precedence) {
         this.showAs = showAs;
         this.precedence = precedence;
     }

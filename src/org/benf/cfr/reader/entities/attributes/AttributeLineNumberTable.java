@@ -25,7 +25,7 @@ public class AttributeLineNumberTable extends Attribute {
         if (numLineNumbers * 2 <= length) {
             long offset = OFFSET_OF_ENTRIES;
             for (int x = 0; x < numLineNumbers; ++x, offset += 4) {
-                int startPc = raw.getU2At(offset + 0);
+                int startPc = raw.getU2At(offset);
                 int lineNumber = raw.getU2At(offset + 2);
                 entries.put( startPc, lineNumber);
             }

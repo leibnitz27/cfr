@@ -6,14 +6,14 @@ import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public interface ClassFileDumper extends TypeUsageCollectable {
-    public enum InnerClassDumpType {
+    enum InnerClassDumpType {
         NOT(false),
         INNER_CLASS(true),
         INLINE_CLASS(true);
 
         final boolean isInnerClass;
 
-        private InnerClassDumpType(boolean isInnerClass) {
+        InnerClassDumpType(boolean isInnerClass) {
             this.isInnerClass = isInnerClass;
         }
 

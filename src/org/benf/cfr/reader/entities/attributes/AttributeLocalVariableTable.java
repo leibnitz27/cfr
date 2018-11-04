@@ -23,7 +23,7 @@ public class AttributeLocalVariableTable extends Attribute {
         int numLocalVariables = raw.getU2At(OFFSET_OF_ENTRY_COUNT);
         long offset = OFFSET_OF_ENTRIES;
         for (int x = 0; x < numLocalVariables; ++x) {
-            int startPc = raw.getU2At(offset + 0);
+            int startPc = raw.getU2At(offset);
             int length = raw.getU2At(offset + 2);
             int nameIndex = raw.getU2At(offset + 4);
             int descriptorIndex = raw.getU2At(offset + 6);

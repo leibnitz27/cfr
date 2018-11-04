@@ -16,9 +16,6 @@ public class DecodedTableSwitch implements DecodedSwitch {
     private static final int OFFSET_OF_HIGHBYTE = 8;
     private static final int OFFSET_OF_OFFSETS = 12;
 
-    private final int startValue;
-    private final int endValue;
-    private final int defaultTarget;
     private final List<DecodedSwitchEntry> jumpTargets;
 
     /*
@@ -34,12 +31,11 @@ public class DecodedTableSwitch implements DecodedSwitch {
         int lowvalue = bd.getS4At(offset + OFFSET_OF_LOWBYTE);
         int highvalue = bd.getS4At(offset + OFFSET_OF_HIGHBYTE);
         int numoffsets = highvalue - lowvalue + 1;
-        this.defaultTarget = defaultvalue;
-        this.startValue = lowvalue;
-        this.endValue = highvalue;
+        int defaultTarget = defaultvalue;
+        int startValue = lowvalue;
 
         // Treemap so that targets are in bytecode order.
-        Map<Integer, List<Integer>> uniqueTargets = MapFactory.<Integer, List<Integer>>newLazyMap(
+        Map<Integer, List<Integer>> uniqueTargets = MapFactory.newLazyMap(
                 new TreeMap<Integer, List<Integer>>(),
                 new UnaryFunction<Integer, List<Integer>>() {
                     @Override

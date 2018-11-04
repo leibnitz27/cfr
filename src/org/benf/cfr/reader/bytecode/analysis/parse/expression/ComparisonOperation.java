@@ -175,7 +175,7 @@ public class ComparisonOperation extends AbstractExpression implements Condition
 
         private final boolean isValid;
 
-        private BooleanComparisonType(boolean isValid) {
+        BooleanComparisonType(boolean isValid) {
             this.isValid = isValid;
         }
 

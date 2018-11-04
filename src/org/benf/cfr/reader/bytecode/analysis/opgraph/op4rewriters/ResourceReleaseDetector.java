@@ -60,7 +60,7 @@ public class ResourceReleaseDetector {
                 new BeginBlock(null),
                 new StructuredIf(new ComparisonOperation(throwableExpression, Literal.NULL, CompOp.NE), null),
                 new BeginBlock(null),
-                new StructuredTry(null, null, null),
+                new StructuredTry(null, null),
                 new BeginBlock(null),
                 closeExpression,
                 new EndBlock(null),

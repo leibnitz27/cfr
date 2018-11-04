@@ -14,7 +14,7 @@ public enum JumpType {
     private final String description;
     private final boolean isUnknown;
 
-    private JumpType(String description, boolean isUnknown) {
+    JumpType(String description, boolean isUnknown) {
         this.description = description;
         this.isUnknown = isUnknown;
     }

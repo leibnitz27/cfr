@@ -100,7 +100,7 @@ public class ArrayVariable extends AbstractLValue {
 
     @Override
     public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
-        return new SSAIdentifiers();
+        return new SSAIdentifiers<LValue>();
     }
 
     @Override

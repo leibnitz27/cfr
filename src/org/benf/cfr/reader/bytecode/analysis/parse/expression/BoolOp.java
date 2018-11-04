@@ -10,7 +10,7 @@ public enum BoolOp {
     private final String showAs;
     private final Precedence precedence;
 
-    private BoolOp(String showAs, Precedence precedence) {
+    BoolOp(String showAs, Precedence precedence) {
         this.showAs = showAs;
         this.precedence = precedence;
     }

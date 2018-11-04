@@ -20,7 +20,6 @@ import java.util.Map;
 public class PluginRunner {
     private final DCCommonState dcCommonState;
     private final IllegalIdentifierDump illegalIdentifierDump = new IllegalIdentifierDump.Nop();
-    private final ClassFileSource classFileSource;
 
     /*
      *
@@ -35,7 +34,6 @@ public class PluginRunner {
 
     public PluginRunner(Map<String, String> options, ClassFileSource classFileSource) {
         this.dcCommonState = initDCState(options, classFileSource);
-        this.classFileSource = classFileSource;
     }
 
     public Options getOptions() {

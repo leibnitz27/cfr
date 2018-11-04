@@ -204,7 +204,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                                 RawJavaType.INT)),
                         new KleeneStar(new ResetAfterTest(wcm2,
                                 new MatchSequence(
-                                        new StructuredTry(null, null, null),
+                                        new StructuredTry(null, null),
                                         new BeginBlock(null),
                                         new StructuredAssignment(
                                                 new ArrayVariable(

@@ -14,6 +14,7 @@ public enum ArrayType {
     T_INT(10, "int", RawJavaType.INT),
     T_LONG(11, "long", RawJavaType.LONG);
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final int spec;
     private final String name;
     private final JavaTypeInstance javaTypeInstance;

@@ -9,7 +9,7 @@ public interface ConstantPoolEntry {
 
     void dump(Dumper d);
 
-    public static enum Type {
+    enum Type {
         CPT_UTF8,
         CPT_Integer,
         CPT_Float,
