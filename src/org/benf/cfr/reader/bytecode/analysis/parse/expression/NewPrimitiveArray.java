@@ -75,11 +75,6 @@ public class NewPrimitiveArray extends AbstractNewArray {
     }
 
     @Override
-    public JavaTypeInstance getInnerType() {
-        return type;
-    }
-
-    @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         size = size.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
         return this;

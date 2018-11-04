@@ -11,11 +11,9 @@ public class AbstractMatchResultIterator implements MatchResultCollector {
 
     @Override
     public void collectStatement(String name, StructuredStatement statement) {
-
     }
 
     @Override
     public void collectMatches(String name, WildcardMatch wcm) {
-
     }
 }

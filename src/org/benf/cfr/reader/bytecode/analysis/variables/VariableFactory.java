@@ -7,7 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.collections.MapFactory;
 
 import java.util.List;
@@ -22,9 +21,6 @@ public class VariableFactory {
 
     public VariableFactory(Method method) {
         this.variableNamer = method.getVariableNamer();
-        if (method == null) {
-            throw new ConfusedCFRException("No method signature for a variable factory");
-        }
         MethodPrototype methodPrototype = method.getMethodPrototype();
         List<JavaTypeInstance> args = methodPrototype.getArgs();
         this.typedArgs = MapFactory.newMap();

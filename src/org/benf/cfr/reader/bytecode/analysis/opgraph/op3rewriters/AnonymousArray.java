@@ -76,7 +76,7 @@ public class AnonymousArray {
             anon.add(testAnon.getExpressionWildCard("val").getMatch());
             anonAssigns.add(next);
         }
-        AssignmentSimple replacement = new AssignmentSimple(arrayLValue.getInferredJavaType(), assignmentSimple.getCreatedLValue(), new NewAnonymousArray(arrayDef.getInferredJavaType(), arrayDef.getNumDims(), anon, false));
+        AssignmentSimple replacement = new AssignmentSimple(assignmentSimple.getCreatedLValue(), new NewAnonymousArray(arrayDef.getInferredJavaType(), arrayDef.getNumDims(), anon, false));
         newArray.replaceStatement(replacement);
         if (array instanceof StackSSALabel) {
             StackEntry arrayStackEntry = ((StackSSALabel) array).getStackEntry();

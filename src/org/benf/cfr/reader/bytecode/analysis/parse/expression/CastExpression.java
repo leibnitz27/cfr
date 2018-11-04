@@ -204,7 +204,7 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
             if (!rawArg) {
                 boolean wasRaw = e.getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType;
                 boolean isRaw = newE.getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType;
-                if (wasRaw && wasRaw != isRaw) {
+                if (wasRaw && !isRaw) {
                     break;
                 }
             }

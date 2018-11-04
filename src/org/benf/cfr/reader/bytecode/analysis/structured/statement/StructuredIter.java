@@ -9,7 +9,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -20,21 +19,12 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     private final BlockIdentifier block;
     private LValue iterator;
     private Expression list;
-    private boolean creator;
 
-    public StructuredIter(BlockIdentifier block, LValue iterator, Expression list, Op04StructuredStatement body) {
+    StructuredIter(BlockIdentifier block, LValue iterator, Expression list, Op04StructuredStatement body) {
         super(body);
         this.block = block;
         this.iterator = iterator;
         this.list = list;
-        this.creator = false;
-        /*
-         * We need to be able to type the iterator.
-         */
-        JavaTypeInstance itertype = iterator.getInferredJavaType().getJavaTypeInstance();
-        if (!itertype.isUsableType()) {
-            //      throw new ConfusedCFRException("Not a usable type for an iter");
-        }
     }
 
     @Override
@@ -96,7 +86,6 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     @Override
     public void markCreator(LValue scopedEntity, StatementContainer<StructuredStatement> hint) {
         // we're always creator.  But we could verify additionally.
-        creator = true;
     }
 
     @Override

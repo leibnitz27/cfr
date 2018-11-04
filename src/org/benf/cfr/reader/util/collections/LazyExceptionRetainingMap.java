@@ -19,6 +19,7 @@ public class LazyExceptionRetainingMap<X, Y> extends LazyMap<X, Y> {
                 return super.get(o);
             } catch (RuntimeException e) {
                 exception = e;
+                //noinspection unchecked
                 exceptionMap.put((X) o, e);
             }
         }

@@ -36,4 +36,10 @@ public class MiscUtils {
             }
         };
     }
+
+    /* Sometimes, we want a no-op inside an if statement, and we don't want to ugly things
+     * up by letting code analysers say we're no good kids, hanging around wasting time.
+     */
+    public static void handyBreakPoint() {
+    }
 }

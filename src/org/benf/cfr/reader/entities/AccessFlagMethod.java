@@ -29,7 +29,7 @@ public enum AccessFlagMethod {
     }
 
     public static EnumSet<AccessFlagMethod> build(int raw) {
-        EnumSet<AccessFlagMethod> res = EnumSet.<AccessFlagMethod>noneOf(AccessFlagMethod.class);
+        EnumSet<AccessFlagMethod> res = EnumSet.noneOf(AccessFlagMethod.class);
 
         // Because we're decoding a C++ style enum.
         if (0 != (raw & 0x1)) res.add(ACC_PUBLIC);
@@ -46,8 +46,7 @@ public enum AccessFlagMethod {
         if (0 != (raw & 0x1000)) res.add(ACC_SYNTHETIC);
 
         if (res.isEmpty()) return res;
-        EnumSet<AccessFlagMethod> resaf = EnumSet.copyOf(res);
-        return resaf;
+        return EnumSet.copyOf(res);
     }
 
 

@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 
@@ -211,9 +212,9 @@ public class InlineDeAssigner {
             Class<? extends Statement> clazz = stmt.getClass();
             if (clazz == AssignmentSimple.class) {
                 deAssign((AssignmentSimple) stmt, statement, newStatements);
-            } else //noinspection StatementWithEmptyBody
-                if (clazz == WhileStatement.class) {
+            } else if (clazz == WhileStatement.class) {
                 // skip. (just looks better!)
+                MiscUtils.handyBreakPoint();
             } else {
                 deAssign(statement, newStatements);
             }

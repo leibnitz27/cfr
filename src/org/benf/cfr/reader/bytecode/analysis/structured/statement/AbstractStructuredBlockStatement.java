@@ -9,7 +9,7 @@ public abstract class AbstractStructuredBlockStatement extends AbstractStructure
 
     private Op04StructuredStatement body;
 
-    public AbstractStructuredBlockStatement(Op04StructuredStatement body) {
+    AbstractStructuredBlockStatement(Op04StructuredStatement body) {
         this.body = body;
     }
 

@@ -25,14 +25,14 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
     private final MethodPrototype methodPrototype;
     private final List<Expression> args;
 
-    public AbstractConstructorInvokation(InferredJavaType inferredJavaType, ConstantPoolEntryMethodRef function, List<Expression> args) {
+    AbstractConstructorInvokation(InferredJavaType inferredJavaType, ConstantPoolEntryMethodRef function, List<Expression> args) {
         super(inferredJavaType);
         this.args = args;
         this.function = function;
         this.methodPrototype = function.getMethodPrototype();
     }
 
-    protected AbstractConstructorInvokation(AbstractConstructorInvokation other, CloneHelper cloneHelper) {
+    AbstractConstructorInvokation(AbstractConstructorInvokation other, CloneHelper cloneHelper) {
         super(other.getInferredJavaType());
         this.args = cloneHelper.replaceOrClone(other.args);
         this.function = other.function;
@@ -107,14 +107,13 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
         if (!constraint.equivalent(getTypeInstance(), other.getTypeInstance())) return false;
         if (!constraint.equivalent(args, other.args)) return false;
         return true;
-
     }
 
 
     /*
      * Duplicate code with abstractFunctionInvokation
      */
-    protected final OverloadMethodSet getOverloadMethodSet() {
+    final OverloadMethodSet getOverloadMethodSet() {
         OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
         if (overloadMethodSet == null) return null;
         JavaTypeInstance objectType = getInferredJavaType().getJavaTypeInstance();
@@ -178,8 +177,8 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
                  * Lambda types will always look wrong.
                  */
                 if (!ignore) {
-                    ignore |= arg instanceof LambdaExpression;
-                    ignore |= arg instanceof LambdaExpressionFallback;
+                    ignore = arg instanceof LambdaExpression
+                            || arg instanceof LambdaExpressionFallback;
                 }
                 if (!ignore) {
                     arg = new CastExpression(new InferredJavaType(argType, InferredJavaType.Source.EXPRESSION, true), arg);

@@ -40,7 +40,7 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         this.classFile = classFile;
     }
 
-    protected ConstructorInvokationAnonymousInner(ConstructorInvokationAnonymousInner other, CloneHelper cloneHelper) {
+    private ConstructorInvokationAnonymousInner(ConstructorInvokationAnonymousInner other, CloneHelper cloneHelper) {
         super(other, cloneHelper);
         this.constructorInvokation = (MemberFunctionInvokation) cloneHelper.replaceOrClone(other.constructorInvokation);
         this.classFile = other.classFile;
@@ -78,10 +78,9 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
     private MethodPrototype improveMethodPrototype(Dumper d) {
         ConstantPool cp = constructorInvokation.getCp();
 
-        ClassFile anonymousClassFile = null;
-        JavaTypeInstance typeInstance = anonymousTypeInstance;
+        ClassFile anonymousClassFile;
         try {
-            anonymousClassFile = cp.getDCCommonState().getClassFile(typeInstance);
+            anonymousClassFile = cp.getDCCommonState().getClassFile(anonymousTypeInstance);
         } catch (CannotLoadClassException e) {
             anonymousClassFile = classFile;
         }
@@ -93,19 +92,18 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         MethodPrototype prototype = this.constructorInvokation.getMethodPrototype();
         try {
             if (classFile != null) prototype = classFile.getMethodByPrototype(prototype).getMethodPrototype();
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException ignore) {
         }
         return prototype;
     }
 
-    public Dumper dumpForEnum(Dumper d) {
+    public void dumpForEnum(Dumper d) {
         // ConstantPool cp = constructorInvokation.getCp();
-        ClassFile anonymousClassFile = classFile; //cp.getCFRState().getClassFile(getTypeInstance());
         ClassFileDumperAnonymousInner cfd = new ClassFileDumperAnonymousInner();
         List<Expression> args = getArgs();
 
         /* Enums always have 2 initial arguments */
-        return cfd.dumpWithArgs(anonymousClassFile, null, args.subList(2, args.size()), true, d);
+        cfd.dumpWithArgs(classFile, null, args.subList(2, args.size()), true, d);
     }
 
     @Override
@@ -119,6 +117,7 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         // This is particularly hairy - two identical looking anonymous classes ARE NOT THE SAME.
         if (getClassFile() != other.getClassFile()) return false;
         if (!getTypeInstance().equals(other.getTypeInstance())) return false;
+        //noinspection RedundantIfStatement
         if (!getArgs().equals(other.getArgs())) return false;
         return true;
     }
@@ -128,6 +127,7 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
         if (!(o instanceof ConstructorInvokationAnonymousInner)) return false;
         if (!super.equivalentUnder(o, constraint)) return false;
         ConstructorInvokationAnonymousInner other = (ConstructorInvokationAnonymousInner) o;
+        //noinspection RedundantIfStatement
         if (!constraint.equivalent(constructorInvokation, other.constructorInvokation)) return false;
         return true;
     }

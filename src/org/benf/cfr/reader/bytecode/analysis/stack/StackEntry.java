@@ -22,27 +22,26 @@ public class StackEntry {
     private final StackType stackType;
     private final InferredJavaType inferredJavaType = new InferredJavaType();
 
-    public StackEntry(StackType stackType) {
+    StackEntry(StackType stackType) {
         id0 = sid++;
         ids.add(id0);
         this.lValue = new StackSSALabel(id0, this);
         this.stackType = stackType;
     }
 
-    public long incrementUsage() {
-        return ++usageCount;
+    public void incrementUsage() {
+        ++usageCount;
     }
 
-    public long decrementUsage() {
-        return (--usageCount);
+    public void decrementUsage() {
+        --usageCount;
     }
 
-    public long forceUsageCount(long newCount) {
+    public void forceUsageCount(long newCount) {
         usageCount = newCount;
-        return usageCount;
     }
 
-    public boolean mergeWith(StackEntry other) {
+    boolean mergeWith(StackEntry other) {
         if (other.stackType != this.stackType) {
             return false;
 //            throw new ConfusedCFRException("Trying to merge different stackTypes " + stackType + " vs " + other.stackType + " [" + id0 + "/" + other.id0 + "]");

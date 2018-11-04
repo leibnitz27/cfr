@@ -123,10 +123,6 @@ public class AssertRewriter {
             assertStatic = staticVariable;
         }
 
-        @Override
-        public void collectMatches(String name, WildcardMatch wcm) {
-        }
-
         boolean matched() {
             return (assertField != null);
         }

@@ -24,6 +24,7 @@ public class AttributeCode extends Attribute {
     private static final long OFFSET_OF_MAX_STACK = 6;
 
     private final int length;
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private final int maxStack;
     private final int maxLocals;
     private final int codeLength;
@@ -42,9 +43,9 @@ public class AttributeCode extends Attribute {
         long OFFSET_OF_CODE_LENGTH = 10;
         long OFFSET_OF_CODE = 14;
 
-        int maxStack = 0;
-        int maxLocals = 0;
-        int codeLength = 0;
+        int maxStack;
+        int maxLocals;
+        int codeLength;
         if (classFileVersion.before(ClassFileVersion.JAVA_1_0)) {
             OFFSET_OF_MAX_LOCALS = 7;
             OFFSET_OF_CODE_LENGTH = 8;
@@ -125,10 +126,6 @@ public class AttributeCode extends Attribute {
 
     public List<ExceptionTableEntry> getExceptionTableEntries() {
         return exceptionTableEntries;
-    }
-
-    public int getMaxStack() {
-        return maxStack;
     }
 
     public int getMaxLocals() {

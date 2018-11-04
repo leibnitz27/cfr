@@ -335,8 +335,8 @@ public class MethodPrototype implements TypeUsageCollectable {
             variableNamer.forceName(slotToIdentMap.get(0), 0, MiscConstants.THIS);
             offset = 1;
         }
-        //noinspection StatementWithEmptyBody
         if (constructorFlag == Method.MethodConstructor.ENUM_CONSTRUCTOR) {
+            MiscUtils.handyBreakPoint();
 //            parameterLValues.add(new LocalVariable(offset, new Ident(offset, 0), variableNamer, offset, new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.UNKNOWN, true), false));
 //            offset++;
 //            hide(0);

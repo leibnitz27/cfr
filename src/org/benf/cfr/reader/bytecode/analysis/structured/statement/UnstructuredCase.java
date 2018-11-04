@@ -41,13 +41,13 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
         collector.collect(caseType.getJavaTypeInstance());
     }
 
-    public StructuredStatement getEmptyStructuredCase() {
+    StructuredStatement getEmptyStructuredCase() {
         Op04StructuredStatement container = getContainer();
         return new StructuredCase(values, caseType,
                 new Op04StructuredStatement(
                         container.getIndex().justAfter(),
                         container.getBlockMembership(),
-                        Block.getEmptyBlock()),
+                        Block.getEmptyBlock(false)),
                 blockIdentifier);
     }
 

@@ -21,7 +21,7 @@ public interface StatementContainer<T> {
 
     void nopOutConditional();
 
-    SSAIdentifiers getSSAIdentifiers();
+    SSAIdentifiers<LValue> getSSAIdentifiers();
 
     Set<BlockIdentifier> getBlockIdentifiers();
 

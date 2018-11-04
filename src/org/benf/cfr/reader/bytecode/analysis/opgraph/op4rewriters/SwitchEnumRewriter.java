@@ -387,16 +387,6 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         }
 
         @Override
-        public void clear() {
-
-        }
-
-        @Override
-        public void collectStatement(String name, StructuredStatement statement) {
-
-        }
-
-        @Override
         public void collectMatches(String name, WildcardMatch wcm) {
             if (wcm == wcmCase) {
                 StaticVariable staticVariable = wcm.getStaticVariable("enumval").getMatch();

@@ -92,11 +92,5 @@ public class InnerClassConstructorRewriter implements Op04Rewriter {
              * We do this at a later step, in case there are multiple constructors.
              */
         }
-
-
-        @Override
-        public void collectMatches(String name, WildcardMatch wcm) {
-
-        }
     }
 }

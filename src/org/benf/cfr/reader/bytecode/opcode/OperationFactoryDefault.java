@@ -40,14 +40,13 @@ public class OperationFactoryDefault implements OperationFactory {
     @Override
     public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
         byte[] args = instr.getRawLength() == 0 ? null : bd.getBytesAt(instr.getRawLength(), 1);
-        int[] targetOffsets = null; // we know the nextr instr, it's our successor.
-        return new Op01WithProcessedDataAndByteJumps(instr, args, targetOffsets, offset);
+        return new Op01WithProcessedDataAndByteJumps(instr, args, null, offset);
     }
 
     /*
      * Misc helpers.
      */
-    protected static StackTypes getStackTypes(StackSim stackSim, Integer... indexes) {
+    static StackTypes getStackTypes(StackSim stackSim, Integer... indexes) {
         if (indexes.length == 1) {
             return stackSim.getEntry(indexes[0]).getType().asList();
         } else {
@@ -59,11 +58,11 @@ public class OperationFactoryDefault implements OperationFactory {
         }
     }
 
-    protected static int getCat(StackSim stackSim, int index) {
+    static int getCat(StackSim stackSim, int index) {
         return stackSim.getEntry(index).getType().getComputationCategory();
     }
 
-    protected static void checkCat(StackSim stackSim, int index, int category) {
+    static void checkCat(StackSim stackSim, int index, @SuppressWarnings("SameParameterValue") int category) {
         if (getCat(stackSim, index) != category) {
             throw new ConfusedCFRException("Expected category " + category + " at index " + index);
         }

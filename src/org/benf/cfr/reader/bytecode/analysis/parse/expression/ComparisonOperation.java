@@ -148,7 +148,7 @@ public class ComparisonOperation extends AbstractExpression implements Condition
         return this;
     }
 
-    protected void addIfLValue(Expression expression, Set<LValue> res) {
+    private void addIfLValue(Expression expression, Set<LValue> res) {
         if (expression instanceof LValueExpression) {
             res.add(((LValueExpression) expression).getLValue());
         }
@@ -209,8 +209,8 @@ public class ComparisonOperation extends AbstractExpression implements Condition
         }
     }
 
-    public ConditionalExpression getConditionalExpression(Expression booleanExpression, BooleanComparisonType booleanComparisonType) {
-        ConditionalExpression res = null;
+    private ConditionalExpression getConditionalExpression(Expression booleanExpression, BooleanComparisonType booleanComparisonType) {
+        ConditionalExpression res;
         if (booleanExpression instanceof ConditionalExpression) {
             res = (ConditionalExpression) booleanExpression;
         } else {
@@ -222,7 +222,7 @@ public class ComparisonOperation extends AbstractExpression implements Condition
 
     @Override
     public ConditionalExpression optimiseForType() {
-        BooleanComparisonType bct = null;
+        BooleanComparisonType bct;
         if ((bct = isBooleanComparison(lhs, rhs, op)).isValid()) {
             return getConditionalExpression(lhs, bct);
         } else if ((bct = isBooleanComparison(rhs, lhs, op)).isValid()) {

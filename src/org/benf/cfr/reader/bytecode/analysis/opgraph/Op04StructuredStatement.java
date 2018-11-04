@@ -149,7 +149,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     @Override
-    public SSAIdentifiers getSSAIdentifiers() {
+    public SSAIdentifiers<LValue> getSSAIdentifiers() {
         throw new UnsupportedOperationException();
     }
 

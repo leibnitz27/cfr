@@ -61,11 +61,7 @@ public class Block extends AbstractStructuredStatement {
         containedStatements.add(stm);
     }
 
-    public static Block getEmptyBlock() {
-        return new Block(emptyBlockStatements, false);
-    }
-
-    public static Block getEmptyBlock(boolean indenting) {
+    static Block getEmptyBlock(boolean indenting) {
         return new Block(emptyBlockStatements, indenting);
     }
 
@@ -100,7 +96,7 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
-    public boolean removeLastNVReturn() {
+    public void removeLastNVReturn() {
         StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof StructuredReturn) {
             Op04StructuredStatement oldReturn = containedStatements.getLast();
@@ -108,34 +104,26 @@ public class Block extends AbstractStructuredStatement {
             if (structuredReturn.getValue() == null) {
                 oldReturn.replaceStatementWithNOP("");
             }
-            return true;
-        } else {
-            return false;
         }
     }
 
     // TODO : This is unsafe.  Replace with version which requires target.
-    public boolean removeLastGoto() {
+    public void removeLastGoto() {
         StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof UnstructuredGoto) {
             Op04StructuredStatement oldGoto = containedStatements.getLast();
             oldGoto.replaceStatementWithNOP("");
-            return true;
-        } else {
-            return false;
         }
     }
 
-    public boolean removeLastGoto(Op04StructuredStatement toHere) {
+    public void removeLastGoto(Op04StructuredStatement toHere) {
         StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof UnstructuredGoto) {
             Op04StructuredStatement oldGoto = containedStatements.getLast();
             if (oldGoto.getTargets().get(0) == toHere) {
                 oldGoto.replaceStatementWithNOP("");
-                return true;
             }
         }
-        return false;
     }
 
     public UnstructuredWhile removeLastEndWhile() {
@@ -335,6 +323,7 @@ public class Block extends AbstractStructuredStatement {
                             if (test instanceof StructuredCatch) {
                                 Set<BlockIdentifier> blocks = ((StructuredCatch) test).getPossibleTryBlocks();
                                 if (blocks.contains(tryBlockIdent)) {
+                                    //noinspection SuspiciousNameCombination oh yes it should.
                                     x = y;
                                     next = containedStatements.get(y);
                                     break;
@@ -482,6 +471,7 @@ public class Block extends AbstractStructuredStatement {
     public void markCreator(LValue scopedEntity, StatementContainer<StructuredStatement> hint) {
         Op04StructuredStatement declaration = new Op04StructuredStatement(new StructuredDefinition(scopedEntity));
         if (hint != null) {
+            //noinspection SuspiciousMethodCalls - we know this is op04
             int idx = containedStatements.indexOf(hint);
             if (idx != -1) {
                 containedStatements.add(idx, declaration);

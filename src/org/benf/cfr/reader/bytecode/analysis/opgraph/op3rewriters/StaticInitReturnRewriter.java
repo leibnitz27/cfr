@@ -19,7 +19,6 @@ public class StaticInitReturnRewriter {
         if (!options.getOption(OptionsImpl.STATIC_INIT_RETURN)) return statementList;
         /*
          * if the final statement is a return, then replace all other returns with a jump to that.
-         *
          */
         Op03SimpleStatement last = statementList.get(statementList.size()-1);
         if (last.getStatement().getClass() != ReturnNothingStatement.class) return statementList;

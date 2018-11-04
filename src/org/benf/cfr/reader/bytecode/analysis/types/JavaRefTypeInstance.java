@@ -36,12 +36,13 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
          */
         if (className.contains(MiscConstants.INNER_CLASS_SEP_STR)) {
             int idx = className.lastIndexOf(MiscConstants.INNER_CLASS_SEP_CHAR);
-            //noinspection StatementWithEmptyBody
+
             if (idx == className.length()-1) {
                 /*
                  * if this is the case, it's likely to be a non-inner scala class.....
                  * Would be nice to have a better way to verify though.
                  */
+                MiscUtils.handyBreakPoint();
             } else {
                 String outer = className.substring(0, idx);
                 JavaRefTypeInstance outerClassTmp = dcCommonState.getClassCache().getRefClassFor(outer);

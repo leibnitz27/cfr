@@ -269,7 +269,7 @@ public class CodeAnalyserWholeClass {
             ClassFileField localClassFileField = classFile.getFieldByName(originalName, fieldType);
             localClassFileField.overrideName(name + ".this");
             localClassFileField.markSyntheticOuterRef();
-        } catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException ignore) {
         }
         classFile.getClassType().getInnerClassHereInfo().setHideSyntheticThis();
     }

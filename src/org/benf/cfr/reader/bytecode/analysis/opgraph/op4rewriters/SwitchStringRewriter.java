@@ -67,7 +67,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 new KleenePlus(
                         new ResetAfterTest(wcm2,
                                 new MatchSequence(
-                                        new StructuredCase(wcm2.<Expression>getList("hashvals"), null, null, wcm2.getBlockIdentifier("case")),
+                                        new StructuredCase(wcm2.getList("hashvals"), null, null, wcm2.getBlockIdentifier("case")),
                                         new BeginBlock(null),
                                         new KleeneStar(
                                                 new ResetAfterTest(wcm3,
@@ -106,18 +106,14 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 StructuredSwitch replacement = rewriteSwitch(secondSwitch, matchResultCollector);
                 secondSwitch.getContainer().replaceContainedStatement(replacement);
                 firstSwitch.getContainer().nopThis();
-                ((AbstractStructuredStatement) matchResultCollector.getStatementByName("ass1")).getContainer().nopThis();
-                ((AbstractStructuredStatement) matchResultCollector.getStatementByName("ass2")).getContainer().nopThis();
-//                firstSwitch.getContainer().nopThisAndReplace();
-//                ((AbstractStructuredStatement) matchResultCollector.getStatementByName("ass1")).getContainer().nopThisAndReplace();
-//                ((AbstractStructuredStatement) matchResultCollector.getStatementByName("ass2")).getContainer().nopThisAndReplace();
+                matchResultCollector.getStatementByName("ass1").getContainer().nopThis();
+                matchResultCollector.getStatementByName("ass2").getContainer().nopThis();
                 mi.rewind1();
             }
         }
     }
 
     private StructuredSwitch rewriteSwitch(StructuredSwitch original, SwitchStringMatchResultCollector matchResultCollector) {
-//        Expression switchOn = original.getSwitchOn();
         Op04StructuredStatement body = original.getBody();
         BlockIdentifier blockIdentifier = original.getBlockIdentifier();
 
@@ -212,14 +208,14 @@ public class SwitchStringRewriter implements Op04Rewriter {
         @Override
         public void collectMatches(String name, WildcardMatch wcm) {
             if (wcm == wholeBlock) {
-                Expression stringObject = wcm.getExpressionWildCard("originalstring").getMatch();
-                stringExpression = stringObject;
+                stringExpression = wcm.getExpressionWildCard("originalstring").getMatch();
             } else if (wcm == caseStatement) {
+                //noinspection unchecked
                 List<Expression> hashvals = wcm.getList("hashvals").getMatch();
                 Expression case2id = wcm.getExpressionWildCard("case2id").getMatch();
                 Expression stringValue = wcm.getExpressionWildCard("stringvalue").getMatch();
                 pendingHashCode.add(Pair.make(getString(stringValue), getInt(case2id)));
-                processPendingWithHashCode(hashvals);
+                processPendingWithHashCode();
             } else if (wcm == hashCollision) {
                 // Note that this will be triggered BEFORE the case statement it's in.
                 Expression case2id = wcm.getExpressionWildCard("case2id").getMatch();
@@ -230,29 +226,29 @@ public class SwitchStringRewriter implements Op04Rewriter {
             }
         }
 
-        void processPendingWithHashCode(List<Expression> hashVals) {
+        void processPendingWithHashCode() {
             for (Pair<String, Integer> pair : pendingHashCode) {
                 validatedHashes.get(pair.getSecond()).add(pair.getFirst());
             }
             pendingHashCode.clear();
         }
 
-        public Expression getStringExpression() {
+        Expression getStringExpression() {
             return stringExpression;
         }
 
-        public Map<Integer, List<String>> getValidatedHashes() {
+        Map<Integer, List<String>> getValidatedHashes() {
             return validatedHashes;
         }
 
-        public StructuredStatement getStatementByName(String name) {
+        StructuredStatement getStatementByName(String name) {
             StructuredStatement structuredStatement = collectedStatements.get(name);
             if (structuredStatement == null) throw new IllegalArgumentException("No collected statement " + name);
             return structuredStatement;
         }
     }
 
-    static String getString(Expression e) {
+    private static String getString(Expression e) {
         if (!(e instanceof Literal)) {
             throw new TooOptimisticMatchException();
         }
@@ -261,12 +257,11 @@ public class SwitchStringRewriter implements Op04Rewriter {
         if (typedLiteral.getType() != TypedLiteral.LiteralType.String) {
             throw new TooOptimisticMatchException();
         }
-        String s = (String) typedLiteral.getValue();
-        return s;
+        return (String) typedLiteral.getValue();
     }
 
     // TODO : Verify type
-    static Integer getInt(Expression e) {
+    private static Integer getInt(Expression e) {
         if (!(e instanceof Literal)) {
             throw new TooOptimisticMatchException();
         }
@@ -282,7 +277,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
     }
 
     private static class FailedRewriteException extends IllegalStateException {
-        public FailedRewriteException(String s) {
+        FailedRewriteException(String s) {
             super(s);
         }
     }

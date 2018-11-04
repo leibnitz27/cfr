@@ -27,13 +27,13 @@ public class AttributeFactory {
 
         try {
             if (AttributeLocalVariableTable.ATTRIBUTE_NAME.equals(attributeName)) {
-                return new AttributeLocalVariableTable(raw, cp);
+                return new AttributeLocalVariableTable(raw);
             } else if (AttributeSignature.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeSignature(raw, cp);
             } else if (AttributeConstantValue.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeConstantValue(raw, cp);
             } else if (AttributeLineNumberTable.ATTRIBUTE_NAME.equals(attributeName)) {
-                return new AttributeLineNumberTable(raw, cp);
+                return new AttributeLineNumberTable(raw);
             } else if (AttributeExceptions.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeExceptions(raw, cp);
             } else if (AttributeEnclosingMethod.ATTRIBUTE_NAME.equals(attributeName)) {
@@ -53,7 +53,7 @@ public class AttributeFactory {
             } else if (AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeRuntimeInvisibleParameterAnnotations(raw, cp);
             } else if (AttributeSourceFile.ATTRIBUTE_NAME.equals(attributeName)) {
-                return new AttributeSourceFile(raw, cp);
+                return new AttributeSourceFile(raw);
             } else if (AttributeInnerClasses.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeInnerClasses(raw, cp);
             } else if (AttributeBootstrapMethods.ATTRIBUTE_NAME.equals(attributeName)) {
@@ -61,15 +61,15 @@ public class AttributeFactory {
             } else if (AttributeAnnotationDefault.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeAnnotationDefault(raw, cp);
             } else if (AttributeLocalVariableTypeTable.ATTRIBUTE_NAME.equals(attributeName)) {
-                return new AttributeLocalVariableTypeTable(raw, cp);
+                return new AttributeLocalVariableTypeTable(raw);
             } else if (AttributeStackMapTable.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeStackMapTable(raw, cp);
             } else if (AttributeSynthetic.ATTRIBUTE_NAME.equals(attributeName)) {
-                return new AttributeSynthetic(raw, cp);
+                return new AttributeSynthetic(raw);
             } else if (AttributeScalaSig.ATTRIBUTE_NAME.equals(attributeName)) {
-                return new AttributeScalaSig(raw, cp);
+                return new AttributeScalaSig(raw);
             } else if (AttributeScala.ATTRIBUTE_NAME.equals(attributeName)) {
-                return new AttributeScala(raw, cp);
+                return new AttributeScala(raw);
             }
         } catch (Exception e) {
             // Can't handle it? Continue and process as an unknown attribute.

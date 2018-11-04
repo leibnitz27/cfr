@@ -159,8 +159,6 @@ public class Misc {
 
     }
 
-
-
     static Set<Op03SimpleStatement> followNopGotoBackwards(Op03SimpleStatement eventualtarget) {
 
         final Set<Op03SimpleStatement> result = SetFactory.newSet();
@@ -179,8 +177,7 @@ public class Misc {
                         arg2.enqueue(source);
                     } else if (clazz == IfStatement.class) {
                         if (source.getTargets().size() == 2 &&
-                                // TODO : BUG
-                            source.getTargets().get(1) == arg2) {
+                            source.getTargets().get(1) == arg1) {
                             result.add(source);
                         }
                     }

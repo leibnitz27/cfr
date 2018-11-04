@@ -25,7 +25,7 @@ public class UnstructuredTry extends AbstractUnStructuredStatement {
     public void collectTypeUsages(TypeUsageCollector collector) {
     }
 
-    public StructuredStatement getEmptyTry() {
+    StructuredStatement getEmptyTry() {
         return new StructuredTry(new Op04StructuredStatement(Block.getEmptyBlock(true)), exceptionGroup.getTryBlockIdentifier());
     }
 

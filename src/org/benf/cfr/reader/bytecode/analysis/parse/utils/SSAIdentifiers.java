@@ -1,9 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
-import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
-import org.benf.cfr.reader.util.functors.BinaryPredicate;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.BinaryPredicate;
 
 import java.util.Map;
 import java.util.Set;
@@ -94,7 +93,7 @@ public class SSAIdentifiers<KEYTYPE> {
         return changed;
     }
 
-    public void fixHere(Set<KEYTYPE> fixed) {
+    void fixHere(Set<KEYTYPE> fixed) {
         for (KEYTYPE fix : fixed) {
             fixedHere.put(fix, fix);
         }
@@ -103,10 +102,6 @@ public class SSAIdentifiers<KEYTYPE> {
     public Set<KEYTYPE> getFixedHere() {
         return fixedHere.keySet();
     }
-
-//    public SSAIdent getValFixedHere() {
-//        return valFixedHere;
-//    }
 
     /*
      * For an identifier to be a valid replacement, its' SSA identifiers need to match those of the
@@ -118,7 +113,7 @@ public class SSAIdentifiers<KEYTYPE> {
      *
      *
      */
-    public boolean isValidReplacement(LValue lValue, SSAIdentifiers<KEYTYPE> other) {
+    public boolean isValidReplacement(KEYTYPE lValue, SSAIdentifiers<KEYTYPE> other) {
         SSAIdent thisVersion = knownIdentifiersOnEntry.get(lValue);
         SSAIdent otherVersion = other.knownIdentifiersOnExit.get(lValue);
         if (thisVersion == null && otherVersion == null) return true;
@@ -132,7 +127,7 @@ public class SSAIdentifiers<KEYTYPE> {
         return false;
     }
 
-    public boolean isValidReplacementOnExit(LValue lValue, SSAIdentifiers<KEYTYPE> other) {
+    boolean isValidReplacementOnExit(KEYTYPE lValue, SSAIdentifiers<KEYTYPE> other) {
         SSAIdent thisVersion = knownIdentifiersOnExit.get(lValue);
         SSAIdent otherVersion = other.knownIdentifiersOnExit.get(lValue);
         if (thisVersion == null && otherVersion == null) return true;
@@ -146,7 +141,7 @@ public class SSAIdentifiers<KEYTYPE> {
         return false;
     }
 
-    public Set<KEYTYPE> getChanges() {
+    Set<KEYTYPE> getChanges() {
         Set<KEYTYPE> result = SetFactory.newSet();
         for (Map.Entry<KEYTYPE, SSAIdent> entry : knownIdentifiersOnEntry.entrySet()) {
             SSAIdent after = knownIdentifiersOnExit.get(entry.getKey());
@@ -173,12 +168,8 @@ public class SSAIdentifiers<KEYTYPE> {
         knownIdentifiersOnExit.put(lValue, ident);
     }
 
-    public void setKnownIdentifierOnEntry(KEYTYPE lValue, SSAIdent ident) {
+    void setKnownIdentifierOnEntry(KEYTYPE lValue, SSAIdent ident) {
         knownIdentifiersOnEntry.put(lValue, ident);
-    }
-
-    public int sizeOnExit() {
-        return knownIdentifiersOnExit.size();
     }
 
     public Map<KEYTYPE, SSAIdent> getKnownIdentifiersOnExit() {

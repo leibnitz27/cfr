@@ -16,7 +16,7 @@ public class StructuredContinue extends AbstractStructuredContinue {
     private final BlockIdentifier continueTgt;
     private final boolean localContinue;
 
-    public StructuredContinue(BlockIdentifier continueTgt, boolean localContinue) {
+    StructuredContinue(BlockIdentifier continueTgt, boolean localContinue) {
         this.continueTgt = continueTgt;
         this.localContinue = localContinue;
     }

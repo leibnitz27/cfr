@@ -19,7 +19,7 @@ public class AccountingRewriter implements ExpressionRewriter {
             new UnaryFunction<StackSSALabel, Long>() {
                 @Override
                 public Long invoke(StackSSALabel arg) {
-                    return new Long(0);
+                    return 0L;
                 }
             });
 

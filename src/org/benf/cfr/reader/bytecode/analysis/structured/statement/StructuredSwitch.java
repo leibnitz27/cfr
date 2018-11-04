@@ -71,14 +71,6 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
     public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
     }
 
-    public Expression getSwitchOn() {
-        return switchOn;
-    }
-
-    public Op04StructuredStatement getBody() {
-        return super.getBody();
-    }
-
     public BlockIdentifier getBlockIdentifier() {
         return blockIdentifier;
     }

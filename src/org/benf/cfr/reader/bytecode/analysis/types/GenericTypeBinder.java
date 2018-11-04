@@ -24,9 +24,9 @@ public class GenericTypeBinder {
         return new GenericTypeBinder(MapFactory.<String, JavaTypeInstance>newMap());
     }
 
-    public static GenericTypeBinder bind(List<FormalTypeParameter> methodFormalTypeParameters,
-                                         ClassSignature classSignature, List<JavaTypeInstance> args,
-                                         JavaGenericRefTypeInstance boundInstance, List<JavaTypeInstance> boundArgs) {
+    static GenericTypeBinder bind(List<FormalTypeParameter> methodFormalTypeParameters,
+                                  ClassSignature classSignature, List<JavaTypeInstance> args,
+                                  JavaGenericRefTypeInstance boundInstance, List<JavaTypeInstance> boundArgs) {
         Map<String, JavaTypeInstance> nameToBoundType = MapFactory.newMap();
 
         if (boundInstance != null) {    // null for static.
@@ -153,7 +153,7 @@ public class GenericTypeBinder {
         nameToBoundType.remove(name);
     }
 
-    public JavaTypeInstance getBindingFor(FormalTypeParameter formalTypeParameter) {
+    JavaTypeInstance getBindingFor(FormalTypeParameter formalTypeParameter) {
         return nameToBoundType.get(formalTypeParameter.getName());
     }
 
@@ -253,7 +253,7 @@ public class GenericTypeBinder {
         // First - check compatibility.
         if (!nameToBoundType.keySet().equals(rhsBinder.nameToBoundType.keySet())) return null;
 
-        Map<String, JavaTypeInstance> resultMap = MapFactory.<String, JavaTypeInstance>newMap();
+        Map<String, JavaTypeInstance> resultMap = MapFactory.newMap();
         for (Map.Entry<String, JavaTypeInstance> entry : nameToBoundType.entrySet()) {
             String key = entry.getKey();
             JavaTypeInstance lhstype = entry.getValue();
@@ -265,7 +265,7 @@ public class GenericTypeBinder {
                 if (rhsBoundSupers == null || !rhsBoundSupers.containsBase(lhstype.getDeGenerifiedType())) return null;
             }
             // Ok, rhstype extends/= lhstype.
-            JavaTypeInstance bestGuess = null;
+            JavaTypeInstance bestGuess;
             if (lhstype instanceof JavaWildcardTypeInstance) {
                 bestGuess = rhstype;
             } else {

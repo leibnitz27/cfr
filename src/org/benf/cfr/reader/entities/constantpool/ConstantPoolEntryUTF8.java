@@ -26,7 +26,6 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
         char[] outchars = new char[bytes.length];
         String tmpValue = null;
         int out = 0;
-        boolean needsUTF = false;
         try {
             for (int i = 0; i < bytes.length; ++i) {
                 int x = bytes[i];
@@ -37,7 +36,6 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
                     if ((y & 0xC0) == 0x80) {
                         int val = ((x & 0x1f) << 6) + (y & 0x3f);
                         outchars[out++] = (char) val;
-                        needsUTF = true;
                     } else {
                         throw new IllegalArgumentException();
                     }
@@ -47,7 +45,6 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
                     if ((y & 0xC0) == 0x80 && (z & 0xC0) == 0x80) {
                         int val = ((x & 0xf) << 12) + ((y & 0x3f) << 6) + (z & 0x3f);
                         outchars[out++] = (char) val;
-                        needsUTF = true;
                     } else {
                         throw new IllegalArgumentException();
                     }
@@ -56,8 +53,8 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
                 }
             }
             tmpValue = new String(outchars, 0, out);
-        } catch (IllegalArgumentException e) {
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IllegalArgumentException ignore) {
+        } catch (IndexOutOfBoundsException ignore) {
         }
         if (tmpValue == null) {
             // Constpool actually uses modified UTF8....
@@ -66,7 +63,6 @@ public class ConstantPoolEntryUTF8 extends AbstractConstantPoolEntry {
         if (tmpValue.length() > 512 && options.getOption(OptionsImpl.HIDE_LONGSTRINGS)) {
             tmpValue = "longStr" + idx++ + "[" + tmpValue.substring(0, 10).replace('\r', '_').replace('\n', '_') + "]";
         }
-//        tmpValue = tmpValue.replace("\n", "\\n").replace("\r", "\\r");
         this.value = tmpValue;
     }
 

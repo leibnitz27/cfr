@@ -65,11 +65,6 @@ public class RedundantSuperRewriter implements Op04Rewriter {
         }
 
         @Override
-        public void clear() {
-
-        }
-
-        @Override
         public void collectStatement(String name, StructuredStatement statement) {
             SuperFunctionInvokation superInvokation = wcm.getSuperFunction("s1").getMatch();
 
@@ -91,12 +86,6 @@ public class RedundantSuperRewriter implements Op04Rewriter {
                     }
                 }
             }
-
-        }
-
-
-        @Override
-        public void collectMatches(String name, WildcardMatch wcm) {
 
         }
     }

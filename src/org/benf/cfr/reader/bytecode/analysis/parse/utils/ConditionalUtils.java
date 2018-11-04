@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.TernaryExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.util.MiscUtils;
 
 public class ConditionalUtils {
     public static ConditionalExpression simplify(ConditionalExpression condition) {
@@ -29,6 +30,7 @@ public class ConditionalUtils {
         ConditionalExpression pred = condition.getCondition();
         if (e1.equals(Literal.TRUE) && e2.equals(Literal.FALSE)) {
             // pred is real!
+            MiscUtils.handyBreakPoint();
         } else if (e1.equals(Literal.FALSE) && e2.equals(Literal.TRUE)) {
             pred = pred.getNegated();
         } else {

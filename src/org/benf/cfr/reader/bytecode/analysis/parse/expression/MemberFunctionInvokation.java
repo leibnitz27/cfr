@@ -8,7 +8,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
-import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -40,11 +39,6 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
 
     public MemberFunctionInvokation withReplacedObject(Expression object) {
         return new MemberFunctionInvokation(getCp(), getFunction(), object, special, getArgs(), getNulls());
-    }
-
-    @Override
-    public void collectTypeUsages(TypeUsageCollector collector) {
-        super.collectTypeUsages(collector);
     }
 
     @Override

@@ -328,16 +328,6 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         ArithOp op;
 
         @Override
-        public void clear() {
-
-        }
-
-        @Override
-        public void collectStatement(String name, StructuredStatement statement) {
-
-        }
-
-        @Override
         public void collectMatches(String name, WildcardMatch wcm) {
             this.matchType = name;
             this.lValue = wcm.getLValueWildCard("lvalue").getMatch();
@@ -412,16 +402,6 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         StaticFunctionInvokation staticFunctionInvokation;
         MemberFunctionInvokation memberFunctionInvokation;
         Expression functionInvokation;
-
-        @Override
-        public void clear() {
-
-        }
-
-        @Override
-        public void collectStatement(String name, StructuredStatement statement) {
-
-        }
 
         @Override
         public void collectMatches(String name, WildcardMatch wcm) {

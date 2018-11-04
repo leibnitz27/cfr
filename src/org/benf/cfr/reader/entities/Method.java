@@ -185,7 +185,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     AttributeSignature getSignatureAttribute() {
-        return this.<AttributeSignature>getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
+        return this.getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
     }
 
     private <T extends Attribute> T getAttributeByName(String name) {
@@ -219,14 +219,12 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
      * Method  : <init> name : 30, descriptor 31
      * Descriptor ConstantUTF8[(Ljava/lang/String;I)V]
      * Signature Signature:ConstantUTF8[()V]
-     *
-     *
      */
     private MethodPrototype generateMethodPrototype(String initialName) {
         AttributeSignature sig = getSignatureAttribute();
         ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
         ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
-        ConstantPoolEntryUTF8 prototype = null;
+        ConstantPoolEntryUTF8 prototype;
         if (signature == null) {
             prototype = descriptor;
         } else {
@@ -279,7 +277,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         return methodPrototype;
     }
 
-    public void markOverride() {
+    void markOverride() {
         isOverride = true;
     }
 
@@ -384,8 +382,6 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
                  * No code attribute - we still need to assign variable names.
                  */
                 Map<Integer, Ident> identMap = MapFactory.newLazyMap(new UnaryFunction<Integer, Ident>() {
-                    public int x = 0;
-
                     @Override
                     public Ident invoke(Integer arg) {
                         return new Ident(arg, 0);

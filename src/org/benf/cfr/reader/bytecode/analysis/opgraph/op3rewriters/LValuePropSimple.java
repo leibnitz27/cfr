@@ -122,7 +122,7 @@ public class LValuePropSimple {
 
                     LValueRewriter<Statement> rewriter = new LValueRewriter<Statement>() {
                         @Override
-                        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
+                        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers<LValue> ssaIdentifiers, StatementContainer<Statement> statementContainer) {
                             if (lValue.equals(prevCreated)) return rhs;
                             return null;
                         }

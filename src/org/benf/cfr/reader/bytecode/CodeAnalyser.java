@@ -383,7 +383,7 @@ public class CodeAnalyser {
         logger.info("identifyCatchBlocks");
         Op03SimpleStatement.identifyCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
 
-        Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes, blockIdentifierFactory);
+        Op03SimpleStatement.combineTryCatchBlocks(op03SimpleParseNodes);
 
         if (options.getOption(OptionsImpl.COMMENT_MONITORS)) {
             Op03SimpleStatement.commentMonitors(op03SimpleParseNodes);
@@ -406,7 +406,7 @@ public class CodeAnalyser {
         LValueProp.condenseLValues(op03SimpleParseNodes);
         Op03SimpleStatement.condenseLValueChain1(op03SimpleParseNodes);
 
-        op03SimpleParseNodes = StaticInitReturnRewriter.rewrite(options, method, op03SimpleParseNodes);
+        StaticInitReturnRewriter.rewrite(options, method, op03SimpleParseNodes);
 
         op03SimpleParseNodes = Op03SimpleStatement.removeRedundantTries(op03SimpleParseNodes);
 
@@ -452,13 +452,12 @@ public class CodeAnalyser {
                 Op03SimpleStatement.replaceReturningIfs(op03SimpleParseNodes, true);
             }
             if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
-                Op03SimpleStatement.propagateToReturn2(method, op03SimpleParseNodes);
+                Op03SimpleStatement.propagateToReturn2(op03SimpleParseNodes);
             }
 
             op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, false);
-//            Op03SimpleStatement.extendCatchBlocks(op03SimpleParseNodes);
 
-            op03SimpleParseNodes = Op03Blocks.topologicalSort(method, op03SimpleParseNodes, comments, options);
+            op03SimpleParseNodes = Op03Blocks.topologicalSort(op03SimpleParseNodes, comments, options);
             Op03SimpleStatement.removePointlessJumps(op03SimpleParseNodes);
 
             /*
@@ -471,7 +470,7 @@ public class CodeAnalyser {
             // This is not neccessarily a sensible thing to do, but we're being aggressive...
             Op03SimpleStatement.rejoinBlocks(op03SimpleParseNodes);
             Op03SimpleStatement.extendTryBlocks(dcCommonState, op03SimpleParseNodes);
-            op03SimpleParseNodes = Op03Blocks.combineTryBlocks(method, op03SimpleParseNodes);
+            op03SimpleParseNodes = Op03Blocks.combineTryBlocks(op03SimpleParseNodes);
             Op03SimpleStatement.combineTryCatchEnds(op03SimpleParseNodes);
             Op03SimpleStatement.rewriteTryBackJumps(op03SimpleParseNodes);
             FinallyRewriter.identifyFinally(options, method, op03SimpleParseNodes, blockIdentifierFactory);
@@ -548,7 +547,7 @@ public class CodeAnalyser {
         LoopIdentifier.identifyLoops1(method, op03SimpleParseNodes, blockIdentifierFactory);
 
         // After we've identified loops, try to push any instructions through a goto
-        op03SimpleParseNodes = Op03SimpleStatement.pushThroughGoto(method, op03SimpleParseNodes);
+        op03SimpleParseNodes = Op03SimpleStatement.pushThroughGoto(op03SimpleParseNodes);
 
         // Replacing returning ifs early (above, aggressively) interferes with some nice output.
         // Normally we'd do it AFTER loops.
@@ -592,7 +591,7 @@ public class CodeAnalyser {
         // Condense again, now we've simplified conditionals, ternaries, etc.
         LValueProp.condenseLValues(op03SimpleParseNodes);
         if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
-            Op03SimpleStatement.propagateToReturn2(method, op03SimpleParseNodes);
+            Op03SimpleStatement.propagateToReturn2(op03SimpleParseNodes);
         }
 
         logger.info("removeUselessNops");
@@ -660,8 +659,6 @@ public class CodeAnalyser {
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
             // Before we handle anonymous blocks - see if we can convert any non-else if statements, which
             // Jump to a Goto Out of try, to just be an anonymous break to after that try statement.
-            // op03SimpleParseNodes = Op03SimpleStatement.convertIndirectTryLeavesToAnonymousBreaks(op03SimpleParseNodes);
-
             Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         }
 
@@ -708,20 +705,13 @@ public class CodeAnalyser {
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
             // Before we handle anonymous blocks - see if we can convert any non-else if statements, which
             // Jump to a Goto Out of try, to just be an anonymous break to after that try statement.
-            // op03SimpleParseNodes = Op03SimpleStatement.convertIndirectTryLeavesToAnonymousBreaks(op03SimpleParseNodes);
             Op03SimpleStatement.classifyAnonymousBlockGotos(op03SimpleParseNodes, true);
 
             Op03SimpleStatement.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         }
 
-        op03SimpleParseNodes = Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new BadNarrowingArgRewriter());
+        Op03SimpleStatement.rewriteWith(op03SimpleParseNodes, new BadNarrowingArgRewriter());
         Cleaner.reindexInPlace(op03SimpleParseNodes);
-
-        /*
-         * Join up separated blocks.  Note that this is a bit dangerous, so we should only enable it
-         * If we have to.
-         */
-        //Op03SimpleStatement.rejoinBlocks2(op03SimpleParseNodes);
 
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 

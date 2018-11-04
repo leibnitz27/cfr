@@ -54,6 +54,7 @@ public class OverloadMethodSet {
             return methodArgs.get(idx);
         }
 
+        @SuppressWarnings("unused")
         public boolean isVararg(int idx) {
             return (idx >= size - 1 && methodPrototype.isVarArgs());
         }
@@ -127,7 +128,6 @@ public class OverloadMethodSet {
         /*
          * Don't even consider any of the matches which have too many required arguments
          */
-
         Set<MethodData> possibleMatches = SetFactory.newSet(
                 Functional.filter(allPrototypes, new Predicate<MethodData>() {
                     @Override
@@ -136,8 +136,7 @@ public class OverloadMethodSet {
                     }
                 }));
 
-
-        Map<Integer, Set<MethodData>> weakMatches = MapFactory.<Integer, Set<MethodData>>newLazyMap(new UnaryFunction<Integer, Set<MethodData>>() {
+        Map<Integer, Set<MethodData>> weakMatches = MapFactory.newLazyMap(new UnaryFunction<Integer, Set<MethodData>>() {
             @Override
             public Set<MethodData> invoke(Integer arg) {
                 return SetFactory.newSet();
@@ -207,7 +206,7 @@ public class OverloadMethodSet {
                 int best = -1;
                 for (int y = 0, len2 = remaining.size(); y < len2; ++y) {
                     JavaTypeInstance t = remaining.get(y).getArgType(x, argTypeUsed);
-                    BindingSuperContainer t2bs = t.getBindingSupers();
+                    BindingSuperContainer t2bs = t == null ? null : t.getBindingSupers();
                     if (t2bs == null) {
                         best = -1;
                         break;
@@ -223,9 +222,8 @@ public class OverloadMethodSet {
                         if (ainb) {
                             mostDefined = t;
                             best = y;
-                        } else {
-                            // do nothing
                         }
+                        // else do nothing
                     } else {
                         best = -1;
                         break;
@@ -291,13 +289,13 @@ public class OverloadMethodSet {
         JavaTypeInstance expectedArgType = actualPrototype.getArgType(idx, newArgType);
 
         if (expectedArgType instanceof RawJavaType) {
-            return callsCorrectApproxRawMethod(newArg, newArgType, idx, gtb);
+            return callsCorrectApproxRawMethod(newArgType, idx, gtb);
         } else {
             return callsCorrectApproxObjMethod(newArg, newArgType, idx, gtb);
         }
     }
 
-    public boolean callsCorrectApproxRawMethod(Expression newArg, JavaTypeInstance actual, int idx, GenericTypeBinder gtb) {
+    private boolean callsCorrectApproxRawMethod(JavaTypeInstance actual, int idx, GenericTypeBinder gtb) {
         List<MethodData> matches = ListFactory.newList();
         for (MethodData prototype : allPrototypes) {
             JavaTypeInstance arg = prototype.getArgType(idx, actual);
@@ -314,6 +312,7 @@ public class OverloadMethodSet {
             return true;
         }
         /*
+         * TODO:?
          * Need to sort them according to how much type promotion is needed, we require our target
          * to be the first one.
          *
@@ -324,7 +323,6 @@ public class OverloadMethodSet {
          * to be truly accurate, this set has to be the set used to verify the type promotion for
          * subsequent arguments.
          */
-        boolean boxingFirst = (!(actual instanceof RawJavaType));
         /*
          * We don't need to sort, we can just do a single run.
          */
@@ -333,17 +331,16 @@ public class OverloadMethodSet {
         for (int x = 1; x < matches.size(); ++x) {
             MethodData next = matches.get(x);
             JavaTypeInstance nextType = next.getArgType(idx, actual);
-            if (nextType.implicitlyCastsTo(lowestType, null)) {
+            if (nextType != null && nextType.implicitlyCastsTo(lowestType, null)) {
                 lowest = next;
                 lowestType = nextType;
             }
         }
 
-        if (lowest.is(actualPrototype)) return true;
-        return false;
+        return lowest.is(actualPrototype);
     }
 
-    public boolean callsCorrectApproxObjMethod(Expression newArg, final JavaTypeInstance actual, final int idx, GenericTypeBinder gtb) {
+    private boolean callsCorrectApproxObjMethod(Expression newArg, final JavaTypeInstance actual, final int idx, GenericTypeBinder gtb) {
         List<MethodData> matches = ListFactory.newList();
         boolean podMatchExists = false;
         boolean nonPodMatchExists = false;
@@ -376,7 +373,7 @@ public class OverloadMethodSet {
             JavaTypeInstance bestType = null;
             for (MethodData match : matches) {
                 JavaTypeInstance arg = match.getArgType(idx, actual);
-                if (!arg.equals(TypeConstants.OBJECT)) {
+                if (arg != null && !arg.equals(TypeConstants.OBJECT)) {
                     if (best == null) {
                         best = match;
                         bestType = arg;
@@ -384,12 +381,11 @@ public class OverloadMethodSet {
                         if (arg.implicitlyCastsTo(bestType, null)) {
                             best = match;
                             bestType = arg;
-                        } else if (bestType.implicitlyCastsTo(arg, null)) {
-                            // We already had the better match.
-                        } else {
+                        } else if (!bestType.implicitlyCastsTo(arg, null)) {
                             // Type collision, needs cast.
                             return false;
                         }
+                        // We already had the better match.
                     }
                 }
             }
@@ -437,13 +433,12 @@ public class OverloadMethodSet {
         for (int x = 0; x < matches.size(); ++x) {
             MethodData next = matches.get(x);
             JavaTypeInstance nextType = next.getArgType(idx, actual);
-            if (nextType.implicitlyCastsTo(lowestType, null)) {
+            if (nextType != null && nextType.implicitlyCastsTo(lowestType, null)) {
                 lowest = next;
                 lowestType = nextType;
             }
         }
 
-        if (lowest.is(actualPrototype)) return true;
-        return false;
+        return lowest.is(actualPrototype);
     }
 }

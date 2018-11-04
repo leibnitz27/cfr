@@ -13,16 +13,14 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 public class OperationFactoryInvokeDynamic extends OperationFactoryDefault {
     private static final int LENGTH_OF_FIELD_INDEX = 2;
 
-    public OperationFactoryInvokeDynamic() {
+    OperationFactoryInvokeDynamic() {
     }
 
     @Override
     public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
         byte[] args = bd.getBytesAt(LENGTH_OF_FIELD_INDEX + 2 /* padded with 0,0 */, 1);
-        int[] targetOffsets = null; // we know the nextr instr, it's our successor (after the invoke returns).
         ConstantPoolEntry[] cpEntries = new ConstantPoolEntry[]{cp.getEntry(bd.getU2At(1))};
-
-        return new Op01WithProcessedDataAndByteJumps(instr, args, targetOffsets, offset, cpEntries);
+        return new Op01WithProcessedDataAndByteJumps(instr, args, null, offset, cpEntries);
     }
 
     @Override

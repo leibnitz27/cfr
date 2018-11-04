@@ -209,6 +209,7 @@ public class InferredJavaType {
                 }
             }
             Pair<Boolean, JavaTypeInstance> newlyResolved = collapseTypeClash2(clashTypes);
+            //noinspection ConstantConditions
             if (newlyResolved == null) return;
 
             // Ignore the first part of the pair - we have to resolve here, so do our best.
@@ -650,7 +651,7 @@ public class InferredJavaType {
     }
 
     private static InferredJavaType mkClash(List<JavaTypeInstance> types) {
-        JavaTypeInstance[] arr = types.toArray(new JavaTypeInstance[0]);
+        JavaTypeInstance[] arr = types.toArray(new JavaTypeInstance[types.size()]);
         return mkClash(arr);
     }
 

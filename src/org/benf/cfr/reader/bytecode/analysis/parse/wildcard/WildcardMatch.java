@@ -295,7 +295,7 @@ public class WildcardMatch {
     }
 
     // ListWildcard is a little dodgy - relies on erasure!
-    public <T> ListWildcard getList(String name) {
+    public ListWildcard getList(String name) {
         ListWildcard res = listMap.get(name);
         if (res != null) return res;
 
@@ -648,9 +648,8 @@ public class WildcardMatch {
              */
             MemberFunctionInvokation other = (MemberFunctionInvokation) o;
             if (isInitMethod != other.isInitMethod()) return false;
-            if (name == null) {
-                // always match.
-            } else if (!name.equals(other.getName())) {
+            // always match null name.
+            if (name != null && !name.equals(other.getName())) {
                 return false;
             }
             if (!object.equals(other.getObject())) return false;

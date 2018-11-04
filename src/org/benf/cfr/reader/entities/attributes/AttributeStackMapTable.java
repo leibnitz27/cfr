@@ -262,7 +262,6 @@ public class AttributeStackMapTable extends Attribute {
             this.frame_type = frame_type;
             this.offset_delta = offset_delta;
         }
-
     }
 
     private static class StackMapFrameSameFrameExtended implements StackMapFrame {

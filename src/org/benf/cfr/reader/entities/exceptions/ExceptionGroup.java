@@ -80,7 +80,7 @@ public class ExceptionGroup {
         /*
          * We expect - astore X, (aload, monitorexit)+, aload X, athrow
          */
-        Integer offset = lutByOffset.get((int) tableEntry.getBytecodeIndexHandler());
+        Integer offset = lutByOffset.get(tableEntry.getBytecodeIndexHandler());
         if (offset == null) return false;
 
         int idx = offset;
@@ -98,8 +98,7 @@ public class ExceptionGroup {
             if (loadIdx == null) {
                 // One alternative - ldc.
                 JVMInstr instr = load.getJVMInstr();
-                if (instr == JVMInstr.LDC) {
-                } else {
+                if (instr != JVMInstr.LDC) {
                     break;
                 }
             }
@@ -224,7 +223,7 @@ public class ExceptionGroup {
         @Override
         public int hashCode() {
             int result = type != null ? type.hashCode() : 0;
-            result = 31 * result + (int) handler;
+            result = 31 * result + handler;
             return result;
         }
     }

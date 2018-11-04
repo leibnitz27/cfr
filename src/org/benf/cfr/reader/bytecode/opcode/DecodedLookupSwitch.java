@@ -28,9 +28,8 @@ public class DecodedLookupSwitch implements DecodedSwitch {
         ByteData bd = new BaseByteData(data);
         int defaultvalue = bd.getS4At(offset + OFFSET_OF_DEFAULT);
         int numpairs = bd.getS4At(offset + OFFSET_OF_NUMPAIRS);
-        int defaultTarget = defaultvalue;
         // Treemap so that targets are in bytecode order.
-        Map<Integer, List<Integer>> uniqueTargets = MapFactory.<Integer, List<Integer>>newLazyMap(
+        Map<Integer, List<Integer>> uniqueTargets = MapFactory.newLazyMap(
                 new TreeMap<Integer, List<Integer>>(),
                 new UnaryFunction<Integer, List<Integer>>() {
                     @Override
@@ -38,11 +37,11 @@ public class DecodedLookupSwitch implements DecodedSwitch {
                         return ListFactory.newList();
                     }
                 });
-        uniqueTargets.get(defaultTarget).add(null);
+        uniqueTargets.get(defaultvalue).add(null);
         for (int x = 0; x < numpairs; ++x) {
             int value = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8));
             int target = bd.getS4At(offset + OFFSET_OF_PAIRS + (x * 8) + 4);
-            if (target != defaultTarget) {
+            if (target != defaultvalue) {
                 uniqueTargets.get(target).add(value);
             }
         }

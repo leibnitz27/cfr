@@ -83,14 +83,11 @@ public class StaticVariable extends AbstractFieldVariable {
         if (o == this) return true;
         if (!(o instanceof StaticVariable)) return false;
         if (!super.equals(o)) return false;
-        StaticVariable other = (StaticVariable) o;
         return true;
-//        return other.knownSimple == knownSimple;
     }
 
     @Override
     public int hashCode() {
         return super.hashCode();
-//        return super.hashCode() + (knownSimple ? 1 : 0) ;
     }
 }

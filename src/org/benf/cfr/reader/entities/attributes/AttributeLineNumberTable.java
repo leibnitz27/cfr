@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.entities.attributes;
 
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -19,7 +18,7 @@ public class AttributeLineNumberTable extends Attribute {
     private final NavigableMap<Integer, Integer> entries = new TreeMap<Integer, Integer>();
 
 
-    public AttributeLineNumberTable(ByteData raw, ConstantPool cp) {
+    public AttributeLineNumberTable(ByteData raw) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
         int numLineNumbers = raw.getU2At(OFFSET_OF_ENTRY_COUNT);
         if (numLineNumbers * 2 <= length) {

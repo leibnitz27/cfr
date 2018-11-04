@@ -27,7 +27,7 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     private JavaTypeInstance allocatedType;
     private int numDims;
     private List<Expression> values;
-    private boolean isCompletelyAnonymous = false;
+    private boolean isCompletelyAnonymous;
 
     public NewAnonymousArray(InferredJavaType type, int numDims, List<Expression> values, boolean isCompletelyAnonymous) {
         super(type);
@@ -36,7 +36,7 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
         this.allocatedType = type.getJavaTypeInstance().getArrayStrippedType();
         if (allocatedType instanceof RawJavaType) {
             for (Expression value : values) {
-                value.getInferredJavaType().useAsWithoutCasting((RawJavaType) allocatedType);
+                value.getInferredJavaType().useAsWithoutCasting(allocatedType);
             }
         }
         // This is only true if the target array has the correct arity.
@@ -143,11 +143,6 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     @Override
     public Expression getDimSize(int dim) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public JavaTypeInstance getInnerType() {
-        return allocatedType;
     }
 
     @Override

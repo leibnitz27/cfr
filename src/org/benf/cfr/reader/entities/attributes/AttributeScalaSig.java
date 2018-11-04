@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.entities.attributes;
 
-import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -12,7 +11,7 @@ public class AttributeScalaSig extends Attribute {
 
     private final int length;
 
-    public AttributeScalaSig(ByteData raw, ConstantPool cp) {
+    public AttributeScalaSig(ByteData raw) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
     }
 

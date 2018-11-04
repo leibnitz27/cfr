@@ -93,7 +93,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
             AttributeSignature sig = getSignatureAttribute();
             ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
             ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
-            ConstantPoolEntryUTF8 prototype = null;
+            ConstantPoolEntryUTF8 prototype;
             if (signature == null) {
                 prototype = descriptor;
             } else {
@@ -107,7 +107,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         return cachedDecodedType;
     }
 
-    public void setDisambiguate() {
+    void setDisambiguate() {
         disambiguate = true;
     }
 

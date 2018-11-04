@@ -24,8 +24,6 @@ public class OperationFactoryDupX1 extends OperationFactoryDupBase {
 
     @Override
     public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
-        byte[] args = null;
-        int[] targetOffsets = null; // we know the nextr instr, it's our successor.
-        return new Op01WithProcessedDataAndByteJumps(instr, args, targetOffsets, offset);
+        return new Op01WithProcessedDataAndByteJumps(instr, null, null, offset);
     }
 }

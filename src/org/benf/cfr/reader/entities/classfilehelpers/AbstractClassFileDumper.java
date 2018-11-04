@@ -21,9 +21,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public abstract class AbstractClassFileDumper implements ClassFileDumper {
+abstract class AbstractClassFileDumper implements ClassFileDumper {
 
-    protected static String getAccessFlagsString(Set<AccessFlag> accessFlags, AccessFlag[] dumpableAccessFlags) {
+    static String getAccessFlagsString(Set<AccessFlag> accessFlags, AccessFlag[] dumpableAccessFlags) {
         StringBuilder sb = new StringBuilder();
 
         for (AccessFlag accessFlag : dumpableAccessFlags) {
@@ -34,11 +34,11 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
 
     private final DCCommonState dcCommonState;
 
-    public AbstractClassFileDumper(DCCommonState dcCommonState) {
+    AbstractClassFileDumper(DCCommonState dcCommonState) {
         this.dcCommonState = dcCommonState;
     }
 
-    protected void dumpTopHeader(ClassFile classFile, Dumper d) {
+    void dumpTopHeader(ClassFile classFile, Dumper d) {
         if (dcCommonState == null) return;
         Options options = dcCommonState.getOptions();
         String header = MiscConstants.CFR_HEADER_BRA +
@@ -53,7 +53,7 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
                     ClassFile loadedClass = null;
                     try {
                         loadedClass = dcCommonState.getClassFile(type);
-                    } catch (CannotLoadClassException e) {
+                    } catch (CannotLoadClassException ignore) {
                     }
                     if (loadedClass == null) {
                         couldNotLoad.add(type);
@@ -70,14 +70,12 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         }
         d.print(" */").newln();
         String packageName = classFile.getThisClassConstpoolEntry().getPackageName();
-        if (packageName.isEmpty()) {
-            // d.print("// no package name").newln();
-        } else {
+        if (!packageName.isEmpty()) {
             d.print("package ").print(packageName).endCodeln().newln();
         }
     }
 
-    protected static void getFormalParametersText(ClassSignature signature, Dumper d) {
+    static void getFormalParametersText(ClassSignature signature, Dumper d) {
         List<FormalTypeParameter> formalTypeParameters = signature.getFormalTypeParameters();
         if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return;
         d.print('<');
@@ -89,9 +87,10 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         d.print('>');
     }
 
-    public void dumpImports(Dumper d, ClassFile classFile) {
+    void dumpImports(Dumper d, ClassFile classFile) {
         List<JavaTypeInstance> classTypes = classFile.getAllClassTypes();
         Set<JavaRefTypeInstance> types = d.getTypeUsageInformation().getShortenedClassTypes();
+        //noinspection SuspiciousMethodCalls
         types.removeAll(classTypes);
         /*
          * Now - for all inner class types, remove them, but make sure the base class of the inner class is imported.
@@ -115,8 +114,7 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         types.removeAll(Functional.filter(types, new Predicate<JavaRefTypeInstance>() {
             @Override
             public boolean test(JavaRefTypeInstance in) {
-                if ("".equals(in.getPackageName())) return true;
-                return false;
+                return "".equals(in.getPackageName());
             }
         }));
 
@@ -127,8 +125,7 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
             importTypes = Functional.filter(importTypes, new Predicate<JavaRefTypeInstance>() {
                 @Override
                 public boolean test(JavaRefTypeInstance in) {
-                    if ("java.lang".equals(in.getPackageName())) return false;
-                    return true;
+                    return !"java.lang".equals(in.getPackageName());
                 }
             });
         }
@@ -152,13 +149,13 @@ public abstract class AbstractClassFileDumper implements ClassFileDumper {
         d.print("\n");
     }
 
-    protected void dumpComments(ClassFile classFile, Dumper d) {
+    void dumpComments(ClassFile classFile, Dumper d) {
         DecompilerComments comments = classFile.getDecompilerComments();
         if (comments == null) return;
         comments.dump(d);
     }
 
-    protected void dumpAnnotations(ClassFile classFile, Dumper d) {
+    void dumpAnnotations(ClassFile classFile, Dumper d) {
         AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = classFile.getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
         AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = classFile.getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
         if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);

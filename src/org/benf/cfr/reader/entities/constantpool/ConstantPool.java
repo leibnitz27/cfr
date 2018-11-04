@@ -23,7 +23,7 @@ public class ConstantPool {
     private final ClassCache classCache;
     private final ClassFile classFile;
     private String comparisonKey;
-    private boolean isLoaded = false;
+    private boolean isLoaded;
     private final int idx = sidx++;
     private static int sidx = 0;
 
@@ -142,7 +142,7 @@ public class ConstantPool {
         return (ConstantPoolEntryMethodHandle) getEntry(index);
     }
 
-    public ConstantPoolEntryMethodRef getMethodRefEntry(int index) {
+    ConstantPoolEntryMethodRef getMethodRefEntry(int index) {
         return (ConstantPoolEntryMethodRef) getEntry(index);
     }
 

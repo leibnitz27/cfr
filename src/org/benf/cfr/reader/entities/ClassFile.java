@@ -59,7 +59,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     private final Map<String, Attribute> attributes;
     private final ConstantPoolEntryClass thisClass;
+    @SuppressWarnings("FieldCanBeLocal")
     private final ConstantPoolEntryClass rawSuperClass;
+    @SuppressWarnings("FieldCanBeLocal")
     private final List<ConstantPoolEntryClass> rawInterfaces;
     private final ClassSignature classSignature;
     private final ClassFileVersion classFileVersion;
@@ -290,7 +292,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         try {
             ClassFileField f = getFieldByName(MiscConstants.SCALA_SERIAL_VERSION, RawJavaType.LONG);
             f.markHidden();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
         }
         // If it's there.  Don't have a flag to hide attributes (should do, really).
         AttributeRuntimeVisibleAnnotations annotations = getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
@@ -405,10 +407,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return accessFlags.contains(accessFlag);
     }
 
-    private void markAsStatic() {
-        accessFlags.add(AccessFlag.ACC_STATIC);
-    }
-
     public boolean hasFormalTypeParameters() {
         List<FormalTypeParameter> formalTypeParameters = classSignature.getFormalTypeParameters();
         return formalTypeParameters != null && !formalTypeParameters.isEmpty();
@@ -501,13 +499,12 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
     private List<Method> getMethodsWithMatchingName(final MethodPrototype prototype) {
-        List<Method> named = Functional.filter(methods, new Predicate<Method>() {
+        return Functional.filter(methods, new Predicate<Method>() {
             @Override
             public boolean test(Method in) {
                 return in.getName().equals(prototype.getName());
             }
         });
-        return named;
     }
 
     public OverloadMethodSet getOverloadMethodSet(final MethodPrototype prototype) {
@@ -584,7 +581,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return methodMatch;
     }
 
-    public Method getAccessibleMethodByPrototype(final MethodPrototype prototype, GenericTypeBinder binder, JavaRefTypeInstance accessor) throws NoSuchMethodException {
+    private Method getAccessibleMethodByPrototype(final MethodPrototype prototype, GenericTypeBinder binder, JavaRefTypeInstance accessor) throws NoSuchMethodException {
         List<Method> named = getMethodsWithMatchingName(prototype);
         Method methodMatch = null;
         for (Method method : named) {
@@ -691,7 +688,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             if (m.getAccessFlags().contains(AccessFlagMethod.ACC_STATIC)) {
                 return true;
             }
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException ignore) {
         }
         return false;
     }
@@ -748,7 +745,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 //                markInnerClassAsStatic(options, innerClass, thisType);
 
                 innerClassesByTypeInfo.put(innerType, new Pair<InnerClassAttributeInfo, ClassFile>(innerClassAttributeInfo, innerClass));
-            } catch (CannotLoadClassException e) {
+            } catch (CannotLoadClassException ignore) {
             }
 
         }
@@ -816,7 +813,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 ClassFile superClsFile = null;
                 try {
                     superClsFile = superC.getClassFile();
-                } catch (CannotLoadClassException e) {
+                } catch (CannotLoadClassException ignore) {
                 }
                 if (superClsFile == null) continue;
                 if (superClsFile == this) continue; // shouldn't happen.
@@ -837,12 +834,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 MethodPrototype prototype = method.getMethodPrototype();
                 Method baseMethod = null;
                 for (Triplet<JavaRefTypeInstance, ClassFile, GenericTypeBinder> bindTester : bindTesters) {
-                    JavaRefTypeInstance refType = bindTester.getFirst();
                     ClassFile classFile = bindTester.getSecond();
                     GenericTypeBinder genericTypeBinder = bindTester.getThird();
                     try {
                         baseMethod = classFile.getAccessibleMethodByPrototype(prototype, genericTypeBinder, (JavaRefTypeInstance)getClassType().getDeGenerifiedType());
-                    } catch (NoSuchMethodException e) {
+                    } catch (NoSuchMethodException ignore) {
                     }
                     if (baseMethod != null) break;
                 }
@@ -854,7 +850,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
 
-    public void analyseMid(DCCommonState state) {
+    private void analyseMid(DCCommonState state) {
         Options options = state.getOptions();
         if (this.begunAnalysis) {
             return;
@@ -1035,7 +1031,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return boundSuperCollector.getBoundSupers();
     }
 
-    public void getBoundSuperClasses(JavaTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector, BindingSuperContainer.Route route, Set<JavaTypeInstance> seen) {
+    private void getBoundSuperClasses(JavaTypeInstance boundGeneric, BoundSuperCollector boundSuperCollector, BindingSuperContainer.Route route, Set<JavaTypeInstance> seen) {
         // TODO: This seems deeply over complicated ;)
         // Perhaps rather than matching in terms of types, we could match in terms of the signature?
         JavaTypeInstance thisType = getClassSignature().getThisGeneralTypeClass(getClassType(), getConstantPool());
@@ -1062,7 +1058,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             JavaGenericRefTypeInstance genericThisType = (JavaGenericRefTypeInstance) thisType;
 
             if (boundGeneric instanceof JavaGenericRefTypeInstance) {
-                genericTypeBinder = GenericTypeBinder.extractBindings(genericThisType, (JavaGenericRefTypeInstance) boundGeneric);
+                genericTypeBinder = GenericTypeBinder.extractBindings(genericThisType, boundGeneric);
             } else {
                 genericTypeBinder = null;
             }
@@ -1084,7 +1080,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             return null;
         } else {
             JavaGenericRefTypeInstance genericThisType = (JavaGenericRefTypeInstance) thisType;
-            return GenericTypeBinder.extractBindings(genericThisType, (JavaGenericRefTypeInstance) boundGeneric);
+            return GenericTypeBinder.extractBindings(genericThisType, boundGeneric);
         }
     }
 
@@ -1117,7 +1113,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         ClassFile classFile = null;
         try {
             classFile = genericBase.getDeGenerifiedType().getClassFile();
-        } catch (CannotLoadClassException e) {
+        } catch (CannotLoadClassException ignore) {
         }
         if (classFile == null) {
             return;
@@ -1134,18 +1130,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
     public void noteMethodUse(ConstructorInvokationSimple constructorCall) {
-        List<Method> constructors = getConstructors();
-        MethodPrototype needle = constructorCall.getConstructorPrototype();
-        List<Method> matching = ListFactory.newList();
-        for (Method constructor : constructors) {
-            MethodPrototype check = constructor.getMethodPrototype();
-//            if (check.isApproxMatch(needle)) {
-//                matching.add(constructor);
-//            }
-        }
-
-//        if (
-
         methodUsages.add(constructorCall);
     }
 
@@ -1161,11 +1145,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     public static JavaTypeInstance getAnonymousTypeBase(ClassFile classFile) {
         ClassSignature signature = classFile.getClassSignature();
         if (signature.getInterfaces().isEmpty()) {
-            JavaTypeInstance superclass = signature.getSuperClass();
-            return superclass;
+            return signature.getSuperClass();
         } else {
-            JavaTypeInstance interfaceType = signature.getInterfaces().get(0);
-            return interfaceType;
+            return signature.getInterfaces().get(0);
         }
     }
 }

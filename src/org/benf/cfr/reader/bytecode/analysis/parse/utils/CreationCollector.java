@@ -50,32 +50,7 @@ public class CreationCollector {
         }
     }
 
-    private static class Triple {
-        private final LValue lValue;
-        private final StatementPair<NewObject> creation;
-        private final StatementPair<MemberFunctionInvokation> construction;
-
-        private Triple(LValue lValue, StatementPair<NewObject> creation, StatementPair<MemberFunctionInvokation> construction) {
-            this.lValue = lValue;
-            this.creation = creation;
-            this.construction = construction;
-        }
-
-        private LValue getlValue() {
-            return lValue;
-        }
-
-        @SuppressWarnings("unused")
-        private StatementPair<NewObject> getCreation() {
-            return creation;
-        }
-
-        private StatementPair<MemberFunctionInvokation> getConstruction() {
-            return construction;
-        }
-    }
-
-    private final List<Triple> collectedConstructions = ListFactory.newList();
+    private final List<Pair<LValue, StatementPair<MemberFunctionInvokation>>> collectedConstructions = ListFactory.newList();
     private final Map<LValue, List<StatementContainer>> collectedCreations = MapFactory.newLazyMap(new UnaryFunction<LValue, List<StatementContainer>>() {
         @Override
         public List<StatementContainer> invoke(LValue arg) {
@@ -116,7 +91,7 @@ public class CreationCollector {
 
 
     private void markConstruction(LValue lValue, MemberFunctionInvokation rValue, StatementContainer container) {
-        collectedConstructions.add(new Triple(lValue, null, new StatementPair<MemberFunctionInvokation>(rValue, container)));
+        collectedConstructions.add(Pair.make(lValue, new StatementPair<MemberFunctionInvokation>(rValue, container)));
     }
 
     /*
@@ -124,9 +99,9 @@ public class CreationCollector {
     */
     public void condenseConstructions(Method method, DCCommonState dcCommonState) {
 
-        for (Triple construction : collectedConstructions) {
-            LValue lValue = construction.getlValue();
-            StatementPair<MemberFunctionInvokation> constructionValue = construction.getConstruction();
+        for (Pair<LValue, StatementPair<MemberFunctionInvokation>> construction : collectedConstructions) {
+            LValue lValue = construction.getFirst();
+            StatementPair<MemberFunctionInvokation> constructionValue = construction.getSecond();
             if (constructionValue == null) continue;
 
             InstrIndex idx = constructionValue.getLocation().getIndex();
@@ -141,13 +116,8 @@ public class CreationCollector {
             }
             if (!found) continue;
 
-//            StatementPair<NewObject> creationValue = construction.getCreation();
-//            if (creationValue == null) continue;
-
             MemberFunctionInvokation memberFunctionInvokation = constructionValue.getValue();
-//            NewObject newObject = creationValue.getValue();
             JavaTypeInstance lValueType = memberFunctionInvokation.getClassTypeInstance();
-//            InferredJavaType inferredJavaType = new InferredJavaType(lValueType, InferredJavaType.Source.EXPRESSION, true);
             InferredJavaType inferredJavaType = lValue.getInferredJavaType();
 
 

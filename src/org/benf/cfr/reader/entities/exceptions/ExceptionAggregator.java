@@ -5,7 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
-import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -363,22 +362,11 @@ public class ExceptionAggregator {
                                            final Map<Integer, Integer> lutByIdx,
                                            List<Op01WithProcessedDataAndByteJumps> instrs) {
         Iterator<ExceptionGroup> groupIterator = exceptionsByRange.iterator();
-        ExceptionGroup prev = null;
         while (groupIterator.hasNext()) {
             ExceptionGroup group = groupIterator.next();
-            boolean prevSame = false;
-            if (prev != null) {
-                List<ExceptionGroup.Entry> groupEntries = group.getEntries();
-                List<ExceptionGroup.Entry> prevEntries = prev.getEntries();
-                if (groupEntries.equals(prevEntries)) {
-                    prevSame = true;
-                }
-            }
             group.removeSynchronisedHandlers(lutByOffset, lutByIdx, instrs);
             if (group.getEntries().isEmpty()) {
                 groupIterator.remove();
-            } else {
-                prev = group;
             }
         }
     }

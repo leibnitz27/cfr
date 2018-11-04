@@ -171,21 +171,6 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
                 }
                 List<StatementContainer<StructuredStatement>> scopeList = definition.getNestedScope();
                 if (scopeList.isEmpty()) scopeList = null;
-//
-//                if (scopeList != null) {
-//                    // Wind back up the scope until we find somewhere that's ALLOWED to define it.
-//                    StatementContainer<StructuredStatement> lastContainer = scopeList.get(scopeList.size()-1);
-//                    if (!lastContainer.getStatement().canDefine(scopedEntity)) {
-//                        // Copy, as we're going to be
-//                        scopeList = ListFactory.newList(scopeList);
-//                        scopeList.remove(scopeList.size()-1);
-//                        for (int x=scopeList.size()-1;x>=0;--x) {
-//                            if (scopeList.get(x).getStatement().canDefine(scopedEntity)) break;
-//                            scopeList.remove(x);
-//                        }
-//                    }
-//                    if (scopeList.isEmpty()) scopeList = null;
-//                }
 
                 if (scopeList == null) {
                     commonScope = null;
@@ -249,7 +234,6 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
         }
     }
 
-
     private static <T> List<T> getCommonPrefix(List<T> a, List<T> b) {
         List<T> la, lb;
         if (a.size() < b.size()) {
@@ -268,21 +252,6 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
         if (sameLen == la.size()) return la;
         return la.subList(0, sameLen);
     }
-    /*
-     *
-     */
-
-//    /*
-//     *
-//     */
-//    private interface ScopeDefinition {
-//        public int getDepth();
-//        public StatementContainer<StructuredStatement> getStatementContainer();
-//        public NamedVariable getName();
-//        public ScopeKey getScopeKey();
-//        public List<StatementContainer<StructuredStatement>> getNestedScope();
-//        public JavaTypeInstance getJavaTypeInstance();
-//    }
 
     static class ScopeDefinition {
         private final int depth;
@@ -353,7 +322,7 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
             return lValue;
         }
 
-        public int getDepth() {
+        int getDepth() {
             return depth;
         }
 
@@ -361,7 +330,7 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
             return name;
         }
 
-        public ScopeKey getScopeKey() {
+        ScopeKey getScopeKey() {
             return scopeKey;
         }
 

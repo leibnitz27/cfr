@@ -40,7 +40,7 @@ public class UnstructuredCatch extends AbstractUnStructuredStatement {
         }
     }
 
-    public StructuredStatement getCatchFor(Op04StructuredStatement innerBlock) {
+    private StructuredStatement getCatchFor(Op04StructuredStatement innerBlock) {
         /*
          * Get the unique set of exception types.
          */

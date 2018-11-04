@@ -86,11 +86,6 @@ public class NewObjectArray extends AbstractNewArray {
     }
 
     @Override
-    public JavaTypeInstance getInnerType() {
-        return resultType;
-    }
-
-    @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
         for (int x = dimSizes.size()-1; x >=0 ; --x) {
             dimSizes.set(x, dimSizes.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));

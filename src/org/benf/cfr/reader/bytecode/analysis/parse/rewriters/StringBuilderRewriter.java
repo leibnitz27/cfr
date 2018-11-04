@@ -65,6 +65,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
             tmp.set(x, tryRemoveCast(tmp.get(x)));
         }
         Expression res = genStringConcat(tmp);
+        if (res == null) return staticFunctionInvokation;
         staticFunctionInvokation.getInferredJavaType().forceDelegate(res.getInferredJavaType());
         return res;
     }
@@ -109,6 +110,7 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         Collections.reverse(toks);
         // The previous return type would be 'CallSite'.  If we leave this in place, we have (String)(Callsite)"dddd" + a;
         Expression res = genStringConcat(toks);
+        if (res == null) return staticFunctionInvokation;
         staticFunctionInvokation.getInferredJavaType().forceDelegate(res.getInferredJavaType());
         return res;
     }
@@ -123,12 +125,6 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         return (ConditionalExpression) res;
     }
-
-//    @Override
-//    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-//        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-//        return (AbstractAssignmentExpression) res;
-//    }
 
     @Override
     public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
@@ -200,7 +196,6 @@ public class StringBuilderRewriter implements ExpressionRewriter {
     }
 
     private Expression genStringConcat(List<Expression> revList) {
-
         JavaTypeInstance lastType = revList.get(revList.size() - 1).getInferredJavaType().getJavaTypeInstance();
         if (lastType != TypeConstants.STRING) {
             boolean needed = true;
@@ -226,16 +221,9 @@ public class StringBuilderRewriter implements ExpressionRewriter {
         int x = revList.size() - 1;
         if (x < 0) return null;
         Expression head = revList.get(x);
-
-//        ClassFile stringClass = cfrState.getClassFile(TypeConstants.stringName, false);
-//        if (stringClass == null) return null;
-//        JavaTypeInstance stringType = stringClass.getClassType();
         InferredJavaType inferredJavaType = new InferredJavaType(TypeConstants.STRING, InferredJavaType.Source.STRING_TRANSFORM, true);
         for (--x; x >= 0; --x) {
             Expression appendee = revList.get(x);
-//            if (appendee instanceof ArithmeticOperation && appendee.getPrecedence().compareTo(Precedence.ADD_SUB) <= 0) {
-//                appendee = new ExplicitBraceExpression(appendee);
-//            }
             head = new ArithmeticOperation(inferredJavaType, head, appendee, ArithOp.PLUS);
         }
         return head;

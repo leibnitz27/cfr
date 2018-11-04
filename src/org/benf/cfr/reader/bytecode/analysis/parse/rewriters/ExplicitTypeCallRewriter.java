@@ -26,7 +26,7 @@ public class ExplicitTypeCallRewriter extends AbstractExpressionRewriter {
         //
         private Expression rewriteFunctionInvokation(AbstractFunctionInvokation invokation) {
             if (invokation instanceof StaticFunctionInvokation) {
-                MethodPrototype p = ((StaticFunctionInvokation) invokation).getFunction().getMethodPrototype();
+                MethodPrototype p = invokation.getFunction().getMethodPrototype();
                 // Does p have any generics?  Are they satisfied by the arguments?
                 // Let's take the easy one first - does it have formal parameters, yet no arguments?
                 if (p.hasFormalTypeParameters() && p.getVisibleArgCount() == 0) {

@@ -276,11 +276,6 @@ public class EnumClassRewriter {
         }
 
         @Override
-        public void clear() {
-
-        }
-
-        @Override
         public void collectStatement(String name, StructuredStatement statement) {
             if (name.equals("entry")) {
                 StaticVariable staticVariable = wcm.getStaticVariable("e").getMatch();
@@ -304,10 +299,6 @@ public class EnumClassRewriter {
                 }
                 return;
             }
-        }
-
-        @Override
-        public void collectMatches(String name, WildcardMatch wcm) {
         }
 
         boolean isValid() {

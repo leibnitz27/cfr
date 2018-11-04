@@ -259,6 +259,7 @@ public enum JVMInstr {
         this(opcode, bytes, popped, pushed, rawJavaType, OperationFactoryDefault.Handler.INSTANCE.getHandler(), false);
     }
 
+    @SuppressWarnings("SameParameterValue")
     JVMInstr(int opcode, int bytes, StackTypes popped, StackTypes pushed, RawJavaType rawJavaType, boolean noThrow) {
         this(opcode, bytes, popped, pushed, rawJavaType, OperationFactoryDefault.Handler.INSTANCE.getHandler(), noThrow);
     }

@@ -98,10 +98,6 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
         return values;
     }
 
-    public Op04StructuredStatement getBody() {
-        return super.getBody();
-    }
-
     public BlockIdentifier getBlockIdentifier() {
         return blockIdentifier;
     }

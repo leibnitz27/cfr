@@ -14,13 +14,13 @@ import java.util.List;
 import java.util.Set;
 
 public class FinallyCatchBody {
-    final Op03SimpleStatement throwOp;
-    final boolean isEmpty;
-    final Op03SimpleStatement catchCodeStart;
-    final List<Op03SimpleStatement> body;
-    final Set<Op03SimpleStatement> bodySet;
+    private final Op03SimpleStatement throwOp;
+    private final boolean isEmpty;
+    private final Op03SimpleStatement catchCodeStart;
+    private final List<Op03SimpleStatement> body;
+    private final Set<Op03SimpleStatement> bodySet;
 
-    protected FinallyCatchBody(Op03SimpleStatement throwOp, boolean isEmpty, Op03SimpleStatement catchCodeStart, List<Op03SimpleStatement> body) {
+    private FinallyCatchBody(Op03SimpleStatement throwOp, boolean isEmpty, Op03SimpleStatement catchCodeStart, List<Op03SimpleStatement> body) {
         this.throwOp = throwOp;
         this.isEmpty = isEmpty;
         this.catchCodeStart = catchCodeStart;
@@ -52,10 +52,8 @@ public class FinallyCatchBody {
             return new FinallyCatchBody(null, true, null, catchBody);
         }
         ThrowStatement testThrow = new ThrowStatement(new LValueExpression(catchStatement.getCreatedLValue()));
-        boolean hasThrow = false;
         Op03SimpleStatement throwOp = null;
         if (testThrow.equals(catchBody.getLast().getStatement())) {
-            hasThrow = true;
             throwOp = catchBody.removeLast();
         }
         return new FinallyCatchBody(throwOp, false, targets.get(0), catchBody);
@@ -69,15 +67,15 @@ public class FinallyCatchBody {
         return body.size();
     }
 
-    public Op03SimpleStatement getCatchCodeStart() {
+    Op03SimpleStatement getCatchCodeStart() {
         return catchCodeStart;
     }
 
-    public Op03SimpleStatement getThrowOp() {
+    Op03SimpleStatement getThrowOp() {
         return throwOp;
     }
 
-    public boolean hasThrowOp() {
+    boolean hasThrowOp() {
         return throwOp != null;
     }
 

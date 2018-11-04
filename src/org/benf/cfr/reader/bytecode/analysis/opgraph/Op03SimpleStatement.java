@@ -288,7 +288,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return isNop;
     }
 
-    public void replaceBlockIfIn(BlockIdentifier oldB, BlockIdentifier newB) {
+    void replaceBlockIfIn(BlockIdentifier oldB, BlockIdentifier newB) {
         if (containedInBlocks.remove(oldB)) {
             containedInBlocks.add(newB);
         }
@@ -458,7 +458,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     public class GraphVisitorCallee implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
         private final List<Op03SimpleStatement> reachableNodes;
 
-        public GraphVisitorCallee(List<Op03SimpleStatement> reachableNodes) {
+        GraphVisitorCallee(List<Op03SimpleStatement> reachableNodes) {
             this.reachableNodes = reachableNodes;
         }
 
@@ -494,12 +494,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         getStatement().dump(dumper);
     }
 
-    public static void dumpAll(List<Op03SimpleStatement> statements, Dumper dumper) {
-        for (Op03SimpleStatement statement : statements) {
-            statement.dumpInner(dumper);
-        }
-    }
-
     @Override
     public Dumper dump(Dumper dumper) {
         dumper.print("**********\n");
@@ -520,7 +514,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return dumper;
     }
 
-    public Op04StructuredStatement getStructuredStatementPlaceHolder() {
+    private Op04StructuredStatement getStructuredStatementPlaceHolder() {
         return new Op04StructuredStatement(
                 index,
                 containedInBlocks,
@@ -648,8 +642,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static void applyLValueSwap(AssignmentSimple a1, AssignmentSimple a2,
-                                       Op03SimpleStatement stm1, Op03SimpleStatement stm2) {
+    private static void applyLValueSwap(AssignmentSimple a1, AssignmentSimple a2,
+                                        Op03SimpleStatement stm1, Op03SimpleStatement stm2) {
         Expression r1 = a1.getRValue();
         Expression r2 = a2.getRValue();
         if (!r1.equals(r2)) return;
@@ -681,8 +675,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static void applyLValueCondense(AssignmentSimple a1, AssignmentSimple a2,
-                                           Op03SimpleStatement stm1, Op03SimpleStatement stm2) {
+    private static void applyLValueCondense(AssignmentSimple a1, AssignmentSimple a2,
+                                            Op03SimpleStatement stm1, Op03SimpleStatement stm2) {
         Expression r1 = a1.getRValue();
         Expression r2 = a2.getRValue();
         LValue l1 = a1.getCreatedLValue();
@@ -919,8 +913,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     /*
                      * Verify that the saident of tgt does not change.
                      */
-                    SSAIdentifiers preChangeIdents = preChange.getSSAIdentifiers();
-                    SSAIdentifiers assignIdents = current.getSSAIdentifiers();
+                    SSAIdentifiers<LValue> preChangeIdents = preChange.getSSAIdentifiers();
+                    SSAIdentifiers<LValue> assignIdents = current.getSSAIdentifiers();
                     if (!preChangeIdents.isValidReplacement(tgt, assignIdents)) {
                         return;
                     }
@@ -1016,7 +1010,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     public static boolean condenseConditionals(List<Op03SimpleStatement> statements) {
         boolean effect = false;
         for (int x = 0; x < statements.size(); ++x) {
-            boolean retry = false;
+            boolean retry;
             do {
                 retry = false;
                 Op03SimpleStatement op03SimpleStatement = statements.get(x);
@@ -1164,7 +1158,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             // separated for stepping
             if (condenseConditional2_type1(ifStatement, statements)) {
                 result = true;
-            } else if (condenseConditional2_type2(ifStatement, statements)) {
+            } else if (condenseConditional2_type2(ifStatement)) {
                 result = true;
             } else if (condenseConditional2_type3(ifStatement, statements)) {
                 result = true;
@@ -1244,26 +1238,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         ifStatement.removeTarget(origtgt);
     }
 
-    private static void replaceReturningGoto(Op03SimpleStatement gotoStatement, boolean aggressive) {
-        if (!(gotoStatement.containedStatement.getClass() == GotoStatement.class)) return;
-        Op03SimpleStatement tgt = gotoStatement.getTargets().get(0);
-        final Op03SimpleStatement origtgt = tgt;
-        boolean requireJustOneSource = !aggressive;
-        do {
-            Op03SimpleStatement next = Misc.followNopGoto(tgt, requireJustOneSource, aggressive);
-            if (next == tgt) break;
-            tgt = next;
-        } while (true);
-        Statement tgtStatement = tgt.containedStatement;
-        if (tgtStatement instanceof ReturnStatement) {
-            gotoStatement.replaceStatement(tgtStatement);
-        } else {
-            return;
-        }
-        origtgt.removeSource(gotoStatement);
-        gotoStatement.removeTarget(origtgt);
-    }
-
     public static void replaceReturningIfs(List<Op03SimpleStatement> statements, boolean aggressive) {
         List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
         for (Op03SimpleStatement ifStatement : ifStatements) {
@@ -1271,7 +1245,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static void propagateToReturn2(Method method, List<Op03SimpleStatement> statements) {
+    public static void propagateToReturn2(List<Op03SimpleStatement> statements) {
         boolean success = false;
         for (Op03SimpleStatement stm : statements) {
             Statement inner = stm.getStatement();
@@ -1286,13 +1260,13 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                  *
                  * We look for returns rather than gotos, as returns are less common.
                  */
-                success |= pushReturnBack(method, stm);
+                success |= pushReturnBack(stm);
             }
         }
         if (success) Op03SimpleStatement.replaceReturningIfs(statements, true);
     }
 
-    private static boolean pushReturnBack(Method method, final Op03SimpleStatement returnStm) {
+    private static boolean pushReturnBack(final Op03SimpleStatement returnStm) {
 
         ReturnStatement returnStatement = (ReturnStatement) returnStm.getStatement();
         final List<Op03SimpleStatement> replaceWithReturn = ListFactory.newList();
@@ -1410,7 +1384,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     /*
      * Attempt to find really simple inline ternaries / negations, so we can convert them before conditional rollup.
      */
-    private static boolean condenseConditional2_type2(Op03SimpleStatement ifStatement, List<Op03SimpleStatement> allStatements) {
+    private static boolean condenseConditional2_type2(Op03SimpleStatement ifStatement) {
         Statement innerStatement = ifStatement.getStatement();
         if (!(innerStatement instanceof IfStatement)) return false;
         IfStatement innerIf = (IfStatement)innerStatement;
@@ -1488,12 +1462,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement nottaken2 = ifStatement2.getTargets().get(0);
         final Op03SimpleStatement nottaken2Immed = nottaken2;
         if (nottaken2Immed.sources.size() != 1) return false;
-        Op03SimpleStatement notTaken2Source = ifStatement2;
         nottaken2 = Misc.followNopGotoChain(nottaken2, true, false);
         do {
             Op03SimpleStatement nontaken2rewrite = Misc.followNopGoto(nottaken2, true, false);
             if (nontaken2rewrite == nottaken2) break;
-            notTaken2Source = nottaken2;
             nottaken2 = nontaken2rewrite;
         } while (true);
         if (!(taken1.containedStatement instanceof IfStatement)) return false;
@@ -1501,7 +1473,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Op03SimpleStatement ifStatement3 = taken1;
         Op03SimpleStatement taken3 = ifStatement3.getTargets().get(1);
         Op03SimpleStatement nottaken3 = ifStatement3.getTargets().get(0);
-        final Op03SimpleStatement nottaken3Immed = nottaken3;
         Op03SimpleStatement notTaken3Source = ifStatement3;
         do {
             Op03SimpleStatement nontaken3rewrite = Misc.followNopGoto(nottaken3, true, false);
@@ -1628,7 +1599,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     private static boolean appropriateForIfAssignmentCollapse2(Op03SimpleStatement statement) {
-        boolean extraCondSeen = false;
         boolean preCondAssignmentSeen = false;
         while (statement.sources.size() == 1) {
             Op03SimpleStatement source = statement.sources.get(0);
@@ -1752,10 +1722,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
             if (!afterSSA.isValidReplacement(lValue, beforeSSA)) return;
             LValueAssignmentExpressionRewriter rewriter = new LValueAssignmentExpressionRewriter(lValue, assignmentExpression, source);
-            Expression replacement = rewriter.rewriteExpression(conditionalExpression, ifStatement.getSSAIdentifiers(), ifStatement, ExpressionRewriterFlags.LVALUE);
+            ConditionalExpression replacement = rewriter.rewriteExpression(conditionalExpression, ifStatement.getSSAIdentifiers(), ifStatement, ExpressionRewriterFlags.LVALUE);
             if (replacement == null) return;
-            if (!(replacement instanceof ConditionalExpression)) return;
-            innerIf.setCondition((ConditionalExpression) replacement);
+            innerIf.setCondition(replacement);
         }
 
     }
@@ -2183,7 +2152,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * block. (strictly speaking this is pessimistic, and avoids indexed breaks and continues.  Revisit if examples
      * of those are found to be problematic).
      */
-    private static void extractCatchEnd(Op03SimpleStatement trystm, List<Op03SimpleStatement> statements, SingleExceptionAddressing trycatch) {
+    private static void extractCatchEnd(List<Op03SimpleStatement> statements, SingleExceptionAddressing trycatch) {
         LinearScannedBlock tryBlock = trycatch.tryBlock;
         BlockIdentifier tryBlockIdent = trycatch.tryBlockIdent;
         BlockIdentifier catchBlockIdent = trycatch.catchBlockIdent;
@@ -2263,7 +2232,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 trycatch.tryBlock.reindex(in);
                 trycatch.catchBlock.reindex(in);
             }
-            extractCatchEnd(tryStatement, in, trycatch);
+            extractCatchEnd(in, trycatch);
         }
     }
 
@@ -2359,35 +2328,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statements.removeAll(removeThese);
     }
 
-
-
-    /* DEAD CODE */
-
-    private static boolean isDirectParentWithoutPassing(Op03SimpleStatement child, Op03SimpleStatement parent, Op03SimpleStatement barrier) {
-        LinkedList<Op03SimpleStatement> tests = ListFactory.newLinkedList();
-        Set<Op03SimpleStatement> seen = SetFactory.newSet();
-        tests.add(child);
-        seen.add(child);
-        boolean hitParent = false;
-        while (!tests.isEmpty()) {
-            Op03SimpleStatement node = tests.removeFirst();
-            if (node == barrier) continue;
-            if (node == parent) {
-                hitParent = true;
-                continue;
-            }
-            List<Op03SimpleStatement> localParents = node.getSources();
-            for (Op03SimpleStatement localParent : localParents) {
-                if (seen.add(localParent)) {
-                    tests.add(localParent);
-                }
-            }
-        }
-        return hitParent;
-    }
-
-
-
     // Todo - could get these out at the same time as below..... would add complexity though...
     private static Op03SimpleStatement getForInvariant(Op03SimpleStatement start, LValue invariant, BlockIdentifier whileLoop) {
         Op03SimpleStatement current = start;
@@ -2432,7 +2372,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return res;
     }
 
-    public static Op03SimpleStatement findMovableAssignment(Op03SimpleStatement start, LValue lValue) {
+    private static Op03SimpleStatement findMovableAssignment(Op03SimpleStatement start, LValue lValue) {
         Op03SimpleStatement current = Misc.findSingleBackSource(start);
         if (current == null) {
             return null;
@@ -2484,7 +2424,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return mutations;
     }
 
-    private static void rewriteWhileAsFor(Op03SimpleStatement statement, List<Op03SimpleStatement> statements, boolean aggcapture) {
+    private static void rewriteWhileAsFor(Op03SimpleStatement statement, boolean aggcapture) {
         // Find the backwards jumps to this statement
         List<Op03SimpleStatement> backSources = Functional.filter(statement.sources, new Misc.IsBackJumpTo(statement.index));
         //
@@ -2517,6 +2457,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 return;
             }
         }
+        //noinspection ConstantConditions
         if (reverseOrderedMutatedPossibilities == null || reverseOrderedMutatedPossibilities.isEmpty()) {
             logger.info("No invariant intersection\n");
             return;
@@ -2576,6 +2517,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
+        //noinspection ConstantConditions
         if (loopVariableOp != null) {
             initalAssignmentSimple = (AssignmentSimple) loopVariableOp.containedStatement;
             loopVariableOp.nopOut();
@@ -2619,7 +2561,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         });
         boolean aggcapture = options.getOption(OptionsImpl.FOR_LOOP_CAPTURE) == Troolean.TRUE;
         for (Op03SimpleStatement whileStart : whileStarts) {
-            rewriteWhileAsFor(whileStart, statements, aggcapture);
+            rewriteWhileAsFor(whileStart, aggcapture);
         }
     }
 
@@ -2754,7 +2696,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                             targetStatement.getBlockStarted().getBlockType() == BlockType.UNCONDITIONALDOLOOP) {
                         if (BlockIdentifier.blockIsOneOf(targetStatement.getBlockStarted(), statement.containedInBlocks)) {
                             jumpingStatement.setJumpType(JumpType.CONTINUE);
-                            continue test;
+                            continue;
                         }
                     }
                     Set<BlockIdentifier> blocksEnded = targetStatement.getBlocksEnded();
@@ -2763,7 +2705,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                         // Break to the outermost block.
                         if (outermostContainedIn != null) {
                             jumpingStatement.setJumpType(JumpType.BREAK);
-                            continue test;
+                            continue;
                         }
                     }
                 }
@@ -2823,7 +2765,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return classifyTryCatchLeaveGoto(gotoStm, blocks, idx, tryBlockIdents, tryStatementsByBlock, catchStatementByBlock, in);
     }
 
-    private static boolean classifyCatchLeaveGoto(Op03SimpleStatement gotoStm, int idx, Set<BlockIdentifier> tryBlockIdents, Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock, Map<BlockIdentifier, List<BlockIdentifier>> catchStatementByBlock, Map<BlockIdentifier, Set<BlockIdentifier>> catchBlockToTryBlocks, List<Op03SimpleStatement> in) {
+    private static void classifyCatchLeaveGoto(Op03SimpleStatement gotoStm, int idx, Set<BlockIdentifier> tryBlockIdents, Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock, Map<BlockIdentifier, List<BlockIdentifier>> catchStatementByBlock, Map<BlockIdentifier, Set<BlockIdentifier>> catchBlockToTryBlocks, List<Op03SimpleStatement> in) {
         Set<BlockIdentifier> inBlocks = gotoStm.getBlockIdentifiers();
 
         /*
@@ -2839,12 +2781,11 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             }
         }
 
-        return classifyTryCatchLeaveGoto(gotoStm, blocks, idx, tryBlockIdents, tryStatementsByBlock, catchStatementByBlock, in);
+        classifyTryCatchLeaveGoto(gotoStm, blocks, idx, tryBlockIdents, tryStatementsByBlock, catchStatementByBlock, in);
     }
 
 
-    public static boolean classifyGotos(List<Op03SimpleStatement> in) {
-        boolean result = false;
+    public static void classifyGotos(List<Op03SimpleStatement> in) {
         List<Pair<Op03SimpleStatement, Integer>> gotos = ListFactory.newList();
         Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock = MapFactory.newMap();
         Map<BlockIdentifier, List<BlockIdentifier>> catchStatementsByBlock = MapFactory.newMap();
@@ -2887,17 +2828,15 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             for (Pair<Op03SimpleStatement, Integer> goto_ : gotos) {
                 Op03SimpleStatement stm = goto_.getFirst();
                 int idx = goto_.getSecond();
-                if (classifyTryLeaveGoto(stm, idx, tryStatementsByBlock.keySet(), tryStatementsByBlock, catchStatementsByBlock, in) ||
-                        classifyCatchLeaveGoto(stm, idx, tryStatementsByBlock.keySet(), tryStatementsByBlock, catchStatementsByBlock, catchToTries, in)) {
-                    result = true;
+                if (classifyTryLeaveGoto(stm, idx, tryStatementsByBlock.keySet(), tryStatementsByBlock, catchStatementsByBlock, in)) {
+                    continue;
                 }
+                classifyCatchLeaveGoto(stm, idx, tryStatementsByBlock.keySet(), tryStatementsByBlock, catchStatementsByBlock, catchToTries, in);
             }
         }
-        return result;
     }
 
-    public static boolean classifyAnonymousBlockGotos(List<Op03SimpleStatement> in, boolean agressive) {
-        boolean result = false;
+    public static void classifyAnonymousBlockGotos(List<Op03SimpleStatement> in, boolean agressive) {
         int agressiveOffset = agressive ? 1 : 0;
 
         /*
@@ -2935,14 +2874,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                              * Should we now be re-looking at ALL other forward jumps to this target?
                              */
                             jumpingStatement.setJumpType(JumpType.BREAK_ANONYMOUS);
-                            result = true;
                         }
                     }
                 }
             }
         }
 
-        return result;
     }
 
     public static Op04StructuredStatement createInitialStructuredBlock(List<Op03SimpleStatement> statements) {
@@ -2982,12 +2919,12 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * We only do this for linear statements, we'd need a structured transform to do something better.
      * (at op4 stage).
      */
-    public static List<Op03SimpleStatement> pushThroughGoto(Method method, List<Op03SimpleStatement> statements) {
+    public static List<Op03SimpleStatement> pushThroughGoto(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> pathtests = Functional.filter(statements, new ExactTypeFilter<GotoStatement>(GotoStatement.class));
         boolean success = false;
         for (Op03SimpleStatement gotostm : pathtests) {
             if (gotostm.getTargets().get(0).getIndex().isBackJumpTo(gotostm)) {
-                if (pushThroughGoto(method, gotostm, statements)) {
+                if (pushThroughGoto(gotostm, statements)) {
                     success = true;
                 }
             }
@@ -3013,7 +2950,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return false;
     }
 
-    private static boolean pushThroughGoto(Method method, Op03SimpleStatement forwardGoto, List<Op03SimpleStatement> statements) {
+    private static boolean pushThroughGoto(Op03SimpleStatement forwardGoto, List<Op03SimpleStatement> statements) {
 
         if (forwardGoto.sources.size() != 1) return false;
 
@@ -3026,7 +2963,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (tgt.getSources().size() != 1) return false;
 
         InstrIndex beforeTgt = tgt.getIndex().justBefore();
-        Op03SimpleStatement last = forwardGoto;
 
         /*
          * We can't push through a goto if TGT is the first instruction after a loop body.
@@ -3047,9 +2983,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         Set<BlockIdentifier> beforeLoopBlocks = SetFactory.newSet(Functional.filterSet(before.getBlockIdentifiers(), isLoopBlock));
         Set<BlockIdentifier> tgtLoopBlocks = SetFactory.newSet(Functional.filterSet(tgt.getBlockIdentifiers(), isLoopBlock));
         if (!beforeLoopBlocks.equals(tgtLoopBlocks)) return false;
-
-
-        before.getBlockIdentifiers();
 
         class IsExceptionBlock implements Predicate<BlockIdentifier> {
             @Override
@@ -3108,7 +3041,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             lastTarget = tryMoveThis;
             nextCandidateIdx--;
             success = true;
-            if (abortNext) return success;
+            if (abortNext) return true;
         }
     }
 
@@ -3203,24 +3136,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     public static class ExactTypeFilter<T> implements Predicate<Op03SimpleStatement> {
         private final Class<T> clazz;
-        private final boolean positive;
 
-        public ExactTypeFilter(Class<T> clazz) {
+        ExactTypeFilter(Class<T> clazz) {
             this.clazz = clazz;
-            this.positive = true;
-        }
-
-        public ExactTypeFilter(Class<T> clazz, boolean positive) {
-            this.clazz = clazz;
-            this.positive = positive;
         }
 
         @Override
         public boolean test(Op03SimpleStatement in) {
-            return (positive == (clazz == (in.containedStatement.getClass())));
+            return clazz == (in.containedStatement.getClass());
         }
     }
-
 
     public static List<Op03SimpleStatement> removeUselessNops(List<Op03SimpleStatement> in) {
         return Functional.filter(in, new Predicate<Op03SimpleStatement>() {
@@ -3231,15 +3156,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         });
     }
 
-    public static List<Op03SimpleStatement> rewriteWith(List<Op03SimpleStatement> in, ExpressionRewriter expressionRewriter) {
+    public static void rewriteWith(List<Op03SimpleStatement> in, ExpressionRewriter expressionRewriter) {
         for (Op03SimpleStatement op03SimpleStatement : in) {
             op03SimpleStatement.rewrite(expressionRewriter);
         }
-        return in;
     }
 
 
-    private static void combineTryCatchBlocks(final Op03SimpleStatement tryStatement, List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
+    private static void combineTryCatchBlocks(final Op03SimpleStatement tryStatement) {
         Set<Op03SimpleStatement> allStatements = SetFactory.newSet();
         TryStatement innerTryStatement = (TryStatement) tryStatement.getStatement();
 
@@ -3293,10 +3217,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     // Up to now, try and catch blocks, while related, are treated in isolation.
     // We need to make sure they're logically grouped, so we can see when a block constraint is being violated.
-    public static void combineTryCatchBlocks(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    public static void combineTryCatchBlocks(List<Op03SimpleStatement> in) {
         List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
         for (Op03SimpleStatement tryStatement : tries) {
-            combineTryCatchBlocks(tryStatement, in, blockIdentifierFactory);
+            combineTryCatchBlocks(tryStatement);
         }
 
     }
@@ -3393,7 +3317,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      * todo : remove this assumption!
      * we need to link it to the end.
      */
-    private static Op03SimpleStatement insertBlockPadding(String comment, Op03SimpleStatement insertAfter, Op03SimpleStatement insertBefore, BlockIdentifier blockIdentifier, List<Op03SimpleStatement> statements) {
+    private static Op03SimpleStatement insertBlockPadding(@SuppressWarnings("SameParameterValue") String comment, Op03SimpleStatement insertAfter, Op03SimpleStatement insertBefore, BlockIdentifier blockIdentifier, List<Op03SimpleStatement> statements) {
         Op03SimpleStatement between = new Op03SimpleStatement(insertAfter.getBlockIdentifiers(), new CommentStatement(comment), insertAfter.getIndex().justAfter());
         insertAfter.replaceTarget(insertBefore, between);
         insertBefore.replaceSource(insertAfter, between);
@@ -3558,64 +3482,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.CATCHBLOCK);
                 catchStatement.setCatchBlockIdent(blockIdentifier);
                 identifyCatchBlock(catchStart, blockIdentifier, in);
-            }
-        }
-    }
-
-
-    /*
-     * We make use of known ordering here - we expect contents of a catch block to be directly after it, and eligible
-     * instructions to be after that.
-     */
-    private static void extendCatchBlock(Op03SimpleStatement catchStart, List<Op03SimpleStatement> in) {
-        int idx = in.indexOf(catchStart);
-        CatchStatement catchStatement = (CatchStatement)catchStart.getStatement();
-        BlockIdentifier blockIdentifier = catchStatement.getCatchBlockIdent();
-        if (catchStart.getTargets().size() != 1) return;
-        idx++;
-        Op03SimpleStatement next = in.get(idx);
-        if (next != catchStart.getTargets().get(0)) return;
-        int tot = in.size();
-        while (idx < tot && in.get(idx).getBlockIdentifiers().contains(blockIdentifier)) {
-            idx++;
-        }
-        if (idx >= tot) return;
-        /*
-         * We assume we have a linear relationship - this is obviously quite poor, but serves to capture
-         * the nastier cases dex2jar generates.
-         */
-        Op03SimpleStatement prev = in.get(idx-1);
-        Set<BlockIdentifier> identifiers = prev.getBlockIdentifiers();
-        while (idx < tot) {
-            Op03SimpleStatement stm = in.get(idx);
-            if (stm.getBlockIdentifiers().size() != identifiers.size() - 1) return;
-            List<BlockIdentifier> diff =  SetUtil.differenceAtakeBtoList(identifiers, stm.getBlockIdentifiers());
-            if (diff.size() != 1) return;
-            if (diff.get(0) != blockIdentifier) return;
-            /*
-             * Verify that all stm's parents are in the catch block, and that diff has only <=one target.
-             */
-            if (stm.getTargets().size() > 1) return;
-            for (Op03SimpleStatement source : stm.getSources()){
-                if (!source.getBlockIdentifiers().contains(blockIdentifier)) return;
-            }
-            if (!stm.getSources().contains(prev)) return;
-            // Ok, add.
-            stm.getBlockIdentifiers().add(blockIdentifier);
-            prev = stm;
-        }
-    }
-
-    /*
-     * After some rewriting operations, we are left with code (return statements mainly!) which couldn't earlier
-     * be pulled inside a block, because it had multiple sources - but now can.
-     */
-    public static void extendCatchBlocks(List<Op03SimpleStatement> in) {
-        List<Op03SimpleStatement> catchStarts = Functional.filter(in, new TypeFilter<CatchStatement>(CatchStatement.class));
-        for (Op03SimpleStatement catchStart : catchStarts) {
-            CatchStatement catchStatement = (CatchStatement) catchStart.containedStatement;
-            if (catchStatement.getCatchBlockIdent() != null) {
-                extendCatchBlock(catchStart, in);
             }
         }
     }
@@ -3809,7 +3675,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return statements;
     }
 
-    private static boolean verifyLinearBlock(Op03SimpleStatement current, BlockIdentifier block, int num) {
+    private static boolean verifyLinearBlock(Op03SimpleStatement current, BlockIdentifier block, @SuppressWarnings("SameParameterValue") int num) {
         while (num >= 0) {
             if (num > 0) {
                 if (current.getStatement() instanceof Nop && current.targets.size() == 0) {
@@ -4027,7 +3893,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     private final static class FindBlockStarts implements Predicate<Op03SimpleStatement> {
         private final BlockType blockType;
 
-        public FindBlockStarts(BlockType blockType) {
+        @SuppressWarnings("SameParameterValue")
+        FindBlockStarts(BlockType blockType) {
             this.blockType = blockType;
         }
 
@@ -4096,27 +3963,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    /*
-     * and this is an even more aggressive version - simply walk the code in order (yes, it needs to be ordered
-     * at this point), and fill in any missing blocks.
-     */
-    public static void rejoinBlocks2(List<Op03SimpleStatement> statements) {
-        Map<BlockIdentifier, Integer> lastSeen = MapFactory.newMap();
-        for (int x=0, len=statements.size();x<len;++x) {
-            Op03SimpleStatement stm = statements.get(x);
-            for (BlockIdentifier identifier : stm.getBlockIdentifiers()) {
-
-                Integer prev = lastSeen.get(identifier)  ;
-                if (prev != null && prev < x-1) {
-                    for (int y=prev+1;y<x;++y) {
-                        statements.get(y).getBlockIdentifiers().add(identifier);
-                    }
-                }
-                lastSeen.put(identifier, x);
-            }
-        }
-    }
-
     private static void removePointlessSwitchDefault(Op03SimpleStatement swtch) {
         SwitchStatement switchStatement = (SwitchStatement) swtch.getStatement();
         BlockIdentifier switchBlock = switchStatement.getSwitchBlock();
@@ -4153,37 +3999,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
-    public static List<Op03SimpleStatement> convertIndirectTryLeavesToAnonymousBreaks(List<Op03SimpleStatement> statements) {
-        Set<BlockIdentifier> blocksToRemoveCompletely = SetFactory.newSet();
-
-        for (Op03SimpleStatement in : statements) {
-            Statement statement = in.getStatement();
-            if (!(statement instanceof IfStatement)) continue;
-            IfStatement ifStatement = (IfStatement) statement;
-            if (ifStatement.hasElseBlock()) continue;
-            Op03SimpleStatement afterIf = in.targets.get(1);
-            Statement indirect = afterIf.getStatement();
-            if (indirect.getClass() != GotoStatement.class) continue;
-            GotoStatement gotoStatement = (GotoStatement) indirect;
-            if (gotoStatement.getJumpType() != JumpType.GOTO_OUT_OF_TRY) continue;
-            Op03SimpleStatement eventualTarget = afterIf.targets.get(0);
-            ifStatement.setJumpType(JumpType.BREAK_ANONYMOUS);
-            in.replaceTarget(afterIf, eventualTarget);
-            afterIf.removeSource(in);
-            eventualTarget.addSource(in);
-            blocksToRemoveCompletely.add(ifStatement.getKnownIfBlock());
-            ifStatement.setKnownBlocks(null, null);
-        }
-
-        if (blocksToRemoveCompletely.isEmpty()) return statements;
-
-        for (Op03SimpleStatement stm : statements) {
-            stm.getBlockIdentifiers().removeAll(blocksToRemoveCompletely);
-        }
-        statements = Cleaner.removeUnreachableCode(statements, false);
-        return statements;
-    }
-
     public static void labelAnonymousBlocks(List<Op03SimpleStatement> statements, BlockIdentifierFactory blockIdentifierFactory) {
         List<Op03SimpleStatement> anonBreaks = Functional.filter(statements, new Predicate<Op03SimpleStatement>() {
             @Override
@@ -4207,7 +4022,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
             targets.add(anonBreakTarget);
         }
 
-        int idx = 0;
         for (Op03SimpleStatement target : targets) {
             BlockIdentifier blockIdentifier = blockIdentifierFactory.getNextBlockIdentifier(BlockType.ANONYMOUS);
             InstrIndex targetIndex = target.getIndex();

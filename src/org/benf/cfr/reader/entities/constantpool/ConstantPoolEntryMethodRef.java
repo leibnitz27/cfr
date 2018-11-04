@@ -19,7 +19,7 @@ import java.util.Collection;
 public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     private static final long OFFSET_OF_CLASS_INDEX = 1;
     private static final long OFFSET_OF_NAME_AND_TYPE_INDEX = 3;
-    @SuppressWarnings("FieldCanBeLocal")
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private final boolean interfaceMethod;
     private static final VariableNamer fakeNamer = new VariableNamerDefault();
     private MethodPrototype methodPrototype = null;
@@ -108,7 +108,7 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
                             classFile = superClassFile;
                             replacement = baseReplacement;
                             break foundBetterMethod;
-                        } catch (NoSuchMethodException e2) {
+                        } catch (NoSuchMethodException ignore) {
                         }
                     }
                     break findBetterMethod;
@@ -117,7 +117,6 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
                 overloadMethodSet = classFile.getOverloadMethodSet(replacement);
                 basePrototype = replacement;
             } catch (CannotLoadClassException ignore) {
-                int x = 1;
             }
 
             methodPrototype = basePrototype;

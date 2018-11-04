@@ -10,23 +10,19 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.collections.SetUtil;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
-import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Statement>, LValueAssignmentCollector<Statement> {
-
-    private static final Logger logger = LoggerFactory.create(LValueAssignmentAndAliasCondenser.class);
-
     //
     // Found states that key can be replaced with value.
     //
@@ -67,6 +63,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
 
     @Override
     public void collectMutatedLValue(LValue lValue, StatementContainer<Statement> statementContainer, Expression value) {
+        //noinspection unchecked
         SSAIdent version = statementContainer.getSSAIdentifiers().getSSAIdentOnExit(lValue);
         if (null != mutableFound.put(new VersionedLValue(lValue, version), new ExpressionStatement(value, statementContainer))) {
             throw new ConfusedCFRException("Duplicate versioned SSA Ident.");
@@ -78,9 +75,9 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<Statement> statementContainer, Expression value) {
     }
 
-    Map<Expression, Expression> cache = MapFactory.newMap();
+    private final Map<Expression, Expression> cache = MapFactory.newMap();
 
-    Set<LValue> findAssignees(Statement s) {
+    private Set<LValue> findAssignees(Statement s) {
         if (!(s instanceof AssignmentSimple)) return null;
         AssignmentSimple assignmentSimple = (AssignmentSimple) s;
         Set<LValue> res = SetFactory.newSet();
@@ -95,11 +92,12 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     }
 
     @Override
-    public LValueRewriter getWithFixed(Set fixed) {
+    public LValueRewriter getWithFixed(Set<SSAIdent> fixed) {
         return this;
     }
 
-    public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> lvSc) {
+    @SuppressWarnings("unchecked")
+    public Expression getLValueReplacement(LValue lValue, SSAIdentifiers<LValue> ssaIdentifiers, StatementContainer<Statement> lvSc) {
         if (!(lValue instanceof StackSSALabel)) return null;
 
         StackSSALabel stackSSALabel = (StackSSALabel) lValue;
@@ -273,12 +271,12 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         );
 
         @Override
-        public LValueRewriter getWithFixed(Set fixed) {
+        public LValueRewriter getWithFixed(Set<SSAIdent> fixed) {
             return this;
         }
 
         @Override
-        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers<LValue> ssaIdentifiers, StatementContainer<Statement> statementContainer) {
             if (!(lValue instanceof StackSSALabel)) return null;
             StackSSALabel stackSSALabel = (StackSSALabel) lValue;
 
@@ -335,6 +333,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 if (index instanceof LValueExpression) {
                     checkThese.add(((LValueExpression) index).getLValue());
                 } else if (index instanceof Literal) {
+                    MiscUtils.handyBreakPoint();
                 } else {
                     return null;
                 }
@@ -349,6 +348,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 if (verifyStatement.getStatement().doesBlackListLValueReplacement(stackSSALabel, target.expression)) return null;
                 for (LValue checkThis : checkThese) {
                     if (guessStatement == verifyStatement) continue;
+                    //noinspection unchecked
                     if (!verifyStatement.getSSAIdentifiers().isValidReplacement(checkThis, guessStatement.getSSAIdentifiers())) {
                         return null;
                     }
@@ -406,7 +406,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
 
         /* Bit cheeky, we'll never actually replace here, but use this pass to collect info. */
         @Override
-        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers<LValue> ssaIdentifiers, StatementContainer<Statement> statementContainer) {
             SSAIdent ssaIdent = ssaIdentifiers.getSSAIdentOnExit(lValue);
             if (ssaIdent != null) {
                 VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);
@@ -497,7 +497,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
-        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer<Statement> statementContainer) {
+        public Expression getLValueReplacement(LValue lValue, SSAIdentifiers<LValue> ssaIdentifiers, StatementContainer<Statement> statementContainer) {
             SSAIdent ssaIdent = ssaIdentifiers.getSSAIdentOnExit(lValue);
             if (ssaIdent != null) {
                 VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);
@@ -507,7 +507,8 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     StatementContainer<Statement> replacement = replaceWith.statementContainer;
                     if (replacement == statementContainer) return null;
 
-                    SSAIdentifiers previousIdents = replacement.getSSAIdentifiers();
+                    //noinspection unchecked
+                    SSAIdentifiers<LValue> previousIdents = replacement.getSSAIdentifiers();
                     Set fixedPrevious = previousIdents.getFixedHere();
                     if (SetUtil.hasIntersection(this.fixed, fixedPrevious)) {
                         return null;
@@ -516,7 +517,8 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     // Only the first time.
                     mutableReplacable.remove(versionedLValue);
                     replacement.nopOut();
-                    SSAIdentifiers currentIdents = statementContainer.getSSAIdentifiers();
+                    //noinspection unchecked
+                    SSAIdentifiers<LValue> currentIdents = statementContainer.getSSAIdentifiers();
                     currentIdents.setKnownIdentifierOnEntry(lValue, previousIdents.getSSAIdentOnEntry(lValue));
                     currentIdents.fixHere(previousIdents.getFixedHere());
                     return replaceWith.expression;
@@ -526,7 +528,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
-        public LValueRewriter getWithFixed(Set fixed) {
+        public LValueRewriter getWithFixed(Set<SSAIdent> fixed) {
             return new MutationRewriterSecondPass(this.mutableReplacable, SetFactory.newSet(this.fixed, fixed));
         }
 

@@ -9,10 +9,12 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockType;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
-import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheckSimple;
 import org.benf.cfr.reader.entities.exceptions.ExceptionGroup;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.DecompilerComment;
+import org.benf.cfr.reader.util.DecompilerComments;
+import org.benf.cfr.reader.util.MiscUtils;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.collections.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
 import org.benf.cfr.reader.util.getopt.Options;
@@ -32,9 +34,7 @@ public class Op03Blocks {
          *
          * We can't do a naive 'emit with 0 parents because of loops.
          */
-        LinkedHashSet<Block3> allBlocks = new LinkedHashSet<Block3>();
-        allBlocks.addAll(in);
-
+        LinkedHashSet<Block3> allBlocks = new LinkedHashSet<Block3>(in);
 
         /* in a simple top sort, you take a node with 0 parents, emit it, remove it as parent from all
          * its children, rinse and repeat.  We can't do that immediately, because we have cycles.
@@ -47,9 +47,8 @@ public class Op03Blocks {
 
         List<Block3> output = ListFactory.newList(in.size());
 
-        Block3 last = null;
         while (!allBlocks.isEmpty()) {
-            Block3 next = null;
+            Block3 next;
             if (!ready.isEmpty()) {
                 /*
                  * Take first known ready
@@ -62,7 +61,6 @@ public class Op03Blocks {
                  */
                 next = getSingle(allBlocks);
             }
-            last = next;
             // Remove from allblocks so we don't process again.
             allBlocks.remove(next);
             output.add(next);
@@ -159,16 +157,6 @@ public class Op03Blocks {
         }
     }
 
-//    private static void applyLastBlockHeuristic(List<Block3> blocks) {
-//        int last = blocks.size()-1;
-//        if (last < 1) return;
-//        Block3 lastBlock = blocks.get(last);
-//        if (lastBlock.targets.isEmpty()) {
-//            lastBlock.addSource(blocks.get(last-1));
-//        }
-//    }
-
-
     private static void removeAliases(Set<BlockIdentifier> in, Map<BlockIdentifier, BlockIdentifier> aliases) {
         Set<BlockIdentifier> toRemove = SetFactory.newSet();
         for (BlockIdentifier i : in) {
@@ -214,7 +202,7 @@ public class Op03Blocks {
                 BlockIdentifier last = tryBlockAliases.put(alias, tryBlockMain);
                 if (last != null && last != tryBlockMain) {
                     // We're going to have problems....
-                    int a = 1;
+                    MiscUtils.handyBreakPoint();
                 }
             }
         }
@@ -225,7 +213,7 @@ public class Op03Blocks {
      * Heuristic - we don't want to reorder entries which leave known blocks - SO... if a source
      * is in a different blockset, we have to wait until the previous block is emitted.
      */
-    private static void applyKnownBlocksHeuristic(final Method method, List<Block3> blocks, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
+    private static void applyKnownBlocksHeuristic(List<Block3> blocks, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
 
         /* Find last statement in each block */
         Map<BlockIdentifier, Block3> lastByBlock = MapFactory.newMap();
@@ -241,44 +229,37 @@ public class Op03Blocks {
             Set<BlockIdentifier> startIdents = start.getBlockIdentifiers();
             boolean needLinPrev = false;
             prevtest:
-            if (block.sources.contains(linPrev)) {
+            if (linPrev != null && block.sources.contains(linPrev)) {
                 Block3 source = linPrev;
-                Set<BlockIdentifier> endIdents = source.getEnd().getBlockIdentifiers();
+                Op03SimpleStatement end = source.getEnd();
+                Set<BlockIdentifier> endIdents = end.getBlockIdentifiers();
+                // If the only difference is case statements, then we allow, unless it's a direct
+                // predecessor
                 if (!endIdents.equals(startIdents)) {
-                    // If the only difference is case statements, then we allow, unless it's a direct
-                    // predecessor
-//                    if (source == linPrev) {
-//                        needLinPrev = true;
-//                        break prevtest;
-//                    } else {
-                    {
-                        Set<BlockIdentifier> diffs = SetUtil.difference(endIdents, startIdents);
-                        // Remove aliases from consideration.
+                    Set<BlockIdentifier> diffs = SetUtil.difference(endIdents, startIdents);
+                    // Remove aliases from consideration.
 
-                        // If we've just jumped INTO a try block, consider us as being in that too.
-                        BlockIdentifier newTryBlock = null;
-                        if (block.getStart().getStatement() instanceof TryStatement) {
-                            newTryBlock = ((TryStatement) block.getStart().getStatement()).getBlockIdentifier();
-                            if (!diffs.add(newTryBlock)) newTryBlock = null;
-                        }
+                    // If we've just jumped INTO a try block, consider us as being in that too.
+                    BlockIdentifier newTryBlock = null;
+                    if (block.getStart().getStatement() instanceof TryStatement) {
+                        newTryBlock = ((TryStatement) block.getStart().getStatement()).getBlockIdentifier();
+                        if (!diffs.add(newTryBlock)) newTryBlock = null;
+                    }
 
-                        removeAliases(diffs, tryBlockAliases);
+                    removeAliases(diffs, tryBlockAliases);
 
-                        for (BlockIdentifier blk : diffs) {
-                            if (blk.getBlockType() == BlockType.CASE ||
+                    for (BlockIdentifier blk : diffs) {
+                        if (blk.getBlockType() == BlockType.CASE ||
                                 blk.getBlockType() == BlockType.SWITCH) continue;
-                            if (blk == newTryBlock) continue;
-                            needLinPrev = true;
-                            break prevtest;
-                        }
+                        if (blk == newTryBlock) continue;
+                        needLinPrev = true;
+                        break prevtest;
                     }
                 }
             }
             if (needLinPrev) {
-                if (linPrev != null) {
-                    block.addSource(linPrev);
-                    linPrev.addTarget(block);
-                }
+                block.addSource(linPrev);
+                linPrev.addTarget(block);
             } else {
                 Op03SimpleStatement blockStart = block.getStart();
                 Statement statement = blockStart.getStatement();
@@ -301,10 +282,7 @@ public class Op03Blocks {
         }
     }
 
-    private static List<Block3> buildBasicBlocks(final Method method, final List<Op03SimpleStatement> statements) {
-        /*
-         *
-         */
+    private static List<Block3> buildBasicBlocks(final List<Op03SimpleStatement> statements) {
         final List<Block3> blocks = ListFactory.newList();
         final Map<Op03SimpleStatement, Block3> starts = MapFactory.newMap();
         final Map<Op03SimpleStatement, Block3> ends = MapFactory.newMap();
@@ -540,7 +518,7 @@ public class Op03Blocks {
         }
     }
 
-    public static List<Op03SimpleStatement> combineTryBlocks(final Method method, final List<Op03SimpleStatement> statements) {
+    public static List<Op03SimpleStatement> combineTryBlocks(final List<Op03SimpleStatement> statements) {
         Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = getTryBlockAliases(statements);
         stripTryBlockAliases(statements, tryBlockAliases);
         return Cleaner.removeUnreachableCode(statements, true);
@@ -569,12 +547,11 @@ public class Op03Blocks {
     }
 
 
-    private static List<Block3> sanitiseBlocks(final Method method, List<Block3> blocks) {
+    private static void sanitiseBlocks(List<Block3> blocks) {
         for (Block3 block : blocks) {
             block.sources.remove(block);
             block.targets.remove(block);
         }
-        return blocks;
     }
 
     /*
@@ -595,10 +572,10 @@ public class Op03Blocks {
      *
      * THIS COULD PROBABLY BE REFACTORED TO REDUCE DUPLICATE CODE.
      */
-    private static List<Block3> invertJoinZeroTargetJumps(final Method method, List<Block3> blocks) {
+    private static List<Block3> invertJoinZeroTargetJumps(List<Block3> blocks) {
         final Map<Op03SimpleStatement, Block3> seenPrevBlock = MapFactory.newMap();
         boolean effect = false;
-        testOne : for (int x = 0, len = blocks.size(); x<len;++x) {
+        for (int x = 0, len = blocks.size(); x < len; ++x) {
             Block3 block = blocks.get(x);
 
             // We keep track of the start of a block to the linearly previous, to discount the case
@@ -607,7 +584,7 @@ public class Op03Blocks {
             // from the original code.
 
             if (block.sources.size() == 1 && block.targets.size() == 0) {
-                if (x > 0) seenPrevBlock.put(block.getStart(), blocks.get(x-1));
+                if (x > 0) seenPrevBlock.put(block.getStart(), blocks.get(x - 1));
 
                 Block3 source = getSingle(block.sources);
                 /*
@@ -616,7 +593,7 @@ public class Op03Blocks {
                 Op03SimpleStatement sourceEnd = source.getEnd();
                 Statement statement = sourceEnd.getStatement();
                 if (statement.getClass() != IfStatement.class) continue;
-                IfStatement ifStatement = (IfStatement)statement;
+                IfStatement ifStatement = (IfStatement) statement;
                 // But does it TAKEN jump to the dangling block?
                 List<Op03SimpleStatement> targets = sourceEnd.getTargets();
                 if (targets.size() != 2) continue;
@@ -660,11 +637,11 @@ public class Op03Blocks {
         return blocks;
     }
 
-    private static List<Block3> combineNeighbouringBlocks(final Method method, List<Block3> blocks) {
-        boolean reloop = false;
+    private static List<Block3> combineNeighbouringBlocks(List<Block3> blocks) {
+        boolean reloop;
         do {
-            blocks = combineNeighbouringBlocksPass1(method, blocks);
-            reloop = moveSingleOutOrderBlocks(method, blocks);
+            blocks = combineNeighbouringBlocksPass1(blocks);
+            reloop = moveSingleOutOrderBlocks(blocks);
         } while (reloop);
         // Now try to see if we can move single blocks into place.
         return blocks;
@@ -674,7 +651,7 @@ public class Op03Blocks {
      * We're looking for a very specific feature here - a case statement which jumps BACK immediately, to something which has NO
      * OTHER source.  This won't get very many exemplars.
      */
-    private static List<Block3> combineSingleCaseBackBlock(final Method method, List<Block3> blocks) {
+    private static List<Block3> combineSingleCaseBackBlock(List<Block3> blocks) {
         IdentityHashMap<Block3, Integer> idx = new IdentityHashMap<Block3, Integer>();
 
         boolean effect = false;
@@ -727,7 +704,7 @@ public class Op03Blocks {
      *
      * b (from a, to c).
      */
-    static boolean moveSingleOutOrderBlocks(final Method method, final List<Block3> blocks) {
+    private static boolean moveSingleOutOrderBlocks(final List<Block3> blocks) {
         IdentityHashMap<Block3, Integer> idx = new IdentityHashMap<Block3, Integer>();
         for (int x = 0, len = blocks.size(); x<len;++x) {
             idx.put(blocks.get(x), x);
@@ -796,7 +773,7 @@ public class Op03Blocks {
         return effect;
     }
 
-    private static List<Block3> combineNeighbouringBlocksPass1(final Method method, final List<Block3> blocks) {
+    private static List<Block3> combineNeighbouringBlocksPass1(final List<Block3> blocks) {
         Block3 curr = blocks.get(0);
         int curridx = 0;
 
@@ -852,23 +829,23 @@ public class Op03Blocks {
         return Functional.filter(blocks, new Functional.NotNull<Block3>());
     }
 
-    public static List<Op03SimpleStatement> topologicalSort(final Method method, final List<Op03SimpleStatement> statements, final DecompilerComments comments, final Options options) {
+    public static List<Op03SimpleStatement> topologicalSort(final List<Op03SimpleStatement> statements, final DecompilerComments comments, final Options options) {
 
-        List<Block3> blocks = buildBasicBlocks(method, statements);
+        List<Block3> blocks = buildBasicBlocks(statements);
 
         apply0TargetBlockHeuristic(blocks);
 
         Map<BlockIdentifier, BlockIdentifier> tryBlockAliases = getTryBlockAliases(statements);
-        applyKnownBlocksHeuristic(method, blocks, tryBlockAliases);
+        applyKnownBlocksHeuristic(blocks, tryBlockAliases);
 
-        blocks = sanitiseBlocks(method, blocks);
-        blocks = invertJoinZeroTargetJumps(method, blocks);
-        blocks = combineNeighbouringBlocks(method, blocks);
+        sanitiseBlocks(blocks);
+        blocks = invertJoinZeroTargetJumps(blocks);
+        blocks = combineNeighbouringBlocks(blocks);
 
         // Case statements can vector BACK to blocks which are tricky to move if we rely on a general
         // reachability ordering criteria.
         // see bb/xh.class
-        blocks = combineSingleCaseBackBlock(method, blocks);
+        blocks = combineSingleCaseBackBlock(blocks);
 
         blocks = doTopSort(blocks);
 
@@ -915,6 +892,7 @@ public class Op03Blocks {
                 Op03SimpleStatement next = outStatements.get(x + 1);
                 if (targets.get(0) == next) {
                     // Nothing.
+                    MiscUtils.handyBreakPoint();
                 } else if (targets.get(1) == next) {
                     IfStatement ifStatement = (IfStatement) stm.getStatement();
                     ifStatement.setCondition(ifStatement.getCondition().getNegated().simplify());
@@ -1024,8 +1002,7 @@ public class Op03Blocks {
         Set<Block3> originalSources = new LinkedHashSet<Block3>();
         Set<Block3> targets = new LinkedHashSet<Block3>();
 
-
-        public Block3(Op03SimpleStatement s) {
+        Block3(Op03SimpleStatement s) {
             startIndex = s.getIndex();
             content.add(s);
         }
@@ -1042,7 +1019,7 @@ public class Op03Blocks {
             return content.get(content.size() - 1);
         }
 
-        public void addSources(List<Block3> sources) {
+        void addSources(List<Block3> sources) {
             for (Block3 source : sources) {
                 if (source == null) {
                     throw new IllegalStateException();
@@ -1062,7 +1039,7 @@ public class Op03Blocks {
             this.targets.addAll(targets);
         }
 
-        public void addTargets(List<Block3> targets) {
+        void addTargets(List<Block3> targets) {
             for (Block3 source : targets) {
                 if (source == null) {
                     throw new IllegalStateException();
@@ -1091,17 +1068,17 @@ public class Op03Blocks {
             return content;
         }
 
-        public void copySources() {
+        void copySources() {
             sources.clear();
             sources.addAll(originalSources);
         }
 
-        public void resetSources() {
+        void resetSources() {
             originalSources.clear();
             originalSources.addAll(sources);
         }
 
-        public Block3 getLastUnconditionalBackjumpToHere(Map<Block3, Integer> idxLut) {
+        Block3 getLastUnconditionalBackjumpToHere(Map<Block3, Integer> idxLut) {
             int thisIdx = idxLut.get(this);
             int best = -1;
             Block3 bestSource = null;

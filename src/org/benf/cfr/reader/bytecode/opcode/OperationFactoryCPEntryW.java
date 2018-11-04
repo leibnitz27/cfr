@@ -11,10 +11,7 @@ public class OperationFactoryCPEntryW extends OperationFactoryDefault {
     @Override
     public Op01WithProcessedDataAndByteJumps createOperation(JVMInstr instr, ByteData bd, ConstantPool cp, int offset) {
         byte[] args = bd.getBytesAt(LENGTH_OF_FIELD_INDEX, 1);
-        int[] targetOffsets = null; // we know the nextr instr, it's our successor (after the invoke returns).
         ConstantPoolEntry[] cpEntries = new ConstantPoolEntry[]{cp.getEntry(bd.getU2At(1))};
-
-
-        return new Op01WithProcessedDataAndByteJumps(instr, args, targetOffsets, offset, cpEntries);
+        return new Op01WithProcessedDataAndByteJumps(instr, args, null, offset, cpEntries);
     }
 }

@@ -94,6 +94,7 @@ public abstract class AbstractExpression implements Expression {
             requires = true;
         } else if (cmp == 0) {
             if (innerP == outerP && innerP.isCommutative()) {
+                //noinspection ConstantConditions
                 requires = false;
             } else {
                 switch (isLhs) {
