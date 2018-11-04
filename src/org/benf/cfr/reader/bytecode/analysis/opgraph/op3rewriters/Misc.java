@@ -175,12 +175,15 @@ public class Misc {
                     } else if (clazz == GotoStatement.class) {
                         result.add(source);
                         arg2.enqueue(source);
+                    }
+                    // It would be great to enable this, however it causes issues with dex2jar source.
+/*
                     } else if (clazz == IfStatement.class) {
                         if (source.getTargets().size() == 2 &&
                             source.getTargets().get(1) == arg1) {
                             result.add(source);
                         }
-                    }
+                        */
                 }
             }
         }).process();
