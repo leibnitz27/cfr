@@ -2,7 +2,8 @@ package org.benf.cfr.reader.state;
 
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -40,7 +41,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
     private String pathPrefix = "";
     private String classRemovePrefix = "";
     private static final boolean JrtPresent = CheckJrt();
-    private static Map<String, String> packMap =  JrtPresent ? getPackageToModuleMap() : new HashMap<String, String>();
+    private static Map<String, String> packMap = JrtPresent ? getPackageToModuleMap() : new HashMap<String, String>();
 
     private static boolean CheckJrt() {
         try {
@@ -405,18 +406,12 @@ public class ClassFileSourceImpl implements ClassFileSource {
 
     @Override
     public void informAnalysisRelativePathDetail(String usePath, String specPath) {
-        new Configurator().configureWith(usePath, specPath);
-    }
-
-    public String adjustInputPath(String inputPath) {
-        if (!unexpectedDirectory) return inputPath;
-        if (inputPath.startsWith(pathPrefix)) inputPath = inputPath.substring(pathPrefix.length());
-        return inputPath;
-    }
-
-    public void clearConfiguration() {
-        unexpectedDirectory = false;
-        pathPrefix = null;
+        if (usePath == null && specPath == null) {
+            unexpectedDirectory = false;
+            pathPrefix = null;
+        } else {
+            new Configurator().configureWith(usePath, specPath);
+        }
     }
 
     private class Configurator {

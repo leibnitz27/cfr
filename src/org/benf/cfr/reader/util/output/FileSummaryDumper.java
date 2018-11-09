@@ -59,11 +59,9 @@ public class FileSummaryDumper implements SummaryDumper {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-
     }
 
-    @Override
-    public void NotifyAdditionalAtEnd() {
+    private void notifyAdditionalAtEnd() {
         try {
             List<DecompilerComment> comments = additionalComments != null ? additionalComments.getComments() : null;
             if (comments != null && !comments.isEmpty()) {
@@ -84,6 +82,7 @@ public class FileSummaryDumper implements SummaryDumper {
     @Override
     public void close() {
         try {
+            notifyAdditionalAtEnd();
             writer.close();
         } catch (IOException e) {
             throw new IllegalStateException(e);

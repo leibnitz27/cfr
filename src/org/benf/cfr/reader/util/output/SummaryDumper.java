@@ -9,6 +9,4 @@ public interface SummaryDumper {
     void notifyError(JavaTypeInstance controllingType, Method method, String error);
 
     void close();
-
-    void NotifyAdditionalAtEnd();
 }

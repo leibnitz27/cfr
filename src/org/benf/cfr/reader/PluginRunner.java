@@ -17,13 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings({"WeakerAccess", "unused"})
+@Deprecated
 public class PluginRunner {
     private final DCCommonState dcCommonState;
-    private final IllegalIdentifierDump illegalIdentifierDump = new IllegalIdentifierDump.Nop();
 
-    /*
-     *
-     */
     public PluginRunner() {
         this(MapFactory.<String, String>newMap(), null);
     }
@@ -62,29 +60,8 @@ public class PluginRunner {
         }
     }
 
-    class StringStreamDumper extends StreamDumper {
-        private final StringBuilder stringBuilder;
-
-        public StringStreamDumper(StringBuilder sb, TypeUsageInformation typeUsageInformation, Options options) {
-            super(typeUsageInformation, options, illegalIdentifierDump);
-            this.stringBuilder = sb;
-        }
-
-        @Override
-        protected void write(String s) {
-            stringBuilder.append(s);
-        }
-
-        @Override
-        public void close() {
-        }
-
-        @Override
-        public void addSummaryError(Method method, String s) {
-        }
-    }
-
     private class PluginDumperFactory implements DumperFactory {
+        private final IllegalIdentifierDump illegalIdentifierDump = new IllegalIdentifierDump.Nop();
 
         private final StringBuilder outBuffer;
         private final Options options;
@@ -95,7 +72,7 @@ public class PluginRunner {
         }
 
         public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-            return new StringStreamDumper(outBuffer, typeUsageInformation, options);
+            return new StringStreamDumper(outBuffer, typeUsageInformation, options, this.illegalIdentifierDump);
         }
 
         /*
@@ -110,6 +87,11 @@ public class PluginRunner {
         @Override
         public ProgressDumper getProgressDumper() {
             return ProgressDumperNop.INSTANCE;
+        }
+
+        @Override
+        public ExceptionDumper getExceptionDumper() {
+            return new StdErrExceptionDumper();
         }
     }
 

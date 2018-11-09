@@ -11,4 +11,6 @@ public interface DumperFactory {
 
     SummaryDumper getSummaryDumper();
 
+    ExceptionDumper getExceptionDumper();
+
 }

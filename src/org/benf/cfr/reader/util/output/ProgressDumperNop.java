@@ -9,6 +9,9 @@ public class ProgressDumperNop implements ProgressDumper {
 
     @Override
     public void analysingType(JavaTypeInstance type) {
+    }
 
+    @Override
+    public void analysingPath(String path) {
     }
 }

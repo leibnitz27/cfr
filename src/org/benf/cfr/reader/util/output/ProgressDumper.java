@@ -4,4 +4,5 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 
 public interface ProgressDumper {
     void analysingType(JavaTypeInstance type);
+    void analysingPath(String path);
 }

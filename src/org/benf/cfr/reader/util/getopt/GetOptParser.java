@@ -96,10 +96,6 @@ public class GetOptParser {
             positional.add("ignoreMe.class");
         }
         T res = getOptSinkFactory.create(named);
-
-        if (positional.size() == 0) {
-            throw new IllegalArgumentException("Insufficient unqualified parameters - provide at least filename.");
-        }
         return Pair.make(positional, res);
     }
 

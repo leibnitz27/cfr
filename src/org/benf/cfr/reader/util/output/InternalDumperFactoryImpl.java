@@ -13,7 +13,7 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import java.util.List;
 import java.util.Set;
 
-public class DumperFactoryImpl implements DumperFactory {
+public class InternalDumperFactoryImpl implements DumperFactory {
     private final boolean checkDupes;
     private Set<String> seen = SetFactory.newSet();
     private boolean seenCaseDupe = false;
@@ -21,7 +21,7 @@ public class DumperFactoryImpl implements DumperFactory {
     private final ProgressDumper progressDumper;
 
 
-    public DumperFactoryImpl(Options options) {
+    public InternalDumperFactoryImpl(Options options) {
         this.checkDupes = CaseSensitiveFileSystemHelper.IsCaseSensitive() && !options.getOption(OptionsImpl.CASE_INSENSITIVE_FS_RENAME);
         this.options = options;
         if (!options.getOption(OptionsImpl.SILENT) && (options.optionIsSet(OptionsImpl.OUTPUT_DIR) || options.optionIsSet(OptionsImpl.OUTPUT_PATH))) {
@@ -47,13 +47,18 @@ public class DumperFactoryImpl implements DumperFactory {
 
         if (targetInfo == null) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump);
 
-        FileDumper res =  new FileDumper(targetInfo.getFirst(), targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
+        FileDumper res = new FileDumper(targetInfo.getFirst(), targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
         if (checkDupes) {
             if (seen.add(res.getFileName().toLowerCase())) {
                 seenCaseDupe = true;
             }
         }
         return res;
+    }
+
+    @Override
+    public ExceptionDumper getExceptionDumper() {
+        return new StdErrExceptionDumper();
     }
 
     private class AdditionalComments implements DecompilerCommentSource {
