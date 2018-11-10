@@ -22,7 +22,7 @@ import java.util.Map;
 public interface ClassFileSource {
     /**
      * CFR has loaded your class, and it has decided that if it were in the correct location, it would instead
-     * be at {@param classFilePath}.
+     * be at {@code classFilePath}.
      *
      * This information should be taken into account when loading any inner classes, or other classes that CFR tries
      * to load in order to improve decompilation.
@@ -43,7 +43,7 @@ public interface ClassFileSource {
     void informAnalysisRelativePathDetail(String usePath, String classFilePath);
 
     /**
-     * CFR would like to know about all classes contained within the jar at {@param jarPath}
+     * CFR would like to know about all classes contained within the jar at {@code jarPath}
      *
      * @param jarPath path to a jar.
      * @return paths (inside jar) of all classes.
