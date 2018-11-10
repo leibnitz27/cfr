@@ -26,10 +26,6 @@ public class SinkDumperFactory implements DumperFactory {
     public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         List<OutputSinkFactory.SinkClass> supported = sinkFactory.getSupportedSinks(OutputSinkFactory.SinkType.JAVA, Arrays.asList(OutputSinkFactory.SinkClass.DECOMPILED, OutputSinkFactory.SinkClass.STRING));
         if (supported == null) supported = justString;
-        System.err.println("Target supports ");
-        for (OutputSinkFactory.SinkClass classs : supported) {
-            System.err.println(classs);
-        }
         for (OutputSinkFactory.SinkClass sinkClass : supported) {
             switch (sinkClass) {
                 case DECOMPILED:

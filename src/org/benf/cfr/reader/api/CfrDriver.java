@@ -59,11 +59,11 @@ public interface CfrDriver {
          * Note.  Strong values on this are not guaranteed, however you should expect
          * that command line options to CFR do not change.
          *
-         * eg { "sugarboxing" -> "false" }
+         * eg { "sugarboxing" -&gt; "false" }
          *
          * You may use
          *
-         * { OptionsImpl.SUGAR_BOXING.getName() -> "false" }
+         * { OptionsImpl.SUGAR_BOXING.getName() -&gt; "false" }
          *
          * However, this is not guaranteed to remain in place currently, and may lead to compile / runtime
          * errors in subsequent versions.

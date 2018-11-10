@@ -67,7 +67,7 @@ public interface ClassFileSource {
      * * the path where you found this.
      *
      * @param path relative path of class we wish to load.
-     * @return Pair<byte[], String> of class file content, and file location.
+     * @return Pair&lt;byte[], String&gt; of class file content, and file location.
      * @throws IOException if you can't find the class.
      */
     Pair<byte[], String> getClassFileContent(final String path) throws IOException;
