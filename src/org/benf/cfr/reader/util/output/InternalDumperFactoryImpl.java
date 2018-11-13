@@ -49,7 +49,7 @@ public class InternalDumperFactoryImpl implements DumperFactory {
 
         FileDumper res = new FileDumper(targetInfo.getFirst(), targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
         if (checkDupes) {
-            if (seen.add(res.getFileName().toLowerCase())) {
+            if (!seen.add(res.getFileName().toLowerCase())) {
                 seenCaseDupe = true;
             }
         }
