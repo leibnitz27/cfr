@@ -19,6 +19,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
@@ -112,7 +113,7 @@ public class WildcardMatch {
         return getArithmeticMutationWildcard(name, Optional.of(lhs), Optional.of(rhs), Optional.<ArithOp>empty());
     }
 
-    private ArithmeticMutationWildcard getArithmeticMutationWildcard(String name, Optional<LValue> lhs, Optional<Expression> rhs, Optional<ArithOp> op) {
+    private ArithmeticMutationWildcard getArithmeticMutationWildcard(String name,   Optional<LValue> lhs, Optional<Expression> rhs, Optional<ArithOp> op) {
         ArithmeticMutationWildcard res = arithMutationMap.get(name);
         if (res != null) return res;
         res = new ArithmeticMutationWildcard(lhs, rhs, op);
