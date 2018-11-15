@@ -42,6 +42,7 @@ public class InferredJavaType {
         LITERAL,
         FIELD,
         FUNCTION,
+        PROTOTYPE,
         OPERATION,
         EXPRESSION,
         INSTRUCTION, // Instr returns type which guarantees this (eg arraylength returns int).

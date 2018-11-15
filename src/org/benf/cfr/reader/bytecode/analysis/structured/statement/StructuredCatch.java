@@ -39,6 +39,7 @@ public class StructuredCatch extends AbstractStructuredStatement {
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(catchTypes);
+        if (!collector.isStatementRecursive()) return;
         catchBlock.collectTypeUsages(collector);
     }
 

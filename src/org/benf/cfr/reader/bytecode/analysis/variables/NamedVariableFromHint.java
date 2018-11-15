@@ -7,7 +7,7 @@ public class NamedVariableFromHint implements NamedVariable {
     private int slot;
     private int idx;
 
-    public NamedVariableFromHint(String name, int slot, int idx) {
+    NamedVariableFromHint(String name, int slot, int idx) {
         this.name = name;
         this.slot = slot;
         this.idx = idx;

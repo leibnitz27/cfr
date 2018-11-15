@@ -36,7 +36,7 @@ public abstract class AbstractLValue implements LValue {
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
-        collector.collect(inferredJavaType.getJavaTypeInstance());
+        inferredJavaType.getJavaTypeInstance().collectInto(collector);
     }
 
     @Override

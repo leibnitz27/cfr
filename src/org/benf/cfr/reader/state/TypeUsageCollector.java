@@ -18,4 +18,6 @@ public interface TypeUsageCollector {
     void collectFrom(Collection<? extends TypeUsageCollectable> collectables);
 
     TypeUsageInformation getTypeUsageInformation();
+
+    boolean isStatementRecursive();
 }

@@ -39,4 +39,9 @@ public class TypeUsageCollectorImpl extends AbstractTypeUsageCollector {
         /* Figure out what the imports are */
         return new TypeUsageInformationImpl(analysisType, typeInstanceSet);
     }
+
+    @Override
+    public boolean isStatementRecursive() {
+        return true;
+    }
 }

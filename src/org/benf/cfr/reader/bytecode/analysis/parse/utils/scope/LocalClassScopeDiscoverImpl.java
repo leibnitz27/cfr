@@ -4,15 +4,18 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.AbstractTypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -21,10 +24,19 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.Map;
 
 public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
-    private final TypeUsageSpotter typeSpotter = new TypeUsageSpotter();
+    private final Map<JavaTypeInstance, Boolean> localClassTypes = MapFactory.newIdentityMap();
+    private final TypeUsageSpotter typeUsageSpotter = new TypeUsageSpotter();
 
-    public LocalClassScopeDiscoverImpl(MethodPrototype prototype, VariableFactory variableFactory) {
-        super(prototype, variableFactory);
+    public LocalClassScopeDiscoverImpl(Method method, VariableFactory variableFactory) {
+        super(method.getMethodPrototype(), variableFactory);
+
+        JavaTypeInstance thisClassType = method.getClassFile().getClassType();
+        while (thisClassType != null) {
+            if (null != localClassTypes.put(thisClassType, Boolean.FALSE)) break;
+            InnerClassInfo innerClassInfo = thisClassType.getInnerClassHereInfo();
+            if (!innerClassInfo.isInnerClass()) break;
+            thisClassType = innerClassInfo.getOuterClass();
+        }
     }
 
     private static class SentinelNV implements NamedVariable {
@@ -74,17 +86,13 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
 
     @Override
     public void processOp04Statement(Op04StructuredStatement statement) {
-        StructuredStatement stm = statement.getStatement();
-        // TODO : We correctly descend lambdas.  But what if there's an local class of a local
-        // class whose type escapes?  (InnerClassTest52).
-        // This is horrid - we need to search EVERYWHERE in each method scoped
-        // class we use, to see if it needs to be lifted.
-//        stm.collectTypeUsages(typeSpotter);
-        stm.traceLocalVariableScope(this);
+        statement.getStatement().collectTypeUsages(typeUsageSpotter);
+        super.processOp04Statement(statement);
     }
 
     @Override
     public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value) {
+        collect(localVariable);
     }
 
     @Override
@@ -94,23 +102,41 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
         if (lValueClass == SentinelLocalClassLValue.class) {
             SentinelLocalClassLValue localClassLValue = (SentinelLocalClassLValue) lValue;
 
-            NamedVariable name = new SentinelNV(localClassLValue.getLocalClassType());
-
-            ScopeDefinition previousDef = earliestDefinition.get(name);
-            // If it's in scope, no problem.
-            if (previousDef != null) return;
             JavaTypeInstance type = localClassLValue.getLocalClassType();
-
-            StatementContainer<StructuredStatement> typeSeen = typeSpotter.seenTypes.get(type);
-
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, type, name, currentMark);
-            earliestDefinition.put(name, scopeDefinition);
-            earliestDefinitionsByLevel.get(currentDepth).put(name, true);
-            discoveredCreations.add(scopeDefinition);
+            defineHere(lValue, type, true);
 
         }  else if (lValueClass == FieldVariable.class) {
             lValue.collectLValueUsage(this);
         }
+    }
+
+    private void defineHere(LValue lValue, JavaTypeInstance type, boolean immediate) {
+
+        NamedVariable name = new SentinelNV(type);
+        NamedVariable keyName = new SentinelNV(type.getDeGenerifiedType());
+
+        ScopeDefinition previousDef = earliestDefinition.get(keyName);
+        // If it's in scope, no problem.
+        if (previousDef != null) {
+            if (previousDef.isImmediate()
+            || !immediate) {
+                return;
+            }
+            if (previousDef.getDepth() < currentDepth) {
+                previousDef.setImmediate();
+                return;
+            }
+            if (!previousDef.isImmediate()) {
+                earliestDefinitionsByLevel.get(currentDepth).remove(keyName);
+                discoveredCreations.remove(previousDef);
+            }
+        }
+
+        ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, currentBlock.peek(), lValue, type, name, currentMark, immediate);
+        earliestDefinition.put(keyName, scopeDefinition);
+        earliestDefinitionsByLevel.get(currentDepth).put(keyName, true);
+        discoveredCreations.add(scopeDefinition);
+        localClassTypes.put(type, Boolean.TRUE);
     }
 
     @Override
@@ -119,7 +145,6 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
     }
 
     class TypeUsageSpotter extends AbstractTypeUsageCollector {
-        private final Map<JavaTypeInstance, StatementContainer<StructuredStatement>> seenTypes = MapFactory.newMap();
 
         @Override
         public void collectRefType(JavaRefTypeInstance type) {
@@ -128,14 +153,25 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
 
         @Override
         public void collect(JavaTypeInstance type) {
-             if (!currentBlock.isEmpty() && !seenTypes.containsKey(type)) {
-                 seenTypes.put(type, currentBlock.peek());
-             }
+            if (type == null) return;
+            Boolean localClass = localClassTypes.get(type);
+            if (localClass == null) {
+                localClass = ConstructorInvokationSimple.isAnonymousMethodType(type);
+                localClassTypes.put(type, localClass);
+            }
+            if (localClass == Boolean.FALSE) return;
+            LValue sentinel = new SentinelLocalClassLValue(type);
+            defineHere(sentinel, type, false);
         }
 
         @Override
         public TypeUsageInformation getTypeUsageInformation() {
             throw new IllegalStateException();
+        }
+
+        @Override
+        public boolean isStatementRecursive() {
+            return false;
         }
     }
 

@@ -29,6 +29,7 @@ public abstract class AbstractStructuredBlockStatement extends AbstractStructure
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
+        if (!collector.isStatementRecursive()) return;
         body.collectTypeUsages(collector);
     }
 }

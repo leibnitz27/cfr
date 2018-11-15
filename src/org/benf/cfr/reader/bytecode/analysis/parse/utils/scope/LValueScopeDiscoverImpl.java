@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredCatch;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -30,10 +31,15 @@ public class LValueScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
         // of the previous one, and kick out the previous (and remove from earlier scopes) if that's the case).
         NamedVariable name = localVariable.getName();
         ScopeDefinition previousDef = earliestDefinition.get(name);
-        if (previousDef == null) {
+        JavaTypeInstance newType = localVariable.getInferredJavaType().getJavaTypeInstance();
+        if ( // Doesn't exist at this level.
+                previousDef == null ||
+                // Total bodge - catch statements.
+                ( previousDef.getDepth() == currentDepth && previousDef.getExactStatement() != null &&
+                previousDef.getExactStatement().getStatement() instanceof StructuredCatch)
+        ) {
             // First use is here.
-            JavaTypeInstance type = localVariable.getInferredJavaType().getJavaTypeInstance();
-            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, type, name, null);
+            ScopeDefinition scopeDefinition = new ScopeDefinition(currentDepth, currentBlock, statementContainer, localVariable, newType, name, null, true);
             earliestDefinition.put(name, scopeDefinition);
             earliestDefinitionsByLevel.get(currentDepth).put(name, true);
             discoveredCreations.add(scopeDefinition);
@@ -44,7 +50,6 @@ public class LValueScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
          * Else verify type.
          */
         JavaTypeInstance oldType = previousDef.getJavaTypeInstance();
-        JavaTypeInstance newType = localVariable.getInferredJavaType().getJavaTypeInstance();
         if (!oldType.equals(newType)) {
             earliestDefinitionsByLevel.get(previousDef.getDepth()).remove(previousDef.getName());
             if (previousDef.getDepth() == currentDepth) {

@@ -115,6 +115,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
+        // Shouldn't be necessary, however belt & braces.
+        // This means if you want to use a non-recursive collector, you collect the
+        // StructuredStatement directly.
+        if (!collector.isStatementRecursive()) return;
         structuredStatement.collectTypeUsages(collector);
     }
 
@@ -816,7 +820,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     public static void discoverLocalClassScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
-        AbstractLValueScopeDiscoverer scopeDiscoverer = new LocalClassScopeDiscoverImpl(method.getMethodPrototype(), variableFactory);
+        AbstractLValueScopeDiscoverer scopeDiscoverer = new LocalClassScopeDiscoverImpl(method, variableFactory);
         scopeDiscoverer.processOp04Statement(root);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();

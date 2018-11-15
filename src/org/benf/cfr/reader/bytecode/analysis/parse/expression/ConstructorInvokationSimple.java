@@ -90,12 +90,18 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
         return super.equals(o);
     }
 
+    public static boolean isAnonymousMethodType(JavaTypeInstance lValueType) {
+        InnerClassInfo innerClassInfo = lValueType.getInnerClassHereInfo();
+        if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnonymousClass()) {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         JavaTypeInstance lValueType = constructorInvokation.getClassTypeInstance();
-        InnerClassInfo innerClassInfo = lValueType.getInnerClassHereInfo();
-
-        if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnonymousClass()) {
+        if (isAnonymousMethodType(lValueType)) {
             lValueUsageCollector.collect(new SentinelLocalClassLValue(lValueType));
         }
 

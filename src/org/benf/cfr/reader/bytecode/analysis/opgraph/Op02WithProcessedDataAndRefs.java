@@ -1148,7 +1148,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case CHECKCAST: {
                 ConstantPoolEntryClass castTarget = (ConstantPoolEntryClass) cpEntries[0];
                 JavaTypeInstance tgtJavaType = castTarget.getTypeInstance();
-                JavaTypeInstance srcJavaType = getStackRValue(0).getInferredJavaType().getJavaTypeInstance();
+                InferredJavaType srcInferredJavaType = getStackRValue(0).getInferredJavaType();
+                JavaTypeInstance srcJavaType = srcInferredJavaType.getJavaTypeInstance();
                 // Have to check against the degenerified type, as checkcast is performed at runtime,
                 // i.e. without generic information.
                 Expression rhs = getStackRValue(0);

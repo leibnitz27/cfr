@@ -545,7 +545,7 @@ public class MethodPrototype implements TypeUsageCollectable {
                     continue;
                 }
             }
-            expressions.set(x, new CastExpression(new InferredJavaType(type, InferredJavaType.Source.FUNCTION, true), expression));
+            expressions.set(x, new CastExpression(new InferredJavaType(type, InferredJavaType.Source.PROTOTYPE, true), expression));
         }
     }
 

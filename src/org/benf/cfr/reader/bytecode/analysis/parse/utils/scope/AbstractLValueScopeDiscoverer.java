@@ -28,16 +28,16 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
      * We keep track of the first definition for a given variable.  If we exit the scope that the variable
      * is defined at (i.e. scope depth goes above) we have to remove all earliest definitions at that level.
      */
-    final Map<NamedVariable, ScopeDefinition> earliestDefinition = MapFactory.newIdentityMap();
+    final Map<NamedVariable, ScopeDefinition> earliestDefinition = MapFactory.newOrderedMap();
     final Map<Integer, Map<NamedVariable, Boolean>> earliestDefinitionsByLevel = MapFactory.newLazyMap(new UnaryFunction<Integer, Map<NamedVariable, Boolean>>() {
         @Override
         public Map<NamedVariable, Boolean> invoke(Integer arg) {
             return MapFactory.newIdentityMap();
         }
     });
-    transient int currentDepth = 0;
+    int currentDepth = 0;
 
-    transient Stack<StatementContainer<StructuredStatement>> currentBlock = new Stack<StatementContainer<StructuredStatement>>();
+    Stack<StatementContainer<StructuredStatement>> currentBlock = new Stack<StatementContainer<StructuredStatement>>();
 
     final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
     final VariableFactory variableFactory;
@@ -162,7 +162,8 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
             List<StatementContainer<StructuredStatement>> commonScope = null;
             ScopeDefinition bestDefn = null;
             LValue scopedEntity = scopeKey.getlValue();
-            for (ScopeDefinition definition : definitions) {
+            for (int x=definitions.size()-1;x>=0;--x) {
+                ScopeDefinition definition = definitions.get(x);
                 StructuredStatement statement = definition.getStatementContainer().getStatement();
 
                 if (statement.alwaysDefines(scopedEntity)) {
@@ -255,6 +256,7 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
 
     static class ScopeDefinition {
         private final int depth;
+        private boolean immediate;
         // Keeping this nested scope is woefully inefficient.... fixme.
         private final List<StatementContainer<StructuredStatement>> nestedScope;
         private final StatementContainer<StructuredStatement> exactStatement;
@@ -266,7 +268,7 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
 
         ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
                         LValue lValue, InferredJavaType inferredJavaType, NamedVariable name) {
-            this(depth, nestedScope, exactStatement, lValue, getUnclashedType(inferredJavaType), name, null);
+            this(depth, nestedScope, exactStatement, lValue, getUnclashedType(inferredJavaType), name, null, true);
         }
 
         private static JavaTypeInstance getUnclashedType(InferredJavaType inferredJavaType) {
@@ -276,9 +278,14 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
             return inferredJavaType.getJavaTypeInstance();
         }
 
+        StatementContainer<StructuredStatement> getExactStatement() {
+            return exactStatement;
+        }
+
         ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
-                        LValue lValue, JavaTypeInstance type, NamedVariable name, StatementContainer<StructuredStatement> hint) {
+                        LValue lValue, JavaTypeInstance type, NamedVariable name, StatementContainer<StructuredStatement> hint, boolean immediate) {
             this.depth = depth;
+            this.immediate = immediate;
             Pair< List<StatementContainer<StructuredStatement>>, StatementContainer<StructuredStatement>> adjustedScope = getBestScopeFor(lValue, nestedScope, exactStatement);
             this.nestedScope = adjustedScope.getFirst();
             this.exactStatement = adjustedScope.getSecond();
@@ -341,6 +348,14 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
         @Override
         public String toString() {
             return name + " : " + lValueType.getRawName();
+        }
+
+        boolean isImmediate() {
+            return immediate;
+        }
+
+        void setImmediate() {
+            immediate = true;
         }
     }
 

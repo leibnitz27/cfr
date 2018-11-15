@@ -75,6 +75,7 @@ public class Block extends AbstractStructuredStatement {
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
+        if (!collector.isStatementRecursive()) return;
         for (Op04StructuredStatement statement : containedStatements) {
             statement.collectTypeUsages(collector);
         }
