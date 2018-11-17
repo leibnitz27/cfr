@@ -5,12 +5,12 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.Method;
 
 public class SinkSummaryDumper implements SummaryDumper {
-    private final OutputSinkFactory.Sink sink;
+    private final OutputSinkFactory.Sink<String> sink;
 
     private transient JavaTypeInstance lastControllingType = null;
     private transient Method lastMethod = null;
 
-    SinkSummaryDumper(OutputSinkFactory.Sink sink) {
+    SinkSummaryDumper(OutputSinkFactory.Sink<String> sink) {
         this.sink = sink;
     }
 

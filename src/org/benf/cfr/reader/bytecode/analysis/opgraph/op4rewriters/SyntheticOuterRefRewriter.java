@@ -12,13 +12,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 
 /**
  * We may have deep inner classes, with references to each other.
- * <p/>
  * So
- * <p/>
  * this.Inner2.this.Inner1.this
- * <p/>
  * But this is illegal.  So remove the outer one, leaving
- * <p/>
  * this.Inner1.this (the LHS this is still illegal, but will be removed later).
  */
 public class SyntheticOuterRefRewriter implements ExpressionRewriter {
@@ -40,12 +36,6 @@ public class SyntheticOuterRefRewriter implements ExpressionRewriter {
         Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         return (ConditionalExpression) res;
     }
-
-//    @Override
-//    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-//        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-//        return (AbstractAssignmentExpression) res;
-//    }
 
     @Override
     public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {

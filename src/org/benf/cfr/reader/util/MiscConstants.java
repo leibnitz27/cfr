@@ -1,7 +1,24 @@
 package org.benf.cfr.reader.util;
 
 public interface MiscConstants {
-    String CFR_VERSION = "0_134";
+    class Version {
+        private static String version;
+
+        static String getVersion() {
+            if (version != null) return version;
+            try {
+                version = Version.class.getPackage().getImplementationVersion();
+            } catch (Exception ignore) {
+                //
+            }
+            if (version == null) {
+                version = "<Could not determine version>";
+            }
+            return version;
+        }
+    }
+
+    String CFR_VERSION = Version.getVersion();
 
     String CFR_HEADER_BRA = "Decompiled with CFR";
 

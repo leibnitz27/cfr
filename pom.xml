@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.benf</groupId>
+    <artifactId>cfr</artifactId>
+    <version>0.135</version>
+
+    <name>cfr</name>
+    <description>CFR Java decompiler</description>
+    <url>https://www.benf.org/other/cfr</url>
+    <inceptionYear>2011</inceptionYear>
+    <!--<organization><name>Lee Benfield</name><url>https://www.benf.org/other/cfr</url></organization>-->
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>https://www.benf.org/other/cfr/license.html</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Lee Benfield</name>
+            <email>lee@benf.org</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/leibnitz27/cfr_examples.git</connection>
+        <developerConnection>scm:git:ssh://github.com:leibnitz27/cfr.git</developerConnection>
+        <url>https://www.benf.org/other/cfr</url>
+    </scm>
+
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <!--<testSource>1.8</testSource>-->
+                    <!--<testTarget>1.8</testTarget>-->
+                    <compilerArgument>-Xlint:none</compilerArgument>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.benf.cfr.reader.Main</mainClass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <excludes>org/**</excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <doctitle>CFR API</doctitle>
+                    <title>CFR API</title>
+                    <additionalOptions>-html5 -quiet</additionalOptions>
+                    <!--<bottom>Copyright &#169; {inceptionYear}&#x2013;{currentYear} Lee Benfield - https://www.benf.org/other/cfr</bottom>-->
+                    <subpackages>
+                        org/benf/cfr/reader/api
+                    </subpackages>
+                    <doclint>none</doclint>
+                    <sourcefileincludes>**\/api\/*.java</sourcefileincludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+</project>

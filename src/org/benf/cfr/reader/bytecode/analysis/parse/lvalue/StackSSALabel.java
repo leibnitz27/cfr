@@ -78,9 +78,9 @@ public class StackSSALabel extends AbstractLValue {
     }
 
     /*
-             * Can any use of this be replaced with the RHS instead?
-             * (Assuming that values in the RHS are not mutated)
-             */
+     * Can any use of this be replaced with the RHS instead?
+     * (Assuming that values in the RHS are not mutated)
+     */
     @Override
     public <Statement> void collectLValueAssignments(Expression rhsAssigned, StatementContainer<Statement> statementContainer, LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
         if (getNumberOfCreators() == 1) {
@@ -94,7 +94,7 @@ public class StackSSALabel extends AbstractLValue {
 
     @Override
     public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
-        return new SSAIdentifiers();
+        return new SSAIdentifiers<LValue>();
     }
 
     @Override
