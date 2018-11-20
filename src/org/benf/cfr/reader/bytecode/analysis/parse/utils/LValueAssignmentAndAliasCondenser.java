@@ -96,6 +96,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         return this;
     }
 
+    @Override
+    public boolean needLR() {
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
     public Expression getLValueReplacement(LValue lValue, SSAIdentifiers<LValue> ssaIdentifiers, StatementContainer<Statement> lvSc) {
         if (!(lValue instanceof StackSSALabel)) return null;
@@ -276,6 +281,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
+        public boolean needLR() {
+            return false;
+        }
+
+        @Override
         public Expression getLValueReplacement(LValue lValue, SSAIdentifiers<LValue> ssaIdentifiers, StatementContainer<Statement> statementContainer) {
             if (!(lValue instanceof StackSSALabel)) return null;
             StackSSALabel stackSSALabel = (StackSSALabel) lValue;
@@ -419,6 +429,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
+        public boolean needLR() {
+            return false;
+        }
+
+        @Override
         public LValueRewriter getWithFixed(Set fixed) {
             return this;
         }
@@ -434,15 +449,15 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         /* Given an original statement (in which we're pre-incrementing x), and a number of uses of X at the value
-                 * 'after' the pre-increment, we want to determine if there is a single use which dominates all others.
-                 *
-                 * We can accomplish this with a DFS starting at the start, which aborts at each node, but if it sees 2, then
-                 * game over.
-                 *
-                 * We can further simplify - if we see a node with 2 targets, we can abort.
-                 *
-                 * todo : StatementContainer doesn't have children.
-                 */
+         * 'after' the pre-increment, we want to determine if there is a single use which dominates all others.
+         *
+         * We can accomplish this with a DFS starting at the start, which aborts at each node, but if it sees 2, then
+         * game over.
+         *
+         * We can further simplify - if we see a node with 2 targets, we can abort.
+         *
+         * todo : StatementContainer doesn't have children.
+         */
         private StatementContainer getUniqueParent(StatementContainer start, final Set<StatementContainer> seen) {
             Op03SimpleStatement o3current = (Op03SimpleStatement) start;
 
@@ -494,6 +509,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         private MutationRewriterSecondPass(Map<VersionedLValue, StatementContainer> mutableReplacable, Set<SSAIdent> fixed) {
             this.mutableReplacable = mutableReplacable;
             this.fixed = fixed;
+        }
+
+        @Override
+        public boolean needLR() {
+            return true;
         }
 
         @Override

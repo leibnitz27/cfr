@@ -138,6 +138,11 @@ public class LValuePropSimple {
                         }
 
                         @Override
+                        public boolean needLR() {
+                            return false;
+                        }
+
+                        @Override
                         public LValueRewriter getWithFixed(Set fixed) {
                             return this;
                         }

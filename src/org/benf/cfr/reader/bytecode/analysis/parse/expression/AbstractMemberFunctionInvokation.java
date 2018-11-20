@@ -56,7 +56,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        for (int x = args.size()-1; x >=0; --x) {
+        for (int x = 0;x<args.size(); ++x) {
             args.set(x, args.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));
         }
         object = object.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);

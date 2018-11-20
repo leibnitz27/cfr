@@ -87,9 +87,7 @@ public class NewObjectArray extends AbstractNewArray {
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        for (int x = dimSizes.size()-1; x >=0 ; --x) {
-            dimSizes.set(x, dimSizes.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));
-        }
+        LValueRewriter.Util.rewriteArgArray(lValueRewriter, ssaIdentifiers, statementContainer, dimSizes);
         return this;
     }
 

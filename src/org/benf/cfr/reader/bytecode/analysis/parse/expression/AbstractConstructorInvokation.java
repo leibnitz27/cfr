@@ -54,9 +54,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        for (int x = args.size() -1; x >= 0; --x) {
-            args.set(x, args.get(x).replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer));
-        }
+        LValueRewriter.Util.rewriteArgArray(lValueRewriter, ssaIdentifiers, statementContainer, args);
         return this;
     }
 
