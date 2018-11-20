@@ -19,9 +19,9 @@ import org.benf.cfr.reader.util.output.*;
 
 import java.util.List;
 
-public class Driver {
+class Driver {
 
-    public static void doClass(DCCommonState dcCommonState, String path, boolean skipInnerClass, DumperFactory dumperFactory) {
+    static void doClass(DCCommonState dcCommonState, String path, boolean skipInnerClass, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
         IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         Dumper d = new ToStringDumper(); // sentinel dumper.
@@ -78,7 +78,7 @@ public class Driver {
         }
     }
 
-    public static void doJar(DCCommonState dcCommonState, String path, DumperFactory dumperFactory) {
+    static void doJar(DCCommonState dcCommonState, String path, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
         IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         SummaryDumper summaryDumper = null;
