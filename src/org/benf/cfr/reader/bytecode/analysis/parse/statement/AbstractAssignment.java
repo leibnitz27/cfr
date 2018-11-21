@@ -12,5 +12,7 @@ public abstract class AbstractAssignment extends AbstractStatement {
 
     public abstract Expression getPostMutation();
 
+    public abstract Expression getPreMutation();
+
     public abstract AbstractAssignmentExpression getInliningExpression();
 }

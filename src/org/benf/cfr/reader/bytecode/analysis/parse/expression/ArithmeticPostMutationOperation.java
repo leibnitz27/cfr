@@ -70,6 +70,11 @@ public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentE
     }
 
     @Override
+    public ArithmeticPreMutationOperation getPreMutation() {
+        throw new IllegalStateException();
+    }
+
+    @Override
     public boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp) {
         return this.mutated.equals(lValue) &&
                 this.op == arithOp;

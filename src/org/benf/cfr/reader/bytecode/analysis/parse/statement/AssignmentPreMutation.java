@@ -103,6 +103,11 @@ public class AssignmentPreMutation extends AbstractAssignment {
     }
 
     @Override
+    public Expression getPreMutation() {
+        return rvalue.getPreMutation();
+    }
+
+    @Override
     public AbstractAssignmentExpression getInliningExpression() {
         return rvalue;
     }

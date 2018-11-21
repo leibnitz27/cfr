@@ -85,6 +85,11 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
     }
 
     @Override
+    public ArithmeticPreMutationOperation getPreMutation() {
+        throw new IllegalStateException();
+    }
+
+    @Override
     public LValue getUpdatedLValue() {
         return lValue;
     }

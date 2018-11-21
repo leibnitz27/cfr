@@ -889,7 +889,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     *
     * v0 = x++
     */
-    private static void pushPreChangeBack(Op03SimpleStatement preChange) {
+    private static boolean pushPreChange(Op03SimpleStatement preChange, boolean back) {
         AssignmentPreMutation mutation = (AssignmentPreMutation) preChange.containedStatement;
         Op03SimpleStatement current = preChange;
 
@@ -898,10 +898,10 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         UsageWatcher usageWatcher = new UsageWatcher(mutatedLValue);
 
         while (true) {
-            List<Op03SimpleStatement> sources = current.getSources();
-            if (sources.size() != 1) return;
+            List<Op03SimpleStatement> candidates = back ? current.getSources() : current.getTargets();
+            if (candidates.size() != 1) return false;
 
-            current = sources.get(0);
+            current = candidates.get(0);
             /*
              * If current makes use of x in any way OTHER than a simple assignment, we have to abort.
              * Otherwise, if it's v0 = x, it's a candidate.
@@ -917,12 +917,16 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     SSAIdentifiers<LValue> preChangeIdents = preChange.getSSAIdentifiers();
                     SSAIdentifiers<LValue> assignIdents = current.getSSAIdentifiers();
                     if (!preChangeIdents.isValidReplacement(tgt, assignIdents)) {
-                        return;
+                        return false;
                     }
-                    assignIdents.setKnownIdentifierOnExit(mutatedLValue, preChangeIdents.getSSAIdentOnExit(mutatedLValue));
-                    current.replaceStatement(new AssignmentSimple(tgt, mutation.getPostMutation()));
+                    if (back) {
+                        assignIdents.setKnownIdentifierOnExit(mutatedLValue, preChangeIdents.getSSAIdentOnExit(mutatedLValue));
+                    } else {
+                        assignIdents.setKnownIdentifierOnEntry(mutatedLValue, preChangeIdents.getSSAIdentOnEntry(mutatedLValue));
+                    }
+                    current.replaceStatement(new AssignmentSimple(tgt, back ? mutation.getPostMutation() : mutation.getPreMutation()));
                     preChange.nopOut();
-                    return;
+                    return true;
                 }
             }
             current.rewrite(usageWatcher);
@@ -930,7 +934,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                 /*
                  * Found a use "Before" assignment.
                  */
-                return;
+                return false;
             }
         }
     }
@@ -951,7 +955,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         if (assignments.isEmpty()) return;
 
         for (Op03SimpleStatement assignment : assignments) {
-            pushPreChangeBack(assignment);
+            if (!pushPreChange(assignment, true)) {
+                pushPreChange(assignment, false);
+            }
         }
 
     }

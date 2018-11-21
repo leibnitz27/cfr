@@ -179,7 +179,7 @@ public class SSAIdentifiers<KEYTYPE> {
         knownIdentifiersOnExit.put(lValue, ident);
     }
 
-    void setKnownIdentifierOnEntry(KEYTYPE lValue, SSAIdent ident) {
+    public void setKnownIdentifierOnEntry(KEYTYPE lValue, SSAIdent ident) {
         knownIdentifiersOnEntry.put(lValue, ident);
     }
 

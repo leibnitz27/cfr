@@ -114,6 +114,11 @@ public class AssignmentSimple extends AbstractAssignment {
     }
 
     @Override
+    public Expression getPreMutation() {
+        throw new IllegalStateException();
+    }
+
+    @Override
     public AbstractAssignmentExpression getInliningExpression() {
         return new AssignmentExpression(getCreatedLValue(), getRValue());
     }

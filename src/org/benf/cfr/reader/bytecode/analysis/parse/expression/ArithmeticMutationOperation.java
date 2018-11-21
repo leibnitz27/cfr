@@ -99,6 +99,11 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
     }
 
     @Override
+    public ArithmeticPreMutationOperation getPreMutation() {
+        return new ArithmeticPreMutationOperation(mutated, op);
+    }
+
+    @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         mutation.collectUsedLValues(lValueUsageCollector);
     }

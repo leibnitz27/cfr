@@ -13,5 +13,7 @@ public abstract class AbstractAssignmentExpression extends AbstractExpression {
 
     public abstract ArithmeticPostMutationOperation getPostMutation();
 
+    public abstract ArithmeticPreMutationOperation getPreMutation();
+
     public abstract LValue getUpdatedLValue();
 }
