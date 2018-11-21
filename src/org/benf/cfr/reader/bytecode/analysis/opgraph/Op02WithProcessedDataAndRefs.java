@@ -2462,6 +2462,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             inlineJSR(target, nodes, ops);
         }
 
+        jsrs = justJSRs(ops);
         /*
          * If there's a JSR we couldn't handle, we might still be able to refactor it, IF it's only got one call site.
          * (unlikely, but allows us to do nasty tricks!)
