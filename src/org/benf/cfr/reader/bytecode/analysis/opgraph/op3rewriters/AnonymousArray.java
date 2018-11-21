@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -84,7 +85,10 @@ public class AnonymousArray {
                 arrayStackEntry.decrementUsage();
             }
         }
+        SSAIdentifiers<LValue> arrayCreationSsa = newArray.getSSAIdentifiers();
         for (Op03SimpleStatement create : anonAssigns) {
+            SSAIdentifiers<LValue> itemIdents = create.getSSAIdentifiers();
+            arrayCreationSsa.consumeExit(itemIdents);
             create.nopOut();
         }
         return true;

@@ -72,6 +72,17 @@ public class SSAIdentifiers<KEYTYPE> {
         }
         return false;
     }
+
+    public void consumeExit(SSAIdentifiers<KEYTYPE> other) {
+        for (Map.Entry<KEYTYPE, SSAIdent> valueSetEntry : other.knownIdentifiersOnExit.entrySet()) {
+            KEYTYPE lValue = valueSetEntry.getKey();
+            SSAIdent otherIdent = valueSetEntry.getValue();
+            if (!fixedHere.containsKey(lValue)) {
+                knownIdentifiersOnExit.put(lValue, otherIdent);
+            }
+        }
+    }
+
     /*
      * We're being called with the idents of our sources.
      */

@@ -6,7 +6,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 
 public abstract class AbstractMutatingAssignmentExpression extends AbstractAssignmentExpression {
 
-    public AbstractMutatingAssignmentExpression(InferredJavaType inferredJavaType) {
+    AbstractMutatingAssignmentExpression(InferredJavaType inferredJavaType) {
         super(inferredJavaType);
     }
 
