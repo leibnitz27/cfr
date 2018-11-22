@@ -822,4 +822,7 @@ public class CodeAnalyser {
         analysed.dump(d);
     }
 
+    public void releaseCode() {
+        analysed = null;
+    }
 }

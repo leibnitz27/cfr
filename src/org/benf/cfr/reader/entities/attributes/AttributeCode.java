@@ -157,4 +157,8 @@ public class AttributeCode extends Attribute {
             attribute.collectTypeUsages(collector);
         }
     }
+
+    public void releaseCode() {
+        this.codeAnalyser.releaseCode();
+    }
 }

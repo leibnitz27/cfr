@@ -102,8 +102,6 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         AccessFlagMethod.applyAttributes(attributes, accessFlags);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
 
-
-
         MethodConstructor methodConstructor = MethodConstructor.NOT;
         if (initialName.equals(MiscConstants.INIT_METHOD)) {
             boolean isEnum = classFile.getAccessFlags().contains(AccessFlag.ACC_ENUM);
@@ -139,6 +137,13 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
                 options.getOption(OptionsImpl.HIDE_BRIDGE_METHODS)) {
             this.hidden = Visibility.HiddenBridge;
         }
+    }
+
+    void releaseCode() {
+        if (codeAttribute != null) {
+            codeAttribute.releaseCode();
+        }
+        attributes.clear();
     }
 
     @Override

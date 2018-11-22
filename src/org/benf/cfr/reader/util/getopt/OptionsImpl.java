@@ -397,6 +397,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> CASE_INSENSITIVE_FS_RENAME = new PermittedOptionProvider.Argument<Boolean>(
             "caseinsensitivefs", defaultFalseBooleanDecoder,
             "Cope with case insensitive file systems by renaming colliding classes.");
+    public static final PermittedOptionProvider.Argument<Boolean> LOMEM = new PermittedOptionProvider.Argument<Boolean>(
+            "lomem", defaultFalseBooleanDecoder,
+            "Be more agressive about uncaching in order to reduce memory footprint.");
 
     public OptionsImpl(Map<String, String> opts) {
         this.opts = new HashMap<String, String>(opts);

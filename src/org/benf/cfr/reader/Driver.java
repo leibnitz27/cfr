@@ -84,6 +84,7 @@ class Driver {
         SummaryDumper summaryDumper = null;
         boolean silent;
         try {
+            final boolean lomem = options.getOption(OptionsImpl.LOMEM);
             final Predicate<String> matcher = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.JAR_FILTER), true);
             ProgressDumper progressDumper = dumperFactory.getProgressDumper();
             silent = options.getOption(OptionsImpl.SILENT);
@@ -133,6 +134,9 @@ class Driver {
                     c.dump(d);
                     d.print("\n");
                     d.print("\n");
+                    if (lomem) {
+                        c.releaseCode();
+                    }
                 } catch (Dumper.CannotCreate e) {
                     throw e;
                 } catch (RuntimeException e) {
