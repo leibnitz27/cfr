@@ -45,9 +45,14 @@ public class StaticVariable extends AbstractFieldVariable {
      * There are some circumstances (final assignment) where it's illegal to use the FQN of a static.
      */
     public StaticVariable getSimpleCopy() {
+        if (knownSimple) return this;
         return new StaticVariable(this, true);
     }
 
+    public StaticVariable getNonSimpleCopy() {
+        if (!knownSimple) return this;
+        return new StaticVariable(this, false);
+    }
 
     @Override
     public Precedence getPrecedence() {

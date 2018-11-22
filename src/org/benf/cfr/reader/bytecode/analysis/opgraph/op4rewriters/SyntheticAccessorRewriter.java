@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -39,6 +40,7 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
 
     private final DCCommonState state;
     private final JavaTypeInstance thisClassType;
+    private final ExpressionRewriter visbilityRewriter = new VisibiliyDecreasingRewriter();
 
     public SyntheticAccessorRewriter(DCCommonState state, JavaTypeInstance thisClassType) {
         this.state = state;
@@ -170,15 +172,12 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(otherCode);
 
         Expression res = tryRewriteAccessor(structuredStatements, otherType, appliedArgs, methodArgs);
-        if (res != null) {
-            otherMethod.hideSynthetic();
-            return res;
+        if (res == null) {
+            res = tryRewriteFunctionCall(structuredStatements, otherType, appliedArgs, methodArgs);
         }
-
-        res = tryRewriteFunctionCall(structuredStatements, otherType, appliedArgs, methodArgs);
         if (res != null) {
             otherMethod.hideSynthetic();
-            return res;
+            return visbilityRewriter.rewriteExpression(res, null, null, null);
         }
 
         return null;
@@ -344,8 +343,8 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         }
     }
 
-    private final String STA_SUB1 = "ssub1";
-    private final String STA_FUN1 = "sfun1";
+    private static final String STA_SUB1 = "ssub1";
+    private static final String STA_FUN1 = "sfun1";
 
     private Expression tryRewriteFunctionCall(List<StructuredStatement> structuredStatements, JavaTypeInstance otherType,
                                               List<Expression> appliedArgs, List<LocalVariable> methodArgs) {
@@ -417,4 +416,17 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         }
     }
 
+    private class VisibiliyDecreasingRewriter extends AbstractExpressionRewriter {
+        @Override
+        public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            if (lValue instanceof StaticVariable) {
+                StaticVariable sv = (StaticVariable)lValue;
+                JavaTypeInstance owning = sv.getOwningClassType();
+                if (!thisClassType.getInnerClassHereInfo().isTransitiveInnerClassOf(owning)) {
+                    return sv.getNonSimpleCopy();
+                }
+            }
+            return lValue;
+        }
+    }
 }
