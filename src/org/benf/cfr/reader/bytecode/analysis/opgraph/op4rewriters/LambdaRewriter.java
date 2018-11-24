@@ -180,19 +180,15 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             return dynamicExpression;
         }
         JavaRefTypeInstance lambdaTypeRefLocation = (JavaRefTypeInstance) lambdaTypeLocation;
-        ClassFile classFile;
+        ClassFile classFile = null;
         if (this.typeInstance.equals(lambdaTypeRefLocation)) {
             classFile = thisClassFile;
         } else {
             try {
                 classFile = state.getClassFile(lambdaTypeRefLocation);
-            } catch (CannotLoadClassException e) {
+            } catch (CannotLoadClassException ignore) {
                 // We can't load the lambda target - we can't really make any assumptions about what it will do.
-                return dynamicExpression;
             }
-        }
-        if (classFile == null) {
-            return dynamicExpression;
         }
 
         // We can't ask the prototype for instance behaviour, we have to get it from the
@@ -204,6 +200,14 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
             case INVOKE_VIRTUAL:
                 instance = true;
                 break;
+        }
+
+        /*
+         * If we don't have the classfile (let's say we're looking at java8's consumer in java6) we can still GUESS
+         * what it was going to do....
+         */
+        if (classFile == null) {
+            return new LambdaExpressionFallback(lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFnName, targetFnArgTypes, curriedArgs, instance);
         }
 
         if (curriedArgs.size() + targetFnArgTypes.size() - (instance ? 1 : 0) != lambdaFnArgTypes.size()) {
@@ -219,7 +223,6 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         } catch (NoSuchMethodException ignore) {
             // This might happen if you're using a JRE which doesn't have support classes, etc.
             return dynamicExpression;
-//            throw new IllegalStateException("Can't find lambda target " + lambdaFn);
         }
         for (int x = 0, len = curriedArgs.size(); x < len; ++x) {
             /*
