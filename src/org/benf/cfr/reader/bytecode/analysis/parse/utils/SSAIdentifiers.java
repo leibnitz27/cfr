@@ -74,7 +74,15 @@ public class SSAIdentifiers<KEYTYPE> {
     }
 
     public void consumeExit(SSAIdentifiers<KEYTYPE> other) {
-        for (Map.Entry<KEYTYPE, SSAIdent> valueSetEntry : other.knownIdentifiersOnExit.entrySet()) {
+        consume(other.knownIdentifiersOnExit);
+    }
+
+    public void consumeEntry(SSAIdentifiers<KEYTYPE> other) {
+        consume(other.knownIdentifiersOnEntry);
+    }
+
+    private void consume(Map<KEYTYPE, SSAIdent> others) {
+        for (Map.Entry<KEYTYPE, SSAIdent> valueSetEntry : others.entrySet()) {
             KEYTYPE lValue = valueSetEntry.getKey();
             SSAIdent otherIdent = valueSetEntry.getValue();
             if (!fixedHere.containsKey(lValue)) {

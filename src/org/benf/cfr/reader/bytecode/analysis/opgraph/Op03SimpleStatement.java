@@ -1421,6 +1421,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         ConditionalExpression condition = innerIf.getCondition().getNegated();
         condition = condition.simplify();
         ifStatement.replaceStatement(new AssignmentSimple(lv, new TernaryExpression(condition, a1.getRValue(), a2.getRValue())));
+        ifStatement.getSSAIdentifiers().consumeEntry(evTgt.getSSAIdentifiers());
         oneSource.replaceStatement(new Nop());
         oneSource.removeTarget(evTgt);
         tgt2.replaceStatement(new Nop());

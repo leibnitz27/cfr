@@ -487,9 +487,6 @@ public class CodeAnalyser {
             RemoveDeterministicJumps.propagateToReturn(method, op03SimpleParseNodes);
         }
 
-        logger.info("sugarAnyonymousArrays");
-        AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
-
         boolean reloop;
         do {
             Op03SimpleStatement.rewriteNegativeJumps(op03SimpleParseNodes, true);
@@ -511,6 +508,9 @@ public class CodeAnalyser {
             op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
 
         } while (reloop);
+
+        logger.info("sugarAnyonymousArrays");
+        AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
 
         logger.info("simplifyConditionals");
         Op03SimpleStatement.simplifyConditionals(op03SimpleParseNodes, false);
