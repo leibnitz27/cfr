@@ -5,12 +5,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdent;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.annotation.Nullable;
@@ -19,9 +20,13 @@ import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
 
 public class MethodPrototype implements TypeUsageCollectable {
     public static class ParameterLValue {
@@ -70,7 +75,7 @@ public class MethodPrototype implements TypeUsageCollectable {
 //    private static int sid = 0;
 //    private final int id = sid++;
 
-    public MethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
+    public MethodPrototype(DCCommonState state, ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         /*
@@ -90,8 +95,10 @@ public class MethodPrototype implements TypeUsageCollectable {
             args2.add(TypeConstants.STRING);
             args2.add(RawJavaType.INT);
             args2.addAll(args);
-            hide(0);
-            hide(1);
+            if (state == null || state.getOptions().getOption(OptionsImpl.ENUM_SUGAR, classFile.getClassFileVersion())) {
+                hide(0);
+                hide(1);
+            }
 
             args = args2;
         }

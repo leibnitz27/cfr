@@ -7,10 +7,13 @@ import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.Collections;
 import java.util.List;
@@ -288,7 +291,7 @@ public class ConstantPoolUtils {
         return Pair.make(curridx, formalTypeParameters);
     }
 
-    public static MethodPrototype parseJavaMethodPrototype(ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, ConstantPoolEntryUTF8 prototype, ConstantPool cp, boolean varargs, boolean synthetic, VariableNamer variableNamer) {
+    public static MethodPrototype parseJavaMethodPrototype(DCCommonState state, ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, ConstantPoolEntryUTF8 prototype, ConstantPool cp, boolean varargs, boolean synthetic, VariableNamer variableNamer) {
         String proto = prototype.getValue();
         int curridx = 0;
         /*
@@ -329,7 +332,7 @@ public class ConstantPoolUtils {
                 resultType = decodeTypeTok(getNextTypeTok(proto, curridx), cp);
                 break;
         }
-        MethodPrototype res = new MethodPrototype(classFile, classType, name, instanceMethod, constructorFlag, formalTypeParameters, args, resultType, varargs, variableNamer, synthetic);
+        MethodPrototype res = new MethodPrototype(state, classFile, classType, name, instanceMethod, constructorFlag, formalTypeParameters, args, resultType, varargs, variableNamer, synthetic);
 //        logger.info("Parsed prototype " + proto + " as " + res);
         return res;
     }

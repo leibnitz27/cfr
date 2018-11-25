@@ -64,7 +64,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     @SuppressWarnings("FieldCanBeLocal")
     private final List<ConstantPoolEntryClass> rawInterfaces;
     private final ClassSignature classSignature;
-    private final ClassFileVersion classFileVersion;
+    private ClassFileVersion classFileVersion;
     private DecompilerComments decompilerComments;
 
     private boolean begunAnalysis;
@@ -97,6 +97,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         int minorVer = data.getU2At(OFFSET_OF_MINOR);
         int majorVer = data.getU2At(OFFSET_OF_MAJOR);
         ClassFileVersion classFileVersion = new ClassFileVersion(majorVer, minorVer);
+        this.classFileVersion = classFileVersion;
         final ClassFileVersion cfv = classFileVersion;
         int constantPoolCount = data.getU2At(OFFSET_OF_CONSTANT_POOL_COUNT);
         this.constantPool = new ConstantPool(this, dcCommonState, data.getOffsetData(OFFSET_OF_CONSTANT_POOL), constantPoolCount);
@@ -233,8 +234,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (classFileVersion.before(ClassFileVersion.JAVA_1_0)) {
             addComment(new DecompilerComment("Class file version " + classFileVersion + " predates " + ClassFileVersion.JAVA_1_0 + ", recompilation may lose compatibility!"));
         }
-
         this.classFileVersion = classFileVersion;
+
 
         /*
          * If the type instance for this class has decided that it's an inner class, but the class meta data does not
@@ -256,7 +257,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             }
         }
 
-        fixConfusingEnumConstructors();
+        if (options.getOption(OptionsImpl.ENUM_SUGAR, classFileVersion)) {
+            fixConfusingEnumConstructors();
+        }
 
         if (options.getOption(OptionsImpl.ELIDE_SCALA)) {
             elideScala();
@@ -654,7 +657,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     /*
      *
      */
-    private boolean isInferredAnonymousStatic(JavaTypeInstance thisType, JavaTypeInstance innerType) {
+    private boolean isInferredAnonymousStatic(DCCommonState state, JavaTypeInstance thisType, JavaTypeInstance innerType) {
         if (!innerType.getInnerClassHereInfo().isAnonymousClass()) return false;
 
         boolean j8orLater = classFileVersion.equalOrLater(ClassFileVersion.JAVA_8);
@@ -681,7 +684,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         String name = nameAndType.getName().getValue();
         VariableNamer fakeNamer = new VariableNamerDefault();
 
-        MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(null, containing, name, /* interfaceMethod */ false, Method.MethodConstructor.NOT, descriptor, constantPool, false /* we can't tell */, false, fakeNamer);
+        MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(state,null, containing, name, /* interfaceMethod */ false, Method.MethodConstructor.NOT, descriptor, constantPool, false /* we can't tell */, false, fakeNamer);
 
         try {
             Method m = containing.getClassFile().getMethodByPrototype(basePrototype);
@@ -722,7 +725,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 // which removes the static marker on anonymous classes.
                 // Why am I checking j8+? BECAUSE java 9.0.4 SAYS J8. FFS.
                 if (!accessFlags.contains(AccessFlag.ACC_STATIC)) {
-                    if (isInferredAnonymousStatic(thisType, innerType)) {
+                    if (isInferredAnonymousStatic(dcCommonState, thisType, innerType)) {
                         accessFlags.add(AccessFlag.ACC_STATIC);
                     }
                 }

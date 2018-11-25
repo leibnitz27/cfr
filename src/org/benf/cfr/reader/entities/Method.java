@@ -238,7 +238,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
         boolean isSynthetic = accessFlags.contains(AccessFlagMethod.ACC_SYNTHETIC);
-        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), initialName, isInstance, getConstructorFlag(), prototype, cp, isVarargs, isSynthetic, variableNamer);
+        DCCommonState state = cp.getDCCommonState();
+        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, getConstructorFlag(), prototype, cp, isVarargs, isSynthetic, variableNamer);
         /*
          * Work around bug in inner class signatures.
          *
@@ -246,7 +247,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
          */
         if (classFile.isInnerClass()) {
             if (signature != null) {
-                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(classFile, classFile.getClassType(), initialName, isInstance, getConstructorFlag(), descriptor, cp, isVarargs, isSynthetic, variableNamer);
+                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, getConstructorFlag(), descriptor, cp, isVarargs, isSynthetic, variableNamer);
                 if (descriptorProto.getArgs().size() != res.getArgs().size()) {
                     // error due to inner class sig bug.
                     res = fixupInnerClassSignature(descriptorProto, res);
