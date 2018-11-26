@@ -1608,7 +1608,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
          * The problem is if we have actual parameters, AND hidden synthetics - in this case
          * we will mark our actual parameters as eliding our synthetics
          */
-        Map<Slot, SSAIdent> idents = useProtoArgs ? method.getMethodPrototype().collectInitialSlotUsage(method.getConstructorFlag(), ssaIdentifierFactory) :
+        Map<Slot, SSAIdent> idents = useProtoArgs ? method.getMethodPrototype().collectInitialSlotUsage(ssaIdentifierFactory) :
                 MapFactory.<Slot, SSAIdent>newMap();
 
         for (Op02WithProcessedDataAndRefs statement : statements) {

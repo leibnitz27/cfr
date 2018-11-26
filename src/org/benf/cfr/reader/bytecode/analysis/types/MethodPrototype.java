@@ -90,10 +90,20 @@ public class MethodPrototype implements TypeUsageCollectable {
          * we could check to see if #given args matches #used args, but that would break when
          * unused args exist!
          */
-        if (constructorFlag.equals(Method.MethodConstructor.ENUM_CONSTRUCTOR) && !synthetic) {
+        if ((
+                constructorFlag == Method.MethodConstructor.ENUM_CONSTRUCTOR ||
+                constructorFlag == Method.MethodConstructor.ECLIPSE_ENUM_CONSTRUCTOR
+            )
+            && !synthetic) {
             List<JavaTypeInstance> args2 = ListFactory.newList();
-            args2.add(TypeConstants.STRING);
-            args2.add(RawJavaType.INT);
+            /*
+             * ECJ will generate a signature which apparently has 2 arguments.
+             * Javac will not.
+             */
+            if (constructorFlag != Method.MethodConstructor.ECLIPSE_ENUM_CONSTRUCTOR) {
+                args2.add(TypeConstants.STRING);
+                args2.add(RawJavaType.INT);
+            }
             args2.addAll(args);
             if (state == null || state.getOptions().getOption(OptionsImpl.ENUM_SUGAR, classFile.getClassFileVersion())) {
                 hide(0);
@@ -136,7 +146,6 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     public void hide(int idx) {
-//        getParameterLValues().get(x).hidden = HiddenReason.HiddenOuterReferece;  // TODO : No.
         hidden.add(idx);
     }
 
@@ -186,7 +195,6 @@ public class MethodPrototype implements TypeUsageCollectable {
         int argssize = args.size();
         boolean first = true;
         int offset = 0;
-        // TODO : GROSS - refactor the fuck out of this before checkin.
         for (int i = 0; i < argssize && (offset + i < parameterLValues.size()); ++i) {
             JavaTypeInstance arg = args.get(i);
             if (getParameterLValues().get(i + offset).hidden != HiddenReason.NotHidden) {
@@ -246,6 +254,10 @@ public class MethodPrototype implements TypeUsageCollectable {
                 offset = 3;
                 break;
             }
+            case ECLIPSE_ENUM_CONSTRUCTOR: {
+                offset = 1;
+                break;
+            }
             default: {
                 if (isInstanceMethod()) offset = 1;
             }
@@ -280,38 +292,16 @@ public class MethodPrototype implements TypeUsageCollectable {
         }
     }
 
-//    public List<Slot> getSyntheticArgs() {
-//        return syntheticArgs;
-//    }
-
-    public Map<Slot, SSAIdent> collectInitialSlotUsage(Method.MethodConstructor constructorFlag, SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
+    public Map<Slot, SSAIdent> collectInitialSlotUsage(SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
         Map<Slot, SSAIdent> res = MapFactory.newOrderedMap();
         int offset = 0;
-        switch (constructorFlag) {
-//            case ENUM_CONSTRUCTOR: {
-////                Slot tgt0 = new Slot(classFile.getClassType(), 0);
-////                res.put(tgt0, ssaIdentifierFactory.getIdent(tgt0));
-////                Slot tgt1 = new Slot(RawJavaType.REF, 1);
-////                res.put(tgt1, ssaIdentifierFactory.getIdent(tgt1));
-////                Slot tgt2 = new Slot(RawJavaType.INT, 2);
-////                res.put(tgt2, ssaIdentifierFactory.getIdent(tgt2));
-////                offset = 3;
-//                break;
-//            }
-            default: {
-                if (instanceMethod) {
-                    Slot tgt = new Slot(classFile.getClassType(), 0);
-                    res.put(tgt, ssaIdentifierFactory.getIdent(tgt));
-                    offset = 1;
-                }
-                break;
-            }
+        if (instanceMethod) {
+            Slot tgt = new Slot(classFile.getClassType(), 0);
+            res.put(tgt, ssaIdentifierFactory.getIdent(tgt));
+            offset = 1;
         }
         if (!syntheticArgs.isEmpty()) {
             for (Slot synthetic : syntheticArgs) {
-//                if (offset != synthetic.getIdx()) {
-//                    throw new IllegalStateException("Synthetic arg - offset is " + offset + ", but got " + synthetic.getIdx());
-//                }
                 res.put(synthetic, ssaIdentifierFactory.getIdent(synthetic));
                 offset += synthetic.getJavaTypeInstance().getStackType().getComputationCategory();
             }

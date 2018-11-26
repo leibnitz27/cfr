@@ -39,7 +39,9 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         NOT(false),
         STATIC_CONSTRUCTOR(false),
         CONSTRUCTOR(true),
-        ENUM_CONSTRUCTOR(true);
+        ENUM_CONSTRUCTOR(true),
+        // Eclipse enums behave like normal enums, except they declare arguments.
+        ECLIPSE_ENUM_CONSTRUCTOR(true);
 
         private final boolean isConstructor;
 
@@ -110,7 +112,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             methodConstructor = MethodConstructor.STATIC_CONSTRUCTOR;
         }
         this.isConstructor = methodConstructor;
-        if (isConstructor() && accessFlags.contains(AccessFlagMethod.ACC_STRICT)) {
+        if (methodConstructor.isConstructor() && accessFlags.contains(AccessFlagMethod.ACC_STRICT)) {
             accessFlags.remove(AccessFlagMethod.ACC_STRICT);
             classFile.getAccessFlags().add(AccessFlag.ACC_STRICT);
         }
@@ -128,8 +130,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             this.variableNamer = VariableNamerFactory.getNamer(variableTable, cp);
             this.codeAttribute.setMethod(this);
         }
-
-        this.methodPrototype = generateMethodPrototype(initialName);
+        this.methodPrototype = generateMethodPrototype(initialName, methodConstructor);
         if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
                 // javac only ever generates bridges into instances,
                 // however kotlin loses useful info if we hide them.
@@ -225,12 +226,17 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
      * Descriptor ConstantUTF8[(Ljava/lang/String;I)V]
      * Signature Signature:ConstantUTF8[()V]
      */
-    private MethodPrototype generateMethodPrototype(String initialName) {
+    private MethodPrototype generateMethodPrototype(String initialName, MethodConstructor constructorFlag) {
         AttributeSignature sig = getSignatureAttribute();
         ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
         ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
         ConstantPoolEntryUTF8 prototype;
         if (signature == null) {
+            // This is 'fun'.  Eclipse doesn't provide a signature, and its descriptor is honest.
+            // java does, which means that javac's signature disagrees with the descriptor.
+            if (constructorFlag == MethodConstructor.ENUM_CONSTRUCTOR) {
+                constructorFlag = MethodConstructor.ECLIPSE_ENUM_CONSTRUCTOR;
+            }
             prototype = descriptor;
         } else {
             prototype = signature;
@@ -239,7 +245,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
         boolean isSynthetic = accessFlags.contains(AccessFlagMethod.ACC_SYNTHETIC);
         DCCommonState state = cp.getDCCommonState();
-        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, getConstructorFlag(), prototype, cp, isVarargs, isSynthetic, variableNamer);
+        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, prototype, cp, isVarargs, isSynthetic, variableNamer);
+
         /*
          * Work around bug in inner class signatures.
          *
@@ -247,28 +254,27 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
          */
         if (classFile.isInnerClass()) {
             if (signature != null) {
-                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, getConstructorFlag(), descriptor, cp, isVarargs, isSynthetic, variableNamer);
+                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, descriptor, cp, isVarargs, isSynthetic, variableNamer);
                 if (descriptorProto.getArgs().size() != res.getArgs().size()) {
                     // error due to inner class sig bug.
-                    res = fixupInnerClassSignature(descriptorProto, res);
+                    fixupInnerClassSignature(descriptorProto, res);
                 }
             }
         }
         return res;
     }
 
-    private static MethodPrototype fixupInnerClassSignature(MethodPrototype descriptor, MethodPrototype signature) {
+    private static void fixupInnerClassSignature(MethodPrototype descriptor, MethodPrototype signature) {
         List<JavaTypeInstance> descriptorArgs = descriptor.getArgs();
         List<JavaTypeInstance> signatureArgs = signature.getArgs();
         if (signatureArgs.size() != descriptorArgs.size() - 1) {
             // It's not the known issue, can't really deal with it.
             signature.setDescriptorProto(descriptor);
-            return signature;
         }
         for (int x = 0; x < signatureArgs.size(); ++x) {
             if (!descriptorArgs.get(x + 1).equals(signatureArgs.get(x).getDeGenerifiedType())) {
                 // Incompatible.
-                return signature;
+                return;
             }
         }
         // Ok.  We've fallen foul of the bad signature-on-inner-class
@@ -276,7 +282,6 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         // outer this pointer.
         // Since we've got the ref to the mutable signatureArgs, let's be DISGUSTING and mutate that.
         signatureArgs.add(0, descriptorArgs.get(0));
-        return signature;
     }
 
     public MethodPrototype getMethodPrototype() {
