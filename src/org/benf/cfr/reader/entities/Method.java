@@ -270,6 +270,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         if (signatureArgs.size() != descriptorArgs.size() - 1) {
             // It's not the known issue, can't really deal with it.
             signature.setDescriptorProto(descriptor);
+            return;
         }
         for (int x = 0; x < signatureArgs.size(); ++x) {
             if (!descriptorArgs.get(x + 1).equals(signatureArgs.get(x).getDeGenerifiedType())) {
