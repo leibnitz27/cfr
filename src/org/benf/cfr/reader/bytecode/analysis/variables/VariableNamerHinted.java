@@ -91,7 +91,7 @@ public class VariableNamerHinted implements VariableNamer {
 
     @Override
     public void forceName(Ident ident, long stackPosition, String name) {
-
+        missingNamer.forceName(ident, stackPosition, name);
     }
 
     @Override

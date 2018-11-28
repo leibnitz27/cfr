@@ -195,7 +195,12 @@ public class CodeAnalyserWholeClass {
             InnerClassInfo innerClassInfo = last.getInnerClassHereInfo();
             if (!innerClassInfo.isInnerClass()) continue;
 
-            innerClassInfo.hideSyntheticFriendClass();
+            /* This is a bit of a hack (really?) to get around the fact that
+             * eclipse will use a class as its own synthetic friend.
+             */
+            if (classFile.getClassType() != last) {
+                innerClassInfo.hideSyntheticFriendClass();
+            }
             prototype.hide(argsThis.size());
             method.hideSynthetic();
         }
