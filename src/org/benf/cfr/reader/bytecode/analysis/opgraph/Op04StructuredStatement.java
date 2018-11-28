@@ -1034,8 +1034,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             if (!(expr instanceof LValueExpression)) continue;
 
             LValue lValueArg = ((LValueExpression) expr).getLValue();
-            if (!(lValueArg instanceof LocalVariable)) continue;
-            LocalVariable localVariable = (LocalVariable) lValueArg;
+            String overrideName = getInnerClassOuterArgName(method, lValueArg);
+            if (overrideName == null) continue;
 
             if (parameterLValue.hidden == MethodPrototype.HiddenReason.HiddenOuterReference) {
                 if (prototype.isInnerOuterThis()) {
@@ -1043,10 +1043,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                         callProto.hide(captureExpression.idx);
                     }
                 } else {
-                    hideField(root, callProto, classFile, captureExpression.idx, parameterLValue.localVariable, lValueArg, localVariable);
+                    hideField(root, callProto, classFile, captureExpression.idx, parameterLValue.localVariable, lValueArg, overrideName);
                 }
             } else if (parameterLValue.hidden == MethodPrototype.HiddenReason.HiddenCapture || callProto.isHiddenArg(x)) {
-                hideField(root, callProto, classFile, captureExpression.idx, parameterLValue.localVariable, lValueArg, localVariable);
+                hideField(root, callProto, classFile, captureExpression.idx, parameterLValue.localVariable, lValueArg, overrideName);
             }
         }
     }
@@ -1089,16 +1089,35 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
              */
             if (!(arg instanceof LValueExpression)) continue;
             LValue lValueArg = ((LValueExpression) arg).getLValue();
-            if (!(lValueArg instanceof LocalVariable)) continue;
-            LocalVariable localVariable = (LocalVariable) lValueArg;
+            String overrideName = getInnerClassOuterArgName(method, lValueArg);
+            if (overrideName == null){
+                continue;
+            }
 
-            hideField(root, prototype, classFile, x, protoVar, lValueArg, localVariable);
+            hideField(root, prototype, classFile, x, protoVar, lValueArg, overrideName);
         }
 
         applyLValueReplacer(replacements, root);
     }
 
-    private static void hideField(Op04StructuredStatement root, MethodPrototype prototype, ClassFile classFile, int x, LocalVariable protoVar, LValue lValueArg, LocalVariable localVariable) {
+    private static String getInnerClassOuterArgName(Method method, LValue lValueArg) {
+        String overrideName = null;
+        if (lValueArg instanceof LocalVariable) {
+            LocalVariable localVariable = (LocalVariable) lValueArg;
+            overrideName = localVariable.getName().getStringName();
+        } else if (lValueArg instanceof FieldVariable) {
+            FieldVariable fv = (FieldVariable)lValueArg;
+            JavaTypeInstance thisClass = method.getClassFile().getClassType();
+            JavaTypeInstance fieldClass = fv.getOwningClassType();
+            boolean isInner = thisClass.getInnerClassHereInfo().isTransitiveInnerClassOf(fieldClass);
+            if (isInner) {
+                overrideName = fv.getFieldName();
+            }
+        }
+        return overrideName;
+    }
+
+    private static void hideField(Op04StructuredStatement root, MethodPrototype prototype, ClassFile classFile, int x, LocalVariable protoVar, LValue lValueArg, String overrideName) {
         InnerClassConstructorRewriter innerClassConstructorRewriter = new InnerClassConstructorRewriter(classFile, protoVar);
         innerClassConstructorRewriter.rewrite(root);
         FieldVariable matchedField = innerClassConstructorRewriter.getMatchedField();
@@ -1113,7 +1132,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         // Once this has occurred, there's a possibility that we may have caused collisions
         // between these renamed members and locals in other code.
         ClassFileField classFileField = matchedField.getClassFileField();
-        classFileField.overrideName(localVariable.getName().getStringName());
+        classFileField.overrideName(overrideName);
         classFileField.markSyntheticOuterRef();
         classFileField.markHidden();
         prototype.hide(x);
