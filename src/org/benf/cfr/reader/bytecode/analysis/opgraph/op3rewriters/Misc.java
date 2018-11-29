@@ -144,8 +144,9 @@ public class Misc {
         for (int x = first; x < afterEnd; ++x) {
             if (reachableNodes.contains(x) || statements.get(x).isAgreedNop()) {
                 if (foundLast) {
-//                    return afterEnd - 1;
-                    throw new CannotPerformDecode("reachable test BLOCK was exited and re-entered.");
+                    // This is 'failure' behaviour.  It will probably trigger a re-sort.
+                    // TODO : Handle better.
+                    return last - 1;
                 }
             } else {
                 if (!foundLast) {
