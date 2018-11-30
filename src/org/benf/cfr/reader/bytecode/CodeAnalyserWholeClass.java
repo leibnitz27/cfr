@@ -400,7 +400,9 @@ public class CodeAnalyserWholeClass {
         if (methodPrototype.getVisibleArgCount() > 0) return;
         // public, non final.
         if (constructor.testAccessFlag(AccessFlagMethod.ACC_FINAL)) return;
-        if (!constructor.testAccessFlag(AccessFlagMethod.ACC_PUBLIC)) return;
+        if (!constructor.getConstructorFlag().isEnumConstructor()) {
+            if (!constructor.testAccessFlag(AccessFlagMethod.ACC_PUBLIC)) return;
+        }
 
         if (!MiscStatementTools.isDeadCode(constructor.getAnalysis())) return;
         classFile.removePointlessMethod(constructor);

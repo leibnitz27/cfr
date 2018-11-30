@@ -92,6 +92,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         for (int x = 0, len = entries.size(); x < len; ++x) {
             dumpEntry(d, entries.get(x), (x == len - 1));
         }
+
         d.print("\n");
 
         List<ClassFileField> fields = classFile.getFields();

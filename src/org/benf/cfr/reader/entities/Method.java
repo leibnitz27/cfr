@@ -36,21 +36,27 @@ import java.util.*;
 public class Method implements KnowsRawSize, TypeUsageCollectable {
 
     public enum MethodConstructor {
-        NOT(false),
-        STATIC_CONSTRUCTOR(false),
-        CONSTRUCTOR(true),
-        ENUM_CONSTRUCTOR(true),
+        NOT(false, false),
+        STATIC_CONSTRUCTOR(false, false),
+        CONSTRUCTOR(true, false),
+        ENUM_CONSTRUCTOR(true, true),
         // Eclipse enums behave like normal enums, except they declare arguments.
-        ECLIPSE_ENUM_CONSTRUCTOR(true);
+        ECLIPSE_ENUM_CONSTRUCTOR(true, true);
 
         private final boolean isConstructor;
+        private final boolean isEnumConstructor;
 
-        MethodConstructor(boolean isConstructor) {
+        MethodConstructor(boolean isConstructor, boolean isEnumConstructor) {
             this.isConstructor = isConstructor;
+            this.isEnumConstructor = isEnumConstructor;
         }
 
         public boolean isConstructor() {
             return isConstructor;
+        }
+
+        public boolean isEnumConstructor() {
+            return isEnumConstructor;
         }
     }
 
