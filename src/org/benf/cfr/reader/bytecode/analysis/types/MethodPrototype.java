@@ -213,9 +213,11 @@ public class MethodPrototype implements TypeUsageCollectable {
             annotationsHelper.addAnnotationTextForParameterInto(paramIdx, d);
             if (varargs && (i == argssize - 1)) {
                 if (!(arg instanceof JavaArrayTypeInstance)) {
-                    throw new ConfusedCFRException("VARARGS method doesn't have an array as last arg!!");
+                    d.print(" /* corrupt varargs signature?! */ ");
+                    d.dump(arg);
+                } else {
+                    ((JavaArrayTypeInstance) arg).toVarargString(d);
                 }
-                ((JavaArrayTypeInstance) arg).toVarargString(d);
             } else {
                 d.dump(arg);
             }
