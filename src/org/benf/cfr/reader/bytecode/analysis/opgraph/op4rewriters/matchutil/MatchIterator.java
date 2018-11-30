@@ -58,4 +58,8 @@ public class MatchIterator<T> {
         T t = data.get(idx);
         return t == null ? "null" : t.toString();
     }
+
+    public void rewind() {
+        idx = 0;
+    }
 }

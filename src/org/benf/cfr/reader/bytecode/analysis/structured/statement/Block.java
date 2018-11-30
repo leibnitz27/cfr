@@ -21,10 +21,7 @@ import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * TODO : Block implements way more functionality than it should - move into callers.
@@ -52,6 +49,25 @@ public class Block extends AbstractStructuredStatement {
         this.containedStatements = containedStatements;
         this.indenting = indenting;
         this.blockIdentifier = blockIdentifier;
+    }
+
+    public void flattenOthersIn() {
+        ListIterator<Op04StructuredStatement> iter = containedStatements.listIterator();
+        while (iter.hasNext()) {
+            Op04StructuredStatement item = iter.next();
+            StructuredStatement contained = item.getStatement();
+            if (contained instanceof Block) {
+                Block containedBlock = (Block)contained;
+                if (containedBlock.canFoldUp()) {
+                    iter.remove();
+                    LinkedList<Op04StructuredStatement> children = containedBlock.containedStatements;
+                    while (!children.isEmpty()) {
+                        iter.add(children.removeLast());
+                        iter.previous();
+                    }
+                }
+            }
+        }
     }
 
     public void addStatement(Op04StructuredStatement stm) {
@@ -485,6 +501,18 @@ public class Block extends AbstractStructuredStatement {
     @Override
     public boolean alwaysDefines(LValue scopedEntity) {
         return false;
+    }
+
+    private boolean canFoldUp() {
+        boolean isIndenting = isIndenting();
+        if (blockIdentifier != null) {
+            if (blockIdentifier.hasForeignReferences()) {
+                isIndenting = true;
+            } else {
+                isIndenting = false;
+            }
+        }
+        return !isIndenting;
     }
 
     @Override

@@ -744,7 +744,7 @@ public class CodeAnalyser {
             // Replace with a more generic interface, etc.
 
             new SwitchStringRewriter(options, classFileVersion, bytecodeMeta).rewrite(block);
-            new SwitchEnumRewriter(dcCommonState, classFileVersion, blockIdentifierFactory).rewrite(block);
+            new SwitchEnumRewriter(dcCommonState, classFile, blockIdentifierFactory).rewrite(block);
 
             // Just prior to variable scopes, if we've got any anonymous classes, and we're J10+,
             // then see if we are addressing non-existent content of anonymous objects.
@@ -800,6 +800,7 @@ public class CodeAnalyser {
              */
             Op04StructuredStatement.applyChecker(new LooseCatchChecker(), block, comments);
 
+            Op04StructuredStatement.flattenNonReferencedBlocks(block);
             /*
              * And apply any type annotations we can.
              */

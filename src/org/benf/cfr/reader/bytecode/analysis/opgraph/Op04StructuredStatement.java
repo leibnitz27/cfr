@@ -94,6 +94,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new ObjectTypeUsageRewriter(anonymousClassUsage, classFile).transform(block);
     }
 
+    public static void flattenNonReferencedBlocks(Op04StructuredStatement block) {
+        block.transform(new UnusedAnonymousBlockFlattener(), new StructuredScope());
+    }
+
     // TODO: This isn't quite right.  Should actually be removing the node.
     public Op04StructuredStatement nopThisAndReplace() {
         Op04StructuredStatement replacement = new Op04StructuredStatement(instrIndex, blockMembership, structuredStatement);
