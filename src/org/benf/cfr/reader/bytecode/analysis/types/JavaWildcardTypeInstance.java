@@ -241,4 +241,9 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
         return null;
     }
+
+    @Override
+    public boolean isRaw() {
+        return false;
+    }
 }

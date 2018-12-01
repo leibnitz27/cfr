@@ -146,6 +146,11 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public boolean isRaw() {
+        return false;
+    }
+
+    @Override
     public int hashCode() {
         return (dimensions * 31) + underlyingType.hashCode();
     }

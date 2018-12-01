@@ -153,6 +153,17 @@ public class PrimitiveBoxingRewriter implements ExpressionRewriter {
              * But if this has left us with a simple null, and the target type is not an object, it won't work.
              */
             if (Literal.NULL.equals(res) && !tgtType.isObject()) return in;
+            /*
+             * Or if this has gone from one raw type to another, and the target type is exactly object
+             * (could probably be more generous).
+             */
+            if (tgtType.isObject()
+                && !BoxingHelper.isBoxedType(tgtType)
+                && in.getInferredJavaType().getJavaTypeInstance().isRaw()
+                && res.getInferredJavaType().getJavaTypeInstance().isRaw()
+                && res.getInferredJavaType().getJavaTypeInstance() != in.getInferredJavaType().getJavaTypeInstance()) {
+                return in;
+            }
             recast = !(tgtType instanceof RawJavaType);
         } else if (in instanceof MemberFunctionInvokation) {
             res = BoxingHelper.sugarUnboxing((MemberFunctionInvokation) in);

@@ -355,4 +355,9 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
     public JavaTypeInstance directImplOf(JavaTypeInstance other) {
         return other == this.getDeGenerifiedType() ? this : null;
     }
+
+    @Override
+    public boolean isRaw() {
+        return false;
+    }
 }

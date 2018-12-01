@@ -138,6 +138,11 @@ public class JavaIntersectionTypeInstance implements JavaTypeInstance {
     }
 
     @Override
+    public boolean isRaw() {
+        return false;
+    }
+
+    @Override
     public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
         JavaTypeInstance degenerifiedOther = other.getDeGenerifiedType();
 

@@ -435,6 +435,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         return null;
     }
 
+    @Override
+    public boolean isRaw() {
+        return false;
+    }
+
     private static class RefTypeInnerClassInfo implements InnerClassInfo {
         private final JavaRefTypeInstance outerClass;
         private boolean isAnonymous = false;

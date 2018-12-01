@@ -233,4 +233,9 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
         return null;
     }
+
+    @Override
+    public boolean isRaw() {
+        return false;
+    }
 }

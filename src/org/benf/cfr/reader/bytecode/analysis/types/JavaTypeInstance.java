@@ -86,4 +86,9 @@ public interface JavaTypeInstance {
      * Strip generics before calling.
      */
     JavaTypeInstance directImplOf(JavaTypeInstance other);
+
+    /*
+     * Is this a raw type?
+     */
+    boolean isRaw();
 }

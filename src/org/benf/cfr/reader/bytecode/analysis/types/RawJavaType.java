@@ -114,6 +114,11 @@ public enum RawJavaType implements JavaTypeInstance {
         return other == this ? this : null;
     }
 
+    @Override
+    public boolean isRaw() {
+        return true;
+    }
+
     /*
      * Compare integral type priorities.
      *
@@ -264,4 +269,6 @@ public enum RawJavaType implements JavaTypeInstance {
     public String toString() {
         return name;
     }
+
+
 }
