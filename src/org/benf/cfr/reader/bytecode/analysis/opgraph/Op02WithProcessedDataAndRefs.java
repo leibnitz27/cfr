@@ -633,10 +633,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         for (int x = 0; x < bootstrapArguments.length; ++x) {
             JavaTypeInstance expected = argTypes.get(ARG_OFFSET + x);
             TypedLiteral typedLiteral = getBootstrapArg(bootstrapArguments, x, cp);
+            Expression literal = new Literal(typedLiteral);
             if (!expected.equals(typedLiteral.getInferredJavaType().getJavaTypeInstance())) {
-                throw new IllegalStateException("Dynamic invoke Expected " + expected + ", got " + typedLiteral);
+                // This may not be a *LEGAL* cast, but it's probably the best we can do.
+                literal = new CastExpression(new InferredJavaType(expected, InferredJavaType.Source.BOOTSTRAP), literal);
             }
-            callargs.add(new Literal(typedLiteral));
+            callargs.add(literal);
         }
 
         return callargs;
