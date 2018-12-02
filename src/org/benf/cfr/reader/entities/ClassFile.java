@@ -943,20 +943,25 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                                         ConstantPoolEntryClass rawSuperClass,
                                         List<ConstantPoolEntryClass> rawInterfaces) {
         AttributeSignature signatureAttribute = getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
-        // If the class isn't generic (or has had the attribute removed), we have to use the
-        // runtime type info.
-        if (signatureAttribute == null) {
-            List<JavaTypeInstance> interfaces = ListFactory.newList();
-            for (ConstantPoolEntryClass rawInterface : rawInterfaces) {
-                interfaces.add(rawInterface.getTypeInstance());
+
+        if (signatureAttribute != null) {
+            try {
+                return ConstantPoolUtils.parseClassSignature(signatureAttribute.getSignature(), cp);
+            } catch (Exception ignore) {
+                // Corrupt?
             }
-
-            return new ClassSignature(null,
-                    rawSuperClass == null ? null : rawSuperClass.getTypeInstance(),
-                    interfaces);
-
         }
-        return ConstantPoolUtils.parseClassSignature(signatureAttribute.getSignature(), cp);
+        // If the class isn't generic (or has had the attribute removed, or corrupted), we have to use the
+        // runtime type info.
+        List<JavaTypeInstance> interfaces = ListFactory.newList();
+        for (ConstantPoolEntryClass rawInterface : rawInterfaces) {
+            interfaces.add(rawInterface.getTypeInstance());
+        }
+
+        return new ClassSignature(null,
+                rawSuperClass == null ? null : rawSuperClass.getTypeInstance(),
+                interfaces);
+
     }
 
 
