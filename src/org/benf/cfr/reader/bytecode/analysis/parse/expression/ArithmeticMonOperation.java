@@ -40,12 +40,12 @@ public class ArithmeticMonOperation extends AbstractExpression {
 
     @Override
     public Precedence getPrecedence() {
-        return op.getPrecedence();
+        return Precedence.UNARY_OTHER;
     }
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.print(op.getShowAs() + " ");
+        d.print(op.getShowAs());
         lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
     }
