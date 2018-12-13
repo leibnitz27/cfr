@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -95,17 +96,33 @@ public class ObjectTypeUsageRewriter extends AbstractExpressionRewriter implemen
             if (owningClassFile != null && owningClassFile.isInterface()) return false;
         }
 
+        JavaTypeInstance currentAsWas = jtObj.getDeGenerifiedType();
+        /*
+         * IF there's no route at all between the "known" type and the invokation type,
+         * then we've probably detected a too-super type for the known type.
+         *
+         * This can happen when two objects share a slot, and we're not able to split the
+         * lifetime correctly.
+         */
+        BindingSuperContainer bindingSupers = currentAsWas.getBindingSupers();
+        if (bindingSupers != null) {
+            if (!bindingSupers.containsBase(owningClassType)) {
+                return true;
+            }
+        }
+
         /*
          * This is fine, IF there's no route between jtObj and jtField in which there *IS* a property which would
          * override
          */
-        JavaTypeInstance currentAsWas = jtObj.getDeGenerifiedType();
         do {
             if (currentAsWas.equals(owningClassType)) return false;
             JavaTypeInstance current = currentAsWas;
             if (!(current instanceof JavaRefTypeInstance)) return false;
             ClassFile classFile = ((JavaRefTypeInstance) current).getClassFile();
-            if (classFile == null) return false;
+            if (classFile == null) {
+                return false;
+            }
             if (checkVisible.invoke(classFile)) {
                 break;
             }
