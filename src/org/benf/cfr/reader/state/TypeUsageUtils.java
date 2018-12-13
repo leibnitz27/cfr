@@ -26,11 +26,14 @@ class TypeUsageUtils {
             }
         }
         JavaRefTypeInstance currentClass = clazz;
+        boolean first = true;
         do {
             InnerClassInfo innerClassInfo = currentClass.getInnerClassHereInfo();
-            if (!innerClassInfo.isAnonymousClass()) {
+            // Need to skip anonymous classes, see (eg) anonymousInnerClassTest3.
+            if (!innerClassInfo.isAnonymousClass() || first) {
                 classStack.addFirst(currentClass);
             }
+            first = false;
             if (!innerClassInfo.isInnerClass()) {
                 break;
             }
@@ -46,7 +49,7 @@ class TypeUsageUtils {
          */
         if (analysisTypeFound == currentClass.equals(analysisType)) {
             StringBuilder sb = new StringBuilder();
-            boolean first = true;
+            first = true;
             /*
              * if we've been overridden, we need to prefix the analysis type. (See ShortNameTest5)
              */
