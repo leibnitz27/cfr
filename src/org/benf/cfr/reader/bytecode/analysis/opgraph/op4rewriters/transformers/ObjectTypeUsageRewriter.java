@@ -69,6 +69,9 @@ public class ObjectTypeUsageRewriter extends AbstractExpressionRewriter implemen
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean needsReWrite(Expression lhsObject, JavaTypeInstance owningClassType, UnaryFunction<ClassFile, Boolean> checkVisible) {
+        if (owningClassType == null) {
+            return false;
+        }
         InferredJavaType ijtObject = lhsObject.getInferredJavaType();
         if (canHaveVar) {
             if (!isAnonVar.containsKey(ijtObject)) {
@@ -81,7 +84,6 @@ public class ObjectTypeUsageRewriter extends AbstractExpressionRewriter implemen
             }
         }
 
-        if (owningClassType == null) return false;
         /*
          * Ok - and what if the property being referenced is not part of the detected class?
          */
