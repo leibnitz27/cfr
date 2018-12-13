@@ -654,9 +654,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return thisClass;
     }
 
-    /*
-     *
-     */
     private boolean isInferredAnonymousStatic(DCCommonState state, JavaTypeInstance thisType, JavaTypeInstance innerType) {
         if (!innerType.getInnerClassHereInfo().isAnonymousClass()) return false;
 
@@ -664,9 +661,15 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (!j8orLater) return false;
         
         JavaRefTypeInstance containing = thisType.getInnerClassHereInfo().getOuterClass();
-        // if the containing class is a static class, so is this.
 
-        if (containing.getClassFile().getAccessFlags().contains(AccessFlag.ACC_STATIC)) {
+        // if the outer class doesn't exist, we just don't know
+        ClassFile containingClassFile = containing.getClassFile();
+        if (containingClassFile == null) {
+            return false;
+        }
+
+        // if the containing class is a static class, so is this.
+        if (containingClassFile.getAccessFlags().contains(AccessFlag.ACC_STATIC)) {
             return true;
         }
 
@@ -687,7 +690,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         MethodPrototype basePrototype = ConstantPoolUtils.parseJavaMethodPrototype(state,null, containing, name, /* interfaceMethod */ false, Method.MethodConstructor.NOT, descriptor, constantPool, false /* we can't tell */, false, fakeNamer);
 
         try {
-            Method m = containing.getClassFile().getMethodByPrototype(basePrototype);
+            Method m = containingClassFile.getMethodByPrototype(basePrototype);
             if (m.getAccessFlags().contains(AccessFlagMethod.ACC_STATIC)) {
                 return true;
             }

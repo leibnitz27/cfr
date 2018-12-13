@@ -71,7 +71,7 @@ class Driver {
                 }
             }
             d.print("");
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             ed.noteException(path, null, e);
         } finally {
             if (d != null) d.close();
@@ -146,7 +146,7 @@ class Driver {
                 }
 
             }
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             dumperFactory.getExceptionDumper().noteException(path, "Exception analysing jar", e);
             if (summaryDumper != null) summaryDumper.notify("Exception analysing jar " + e);
         } finally {
