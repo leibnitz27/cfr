@@ -330,7 +330,7 @@ public class RemoveDeterministicJumps {
         }
 
 
-        if (success) Op03SimpleStatement.replaceReturningIfs(statements, true);
+        if (success) Op03Rewriters.replaceReturningIfs(statements, true);
     }
 
 }

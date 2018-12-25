@@ -40,7 +40,7 @@ public class NarrowingTypeRewriter {
         return BAD_SENTINEL;
     }
 
-    public void rewrite(Method method, List<Op03SimpleStatement> statements) {
+    public static void rewrite(Method method, List<Op03SimpleStatement> statements) {
         LValueAssignmentCollector collector = new LValueAssignmentCollector();
 
         for (LocalVariable lv : method.getMethodPrototype().getComputedParameters()) {

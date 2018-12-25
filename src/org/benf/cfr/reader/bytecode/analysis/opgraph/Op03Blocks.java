@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Cleaner;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.ExactTypeFilter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.TypeFilter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -935,7 +936,7 @@ public class Op03Blocks {
 
     private static boolean stripBackExceptions(List<Op03SimpleStatement> statements) {
         boolean res = false;
-        List<Op03SimpleStatement> tryStatements = Functional.filter(statements, new Op03SimpleStatement.ExactTypeFilter<TryStatement>(TryStatement.class));
+        List<Op03SimpleStatement> tryStatements = Functional.filter(statements, new ExactTypeFilter<TryStatement>(TryStatement.class));
         for (Op03SimpleStatement statement : tryStatements) {
             TryStatement tryStatement = (TryStatement) statement.getStatement();
 

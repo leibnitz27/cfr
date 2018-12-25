@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  * This is all a bit ugly, with the random casting going on. But I think probably it would be worse to use
- * a multiple direction visitor....
+ * a multiple indirection visitor....
  */
 public class CreationCollector {
 

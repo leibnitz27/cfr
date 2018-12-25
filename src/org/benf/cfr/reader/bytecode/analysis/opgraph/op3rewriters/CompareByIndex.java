@@ -14,9 +14,9 @@ public class CompareByIndex implements Comparator<Op03SimpleStatement> {
     }
 
     public CompareByIndex(boolean asc) {
-
         this.asc = asc;
     }
+
     @Override
     public int compare(Op03SimpleStatement a, Op03SimpleStatement b) {
         int res = a.getIndex().compareTo(b.getIndex());
