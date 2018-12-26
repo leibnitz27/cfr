@@ -14,8 +14,8 @@ import org.benf.cfr.reader.util.Troolean;
 
 import java.util.List;
 
-public class ConditionalSimplifier {
-    public static void simplifyConditionals(List<Op03SimpleStatement> statements, boolean aggressive) {
+class ConditionalSimplifier {
+    static void simplifyConditionals(List<Op03SimpleStatement> statements, boolean aggressive) {
         for (Op03SimpleStatement statement : statements) {
             if (!(statement.getStatement() instanceof IfStatement)) continue;
 

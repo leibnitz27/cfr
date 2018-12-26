@@ -191,9 +191,41 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
         return true;
     }
 
+    private static boolean returnsTrueForNaN(CompOp from, int on, boolean nanG) {
+        if (on == 0) {
+            if (nanG) {
+                switch (from) {
+                    case GTE:
+                    case GT:
+                        return true;
+                }
+            } else {
+                switch (from) {
+                    case LT:
+                    case LTE:
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean canNegateAroundNaN(CompOp from, int on) {
+        if (on == 0) {
+            switch (from) {
+                case EQ:
+                case NE:
+                    return true;
+            }
+            return false;
+        }
+        return true;
+    }
 
     private static CompOp rewriteXCMPCompOp(CompOp from, int on) {
-        if (on == 0) return from;
+        if (on == 0) {
+            return from;
+        }
         if (on < 0) {
             switch (from) {
                 case LT:
@@ -296,14 +328,26 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
             default:
                 throw new ConfusedCFRException("Invalid literal value " + litVal + " in xCMP");
         }
-        /*
-         * TODO: Not quite behaving correctly here wrt floating point, i.e. DCMPG vs DCMPL.
+        /* https://docs.oracle.com/javase/specs/jvms/se6/html/Instructions2.doc3.html
+         *
+         * ...Otherwise, at least one of value1' or value2' is NaN. The dcmpg instruction pushes the int value 1
+         * onto the operand stack and the dcmpl instruction pushes the int value -1 onto the operand stack.
          */
+        boolean acceptsNaN = false;
+        boolean canNegate = true;
         switch (op) {
             case DCMPG:
             case FCMPG:
+                // litVal must be 0 here.  If it's not, we're confused!
+                acceptsNaN = returnsTrueForNaN(compOp, litVal, true);
+                canNegate = canNegateAroundNaN(compOp, litVal);
+                break;
             case DCMPL:
             case FCMPL:
+                // litVal must be 0 here.  If it's not, we're confused!
+                acceptsNaN = returnsTrueForNaN(compOp, litVal, false);
+                canNegate = canNegateAroundNaN(compOp, litVal);
+                break;
             case LCMP:
                 break;
             default:
@@ -320,6 +364,11 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
          *      > -1 --> >= 0
          */
         compOp = rewriteXCMPCompOp(compOp, litVal);
-        return new ComparisonOperation(this.lhs, this.rhs, compOp);
+        if (acceptsNaN) {
+            ConditionalExpression comp = new ComparisonOperation(this.lhs, this.rhs, compOp.getInverted(), false);
+            comp = new NotOperation(comp);
+            return comp;
+        }
+        return new ComparisonOperation(this.lhs, this.rhs, compOp, canNegate);
     }
 }

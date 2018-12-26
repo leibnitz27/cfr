@@ -16,8 +16,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
-import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.Troolean;
+import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
@@ -27,9 +27,16 @@ public class ComparisonOperation extends AbstractExpression implements Condition
     private Expression lhs;
     private Expression rhs;
     private final CompOp op;
+    private final boolean canNegate;
+
 
     public ComparisonOperation(Expression lhs, Expression rhs, CompOp op) {
+        this(lhs, rhs, op, true);
+    }
+
+    public ComparisonOperation(Expression lhs, Expression rhs, CompOp op, boolean canNegate) {
         super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
+        this.canNegate = canNegate;
         this.lhs = lhs;
         this.rhs = rhs;
         /*
@@ -68,7 +75,7 @@ public class ComparisonOperation extends AbstractExpression implements Condition
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ComparisonOperation(cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op);
+        return new ComparisonOperation(cloneHelper.replaceOrClone(lhs), cloneHelper.replaceOrClone(rhs), op, canNegate);
     }
 
     @Override
@@ -135,6 +142,9 @@ public class ComparisonOperation extends AbstractExpression implements Condition
 
     @Override
     public ConditionalExpression getNegated() {
+        if (!canNegate) {
+            return new NotOperation(this);
+        }
         return new ComparisonOperation(lhs, rhs, op.getInverted());
     }
 
