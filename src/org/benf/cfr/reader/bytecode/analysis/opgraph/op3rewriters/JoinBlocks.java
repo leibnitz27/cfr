@@ -10,11 +10,11 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import java.util.List;
 import java.util.Set;
 
-public class JoinBlocks {
+class JoinBlocks {
     /*
      * This is a dangerous tidy-up operation.  Should only do it if we're falling back.
      */
-    public static void rejoinBlocks(List<Op03SimpleStatement> statements) {
+    static void rejoinBlocks(List<Op03SimpleStatement> statements) {
         Set<BlockIdentifier> lastBlocks = SetFactory.newSet();
         Set<BlockIdentifier> haveLeft = SetFactory.newSet();
         // We blacklist blocks we can't POSSIBLY be in - i.e. after a catch block has started, we can't POSSIBLY

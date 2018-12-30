@@ -63,12 +63,20 @@ public class ExceptionCheckImpl implements ExceptionCheck {
         for (JavaTypeInstance thrownType : thrown) {
             try {
                 ClassFile thrownClassFile = dcCommonState.getClassFile(thrownType);
-                if (thrownClassFile == null) return true;
+                if (thrownClassFile == null) {
+                    return true;
+                }
                 BindingSuperContainer bindingSuperContainer = thrownClassFile.getBindingSupers();
-                if (bindingSuperContainer == null) return true;
+                if (bindingSuperContainer == null) {
+                    return true;
+                }
                 Map<JavaRefTypeInstance, ?> boundSuperClasses = bindingSuperContainer.getBoundSuperClasses();
-                if (boundSuperClasses == null) return true;
-                if (SetUtil.hasIntersection(caughtChecked, boundSuperClasses.keySet())) return true;
+                if (boundSuperClasses == null) {
+                    return true;
+                }
+                if (SetUtil.hasIntersection(caughtChecked, boundSuperClasses.keySet())) {
+                    return true;
+                }
             } catch (CannotLoadClassException e) {
                 return true;
             }

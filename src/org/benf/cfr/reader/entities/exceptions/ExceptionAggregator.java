@@ -39,11 +39,11 @@ public class ExceptionAggregator {
     private class ByTarget {
         private final List<ExceptionTableEntry> entries;
 
-        public ByTarget(List<ExceptionTableEntry> entries) {
+        ByTarget(List<ExceptionTableEntry> entries) {
             this.entries = entries;
         }
 
-        public Collection<ExceptionTableEntry> getAggregated() {
+        Collection<ExceptionTableEntry> getAggregated() {
             Collections.sort(this.entries, new CompareExceptionTablesByRange());
             /* If two entries are contiguous, they can be merged 
              * If they're 'almost' contiguous, but point to the same range? ........ don't know.
@@ -111,6 +111,8 @@ public class ExceptionAggregator {
                     // Getstatic CAN throw, but some code will separate exception blocks around it, just to be
                     // awkward.
                     case GETSTATIC:
+//                    case IASTORE:
+//                    case IALOAD:
                         current += op.getInstructionLength();
                         break;
                     default:
@@ -176,13 +178,6 @@ public class ExceptionAggregator {
         }
         this.removedLoopingExceptions = removedLoopingExceptions;
         if (rawExceptions.isEmpty()) return;
-
-//        for (int x=0, len=rawExceptions.size();x<len;++x) {
-//            ExceptionTableEntry e = rawExceptions.get(x);
-//            if (e.getCatchType(cp).getRawName().equals(TypeConstants.throwableName)) {
-//                rawExceptions.set(x, e.withThrowableCatchType());
-//            }
-//        }
 
         // Todo : Use ConvExceptions (based on op index), not RawExceptions (based on bytecode index).
         /*
@@ -291,33 +286,7 @@ public class ExceptionAggregator {
         for (ByTarget t : byTargetList) {
             byTargetMap.put(t.entries.get(0).getBytecodeIndexHandler(), t);
         }
-//
-//        for (ByTarget t : byTargetList) {
-//            List<ExceptionTableEntry> e = t.entries;
-//            for (int x=1;x<e.size();++x) {
-//                ExceptionTableEntry e1 = e.get(x-1);
-//                ExceptionTableEntry e2 = e.get(x);
-//                ByTarget alternate = byTargetMap.get(e2.getBytecodeIndexFrom());
-//                if (alternate == null) continue;
-//                for (ExceptionTableEntry o : alternate.entries) {
-//                    if (o == null) continue;
-//                    if (o.getBytecodeIndexFrom() == e1.getBytecodeIndexFrom() &&
-//                        o.getBytecodeIndexTo() == e1.getBytecodeIndexTo()) {
-//                        JavaRefTypeInstance t1 = o.getCatchType(cp);
-//                        JavaRefTypeInstance t2 = e1.getCatchType(cp);
-//                        boolean cast1 = t1.implicitlyCastsTo(t2);
-//                        boolean cast2 = t2.implicitlyCastsTo(t1);
-//                        if ((cast1 || cast2)) {
-//                            e.set(x, e1.copyWithRange(e1.getBytecodeIndexFrom(), e2.getBytecodeIndexTo()));
-//                            e.set(x-1, null);
-//                            e.remove(x-1);
-//                            x--;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
+
         /*
          * Each of these is now lists which point to the same handler+type.
          */
@@ -346,8 +315,6 @@ public class ExceptionAggregator {
             }
             currentGroup.add(e);
         }
-
-
         exceptionsByRange.addAll(rawExceptionsByRange);
     }
 

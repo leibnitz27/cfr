@@ -20,7 +20,7 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
 
     private final int priority;
 
-    public ExceptionTableEntry(ByteData raw, int priority) {
+    private ExceptionTableEntry(ByteData raw, int priority) {
         this(
                 raw.getU2At(OFFSET_INDEX_FROM),
                 raw.getU2At(OFFSET_INDEX_TO),
@@ -29,7 +29,7 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
                 priority);
     }
 
-    public ExceptionTableEntry(int from, int to, int handler, int catchType, int priority) {
+    ExceptionTableEntry(int from, int to, int handler, int catchType, int priority) {
         this.bytecode_index_from = from;
         this.bytecode_index_to = to;
         this.bytecode_index_handler = handler;
@@ -40,12 +40,8 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         }
     }
 
-    public ExceptionTableEntry withThrowableCatchType() {
-        return new ExceptionTableEntry(bytecode_index_from, bytecode_index_to, bytecode_index_handler, (short)0, priority);
-    }
-
     // TODO : Refactor into constructor.
-    public JavaRefTypeInstance getCatchType(ConstantPool cp) {
+    JavaRefTypeInstance getCatchType(ConstantPool cp) {
         if (catch_type == 0) {
             return cp.getClassCache().getRefClassFor(TypeConstants.throwableName);
         } else {
@@ -53,31 +49,31 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         }
     }
 
-    public ExceptionTableEntry copyWithRange(int from, int to) {
+    ExceptionTableEntry copyWithRange(int from, int to) {
         return new ExceptionTableEntry(from, to, this.bytecode_index_handler, this.catch_type, this.priority);
     }
 
-    public int getBytecodeIndexFrom() {
+    int getBytecodeIndexFrom() {
         return bytecode_index_from;
     }
 
-    public int getBytecodeIndexTo() {
+    int getBytecodeIndexTo() {
         return bytecode_index_to;
     }
 
-    public int getBytecodeIndexHandler() {
+    int getBytecodeIndexHandler() {
         return bytecode_index_handler;
     }
 
-    public int getCatchType() {
+    int getCatchType() {
         return catch_type;
     }
 
-    public int getPriority() {
+    int getPriority() {
         return priority;
     }
 
-    public ExceptionTableEntry aggregateWith(ExceptionTableEntry later) {
+    ExceptionTableEntry aggregateWith(ExceptionTableEntry later) {
         if ((this.bytecode_index_from >= later.bytecode_index_from) ||
                 (this.bytecode_index_to != later.bytecode_index_from)) {
             throw new ConfusedCFRException("Can't aggregate exceptionTableEntries");
@@ -86,7 +82,7 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         return new ExceptionTableEntry(this.bytecode_index_from, later.bytecode_index_to, this.bytecode_index_handler, this.catch_type, this.priority);
     }
 
-    public ExceptionTableEntry aggregateWithLenient(ExceptionTableEntry later) {
+    ExceptionTableEntry aggregateWithLenient(ExceptionTableEntry later) {
         if (this.bytecode_index_from >= later.bytecode_index_from) {
             throw new ConfusedCFRException("Can't aggregate exceptionTableEntries");
         }
@@ -94,14 +90,14 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         return new ExceptionTableEntry(this.bytecode_index_from, later.bytecode_index_to, this.bytecode_index_handler, this.catch_type, this.priority);
     }
 
-    public static UnaryFunction<ByteData, ExceptionTableEntry> getBuilder(ConstantPool cp) {
-        return new ExceptionTableEntryBuilder(cp);
+    public static UnaryFunction<ByteData, ExceptionTableEntry> getBuilder() {
+        return new ExceptionTableEntryBuilder();
     }
 
     private static class ExceptionTableEntryBuilder implements UnaryFunction<ByteData, ExceptionTableEntry> {
         int idx = 0;
 
-        public ExceptionTableEntryBuilder(ConstantPool cp) {
+        ExceptionTableEntryBuilder() {
         }
 
         @Override
