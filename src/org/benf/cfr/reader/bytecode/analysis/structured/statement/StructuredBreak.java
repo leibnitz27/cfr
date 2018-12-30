@@ -76,6 +76,12 @@ public class StructuredBreak extends AbstractStructuredStatement {
     public StructuredBreak maybeTightenToLocal(Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> scopes) {
         if (localBreak) return this;
         /*
+         * Can't improve if no targets.
+         */
+        if (scopes.isEmpty()) {
+            return this;
+        }
+        /*
          * ok, it's not local.  Go up the scopes, and find the enclosing block, then see if the innermost breakable also
          * falls through to the same target.  If so, we can convert it to a local break.
          */
