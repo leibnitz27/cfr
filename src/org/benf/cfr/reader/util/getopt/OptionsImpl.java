@@ -300,10 +300,13 @@ public class OptionsImpl implements Options {
             "Drop exception information if completely stuck (WARNING : changes semantics, dangerous!)");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean>(
             "forceexceptionprune", defaultNeitherTrooleanDecoder,
-            "Try to extend and merge exceptions more aggressively");
+            "Remove nested exception handlers if they don't change semantics");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_AGGRESSIVE_EXCEPTION_AGG = new PermittedOptionProvider.Argument<Troolean>(
             "aexagg", defaultNeitherTrooleanDecoder,
-            "Remove nested exception handlers if they don't change semantics");
+            "Try to extend and merge exceptions more aggressively");
+    public static final PermittedOptionProvider.Argument<Troolean> FORCE_AGGRESSIVE_EXCEPTION_AGG2 = new PermittedOptionProvider.Argument<Troolean>(
+            "aexagg", defaultNeitherTrooleanDecoder,
+            "Try to extend and merge exceptions more aggressively (may change semantics)");
     public static final PermittedOptionProvider.Argument<Troolean> RECOVER_TYPECLASHES = new PermittedOptionProvider.Argument<Troolean>(
             "recovertypeclash", defaultNeitherTrooleanDecoder,
             "Split lifetimes where analysis caused type clash");

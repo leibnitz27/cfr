@@ -22,8 +22,8 @@ public class ExceptionAggregator {
     private final List<ExceptionGroup> exceptionsByRange = ListFactory.newList();
     private final Map<Integer, Integer> lutByOffset;
     private final List<Op01WithProcessedDataAndByteJumps> instrs;
-    private final boolean aggressivePrune;
     private final boolean aggressiveAggregate;
+    private final boolean aggressiveAggregate2;
     private final boolean removedLoopingExceptions;
 
 
@@ -43,7 +43,7 @@ public class ExceptionAggregator {
             this.entries = entries;
         }
 
-        Collection<ExceptionTableEntry> getAggregated() {
+        Collection<ExceptionTableEntry> getAggregated(DecompilerComments comments) {
             Collections.sort(this.entries, new CompareExceptionTablesByRange());
             /* If two entries are contiguous, they can be merged 
              * If they're 'almost' contiguous, but point to the same range? ........ don't know.
@@ -65,7 +65,7 @@ public class ExceptionAggregator {
                             entry.getBytecodeIndexFrom() < held.getBytecodeIndexTo() &&
                             entry.getBytecodeIndexTo() > held.getBytecodeIndexTo()) {
                         held = held.aggregateWithLenient(entry);
-                    } else if (aggressiveAggregate && canExtendTo(held, entry)) {
+                    } else if (aggressiveAggregate && canExtendTo(held, entry, comments)) {
                         held = held.aggregateWithLenient(entry);
                     } else {
                         res.add(held);
@@ -94,10 +94,11 @@ public class ExceptionAggregator {
      *
      * Some instructions can be guaranteed not to throw, they can be extended over.
      */
-    private boolean canExtendTo(ExceptionTableEntry a, ExceptionTableEntry b) {
+    private boolean canExtendTo(ExceptionTableEntry a, ExceptionTableEntry b, DecompilerComments comments) {
         final int startNext = b.getBytecodeIndexFrom();
         int current = a.getBytecodeIndexTo();
         if (current > startNext) return false;
+        boolean veryAggressive = false;
 
         while (current < startNext) {
             Integer idx = lutByOffset.get(current);
@@ -106,13 +107,32 @@ public class ExceptionAggregator {
             JVMInstr instr = op.getJVMInstr();
             if (instr.isNoThrow()) {
                 current += op.getInstructionLength();
-            } else if (aggressivePrune) {
+            } else if (aggressiveAggregate) {
                 switch (instr) {
-                    // Getstatic CAN throw, but some code will separate exception blocks around it, just to be
-                    // awkward.
+                    case IASTORE:
+                    case IALOAD:
+                    case DASTORE:
+                    case DALOAD:
+                    case FASTORE:
+                    case FALOAD:
+                    case AASTORE:
+                    case AALOAD:
+                        /*
+                         * These are doubly interesting - they could NPE, or array index out of bounds.
+                         * However, I've seen multiple examples where exceptions are split with this inbetween.
+                         * There's no reasonably way that this code would have been written like that, so it implies
+                         * that either an obfuscator has been at it, or a compiler has proved they won't fail, and
+                         * split the exception up.  (WHY, though?)
+                         */
+                        if (!this.aggressiveAggregate2) {
+                            return false;
+                        }
+                        veryAggressive = true;
                     case GETSTATIC:
-//                    case IASTORE:
-//                    case IALOAD:
+                        /* Getstatic CAN throw, but some code will separate exception blocks around it, just to be
+                         * awkward.  This is likely enough (and reasonably innocent) that we don't consider it to be a
+                         * "very" dangerous aggregation.
+                         */
                         current += op.getInstructionLength();
                         break;
                     default:
@@ -121,6 +141,9 @@ public class ExceptionAggregator {
             } else {
                 return false;
             }
+        }
+        if (veryAggressive) {
+            comments.addComment(DecompilerComment.AGGRESSIVE_EXCEPTION_VERY_AGG);
         }
         return true;
     }
@@ -163,12 +186,13 @@ public class ExceptionAggregator {
                                final Map<Integer, Integer> lutByOffset,
                                List<Op01WithProcessedDataAndByteJumps> instrs,
                                final Options options,
-                               final ConstantPool cp) {
+                               final ConstantPool cp,
+                               DecompilerComments comments) {
 
         this.lutByOffset = lutByOffset;
         this.instrs = instrs;
-        this.aggressivePrune = options.getOption(OptionsImpl.FORCE_PRUNE_EXCEPTIONS) == Troolean.TRUE;
         this.aggressiveAggregate = options.getOption(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG) == Troolean.TRUE;
+        this.aggressiveAggregate2 = options.getOption(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG2) == Troolean.TRUE;
 
         List<ExceptionTableEntry> tmpExceptions = Functional.filter(rawExceptions, new ValidException());
         boolean removedLoopingExceptions = false;
@@ -291,7 +315,7 @@ public class ExceptionAggregator {
          * Each of these is now lists which point to the same handler+type.
          */
         for (ByTarget byTarget : byTargetList) {
-            rawExceptions.addAll(byTarget.getAggregated());
+            rawExceptions.addAll(byTarget.getAggregated(comments));
         }
 
         /*
@@ -367,7 +391,6 @@ public class ExceptionAggregator {
      *
      */
     public void aggressivePruning(final Map<Integer, Integer> lutByOffset,
-                                  final Map<Integer, Integer> lutByIdx,
                                   List<Op01WithProcessedDataAndByteJumps> instrs) {
         Iterator<ExceptionGroup> groupIterator = exceptionsByRange.iterator();
         while (groupIterator.hasNext()) {

@@ -29,10 +29,8 @@ import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.LoggerFactory;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 public class CodeAnalyser {
     private final AttributeCode originalCodeAttribute;
@@ -79,7 +77,8 @@ public class CodeAnalyser {
     );
 
     private static final RecoveryOptions recover2 = new RecoveryOptions(recover1,
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_EXTRA, Troolean.TRUE)
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_EXTRA, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG2, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
     );
 
     private static final RecoveryOptions recover3 = new RecoveryOptions(recover1,
@@ -250,7 +249,7 @@ public class CodeAnalyser {
         // These are 'processed' exceptions, which we can use to lay out code.
         List<ExceptionTableEntry> exceptionTableEntries = originalCodeAttribute.getExceptionTableEntries();
         if (options.getOption(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS)) exceptionTableEntries = ListFactory.newList();
-        ExceptionAggregator exceptions = new ExceptionAggregator(exceptionTableEntries, blockIdentifierFactory, lutByOffset, instrs, options, cp);
+        ExceptionAggregator exceptions = new ExceptionAggregator(exceptionTableEntries, blockIdentifierFactory, lutByOffset, instrs, options, cp, comments);
         if (exceptions.RemovedLoopingExceptions()) {
             comments.addComment(DecompilerComment.LOOPING_EXCEPTIONS);
         }
@@ -264,7 +263,7 @@ public class CodeAnalyser {
              * Aggressive exception pruning.  try { x } catch (e) { throw e } , when NOT covered by another exception handler,
              * is a pointless construct.  It also leads to some very badly structured code.
              */
-            exceptions.aggressivePruning(lutByOffset, lutByIdx, instrs);
+            exceptions.aggressivePruning(lutByOffset, instrs);
             /*
              * This one's less safe, but...
              */

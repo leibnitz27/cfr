@@ -18,6 +18,7 @@ import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.collections.*;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.graph.GraphVisitor;
@@ -377,7 +378,7 @@ public class Op03Blocks {
         BlockIdentifierFactory blockIdentifierFactory = new BlockIdentifierFactory();
         List<Set<BlockIdentifier>> blockMembers = ListFactory.newList();
         for (int i = 0, len = blocks.size(); i < len; ++i) {
-            blockMembers.add(SetFactory.<BlockIdentifier>newSet());
+            blockMembers.add(SetFactory.<BlockIdentifier>newOrderedSet());
         }
         Map<BlockIdentifier, Block3> firstByBlock = MapFactory.newMap();
         Map<BlockIdentifier, Block3> lastByBlock = MapFactory.newMap();
@@ -451,7 +452,7 @@ public class Op03Blocks {
                     if (!blockMembers.get(idxLut.get(blktgt)).contains(ident)) continue;
                     if (lastByBlock.get(ident) == blktgt) continue;
 
-                    Set<Block3> origSources = SetFactory.newSet(blktgt.originalSources);
+                    Set<Block3> origSources = SetFactory.newOrderedSet(blktgt.originalSources);
                     origSources.remove(block);
                     for (Block3 src : origSources) {
                         if ((blockMembers.get(idxLut.get(src)).contains(ident) && src.startIndex.isBackJumpFrom(blktgt.startIndex)) ||
@@ -848,6 +849,8 @@ public class Op03Blocks {
         // see bb/xh.class
         blocks = combineSingleCaseBackBlock(blocks);
 
+        blocks = addTryEndDependencies(blocks);
+
         blocks = doTopSort(blocks);
 
         /*
@@ -934,6 +937,41 @@ public class Op03Blocks {
         return Cleaner.removeUnreachableCode(outStatements, true);
     }
 
+    /*
+     * If we've got a try-wrapping block which has a target of a catch block, we want to try to get the body of the
+     * try block before the catch.
+     */
+    private static List<Block3> addTryEndDependencies(List<Block3> blocks) {
+        Map<BlockIdentifier, List<Block3>> tryContent = MapFactory.newLazyMap(new UnaryFunction<BlockIdentifier, List<Block3>>() {
+            @Override
+            public List<Block3> invoke(BlockIdentifier arg) {
+                return ListFactory.newList();
+            }
+        });
+        for (Block3 block : blocks) {
+            for (BlockIdentifier blockIdentifier : block.getStart().getBlockIdentifiers()) {
+                if (blockIdentifier.getBlockType() == BlockType.TRYBLOCK) {
+                    tryContent.get(blockIdentifier).add(block);
+                }
+            }
+        }
+        for (Block3 block : blocks) {
+            Statement blockStatement = block.getStart().getStatement();
+            if (blockStatement instanceof CatchStatement) {
+                CatchStatement catchStatement = (CatchStatement) blockStatement;
+                for (Map.Entry<BlockIdentifier, List<Block3>> entry : tryContent.entrySet()) {
+                    if (catchStatement.hasCatchBlockFor(entry.getKey())) {
+                        for (Block3 b2 : entry.getValue()) {
+                            block.addSource(b2);
+                           b2.addTarget(block);
+                        }
+                    }
+                }
+            }
+        }
+        return blocks;
+    }
+
     private static boolean stripBackExceptions(List<Op03SimpleStatement> statements) {
         boolean res = false;
         List<Op03SimpleStatement> tryStatements = Functional.filter(statements, new ExactTypeFilter<TryStatement>(TryStatement.class));
@@ -998,10 +1036,10 @@ public class Op03Blocks {
     private static class Block3 implements Comparable<Block3> {
         InstrIndex startIndex;
         List<Op03SimpleStatement> content = ListFactory.newList();
-        Set<Block3> sources = new LinkedHashSet<Block3>();
+        Set<Block3> sources = SetFactory.newOrderedSet();
         // This seems redundant? - verify need.
-        Set<Block3> originalSources = new LinkedHashSet<Block3>();
-        Set<Block3> targets = new LinkedHashSet<Block3>();
+        Set<Block3> originalSources = SetFactory.newOrderedSet();
+        Set<Block3> targets = SetFactory.newOrderedSet();
 
         Block3(Op03SimpleStatement s) {
             startIndex = s.getIndex();

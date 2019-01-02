@@ -10,19 +10,19 @@ import java.util.List;
 
 public abstract class RecoveryOption<T> {
 
-    protected final UnaryFunction<BytecodeMeta, Boolean> canhelp;
+    final UnaryFunction<BytecodeMeta, Boolean> canhelp;
     protected final PermittedOptionProvider.Argument<T> arg;
     protected final T value;
-    protected final DecompilerComment decompilerComment;
+    private final DecompilerComment decompilerComment;
 
-    public RecoveryOption(PermittedOptionProvider.Argument<T> arg, T value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
+    RecoveryOption(PermittedOptionProvider.Argument<T> arg, T value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
         this.arg = arg;
         this.value = value;
         this.decompilerComment = comment;
         this.canhelp = canHelp;
     }
 
-    protected boolean applyComment(boolean applied, List<DecompilerComment> commentList) {
+    boolean applyComment(boolean applied, List<DecompilerComment> commentList) {
         if (!applied) return false;
         if (decompilerComment == null) return true;
         commentList.add(decompilerComment);
@@ -32,19 +32,19 @@ public abstract class RecoveryOption<T> {
     public abstract boolean apply(MutableOptions mutableOptions, List<DecompilerComment> commentList, BytecodeMeta bytecodeMeta);
 
     public static class TrooleanRO extends RecoveryOption<Troolean> {
-        public TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value) {
+        TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value) {
             super(arg, value, null, null);
         }
 
-        public TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value, DecompilerComment comment) {
+        TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value, DecompilerComment comment) {
             super(arg, value, null, comment);
         }
 
-        public TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value, UnaryFunction<BytecodeMeta, Boolean> canHelp) {
+        TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value, UnaryFunction<BytecodeMeta, Boolean> canHelp) {
             super(arg, value, canHelp, null);
         }
 
-        public TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
+        TrooleanRO(PermittedOptionProvider.Argument<Troolean> arg, Troolean value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
             super(arg, value, canHelp, comment);
         }
 
@@ -56,7 +56,7 @@ public abstract class RecoveryOption<T> {
     }
 
     public static class BooleanRO extends RecoveryOption<Boolean> {
-        public BooleanRO(PermittedOptionProvider.Argument<Boolean> arg, boolean value) {
+        BooleanRO(PermittedOptionProvider.Argument<Boolean> arg, boolean value) {
             super(arg, value, null, null);
         }
 
@@ -64,7 +64,7 @@ public abstract class RecoveryOption<T> {
             super(arg, value, null, comment);
         }
 
-        public BooleanRO(PermittedOptionProvider.Argument<Boolean> arg, boolean value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
+        BooleanRO(PermittedOptionProvider.Argument<Boolean> arg, boolean value, UnaryFunction<BytecodeMeta, Boolean> canHelp, DecompilerComment comment) {
             super(arg, value, canHelp, comment);
         }
 
