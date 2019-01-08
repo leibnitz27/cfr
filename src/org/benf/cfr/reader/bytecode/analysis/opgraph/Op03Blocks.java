@@ -476,8 +476,10 @@ public class Op03Blocks {
     }
 
     private static void stripTryBlockAliases(List<Op03SimpleStatement> out, Map<BlockIdentifier, BlockIdentifier> tryBlockAliases) {
-
-        List<Op03SimpleStatement> remove = ListFactory.newList();
+        Map<BlockIdentifier, Op03SimpleStatement> tries = MapFactory.newMap();
+        Set<Op03SimpleStatement> remove = SetFactory.newOrderedSet();
+        Set<BlockIdentifier> blocksToRemove = SetFactory.newOrderedSet();
+        blocksToRemove.addAll(tryBlockAliases.keySet());
 
         for (int x = 1, len = out.size(); x < len; ++x) {
             Op03SimpleStatement s = out.get(x);
@@ -488,14 +490,35 @@ public class Op03Blocks {
              */
             TryStatement tryStatement = (TryStatement) s.getStatement();
             BlockIdentifier tryBlock = tryStatement.getBlockIdentifier();
+            tries.put(tryBlock, s);
             Op03SimpleStatement prev = out.get(x - 1);
             BlockIdentifier alias = tryBlockAliases.get(tryBlock);
             if (alias == null) continue;
 
-            if (prev.getBlockIdentifiers().contains(alias)) remove.add(s);
-
+            if (prev.getBlockIdentifiers().contains(alias)) {
+                remove.add(s);
+                blocksToRemove.remove(tryBlock);
+            }
         }
-        if (remove.isEmpty()) return;
+        // If there are any try blocks that haven't been found, repeat, but with the first statement in the block.
+        if (!blocksToRemove.isEmpty()) {
+            Map<BlockIdentifier, Integer> actualStarts = findFirstInBlock(out, blocksToRemove);
+            for (Map.Entry<BlockIdentifier, Integer> entry : actualStarts.entrySet()) {
+                int x = entry.getValue();
+                BlockIdentifier tryBlock = entry.getKey();
+                Op03SimpleStatement tryStm = tries.get(tryBlock);
+                if (tryStm == null) continue;
+
+                Op03SimpleStatement prev = out.get(x - 1);
+                BlockIdentifier alias = tryBlockAliases.get(tryBlock);
+                if (alias == null) continue;
+
+                if (prev.getBlockIdentifiers().contains(alias)) {
+                    remove.add(tryStm);
+                    blocksToRemove.remove(tryBlock);
+                }
+            }
+        }
         for (Op03SimpleStatement removeThis : remove) {
             TryStatement removeTry = (TryStatement) removeThis.getStatement();
             BlockIdentifier blockIdentifier = removeTry.getBlockIdentifier();
@@ -518,6 +541,27 @@ public class Op03Blocks {
                 statement.replaceBlockIfIn(blockIdentifier, alias);
             }
         }
+    }
+
+    private static Map<BlockIdentifier, Integer> findFirstInBlock(List<Op03SimpleStatement> statements, Set<BlockIdentifier> mutableMissing) {
+        int size = statements.size();
+        Map<BlockIdentifier, Integer> res = MapFactory.newMap();
+        for (int x = 0; x< size; ++x) {
+            Op03SimpleStatement stm = statements.get(x);
+            Set<BlockIdentifier> stmBlocks = stm.getBlockIdentifiers();
+            Iterator<BlockIdentifier> toFind = mutableMissing.iterator();
+            while (toFind.hasNext()) {
+                BlockIdentifier block = toFind.next();
+                if (stmBlocks.contains(block)) {
+                    toFind.remove();
+                    res.put(block, x);
+                    if (mutableMissing.isEmpty()) {
+                        return res;
+                    }
+                }
+            }
+        }
+        return res;
     }
 
     public static List<Op03SimpleStatement> combineTryBlocks(final List<Op03SimpleStatement> statements) {

@@ -31,17 +31,12 @@ public class SwitchReplacer {
         // Replace raw switch statements with switches and case statements inline.
         List<Op03SimpleStatement> switches = ListFactory.newList();
         for (Op03SimpleStatement switchStatement : switchStatements) {
-            Op03SimpleStatement switchToProcess = replaceRawSwitch(method, switchStatement, in, blockIdentifierFactory);
+            Op03SimpleStatement switchToProcess = replaceRawSwitch(method, switchStatement, in, blockIdentifierFactory, options);
             if (switchToProcess != null) switches.add(switchToProcess);
         }
         // We've injected 'case' statements, sort to get them into the proper place.
         Collections.sort(in, new CompareByIndex());
 
-//        Dumper d = new Dumper();
-//        for (Op03SimpleStatement statement : in) {
-//            statement.dumpInner(d);
-//        }
-//
         // For each of the switch statements, can we find a contiguous range which represents it?
         // (i.e. where the break statement vectors to).
         // for each case statement, we need to find a common successor, however there may NOT be
@@ -70,7 +65,7 @@ public class SwitchReplacer {
 
     }
 
-    private static Op03SimpleStatement replaceRawSwitch(@SuppressWarnings("unused") Method method, Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    private static Op03SimpleStatement replaceRawSwitch(@SuppressWarnings("unused") Method method, Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory, Options options) {
         List<Op03SimpleStatement> targets = swatch.getTargets();
         RawSwitchStatement switchStatement = (RawSwitchStatement) swatch.getStatement();
         DecodedSwitch switchData = switchStatement.getSwitchData();
@@ -99,7 +94,7 @@ public class SwitchReplacer {
              * it anyway - as an empty switch, but if it's not, we'll drop it completely.
              */
             int idx = in.indexOf(swatch);
-            if (idx+1 >= in.size() || oneTarget != in.get(idx+1)) {
+            if (idx + 1 >= in.size() || oneTarget != in.get(idx + 1)) {
                 // drop it completely.
                 swatch.replaceStatement(new GotoStatement());
                 return null;
@@ -121,16 +116,18 @@ public class SwitchReplacer {
 
         }
 
+        if (options.getOption(OptionsImpl.FORCE_TOPSORT_EXTRA) == Troolean.TRUE) {
+            tryInlineRawSwitchContent(swatch, in);
+        }
+
         // For each of the switch targets, add a 'case' statement
         // We can add them at the end, as long as we've got a post hoc sort.
-
         // What happens if there's no default statement?  Not sure java permits?
         List<DecodedSwitchEntry> entries = switchData.getJumpTargets();
         InferredJavaType caseType = switchStatement.getSwitchOn().getInferredJavaType();
         Map<InstrIndex, Op03SimpleStatement> firstPrev = MapFactory.newMap();
-
         InstrIndex nextIntermed = swatch.getIndex().justAfter();
-        for (int x = 0, len=targets.size(); x < len; ++x) {
+        for (int x = 0, len = targets.size(); x < len; ++x) {
             Op03SimpleStatement target = targets.get(x);
             InstrIndex tindex = target.getIndex();
             if (firstPrev.containsKey(tindex)) { // Get previous case statement if already exists, so we stack them.
@@ -305,10 +302,6 @@ public class SwitchReplacer {
 
         List<Op03SimpleStatement> switchStatements = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
         /*
-         * Filter out any no-op switches we've had to leave in....
-         */
-
-        /*
          * Get the block identifiers for all switch statements and their cases.
          */
         for (Op03SimpleStatement switchStatement : switchStatements) {
@@ -350,8 +343,6 @@ public class SwitchReplacer {
         }
         return true;
     }
-
-
 
     private static void examineSwitchContiguity(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements,
                                                 boolean pullCodeIntoCase) {
@@ -567,6 +558,14 @@ public class SwitchReplacer {
                     }
                     if (originalTarget != breakStatementTarget) {
                         // Repoint.
+                        if (originalTarget == breakSource.getLinearlyNext()
+                            && originalTarget.getStatement() instanceof CaseStatement
+                            && !((CaseStatement) originalTarget.getStatement()).isDefault()
+                            && originalTarget.getSources().contains(switchStatement)) {
+                            // An unusual fall through.
+                            breakSource.replaceStatement(new Nop());
+                            continue;
+                        }
                         breakSource.replaceTarget(originalTarget, breakStatementTarget);
                         originalTarget.removeSource(breakSource);
                         breakStatementTarget.addSource(breakSource);
@@ -616,20 +615,20 @@ public class SwitchReplacer {
 
 
     /*
-* If we end up in a situation like this
-*
-* switch (x) {
-*   case a:
-*   case b:
-*   case c:
-*   lbl : case d: [or default]
-* }
-*
-* where lbl has no body, then forward jumps to lbl from inside that switch are equivalent to jumping to the
-* following statement.
-*
-* This is related to (but not identical to) removePointlessSwitchDefaults.
-*/
+    * If we end up in a situation like this
+    *
+    * switch (x) {
+    *   case a:
+    *   case b:
+    *   case c:
+    *   lbl : case d: [or default]
+    * }
+    *
+    * where lbl has no body, then forward jumps to lbl from inside that switch are equivalent to jumping to the
+    * following statement.
+    *
+    * This is related to (but not identical to) removePointlessSwitchDefaults.
+    */
     private static void moveJumpsToTerminalIfEmpty(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
         SwitchStatement swatch = (SwitchStatement) switchStatement.getStatement();
         Op03SimpleStatement lastTgt = switchStatement.getTargets().get(switchStatement.getTargets().size() - 1);
@@ -676,8 +675,7 @@ public class SwitchReplacer {
 
 
     /* This WILL go too far, as we have no way of knowing when the common code ends....
- *
- */
+     */
     private static class NodeReachable implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
 
         private final Set<Op03SimpleStatement> otherCases;
@@ -709,5 +707,151 @@ public class SwitchReplacer {
             inBlock.add(arg1);
             arg2.enqueue(arg1.getTargets());
         }
+    }
+
+    private static class NodesReachedUntil implements BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>> {
+        private final Op03SimpleStatement start;
+        private final Op03SimpleStatement target;
+        private final Set<Op03SimpleStatement> banned;
+        private boolean found = false;
+        private boolean hitBanned = false;
+
+        private final Set<Op03SimpleStatement> reaches = SetFactory.newSet();
+
+        private NodesReachedUntil(Op03SimpleStatement start, Op03SimpleStatement target, Set<Op03SimpleStatement> banned) {
+            this.start = start;
+            this.target = target;
+            this.banned = banned;
+        }
+
+        @Override
+        public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
+            if (arg1 == target) {
+                found = true;
+                return;
+            }
+            if (banned.contains(arg1)) {
+                hitBanned = true;
+                return;
+            }
+            if (reaches.add(arg1)) {
+                arg2.enqueue(arg1.getTargets());
+            }
+        }
+    }
+
+    private static int getDefault(DecodedSwitch decodedSwitch) {
+        List<DecodedSwitchEntry> jumpTargets = decodedSwitch.getJumpTargets();
+        for (int idx = 0; idx< jumpTargets.size(); ++idx) {
+            DecodedSwitchEntry entry = jumpTargets.get(idx);
+            if (entry.hasDefault()) return idx;
+        }
+        return -1;
+    }
+
+    /*
+     * This handles a particular code pattern seen in some embedded java
+     * in which a switch references blocks that have no spatial locality at all - usually the second switch
+     * in the method behaves like this, which leads me to assume it's a code re-use strategy rather than
+     * an obfuscation in the specific examples I'm seeing.
+     */
+    private static void tryInlineRawSwitchContent(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements) {
+        /*
+         * We have to assume we can tie the cases up somehow.  First attempt - assume that the default branch
+         * (following nop goto) is the common end case.
+         *
+         * This will only work for a limited scenario:
+         *
+         * - Case statements do not have fall through
+         * - Default is common join point ( returns possible, but case must rejoin )
+         * - Individual cases are not reachable from elsewhere
+         */
+        RawSwitchStatement rawSwitch = (RawSwitchStatement)switchStatement.getStatement();
+        int defaultIdx = getDefault(rawSwitch.getSwitchData());
+        if (defaultIdx < 0) return;
+        Op03SimpleStatement defaultTarget = switchStatement.getTargets().get(defaultIdx);
+
+        Op03SimpleStatement ultTarget = Misc.followNopGotoChain(defaultTarget, true, false);
+
+        /*
+         * For each of the cases ( including default ), ensure that they join up at ultTarget, *without intersecting*
+         * and without changing block content.
+         */
+        Set<Op03SimpleStatement> seen = SetFactory.newSet(switchStatement);
+        List<NodesReachedUntil> reachedUntils = ListFactory.newList();
+        for (Op03SimpleStatement target : switchStatement.getTargets()) {
+            NodesReachedUntil nodesReachedUntil = new NodesReachedUntil(target, ultTarget, seen);
+            reachedUntils.add(nodesReachedUntil);
+            GraphVisitor<Op03SimpleStatement> gv = new GraphVisitorDFS<Op03SimpleStatement>(target, nodesReachedUntil);
+            gv.process();
+            if (!nodesReachedUntil.found) {
+                return;
+            }
+            if (nodesReachedUntil.hitBanned) {
+                return;
+            }
+            // For each of these blocks, they should have no entry points other than switchStatement, or themselves.
+            Set<Op03SimpleStatement> reachedNodes = nodesReachedUntil.reaches;
+            for (Op03SimpleStatement reached : reachedNodes) {
+                for (Op03SimpleStatement source : reached.getSources()) {
+                    if (reachedNodes.contains(source)) {
+                        continue;
+                    }
+                    if (source == switchStatement) {
+                        continue;
+                    }
+                    return;
+                }
+            }
+            if (!blockIsContiguous(statements, target, reachedNodes)) {
+                return;
+            }
+            seen.addAll(reachedNodes);
+        }
+        // If we've got here, then all of the content of each of the cases can be copied into the target.
+        // because we've verified that they don't share any code with other blocks though, we'll just re-label them.
+        InstrIndex targetIndex = switchStatement.getIndex();
+        Op03SimpleStatement lastStatement = null;
+        Op03SimpleStatement firstStatement = null;
+        for (NodesReachedUntil reached : reachedUntils) {
+            Op03SimpleStatement start = reached.start;
+            // We have already verified that these are contiguous.
+            int idx = statements.indexOf(start);
+            int max = idx + reached.reaches.size();
+            for (int x = idx; x < max; ++x) {
+                targetIndex = targetIndex.justAfter();
+                lastStatement = statements.get(x);
+                if (firstStatement == null) {
+                    firstStatement = lastStatement;
+                }
+                lastStatement.setIndex(targetIndex);
+            }
+        }
+        if (lastStatement == null) {
+            // We never achieved anything.
+            return;
+        }
+        // If ult target is before the switch, we need to introduce another node after the switch in replacement,
+        // and redirect via that.
+        if (ultTarget.getIndex().isBackJumpFrom(switchStatement)) {
+            targetIndex = targetIndex.justAfter();
+            Op03SimpleStatement ultTargetNew = new Op03SimpleStatement(lastStatement.getBlockIdentifiers(), new GotoStatement(), targetIndex);
+            statements.add(ultTargetNew);
+            ultTargetNew.addTarget(ultTarget);
+            ultTarget.addSource(ultTargetNew);
+            List<Op03SimpleStatement> ultSources = ListFactory.newList(ultTarget.getSources());
+            seen.add(switchStatement);
+            for (Op03SimpleStatement source : ultSources) {
+                if (seen.contains(source)) {
+                    ultTarget.removeSource(source);
+                    source.replaceTarget(ultTarget, ultTargetNew);
+                    ultTargetNew.addSource(source);
+                }
+            }
+        }
+        Set<BlockIdentifier> firstBlocks = firstStatement.getBlockIdentifiers();
+        List<BlockIdentifier> newInFirst = SetUtil.differenceAtakeBtoList(firstBlocks, switchStatement.getBlockIdentifiers());
+        Cleaner.sortAndRenumberInPlace(statements);
+        switchStatement.getBlockIdentifiers().addAll(newInFirst);
     }
 }

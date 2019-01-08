@@ -248,7 +248,10 @@ public class CodeAnalyser {
 
         // These are 'processed' exceptions, which we can use to lay out code.
         List<ExceptionTableEntry> exceptionTableEntries = originalCodeAttribute.getExceptionTableEntries();
-        if (options.getOption(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS)) exceptionTableEntries = ListFactory.newList();
+        if (options.getOption(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS)) {
+            exceptionTableEntries = ListFactory.newList();
+        }
+
         ExceptionAggregator exceptions = new ExceptionAggregator(exceptionTableEntries, blockIdentifierFactory, lutByOffset, instrs, options, cp, comments);
         if (exceptions.RemovedLoopingExceptions()) {
             comments.addComment(DecompilerComment.LOOPING_EXCEPTIONS);
