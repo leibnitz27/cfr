@@ -56,7 +56,7 @@ public class Misc {
     public static class IsBackJumpTo implements Predicate<Op03SimpleStatement> {
         private final InstrIndex thisIndex;
 
-        public IsBackJumpTo(InstrIndex thisIndex) {
+        IsBackJumpTo(InstrIndex thisIndex) {
             this.thisIndex = thisIndex;
         }
 
@@ -146,7 +146,7 @@ public class Misc {
                 if (foundLast) {
                     // This is 'failure' behaviour.  It will probably trigger a re-sort.
                     // TODO : Handle better.
-                    return last - 1;
+                    return last;
                 }
             } else {
                 if (!foundLast) {
@@ -193,7 +193,7 @@ public class Misc {
     }
 
     // Should have a set to make sure we've not looped.
-    public static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource, boolean aggressive) {
+    static Op03SimpleStatement followNopGoto(Op03SimpleStatement in, boolean requireJustOneSource, boolean aggressive) {
         if (in == null) {
             return null;
         }
@@ -245,14 +245,13 @@ public class Misc {
         statement.rewriteExpressions(finder, statement.getContainer().getSSAIdentifiers());
     }
 
-    public static Op03SimpleStatement findSingleBackSource(Op03SimpleStatement start) {
+    static Op03SimpleStatement findSingleBackSource(Op03SimpleStatement start) {
         List<Op03SimpleStatement> startSources = Functional.filter(start.getSources(), new IsForwardJumpTo(start.getIndex()));
         if (startSources.size() != 1) {
             return null;
         }
         return startSources.get(0);
     }
-
 
     static BlockIdentifier findOuterBlock(BlockIdentifier b1, BlockIdentifier b2, List<Op03SimpleStatement> statements) {
         for (Op03SimpleStatement s : statements) {
@@ -303,7 +302,7 @@ public class Misc {
             return found;
         }
 
-        public static Set<Op03SimpleStatement> getBlockReachable(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
+        static Set<Op03SimpleStatement> getBlockReachable(Op03SimpleStatement start, BlockIdentifier blockIdentifier) {
             GraphVisitorBlockReachable r = new GraphVisitorBlockReachable(start, blockIdentifier);
             return r.privGetBlockReachable();
         }
@@ -321,9 +320,7 @@ public class Misc {
             GraphVisitorBlockReachable r = new GraphVisitorBlockReachable(start, blockIdentifier);
             return r.privGetBlockReachableAndExits();
         }
-
     }
-
 
     static Set<Op03SimpleStatement> collectAllSources(Collection<Op03SimpleStatement> statements) {
         Set<Op03SimpleStatement> result = SetFactory.newSet();

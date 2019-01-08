@@ -72,7 +72,7 @@ public class AttributeCode extends Attribute {
         etis.ensureCapacity(numExceptions);
         final long numBytesExceptionInfo =
                 ContiguousEntityFactory.buildSized(raw.getOffsetData(OFFSET_OF_EXCEPTION_TABLE), numExceptions, 8, etis,
-                        ExceptionTableEntry.getBuilder(cp));
+                        ExceptionTableEntry.getBuilder());
         this.exceptionTableEntries = etis;
 
         final long OFFSET_OF_ATTRIBUTES_COUNT = OFFSET_OF_EXCEPTION_TABLE + numBytesExceptionInfo;

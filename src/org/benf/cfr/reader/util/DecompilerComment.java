@@ -4,11 +4,12 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-public class    DecompilerComment implements Dumpable {
+public class DecompilerComment implements Dumpable {
 
     public static DecompilerComment UNABLE_TO_STRUCTURE = new DecompilerComment("Unable to fully structure code", true);
     public static DecompilerComment AGGRESSIVE_TOPOLOGICAL_SORT = new DecompilerComment("Enabled aggressive block sorting");
     public static DecompilerComment AGGRESSIVE_EXCEPTION_AGG = new DecompilerComment("Enabled aggressive exception aggregation");
+    public static DecompilerComment AGGRESSIVE_EXCEPTION_VERY_AGG = new DecompilerComment("WARNING - combined exceptions agressively - possible behaviour change.");
     public static DecompilerComment COND_PROPAGATE = new DecompilerComment("Enabled force condition propagation");
     public static DecompilerComment RETURNING_IFS = new DecompilerComment("Lifted jumps to return sites");
     public static DecompilerComment PRUNE_EXCEPTIONS = new DecompilerComment("Enabled unnecessary exception pruning");

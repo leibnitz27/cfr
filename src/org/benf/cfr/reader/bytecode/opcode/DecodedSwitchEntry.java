@@ -18,7 +18,7 @@ public class DecodedSwitchEntry {
         return value;
     }
 
-    public int getBytecodeTarget() {
+    int getBytecodeTarget() {
         return bytecodeTarget;
     }
 

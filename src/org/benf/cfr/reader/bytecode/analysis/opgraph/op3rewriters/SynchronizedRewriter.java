@@ -15,7 +15,7 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
 
-public class SynchronizedRewriter {
+class SynchronizedRewriter {
     /*
      * TODO : Defeatable.
      * Every time we write
@@ -37,7 +37,7 @@ public class SynchronizedRewriter {
      *
      * Remove the catch block and try statement.
      */
-    public static void removeSynchronizedCatchBlocks(Options options, List<Op03SimpleStatement> in) {
+    static void removeSynchronizedCatchBlocks(Options options, List<Op03SimpleStatement> in) {
         if (!options.getOption(OptionsImpl.TIDY_MONITORS)) return;
         // find all the block statements which are the first statement in a CATCHBLOCK.
         List<Op03SimpleStatement> catchStarts = Functional.filter(in, new FindBlockStarts(BlockType.CATCHBLOCK));

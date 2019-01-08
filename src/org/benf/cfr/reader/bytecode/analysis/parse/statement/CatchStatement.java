@@ -32,7 +32,7 @@ public class CatchStatement extends AbstractStatement {
         }
     }
 
-    public static JavaTypeInstance determineType(List<ExceptionGroup.Entry> exceptions) {
+    private static JavaTypeInstance determineType(List<ExceptionGroup.Entry> exceptions) {
         InferredJavaType ijt = new InferredJavaType();
         ijt.chain(new InferredJavaType(exceptions.get(0).getCatchType(), InferredJavaType.Source.EXCEPTION));
         for (int x = 1, len = exceptions.size(); x < len; ++x) {
@@ -52,6 +52,13 @@ public class CatchStatement extends AbstractStatement {
             }
         });
         exceptions.removeAll(toRemove);
+    }
+
+    public boolean hasCatchBlockFor(final BlockIdentifier tryBlockIdent) {
+        for (ExceptionGroup.Entry entry : exceptions) {
+            if (entry.getTryBlockIdentifier().equals(tryBlockIdent)) return true;
+        }
+        return false;
     }
 
     @Override

@@ -300,10 +300,13 @@ public class OptionsImpl implements Options {
             "Drop exception information if completely stuck (WARNING : changes semantics, dangerous!)");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_PRUNE_EXCEPTIONS = new PermittedOptionProvider.Argument<Troolean>(
             "forceexceptionprune", defaultNeitherTrooleanDecoder,
-            "Try to extend and merge exceptions more aggressively");
+            "Remove nested exception handlers if they don't change semantics");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_AGGRESSIVE_EXCEPTION_AGG = new PermittedOptionProvider.Argument<Troolean>(
             "aexagg", defaultNeitherTrooleanDecoder,
-            "Remove nested exception handlers if they don't change semantics");
+            "Try to extend and merge exceptions more aggressively");
+    public static final PermittedOptionProvider.Argument<Troolean> FORCE_AGGRESSIVE_EXCEPTION_AGG2 = new PermittedOptionProvider.Argument<Troolean>(
+            "aexagg", defaultNeitherTrooleanDecoder,
+            "Try to extend and merge exceptions more aggressively (may change semantics)");
     public static final PermittedOptionProvider.Argument<Troolean> RECOVER_TYPECLASHES = new PermittedOptionProvider.Argument<Troolean>(
             "recovertypeclash", defaultNeitherTrooleanDecoder,
             "Split lifetimes where analysis caused type clash");
@@ -447,7 +450,7 @@ public class OptionsImpl implements Options {
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
                     RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS, USE_NAME_TABLE,
                     AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA,
-                    CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS, REWRITE_TRY_RESOURCES, IGNORE_EXCEPTIONS, METHODNAME, SKIP_BATCH_INNER_CLASSES);
+                    CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS, REWRITE_TRY_RESOURCES, IGNORE_EXCEPTIONS, IGNORE_EXCEPTIONS_ALWAYS, METHODNAME, SKIP_BATCH_INNER_CLASSES);
         }
 
         @Override
