@@ -893,7 +893,9 @@ public class Op03Blocks {
         // see bb/xh.class
         blocks = combineSingleCaseBackBlock(blocks);
 
-        blocks = addTryEndDependencies(blocks);
+        if (options.getOption(OptionsImpl.FORCE_TOPSORT_EXTRA) == Troolean.TRUE) {
+            blocks = addTryEndDependencies(blocks);
+        }
 
         blocks = doTopSort(blocks);
 
