@@ -223,8 +223,10 @@ public class ExceptionAggregator {
                     // See if the last statement is a direct return, which could be pushed in.  If so, expand try block.
                     int offset = canExpandTryBy(tgtIdx, instrs);
                     if (offset != 0) {
-                        exceptionTableEntry = exceptionTableEntry.copyWithRange(exceptionTableEntry.getBytecodeIndexFrom(),
-                                (short) (exceptionTableEntry.getBytecodeIndexTo() + offset));
+                        int bytecodeIndexFrom = exceptionTableEntry.getBytecodeIndexFrom();
+                        int bytecodeIndexTo = (exceptionTableEntry.getBytecodeIndexTo() + offset);
+                        exceptionTableEntry = exceptionTableEntry.copyWithRange(bytecodeIndexFrom,
+                                bytecodeIndexTo);
                     }
                     indexTo += offset;
                 }
