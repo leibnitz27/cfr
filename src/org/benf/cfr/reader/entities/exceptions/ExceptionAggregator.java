@@ -242,7 +242,7 @@ public class ExceptionAggregator {
             int indexFrom = exceptionTableEntry.getBytecodeIndexFrom();
             if (indexFrom < handlerIndex &&
                     indexTo >= handlerIndex) {
-                exceptionTableEntry = exceptionTableEntry.copyWithRange((short) indexFrom, (short) handlerIndex);
+                exceptionTableEntry = exceptionTableEntry.copyWithRange(indexFrom, handlerIndex);
             }
             extended.add(exceptionTableEntry);
         }
