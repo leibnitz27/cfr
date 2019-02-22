@@ -104,7 +104,7 @@ public class GetOptParser {
     }
 
     private static void printUsage() {
-        System.err.println("java --jar CFRJAR.jar class_or_jar_file [method] [options]\n");
+        System.err.println("java -jar CFRJAR.jar class_or_jar_file [method] [options]\n");
     }
 
     public void showHelp(Exception e) {
