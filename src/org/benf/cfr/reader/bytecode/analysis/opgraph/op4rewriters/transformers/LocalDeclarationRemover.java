@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -32,7 +33,11 @@ public class LocalDeclarationRemover implements StructuredStatementTransformer, 
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         Expression tmp = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         if (tmp instanceof StructuredStatementExpression) {
-            ((StructuredStatementExpression) tmp).getContent().getContainer().transform(this, new StructuredScope());
+            Op04StructuredStatement container = ((StructuredStatementExpression) tmp).getContent().getContainer();
+            // Can't always assume a container - some lambda expressions won't have one.
+            if (container != null) {
+                container.transform(this, new StructuredScope());
+            }
         }
         return tmp;
     }
