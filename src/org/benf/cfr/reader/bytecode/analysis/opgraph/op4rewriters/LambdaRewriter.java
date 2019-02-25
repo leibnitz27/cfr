@@ -144,7 +144,6 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         if (e instanceof LValueExpression) {
             LValueExpression lValueExpression = (LValueExpression) e;
             LValue lValue = lValueExpression.getLValue();
-            if (!(lValue instanceof LocalVariable)) throw new CannotDelambaException();
             return new LValueExpression(lValue);
         }
         if (e instanceof NewObjectArray) return e;
