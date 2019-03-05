@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,16 @@ public class BindingSuperContainer {
         this.thisClass = thisClass;
         this.boundSuperClasses = boundSuperClasses;
         this.boundSuperRoute = boundSuperRoute;
+    }
+
+    public static BindingSuperContainer unknownThrowable(JavaRefTypeInstance refType) {
+        Map<JavaRefTypeInstance, JavaGenericRefTypeInstance> supers = MapFactory.newMap();
+        supers.put(TypeConstants.THROWABLE, null);
+        supers.put(refType, null);
+        Map<JavaRefTypeInstance, Route> routes = MapFactory.newMap();
+        routes.put(TypeConstants.THROWABLE, Route.EXTENSION);
+        routes.put(refType, Route.IDENTITY);
+        return new BindingSuperContainer(null, supers, routes);
     }
 
     public JavaGenericRefTypeInstance getBoundAssignable(JavaGenericRefTypeInstance assignable, JavaGenericRefTypeInstance superType) {

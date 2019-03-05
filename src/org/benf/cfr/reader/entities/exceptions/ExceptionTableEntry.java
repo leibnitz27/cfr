@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.entities.exceptions;
 
+import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
@@ -45,7 +46,14 @@ public class ExceptionTableEntry implements Comparable<ExceptionTableEntry> {
         if (catch_type == 0) {
             return cp.getClassCache().getRefClassFor(TypeConstants.throwableName);
         } else {
-            return (JavaRefTypeInstance) cp.getClassEntry(catch_type).getTypeInstance();
+            JavaRefTypeInstance refTypeInstance = (JavaRefTypeInstance) cp.getClassEntry(catch_type).getTypeInstance();
+            // It's possible we won't be able to load the type.
+            // If so, we at least know it's throwable.
+            if (refTypeInstance.getBindingSupers() == null) {
+                BindingSuperContainer bsc = BindingSuperContainer.unknownThrowable(refTypeInstance);
+                refTypeInstance.forceBindingSupers(bsc);
+            }
+            return refTypeInstance;
         }
     }
 

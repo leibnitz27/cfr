@@ -272,6 +272,10 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         return innerClassInfo;
     }
 
+    public void forceBindingSupers(BindingSuperContainer bindingSuperContainer) {
+        cachedBindingSupers = bindingSuperContainer;
+    }
+
     @Override
     public BindingSuperContainer getBindingSupers() {
         if (cachedBindingSupers != BindingSuperContainer.POISON) return cachedBindingSupers;
