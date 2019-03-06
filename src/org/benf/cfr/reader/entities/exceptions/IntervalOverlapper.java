@@ -25,7 +25,7 @@ public class IntervalOverlapper {
 
     //Apache Harmony throws an NPE when calling methods on value set of a blank map
     private static <X> Set<X> razeValues(NavigableMap<?, Set<X>> map) {
-        Set<X> res = SetFactory.newSet();
+        Set<X> res = SetFactory.newOrderedSet();
         if (map.isEmpty()) return res;
         for (Set<X> i : map.values()) {
             res.addAll(i);
@@ -111,10 +111,10 @@ public class IntervalOverlapper {
                 ExceptionTableEntry out = e.copyWithRange(start, currentTo);
                 addEntry(out);
                 output.add(out);
-                currentTo = (start);
+                currentTo = start;
             }
             remainingBlockTo = currentTo;
-            revBlockStarts.add((to));
+            revBlockStarts.add(to);
             for (ExceptionTableEntry e2 : overlapStartsBefore) {
                 currentTo = e2.getBytecodeIndexTo();
                 for (int x = revBlockStarts.size() - 1; x >= 0; --x) {
@@ -123,7 +123,7 @@ public class IntervalOverlapper {
                     ExceptionTableEntry out = e.copyWithRange(start, currentTo);
                     addEntry(out);
                     output.add(out);
-                    currentTo = (start);
+                    currentTo = start;
                 }
             }
         }
@@ -141,7 +141,7 @@ public class IntervalOverlapper {
     private <A, B> void add(NavigableMap<A, Set<B>> m, A k, B v) {
         Set<B> b = m.get(k);
         if (b == null) {
-            b = SetFactory.newSet();
+            b = SetFactory.newOrderedSet();
             m.put(k, b);
         }
         b.add(v);
