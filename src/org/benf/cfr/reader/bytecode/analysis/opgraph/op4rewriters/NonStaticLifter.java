@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.Construct
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
@@ -16,6 +17,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssi
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDefinition;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -152,6 +154,22 @@ public class NonStaticLifter {
                 return;
             }
             usedFvs.add(fieldVariable.getObject());
+
+            ClassFileField f = fieldMap.get(fieldVariable.getFieldName()).getSecond();
+            // Ok, it doesn't use anything it shouldn't - change the initialiser.
+            Field field = f.getField();
+            // This is where it gets fun.  If it doesn't have a constant value, we can lift it, UNLESS it's
+            // a literal!!
+            if (field.testAccessFlag(AccessFlag.ACC_FINAL)
+                    && field.getConstantValue() == null
+                    && rValue instanceof Literal) {
+                // And it's being assigned to either a raw or a string
+                if (field.getJavaTypeInstance().isRaw() ||
+                    field.getJavaTypeInstance() == TypeConstants.STRING) {
+                    continue;
+                }
+            }
+            f.setInitialValue(rValue);
             for (List<Op04StructuredStatement> constructorCodeLst1 : constructorCodeList) {
                 constructorCodeLst1.get(x).nopOut();
             }
@@ -170,8 +188,6 @@ public class NonStaticLifter {
         if (thisField == null) return false;
         ClassFileField classFileField = thisField.getSecond();
         if (!hasLegitArgs(rValue, usedFvs)) return false;
-        // Ok, it doesn't use anything it shouldn't - change the initialiser.
-        classFileField.setInitialValue(rValue);
         return true;
     }
 
