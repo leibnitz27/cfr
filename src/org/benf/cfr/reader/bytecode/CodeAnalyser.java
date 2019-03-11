@@ -359,6 +359,8 @@ public class CodeAnalyser {
             op03SimpleParseNodes = LValuePropSimple.condenseSimpleLValues(op03SimpleParseNodes);
         }
 
+        Op03Rewriters.nopIsolatedStackValues(op03SimpleParseNodes);
+
         Op03SimpleStatement.assignSSAIdentifiers(method, op03SimpleParseNodes);
 
         // Condense pointless assignments

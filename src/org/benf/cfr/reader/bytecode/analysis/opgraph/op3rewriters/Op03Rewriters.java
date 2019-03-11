@@ -184,4 +184,8 @@ public class Op03Rewriters {
     public static void condenseConstruction(DCCommonState dcCommonState, Method method, List<Op03SimpleStatement> op03SimpleParseNodes, AnonymousClassUsage anonymousClassUsage) {
         CondenseConstruction.condenseConstruction(dcCommonState, method, op03SimpleParseNodes, anonymousClassUsage);
     }
+
+    public static void nopIsolatedStackValues(List<Op03SimpleStatement> op03SimpleParseNodes) {
+        IsolatedStackValue.nopIsolatedStackValues(op03SimpleParseNodes);
+    }
 }
