@@ -70,7 +70,7 @@ public class LoopLivenessClash {
          */
 //        if (iterType == TypeConstants.OBJECT) return false;
         /*
-         * We're not interating over the right thing.
+         * We're not iterating over the right thing.
          */
         LocalVariable lvIter = (LocalVariable)iterator;
         Set<Integer> clashes = SetFactory.newSet();
