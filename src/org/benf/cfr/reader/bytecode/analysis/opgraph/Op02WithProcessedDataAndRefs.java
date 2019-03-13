@@ -1540,7 +1540,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         this.instr = JVMInstr.SWAP;
     }
 
-    private void collectLocallyMutatedVariables(SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
+    private void collectLocallyMutatedVariables(SSAIdentifierFactory<Slot, StackType> ssaIdentifierFactory) {
         Pair<JavaTypeInstance, Integer> storage = getStorageType();
         if (storage != null) {
             ssaIdentifiers = new SSAIdentifiers<Slot>(new Slot(storage.getFirst(), storage.getSecond()), ssaIdentifierFactory);
@@ -1548,10 +1548,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
 
         ssaIdentifiers = new SSAIdentifiers<Slot>();
-        return;
     }
 
-    private static void assignSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta) {
+    private static void assignSSAIdentifiers(SSAIdentifierFactory<Slot, StackType> ssaIdentifierFactory, Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta) {
         NavigableMap<Integer, JavaTypeInstance> missing = assignIdentsAndGetMissingMap(ssaIdentifierFactory, method, statements, bytecodeMeta, true);
 
         if (missing.isEmpty()) return;
@@ -1582,7 +1581,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements, bytecodeMeta, true);
     }
 
-    private static NavigableMap<Integer, JavaTypeInstance> assignIdentsAndGetMissingMap(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, boolean useProtoArgs) {
+    private static NavigableMap<Integer, JavaTypeInstance> assignIdentsAndGetMissingMap(SSAIdentifierFactory<Slot, StackType> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, boolean useProtoArgs) {
         assignSSAIdentifiersInner(ssaIdentifierFactory, method, statements, bytecodeMeta, useProtoArgs);
 
         /*
@@ -1603,7 +1602,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return missing;
     }
 
-    private static void assignSSAIdentifiersInner(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, boolean useProtoArgs) {
+    private static void assignSSAIdentifiersInner(SSAIdentifierFactory<Slot, StackType> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> statements, BytecodeMeta bytecodeMeta, boolean useProtoArgs) {
         /*
          * before we do anything, we need to generate identifiers for the parameters.
          *
@@ -1684,7 +1683,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
      * Detect that this aliasing is never READ, and therefore these two can be considered to be seperate.
      */
     @SuppressWarnings("unused")
-    private static void removeUnusedSSAIdentifiers(SSAIdentifierFactory<Slot> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> op2list) {
+    private static void removeUnusedSSAIdentifiers(SSAIdentifierFactory<Slot, StackType> ssaIdentifierFactory, Method method, List<Op02WithProcessedDataAndRefs> op2list) {
         final List<Op02WithProcessedDataAndRefs> endPoints = ListFactory.newList();
         GraphVisitor<Op02WithProcessedDataAndRefs> gv = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(
                 op2list.get(0),
@@ -1806,9 +1805,9 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     public static void discoverStorageLiveness(Method method, DecompilerComments comments, List<Op02WithProcessedDataAndRefs> op2list, BytecodeMeta bytecodeMeta) {
-        SSAIdentifierFactory<Slot> ssaIdentifierFactory = new SSAIdentifierFactory<Slot>(new UnaryFunction<Slot, Object>() {
+        SSAIdentifierFactory<Slot, StackType> ssaIdentifierFactory = new SSAIdentifierFactory<Slot, StackType>(new UnaryFunction<Slot, StackType>() {
             @Override
-            public Object invoke(Slot arg) {
+            public StackType invoke(Slot arg) {
                 return arg.getJavaTypeInstance().getStackType();
             }
         });
@@ -1924,6 +1923,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                             if (!innerslotkey.equals(slotkey)) {
                                 StackType s1 = innerslotkey.getFirst().getJavaTypeInstance().getStackType();
                                 StackType s2 = slotkey.getFirst().getJavaTypeInstance().getStackType();
+//                                if (innerslotkey.getSecond().getComparisonType() instanceof StackType) {
+//                                    s1 = (StackType)innerslotkey.getSecond().getComparisonType();
+//                                }
+//                                if (slotkey.getSecond().getComparisonType() instanceof StackType) {
+//                                    s2 = (StackType)innerslotkey.getSecond().getComparisonType();
+//                                }
                                 if (!(s1 == s2 && s1.isClosed())) {
                                     return;
                                 }

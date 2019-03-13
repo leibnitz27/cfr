@@ -384,7 +384,7 @@ public class WildcardMatch {
         }
 
         @Override
-        public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
+        public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue, ?> ssaIdentifierFactory) {
             throw new UnsupportedOperationException();
         }
 

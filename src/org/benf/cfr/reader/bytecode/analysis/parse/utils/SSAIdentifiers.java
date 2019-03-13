@@ -28,7 +28,7 @@ public class SSAIdentifiers<KEYTYPE> {
         knownIdentifiersOnExit.putAll(other.knownIdentifiersOnExit);
     }
 
-    public SSAIdentifiers(KEYTYPE lValue, SSAIdentifierFactory<KEYTYPE> ssaIdentifierFactory) {
+    public SSAIdentifiers(KEYTYPE lValue, SSAIdentifierFactory<KEYTYPE, ?> ssaIdentifierFactory) {
         SSAIdent id = ssaIdentifierFactory.getIdent(lValue);
         knownIdentifiersOnEntry = MapFactory.newMap();
         knownIdentifiersOnExit = MapFactory.newMap();

@@ -553,16 +553,12 @@ public class InferredJavaType {
 
         public ClashState getClashState() {
             return ClashState.None;
-//            if (clashState != null) return clashState;
-//            if (isDelegate) return delegate.getClashState();
-//            return ClashState.None;
         }
 
         public void mkDelegate(IJTInternal newDelegate) {
             if (isDelegate) {
                 delegate.mkDelegate(newDelegate);
             } else {
-//                System.out.println("Making " + this + " a delegate to " + newDelegate);
                 isDelegate = true;
                 delegate = newDelegate;
             }
@@ -604,13 +600,6 @@ public class InferredJavaType {
 
         public void markClashState(ClashState newClashState) {
             throw new UnsupportedOperationException();
-//            if (this.clashState != null) {
-//                this.clashState = newClashState;
-//                return;
-//            }
-//            if (isDelegate) {
-//                delegate.markClashState(newClashState);
-//            }
         }
 
         public String toString() {
@@ -904,7 +893,14 @@ public class InferredJavaType {
         RawJavaType art = a.getRawType();
         RawJavaType brt = b.getRawType();
         if (art.getStackType() != StackType.INT ||
-                brt.getStackType() != StackType.INT) return;
+            brt.getStackType() != StackType.INT) {
+//            if (art == RawJavaType.VOID) {
+//                a.forceDelegate(b);
+//            } else if (brt == RawJavaType.VOID) {
+//                b.forceDelegate(a);
+//            }
+            return;
+        }
 
         InferredJavaType litType = null;
         InferredJavaType betterType = null;
@@ -944,7 +940,6 @@ public class InferredJavaType {
         litType.chainFrom(betterType);
     }
 
-
     /*
      * This is being explicitly casted by (eg) i2c.  We need to cut the chain.
      */
@@ -972,7 +967,6 @@ public class InferredJavaType {
                 if (thisRaw == RawJavaType.BOOLEAN && forbidBool) {
                     this.value.forceType(otherRaw, false);
                 }
-//                this.value.forceType(otherRaw, false);
             } else if (cmp == 0) {
                 if (thisRaw == RawJavaType.BOOLEAN && forbidBool) {
                     this.value.forceType(RawJavaType.INT, false);
@@ -998,6 +992,9 @@ public class InferredJavaType {
                 lhsRawType = RawJavaType.INT;
                 break;
         }
+//        if (lhsRawType == RawJavaType.VOID) {
+//            lhsRawType = RawJavaType.INT;
+//        }
         rhs.useInArithOp(lhs, lhsRawType, forbidBool);
     }
 
@@ -1180,9 +1177,6 @@ public class InferredJavaType {
     public void confirmVarIfPossible() {
         value.confirmVarIfPossible();
     }
-//    public String getCastString() {
-//        return value.getJavaTypeInstance().toString();
-//    }
 
     public JavaTypeInstance getJavaTypeInstance() {
         return value.getJavaTypeInstance();
@@ -1201,6 +1195,5 @@ public class InferredJavaType {
     @Override
     public String toString() {
         return (value.getClashState() == ClashState.Clash) ? " /* !! */ " : "";
-        //  return "[" + ((value.getClashState() == ClashState.Clash) ? " /* !! */ " : "") + value.toString() + "]";
     }
 }

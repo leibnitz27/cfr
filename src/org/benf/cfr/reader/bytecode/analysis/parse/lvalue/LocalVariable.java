@@ -130,7 +130,7 @@ public class LocalVariable extends AbstractLValue {
     }
 
     @Override
-    public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
+    public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue, ?> ssaIdentifierFactory) {
         return new SSAIdentifiers<LValue>(this, ssaIdentifierFactory);
     }
 

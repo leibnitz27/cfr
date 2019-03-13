@@ -294,7 +294,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         }
     }
 
-    public Map<Slot, SSAIdent> collectInitialSlotUsage(SSAIdentifierFactory<Slot> ssaIdentifierFactory) {
+    public Map<Slot, SSAIdent> collectInitialSlotUsage(SSAIdentifierFactory<Slot, ?> ssaIdentifierFactory) {
         Map<Slot, SSAIdent> res = MapFactory.newOrderedMap();
         int offset = 0;
         if (instanceMethod) {

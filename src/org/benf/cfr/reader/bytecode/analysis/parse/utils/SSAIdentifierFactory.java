@@ -5,7 +5,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Map;
 
-public class SSAIdentifierFactory<KEYTYPE> {
+public class SSAIdentifierFactory<KEYTYPE, CMPTYPE> {
     private final Map<KEYTYPE, Integer> nextIdentFor = MapFactory.newLazyMap(
             MapFactory.<KEYTYPE, Integer>newOrderedMap(),
             new UnaryFunction<KEYTYPE, Integer>() {
@@ -15,9 +15,9 @@ public class SSAIdentifierFactory<KEYTYPE> {
                 }
             });
 
-    private final UnaryFunction<KEYTYPE, Object> typeComparisonFunction;
+    private final UnaryFunction<KEYTYPE, CMPTYPE> typeComparisonFunction;
 
-    public SSAIdentifierFactory(UnaryFunction<KEYTYPE, Object> typeComparisonFunction) {
+    public SSAIdentifierFactory(UnaryFunction<KEYTYPE, CMPTYPE> typeComparisonFunction) {
         this.typeComparisonFunction = typeComparisonFunction;
     }
 

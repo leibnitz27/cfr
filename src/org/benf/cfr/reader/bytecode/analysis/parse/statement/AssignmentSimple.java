@@ -53,7 +53,7 @@ public class AssignmentSimple extends AbstractAssignment {
     }
 
     @Override
-    public SSAIdentifiers<LValue> collectLocallyMutatedVariables(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
+    public SSAIdentifiers<LValue> collectLocallyMutatedVariables(SSAIdentifierFactory<LValue, ?> ssaIdentifierFactory) {
         return lvalue.collectVariableMutation(ssaIdentifierFactory);
     }
 

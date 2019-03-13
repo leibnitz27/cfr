@@ -21,7 +21,7 @@ public interface LValue extends DumpableWithPrecedence, DeepCloneable<LValue>, T
 
     void collectLValueUsage(LValueUsageCollector lValueUsageCollector);
 
-    SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory);
+    SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue, ?> ssaIdentifierFactory);
 
     LValue replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer);
 

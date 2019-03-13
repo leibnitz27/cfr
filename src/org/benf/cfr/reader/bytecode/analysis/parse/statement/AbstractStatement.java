@@ -40,7 +40,7 @@ public abstract class AbstractStatement implements Statement {
     }
 
     @Override
-    public SSAIdentifiers<LValue> collectLocallyMutatedVariables(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
+    public SSAIdentifiers<LValue> collectLocallyMutatedVariables(SSAIdentifierFactory<LValue, ?> ssaIdentifierFactory) {
         return new SSAIdentifiers<LValue>();
     }
 

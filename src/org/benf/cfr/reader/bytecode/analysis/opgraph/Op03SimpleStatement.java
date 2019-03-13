@@ -541,7 +541,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         return result;
     }
 
-    private void collectLocallyMutatedVariables(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
+    private void collectLocallyMutatedVariables(SSAIdentifierFactory<LValue, ?> ssaIdentifierFactory) {
         this.ssaIdentifiers = containedStatement.collectLocallyMutatedVariables(ssaIdentifierFactory);
     }
 
@@ -557,7 +557,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
      */
     public static void assignSSAIdentifiers(Method method, List<Op03SimpleStatement> statements) {
 
-        SSAIdentifierFactory<LValue> ssaIdentifierFactory = new SSAIdentifierFactory<LValue>(null);
+        SSAIdentifierFactory<LValue,Void> ssaIdentifierFactory = new SSAIdentifierFactory<LValue,Void>(null);
 
         List<LocalVariable> params = method.getMethodPrototype().getComputedParameters();
         Map<LValue, SSAIdent> initialSSAValues = MapFactory.newMap();

@@ -32,7 +32,7 @@ public interface Statement extends Dumpable, ComparableUnderEC {
 
     void collectObjectCreation(CreationCollector creationCollector);
 
-    SSAIdentifiers<LValue> collectLocallyMutatedVariables(SSAIdentifierFactory<LValue> ssaIdentifierFactory);
+    SSAIdentifiers<LValue> collectLocallyMutatedVariables(SSAIdentifierFactory<LValue, ?> ssaIdentifierFactory);
 
     boolean isCompound();
 

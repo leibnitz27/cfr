@@ -108,7 +108,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
     }
 
     @Override
-    public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue> ssaIdentifierFactory) {
+    public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue, ?> ssaIdentifierFactory) {
         //noinspection unchecked
         return new SSAIdentifiers(this, ssaIdentifierFactory);
     }
