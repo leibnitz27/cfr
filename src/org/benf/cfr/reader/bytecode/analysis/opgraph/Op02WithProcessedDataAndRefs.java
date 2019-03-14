@@ -1923,12 +1923,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                             if (!innerslotkey.equals(slotkey)) {
                                 StackType s1 = innerslotkey.getFirst().getJavaTypeInstance().getStackType();
                                 StackType s2 = slotkey.getFirst().getJavaTypeInstance().getStackType();
-//                                if (innerslotkey.getSecond().getComparisonType() instanceof StackType) {
-//                                    s1 = (StackType)innerslotkey.getSecond().getComparisonType();
-//                                }
-//                                if (slotkey.getSecond().getComparisonType() instanceof StackType) {
-//                                    s2 = (StackType)innerslotkey.getSecond().getComparisonType();
-//                                }
+                                if (innerslotkey.getSecond().getComparisonType() instanceof StackType) {
+                                    s1 = (StackType)innerslotkey.getSecond().getComparisonType();
+                                }
+                                if (slotkey.getSecond().getComparisonType() instanceof StackType) {
+                                    s2 = (StackType)innerslotkey.getSecond().getComparisonType();
+                                }
                                 if (!(s1 == s2 && s1.isClosed())) {
                                     return;
                                 }
