@@ -13,11 +13,13 @@ public class ForIterStatement extends AbstractStatement {
     private BlockIdentifier blockIdentifier;
     private LValue iterator;
     private Expression list; // or array!
+    private LValue hiddenList;
 
-    public ForIterStatement(BlockIdentifier blockIdentifier, LValue iterator, Expression list) {
+    public ForIterStatement(BlockIdentifier blockIdentifier, LValue iterator, Expression list, LValue hiddenList) {
         this.blockIdentifier = blockIdentifier;
         this.iterator = iterator;
         this.list = list;
+        this.hiddenList = hiddenList;
     }
 
     @Override
@@ -27,6 +29,10 @@ public class ForIterStatement extends AbstractStatement {
 
     public Expression getList() {
         return list;
+    }
+
+    public LValue getHiddenList() {
+        return hiddenList;
     }
 
     @Override

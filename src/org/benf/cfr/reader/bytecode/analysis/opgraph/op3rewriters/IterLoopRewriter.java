@@ -221,8 +221,7 @@ public class IterLoopRewriter {
             return;
         }
 
-
-        loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, arrayStatement));
+        loop.replaceStatement(new ForIterStatement(forBlock, sugarIter, arrayStatement, originalArray));
         if (loopStart != realLoopStart) {
             if (hiddenIter) {
                 /*
@@ -417,7 +416,7 @@ public class IterLoopRewriter {
             return;
         }
 
-        loop.replaceStatement(new ForIterStatement(blockIdentifier, sugarIter, iterSource));
+        loop.replaceStatement(new ForIterStatement(blockIdentifier, sugarIter, iterSource, null));
         if (loopStart != realLoopStart) {
             if (hiddenIter) {
                 /*

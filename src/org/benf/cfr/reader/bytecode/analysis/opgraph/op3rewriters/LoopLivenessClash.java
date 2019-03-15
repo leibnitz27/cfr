@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.SetFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -41,13 +42,21 @@ public class LoopLivenessClash {
     }
 
     private static boolean detect(Op03SimpleStatement statement, BytecodeMeta bytecodeMeta) {
+        boolean res = false;
         ForIterStatement forIterStatement = (ForIterStatement)statement.getStatement();
         LValue iterator = forIterStatement.getCreatedLValue();
         // Shouldn't happen, but if it has, don't check further.
-        if (!(iterator instanceof LocalVariable)) return false;
+        if (!(iterator instanceof LocalVariable)) return res;
 
         JavaTypeInstance iterType = iterator.getInferredJavaType().getJavaTypeInstance();
         InferredJavaType inferredListType = forIterStatement.getList().getInferredJavaType();
+        LValue hiddenList = forIterStatement.getHiddenList();
+        if (hiddenList != null && hiddenList.getInferredJavaType().isClash()) {
+            if (hiddenList instanceof LocalVariable) {
+                bytecodeMeta.informLivenessClashes(Collections.singleton(((LocalVariable) hiddenList) .getIdx()));
+                res = true;
+            }
+        }
         JavaTypeInstance listType = inferredListType.getJavaTypeInstance();
         // Figure out the iterable type - if we have an array / list.
         JavaTypeInstance listIterType;
@@ -56,13 +65,13 @@ public class LoopLivenessClash {
         } else {
             listIterType = getIterableIterType(listType);
         }
-        if (listIterType == null) return false;
-        if (iterType.equals(listIterType)) return false;
+        if (listIterType == null) return res;
+        if (iterType.equals(listIterType)) return res;
         // We've probably screwed up the types by failing to get the correct list type instead.
         // If it's appropriate, collect the 'better' type.
         if (listIterType instanceof JavaGenericPlaceholderTypeInstance) {
             bytecodeMeta.takeIteratedTypeHint(inferredListType, iterType);
-            return false;
+            return res;
         }
 
         /*

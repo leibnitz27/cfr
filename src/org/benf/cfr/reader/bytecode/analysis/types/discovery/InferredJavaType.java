@@ -114,10 +114,9 @@ public class InferredJavaType {
 
         private JavaTypeInstance type = null;
 
-
         private IJTInternal_Clash(Collection<IJTInternal> clashes) {
             this.id = global_id++;
-            this.clashes = ListFactory.newList(clashes);
+            this.clashes = ListFactory.newList(SetFactory.newOrderedSet(clashes));
         }
 
         private static Map<JavaTypeInstance, JavaGenericRefTypeInstance> getClashMatches(List<IJTInternal> clashes) {
@@ -134,6 +133,13 @@ public class InferredJavaType {
                 JavaTypeInstance clashType = clashes.get(x);
                 BindingSuperContainer otherSupers = clashType.getBindingSupers();
                 if (otherSupers == null) {
+                    if (clashType.isRaw() && !clashType.isObject()) {
+                    // We're never going to resolve this.
+                        // If we'd picked this type first, then we would have an
+                        // empty match set.
+                        matches.clear();
+                        return matches;
+                    }
                     continue;
                 }
                 Map<? extends JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
@@ -372,9 +378,6 @@ public class InferredJavaType {
 
         @Override
         public void forceType(JavaTypeInstance rawJavaType, boolean ignoreLock) {
-//            for (IJTInternal delegate : clashes) {
-//                delegate.forceType(rawJavaType, ignoreLock);
-//            }
             type = rawJavaType;
             resolved = true;
         }
@@ -771,15 +774,18 @@ public class InferredJavaType {
             if (genericThis && genericThat) {
                 return checkGenericCompatibility((JavaGenericRefTypeInstance)thisType, (JavaGenericRefTypeInstance)otherType);
             }
-            /*
-             *
-             */
             return true;
         }
 
-
         BindingSuperContainer otherSupers = otherType.getBindingSupers();
         if (otherSupers == null) {
+            // It's *not* correct to be symmetric here, however we really
+            // want to return true :)
+            // only return false if there's no sensible path.
+            if (thisStripped.isRaw() || otherStripped.isRaw()) {
+                return thisStripped.implicitlyCastsTo(otherStripped, null) ||
+                       otherStripped.implicitlyCastsTo(thisStripped, null);
+            }
             // We're stuck.  Can't do this, best effort!
             return true;
         } else {
@@ -992,9 +998,6 @@ public class InferredJavaType {
                 lhsRawType = RawJavaType.INT;
                 break;
         }
-//        if (lhsRawType == RawJavaType.VOID) {
-//            lhsRawType = RawJavaType.INT;
-//        }
         rhs.useInArithOp(lhs, lhsRawType, forbidBool);
     }
 
