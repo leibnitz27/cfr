@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewr
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.VoidVariableChecker;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.SwitchExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExplicitTypeCallRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.XorRewriter;
@@ -744,6 +745,9 @@ public class CodeAnalyser {
                 Op04StructuredStatement.removeEndResource(method.getClassFile(), block);
             }
 
+            if (options.getOption(OptionsImpl.SWITCH_EXPRESSION, classFileVersion)) {
+                Op04StructuredStatement.switchExpression(block);
+            }
             Op04StructuredStatement.rewriteLambdas(dcCommonState, method, block);
             // Now lambdas have been rewritten, reprocess ONLY to insert local class
             // definitions.

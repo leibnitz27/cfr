@@ -42,4 +42,6 @@ public class ClassFileVersion {
     public static ClassFileVersion JAVA_8 = new ClassFileVersion(52, 0, "8");
     public static ClassFileVersion JAVA_9 = new ClassFileVersion(53, 0, "9");
     public static ClassFileVersion JAVA_10 = new ClassFileVersion(54, 0, "10");
+    public static ClassFileVersion JAVA_11 = new ClassFileVersion(55, 0, "10");
+    public static ClassFileVersion JAVA_12 = new ClassFileVersion(56, 0, "10");
 }

@@ -28,6 +28,10 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
         this.blockIdentifier = blockIdentifier;
     }
 
+    public Expression getSwitchOn() {
+        return switchOn;
+    }
+
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         switchOn.collectTypeUsages(collector);

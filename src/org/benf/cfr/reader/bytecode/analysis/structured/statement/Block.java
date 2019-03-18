@@ -354,7 +354,7 @@ public class Block extends AbstractStructuredStatement {
                     ++x;
                     StructuredStatement nextStatement = next.getStatement();
                     if (nextStatement instanceof StructuredComment) {
-                        next.nopThis(); // pointless.
+                        next.nopOut(); // pointless.
                         // Nothing.
                     } else if (nextStatement instanceof StructuredCatch) {
                         Set<BlockIdentifier> blocks = ((StructuredCatch) nextStatement).getPossibleTryBlocks();

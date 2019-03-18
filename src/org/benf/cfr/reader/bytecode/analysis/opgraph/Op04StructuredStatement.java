@@ -98,6 +98,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         block.transform(new UnusedAnonymousBlockFlattener(), new StructuredScope());
     }
 
+    public static void switchExpression(Op04StructuredStatement root) {
+        new SwitchExpressionRewriter().rewrite(root);
+    }
+
     // TODO: This isn't quite right.  Should actually be removing the node.
     public Op04StructuredStatement nopThisAndReplace() {
         Op04StructuredStatement replacement = new Op04StructuredStatement(instrIndex, blockMembership, structuredStatement);
@@ -107,10 +111,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return replacement;
     }
 
-    public void nopThis() {
+    @Override
+    public void nopOut() {
         replaceStatementWithNOP("");
     }
-
 
     @Override
     public StructuredStatement getStatement() {
@@ -142,13 +146,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     @Override
-    public void nopOut() {
-        replaceStatementWithNOP("");
-    }
-
-    @Override
     public void replaceStatement(StructuredStatement newTarget) {
         structuredStatement = newTarget;
+        newTarget.setContainer(this);
     }
 
     @Override

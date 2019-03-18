@@ -22,12 +22,6 @@ public abstract class AbstractExpression implements Expression {
         this.inferredJavaType = inferredJavaType;
     }
 
-    /*
-    protected String typeToString() {
-        return inferredJavaType.toString();
-    }
-    */
-
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(inferredJavaType.getJavaTypeInstance());

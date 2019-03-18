@@ -15,8 +15,24 @@ public class Functional {
         }
     }
 
-    public static <X> List<X> filterColl(Collection<X> input, Predicate<X> predicate) {
-        return filter(input, predicate);
+    public static <X> List<X> filterOptimistic(List<X> input, Predicate<X> predicate) {
+        List<X> res = null;
+        for (int x=0;x<input.size();++x) {
+            X item = input.get(x);
+            if (!predicate.test(item)) {
+                if (res == null) {
+                    res = new ArrayList<X>();
+                    for (int y=0;y<x;++y) {
+                        res.add(input.get(y));
+                    }
+                }
+            } else {
+                if (res != null) {
+                    res.add(item);
+                }
+            }
+        }
+        return res == null ? input : res;
     }
 
     public static <X> List<X> filter(Collection<X> input, Predicate<X> predicate) {

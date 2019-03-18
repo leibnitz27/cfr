@@ -204,6 +204,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> STRING_SWITCH = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true),
             "Re-sugar switch on String - see " + CFR_WEBSITE + "java7switchonstring.html");
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SWITCH_EXPRESSION = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "switchexpression", new VersionSpecificDefaulter(ClassFileVersion.JAVA_12, true),
+            "Re-sugar switch expression.");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ARRAY_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
             "Re-sugar array based iteration.");
@@ -436,7 +439,7 @@ public class OptionsImpl implements Options {
         @Override
         @SuppressWarnings("unchecked")
         public List<? extends ArgumentParam<?, ?>> getArguments() {
-            return ListFactory.newImmutableList(ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, ARRAY_ITERATOR,
+            return ListFactory.newImmutableList(ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, SWITCH_EXPRESSION, ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,

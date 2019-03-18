@@ -349,6 +349,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             localAccessFlags = SetFactory.newSet(localAccessFlags);
             localAccessFlags.remove(AccessFlagMethod.ACC_ABSTRACT);
         }
+        localAccessFlags.remove(AccessFlagMethod.ACC_VARARGS);
         String prefix = CollectionUtils.join(localAccessFlags, " ");
 
         if (!prefix.isEmpty()) d.print(prefix);
