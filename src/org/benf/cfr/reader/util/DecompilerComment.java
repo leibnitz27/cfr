@@ -21,6 +21,7 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment TYPE_CLASHES = new DecompilerComment("Could not resolve type clashes", true);
     public static DecompilerComment ITERATED_TYPE_HINTS = new DecompilerComment("Iterators could be improved", true);
     public static DecompilerComment LOOSE_CATCH_BLOCK = new DecompilerComment("Loose catch block", true);
+    public static DecompilerComment VOID_DECLARATION = new DecompilerComment("WARNING - void declaration");
     public static DecompilerComment CLASS_RENAMED = new DecompilerComment("Inner class renamed, behaviour may change", true);
     public static DecompilerComment RENAME_MEMBERS = new DecompilerComment("Duplicate member names - consider using --" + OptionsImpl.RENAME_DUP_MEMBERS.getName() + " true");
     public static DecompilerComment ILLEGAL_IDENTIFIERS = new DecompilerComment("Illegal identifiers - consider using --" + OptionsImpl.RENAME_ILLEGAL_IDENTS.getName() + " true");

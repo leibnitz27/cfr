@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.VoidVariableChecker;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExplicitTypeCallRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.XorRewriter;
@@ -777,6 +778,7 @@ public class CodeAnalyser {
              * Now finally run some extra checks to spot wierdness.
              */
             Op04StructuredStatement.applyChecker(new LooseCatchChecker(), block, comments);
+            Op04StructuredStatement.applyChecker(new VoidVariableChecker(), block, comments);
 
             Op04StructuredStatement.flattenNonReferencedBlocks(block);
             /*
