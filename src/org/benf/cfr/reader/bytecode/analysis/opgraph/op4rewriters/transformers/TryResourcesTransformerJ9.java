@@ -22,7 +22,7 @@ import org.benf.cfr.reader.entities.Method;
 
 import java.util.List;
 
-public class TryResourcesTransformerJ9 extends TryResourcesTransformerBase {
+public class TryResourcesTransformerJ9 extends TryResourceTransformerFinally {
     public TryResourcesTransformerJ9(ClassFile classFile) {
         super(classFile);
     }

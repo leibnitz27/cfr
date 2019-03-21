@@ -710,6 +710,7 @@ public class CodeAnalyser {
         // It seems perverse to do a second pass for removal of pointless blocks - but now everything is in place
         // the logic is much cleaner.
         Op04StructuredStatement.removeUnnecessaryLabelledBreaks(block);
+        Op04StructuredStatement.flattenNonReferencedBlocks(block);
 
         /*
          * If we can't fully structure the code, we bow out here.

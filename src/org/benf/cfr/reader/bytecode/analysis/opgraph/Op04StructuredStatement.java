@@ -742,7 +742,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         // Note - this is not in Java9 CODE per se, it's if it's been compiled by the J9 compiler.
         boolean s1 = new TryResourcesTransformerJ9(classFile).transform(root);
         boolean s2 = new TryResourcesTransformerJ7(classFile).transform(root);
-        if (s1 || s2) {
+        boolean s3 = new TryResourcesTransformerJ12(classFile).transform(root);
+        // Java 11
+        if (s1 || s2 || s3) {
             new TryResourcesCollapser().transform(root);
         }
     }

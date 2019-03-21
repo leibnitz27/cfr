@@ -2,7 +2,9 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
@@ -110,7 +112,7 @@ class TryRewriter {
             }
             currentStatement = nextStatement;
         }
-        if (lastStatement != null &&  lastStatement.getTargets().isEmpty()) {
+        if (lastStatement != null && lastStatement.getTargets().isEmpty()) {
             // We have opportunity to rescan and see if there is a UNIQUE forward jump out.
             Set<Op03SimpleStatement> outTargets = SetFactory.newSet();
             for (Op03SimpleStatement jump : jumps) {

@@ -43,14 +43,11 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
         return success;
     }
 
-
-
     @Override
     public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
         if (in instanceof StructuredTry) {
             StructuredTry structuredTry = (StructuredTry)in;
-            Op04StructuredStatement finallyBlock = structuredTry.getFinallyBlock();
-            ResourceMatch match = findResourceFinally(finallyBlock);
+            ResourceMatch match = getResourceMatch(structuredTry, scope);
             if (match != null) {
                 // Ok, now we have to find the initialisation of the closable.
                 if (rewriteTry(structuredTry, scope, match)) {
@@ -62,9 +59,11 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
         return in;
     }
 
+    protected abstract ResourceMatch getResourceMatch(StructuredTry structuredTry, StructuredScope scope);
+
     // Now we have to walk back from the try statement, finding the declaration of the resource.
     // the declaration MUST not be initialised from something which is subsequently used before the try statement.
-    private boolean rewriteTry(StructuredTry structuredTry, StructuredScope scope, ResourceMatch resourceMatch) {
+    protected boolean rewriteTry(StructuredTry structuredTry, StructuredScope scope, ResourceMatch resourceMatch) {
         List<Op04StructuredStatement> preceeding = scope.getPrecedingInblock(1, 2);
         // seatch backwards for a definition of resource.
         LValue resource = resourceMatch.resource;
@@ -77,7 +76,10 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
         if (resourceMatch.resourceMethod != null) {
             resourceMatch.resourceMethod.hideSynthetic();
         }
-        return rewriteException(structuredTry, preceeding);
+        if (resourceMatch.reprocessException) {
+            return rewriteException(structuredTry, preceeding);
+        }
+        return true;
     }
 
     // And if this looks like
@@ -175,28 +177,24 @@ public abstract class TryResourcesTransformerBase implements StructuredStatement
         }
     }
 
-    // If the finally block is
-    // if (autoclosable != null) {
-    //    close(exception, autoclosable)
-    // }
-    //
-    // or
-    //
-    // close(exception, autoclosable)
-    //
-    // we can lift the autocloseable into the try.
-    protected abstract ResourceMatch findResourceFinally(Op04StructuredStatement finallyBlock);
-
     static class ResourceMatch
     {
         final Method resourceMethod;
         final LValue resource;
         final LValue throwable;
+        final boolean reprocessException;
+        final List<Op04StructuredStatement> removeThese;
 
         ResourceMatch(Method resourceMethod, LValue resource, LValue throwable) {
+            this(resourceMethod, resource, throwable,  true, null);
+        }
+
+        ResourceMatch(Method resourceMethod, LValue resource, LValue throwable, boolean reprocessException, List<Op04StructuredStatement> removeThese) {
             this.resourceMethod = resourceMethod;
             this.resource = resource;
             this.throwable = throwable;
+            this.reprocessException = reprocessException;
+            this.removeThese = removeThese;
         }
     }
 

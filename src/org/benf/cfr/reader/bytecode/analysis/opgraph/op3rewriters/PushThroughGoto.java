@@ -117,7 +117,6 @@ public class PushThroughGoto {
             Op03SimpleStatement tryMoveThis = forwardGoto.getSources().get(0);
 
             if (!moveable(tryMoveThis.getStatement())) return success;
-
             if (!seen.add(tryMoveThis)) return success;
 
             if (statements.get(nextCandidateIdx) != tryMoveThis) return success;
@@ -125,7 +124,7 @@ public class PushThroughGoto {
             // If sources > 1, we can't continue processing after this one, but we can do this one.
             boolean abortNext = (tryMoveThis.getSources().size() != 1);
             // Is it in the same exception blocks?
-            Set<BlockIdentifier> moveEB = SetFactory.newSet(Functional.filterSet(forwardGoto.getBlockIdentifiers(), exceptionFilter));
+            Set<BlockIdentifier> moveEB = SetFactory.newSet(Functional.filterSet(tryMoveThis.getBlockIdentifiers(), exceptionFilter));
             if (!moveEB.equals(exceptionBlocks)) return success;
             /* Move this instruction through the goto
              */

@@ -52,22 +52,14 @@ public class ResourceReleaseDetector {
     public static Matcher<StructuredStatement> getStructuredStatementMatcher(WildcardMatch wcm, LValue throwableLValue, LValue autoclose) {
         LValueExpression autocloseExpression = new LValueExpression(autoclose);
         LValueExpression throwableExpression = new LValueExpression(throwableLValue);
-        MatchOneOf closeExpression = new MatchOneOf(
-                new StructuredExpressionStatement(wcm.getMemberFunction("m1", "close", autocloseExpression), false),
-                new StructuredExpressionStatement(wcm.getMemberFunction("m2", "close", wcm.getCastExpressionWildcard("cast", autocloseExpression)), false)
-        );
+        MatchOneOf closeExpression = getCloseExpressionMatch(wcm, autocloseExpression);
+        MatchSequence inner = getInnerResourceMatch(wcm, throwableExpression, closeExpression);
+
         return new MatchSequence(
                 new BeginBlock(null),
                 new StructuredIf(new ComparisonOperation(throwableExpression, Literal.NULL, CompOp.NE), null),
                 new BeginBlock(null),
-                new StructuredTry(null, null),
-                new BeginBlock(null),
-                closeExpression,
-                new EndBlock(null),
-                new StructuredCatch(null, null, wcm.getLValueWildCard("caught"), null),
-                new BeginBlock(null),
-                new StructuredExpressionStatement(wcm.getMemberFunction("addsupp", "addSuppressed", throwableExpression, new LValueExpression(wcm.getLValueWildCard("caught"))), false),
-                new EndBlock(null),
+                inner,
                 new EndBlock(null),
                 new ElseBlock(),
                 new BeginBlock(null),
@@ -75,5 +67,33 @@ public class ResourceReleaseDetector {
                 new EndBlock(null),
                 new EndBlock(null)
         );
+    }
+
+    public static Matcher<StructuredStatement> getNonTestingStructuredStatementMatcher(WildcardMatch wcm, LValue throwableLValue, LValue autoclose) {
+        LValueExpression autocloseExpression = new LValueExpression(autoclose);
+        LValueExpression throwableExpression = new LValueExpression(throwableLValue);
+        MatchOneOf closeExpression = getCloseExpressionMatch(wcm, autocloseExpression);
+        MatchSequence inner = getInnerResourceMatch(wcm, throwableExpression, closeExpression);
+        return inner;
+    }
+
+    private static MatchSequence getInnerResourceMatch(WildcardMatch wcm, LValueExpression throwableExpression, MatchOneOf closeExpression) {
+        return new MatchSequence(
+                    new StructuredTry(null, null),
+                    new BeginBlock(null),
+                    closeExpression,
+                    new EndBlock(null),
+                    new StructuredCatch(null, null, wcm.getLValueWildCard("caught"), null),
+                    new BeginBlock(null),
+                    new StructuredExpressionStatement(wcm.getMemberFunction("addsupp", "addSuppressed", throwableExpression, new LValueExpression(wcm.getLValueWildCard("caught"))), false),
+                    new EndBlock(null)
+            );
+    }
+
+    public static MatchOneOf getCloseExpressionMatch(WildcardMatch wcm, LValueExpression autocloseExpression) {
+        return new MatchOneOf(
+                    new StructuredExpressionStatement(wcm.getMemberFunction("m1", "close", autocloseExpression), false),
+                    new StructuredExpressionStatement(wcm.getMemberFunction("m2", "close", wcm.getCastExpressionWildcard("cast", autocloseExpression)), false)
+            );
     }
 }

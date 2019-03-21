@@ -43,6 +43,10 @@ public class StructuredCatch extends AbstractStructuredStatement {
         catchBlock.collectTypeUsages(collector);
     }
 
+    public List<JavaRefTypeInstance> getCatchTypes() {
+        return catchTypes;
+    }
+
     @Override
     public Dumper dump(Dumper dumper) {
         boolean first = true;
@@ -56,7 +60,6 @@ public class StructuredCatch extends AbstractStructuredStatement {
         catchBlock.dump(dumper);
         return dumper;
     }
-
 
     @Override
     public boolean isProperlyStructured() {

@@ -262,6 +262,7 @@ public class Block extends AbstractStructuredStatement {
                 /*
                  * Any source which is an unstructured break to this block, replace with a structured labelled break.
                  */
+                boolean found = false;
                 for (Op04StructuredStatement source : sources) {
                     StructuredStatement maybeBreak = source.getStatement();
                     // TODO : FIXME.
@@ -270,11 +271,16 @@ public class Block extends AbstractStructuredStatement {
                         StructuredIf structuredIf = (StructuredIf) maybeBreak;
                         source = structuredIf.getIfTaken();
                         maybeBreak = source.getStatement();
+                        found = true;
                     }
                     if (maybeBreak.getClass() == UnstructuredAnonymousBreak.class) {
                         UnstructuredAnonymousBreak unstructuredBreak = (UnstructuredAnonymousBreak) maybeBreak;
                         source.replaceStatement(unstructuredBreak.tryExplicitlyPlaceInBlock(blockIdentifier));
+                        found = true;
                     }
+                }
+                if (!found) {
+                    nested.indenting = false;
                 }
                 // It's not fatal if we've messed up here, we'll leave some extra block labels in...
                 // But be paranoid.

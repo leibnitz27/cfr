@@ -15,7 +15,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 
 import java.util.List;
 
-public class TryResourcesTransformerJ7 extends TryResourcesTransformerBase {
+public class TryResourcesTransformerJ7 extends TryResourceTransformerFinally {
     public TryResourcesTransformerJ7(ClassFile classFile) {
         super(classFile);
     }
