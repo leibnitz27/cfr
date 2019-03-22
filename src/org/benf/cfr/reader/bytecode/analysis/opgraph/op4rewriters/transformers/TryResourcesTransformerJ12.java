@@ -8,10 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredCatch;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredThrow;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredTry;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -87,7 +84,6 @@ public class TryResourcesTransformerJ12 extends TryResourcesTransformerBase {
                         new MatchSequence(
                             new BeginBlock(null),
                             ResourceReleaseDetector.getNonTestingStructuredStatementMatcher(wcm, throwableLValue, autoclose),
-                            new StructuredThrow(new LValueExpression(throwableLValue)),
                             new EndBlock(null)
                         )
                 );
@@ -100,6 +96,33 @@ public class TryResourcesTransformerJ12 extends TryResourcesTransformerBase {
         boolean res = m.match(mi, collector);
         if (!res) return null;
 
+        /* There are two possible locations for the close statement to be, depending on how our try block has been
+         * structured.
+         * It could be either after the catch, or at the last statement of the try.
+         */
+        List<Op04StructuredStatement> toRemove = getCloseStatementAfter(structuredTry, scope, wcm, collector);
+        if (toRemove == null) {
+            toRemove = getCloseStatementEndTry(structuredTry, scope, wcm, collector);
+            if (toRemove == null) {
+                return null;
+            }
+        }
+        return new ResourceMatch(null, collector.resource, collector.throwable, false, toRemove);
+    }
+
+    private List<Op04StructuredStatement> getCloseStatementEndTry(StructuredTry structuredTry, StructuredScope scope, WildcardMatch wcm, TryResourcesMatchResultCollector collector) {
+        Op04StructuredStatement tryb = structuredTry.getTryBlock();
+        StructuredStatement tryStm = tryb.getStatement();
+        if (!(tryStm instanceof Block)) return null;
+        Block block = (Block)tryStm;
+        Op04StructuredStatement lastInBlock = block.getLast();
+        if (getMatchingCloseStatement(wcm, collector, lastInBlock.getStatement())) {
+            return Collections.singletonList(lastInBlock);
+        }
+        return null;
+    }
+
+    private List<Op04StructuredStatement> getCloseStatementAfter(StructuredTry structuredTry, StructuredScope scope, WildcardMatch wcm, TryResourcesMatchResultCollector collector) {
         Set<Op04StructuredStatement> next = scope.getNextFallThrough(structuredTry);
 
         List<Op04StructuredStatement> toRemove = Functional.filter(next, new Predicate<Op04StructuredStatement>() {
@@ -110,12 +133,19 @@ public class TryResourcesTransformerJ12 extends TryResourcesTransformerBase {
         });
         if (toRemove.size() != 1) return null;
 
+        StructuredStatement statement = toRemove.get(0).getStatement();
+
+        if (getMatchingCloseStatement(wcm, collector, statement)) {
+            return toRemove;
+        }
+        return null;
+    }
+
+    private boolean getMatchingCloseStatement(WildcardMatch wcm, TryResourcesMatchResultCollector collector, StructuredStatement statement) {
         Matcher<StructuredStatement> checkClose = ResourceReleaseDetector.getCloseExpressionMatch(wcm, new LValueExpression(collector.resource));
-        MatchIterator<StructuredStatement> closeStm = new MatchIterator<StructuredStatement>(Collections.singletonList(toRemove.get(0).getStatement()));
+        MatchIterator<StructuredStatement> closeStm = new MatchIterator<StructuredStatement>(Collections.singletonList(statement));
 
         closeStm.advance();
-        boolean hasClose = checkClose.match(closeStm, new EmptyMatchResultCollector());
-        if (!hasClose) return null;
-        return new ResourceMatch(null, collector.resource, collector.throwable, false, toRemove);
+        return checkClose.match(closeStm, new EmptyMatchResultCollector());
     }
 }

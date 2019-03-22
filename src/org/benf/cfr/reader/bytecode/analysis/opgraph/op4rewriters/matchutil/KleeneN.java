@@ -6,12 +6,12 @@ public class KleeneN implements Matcher<StructuredStatement> {
     private final Matcher<StructuredStatement> inner;
     private final int nRequired;
 
-    KleeneN(int nRequired, Matcher<StructuredStatement> inner) {
+    public KleeneN(int nRequired, Matcher<StructuredStatement> inner) {
         this.inner = inner;
         this.nRequired = nRequired;
     }
 
-    KleeneN(int nRequired, Matcher<StructuredStatement>... matchers) {
+    public KleeneN(int nRequired, Matcher<StructuredStatement>... matchers) {
         this.inner = new MatchSequence(matchers);
         this.nRequired = nRequired;
     }

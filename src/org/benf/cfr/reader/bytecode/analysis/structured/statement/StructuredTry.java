@@ -43,6 +43,10 @@ public class StructuredTry extends AbstractStructuredStatement {
         return resourceBlock != null;
     }
 
+    public Op04StructuredStatement getTryBlock() {
+        return tryBlock;
+    }
+
     public List<Op04StructuredStatement> getCatchBlocks() {
         return catchBlocks;
     }

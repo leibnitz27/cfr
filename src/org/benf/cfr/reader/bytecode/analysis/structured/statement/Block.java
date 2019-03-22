@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.CommentStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
@@ -131,6 +132,15 @@ public class Block extends AbstractStructuredStatement {
             Op04StructuredStatement oldGoto = containedStatements.getLast();
             oldGoto.replaceStatementWithNOP("");
         }
+    }
+
+    public Op04StructuredStatement getLast() {
+        Iterator<Op04StructuredStatement> iter = containedStatements.descendingIterator();
+        while (iter.hasNext()) {
+            Op04StructuredStatement stm = iter.next();
+            if (!(stm.getStatement() instanceof StructuredComment)) return stm;
+        }
+        return null;
     }
 
     public void removeLastGoto(Op04StructuredStatement toHere) {
