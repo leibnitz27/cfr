@@ -15,10 +15,13 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.Keywords;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -174,10 +177,25 @@ public class VariableNameTidier implements StructuredStatementTransformer {
         @Override
         public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
             if (lValue.getClass() == StaticVariable.class) {
-                StaticVariable staticVariable = (StaticVariable)lValue;
-                if (staticVariable.getOwningClassType().equals(ownerClassType)) {
-                    if (!localScope.isDefined(staticVariable.getFieldName())) {
+                StaticVariable staticVariable = (StaticVariable) lValue;
+                String fieldName = staticVariable.getFieldName();
+                if (!localScope.isDefined(fieldName)) {
+                    JavaTypeInstance owningClassType = staticVariable.getOwningClassType();
+                    if (owningClassType.equals(ownerClassType)) {
                         return staticVariable.getSimpleCopy();
+                    } else {
+                        // From Java12 and up, we generate direct accessors to private static variables in outer classes!
+                        InnerClassInfo innerClassInfo = ownerClassType.getInnerClassHereInfo();
+                        while (innerClassInfo.isInnerClass()) {
+                            JavaRefTypeInstance clazz = innerClassInfo.getOuterClass();
+                            ClassFile classFile = clazz.getClassFile();
+                            if (classFile == null) break;
+                            if (owningClassType.equals(clazz)) {
+                                return staticVariable.getSimpleCopy();
+                            }
+                            if (classFile.hasField(fieldName)) break;
+                            innerClassInfo = clazz.getInnerClassHereInfo();
+                        }
                     }
                 }
             }
