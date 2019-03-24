@@ -594,7 +594,6 @@ public class FinalAnalyzer {
             }
         }
 
-
         /*
          * Remove any dead block references.
          */
@@ -602,15 +601,12 @@ public class FinalAnalyzer {
             stm.getBlockIdentifiers().removeAll(blocksToRemoveCompletely);
         }
 
-
-
         /*
          * And, finally, link the try op to the finally.
          */
         in.addTarget(finallyOp);
         finallyOp.addSource(in);
         allStatements.addAll(newFinallyBody);
-
     }
 
 
@@ -684,11 +680,6 @@ public class FinalAnalyzer {
                             if (linNext.getBlockIdentifiers().contains(tryBlockIdentifier)) {
                                 arg2.enqueue(linNext);
                             }
-                            //else {
-                                //                            if (arg1.getStatement() instanceof ThrowStatement) {
-                                //                                exitPaths.add(arg1);
-                                //                            }
-                            //}
                         }
                     } else {
                         if (arg1.getStatement() instanceof CaseStatement) {
@@ -701,15 +692,6 @@ public class FinalAnalyzer {
             gv.process();
             if (!exitPaths.isEmpty()) break;
         }
-
-        /*
-         * VERY (too much so, this won't catch everything) special case - IFF the finally code body is a single
-         * MONITOREXIT statement, AND none of the exitpaths are, then they might have been rolled into the try body.
-         */
-//        List<Op03SimpleStatement> tmp = ListFactory.newList(exitPaths);
-//        Collections.sort(tmp, new CompareByIndex());
-//        exitPaths.clear();
-//        exitPaths.addAll(tmp);
 
         /*
          * See if this block jumps into any peerTries, in which case we add them to peerTries.

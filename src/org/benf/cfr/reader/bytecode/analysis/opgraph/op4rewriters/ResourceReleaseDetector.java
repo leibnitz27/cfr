@@ -99,7 +99,22 @@ public class ResourceReleaseDetector {
                 new EndBlock(null),
                 new StructuredThrow(new LValueExpression(throwableLValue))
         );
+
         return inner;
+    }
+
+    public static Matcher<StructuredStatement> getSimpleStructuredStatementMatcher(WildcardMatch wcm, LValue throwableLValue, LValue autoclose) {
+        LValueExpression autocloseExpression = new LValueExpression(autoclose);
+        MatchOneOf closeExpression = getCloseExpressionMatch(wcm, autocloseExpression);
+
+        Matcher<StructuredStatement> matchsimple = new MatchOneOf(new MatchSequence(
+                new StructuredIf(new ComparisonOperation(new LValueExpression(autoclose), Literal.NULL, CompOp.NE), null),
+                new BeginBlock(null),
+                closeExpression,
+                new EndBlock(null)),
+                closeExpression);
+
+        return matchsimple;
     }
 
     public static MatchOneOf getCloseExpressionMatch(WildcardMatch wcm, LValueExpression autocloseExpression) {

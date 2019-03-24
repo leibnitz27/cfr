@@ -2173,6 +2173,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                     }
                 });
 
+//        Iterator<ExceptionGroup> iter = exceptions.getExceptionsGroups().iterator();
+//        while (iter.hasNext()) {
+//            ExceptionGroup exceptionGroup = iter.next();
+//            int originalIndex = lutByOffset.get(exceptionGroup.getBytecodeIndexFrom());
+//            int exclusiveLastIndex = getLastIndex(lutByOffset, originalInstrCount, codeLength, exceptionGroup.getByteCodeIndexTo());
+//            if (exclusiveLastIndex == originalIndex + 1) {
+//                iter.remove();
+//            }
+//        }
+
         // First pass - decorate blocks with identifiers, so that when we introduce try/catch statements
         // they get the correct identifiers
         for (ExceptionGroup exceptionGroup : exceptions.getExceptionsGroups()) {

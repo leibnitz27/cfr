@@ -61,7 +61,42 @@ public class TryResourcesTransformerJ12 extends TryResourcesTransformerBase {
 
     @Override
     protected ResourceMatch getResourceMatch(StructuredTry structuredTry, StructuredScope scope) {
-        if (structuredTry.getFinallyBlock() != null) return null;
+        if (structuredTry.getFinallyBlock() == null) {
+            return getComplexResourceMatch(structuredTry, scope);
+        } else {
+            return getSimpleResourceMatch(structuredTry, scope);
+        }
+    }
+
+    private ResourceMatch getSimpleResourceMatch(StructuredTry structuredTry, StructuredScope scope) {
+        Op04StructuredStatement finallyBlock = structuredTry.getFinallyBlock();
+
+        WildcardMatch wcm = new WildcardMatch();
+        List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(finallyBlock);
+        if (structuredStatements == null) return null;
+
+        WildcardMatch.LValueWildcard throwableLValue = wcm.getLValueWildCard("throwable");
+        WildcardMatch.LValueWildcard autoclose = wcm.getLValueWildCard("resource");
+
+        Matcher<StructuredStatement> m =
+                new ResetAfterTest(wcm,
+                        new MatchSequence(
+                                new BeginBlock(null),
+                                ResourceReleaseDetector.getSimpleStructuredStatementMatcher(wcm, throwableLValue, autoclose),
+                                new EndBlock(null)
+                        )
+                );
+
+        MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
+        TryResourcesMatchResultCollector collector = new TryResourcesMatchResultCollector();
+        mi.advance();
+        mi.advance(); // skip structuredCatch
+        boolean res = m.match(mi, collector);
+        if (!res) return null;
+        return new ResourceMatch(null, collector.resource, collector.throwable, false, Collections.<Op04StructuredStatement>emptyList());
+    }
+
+    private ResourceMatch getComplexResourceMatch(StructuredTry structuredTry, StructuredScope scope) {
         if (structuredTry.getCatchBlocks().size() != 1) return null;
         Op04StructuredStatement catchBlock = structuredTry.getCatchBlocks().get(0);
         StructuredStatement catchStm = catchBlock.getStatement();

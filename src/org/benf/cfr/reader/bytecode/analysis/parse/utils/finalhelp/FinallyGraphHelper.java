@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils.finalhelp;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
@@ -9,8 +11,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -83,7 +83,32 @@ public class FinallyGraphHelper {
             sa.collectLValueAssignments(equivalenceConstraint);
 
             if (!sa.equivalentUnder(sb, equivalenceConstraint)) {
-                return Result.FAIL;
+                /*
+                 * jdk13+ may need us to consider the following equivalent
+                 *
+                 * test:
+                 * a
+                 * b
+                 *
+                 * finallyCatchBody:
+                 * a
+                 * try {
+                 * b
+                 * } catch( x)
+                 * e.addSuppressed(x)
+                 *
+                 */
+                if (treatAsJava13Finally(b, sb)) {
+                    b = b.getTargets().get(0);
+                    sb = b.getStatement();
+                    if (!sa.equivalentUnder(sb, equivalenceConstraint)) return Result.FAIL;
+                    if (b.getTargets().size() != 1) return Result.FAIL;
+                    Statement stm = b.getTargets().get(0).getStatement();
+                    if (!(stm instanceof GotoStatement)) return Result.FAIL;
+                    b = b.getTargets().get(0);
+                } else {
+                    return Result.FAIL;
+                }
             }
 
             List<Op03SimpleStatement> tgta = ListFactory.newList(a.getTargets());
@@ -142,6 +167,22 @@ public class FinallyGraphHelper {
         return new Result(toRemove, test, Misc.followNopGotoChain(finalThrowProxy, false, false));
     }
 
+    private boolean treatAsJava13Finally(Op03SimpleStatement b, Statement sb) {
+        if (!(sb instanceof TryStatement)) return false;
+        List<Op03SimpleStatement> bTargets = b.getTargets();
+        if (bTargets.size() != 2) return false;
+        Op03SimpleStatement catchStm = bTargets.get(1);
+        if (!(catchStm.getStatement() instanceof CatchStatement)) return false;
+        List<Op03SimpleStatement> catchTargets = catchStm.getTargets();
+        if (catchTargets.size() != 1) return false;
+        Statement addSupp = catchTargets.get(0).getStatement();
+        if (!(addSupp instanceof ExpressionStatement)) return false;
+        Expression eAddSup = ((ExpressionStatement) addSupp).getExpression();
+        if (!(eAddSup instanceof MemberFunctionInvokation)) return false;
+        MemberFunctionInvokation mfi = (MemberFunctionInvokation)eAddSup;
+        if (!mfi.getMethodPrototype().getName().equals("addSuppressed")) return false;
+        return true;
+    }
 
     private class FinallyEquivalenceConstraint extends DefaultEquivalenceConstraint implements LValueAssignmentCollector<Statement> {
         /*
