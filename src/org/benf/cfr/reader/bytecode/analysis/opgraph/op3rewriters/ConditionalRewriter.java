@@ -373,6 +373,16 @@ lbl10: // 1 sources:
             stmtLastBlockRewrite = stmtLastBlock;
         }
 
+        Op03SimpleStatement statementStart = statements.get(idxCurrent);
+        Predicate<BlockIdentifier> tryBlockFilter = new Predicate<BlockIdentifier>() {
+            @Override
+            public boolean test(BlockIdentifier in) {
+                return in.getBlockType() == BlockType.TRYBLOCK;
+            }
+        };
+        Set<BlockIdentifier> startTryBlocks = Functional.filterSet(statementStart.getBlockIdentifiers(), tryBlockFilter);
+
+        Op03SimpleStatement statementPrev = statementStart;
         do {
             Op03SimpleStatement statementCurrent = statements.get(idxCurrent);
             boolean currentParent = false;
@@ -401,6 +411,13 @@ lbl10: // 1 sources:
                             // (although it might mean some horrid duffs device style compiler output).
                             // TODO: CheckForDuff As below.
                             //if (statementIsReachableFrom(statementCurrent, ifStatement)) return false;
+
+                            // We want to avoid breaking up a try block.
+                            if (statementPrev != statementStart &&
+                                    !SetUtil.equals(Functional.filterSet(statementPrev.getBlockIdentifiers(), tryBlockFilter), startTryBlocks)) {
+                                return false;
+                            }
+
                             Op03SimpleStatement newJump = new Op03SimpleStatement(ifStatement.getBlockIdentifiers(), new GotoStatement(), statementCurrent.getIndex().justBefore());
                             if (statementCurrent != ifStatement.getTargets().get(0)) {
                                 Op03SimpleStatement oldTarget = ifStatement.getTargets().get(1);
@@ -487,6 +504,7 @@ lbl10: // 1 sources:
                 }
             }
             idxCurrent++;
+            statementPrev = statementCurrent;
         } while (idxCurrent != idxEnd);
         // We've reached the "other" branch of the conditional.
         // If maybeSimpleIfElse is set, then there was a final jump to
