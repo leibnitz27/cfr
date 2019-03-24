@@ -43,7 +43,7 @@ public class VariableNamerHinted implements VariableNamer {
         if (!localVariableEntryTreeSet.containsKey(sstackPos)) {
             return missingNamer.getName(0, ident, sstackPos);
         }
-        LocalVariableEntry tmp = new LocalVariableEntry((short) (originalRawOffset), (short) 1, (short) -1, (short) -1, (short) stackPosition);
+        LocalVariableEntry tmp = new LocalVariableEntry(originalRawOffset, (short) 1, (short) -1, (short) -1, (short) stackPosition);
         LocalVariableEntry lve = localVariableEntryTreeSet.get(sstackPos).floor(tmp);
 
         if (lve == null) {
