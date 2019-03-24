@@ -32,7 +32,7 @@ public class Nop extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredComment("");
+        return StructuredComment.EMPTY_COMMENT;
     }
 
     @Override

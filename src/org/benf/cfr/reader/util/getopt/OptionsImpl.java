@@ -205,7 +205,7 @@ public class OptionsImpl implements Options {
             "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true),
             "Re-sugar switch on String - see " + CFR_WEBSITE + "java7switchonstring.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SWITCH_EXPRESSION = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "switchexpression", new VersionSpecificDefaulter(ClassFileVersion.JAVA_12, true),
+            "switchexpression", new VersionSpecificDefaulter(ClassFileVersion.JAVA_13, true),
             "Re-sugar switch expression.");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ARRAY_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),

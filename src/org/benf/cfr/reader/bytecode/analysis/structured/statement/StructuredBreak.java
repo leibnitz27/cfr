@@ -20,6 +20,7 @@ import java.util.Stack;
 public class StructuredBreak extends AbstractStructuredStatement {
 
     private final BlockIdentifier breakBlock;
+
     private final boolean localBreak;
 
     public StructuredBreak(BlockIdentifier breakBlock, boolean localBreak) {
@@ -39,6 +40,10 @@ public class StructuredBreak extends AbstractStructuredStatement {
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
+    }
+
+    public boolean isLocalBreak() {
+        return localBreak;
     }
 
     public BlockIdentifier getBreakBlock() {

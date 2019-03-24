@@ -294,7 +294,7 @@ public class Block extends AbstractStructuredStatement {
                 }
                 // It's not fatal if we've messed up here, we'll leave some extra block labels in...
                 // But be paranoid.
-                stm.replaceStatement(new StructuredComment(""));
+                stm.replaceStatement(StructuredComment.EMPTY_COMMENT);
             }
         }
         for (Op04StructuredStatement entry : newEntries) {

@@ -8,8 +8,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredStatementExpression;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredThrow;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -19,9 +17,38 @@ import java.util.List;
 
 public class SwitchExpression extends AbstractExpression {
     private Expression value;
-    private List<Pair<List<Expression>, Expression>> cases;
+    private List<Branch> cases;
 
-    public SwitchExpression(InferredJavaType inferredJavaType, Expression value, List<Pair<List<Expression>, Expression>> cases) {
+    public static class Branch {
+        List<Expression> cases;
+        Expression value;
+
+        public Branch(List<Expression> cases, Expression value) {
+            this.cases = cases;
+            this.value = value;
+        }
+
+        private Branch rewrite(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            boolean thisChanged = false;
+            List<Expression> newCases = ListFactory.newList();
+            for (Expression exp : cases) {
+                Expression newExp = expressionRewriter.rewriteExpression(exp, ssaIdentifiers, statementContainer, flags);
+                if (newExp != exp) {
+                    thisChanged = true;
+                }
+                newCases.add(newExp);
+            }
+            Expression newValue = expressionRewriter.rewriteExpression(value, ssaIdentifiers, statementContainer, flags);
+            if (newValue !=value) {
+                thisChanged = true;
+            }
+            if (!thisChanged) return this;
+            return new Branch(newCases, newValue);
+        }
+
+    }
+
+    public SwitchExpression(InferredJavaType inferredJavaType, Expression value, List<Branch> cases) {
         super(inferredJavaType);
         this.value = value;
         this.cases = cases;
@@ -48,9 +75,9 @@ public class SwitchExpression extends AbstractExpression {
         d.print(") {");
         d.newln();
         d.indent(1);
-        for (Pair<List<Expression>, Expression> item : cases) {
+        for (Branch item : cases) {
             boolean first = true;
-            List<Expression> cases = item.getFirst();
+            List<Expression> cases = item.cases;
             if (cases.isEmpty()) {
                 d.print("default");
             } else {
@@ -59,8 +86,8 @@ public class SwitchExpression extends AbstractExpression {
                     d.dump(e);
                 }
             }
-            d.print(" -> ").dump(item.getSecond());
-            if (!(item.getSecond() instanceof StructuredStatementExpression)) {
+            d.print(" -> ").dump(item.value);
+            if (!(item.value instanceof StructuredStatementExpression)) {
                 d.print(';').newln();
             }
         }
@@ -81,24 +108,12 @@ public class SwitchExpression extends AbstractExpression {
         if (newValue != value) {
             changed = true;
         }
-        List<Pair<List<Expression>, Expression>> out = ListFactory.newList();
-        for (Pair<List<Expression>, Expression> case1 : cases) {
-            List<Expression> exprs = ListFactory.newList();
-            boolean thisChanged = false;
-            for (Expression exp : case1.getFirst()) {
-                Expression newExp = expressionRewriter.rewriteExpression(exp, ssaIdentifiers, statementContainer, flags);
-                if (newExp != exp) {
-                    thisChanged = true;
-                }
-                exprs.add(newExp);
-            }
-            Expression new1 = expressionRewriter.rewriteExpression(case1.getSecond(), ssaIdentifiers, statementContainer, flags);
-            if (new1 != case1.getSecond()) {
-                thisChanged = true;
-            }
-            if (thisChanged) {
+        List<Branch> out = ListFactory.newList();
+        for (Branch case1 : cases) {
+            Branch newBranch = case1.rewrite(expressionRewriter, ssaIdentifiers, statementContainer, flags);
+            if (newBranch != case1) {
                 changed = true;
-                out.add(Pair.make(exprs, new1));
+                out.add(newBranch);
             } else {
                 out.add(case1);
             }
@@ -117,9 +132,9 @@ public class SwitchExpression extends AbstractExpression {
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         value.collectUsedLValues(lValueUsageCollector);
-        for (Pair<List<Expression>, Expression> case1 : cases) {
-            for (Expression item : case1.getFirst()) item.collectUsedLValues(lValueUsageCollector);
-            case1.getSecond().collectUsedLValues(lValueUsageCollector);
+        for (Branch case1 : cases) {
+            for (Expression item : case1.cases) item.collectUsedLValues(lValueUsageCollector);
+            case1.value.collectUsedLValues(lValueUsageCollector);
         }
     }
 
@@ -131,19 +146,19 @@ public class SwitchExpression extends AbstractExpression {
         SwitchExpression other = (SwitchExpression)o;
         if (other.cases.size() != cases.size()) return false;
         for (int i=0;i<cases.size();++i) {
-            Pair<List<Expression>, Expression> p1 = cases.get(i);
-            Pair<List<Expression>, Expression> p2 = other.cases.get(i);
-            if (!constraint.equivalent(p1.getFirst(), p2.getFirst())) return false;
-            if (!constraint.equivalent(p1.getSecond(), p2.getSecond())) return false;
+            Branch p1 = cases.get(i);
+            Branch p2 = other.cases.get(i);
+            if (!constraint.equivalent(p1.cases, p2.cases)) return false;
+            if (!constraint.equivalent(p1.value, p2.value)) return false;
         }
         return constraint.equivalent(value, other.value);
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        List<Pair<List<Expression>, Expression>> res = ListFactory.newList();
-        for (Pair<List<Expression>, Expression> case1 : cases) {
-            res.add(Pair.make(cloneHelper.replaceOrClone(case1.getFirst()), cloneHelper.replaceOrClone(case1.getSecond())));
+        List<Branch> res = ListFactory.newList();
+        for (Branch case1 : cases) {
+            res.add(new Branch(cloneHelper.replaceOrClone(case1.cases), cloneHelper.replaceOrClone(case1.value)));
         }
         return new SwitchExpression(getInferredJavaType(), cloneHelper.replaceOrClone(value), res);
     }

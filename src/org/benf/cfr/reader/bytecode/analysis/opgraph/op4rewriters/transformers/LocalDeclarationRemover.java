@@ -21,7 +21,7 @@ public class LocalDeclarationRemover implements StructuredStatementTransformer, 
     public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
         if (in instanceof StructuredDefinition) {
             if (((StructuredDefinition) in).getLvalue() instanceof SentinelLocalClassLValue) {
-                return new StructuredComment("");
+                return StructuredComment.EMPTY_COMMENT;
             }
         }
         in.transformStructuredChildren(this, scope);

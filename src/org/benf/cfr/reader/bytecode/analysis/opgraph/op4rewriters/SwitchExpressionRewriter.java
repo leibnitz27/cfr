@@ -1,15 +1,19 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SwitchExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.CommentStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.ThrowStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredStatementExpression;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
@@ -19,7 +23,6 @@ import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SwitchExpressionRewriter extends AbstractExpressionRewriter implements Op04Rewriter {
@@ -56,16 +59,21 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         List<Op04StructuredStatement> content = b.getBlockStatements();
         int size = content.size();
         List<Pair<StructuredCase, Expression>> extracted = ListFactory.newList();
+        List<Pair<Op04StructuredStatement, StructuredStatement>> replacements = ListFactory.newList();
         for (int itm = 0; itm < size; ++itm) {
-            Pair<StructuredCase, Expression> e = extractSwitchEntryPair(target, content.get(itm), itm == size -1);
+            Pair<StructuredCase, Expression> e = extractSwitchEntryPair(target, content.get(itm), replacements,itm == size -1);
             if (e == null) {
                 return;
             }
             extracted.add(e);
         }
-        List<Pair<List<Expression>, Expression>> items = ListFactory.newList();
+        // Now we're sure we're doing the transformation....
+        for (Pair<Op04StructuredStatement, StructuredStatement> replacement : replacements) {
+            replacement.getFirst().replaceContainedStatement(replacement.getSecond());
+        }
+        List<SwitchExpression.Branch> items = ListFactory.newList();
         for (Pair<StructuredCase, Expression> e : extracted) {
-            items.add(Pair.make(e.getFirst().getValues(), e.getSecond()));
+            items.add(new SwitchExpression.Branch(e.getFirst().getValues(), e.getSecond()));
         }
         swat.getContainer().nopOut();
         StructuredAssignment switchStatement =
@@ -81,20 +89,31 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         }
     };
 
-    private Pair<StructuredCase, Expression> extractSwitchEntryPair(LValue target, Op04StructuredStatement item, boolean last) {
+    private Pair<StructuredCase, Expression> extractSwitchEntryPair(LValue target, Op04StructuredStatement item, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements, boolean last) {
         StructuredStatement stm = item.getStatement();
         if (!(stm instanceof StructuredCase)) {
             return null;
         }
         StructuredCase sc = (StructuredCase)stm;
-        Expression res = extractSwitchEntry(target, sc.getBody(), last);
+        Expression res = extractSwitchEntry(target, sc.getBody(), replacements, last);
         if (res == null) {
             return null;
         }
         return Pair.make(sc, res);
     }
 
-    private Expression extractSwitchEntry(LValue target, Op04StructuredStatement body, boolean last) {
+    /*
+     * The body of a switch expression is a legitimate result if it assigns to the target or throws before every
+     * exit point.
+     *
+     * All exit points must target the eventual target of the switch. (otherwise we could assign, then break
+     * an outer block).
+     * (fortunately by this time we're structured, so all exit points must be a structured break, or roll off the end.
+     * a break inside an inner breakable construct is therefore not adequate).
+     *
+     * No assignment to the target can happen other than just prior to an exit point.
+     */
+    private Expression extractSwitchEntry(LValue target, Op04StructuredStatement body, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements, boolean last) {
         if (body.getStatement() instanceof Block) {
             Block block = (Block) body.getStatement();
             List<Op04StructuredStatement> blockStm = block.getBlockStatements();
@@ -104,10 +123,136 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
             } if (blockStm.size() == 1) {
                 return extractOneSwitchEntry(target, blockStm.get(0), last);
             }
-        } else {
-            return extractOneSwitchEntry(target, body, last);
+            return extractSwitchStructure(target, body, replacements, last);
         }
-        return null;
+        return extractOneSwitchEntry(target, body, last);
+    }
+
+    /*
+     * Other than in the prescribed place, our lvalue can't be touched.
+     */
+    static class UsageCheck extends AbstractExpressionRewriter {
+        private final LValue target;
+        private boolean failed;
+
+        UsageCheck(LValue target) {
+            this.target = target;
+        }
+
+        @Override
+        public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            if (target.equals(lValue)) {
+                failed = true;
+            }
+            return super.rewriteExpression(lValue, ssaIdentifiers, statementContainer, flags);
+        }
+    }
+
+    enum LastOk {
+        Ok,
+        OkIfLast,
+        NotOk
+    }
+
+    static class SwitchExpressionTransformer implements StructuredStatementTransformer {
+        private BadSwitchExpressionTransformer badTransfomer = new BadSwitchExpressionTransformer();
+        private UsageCheck rewriter;
+        private List<Pair<Op04StructuredStatement, StructuredStatement>> replacements;
+        private final LValue target;
+        private LastOk lastOk = LastOk.NotOk;
+        private boolean failed;
+        private Expression pendingAssignment;
+
+        private SwitchExpressionTransformer(LValue target, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements) {
+            this.target = target;
+            this.rewriter = new UsageCheck(target);
+            this.replacements = replacements;
+        }
+
+        @Override
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            if (failed) return in;
+            lastOk = LastOk.NotOk;
+            if (pendingAssignment != null) {
+                // Expecting a break.
+                if (in instanceof StructuredBreak) {
+                    if (((StructuredBreak) in).isLocalBreak()) {
+                        replacements.add(Pair.make(in.getContainer(), (StructuredStatement)new StructuredExpressionBreak(pendingAssignment)));
+                        pendingAssignment = null;
+                        lastOk = LastOk.Ok;
+                        return in;
+                    }
+                }
+                failed = true;
+                return in;
+            }
+            if (in.supportsBreak()) {
+                return badTransfomer.transform(in, scope);
+            }
+            if (in instanceof StructuredBreak) {
+                failed = true;
+                return in;
+            }
+            if (in instanceof StructuredReturn) {
+                failed = true;
+                return in;
+            }
+            if (in instanceof StructuredAssignment && ((StructuredAssignment) in).getLvalue().equals(target)) {
+                if (pendingAssignment != null) {
+                    failed = true;
+                    return in;
+                }
+                pendingAssignment = ((StructuredAssignment) in).getRvalue();
+                replacements.add(Pair.make(in.getContainer(), (StructuredStatement)StructuredComment.EMPTY_COMMENT));
+                lastOk = LastOk.OkIfLast;
+                return in;
+            }
+            in.rewriteExpressions(rewriter);
+            if (rewriter.failed) {
+                failed = true;
+                return in;
+            }
+            in.transformStructuredChildren(this, scope);
+            return in;
+        }
+
+        // Inside here, we can't assign, we can't even break too far.
+        class BadSwitchExpressionTransformer implements StructuredStatementTransformer {
+            @Override
+            public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+                if (failed) return in;
+                lastOk = LastOk.NotOk;
+                in.rewriteExpressions(rewriter);
+                if (rewriter.failed) {
+                    failed = true;
+                    return in;
+                }
+                if (in instanceof StructuredBreak) {
+                    // this *COULD* be ok, but come on.....
+                    if (!((StructuredBreak) in).isLocalBreak()) {
+                        failed = true;
+                    }
+                    return in;
+                }
+                if (in instanceof StructuredReturn) {
+                    failed = true;
+                    return in;
+                }
+                in.transformStructuredChildren(this, scope);
+                return in;
+            }
+        }
+    }
+
+    private Expression extractSwitchStructure(LValue target, Op04StructuredStatement body, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements, boolean last) {
+        SwitchExpressionTransformer transformer = new SwitchExpressionTransformer(target, replacements);
+        body.transform(transformer, new StructuredScope());
+        if (transformer.failed) return null;
+        if (transformer.lastOk == LastOk.NotOk) return null;
+        if (transformer.lastOk == LastOk.OkIfLast) {
+            if (!last) return null;
+        }
+        return new StructuredStatementExpression(target.getInferredJavaType(), body.getStatement());
     }
 
     private Expression extractOneSwitchAssignment(LValue target, List<Op04StructuredStatement> blockStm) {

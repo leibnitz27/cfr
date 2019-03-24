@@ -14,6 +14,8 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 
 public class StructuredComment extends AbstractStructuredStatement {
+    public static final StructuredComment EMPTY_COMMENT = new StructuredComment("");
+
     private Expression expression;
 
     public StructuredComment(Expression expression) {

@@ -49,7 +49,7 @@ public class ControlFlowCleaningTransformer implements StructuredStatementTransf
                     if (stm instanceof StructuredBreak) {
                         StructuredBreak stmb = (StructuredBreak) stm;
                         if (stmb.getBreakBlock() == inb.getBreakBlock()) {
-                            return new StructuredComment("");
+                            return StructuredComment.EMPTY_COMMENT;
                         }
                     }
                 }
@@ -64,7 +64,7 @@ public class ControlFlowCleaningTransformer implements StructuredStatementTransf
                     if (stm instanceof StructuredContinue) {
                         StructuredContinue stmb = (StructuredContinue) stm;
                         if (stmb.getContinueTgt() == cont.getContinueTgt()) {
-                            return new StructuredComment("");
+                            return StructuredComment.EMPTY_COMMENT;
                         }
                     }
                     if (stm instanceof StructuredComment) {
@@ -75,7 +75,7 @@ public class ControlFlowCleaningTransformer implements StructuredStatementTransf
 
                 BlockIdentifier block = scope.getContinueBlock();
                 if (block == cont.getContinueTgt()) {
-                    return new StructuredComment("");
+                    return StructuredComment.EMPTY_COMMENT;
                 }
 
                 return in;

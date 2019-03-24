@@ -589,9 +589,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             // and the current scope has fallthrough, we can be removed.  Otherwise we
             // need to be translated to a break.
             if (scope.statementIsLast(stm)) {
-                return new StructuredComment("");
+                return StructuredComment.EMPTY_COMMENT;
             } else if (scope.getDirectFallThrough(stm).contains(target)) {
-                return new StructuredComment("");
+                return StructuredComment.EMPTY_COMMENT;
             } else {
                 return stm;
             }
