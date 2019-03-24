@@ -251,6 +251,9 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         if (transformer.lastOk == LastOk.NotOk) return null;
         if (transformer.lastOk == LastOk.OkIfLast) {
             if (!last) return null;
+            int lastReplacement = replacements.size() - 1;
+            Op04StructuredStatement stm = replacements.get(lastReplacement).getFirst();
+            replacements.set(lastReplacement, Pair.make(stm, (StructuredStatement)new StructuredExpressionBreak(transformer.pendingAssignment)));
         }
         return new StructuredStatementExpression(target.getInferredJavaType(), body.getStatement());
     }
