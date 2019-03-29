@@ -26,6 +26,7 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment RENAME_MEMBERS = new DecompilerComment("Duplicate member names - consider using --" + OptionsImpl.RENAME_DUP_MEMBERS.getName() + " true");
     public static DecompilerComment ILLEGAL_IDENTIFIERS = new DecompilerComment("Illegal identifiers - consider using --" + OptionsImpl.RENAME_ILLEGAL_IDENTS.getName() + " true");
     public static DecompilerComment WHOLE_CLASS_EXCEPTION = new DecompilerComment("Exception performing whole class analysis.");
+    public static DecompilerComment EXPERIMENTAL_FEATURE = new DecompilerComment("Uses experimental features - may require --enable-preview");
     public static DecompilerComment BAD_ANNOTATION = new DecompilerComment("Issues handling annotations - annotations may be inaccurate");
     public static DecompilerComment CASE_CLASH_FS = new DecompilerComment("Classes with case insensitive name clashes seen, and your FS appears to be case insensitive - consider using --" + OptionsImpl.CASE_INSENSITIVE_FS_RENAME.getName() + " true");
 

@@ -98,8 +98,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         block.transform(new UnusedAnonymousBlockFlattener(), new StructuredScope());
     }
 
-    public static void switchExpression(Op04StructuredStatement root) {
-        new SwitchExpressionRewriter().rewrite(root);
+    public static void switchExpression(Op04StructuredStatement root, DecompilerComments comments, ClassFileVersion classFileVersion) {
+        new SwitchExpressionRewriter(comments, classFileVersion).rewrite(root);
     }
 
     // TODO: This isn't quite right.  Should actually be removing the node.

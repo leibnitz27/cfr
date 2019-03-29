@@ -23,6 +23,14 @@ public class ClassFileVersion {
         return true;
     }
 
+    public boolean isExperimental() {
+        return this.minor == 65535;
+    }
+
+    public boolean sameMajor(ClassFileVersion other) {
+        return major == other.major;
+    }
+
     public boolean before(ClassFileVersion other) {
         return !equalOrLater(other);
     }
@@ -44,5 +52,6 @@ public class ClassFileVersion {
     public static ClassFileVersion JAVA_10 = new ClassFileVersion(54, 0, "10");
     public static ClassFileVersion JAVA_11 = new ClassFileVersion(55, 0, "11");
     public static ClassFileVersion JAVA_12 = new ClassFileVersion(56, 0, "12");
+    public static ClassFileVersion JAVA_12_Experimental = new ClassFileVersion(56, 65535, "12");
     public static ClassFileVersion JAVA_13 = new ClassFileVersion(57, 0, "13");
 }

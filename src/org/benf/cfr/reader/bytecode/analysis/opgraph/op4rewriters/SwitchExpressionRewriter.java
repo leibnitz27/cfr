@@ -19,13 +19,24 @@ import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredSta
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.DecompilerComment;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.List;
 
 public class SwitchExpressionRewriter extends AbstractExpressionRewriter implements Op04Rewriter {
+    private final boolean experimental;
+    private DecompilerComments comments;
+
+    public SwitchExpressionRewriter(DecompilerComments comments, ClassFileVersion classFileVersion) {
+        this.comments = comments;
+        this.experimental = OptionsImpl.switchExpressionVersion.isExperimentalIn(classFileVersion);
+    }
 
     // TODO : This is a very common pattern - linearize is treated as a util - we should just walk.
     @Override
@@ -33,19 +44,25 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;
 
+        boolean action = false;
         for (int x=0;x<structuredStatements.size()-1;++x) {
             StructuredStatement s = structuredStatements.get(x);
             if (s instanceof StructuredDefinition) {
-                replaceSwitch(structuredStatements, x);
+                if (replaceSwitch(structuredStatements, x)) {
+                    action = true;
+                }
             }
+        }
+        if (action && experimental) {
+            comments.addComment(DecompilerComment.EXPERIMENTAL_FEATURE);
         }
     }
 
-    private void replaceSwitch(List<StructuredStatement> structuredStatements, int x) {
+    private boolean replaceSwitch(List<StructuredStatement> structuredStatements, int x) {
         StructuredDefinition def = (StructuredDefinition)structuredStatements.get(x);
         StructuredStatement swat = structuredStatements.get(x+1);
         if (!(swat instanceof StructuredSwitch)) {
-            return;
+            return false;
         }
         StructuredSwitch swatch = (StructuredSwitch)swat;
         LValue target = def.getLvalue();
@@ -53,7 +70,7 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         // a single thing to target, or throw an exception;
         Op04StructuredStatement swBody = swatch.getBody();
         if (!(swBody.getStatement() instanceof Block)) {
-            return;
+            return false;
         }
         Block b = (Block)swBody.getStatement();
         List<Op04StructuredStatement> content = b.getBlockStatements();
@@ -63,7 +80,7 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         for (int itm = 0; itm < size; ++itm) {
             Pair<StructuredCase, Expression> e = extractSwitchEntryPair(target, content.get(itm), replacements,itm == size -1);
             if (e == null) {
-                return;
+                return false;
             }
             extracted.add(e);
         }
@@ -80,6 +97,7 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
                 new StructuredAssignment(target, new SwitchExpression(target.getInferredJavaType(), swatch.getSwitchOn(), items));
         def.getContainer().replaceStatement(switchStatement);
         switchStatement.markCreator(target, switchStatement.getContainer());
+        return true;
     }
 
     private final static Predicate<Op04StructuredStatement> notEmpty = new Predicate<Op04StructuredStatement>() {

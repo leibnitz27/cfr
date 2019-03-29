@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.getopt;
 
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.collections.ListFactory;
 
@@ -184,6 +185,52 @@ public class OptionsImpl implements Options {
 
     }
 
+    public static class ExperimentalVersionSpecificDefaulter implements OptionDecoderParam<Boolean, ClassFileVersion> {
+
+        ClassFileVersion versionGreaterThanOrEqual;
+        private ClassFileVersion[] experimentalVersions;
+        boolean resultIfGreaterThanOrEqual;
+
+        private ExperimentalVersionSpecificDefaulter(ClassFileVersion versionGreaterThanOrEqual, boolean resultIfGreaterThanOrEqual, ClassFileVersion ... experimentalVersions) {
+            this.versionGreaterThanOrEqual = versionGreaterThanOrEqual;
+            this.experimentalVersions = experimentalVersions;
+            this.resultIfGreaterThanOrEqual = resultIfGreaterThanOrEqual;
+        }
+
+        @Override
+        public Boolean invoke(String arg, ClassFileVersion classFileVersion, Options ignore2) {
+            if (arg != null) return Boolean.parseBoolean(arg);
+            if (classFileVersion == null) throw new IllegalStateException(); // ho ho ho.
+            if (isExperimentalIn(classFileVersion)) return resultIfGreaterThanOrEqual;
+            return (classFileVersion.equalOrLater(versionGreaterThanOrEqual)) == resultIfGreaterThanOrEqual;
+        }
+
+        public boolean isExperimentalIn(ClassFileVersion classFileVersion) {
+            if (!classFileVersion.isExperimental()) return false;
+            for (ClassFileVersion experimental : experimentalVersions) {
+                if (experimental.sameMajor(classFileVersion)) return true;
+            }
+            return false;
+        }
+
+        @Override
+        public String getRangeDescription() {
+            return "boolean";
+        }
+
+        @Override
+        public String getDefaultValue() {
+            boolean first = true;
+            StringBuilder sb = new StringBuilder();
+            for (ClassFileVersion experimental : experimentalVersions) {
+                first = StringUtils.comma(first, sb);
+                sb.append(experimental);
+            }
+            return "" + resultIfGreaterThanOrEqual + " if class file from version " + versionGreaterThanOrEqual + " or greater, or experimental in " + sb.toString();
+        }
+
+    }
+
     private static final String CFR_WEBSITE = "http://www.benf.org/other/cfr/";
 
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGBUFFER = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
@@ -204,8 +251,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> STRING_SWITCH = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true),
             "Re-sugar switch on String - see " + CFR_WEBSITE + "java7switchonstring.html");
+    public static final ExperimentalVersionSpecificDefaulter switchExpressionVersion = new ExperimentalVersionSpecificDefaulter(ClassFileVersion.JAVA_13, true, ClassFileVersion.JAVA_12);
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SWITCH_EXPRESSION = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
-            "switchexpression", new VersionSpecificDefaulter(ClassFileVersion.JAVA_13, true),
+            "switchexpression", switchExpressionVersion,
             "Re-sugar switch expression.");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ARRAY_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
