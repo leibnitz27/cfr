@@ -533,12 +533,18 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     if (SetUtil.hasIntersection(this.fixed, fixedPrevious)) {
                         return null;
                     }
+                    SSAIdentifiers<LValue> currentIdents = statementContainer.getSSAIdentifiers();
+                    // Need to verify that any other LValue does not jump.
+                    LValueUsageCollectorSimple collector = new LValueUsageCollectorSimple();
+                    replacement.getStatement().collectLValueUsage(collector);
+                    for (LValue testSafe : collector.getUsedLValues()) {
+                        if (!previousIdents.isValidReplacementOnExit(testSafe, currentIdents)) return null;
+                    }
 
                     // Only the first time.
                     mutableReplacable.remove(versionedLValue);
                     replacement.nopOut();
                     //noinspection unchecked
-                    SSAIdentifiers<LValue> currentIdents = statementContainer.getSSAIdentifiers();
                     currentIdents.setKnownIdentifierOnEntry(lValue, previousIdents.getSSAIdentOnEntry(lValue));
                     currentIdents.fixHere(previousIdents.getFixedHere());
                     return replaceWith.expression;
