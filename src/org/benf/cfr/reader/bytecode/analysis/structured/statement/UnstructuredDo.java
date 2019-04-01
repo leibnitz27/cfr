@@ -62,7 +62,7 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
             LinkedList<Op04StructuredStatement> blockContent = ListFactory.newLinkedList();
             blockContent.add(new Op04StructuredStatement(inner));
             inner = new Block(blockContent, true);
-            innerBlock.replaceContainedStatement(inner);
+            innerBlock.replaceStatement(inner);
         }
         Block block = (Block) inner;
         Optional<Op04StructuredStatement> maybeStatement = block.getMaybeJustOneStatement();

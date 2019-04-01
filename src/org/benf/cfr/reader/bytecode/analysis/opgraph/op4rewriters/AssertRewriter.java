@@ -265,7 +265,7 @@ public class AssertRewriter {
                 if (name.equals("ass1") || name.equals("ass1c")) condition = new NotOperation(condition);
                 condition = condition.simplify();
                 StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(condition,arg));
-                ifStatement.getContainer().replaceContainedStatement(structuredAssert);
+                ifStatement.getContainer().replaceStatement(structuredAssert);
             } else if (name.equals("ass2")) {
                 if (ass2throw == null) throw new IllegalStateException();
                 StructuredIf ifStatement = (StructuredIf) statement;
@@ -276,14 +276,14 @@ public class AssertRewriter {
                     conditionalExpression = new BooleanExpression(new Literal(TypedLiteral.getBoolean(0)));
                 // The if statement becomes an assert conditjon, the throw statement becomes the content of the if block.
                 StructuredStatement structuredAssert = new StructuredAssert(conditionalExpression,arg);
-                ifStatement.getContainer().replaceContainedStatement(structuredAssert);
-                ass2throw.getContainer().replaceContainedStatement(ifStatement.getIfTaken().getStatement());
+                ifStatement.getContainer().replaceStatement(structuredAssert);
+                ass2throw.getContainer().replaceStatement(ifStatement.getIfTaken().getStatement());
             } else if (name.equals("ass2throw")) {
                 ass2throw = statement;
             } else if (name.equals("assonly")) {
                 StructuredIf ifStatement = (StructuredIf) statement;
                 StructuredStatement structuredAssert = ifStatement.convertToAssertion(new StructuredAssert(new BooleanExpression(Literal.FALSE),arg));
-                ifStatement.getContainer().replaceContainedStatement(structuredAssert);
+                ifStatement.getContainer().replaceStatement(structuredAssert);
             }
         }
     }

@@ -104,7 +104,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 StructuredSwitch secondSwitch = (StructuredSwitch) matchResultCollector.getStatementByName("switch2");
 
                 StructuredSwitch replacement = rewriteSwitch(secondSwitch, matchResultCollector);
-                secondSwitch.getContainer().replaceContainedStatement(replacement);
+                secondSwitch.getContainer().replaceStatement(replacement);
                 firstSwitch.getContainer().nopOut();
                 matchResultCollector.getStatementByName("ass1").getContainer().nopOut();
                 matchResultCollector.getStatementByName("ass2").getContainer().nopOut();

@@ -99,7 +99,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     public static void switchExpression(Op04StructuredStatement root, DecompilerComments comments, ClassFileVersion classFileVersion) {
-        new SwitchExpressionRewriter(comments, classFileVersion).rewrite(root);
+        root.transform(new SwitchExpressionRewriter(comments, classFileVersion), new StructuredScope());
     }
 
     // TODO: This isn't quite right.  Should actually be removing the node.
@@ -367,11 +367,6 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         this.structuredStatement = replacement;
         replacement.setContainer(this);
         return true;
-    }
-
-    public void replaceContainedStatement(StructuredStatement structuredStatement) {
-        this.structuredStatement = structuredStatement;
-        this.structuredStatement.setContainer(this);
     }
 
     private static class StackedBlock {

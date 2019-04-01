@@ -428,7 +428,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         }
 
 
-        structuredStatement.getContainer().replaceContainedStatement(newSwitch);
+        structuredStatement.getContainer().replaceStatement(newSwitch);
         return false;
     }
 

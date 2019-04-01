@@ -27,11 +27,23 @@ import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
+import java.util.Collections;
 import java.util.List;
 
-public class SwitchExpressionRewriter extends AbstractExpressionRewriter implements Op04Rewriter {
+public class SwitchExpressionRewriter extends AbstractExpressionRewriter implements StructuredStatementTransformer {
     private final boolean experimental;
     private DecompilerComments comments;
+
+    @Override
+    public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+        in.transformStructuredChildren(this, scope);
+        if (in instanceof StructuredSwitch) {
+            Op04StructuredStatement container = in.getContainer();
+            rewrite(container, scope);
+            return container.getStatement();
+        }
+        return in;
+    }
 
     public SwitchExpressionRewriter(DecompilerComments comments, ClassFileVersion classFileVersion) {
         this.comments = comments;
@@ -39,33 +51,21 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
     }
 
     // TODO : This is a very common pattern - linearize is treated as a util - we should just walk.
-    @Override
-    public void rewrite(Op04StructuredStatement root) {
+    public void rewrite(Op04StructuredStatement root, StructuredScope scope) {
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;
 
-        boolean action = false;
-        for (int x=0;x<structuredStatements.size()-1;++x) {
-            StructuredStatement s = structuredStatements.get(x);
-            if (s instanceof StructuredDefinition) {
-                if (replaceSwitch(structuredStatements, x)) {
-                    action = true;
-                }
-            }
-        }
-        if (action && experimental) {
+        if (replaceSwitch(root, structuredStatements, scope) && experimental) {
             comments.addComment(DecompilerComment.EXPERIMENTAL_FEATURE);
         }
     }
 
-    private boolean replaceSwitch(List<StructuredStatement> structuredStatements, int x) {
-        StructuredDefinition def = (StructuredDefinition)structuredStatements.get(x);
-        StructuredStatement swat = structuredStatements.get(x+1);
+    private boolean replaceSwitch(Op04StructuredStatement container, List<StructuredStatement> structuredStatements, StructuredScope scope) {
+        StructuredStatement swat = structuredStatements.get(0);
         if (!(swat instanceof StructuredSwitch)) {
             return false;
         }
         StructuredSwitch swatch = (StructuredSwitch)swat;
-        LValue target = def.getLvalue();
         // At this point, the switch needs total coverage, and every item needs to assign
         // a single thing to target, or throw an exception;
         Op04StructuredStatement swBody = swatch.getBody();
@@ -77,6 +77,13 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         int size = content.size();
         List<Pair<StructuredCase, Expression>> extracted = ListFactory.newList();
         List<Pair<Op04StructuredStatement, StructuredStatement>> replacements = ListFactory.newList();
+        LValue target = null;
+        for (int itm = 0; itm < size && target == null; ++itm) {
+            target = extractSwitchLValue(content.get(itm), itm == size - 1);
+        }
+        if (target == null) {
+            return false;
+        }
         for (int itm = 0; itm < size; ++itm) {
             Pair<StructuredCase, Expression> e = extractSwitchEntryPair(target, content.get(itm), replacements,itm == size -1);
             if (e == null) {
@@ -84,20 +91,87 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
             }
             extracted.add(e);
         }
+        /*
+         * We have to find definition of target in our scope.
+         */
+        StructuredStatement declarationContainer = scope.get(1);
+        if (!(declarationContainer instanceof Block)) return false;
+
+        // Find the definition of the var, and ensure it's not used between there and statement.
+        // TODO : This is expensive, and we could improve this by ensuring variable is declared
+        // closer to usage.
+        List<Op04StructuredStatement> blockContent = ((Block) declarationContainer).getBlockStatements();
+        Op04StructuredStatement definition = null;
+        UsageCheck usageCheck = new UsageCheck(target);
+        for (Op04StructuredStatement blockItem : blockContent) {
+            if (definition == null) {
+                StructuredStatement stm = blockItem.getStatement();
+                if (stm instanceof StructuredDefinition) {
+                    if (target.equals(((StructuredDefinition) stm).getLvalue())) {
+                        definition = blockItem;
+                    }
+                }
+                continue;
+            }
+            if (blockItem == container) break;
+            blockItem.getStatement().rewriteExpressions(usageCheck);
+            if (usageCheck.failed) {
+                return false;
+            }
+        }
+        if (definition == null) {
+            return false;
+        }
+
         // Now we're sure we're doing the transformation....
         for (Pair<Op04StructuredStatement, StructuredStatement> replacement : replacements) {
-            replacement.getFirst().replaceContainedStatement(replacement.getSecond());
+            replacement.getFirst().replaceStatement(replacement.getSecond());
         }
         List<SwitchExpression.Branch> items = ListFactory.newList();
         for (Pair<StructuredCase, Expression> e : extracted) {
             items.add(new SwitchExpression.Branch(e.getFirst().getValues(), e.getSecond()));
         }
-        swat.getContainer().nopOut();
+
+        definition.nopOut();
         StructuredAssignment switchStatement =
                 new StructuredAssignment(target, new SwitchExpression(target.getInferredJavaType(), swatch.getSwitchOn(), items));
-        def.getContainer().replaceStatement(switchStatement);
+        swat.getContainer().replaceStatement(switchStatement);
         switchStatement.markCreator(target, switchStatement.getContainer());
         return true;
+    }
+
+    private LValue extractSwitchLValue(Op04StructuredStatement item, boolean last) {
+        StructuredStatement stm = item.getStatement();
+        if (!(stm instanceof StructuredCase)) {
+            return null;
+        }
+        StructuredCase sc = (StructuredCase)stm;
+        Op04StructuredStatement body = sc.getBody();
+        StructuredStatement bodyStm = body.getStatement();
+        List<Op04StructuredStatement> content;
+        if (bodyStm instanceof Block) {
+            content = Functional.filterOptimistic(((Block) bodyStm).getBlockStatements(), notEmpty);
+        } else {
+            content = Collections.singletonList(body);
+        }
+        if (content.size() > 2) {
+            content = content.subList(content.size()-2,content.size());
+        }
+        if (content.isEmpty()) return null;
+        if (content.size() == 2) {
+            // last should be a break.
+            if (content.get(1).getStatement() instanceof StructuredBreak) {
+                // and the assignment?
+                StructuredStatement isAssign = content.get(0).getStatement();
+                if (!(isAssign instanceof StructuredAssignment)) return null;
+                return ((StructuredAssignment) isAssign).getLvalue();
+            }
+        }
+        if (!last) return null;
+        // and the assignment?
+        StructuredStatement isAssign = content.get(content.size()-1).getStatement();
+        if (!(isAssign instanceof StructuredAssignment)) return null;
+        return ((StructuredAssignment) isAssign).getLvalue();
     }
 
     private final static Predicate<Op04StructuredStatement> notEmpty = new Predicate<Op04StructuredStatement>() {

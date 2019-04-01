@@ -94,7 +94,7 @@ public class InfiniteAssertRewriter implements StructuredStatementTransformer
         StructuredStatement bodyContent = body.getStatement();
         if (!(bodyContent instanceof Block)) {
             bodyContent = new Block(new Op04StructuredStatement(bodyContent));
-            body.replaceContainedStatement(bodyContent);
+            body.replaceStatement(bodyContent);
         }
         Block bodyBlock = (Block)bodyContent;
         bodyBlock.addStatement(new Op04StructuredStatement(

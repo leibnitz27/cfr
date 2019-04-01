@@ -45,7 +45,7 @@ public class UnstructuredSwitch extends AbstractUnStructuredStatement {
             Op04StructuredStatement last = statements.get(statements.size() - 1);
             if (last.getStatement() instanceof UnstructuredCase) {
                 UnstructuredCase caseStatement = (UnstructuredCase) (last.getStatement());
-                last.replaceContainedStatement(caseStatement.getEmptyStructuredCase());
+                last.replaceStatement(caseStatement.getEmptyStructuredCase());
             }
         }
         return new StructuredSwitch(switchOn, innerBlock, blockIdentifier);
