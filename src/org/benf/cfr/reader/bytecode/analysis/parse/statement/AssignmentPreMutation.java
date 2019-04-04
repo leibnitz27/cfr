@@ -63,6 +63,7 @@ public class AssignmentPreMutation extends AbstractAssignment {
 
     @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
+        lvalue.collectLValueUsage(lValueUsageCollector);
         rvalue.collectUsedLValues(lValueUsageCollector);
     }
 

@@ -20,7 +20,7 @@ public abstract class AbstractLValue implements LValue {
         this.inferredJavaType = inferredJavaType;
     }
 
-    protected String typeToString() {
+    String typeToString() {
         return inferredJavaType.toString();
     }
 

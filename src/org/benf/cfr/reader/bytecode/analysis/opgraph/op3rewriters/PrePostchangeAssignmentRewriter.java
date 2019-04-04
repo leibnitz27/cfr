@@ -17,7 +17,7 @@ import org.benf.cfr.reader.util.functors.Predicate;
 
 import java.util.List;
 
-public class PrePostchangeAssignmentRewriter {
+class PrePostchangeAssignmentRewriter {
 
     /*
      * preChange is --x / ++x.
@@ -55,6 +55,11 @@ public class PrePostchangeAssignmentRewriter {
                 AssignmentSimple assignmentSimple = (AssignmentSimple) innerStatement;
                 if (assignmentSimple.getRValue().equals(lvalueExpression)) {
                     LValue tgt = assignmentSimple.getCreatedLValue();
+                    tgt.applyExpressionRewriter(usageWatcher, null, current, ExpressionRewriterFlags.LVALUE);
+                    if (usageWatcher.isFound()) {
+                        return false;
+                    }
+
                     /*
                      * Verify that the saident of tgt does not change.
                      */
@@ -114,7 +119,7 @@ public class PrePostchangeAssignmentRewriter {
         }
     }
 
-    public static void pushPreChangeBack(List<Op03SimpleStatement> statements) {
+    static void pushPreChangeBack(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentPreMutation>(AssignmentPreMutation.class));
         assignments = Functional.filter(assignments, new StatementCanBePostMutation());
         if (assignments.isEmpty()) return;
@@ -201,7 +206,7 @@ public class PrePostchangeAssignmentRewriter {
         statement.replaceStatement(new AssignmentSimple(tmp, postMutationOperation));
     }
 
-    public static void replacePrePostChangeAssignments(List<Op03SimpleStatement> statements) {
+    static void replacePrePostChangeAssignments(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> assignments = Functional.filter(statements, new TypeFilter<AssignmentSimple>(AssignmentSimple.class));
         for (Op03SimpleStatement assignment : assignments) {
             if (replacePreChangeAssignment(assignment)) continue;
