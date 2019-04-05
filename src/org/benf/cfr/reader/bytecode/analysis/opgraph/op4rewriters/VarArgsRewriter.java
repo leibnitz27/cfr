@@ -82,7 +82,11 @@ public class VarArgsRewriter implements Op04Rewriter, ExpressionRewriter {
 
     public void rewriteVarArgsArg(OverloadMethodSet overloadMethodSet, MethodPrototype methodPrototype, List<Expression> args, GenericTypeBinder gtb) {
         if (!methodPrototype.isVarArgs()) return;
-        if (args.size() != methodPrototype.getArgs().size()) return;
+        if (args.size() != methodPrototype.getArgs().size() || args.isEmpty()) {
+            // This shouldn't be possible.  Someone's decorated a method varargs
+            // when it isn't really.  Obfuscator?
+            return;
+        }
         int last = args.size() - 1;
         Expression lastArg = args.get(args.size() - 1);
         if (!(lastArg instanceof NewAnonymousArray)) return;
