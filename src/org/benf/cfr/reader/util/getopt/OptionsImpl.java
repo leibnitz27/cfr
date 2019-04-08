@@ -1,10 +1,15 @@
 package org.benf.cfr.reader.util.getopt;
 
-import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.AnalysisType;
+import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.StringUtils;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.collections.ListFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class OptionsImpl implements Options {
     private final Map<String, String> opts;
@@ -198,8 +203,10 @@ public class OptionsImpl implements Options {
         }
 
         @Override
-        public Boolean invoke(String arg, ClassFileVersion classFileVersion, Options ignore2) {
+        public Boolean invoke(String arg, ClassFileVersion classFileVersion, Options options) {
             if (arg != null) return Boolean.parseBoolean(arg);
+            // If preview features is set to false, return false;
+            if (!options.getOption(OptionsImpl.PREVIEW_FEATURES)) return false;
             if (classFileVersion == null) throw new IllegalStateException(); // ho ho ho.
             if (isExperimentalIn(classFileVersion)) return resultIfGreaterThanOrEqual;
             return (classFileVersion.equalOrLater(versionGreaterThanOrEqual)) == resultIfGreaterThanOrEqual;
@@ -251,6 +258,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> STRING_SWITCH = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "decodestringswitch", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, true),
             "Re-sugar switch on String - see " + CFR_WEBSITE + "java7switchonstring.html");
+    public static final PermittedOptionProvider.Argument<Boolean> PREVIEW_FEATURES = new PermittedOptionProvider.Argument<Boolean>(
+            "previewfeatures", defaultTrueBooleanDecoder,
+            "Decompile preview features if class was compiled with (jdk --enable-preview).");
     public static final ExperimentalVersionSpecificDefaulter switchExpressionVersion = new ExperimentalVersionSpecificDefaulter(ClassFileVersion.JAVA_13, true, ClassFileVersion.JAVA_12);
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SWITCH_EXPRESSION = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "switchexpression", switchExpressionVersion,
@@ -487,7 +497,8 @@ public class OptionsImpl implements Options {
         @Override
         @SuppressWarnings("unchecked")
         public List<? extends ArgumentParam<?, ?>> getArguments() {
-            return ListFactory.newImmutableList(ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, SWITCH_EXPRESSION, ARRAY_ITERATOR,
+            return ListFactory.newImmutableList(ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, SWITCH_EXPRESSION, PREVIEW_FEATURES,
+                    ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,

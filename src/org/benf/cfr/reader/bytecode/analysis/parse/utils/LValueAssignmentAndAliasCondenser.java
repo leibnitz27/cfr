@@ -18,6 +18,7 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.collections.SetUtil;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,13 +27,15 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     //
     // Found states that key can be replaced with value.
     //
-    private final Map<StackSSALabel, ExpressionStatement> found = MapFactory.newOrderedMap();
-    private final Set<StackSSALabel> blacklisted = SetFactory.newOrderedSet();
+    private final Map<StackSSALabel, ExpressionStatement> found;
+    private final Set<StackSSALabel> blacklisted;
+    private final Set<LValue> keepConstant;
+
     //
     // A chain of dup, copy assign can be considered to be an alias set.
     // we can replace references to subsequent temporaries with references to the first LValue.
     //
-    private final Map<StackSSALabel, Expression> aliasReplacements = MapFactory.newMap();
+    private final Map<StackSSALabel, Expression> aliasReplacements;
 
     // When we know that this value is being used multiple times.
     // Maybe we can convert
@@ -42,14 +45,31 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     // into
     // c = 1+1
     // d = c
-    private final Map<StackSSALabel, ExpressionStatement> multiFound = MapFactory.newMap();
+    private final Map<StackSSALabel, ExpressionStatement> multiFound;
 
     //
     // When we're EXPLICITLY being told that this NON SSA value can be moved to later in the
     // code (i.e.  ++x;  if (x) -> if (++x) )
     //
-    private final Map<VersionedLValue, ExpressionStatement> mutableFound = MapFactory.newMap();
+    private final Map<VersionedLValue, ExpressionStatement> mutableFound;
 
+    public LValueAssignmentAndAliasCondenser() {
+        found = MapFactory.newOrderedMap();
+        blacklisted = SetFactory.newOrderedSet();
+        keepConstant = SetFactory.newSet();
+        aliasReplacements = MapFactory.newMap();
+        multiFound = MapFactory.newMap();
+        mutableFound = MapFactory.newMap();
+    }
+
+    public LValueAssignmentAndAliasCondenser(LValueAssignmentAndAliasCondenser other, Set<LValue> keepConstant) {
+        this.keepConstant = keepConstant;
+        this.found = other.found;
+        this.blacklisted = other.blacklisted;
+        this.aliasReplacements = other.aliasReplacements;
+        this.multiFound = other.multiFound;
+        this.mutableFound = other.mutableFound;
+    }
 
     @Override
     public void collect(StackSSALabel lValue, StatementContainer<Statement> statementContainer, Expression value) {
@@ -97,6 +117,15 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     }
 
     @Override
+    public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+        return new LValueAssignmentAndAliasCondenser(this, SetFactory.newSet(keepConstant, usedLValues));
+    }
+
+    public void reset() {
+        keepConstant.clear();
+    }
+
+    @Override
     public boolean needLR() {
         return false;
     }
@@ -121,6 +150,14 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         Expression res = pair.expression;
 
         if (replacementIdentifiers != null) {
+            if (!this.keepConstant.isEmpty()) {
+                for (LValue l : this.keepConstant) {
+                    if (!replacementIdentifiers.unchanged(l)) {
+                        return null;
+                    }
+                }
+            }
+
             LValueUsageCollectorSimple lvcInSource = new LValueUsageCollectorSimple();
             res.collectUsedLValues(lvcInSource);
 
@@ -281,6 +318,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
+        public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+            return this;
+        }
+
+        @Override
         public boolean needLR() {
             return false;
         }
@@ -434,6 +476,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
+        public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+            return this;
+        }
+
+        @Override
         public LValueRewriter getWithFixed(Set fixed) {
             return this;
         }
@@ -514,6 +561,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         @Override
         public boolean needLR() {
             return true;
+        }
+
+        @Override
+        public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+            return this;
         }
 
         @Override

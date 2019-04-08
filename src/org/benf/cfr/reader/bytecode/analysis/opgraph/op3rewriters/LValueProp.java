@@ -50,6 +50,7 @@ public class LValueProp {
 
             lValueAssigmentCollector = new LValueAssignmentAndAliasCondenser();
             for (Op03SimpleStatement statement : statements) {
+                lValueAssigmentCollector.reset();
                 statement.collect(lValueAssigmentCollector);
             }
         }
@@ -64,6 +65,7 @@ public class LValueProp {
         multiRewriter.inferAliases();
 
         for (Op03SimpleStatement statement : statements) {
+            lValueAssigmentCollector.reset();
             statement.condense(lValueAssigmentCollector);
         }
     }

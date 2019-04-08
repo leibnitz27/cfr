@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -140,6 +141,11 @@ public class LValuePropSimple {
                         @Override
                         public boolean needLR() {
                             return false;
+                        }
+
+                        @Override
+                        public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+                            return this;
                         }
 
                         @Override

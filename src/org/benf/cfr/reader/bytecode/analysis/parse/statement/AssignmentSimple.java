@@ -11,7 +11,11 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
+import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class AssignmentSimple extends AbstractAssignment {
     private LValue lvalue;
@@ -127,6 +131,11 @@ public class AssignmentSimple extends AbstractAssignment {
     @Override
     public void replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers) {
         lvalue = lvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
+        LValueUsageCollectorSimple tmp = new LValueUsageCollectorSimple();
+        lvalue.collectLValueUsage(tmp);
+        if (!tmp.getUsedLValues().isEmpty()) {
+            lValueRewriter = lValueRewriter.keepConstant(tmp.getUsedLValues());
+        }
         rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
         // We need to make sure that we haven't violated any preconditions with a rewrite.
         lValueRewriter.checkPostConditions(lvalue, rvalue);

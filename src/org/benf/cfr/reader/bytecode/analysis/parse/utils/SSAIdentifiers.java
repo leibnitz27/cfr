@@ -171,6 +171,13 @@ public class SSAIdentifiers<KEYTYPE> {
         return result;
     }
 
+    public boolean unchanged(KEYTYPE lValue) {
+        SSAIdent before = getSSAIdentOnEntry(lValue);
+        SSAIdent after = getSSAIdentOnExit(lValue);
+        if (before == null) return after == null;
+        return before.equals(after);
+    }
+
     public SSAIdent getSSAIdentOnExit(KEYTYPE lValue) {
         return knownIdentifiersOnExit.get(lValue);
     }
