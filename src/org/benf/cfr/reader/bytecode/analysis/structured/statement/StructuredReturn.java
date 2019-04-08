@@ -92,6 +92,26 @@ public class StructuredReturn extends AbstractStructuredStatement implements Box
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (obj.getClass() != StructuredReturn.class) return false;
+        StructuredReturn other = (StructuredReturn)obj;
+        if (value == null) {
+            if (other.value != null) return false;
+        } else {
+            if (!value.equals(other.value)) return false;
+        }
+
+        if (fnReturnType == null) {
+            if (other.fnReturnType != null) return false;
+        } else {
+            if (!fnReturnType.equals(other.fnReturnType)) return false;
+        }
+        return true;
+    }
+
+    @Override
     public boolean match(MatchIterator<StructuredStatement> matchIterator, MatchResultCollector matchResultCollector) {
         StructuredStatement o = matchIterator.getCurrent();
         if (!(o instanceof StructuredReturn)) return false;

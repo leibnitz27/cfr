@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.IllegalReturnChecker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.VoidVariableChecker;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SwitchExpression;
@@ -785,6 +786,7 @@ public class CodeAnalyser {
              */
             Op04StructuredStatement.applyChecker(new LooseCatchChecker(), block, comments);
             Op04StructuredStatement.applyChecker(new VoidVariableChecker(), block, comments);
+            Op04StructuredStatement.applyChecker(new IllegalReturnChecker(), block, comments);
 
             Op04StructuredStatement.flattenNonReferencedBlocks(block);
             /*
