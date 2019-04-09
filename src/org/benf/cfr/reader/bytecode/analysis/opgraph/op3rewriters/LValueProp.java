@@ -50,7 +50,6 @@ public class LValueProp {
 
             lValueAssigmentCollector = new LValueAssignmentAndAliasCondenser();
             for (Op03SimpleStatement statement : statements) {
-                lValueAssigmentCollector.reset();
                 statement.collect(lValueAssigmentCollector);
             }
         }
