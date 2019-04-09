@@ -88,7 +88,11 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         switchOn.collectUsedLValues(scopeDiscoverer);
+        // We have a spurious Block underneath us, but that's ok - anything that is discovered
+        // into that scope will be discovered into here.
+        scopeDiscoverer.enterBlock(this);
         scopeDiscoverer.processOp04Statement(getBody());
+        scopeDiscoverer.leaveBlock(this);
     }
 
     @Override

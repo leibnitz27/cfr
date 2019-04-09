@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredSwitch;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -154,7 +155,7 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
             }
         });
 
-        for (Map.Entry<ScopeKey, List<ScopeDefinition>> entry : definitionsByType.entrySet()) {
+        creation : for (Map.Entry<ScopeKey, List<ScopeDefinition>> entry : definitionsByType.entrySet()) {
             ScopeKey scopeKey = entry.getKey();
             List<ScopeDefinition> definitions = entry.getValue();
             // find the longest common nested scope - null wins automatically!
@@ -219,20 +220,53 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
             } else {
                 if (bestDefn != null) {
                     creationContainer = bestDefn.getStatementContainer();
-                } else if (commonScope != null) {
+                } else if (commonScope != null && !commonScope.isEmpty()) {
+                    // This is a bit ugly.  If we have a switchStatement at -2,
+                    // then we know that the statement at -1 is invalid.
+                    if (commonScope.size() > 2) {
+                        StatementContainer<StructuredStatement> testSwitch = commonScope.get(commonScope.size() - 2);
+                        if (testSwitch.getStatement() instanceof StructuredSwitch) {
+                            // We can't define at this level.  We could either define 1 level higher, or (this is fun)
+                            // we can define inside each of the first eligible blocks of definitions!
+                            if (defineInsideSwitchContent(scopedEntity, definitions, commonScope)) {
+                                //noinspection UnnecessaryLabelOnContinueStatement
+                                continue creation;
+                            }
+                            commonScope = commonScope.subList(0, commonScope.size()-2);
+                        }
+                    }
+
                     creationContainer = commonScope.get(commonScope.size() - 1);
                 }
             }
 
             StatementContainer<StructuredStatement> hint = bestDefn == null ? null : bestDefn.localHint;
             if (creationContainer != null) {
-                // Could make use of the fact that if something here is void, we've obviously screwed up.
-//                if (scopedEntity.getInferredJavaType().getJavaTypeInstance() == RawJavaType.VOID) {
-//                    throw new ConfusedCFRException("Void");
-//                }
                 creationContainer.getStatement().markCreator(scopedEntity, hint);
             }
         }
+    }
+
+    private boolean defineInsideSwitchContent(LValue scopedEntity, List<ScopeDefinition> definitions, List<StatementContainer<StructuredStatement>> commonScope) {
+        int commonScopeSize = commonScope.size();
+        List<StatementContainer<StructuredStatement>> newDefs = ListFactory.newList();
+        for (ScopeDefinition def : definitions) {
+            if (def.nestedScope.size() <= commonScopeSize) return false;
+            StatementContainer<StructuredStatement> innerDef = def.nestedScope.get(commonScopeSize);
+            if (!innerDef.getStatement().canDefine(scopedEntity)) return false;
+            newDefs.add(innerDef);
+        }
+        for (int x=0;x<newDefs.size();++x) {
+            StatementContainer<StructuredStatement> stm = newDefs.get(x);
+            ScopeDefinition definition = definitions.get(x);
+            if (definition.nestedScope.size() == commonScopeSize+1) {
+                if (definition.exactStatement != null) {
+                    stm = definition.exactStatement;
+                }
+            }
+            stm.getStatement().markCreator(scopedEntity, stm);
+        }
+        return true;
     }
 
     private static <T> List<T> getCommonPrefix(List<T> a, List<T> b) {
