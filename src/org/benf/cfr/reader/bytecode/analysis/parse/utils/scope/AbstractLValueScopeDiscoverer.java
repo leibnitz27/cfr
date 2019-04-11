@@ -19,6 +19,7 @@ import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.*;
@@ -249,19 +250,21 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
 
     private boolean defineInsideSwitchContent(LValue scopedEntity, List<ScopeDefinition> definitions, List<StatementContainer<StructuredStatement>> commonScope) {
         int commonScopeSize = commonScope.size();
-        List<StatementContainer<StructuredStatement>> newDefs = ListFactory.newList();
+        Set<StatementContainer<StructuredStatement>> usedPoints = SetFactory.newIdentitySet();
+        List<ScopeDefinition> foundPoints = ListFactory.newList();
         for (ScopeDefinition def : definitions) {
             if (def.nestedScope.size() <= commonScopeSize) return false;
             StatementContainer<StructuredStatement> innerDef = def.nestedScope.get(commonScopeSize);
             if (!innerDef.getStatement().canDefine(scopedEntity)) return false;
-            newDefs.add(innerDef);
+            if (usedPoints.add(innerDef)) {
+                foundPoints.add(def);
+            }
         }
-        for (int x=0;x<newDefs.size();++x) {
-            StatementContainer<StructuredStatement> stm = newDefs.get(x);
-            ScopeDefinition definition = definitions.get(x);
-            if (definition.nestedScope.size() == commonScopeSize+1) {
-                if (definition.exactStatement != null) {
-                    stm = definition.exactStatement;
+        for (ScopeDefinition def : foundPoints) {
+            StatementContainer<StructuredStatement> stm = def.nestedScope.get(commonScopeSize);
+            if (def.nestedScope.size() == commonScopeSize+1) {
+                if (def.exactStatement != null) {
+                    stm = def.exactStatement;
                 }
             }
             stm.getStatement().markCreator(scopedEntity, stm);
