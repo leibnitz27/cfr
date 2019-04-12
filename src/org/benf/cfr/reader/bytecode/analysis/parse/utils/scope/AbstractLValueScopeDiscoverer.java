@@ -4,18 +4,23 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.SentinelLocalClassLValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredSwitch;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -44,8 +49,10 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
     final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
     final VariableFactory variableFactory;
     StatementContainer<StructuredStatement> currentMark = null;
+    private final MethodPrototype prototype;
 
     AbstractLValueScopeDiscoverer(MethodPrototype prototype, VariableFactory variableFactory) {
+        this.prototype = prototype;
         final List<LocalVariable> parameters = prototype.getComputedParameters();
         this.variableFactory = variableFactory;
         for (LocalVariable parameter : parameters) {
@@ -242,10 +249,41 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
             }
 
             StatementContainer<StructuredStatement> hint = bestDefn == null ? null : bestDefn.localHint;
-            if (creationContainer != null) {
-                creationContainer.getStatement().markCreator(scopedEntity, hint);
+            if (creationContainer == null) {
+                continue;
             }
+            // If we have no hint but a creation container, where in the scope is it?
+            // Is it at the top of the scope?
+            // If so, is this a constructor? Because if so we have to make sure we skip any
+            // this / super calls.
+            if (hint == null && commonScope != null && commonScope.size() == 1) {
+                if (MiscConstants.INIT_METHOD.equals(prototype.getName())) {
+                    hint = getNonInit(creationContainer);
+                }
+            }
+            creationContainer.getStatement().markCreator(scopedEntity, hint);
         }
+    }
+
+    private StatementContainer<StructuredStatement> getNonInit(StatementContainer<StructuredStatement> creationContainer) {
+        StructuredStatement stm = creationContainer.getStatement();
+        if (!(stm instanceof Block)) {
+            return null;
+        }
+        List<Op04StructuredStatement> content = ((Block) stm).getBlockStatements();
+        int x;
+        int len = content.size()-1;
+        for (x = 0;x < len;++x) {
+            StructuredStatement item = content.get(x).getStatement();
+            if (item instanceof StructuredComment) continue;
+            if (item instanceof StructuredExpressionStatement) {
+                Expression e = (((StructuredExpressionStatement) item).getExpression());
+                if (e instanceof MemberFunctionInvokation && ((MemberFunctionInvokation) e).isInitMethod()) break;
+                if (e instanceof SuperFunctionInvokation) break;
+            }
+            return null;
+        }
+        return content.get(x+1);
     }
 
     private boolean defineInsideSwitchContent(LValue scopedEntity, List<ScopeDefinition> definitions, List<StatementContainer<StructuredStatement>> commonScope) {
