@@ -551,7 +551,7 @@ lbl10: // 1 sources:
         // If we've changed the blocks we're in, that means we've jumped into a block.
         // The only way we can cope with this, is if we're jumping into a block which we subsequently change
         // to be an anonymous escape.
-        mismatchedBlocks : if (!(blocksAtStart.containsAll(blocksAtEnd) && blocksAtEnd.size() == blocksAtStart.size())) {
+        mismatchedBlocks : if (!(blocksAtStart.equals(blocksAtEnd))) {
             /*
              * A 'normal' case where we might jump into a different blockset - if we've jumped over
              * the body of a switch block - if this is the case, the only difference will be one case statement,
@@ -560,10 +560,17 @@ lbl10: // 1 sources:
             if (blocksAtStart.size() == blocksAtEnd.size()+1) {
                 List<BlockIdentifier> change = SetUtil.differenceAtakeBtoList(blocksAtStart, blocksAtEnd);
                 // size == 1 already verified, but...
-                if (change.size() == 1 && change.get(0).getBlockType() == BlockType.CASE &&
-                    takenTarget.getStatement() instanceof CaseStatement) {
-                    // We need to check if the statement LINEARLY preceeding this is in the block we've left.
-                    if (stmtLastBlock.getBlockIdentifiers().contains(change.get(0))) {
+                if (change.size() == 1 && change.get(0).getBlockType() == BlockType.CASE) {
+                    if (takenTarget.getStatement() instanceof CaseStatement) {
+                        // We need to check if the statement LINEARLY preceeding this is in the block we've left.
+                        if (stmtLastBlock.getBlockIdentifiers().contains(change.get(0))) {
+                            break mismatchedBlocks;
+                        }
+                    }
+                    // Ok, but what about SwitchTest38?  Jump if still inside the case, but the last item in the
+                    // else block is the end of the case.
+                    Op03SimpleStatement beforeRealEnd = statements.get(idxEnd-1);
+                    if (blocksAtStart.equals(beforeRealEnd.getBlockIdentifiers())) {
                         break mismatchedBlocks;
                     }
                 }
@@ -606,8 +613,6 @@ lbl10: // 1 sources:
                 StackSSALabel stackSSALabel = (StackSSALabel) ternary.lValue;
                 StackEntry stackEntry = stackSSALabel.getStackEntry();
                 stackEntry.decSourceCount();
-//                List<Long> sources = stackEntry.getSources();
-//                stackEntry.removeSource(sources.get(sources.size() - 1));
             }
 
             // If statement now should have only one target.
