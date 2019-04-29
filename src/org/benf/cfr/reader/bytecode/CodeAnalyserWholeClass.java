@@ -249,7 +249,6 @@ public class CodeAnalyserWholeClass {
             Op04StructuredStatement.removeInnerClassOuterThis(method, method.getAnalysis());
         }
 
-
         String originalName = foundOuterThis.getFieldName();
         /*
          * FieldVariable here is a 'local' one - it has an expression object of 'this'.
@@ -263,7 +262,13 @@ public class CodeAnalyserWholeClass {
         }
         JavaRefTypeInstance fieldRefType = (JavaRefTypeInstance) fieldType.getDeGenerifiedType();
         String name = fieldRefType.getRawShortName();
-        classFileField.overrideName(name + ".this");
+        String explicitName = name + ".this";
+        if (fieldRefType.getInnerClassHereInfo().isMethodScopedClass()) {
+            // We're referring to a value captured from the anonymous class.
+            // What we *Should* do is drop the field reference completely.
+            explicitName = MiscConstants.THIS;
+        }
+        classFileField.overrideName(explicitName);
         classFileField.markSyntheticOuterRef();
         /*
          * TODO :
@@ -272,7 +277,7 @@ public class CodeAnalyserWholeClass {
          */
         try {
             ClassFileField localClassFileField = classFile.getFieldByName(originalName, fieldType);
-            localClassFileField.overrideName(name + ".this");
+            localClassFileField.overrideName(explicitName);
             localClassFileField.markSyntheticOuterRef();
         } catch (NoSuchFieldException ignore) {
         }

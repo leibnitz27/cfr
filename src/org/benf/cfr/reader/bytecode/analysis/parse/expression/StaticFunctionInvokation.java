@@ -32,10 +32,9 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
     List<JavaTypeInstance> explicitGenerics;
 
     private static InferredJavaType getTypeForFunction(ConstantPoolEntryMethodRef function, List<Expression> args) {
-        InferredJavaType res = new InferredJavaType(
+        return new InferredJavaType(
                 function.getMethodPrototype().getReturnType(function.getClassEntry().getTypeInstance(), args),
                 InferredJavaType.Source.FUNCTION, true);
-        return res;
     }
 
     @Override

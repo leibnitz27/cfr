@@ -32,7 +32,9 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
         if (Keywords.isAKeyword(identifier)) return true;
         if (identifier.length() == 0) return false;
         char[] chars = identifier.toCharArray();
-        if (!Character.isJavaIdentifierStart(chars[0])) return true;
+        if (!Character.isJavaIdentifierStart(chars[0])) {
+            return true;
+        }
         for (int x=1;x<chars.length;++x) {
             if (!Character.isJavaIdentifierPart(chars[x])) return true;
         }

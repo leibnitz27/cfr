@@ -8,7 +8,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRe
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.IllegalReturnChecker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.LooseCatchChecker;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.VoidVariableChecker;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.SwitchExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExplicitTypeCallRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.XorRewriter;

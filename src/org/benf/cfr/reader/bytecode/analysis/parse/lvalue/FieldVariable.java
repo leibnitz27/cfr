@@ -76,6 +76,17 @@ public class FieldVariable extends AbstractFieldVariable {
         return false;
     }
 
+    private boolean objectIsIllegalThis() {
+        if (object instanceof LValueExpression) {
+            LValue lValue = ((LValueExpression) object).getLValue();
+            if (lValue instanceof FieldVariable) {
+                FieldVariable fv = (FieldVariable)lValue;
+                return fv.getFieldName().equals(MiscConstants.THIS);
+            }
+        }
+        return false;
+    }
+
     @Override
     public Precedence getPrecedence() {
         return Precedence.PAREN_SUB_MEMBER;
@@ -83,19 +94,14 @@ public class FieldVariable extends AbstractFieldVariable {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        if (isOuterRef() && objectIsThis()) {
-            return d.identifier(getFieldName());
-        } else {
-            // TODO : DO NOT CHECK IN MOVE TO PASS.
-            // TOOD : THIS IS WRONG
-//            if ( this.getOwningClassType() != object.getInferredJavaType().getJavaTypeInstance()) {
-//                CastExpression c = new CastExpression(new InferredJavaType(this.getOwningClassType(), InferredJavaType.Source.UNKNOWN), object);
-//                d.dump(c);
-//            } else {
-                object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
-//            }
-            return d.print(".").identifier(getFieldName());
+        if (!(isOuterRef() && objectIsThis())) {
+            // I'd rather not have this check here, but I don't want to have a pass to get rid of
+            // what is actually useful information.
+            if (!objectIsIllegalThis()) {
+                object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER).print(".");
+            }
         }
+        return d.identifier(getFieldName());
     }
 
     @Override
