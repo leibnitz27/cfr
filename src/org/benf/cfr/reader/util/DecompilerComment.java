@@ -30,6 +30,7 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment EXPERIMENTAL_FEATURE = new DecompilerComment("Uses preview features.  Disable with feature flag or --" + OptionsImpl.PREVIEW_FEATURES.getName() + " false");
     public static DecompilerComment BAD_ANNOTATION = new DecompilerComment("Issues handling annotations - annotations may be inaccurate");
     public static DecompilerComment CASE_CLASH_FS = new DecompilerComment("Classes with case insensitive name clashes seen, and your FS appears to be case insensitive - consider using --" + OptionsImpl.CASE_INSENSITIVE_FS_RENAME.getName() + " true");
+    public static DecompilerComment DYNAMIC_CONSTANTS = new DecompilerComment("Uses jvm11+ dynamic constants - pseudocode provided - see https://www.benf.org/other/cfr/dynamic-constants.html");
 
     private final String comment;
     private final String summaryMessage;

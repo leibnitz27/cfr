@@ -42,7 +42,6 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
         return new StaticFunctionInvokation(getFunction(), cloneHelper.replaceOrClone(args));
     }
 
-
     public StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args) {
         super(function, getTypeForFunction(function, args));
         this.args = args;

@@ -35,6 +35,8 @@ public interface TypeConstants {
     String className = "java.lang.Class";
     String objectName = "java.lang.Object";
 
+    String methodHandlesName = "java.lang.invoke.MethodHandles";
+    String methodHandlesLookupName = "java.lang.invoke.MethodHandles$Lookup";
     String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
     String supplierName = "java.util.function.Supplier";
     String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";

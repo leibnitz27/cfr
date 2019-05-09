@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.constantpool;
 
 import org.benf.cfr.reader.bytecode.analysis.stack.StackDelta;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
@@ -40,6 +41,10 @@ public class ConstantPoolEntryNameAndType extends AbstractConstantPoolEntry {
 
     public ConstantPoolEntryUTF8 getDescriptor() {
         return getCp().getUTF8Entry(descriptorIndex);
+    }
+
+    public JavaTypeInstance decodeTypeTok() {
+        return ConstantPoolUtils.decodeTypeTok(getDescriptor().getValue(), getCp());
     }
 
     public StackDelta getStackDelta(boolean member) {

@@ -6,7 +6,7 @@
 
     <groupId>org.benf</groupId>
     <artifactId>cfr</artifactId>
-    <version>0.143</version>
+    <version>0.144-SNAPSHOT</version>
 
     <name>cfr</name>
     <description>CFR Java decompiler</description>

@@ -25,6 +25,7 @@ public interface MiscConstants {
     String INIT_METHOD = "<init>";
     String STATIC_INIT_METHOD = "<clinit>";
     String THIS = "this";
+    String CLASS = "class";
     String UNBOUND_GENERIC = "?";
     char INNER_CLASS_SEP_CHAR = '$';
     String INNER_CLASS_SEP_STR = "$";

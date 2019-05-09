@@ -120,11 +120,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         );
         thisClass = (ConstantPoolEntryClass) constantPool.getEntry(data.getU2At(OFFSET_OF_THIS_CLASS));
 
-//        if (configCallback != null) {
-//            configCallback.configureWith(this);
-//        }
         this.rawInterfaces = tmpInterfaces;
-
 
         accessFlags = AccessFlag.build(data.getU2At(OFFSET_OF_ACCESS_FLAGS));
 
@@ -263,6 +259,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         if (options.getOption(OptionsImpl.ELIDE_SCALA)) {
             elideScala();
+        }
+
+        if (constantPool.isDynamicConstants()) {
+            addComment(DecompilerComment.DYNAMIC_CONSTANTS);
         }
     }
 

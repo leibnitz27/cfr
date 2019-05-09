@@ -6,6 +6,7 @@ import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
@@ -26,16 +27,17 @@ public class ConstantPool {
     private boolean isLoaded;
     private final int idx = sidx++;
     private static int sidx = 0;
+    private final boolean dynamicConstants;
 
     public ConstantPool(ClassFile classFile, DCCommonState dcCommonState, ByteData raw, int count) {
         this.classFile = classFile;
         this.options = dcCommonState.getOptions();
-        ArrayList<ConstantPoolEntry> res = new ArrayList<ConstantPoolEntry>();
         count--;
-        res.ensureCapacity(count);
 
-        length = processRaw(raw, count, res);
-        entries = res;
+        RawTmp tmp = processRaw(raw, count);
+        this.entries = tmp.entries;
+        this.length = tmp.rawLength;
+        this.dynamicConstants = tmp.dynamicConstants;
         this.dcCommonState = dcCommonState;
         this.classCache = dcCommonState.getClassCache();
         this.isLoaded = true;
@@ -49,8 +51,26 @@ public class ConstantPool {
         return isLoaded;
     }
 
-    private long processRaw(ByteData raw, int count, List<ConstantPoolEntry> tgt) {
+    public boolean isDynamicConstants() {
+        return dynamicConstants;
+    }
+
+    private static class RawTmp {
+        final List<ConstantPoolEntry> entries;
+        final long rawLength;
+        final boolean dynamicConstants;
+
+        RawTmp(List<ConstantPoolEntry> entries, long rawLength, boolean dynamicConstants) {
+            this.entries = entries;
+            this.rawLength = rawLength;
+            this.dynamicConstants = dynamicConstants;
+        }
+    }
+
+    private RawTmp processRaw(ByteData raw, int count) {
+        List<ConstantPoolEntry> tgt = ListFactory.newList(count);
         OffsettingByteData data = raw.getOffsettingOffsetData(0);
+        boolean dynamicConstant = false;
         logger.info("Processing " + count + " constpool entries.");
         for (int x = 0; x < count; ++x) {
             ConstantPoolEntry.Type type = ConstantPoolEntry.Type.get(data.getS1At(0));
@@ -95,6 +115,10 @@ public class ConstantPool {
                 case CPT_MethodType:
                     cpe = new ConstantPoolEntryMethodType(this, data);
                     break;
+                case CPT_DynamicInfo:
+                    cpe = new ConstantPoolEntryDynamicInfo(this, data);
+                    dynamicConstant = true;
+                    break;
                 case CPT_InvokeDynamic:
                     cpe = new ConstantPoolEntryInvokeDynamic(this, data);
                     break;
@@ -114,7 +138,7 @@ public class ConstantPool {
             long size = cpe.getRawByteLength();
             data.advance(size);
         }
-        return data.getOffset();
+        return new RawTmp(tgt, data.getOffset(), dynamicConstant);
     }
 
     public long getRawByteLength() {

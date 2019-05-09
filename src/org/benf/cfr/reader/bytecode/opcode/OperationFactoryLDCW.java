@@ -15,11 +15,7 @@ public class OperationFactoryLDCW extends OperationFactoryCPEntryW {
     @Override
     public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPoolEntry[] cpEntries,
                                     StackSim stackSim, Method method) {
-        ConstantPoolEntryLiteral constantPoolEntryLiteral = (ConstantPoolEntryLiteral) cpEntries[0];
-        if (constantPoolEntryLiteral == null) {
-            throw new ConfusedCFRException("Expecting ConstantPoolEntryLiteral");
-        }
-        StackType stackType = constantPoolEntryLiteral.getStackType();
+        StackType stackType = OperationFactoryLDC.getStackType(cpEntries[0]);
         int requiredComputationCategory = getRequiredComputationCategory();
         if (stackType.getComputationCategory() != requiredComputationCategory) {
             throw new ConfusedCFRException("Got a literal, but expected a different category");

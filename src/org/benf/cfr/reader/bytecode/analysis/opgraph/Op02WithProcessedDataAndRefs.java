@@ -375,18 +375,17 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     private Statement buildInvokeDynamic(Method method, DCCommonState dcCommonState) {
         ConstantPoolEntryInvokeDynamic invokeDynamic = (ConstantPoolEntryInvokeDynamic) cpEntries[0];
-
         ConstantPoolEntryNameAndType nameAndType = invokeDynamic.getNameAndTypeEntry();
-
-        // Should have this as a member on name and type
-        ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
-        // Todo : Not happy about hardcoding if this is an instance function.
-        // also - we have a descriptor, but NOT a signature here.  Is that right?
-        MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(dcCommonState, null, null, "", false, Method.MethodConstructor.NOT, descriptor, cp, false, false, new VariableNamerDefault());
-
         int idx = invokeDynamic.getBootstrapMethodAttrIndex();
+        ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
+        MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(dcCommonState, null, null, "", false, Method.MethodConstructor.NOT, descriptor, cp, false, false, new VariableNamerDefault());
+        return buildInvokeDynamic(method.getClassFile(), dcCommonState, dynamicPrototype, idx, false);
+    }
 
-        BootstrapMethodInfo bootstrapMethodInfo = method.getClassFile().getBootstrapMethods().getBootStrapMethodInfo(idx);
+    private Statement buildInvokeDynamic(ClassFile classFile, DCCommonState dcCommonState, MethodPrototype dynamicPrototype,
+                                         int idx, boolean showBoilerArgs) {
+
+        BootstrapMethodInfo bootstrapMethodInfo = classFile.getBootstrapMethods().getBootStrapMethodInfo(idx);
         ConstantPoolEntryMethodRef methodRef = bootstrapMethodInfo.getConstantPoolEntryMethodRef();
         MethodPrototype prototype = methodRef.getMethodPrototype();
         MethodHandleBehaviour bootstrapBehaviour = bootstrapMethodInfo.getMethodHandleBehaviour();
@@ -399,7 +398,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         switch (dynamicInvokeType) {
             case UNKNOWN:
             case BOOTSTRAP: {
-                callargs = buildInvokeBootstrapArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef);
+                callargs = buildInvokeBootstrapArgs(prototype, dynamicPrototype, bootstrapBehaviour, bootstrapMethodInfo, methodRef, showBoilerArgs, classFile, dcCommonState);
                 List<Expression> dynamicArgs = getNStackRValuesAsExpressions(stackConsumed.size());
                 if (dynamicInvokeType == DynamicInvokeType.UNKNOWN) {
                     List<JavaTypeInstance> typeArgs = dynamicPrototype.getArgs();
@@ -605,7 +604,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     @SuppressWarnings("unused")
-    private List<Expression> buildInvokeBootstrapArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef) {
+    private List<Expression> buildInvokeBootstrapArgs(MethodPrototype prototype, MethodPrototype dynamicPrototype, MethodHandleBehaviour bootstrapBehaviour, BootstrapMethodInfo bootstrapMethodInfo, ConstantPoolEntryMethodRef methodRef,
+                                                      boolean showBoilerArgs, ClassFile classFile, DCCommonState state) {
         final int ARG_OFFSET = 3;
         List<JavaTypeInstance> argTypes = prototype.getArgs();
         ConstantPoolEntry[] bootstrapArguments = bootstrapMethodInfo.getBootstrapArguments();
@@ -630,6 +630,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
         List<Expression> callargs = ListFactory.newList();
 
+        // We're trying to show the boilerplate arguments.  This will never work,
+        // but will hopefully point readers in the right direction.
+        if (showBoilerArgs) {
+            Pair<JavaRefTypeInstance, JavaRefTypeInstance> methodHandlesLookup = state.getClassCache().getRefClassForInnerOuterPair(TypeConstants.methodHandlesLookupName, TypeConstants.methodHandlesName);
+            callargs.add(new StaticFunctionInvokationExplicit(new InferredJavaType(methodHandlesLookup.getFirst(), InferredJavaType.Source.LITERAL),
+                    methodHandlesLookup.getSecond(), "lookup", Collections.<Expression>emptyList()));
+            callargs.add(new Literal(TypedLiteral.getString(QuotingUtils.enquoteString(methodRef.getName()))));
+            callargs.add(new LValueExpression(new StaticVariable(new InferredJavaType(TypeConstants.CLASS, InferredJavaType.Source.LITERAL), classFile.getClassType(), "class")));
+        }
         for (int x = 0; x < bootstrapArguments.length; ++x) {
             JavaTypeInstance expected = argTypes.get(ARG_OFFSET + x);
             TypedLiteral typedLiteral = getBootstrapArg(bootstrapArguments, x, cp);
@@ -1376,7 +1385,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LDC:
             case LDC_W:
             case LDC2_W:
-                return new AssignmentSimple(getStackLValue(0), new Literal(TypedLiteral.getConstantPoolEntry(cp, cpEntries[0])));
+                return new AssignmentSimple(getStackLValue(0), getLiteralConstantPoolEntry(method, cpEntries[0]));
             case MONITORENTER:
                 return new MonitorEnterStatement(getStackRValue(0), blockIdentifierFactory.getNextBlockIdentifier(BlockType.MONITOR));
             case MONITOREXIT:
@@ -1443,6 +1452,31 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             default:
                 throw new ConfusedCFRException("Not implemented - conversion to statement from " + instr);
         }
+    }
+
+    private Expression getLiteralConstantPoolEntry(Method m, ConstantPoolEntry cpe) {
+        if (cpe instanceof ConstantPoolEntryLiteral) {
+            return new Literal(TypedLiteral.getConstantPoolEntry(cp, cpe));
+        }
+        if (cpe instanceof ConstantPoolEntryDynamicInfo) {
+            return getDynamicLiteral(m, (ConstantPoolEntryDynamicInfo)cpe);
+        }
+        throw new ConfusedCFRException("Constant pool entry is neither literal or dynamic literal.");
+    }
+
+    private Expression getDynamicLiteral(Method method, ConstantPoolEntryDynamicInfo cpe) {
+        ClassFile classFile = method.getClassFile();
+        ConstantPoolEntryNameAndType nameAndType = cpe.getNameAndTypeEntry();
+        int idx = cpe.getBootstrapMethodAttrIndex();
+        MethodPrototype dynamicProto = new MethodPrototype(cp.getDCCommonState(), classFile, classFile.getClassType(), "???",
+                false, Method.MethodConstructor.NOT, Collections.<FormalTypeParameter>emptyList(), Collections.<JavaTypeInstance>emptyList(),
+                nameAndType.decodeTypeTok(), false, new VariableNamerDefault(), false);
+        Statement s =  buildInvokeDynamic(classFile, cp.getDCCommonState(), dynamicProto, idx, true);
+        if (!(s instanceof AssignmentSimple)) {
+            throw new ConfusedCFRException("Expected a result from a dynamic literal");
+        }
+        AssignmentSimple as = (AssignmentSimple)s;
+        return new DynamicConstExpression(as.getRValue());
     }
 
     private StackValue getStackRValue(int idx) {

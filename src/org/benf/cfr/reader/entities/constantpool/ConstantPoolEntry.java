@@ -23,6 +23,7 @@ public interface ConstantPoolEntry {
         CPT_NameAndType,
         CPT_MethodHandle,
         CPT_MethodType,
+        CPT_DynamicInfo,
         CPT_InvokeDynamic;
 
         private static final byte VAL_UTF8 = 1;
@@ -38,6 +39,7 @@ public interface ConstantPoolEntry {
         private static final byte VAL_NameAndType = 12;
         private static final byte VAL_MethodHandle = 15;
         private static final byte VAL_MethodType = 16;
+        private static final byte VAL_DynamicInfo = 17;
         private static final byte VAL_InvokeDynamic = 18;
 
         public static Type get(byte val) {
@@ -68,6 +70,8 @@ public interface ConstantPoolEntry {
                     return CPT_MethodHandle;
                 case VAL_MethodType:
                     return CPT_MethodType;
+                case VAL_DynamicInfo:
+                    return CPT_DynamicInfo;
                 case VAL_InvokeDynamic:
                     return CPT_InvokeDynamic;
                 default:
