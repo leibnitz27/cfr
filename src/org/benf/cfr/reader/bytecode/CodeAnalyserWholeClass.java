@@ -82,6 +82,15 @@ public class CodeAnalyserWholeClass {
         }
     }
 
+    private static void removeRedundantSupers(ClassFile classFile) {
+        for (Method method : classFile.getConstructors()) {
+            if (method.hasCodeAttribute()) {
+                Op04StructuredStatement code = method.getAnalysis();
+                Op04StructuredStatement.removeConstructorBoilerplate(code);
+            }
+        }
+    }
+
     private static void replaceNestedSyntheticOuterRefs(ClassFile classFile) {
         for (Method method : classFile.getMethods()) {
             if (method.hasCodeAttribute()) {
@@ -452,6 +461,22 @@ public class CodeAnalyserWholeClass {
      *
      * This is the point at which we can perform analysis like rewriting references like accessors inner -> outer.
      */
+    public static void wholeClassAnalysisPass3(ClassFile classFile, DCCommonState state) {
+        Options options = state.getOptions();
+        if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
+            removeRedundantSupers(classFile);
+        }
+
+        if (options.getOption(OptionsImpl.REMOVE_DEAD_METHODS)) {
+            removeDeadMethods(classFile);
+        }
+    }
+
+    /*
+     * This pass is performed INNER CLASS LAST.
+     *
+     * This is the point at which we can perform analysis like rewriting references like accessors inner -> outer.
+     */
     public static void wholeClassAnalysisPass2(ClassFile classFile, DCCommonState state) {
         Options options = state.getOptions();
         /*
@@ -477,12 +502,6 @@ public class CodeAnalyserWholeClass {
              */
             renameAnonymousScopeHidingVariables(classFile, state.getClassCache());
         }
-
-
-        if (options.getOption(OptionsImpl.REMOVE_DEAD_METHODS)) {
-            removeDeadMethods(classFile);
-        }
-
 
         if (options.getOption(OptionsImpl.RELINK_CONSTANT_STRINGS)) {
             relinkConstantStrings(classFile, state);

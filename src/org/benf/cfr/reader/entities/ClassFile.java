@@ -28,6 +28,7 @@ import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.functors.UnaryProcedure;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -774,9 +775,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
     }
 
-    private void analysePassOuterFirst(DCCommonState state) {
+    private void analysePassOuterFirst(UnaryProcedure<ClassFile> fn) {
         try {
-            CodeAnalyserWholeClass.wholeClassAnalysisPass2(this, state);
+            fn.call(this);
         } catch (RuntimeException e) {
             addComment("Exception performing whole class analysis ignored.", e);
         }
@@ -784,13 +785,24 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (innerClassesByTypeInfo == null) return;
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassInfoClassFilePair : innerClassesByTypeInfo.values()) {
             ClassFile classFile = innerClassInfoClassFilePair.getSecond();
-            classFile.analysePassOuterFirst(state);
+            classFile.analysePassOuterFirst(fn);
         }
     }
 
-    public void analyseTop(DCCommonState dcCommonState) {
+    public void analyseTop(final DCCommonState dcCommonState) {
         analyseMid(dcCommonState);
-        analysePassOuterFirst(dcCommonState);
+        analysePassOuterFirst(new UnaryProcedure<ClassFile>() {
+            @Override
+            public void call(ClassFile arg) {
+                CodeAnalyserWholeClass.wholeClassAnalysisPass2(arg, dcCommonState);
+            }
+        });
+        analysePassOuterFirst(new UnaryProcedure<ClassFile>() {
+            @Override
+            public void call(ClassFile arg) {
+                CodeAnalyserWholeClass.wholeClassAnalysisPass3(arg, dcCommonState);
+            }
+        });
     }
 
     private void analyseSyntheticTags(Method method, Options options) {

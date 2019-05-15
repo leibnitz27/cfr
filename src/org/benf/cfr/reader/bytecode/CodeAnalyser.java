@@ -762,7 +762,10 @@ public class CodeAnalyser {
             //        Op04StructuredStatement.inlineSyntheticAccessors(cfrState, method, block);
 
             if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
-                if (this.method.isConstructor()) Op04StructuredStatement.removeConstructorBoilerplate(block);
+                // Note - we ALSO try to do this in whole pass analysis.
+                if (this.method.isConstructor()) {
+                    Op04StructuredStatement.removeConstructorBoilerplate(block);
+                }
             }
 
             // Some misc translations.
