@@ -81,6 +81,7 @@ public class SwitchExpression extends AbstractExpression {
             if (cases.isEmpty()) {
                 d.print("default");
             } else {
+                d.print("case ");
                 for (Expression e : cases) {
                     first = StringUtils.comma(first, d);
                     d.dump(e);
