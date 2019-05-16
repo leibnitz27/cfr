@@ -56,8 +56,13 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
 
     @Override
     public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
-        LValueRewriter.Util.rewriteArgArray(lValueRewriter, ssaIdentifiers, statementContainer, args);
-        object = object.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+        if (lValueRewriter.needLR()) {
+            object = object.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+            LValueRewriter.Util.rewriteArgArray(lValueRewriter, ssaIdentifiers, statementContainer, args);
+        } else {
+            LValueRewriter.Util.rewriteArgArray(lValueRewriter, ssaIdentifiers, statementContainer, args);
+            object = object.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, statementContainer);
+        }
         return this;
     }
 
