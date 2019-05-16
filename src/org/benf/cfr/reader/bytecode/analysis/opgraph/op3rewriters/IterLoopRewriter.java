@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.BoxingHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -295,6 +296,15 @@ public class IterLoopRewriter {
                 condpr.getFirst())) return;
 
         final LValue iterable = wildcardMatch.getLValueWildCard("iterable").getMatch();
+        // If we have a type parameter on the iterable, great.
+        JavaTypeInstance iterableType = iterable.getInferredJavaType().getJavaTypeInstance();
+        JavaTypeInstance iterableContentType = null;
+        if (iterableType instanceof JavaGenericRefTypeInstance) {
+            List<JavaTypeInstance> types = ((JavaGenericRefTypeInstance) iterableType).getGenericTypes();
+            if (types.size() == 1) {
+                iterableContentType = types.get(0);
+            }
+        }
 
         Op03SimpleStatement realLoopStart = loop.getTargets().get(0);
         Op03SimpleStatement loopStart = realLoopStart;
@@ -321,7 +331,12 @@ public class IterLoopRewriter {
                         wildcardMatch.getCastExpressionWildcard("cast", nextCall)),
                 loopStart.getStatement())) {
             // It's a cast expression - so we know that there's a type we might be able to push back up.
-        } else {
+        } else if (iterableContentType != null && BoxingHelper.isBoxedType(iterableContentType) &&
+                wildcardMatch.match(new AssignmentSimple(sugariterWC, wildcardMatch.getMemberFunction("unbox",
+                        BoxingHelper.getUnboxingMethodName(iterableContentType), nextCall)),
+                        loopStart.getStatement())) {
+            // it's unboxing into the iterator. (See BreakTest4)
+        }  else {
             // Try seeing if it's a hidden iter, which has been pushed inside a conditional
             Set<Expression> poison = SetFactory.<Expression>newSet(new LValueExpression(iterable));
             if (!Misc.findHiddenIter(loopStart.getStatement(), sugariterWC, nextCall, poison)) {

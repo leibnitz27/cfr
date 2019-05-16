@@ -405,11 +405,16 @@ public class CodeAnalyserWholeClass {
     }
 
     private static void tryRemoveConstructor(ClassFile classFile) {
-        List<Method> constructors = classFile.getConstructors();
+        List<Method> constructors = Functional.filter(classFile.getConstructors(),
+                new Predicate<Method>() {
+                    @Override
+                    public boolean test(Method in) {
+                        return in.hiddenState() == Method.Visibility.Visible;
+                    }
+                });
         if (constructors.size() != 1) return;
         Method constructor = constructors.get(0);
 
-        // 0 args.
         MethodPrototype methodPrototype = constructor.getMethodPrototype();
         if (methodPrototype.getVisibleArgCount() > 0) return;
         // public, non final.

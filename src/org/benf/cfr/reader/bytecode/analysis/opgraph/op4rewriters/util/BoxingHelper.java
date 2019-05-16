@@ -7,8 +7,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
+import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 
+import java.util.Map;
 import java.util.Set;
 
 public class BoxingHelper {
@@ -22,6 +24,8 @@ public class BoxingHelper {
             Pair.make(TypeConstants.boxingNameBoolean, "booleanValue")
     );
 
+    private static Map<String, String> unboxingByRawName;
+
     @SuppressWarnings("unchecked")
     private static Set<Pair<String, String>> boxing = SetFactory.newSet(
             Pair.make(TypeConstants.boxingNameInt, "valueOf"),
@@ -32,6 +36,12 @@ public class BoxingHelper {
             Pair.make(TypeConstants.boxingNameBoolean, "valueOf")
     );
 
+    static {
+        unboxingByRawName = MapFactory.newMap();
+        for (Pair<String, String> pair : unboxing) {
+            unboxingByRawName.put(pair.getFirst(), pair.getSecond());
+        }
+    }
 
     public static Expression sugarUnboxing(MemberFunctionInvokation memberFunctionInvokation) {
         String name = memberFunctionInvokation.getName();
@@ -45,6 +55,9 @@ public class BoxingHelper {
         return memberFunctionInvokation;
     }
 
+    public static String getUnboxingMethodName(JavaTypeInstance type) {
+        return unboxingByRawName.get(type.getRawName());
+    }
 
     public static Expression sugarBoxing(StaticFunctionInvokation staticFunctionInvokation) {
         String name = staticFunctionInvokation.getName();
