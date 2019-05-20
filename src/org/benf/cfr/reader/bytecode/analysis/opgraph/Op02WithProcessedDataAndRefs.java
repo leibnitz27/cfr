@@ -749,6 +749,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case FLOAD_WIDE:
                 type = RawJavaType.FLOAT;
                 break;
+            case RET:
+            case RET_WIDE:
+                type = RawJavaType.RETURNADDRESS;
+                break;
             default:
                 return null;
         }
@@ -795,6 +799,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             case LLOAD_WIDE:
             case DLOAD_WIDE:
             case FLOAD_WIDE:
+                idx = getInstrArgShort(1);
+                break;
+            case RET:
+                idx = getInstrArgByte(0);
+                break;
+            case RET_WIDE:
                 idx = getInstrArgShort(1);
                 break;
             default:
@@ -2461,7 +2471,60 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return jsrInstrs;
     }
 
+    private static Op02WithProcessedDataAndRefs followNopGoto(Op02WithProcessedDataAndRefs op) {
+        Set<Op02WithProcessedDataAndRefs> seen = SetFactory.newIdentitySet();
+        do {
+            if (op.getTargets().size() != 1) return op;
+            JVMInstr instr = op.getInstr();
+            if (instr == JVMInstr.NOP || instr == JVMInstr.GOTO || instr == JVMInstr.GOTO_W) {
+                op = op.getTargets().get(0);
+            } else {
+                return op;
+            }
+        } while (seen.add(op));
+        return op;
+    }
+
     private static void processJSRs(List<Op02WithProcessedDataAndRefs> jsrs, List<Op02WithProcessedDataAndRefs> ops) {
+        /* try seeing if we have multiple JSRs that jump to the same place, and afterwards end up in the
+         * same place also - if so, these are all effectively a single JSR, and all but one can be replaced with a
+         * goto the first.
+         *
+         * Why would this happen?  TBH it's unlikely, however it's a pretty nice obfuscation.
+         */
+        Map<Op02WithProcessedDataAndRefs, Integer> idxOf = Functional.indexedIdentityMapOf(ops);
+
+        Map<Op02WithProcessedDataAndRefs, List<Op02WithProcessedDataAndRefs>> targets = getJsrsWithCommonTarget(jsrs);
+        nextjsr:
+        for (Map.Entry<Op02WithProcessedDataAndRefs, List<Op02WithProcessedDataAndRefs>> entry : targets.entrySet()) {
+            List<Op02WithProcessedDataAndRefs> onetarget = entry.getValue();
+            if (onetarget.size() < 2) continue;
+            int idx = idxOf.get(onetarget.get(0));
+            // this shouldn't be possible.
+            if (idx >= ops.size()) continue;
+            Op02WithProcessedDataAndRefs eventual = followNopGoto(ops.get(idx + 1));
+            for (int x = 1;x<onetarget.size();++x) {
+                idx = idxOf.get(onetarget.get(x));
+                // this shouldn't be possible.
+                if (idx >= ops.size()) continue nextjsr;
+                Op02WithProcessedDataAndRefs e2 = followNopGoto(ops.get(idx + 1));
+                if (e2 != eventual) continue nextjsr;
+            }
+            // All the results after these jsrs go to the same place.
+            // so let's make all but one jump to the last JSR.
+            Op02WithProcessedDataAndRefs saveJsr = onetarget.get(onetarget.size()-1);
+            for (int x=0;x<onetarget.size()-1;++x) {
+                Op02WithProcessedDataAndRefs j = onetarget.get(x);
+                j.targets.get(0).removeSource(j);
+                j.targets.clear();
+                j.targets.add(saveJsr);
+                saveJsr.addSource(j);
+                jsrs.remove(j);
+                j.instr = JVMInstr.GOTO;
+            }
+        }
+
+
         /*
          * Very dirty hack. eg: X)JSR_Y -> Y)JSR_Z -> Z)SWAP -> STORE_n -> RET_n
          */
@@ -2476,12 +2539,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         // Then, for each of these, find out if it's possible to get BACK to the JSR instruction without
         // RETTING.  If that's the case, the JSR has been used as a loop, and we need to treat it as if it's just a
         // fancy (albeit confusing) GOTO.
-        Map<Op02WithProcessedDataAndRefs, List<Op02WithProcessedDataAndRefs>> targets = Functional.groupToMapBy(jsrs, new UnaryFunction<Op02WithProcessedDataAndRefs, Op02WithProcessedDataAndRefs>() {
-            @Override
-            public Op02WithProcessedDataAndRefs invoke(Op02WithProcessedDataAndRefs arg) {
-                return arg.getTargets().get(0);
-            }
-        });
+        targets = getJsrsWithCommonTarget(jsrs);
         Set<Op02WithProcessedDataAndRefs> inlineCandidates = SetFactory.newSet();
         for (final Op02WithProcessedDataAndRefs target : targets.keySet()) {
             GraphVisitor<Op02WithProcessedDataAndRefs> gv = new GraphVisitorDFS<Op02WithProcessedDataAndRefs>(target.getTargets(), new BinaryProcedure<Op02WithProcessedDataAndRefs, GraphVisitor<Op02WithProcessedDataAndRefs>>() {
@@ -2568,6 +2626,15 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         }
 
         // result not used for anything any more - remove?
+    }
+
+    private static Map<Op02WithProcessedDataAndRefs, List<Op02WithProcessedDataAndRefs>> getJsrsWithCommonTarget(List<Op02WithProcessedDataAndRefs> jsrs) {
+        return Functional.groupToMapBy(jsrs, new UnaryFunction<Op02WithProcessedDataAndRefs, Op02WithProcessedDataAndRefs>() {
+                @Override
+                public Op02WithProcessedDataAndRefs invoke(Op02WithProcessedDataAndRefs arg) {
+                    return arg.getTargets().get(0);
+                }
+            });
     }
 
     // A very simple (and impossibly naive VM simulator which can only step over deliberate JSR obfuscations).

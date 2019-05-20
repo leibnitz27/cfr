@@ -99,6 +99,15 @@ public class Functional {
         return result;
     }
 
+    public static <X> Map<X, Integer> indexedIdentityMapOf(Collection<X> input) {
+        Map<X, Integer> temp = MapFactory.newIdentityMap();
+        int idx = 0;
+        for (X x : input) {
+            temp.put(x, idx++);
+        }
+        return temp;
+    }
+
     public static <Y, X> Map<Y, List<X>> groupToMapBy(Collection<X> input, UnaryFunction<X, Y> mapF) {
         Map<Y, List<X>> temp = MapFactory.newMap();
         return groupToMapBy(input, temp, mapF);
