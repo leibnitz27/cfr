@@ -27,6 +27,8 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
             childInferredJavaType.forceType(RawJavaType.INT, true);
         }
         RawJavaType knownTypeRawType = knownType.getRawType();
+        // It's ok to insert Boolean -> XX explicit casts at construction time, as we
+        // don't have booleans early.
         if (childInferredJavaType.getRawType() == RawJavaType.BOOLEAN && knownTypeRawType != RawJavaType.BOOLEAN && knownTypeRawType.getStackType() == StackType.INT) {
             Expression tmp = new TernaryExpression(new BooleanExpression(child), Literal.INT_ONE, Literal.INT_ZERO);
             child = tmp;

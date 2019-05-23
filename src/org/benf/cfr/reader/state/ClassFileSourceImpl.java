@@ -428,6 +428,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
             l.toArray(in);
         }
 
+        // Note - this will cause a lie if the class file has been renamed.
         private void getCommonRoot(String filePath, String classPath) {
             String npath = filePath.replace('\\', '/');
             String[] fileParts = npath.split("/");
