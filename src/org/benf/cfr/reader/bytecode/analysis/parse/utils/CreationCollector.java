@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -109,6 +110,7 @@ public class CreationCollector {
             List<StatementContainer> creations = collectedCreations.get(lValue);
             boolean found = false;
             for (StatementContainer creation : creations) {
+                // This is a terrible heuristic.
                 if (creation.getIndex().isBackJumpFrom(idx)) {
                     found = true;
                     break;
@@ -171,9 +173,18 @@ public class CreationCollector {
             }
 
             if (constructorInvokation == null) {
+                InferredJavaType constructionType = new InferredJavaType(lValueType, InferredJavaType.Source.CONSTRUCTOR);
+                // We'd prefer to use inferredJavaType here, as it can capture generic information
+                // What would be *nicer* to do is to chain the generic information for the captured
+                // construction type.
+                if (inferredJavaType.getJavaTypeInstance() instanceof JavaGenericBaseInstance) {
+                    constructionType = inferredJavaType;
+                }
+
                 ConstructorInvokationSimple cis = new ConstructorInvokationSimple(
                         memberFunctionInvokation,
                         inferredJavaType,
+                        constructionType,
                         memberFunctionInvokation.getArgs());
 
                 constructorInvokation = cis;

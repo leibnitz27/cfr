@@ -22,16 +22,19 @@ import java.util.List;
 public class ConstructorInvokationSimple extends AbstractConstructorInvokation implements FunctionProcessor {
 
     private final MemberFunctionInvokation constructorInvokation;
+    private InferredJavaType constructionType;
 
     public ConstructorInvokationSimple(MemberFunctionInvokation constructorInvokation,
-                                       InferredJavaType inferredJavaType, List<Expression> args) {
+                                       InferredJavaType inferredJavaType, InferredJavaType constructionType,
+                                       List<Expression> args) {
         super(inferredJavaType, constructorInvokation.getFunction(), args);
         this.constructorInvokation = constructorInvokation;
+        this.constructionType = constructionType;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new ConstructorInvokationSimple(constructorInvokation, getInferredJavaType(), cloneHelper.replaceOrClone(getArgs()));
+        return new ConstructorInvokationSimple(constructorInvokation, getInferredJavaType(), constructionType, cloneHelper.replaceOrClone(getArgs()));
     }
 
     @Override
@@ -40,7 +43,7 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
     }
 
     private JavaTypeInstance getFinalDisplayTypeInstance() {
-        JavaTypeInstance res = getTypeInstance();
+        JavaTypeInstance res = constructionType.getJavaTypeInstance();
         if (!(res instanceof JavaGenericBaseInstance)) return res;
         if (!((JavaGenericBaseInstance) res).hasL01Wildcard()) return res;
         res = ((JavaGenericBaseInstance) res).getWithoutL01Wildcard();

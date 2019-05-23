@@ -316,7 +316,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             String funcName = nameAndType.getName().getValue();
             boolean typesMatch = callType.equals(objType);
             if (funcName.equals(MiscConstants.INIT_METHOD)) {
-                if (!(typesMatch || objType.getRawName().equals(TypeConstants.objectName))) {
+                if (thisCallerMethod.getName().equals(MiscConstants.INIT_METHOD) &&
+                        !(typesMatch || objType.getRawName().equals(TypeConstants.objectName))) {
                     isSuper = true;
                 }
             } else {
