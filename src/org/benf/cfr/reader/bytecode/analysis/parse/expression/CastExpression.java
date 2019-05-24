@@ -91,6 +91,15 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         }
         if (castType == RawJavaType.NULL) {
             child.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
+        } else if (castType == RawJavaType.BOOLEAN &&
+                child.getInferredJavaType().getJavaTypeInstance().getStackType() == StackType.INT &&
+                child.getInferredJavaType().getRawType() != RawJavaType.BOOLEAN) {
+            // We're treating an integral type as a boolean.
+            // Last minute cheeky != 0.
+            // This may happen if an optimizer has reused a non-boolean as a boolean.
+            // (See SootOptimizationTest).
+            // This *could* be done in an extra pass......
+            new ComparisonOperation(child, Literal.INT_ZERO, CompOp.NE).dump(d);
         } else {
             d.print("(").dump(castType).print(")");
             child.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
