@@ -30,8 +30,7 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         // It's ok to insert Boolean -> XX explicit casts at construction time, as we
         // don't have booleans early.
         if (childInferredJavaType.getRawType() == RawJavaType.BOOLEAN && knownTypeRawType != RawJavaType.BOOLEAN && knownTypeRawType.getStackType() == StackType.INT) {
-            Expression tmp = new TernaryExpression(new BooleanExpression(child), Literal.INT_ONE, Literal.INT_ZERO);
-            child = tmp;
+            child = new TernaryExpression(new BooleanExpression(child), Literal.INT_ONE, Literal.INT_ZERO);
         }
         this.child = child;
         this.forced = false;
@@ -59,7 +58,7 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         return childType.implicitlyCastsTo(tgtType, gtb);
     }
 
-    public boolean couldBeImplicit(JavaTypeInstance tgtType, GenericTypeBinder gtb) {
+    private boolean couldBeImplicit(JavaTypeInstance tgtType, GenericTypeBinder gtb) {
         if (forced) return false;
         JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
         return childType.implicitlyCastsTo(tgtType, gtb);
@@ -91,15 +90,6 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         }
         if (castType == RawJavaType.NULL) {
             child.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
-        } else if (castType == RawJavaType.BOOLEAN &&
-                child.getInferredJavaType().getJavaTypeInstance().getStackType() == StackType.INT &&
-                child.getInferredJavaType().getRawType() != RawJavaType.BOOLEAN) {
-            // We're treating an integral type as a boolean.
-            // Last minute cheeky != 0.
-            // This may happen if an optimizer has reused a non-boolean as a boolean.
-            // (See SootOptimizationTest).
-            // This *could* be done in an extra pass......
-            new ComparisonOperation(child, Literal.INT_ZERO, CompOp.NE).dump(d);
         } else {
             d.print("(").dump(castType).print(")");
             child.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
