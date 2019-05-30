@@ -32,27 +32,29 @@ public class StringBuilderRewriter implements ExpressionRewriter {
 
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        expression = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+
+        Expression result = null;
         if ((stringBufferEnabled || stringBuilderEnabled) && expression instanceof MemberFunctionInvokation) {
             MemberFunctionInvokation memberFunctionInvokation = (MemberFunctionInvokation) expression;
             if ("toString".equals(memberFunctionInvokation.getName())) {
                 Expression lhs = memberFunctionInvokation.getObject();
-                Expression result = testAppendChain(lhs);
-                if (result != null) return result;
+                result = testAppendChain(lhs);
             }
-        }
-        if (stringConcatFactoryEnabled && expression instanceof StaticFunctionInvokation) {
+        } else if (stringConcatFactoryEnabled && expression instanceof StaticFunctionInvokation) {
             StaticFunctionInvokation invokation = (StaticFunctionInvokation)expression;
             if ("makeConcatWithConstants".equals(invokation.getName())
                     && invokation.getClazz().getRawName().equals(TypeConstants.stringConcatFactoryName)) {
-                Expression result = extractStringConcat(invokation);
-                if (result != null) return result;
+                result = extractStringConcat(invokation);
             } else if ("makeConcat".equals(invokation.getName())
                     && invokation.getClazz().getRawName().equals(TypeConstants.stringConcatFactoryName)) {
-                Expression result = extractStringConcatSimple(invokation);
-                if (result != null) return result;
+                result = extractStringConcatSimple(invokation);
             }
         }
-        return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+        if (result != null) {
+            return result;
+        }
+        return expression;
     }
 
     private Expression extractStringConcatSimple(StaticFunctionInvokation staticFunctionInvokation) {
