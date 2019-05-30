@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.state;
 
-import org.benf.cfr.reader.api.ClassFileSource;
+import org.benf.cfr.reader.apiunreleased.ClassFileSource2;
+import org.benf.cfr.reader.apiunreleased.JarContent;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -13,10 +15,12 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLConnection;
@@ -26,7 +30,7 @@ import java.util.zip.ZipFile;
 
 import static org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils.getPackageAndClassNames;
 
-public class ClassFileSourceImpl implements ClassFileSource {
+public class ClassFileSourceImpl implements ClassFileSource2 {
 
     private final Set<String> explicitJars = SetFactory.newSet();
     private Map<String, String> classToPathMap;
@@ -251,7 +255,12 @@ public class ClassFileSourceImpl implements ClassFileSource {
         throw new IOException("No such file " + inputPath);
     }
 
+    @Deprecated
     public Collection<String> addJar(String jarPath) {
+        return addJarContent(jarPath).getClassFiles();
+    }
+
+    public JarContent addJarContent(String jarPath) {
         // Make sure classpath is scraped first, so we'll overwrite it.
         getClassPathClasses();
 
@@ -260,14 +269,14 @@ public class ClassFileSourceImpl implements ClassFileSource {
             throw new ConfusedCFRException("No such jar file " + jarPath);
         }
         jarPath = file.getAbsolutePath();
-        Map<String, String> thisJar = MapFactory.newOrderedMap();
-        if (!processClassPathFile(file, jarPath, thisJar, false)) {
+        JarContent jarContent = processClassPathFile(file, false);
+        if (jarContent == null){
             throw new ConfusedCFRException("Failed to load jar " + jarPath);
         }
 
         Set<String> dedup;
         if (classCollisionRenamerLCToReal != null) {
-            final Map<String, List<String>> map = Functional.groupToMapBy(thisJar.keySet(), new UnaryFunction<String, String>() {
+            final Map<String, List<String>> map = Functional.groupToMapBy(jarContent.getClassFiles(), new UnaryFunction<String, String>() {
                 @Override
                 public String invoke(String arg) {
                     return arg.toLowerCase();
@@ -284,8 +293,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
         }
 
         List < String > output = ListFactory.newList();
-        for (Map.Entry<String, String> entry : thisJar.entrySet()) {
-            String classPath = entry.getKey();
+        for (String classPath : jarContent.getClassFiles()) {
             if (classPath.toLowerCase().endsWith(".class")) {
                 // nb : entry.value will always be the jar here, but ....
                 if (classCollisionRenamerLCToReal != null) {
@@ -293,12 +301,12 @@ public class ClassFileSourceImpl implements ClassFileSource {
                     classCollisionRenamerRealToLC.put(classPath, renamed);
                     classPath = renamed;
                 }
-                classToPathMap.put(classPath, entry.getValue());
+                classToPathMap.put(classPath, jarPath);
                 output.add(classPath);
             }
         }
         explicitJars.add(jarPath);
-        return output;
+        return jarContent;
     }
 
     private static String addDedupName(String potDup, Set<String> collisions, Map<String, String> data) {
@@ -329,12 +337,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
             if (null != extraClassPath) {
                 classPath = classPath + File.pathSeparatorChar + extraClassPath;
             }
-            /*
-             * If the user has java9, then alas rt.jar isn't on the class path any more, and we won't be able to find
-             * base objects.
-             * Cheat, and expect to find a jmod directory.
-             */
-//            classPath = classPath + File.pathSeparator + System.getProperty("java.home") + File.separator + "jmods";
+
             if (renameCase) {
                 classCollisionRenamerLCToReal = MapFactory.newMap();
                 classCollisionRenamerRealToLC = MapFactory.newMap();
@@ -374,9 +377,22 @@ public class ClassFileSourceImpl implements ClassFileSource {
         return classToPathMap;
     }
 
-    private boolean processClassPathFile(final File file, final String path, Map<String, String> classToPathMap, boolean dump) {
+    private void processClassPathFile(File file, String absolutePath, Map<String, String> classToPathMap, boolean dump) {
+        JarContent content = processClassPathFile(file, dump);
+        if (content == null) {
+            return;
+        }
+        for (String name : content.getClassFiles()) {
+            classToPathMap.put(name, absolutePath);
+        }
+    }
+
+    private JarContent processClassPathFile(final File file, boolean dump) {
+        List<String> content = ListFactory.newList();
+        Map<String, String> manifest;
         try {
             ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
+            manifest = getManifestContent(zipFile);
             try {
                 Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
                 while (enumeration.hasMoreElements()) {
@@ -387,7 +403,7 @@ public class ClassFileSourceImpl implements ClassFileSource {
                             if (dump) {
                                 System.out.println("  " + name);
                             }
-                            classToPathMap.put(name, path);
+                            content.add(name);
                         } else {
                             if (dump) {
                                 System.out.println("  [ignoring] " + name);
@@ -399,9 +415,34 @@ public class ClassFileSourceImpl implements ClassFileSource {
                 zipFile.close();
             }
         } catch (IOException e) {
-            return false;
+            return null;
         }
-        return true;
+        return new JarContentImpl(content, manifest);
+    }
+
+    private Map<String, String> getManifestContent(ZipFile zipFile) {
+        try {
+            ZipEntry manifestEntry = zipFile.getEntry(MiscConstants.MANIFEST_PATH);
+            Map<String, String> manifest;
+            if (manifestEntry == null) {
+                // Odd, but feh.
+                manifest = MapFactory.newMap();
+            } else {
+                InputStream is = zipFile.getInputStream(manifestEntry);
+                BufferedReader bis = new BufferedReader(new InputStreamReader(is));
+                manifest = MapFactory.newMap();
+                String line;
+                while (null != (line = bis.readLine())) {
+                    int idx = line.indexOf(':');
+                    if (idx <= 0) continue;
+                    manifest.put(line.substring(0, idx), line.substring(idx + 1).trim());
+                }
+                bis.close();
+            }
+            return manifest;
+        } catch (Exception e) {
+            return MapFactory.newMap();
+        }
     }
 
     @Override
@@ -449,17 +490,15 @@ public class ClassFileSourceImpl implements ClassFileSource {
         }
 
         void configureWith(String usePath, String specPath) {
-            String path = usePath;
-            String actualPath = specPath;
-            if (!actualPath.equals(path)) {
+            if (!specPath.equals(usePath)) {
                 unexpectedDirectory = true;
-                if (path.endsWith(actualPath)) {
-                    pathPrefix = path.substring(0, path.length() - actualPath.length());
+                if (usePath.endsWith(specPath)) {
+                    pathPrefix = usePath.substring(0, usePath.length() - specPath.length());
                 } else {
                     // We're loading from the wrong directory.  We need to rebase so that dependencies are sought
                     // in similar locations.
                     // TODO : File.separator, rather than hardcoded!
-                    getCommonRoot(path, actualPath);
+                    getCommonRoot(usePath, specPath);
                 }
             }
         }

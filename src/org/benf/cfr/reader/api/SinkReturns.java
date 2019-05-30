@@ -45,4 +45,20 @@ public interface SinkReturns {
          */
         String getJava();
     }
+
+    /**
+     * Extends {@link Decompiled} to describe which version of JVM this
+     * class is visible from.  (if JEP238 applies)
+     */
+    interface DecompiledMultiVer extends Decompiled {
+        /**
+         * Returns the version of the runtime that this class is visible from.
+         * If the jar is not a JEP238 (multi version) jar (or this is not a
+         * version override class), then this will be 0.
+         *
+         * @return visible from JRE version.
+         */
+        int getRuntimeFrom();
+    }
+
 }

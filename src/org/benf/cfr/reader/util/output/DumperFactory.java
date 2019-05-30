@@ -13,4 +13,5 @@ public interface DumperFactory {
 
     ExceptionDumper getExceptionDumper();
 
+    DumperFactory getFactoryWithPrefix(String prefix, int version);
 }

@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.util;
 
+import java.util.regex.Pattern;
+
 public interface MiscConstants {
     class Version {
         private static String version;
@@ -34,4 +36,9 @@ public interface MiscConstants {
     String SCALA_SERIAL_VERSION = "serialVersionUID";
     String GET_CLASS_NAME = "getClass";
     String REQUIRE_NON_NULL = "requireNonNull";
+
+    String MANIFEST_PATH = "META-INF/MANIFEST.MF";
+    String MULTI_RELEASE_KEY = "Multi-Release";
+    String MULTI_RELEASE_PREFIX = "META-INF/versions/";
+    Pattern MULTI_RELEASE_PATH_PATTERN = Pattern.compile("^" + MULTI_RELEASE_PREFIX + "(\\d+)/(.*)$");
 }

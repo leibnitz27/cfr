@@ -3,7 +3,9 @@ package org.benf.cfr.reader;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.api.OutputSinkFactory;
+import org.benf.cfr.reader.apiunreleased.ClassFileSource2;
 import org.benf.cfr.reader.state.ClassFileSourceImpl;
+import org.benf.cfr.reader.state.ClassFileSourceWrapper;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.getopt.Options;
@@ -18,7 +20,7 @@ import java.util.List;
 
 public class CfrDriverImpl implements CfrDriver {
     private final Options options;
-    private final ClassFileSource classFileSource;
+    private final ClassFileSource2 classFileSource;
     private final OutputSinkFactory outputSinkFactory;
 
     public CfrDriverImpl(ClassFileSource source, OutputSinkFactory outputSinkFactory, Options options) {
@@ -30,7 +32,7 @@ public class CfrDriverImpl implements CfrDriver {
         }
         this.outputSinkFactory = outputSinkFactory;
         this.options = options;
-        this.classFileSource = source;
+        this.classFileSource = source instanceof ClassFileSource2 ? (ClassFileSource2)source : new ClassFileSourceWrapper(source);
     }
 
     @Override

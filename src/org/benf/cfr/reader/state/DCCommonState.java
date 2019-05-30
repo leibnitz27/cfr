@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.state;
 
-import org.benf.cfr.reader.api.ClassFileSource;
+import org.benf.cfr.reader.apiunreleased.ClassFileSource2;
+import org.benf.cfr.reader.apiunreleased.JarContent;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
@@ -8,27 +9,61 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.CannotLoadClassException;
-import org.benf.cfr.reader.util.collections.ListFactory;
-import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.BinaryFunction;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 
-import java.io.*;
+import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
 
 public class DCCommonState {
 
-    private final ClassCache classCache = new ClassCache(this);
-    private final ClassFileSource classFileSource;
+    private final ClassCache classCache;
+    private final ClassFileSource2 classFileSource;
     private final Options options;
-
+    private final Map<String, ClassFile> classFileCache;
+    private Set<JavaTypeInstance> versionCollisions;
     private transient LinkedHashSet<String> couldNotLoadClasses = new LinkedHashSet<String>();
 
-    public DCCommonState(Options options, ClassFileSource classFileSource) {
+    public DCCommonState(Options options, ClassFileSource2 classFileSource) {
         this.options = options;
         this.classFileSource = classFileSource;
+        this.classCache = new ClassCache(this);
+        this.classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
+            @Override
+            public ClassFile invoke(String arg) {
+                return loadClassFileAtPath(arg);
+            }
+        });
+        this.versionCollisions = SetFactory.newSet();
+    }
+
+    public DCCommonState(DCCommonState dcCommonState, final BinaryFunction<String, DCCommonState, ClassFile> cacheAccess) {
+        this.options = dcCommonState.options;
+        this.classFileSource = dcCommonState.classFileSource;
+        this.classCache = new ClassCache(this);
+        this.classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
+            @Override
+            public ClassFile invoke(String arg) {
+                return cacheAccess.invoke(arg, DCCommonState.this);
+            }
+        });
+        this.versionCollisions = dcCommonState.versionCollisions;
+    }
+
+    public void setCollisions(Set<JavaTypeInstance> versionCollisions) {
+        this.versionCollisions = versionCollisions;
+    }
+
+    public Set<JavaTypeInstance> getVersionCollisions() {
+        return versionCollisions;
     }
 
     public void configureWith(ClassFile classFile) {
@@ -44,36 +79,63 @@ public class DCCommonState {
         return couldNotLoadClasses;
     }
 
-    private Map<String, ClassFile> classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
-        @Override
-        public ClassFile invoke(String arg) {
-            return loadClassFileAtPath(arg);
-        }
-    });
-
-    private ClassFile loadClassFileAtPath(final String path) {
+    public ClassFile loadClassFileAtPath(final String path) {
         try {
             Pair<byte[], String> content = classFileSource.getClassFileContent(path);
             ByteData data = new BaseByteData(content.getFirst());
-            ClassFile res = new ClassFile(data, content.getSecond(), this);
-            return res;
+            return new ClassFile(data, content.getSecond(), this);
         } catch (Exception e) {
             couldNotLoadClasses.add(path);
             throw new CannotLoadClassException(path, e);
         }
     }
 
+    private static boolean isMultiReleaseJar(JarContent jarContent) {
+        String val = jarContent.getManifestEntries().get(MiscConstants.MULTI_RELEASE_KEY);
+        if (val == null) return false;
+        return Boolean.parseBoolean(val);
+    }
 
-    public List<JavaTypeInstance> explicitlyLoadJar(String path) {
-        List<JavaTypeInstance> output = ListFactory.newList();
-        Collection<String> classPaths = classFileSource.addJar(path);
-        for (String classPath : classPaths) {
+    public TreeMap<Integer, List<JavaTypeInstance>> explicitlyLoadJar(String path) {
+        JarContent jarContent = classFileSource.addJarContent(path);
+
+        TreeMap<Integer, List<JavaTypeInstance>> baseRes = MapFactory.newTreeMap();
+        Map<Integer, List<JavaTypeInstance>> res = MapFactory.newLazyMap(baseRes, new UnaryFunction<Integer, List<JavaTypeInstance>>() {
+            @Override
+            public List<JavaTypeInstance> invoke(Integer arg) {
+                return ListFactory.newList();
+            }
+        });
+        boolean isMultiReleaseJar = isMultiReleaseJar(jarContent);
+
+        for (String classPath : jarContent.getClassFiles()) {
+            // If the classPath is from a multi release jar, then we're going
+            // to have to process it in a more unpleasant way.
+            int version = 0;
+            if (isMultiReleaseJar) {
+                Matcher matcher = MiscConstants.MULTI_RELEASE_PATH_PATTERN.matcher(classPath);
+                // It's kind of irritating that we're reprocessing each name, rather than
+                // determining this in a tree structured walk through the source jar.
+                if (matcher.matches()) {
+                    try {
+                        String ver = matcher.group(1);
+                        version = Integer.parseInt(ver);
+                        classPath = matcher.group(2);
+                    } catch (Exception e) {
+                        // This is unfortunate - someone's playing silly buggers!
+                        // Ignore this file - it won't get seen by jre.
+                        // (should also be impossible to get here given regex).
+                        continue;
+                    }
+                }
+            }
+
             // Redundant test as we're defending against a bad implementation.
             if (classPath.toLowerCase().endsWith(".class")) {
-                output.add(classCache.getRefClassFor(classPath.substring(0, classPath.length() - 6)));
+                res.get(version).add(classCache.getRefClassFor(classPath.substring(0, classPath.length() - 6)));
             }
         }
-        return output;
+        return baseRes;
     }
 
     public ClassFile getClassFile(String path) throws CannotLoadClassException {
@@ -123,4 +185,5 @@ public class DCCommonState {
         if (lcPath.endsWith(".jar") || lcPath.endsWith(".war")) return AnalysisType.JAR;
         return AnalysisType.CLASS;
     }
+
 }

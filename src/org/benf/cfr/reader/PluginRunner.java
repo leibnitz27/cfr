@@ -1,9 +1,10 @@
 package org.benf.cfr.reader;
 
 import org.benf.cfr.reader.api.ClassFileSource;
+import org.benf.cfr.reader.apiunreleased.ClassFileSource2;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.ClassFileSourceImpl;
+import org.benf.cfr.reader.state.ClassFileSourceWrapper;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -48,7 +49,7 @@ public class PluginRunner {
 
     public List<String> addJarPath(String jarPath) {
         try {
-            List<JavaTypeInstance> types = dcCommonState.explicitlyLoadJar(jarPath);
+            List<JavaTypeInstance> types = dcCommonState.explicitlyLoadJar(jarPath).get(0);
             return Functional.map(types, new UnaryFunction<JavaTypeInstance, String>() {
                 @Override
                 public String invoke(JavaTypeInstance arg) {
@@ -93,6 +94,11 @@ public class PluginRunner {
         public ExceptionDumper getExceptionDumper() {
             return new StdErrExceptionDumper();
         }
+
+        @Override
+        public DumperFactory getFactoryWithPrefix(String prefix, int version) {
+            return this;
+        }
     }
 
     public String getDecompilationFor(String classFilePath) {
@@ -108,9 +114,10 @@ public class PluginRunner {
 
     private static DCCommonState initDCState(Map<String, String> optionsMap, ClassFileSource classFileSource) {
         OptionsImpl options = new OptionsImpl(optionsMap);
-        if (classFileSource == null) classFileSource = new ClassFileSourceImpl(options);
-        DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
-        return dcCommonState;
+        ClassFileSource2 source = classFileSource == null ?
+                new ClassFileSourceImpl(options) :
+                new ClassFileSourceWrapper(classFileSource);
+        return new DCCommonState(options, source);
     }
 
 }

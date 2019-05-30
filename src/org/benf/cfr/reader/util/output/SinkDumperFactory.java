@@ -16,10 +16,23 @@ public class SinkDumperFactory implements DumperFactory {
     private static final List<OutputSinkFactory.SinkClass> justString = Collections.singletonList(OutputSinkFactory.SinkClass.STRING);
     private final OutputSinkFactory sinkFactory;
     private Options options;
+    private final int version;
 
     public SinkDumperFactory(OutputSinkFactory sinkFactory, Options options) {
         this.sinkFactory = sinkFactory;
         this.options = options;
+        this.version = 0;
+    }
+
+    private SinkDumperFactory(SinkDumperFactory other, int version) {
+        this.sinkFactory = other.sinkFactory;
+        this.options = other.options;
+        this.version = version;
+    }
+
+    @Override
+    public DumperFactory getFactoryWithPrefix(String prefix, int version) {
+        return new SinkDumperFactory(this, version);
     }
 
     @Override
@@ -28,12 +41,13 @@ public class SinkDumperFactory implements DumperFactory {
         if (supported == null) supported = justString;
         for (OutputSinkFactory.SinkClass sinkClass : supported) {
             switch (sinkClass) {
+                case DECOMPILED_MULTIVER:
+                    return SinkSourceClassDumper(sinkFactory.<SinkReturns.Decompiled>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), version, classType, typeUsageInformation, illegalIdentifierDump);
                 case DECOMPILED:
                     return SinkSourceClassDumper(sinkFactory.<SinkReturns.Decompiled>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), classType, typeUsageInformation, illegalIdentifierDump);
                 case STRING:
                     return SinkStringClassDumper(sinkFactory.<String>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), typeUsageInformation, illegalIdentifierDump);
                 default:
-                    continue;
             }
         }
         OutputSinkFactory.Sink<String> stringSink = sinkFactory.getSink(OutputSinkFactory.SinkType.JAVA, OutputSinkFactory.SinkClass.STRING);
@@ -76,6 +90,42 @@ public class SinkDumperFactory implements DumperFactory {
                     @Override
                     public String getJava() {
                         return java;
+                    }
+                };
+
+                sink.write(res);
+            }
+        };
+    }
+
+    private Dumper SinkSourceClassDumper(final OutputSinkFactory.Sink<SinkReturns.Decompiled> sink, final int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+        final StringBuilder sb = new StringBuilder();
+        final Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(classType.getRawName());
+
+        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump) {
+
+            @Override
+            public void close() {
+                final String java = sb.toString();
+                SinkReturns.DecompiledMultiVer res = new SinkReturns.DecompiledMultiVer() {
+                    @Override
+                    public String getPackageName() {
+                        return names.getFirst();
+                    }
+
+                    @Override
+                    public String getClassName() {
+                        return names.getSecond();
+                    }
+
+                    @Override
+                    public String getJava() {
+                        return java;
+                    }
+
+                    @Override
+                    public int getRuntimeFrom() {
+                        return version;
                     }
                 };
 

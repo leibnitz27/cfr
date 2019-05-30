@@ -31,7 +31,7 @@ public interface ClassFileSource {
      * It should be found at org/person/Bob.class.
      *
      * Implementors of this will be called back with "", and "org/person", telling you that org.person are implicit
-     * in your papth.  CFR may later ask you to load "org/person/Bob$1.class".
+     * in your path.  CFR may later ask you to load "org/person/Bob$1.class".
      *
      * You should adjust this path to match where Bob$1 actually is.
      *

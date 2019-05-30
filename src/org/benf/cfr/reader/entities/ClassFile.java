@@ -265,6 +265,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (constantPool.isDynamicConstants()) {
             addComment(DecompilerComment.DYNAMIC_CONSTANTS);
         }
+
+        if (dcCommonState.getVersionCollisions().contains(getClassType())) {
+            addComment(DecompilerComment.MULTI_VERSION);
+        }
     }
 
     /*

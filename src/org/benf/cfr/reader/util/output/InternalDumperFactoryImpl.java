@@ -15,10 +15,11 @@ import java.util.Set;
 
 public class InternalDumperFactoryImpl implements DumperFactory {
     private final boolean checkDupes;
-    private Set<String> seen = SetFactory.newSet();
+    private final Set<String> seen = SetFactory.newSet();
     private boolean seenCaseDupe = false;
     private final Options options;
     private final ProgressDumper progressDumper;
+    private final String prefix;
 
 
     public InternalDumperFactoryImpl(Options options) {
@@ -29,9 +30,23 @@ public class InternalDumperFactoryImpl implements DumperFactory {
         } else {
             progressDumper = ProgressDumperNop.INSTANCE;
         }
+        this.prefix = "";
     }
 
-    private static Pair<String, Boolean> getPathAndClobber(Options options) {
+    private InternalDumperFactoryImpl(InternalDumperFactoryImpl other, String prefix) {
+        this.checkDupes = other.checkDupes;
+        this.seenCaseDupe = other.seenCaseDupe;
+        this.options = other.options;
+        this.progressDumper = other.progressDumper;
+        this.prefix = prefix;
+    }
+
+    @Override
+    public DumperFactory getFactoryWithPrefix(String prefix, int version) {
+        return new InternalDumperFactoryImpl(this, prefix);
+    }
+
+    private Pair<String, Boolean> getPathAndClobber() {
         Troolean clobber = options.getOption(OptionsImpl.CLOBBER_FILES);
         if (options.optionIsSet(OptionsImpl.OUTPUT_DIR)) {
             return Pair.make(options.getOption(OptionsImpl.OUTPUT_DIR), clobber.boolValue(true));
@@ -43,11 +58,11 @@ public class InternalDumperFactoryImpl implements DumperFactory {
     }
 
     public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-        Pair<String, Boolean> targetInfo = getPathAndClobber(options);
+        Pair<String, Boolean> targetInfo = getPathAndClobber();
 
         if (targetInfo == null) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump);
 
-        FileDumper res = new FileDumper(targetInfo.getFirst(), targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
+        FileDumper res = new FileDumper(targetInfo.getFirst() + prefix, targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
         if (checkDupes) {
             if (!seen.add(res.getFileName().toLowerCase())) {
                 seenCaseDupe = true;
@@ -77,7 +92,7 @@ public class InternalDumperFactoryImpl implements DumperFactory {
      * A summary dumper will receive errors.  Generally, it's only of value when dumping jars to file.
      */
     public SummaryDumper getSummaryDumper() {
-        Pair<String, Boolean> targetInfo = getPathAndClobber(options);
+        Pair<String, Boolean> targetInfo = getPathAndClobber();
 
         if (targetInfo == null) return new NopSummaryDumper();
 

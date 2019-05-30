@@ -19,6 +19,8 @@ public interface OutputSinkFactory {
         STRING(String.class),
         /** Sinks will accept {@link org.benf.cfr.reader.api.SinkReturns.Decompiled} */
         DECOMPILED(SinkReturns.Decompiled.class),
+        /** Sinks will accept {@link org.benf.cfr.reader.api.SinkReturns.DecompiledMultiVer} */
+        DECOMPILED_MULTIVER(SinkReturns.DecompiledMultiVer.class),
         /** Sinks will accept {@link org.benf.cfr.reader.api.SinkReturns.ExceptionMessage} */
         EXCEPTION_MESSAGE(SinkReturns.ExceptionMessage.class);
 
