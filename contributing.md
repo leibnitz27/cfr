@@ -16,6 +16,7 @@ Ok, that's out of the way.
 
 # Great things to contribute
 
+* Improvements to the 'test framework'.  At the moment, it's a fairly Heath Robinson-ian (or Rube Goldberg, pick your poison) contraption, to allow multiple versions of Java to be tested.  I **know** it could be better.....
 * Tests.  Because CFR is Java 6 only, the tests are held in a seperate repo. <a href="https://github.com/leibnitz27/cfr_tests">cfr_tests</a>, which will build and compare several hundred exemplars in multiple versions of Java.
 * Fixes for your new Tests. ;)
 
@@ -23,11 +24,11 @@ Ok, that's out of the way.
 
 * Output code formatting (other than egregious fixes).  CFR can't be all things to all people, and there are lots of great tools out there to apply your own flavour of egyptian braces, non-egyptian braces, positive semi-definite braces etc.
 * Java above 6.  See above.  *I know.*  But it's all syntactic sugar anyway.  **cough**.  Anyway, you get to work with $$FUNKY_NEW_LANGUAGE$$ in your day job.
-* External dependencies.  *I know.*  See above.   
+* External dependencies.  *I know.*  See above.  
 * Bad Vibes.
 
 # Before contributing
 
-* Please chat with me about what you're going to do.   You can get hold of me at lee@benf.org , or @leeAtBenf on Twitter.
-* Please ensure that you have tested CFR tests against at least java 6, 8 and 13, and the hardcoded class files.
+* Please chat with me about what you're going to do.   You can get hold of me at lee@benf.org , or <a href="https://twitter.com/leeatbenf">@leeAtBenf</a> on Twitter.
+* Please ensure that you have tested <a href="https://github.com/leibnitz27/cfr_tests">cfr_tests</a> against at least java 6, 8 and 13, and the hardcoded class files.
 * Even if you pass all tests, I'll be verifying against a huge library of class files that I can't share, so passing all the tests is no guarantee you won't have broken things.  But we can work on that!
