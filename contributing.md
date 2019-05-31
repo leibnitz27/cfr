@@ -25,6 +25,7 @@ Ok, that's out of the way.
 * Output code formatting (other than egregious fixes).  CFR can't be all things to all people, and there are lots of great tools out there to apply your own flavour of egyptian braces, non-egyptian braces, positive semi-definite braces etc.
 * Java above 6.  See above.  *I know.*  But it's all syntactic sugar anyway.  **cough**.  Anyway, you get to work with $$FUNKY_NEW_LANGUAGE$$ in your day job.
 * External dependencies.  *I know.*  See above.  
+* Reflection.  No reflection please. 
 * Bad Vibes.
 
 # Before contributing
