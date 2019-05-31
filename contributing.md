@@ -29,6 +29,7 @@ Ok, that's out of the way.
 
 # Before contributing
 
+* Please start small, until I get to know you!  If you send me a 20kloc refactor out of the blue, I'm going to struggle.
 * Please chat with me about what you're going to do.   You can get hold of me at lee@benf.org , or <a href="https://twitter.com/leeatbenf">@leeAtBenf</a> on Twitter.
 * Please ensure that you have tested <a href="https://github.com/leibnitz27/cfr_tests">cfr_tests</a> against at least java 6, 8 and 13, and the hardcoded class files.
 * Even if you pass all tests, I'll be verifying against a huge library of class files that I can't share, so passing all the tests is no guarantee you won't have broken things.  But we can work on that!
