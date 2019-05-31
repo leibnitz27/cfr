@@ -26,6 +26,7 @@ Ok, that's out of the way.
 * Java above 6.  See above.  *I know.*  But it's all syntactic sugar anyway.  **cough**.  Anyway, you get to work with $$FUNKY_NEW_LANGUAGE$$ in your day job.
 * External dependencies.  *I know.*  See above.  
 * Reflection.  No reflection please. 
+* No-op changes.  (For example, there are quite a few intermediate variables just before a return.  I find them convenient for debugging).
 * Bad Vibes.
 
 # Before contributing
