@@ -17,5 +17,7 @@ Since 0.145, Binaries are published on github along with release tags.
 
 You can also download CFR from your favourite <a href="https://mvnrepository.com/artifact/org.benf/cfr">maven</a> repo, though releases are published a few days late usually, to allow for release regret.
 
+# Issues
 
+If you have an issue, please **_DO NOT_** include copyright materials.  I will have to delete your issue.
 
