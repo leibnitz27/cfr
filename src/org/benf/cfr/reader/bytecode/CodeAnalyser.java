@@ -467,7 +467,7 @@ public class CodeAnalyser {
             /*
              * This set of operations is /very/ aggressive.
              */
-            // This is not neccessarily a sensible thing to do, but we're being aggressive...
+            // This is not necessarily a sensible thing to do, but we're being aggressive...
             Op03Rewriters.rejoinBlocks(op03SimpleParseNodes);
             Op03Rewriters.extendTryBlocks(dcCommonState, op03SimpleParseNodes);
             op03SimpleParseNodes = Op03Blocks.combineTryBlocks(op03SimpleParseNodes);
@@ -534,7 +534,6 @@ public class CodeAnalyser {
         if (options.getOption(OptionsImpl.ECLIPSE)) {
             Op03Rewriters.eclipseLoopPass(op03SimpleParseNodes);
         }
-      //  Op03SimpleStatement.classifyGotos(op03SimpleParseNodes);
 
         // Identify simple while loops.
         op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
@@ -756,11 +755,6 @@ public class CodeAnalyser {
             // Note that local class definitions are removed at the point of lambda rewrite.
             Op04StructuredStatement.discoverLocalClassScopes(method, block, variableFactory);
                                             
-            // Done by wholeClass analyser.
-            //        Op04StructuredStatement.fixInnerClassConstruction(cfrState, method, block);
-
-            //        Op04StructuredStatement.inlineSyntheticAccessors(cfrState, method, block);
-
             if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
                 // Note - we ALSO try to do this in whole pass analysis.
                 if (this.method.isConstructor()) {
