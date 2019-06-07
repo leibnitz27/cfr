@@ -32,8 +32,7 @@ public class Literal extends AbstractExpression {
     public static final Literal INT_ONE = new Literal(TypedLiteral.getInt(1));
     private static final Literal LONG_ONE = new Literal(TypedLiteral.getLong(1));
 
-    private final TypedLiteral value;
-
+    protected final TypedLiteral value;
 
     public Literal(TypedLiteral value) {
         super(value.getInferredJavaType());
@@ -123,10 +122,10 @@ public class Literal extends AbstractExpression {
     }
 
     @Override
-    public final boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
+    public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
         if (o == null) return false;
         if (o == this) return true;
-        if (getClass() != o.getClass()) return false;
+        if (!(o instanceof Literal)) return false;
         Literal other = (Literal) o;
         if (!constraint.equivalent(value, other.value)) return false;
         return true;

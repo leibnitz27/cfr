@@ -761,6 +761,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new LambdaCleaner().transform(root);
         new TernaryCastCleaner().transform(root);
         new InvalidBooleanCastCleaner().transform(root);
+        new HexLiteralTidier().transform(root);
     }
 
     public static void prettifyBadLoops(Op04StructuredStatement root) {

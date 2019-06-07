@@ -26,6 +26,11 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         MethodType     // Only used for invokedynamic arguments
     }
 
+    public enum FormatHint {
+        None,
+        Hex
+    }
+
     private final InferredJavaType inferredJavaType;
     private final LiteralType type;
     private final Object value;
@@ -43,7 +48,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         }
     }
 
-    private static String integerName(Object o) {
+    private static String integerName(Object o, FormatHint formatHint) {
         if (!(o instanceof Integer)) return o.toString();
         int i = (Integer) o;
         switch (i) {
@@ -52,6 +57,9 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             case Integer.MIN_VALUE:
                 return "Integer.MIN_VALUE";
             default:
+                if (formatHint == FormatHint.Hex) {
+                    return "0x" + Integer.toHexString(i).toUpperCase();
+                }
                 return o.toString();
         }
     }
@@ -93,6 +101,13 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         Integer i = (Integer) value;
         return (i != 0);
     }
+
+    public long getLongValue() {
+        if (type != LiteralType.Long) throw new IllegalStateException("Expecting long literal");
+        Long l = (Long) value;
+        return l;
+    }
+
 
     public int getIntValue() {
         if (type != LiteralType.Integer) throw new IllegalStateException("Expecting integral literal");
@@ -159,32 +174,35 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         }
     }
 
-    private static String longName(Object o) {
+    private static String longName(Object o, FormatHint formatHint) {
         if (!(o instanceof Long)) return o.toString();
         long l = (Long) o;
         if (l == Long.MAX_VALUE) return "Long.MAX_VALUE";
         if (l == Long.MIN_VALUE) return "Long.MIN_VALUE";
         if (l == Integer.MAX_VALUE) return "Integer.MAX_VALUE";
         if (l == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
-        String longString = o.toString();
-        if (l > 0xfffffL) {
+        String longString = null;
+        if (l > 0xfffffL || formatHint == FormatHint.Hex) {
             String hexTest = Long.toHexString(l).toUpperCase();
-            byte[] bytes = hexTest.getBytes();
-            byte[] count = new byte[16];
             int diff = 0;
-            for (int i = 0, len = bytes.length; i < len; ++i) {
-                byte b = bytes[i];
-                if (b >= '0' && b <= '9') {
-                    if (++count[bytes[i] - '0'] == 1) diff++;
-                } else if (b >= 'A' && b <= 'F') {
-                    if (++count[bytes[i] - 'A' + 10] == 1) diff++;
-                } else {
-                    diff = 10;
-                    break;
+            if (formatHint != FormatHint.Hex) {
+                // If we're not hinted to go hex, see if it's .... ugly.
+                byte[] bytes = hexTest.getBytes();
+                byte[] count = new byte[16];
+                for (byte b : bytes) {
+                    if (b >= '0' && b <= '9') {
+                        if (++count[b - '0'] == 1) diff++;
+                    } else if (b >= 'A' && b <= 'F') {
+                        if (++count[b - 'A' + 10] == 1) diff++;
+                    } else {
+                        diff = 10;
+                        break;
+                    }
                 }
             }
             if (diff <= 2) longString = "0x" + hexTest;
         }
+        if (longString == null) longString = o.toString();
 
         return longString + "L";
     }
@@ -202,6 +220,10 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     @Override
     public Dumper dump(Dumper d) {
+        return dumpWithHint(d, FormatHint.None);
+    }
+
+    public Dumper dumpWithHint(Dumper d, FormatHint hint) {
         switch (type) {
             case String:
                 return d.print(((String) value));
@@ -217,10 +239,10 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
                         // It's tempting to add "(byte)/(short)" here, but JLS 5.2 specifically states that compile time
                         // narrowing of constants for assignment is not necessary.
                         // (but it is for calls, eg NarrowingTestXX).
-                        return d.print(integerName(value));
+                        return d.print(integerName(value, hint));
                 }
             case Long:
-                return d.print(longName(value));
+                return d.print(longName(value, hint));
             case MethodType:
                 return d.print(methodTypeName(value));
             case MethodHandle:
