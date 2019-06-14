@@ -69,7 +69,7 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
     );
 
-    private static final RecoveryOptions recover1 = new RecoveryOptions(recover0,
+    private static final RecoveryOptions recoverPre1 = new RecoveryOptions(recover0,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
             new RecoveryOption.TrooleanRO(OptionsImpl.FOR_LOOP_CAPTURE, Troolean.TRUE),
             new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
@@ -77,6 +77,10 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.AGGRESSIVE_EXCEPTION_AGG)
     );
+
+    private static final RecoveryOptions recover1 = new RecoveryOptions(recoverPre1,
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_NOPULL, Troolean.TRUE)
+            );
 
     private static final RecoveryOptions recover2 = new RecoveryOptions(recover1,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_EXTRA, Troolean.TRUE),
@@ -92,7 +96,7 @@ public class CodeAnalyser {
             new RecoveryOption.BooleanRO(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS, true, BytecodeMeta.checkParam(OptionsImpl.IGNORE_EXCEPTIONS), DecompilerComment.DROP_EXCEPTIONS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recover1, recover2, recoverExAgg, recover3, recoverLast};
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverPre1, recover1, recover2, recoverExAgg, recover3, recoverLast};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.

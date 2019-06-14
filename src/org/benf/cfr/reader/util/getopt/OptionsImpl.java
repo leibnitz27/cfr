@@ -347,6 +347,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT_EXTRA = new PermittedOptionProvider.Argument<Troolean>(
             "forcetopsortaggress", defaultNeitherTrooleanDecoder,
             "Force extra aggressive topsort options");
+    public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT_NOPULL = new PermittedOptionProvider.Argument<Troolean>(
+            "forcetopsortnopull", defaultNeitherTrooleanDecoder,
+            "Force topsort not to pull try blocks.");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_COND_PROPAGATE = new PermittedOptionProvider.Argument<Troolean>(
             "forcecondpropagate", defaultNeitherTrooleanDecoder,
             "Pull results of deterministic jumps back through some constant assignments");

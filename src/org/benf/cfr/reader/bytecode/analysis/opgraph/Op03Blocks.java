@@ -904,7 +904,12 @@ public class Op03Blocks {
          * been moved out of order.  I'm SURE this isn't the right way to do it, however it stops us pessimising
          * some very odd cases.  :(
          */
-        if (detectMoves(blocks, options)) {
+        boolean redo = false;
+        redo = detectMoves(blocks, options);
+        if (options.getOption(OptionsImpl.FORCE_TOPSORT_NOPULL) != Troolean.TRUE) {
+            redo = addCatchEndDependencies(blocks) || redo;
+        }
+        if (redo) {
             Collections.sort(blocks);
             blocks = doTopSort(blocks);
         }
@@ -981,6 +986,73 @@ public class Op03Blocks {
         }
 
         return Cleaner.removeUnreachableCode(outStatements, true);
+    }
+
+    private static boolean addCatchEndDependencies(List<Block3> blocks) {
+        boolean effect = false;
+        // If we've ended up with a block in the middle of a try-catch region
+        // which doesn't belong, give it an extra dependency of the last block in the catch region.
+        // This relies on us having already had an attempt at sorting.
+        Map<BlockIdentifier, Integer> lastIn = MapFactory.newMap();
+        int size = blocks.size();
+
+        for (int x = size-1; x >= 0; --x) {
+            Block3 block = blocks.get(x);
+            Set<BlockIdentifier> inBlocks = block.getStart().getBlockIdentifiers();
+            for (BlockIdentifier inBlock : inBlocks) {
+                if (!lastIn.containsKey(inBlock)) {
+                    lastIn.put(inBlock, x);
+                }
+            }
+        }
+
+        List<Set<BlockIdentifier>> identifiersByBlock = ListFactory.newList();
+        for (int x = 0; x < size; ++x) {
+            Block3 block = blocks.get(x);
+            Op03SimpleStatement ostm = block.getStart();
+            Set<BlockIdentifier> idents = ostm.getBlockIdentifiers();
+            if (ostm.getStatement() instanceof CatchStatement) {
+                idents = SetFactory.newSet(idents);
+                idents.add(((CatchStatement)ostm.getStatement()).getCatchBlockIdent());
+            }
+            identifiersByBlock.add(idents);
+        }
+
+        outer : for (int x = 0; x < size; ++x) {
+            Block3 block = blocks.get(x);
+            if (block.getEnd().getStatement() instanceof TryStatement) {
+                TryStatement tryStm = (TryStatement)block.getEnd().getStatement();
+                BlockIdentifier tryBlockIdent = tryStm.getBlockIdentifier();
+                Set<BlockIdentifier> catchBlockIdents = SetFactory.newSet();
+                for (Op03SimpleStatement target : block.getEnd().getTargets()) {
+                    if (target.getStatement() instanceof CatchStatement) {
+                        catchBlockIdents.add(((CatchStatement)target.getStatement()).getCatchBlockIdent());
+                    }
+                }
+                Integer lastTry = lastIn.get(tryBlockIdent);
+                if (lastTry == null) continue outer;
+                // Find the last index of any of these blocks.
+                int idx = x;
+                for (BlockIdentifier catchIdent : catchBlockIdents) {
+                    Integer thisIdx = lastIn.get(catchIdent);
+                    if (thisIdx == null) continue outer;
+                    idx = Math.max(idx, thisIdx);
+                }
+                Set<BlockIdentifier> allBlockIdents = SetFactory.newSet(catchBlockIdents);
+                allBlockIdents.add(tryBlockIdent);
+                Block3 last = blocks.get(idx);
+                // Now walk until we come to last Idx
+                for (int y = x+1; y <= idx; ++y) {
+                    Block3 yBlock = blocks.get(y);
+                    if (!SetUtil.hasIntersection(identifiersByBlock.get(y), allBlockIdents)) {
+                        yBlock.addSource(last);
+                        last.addTarget(yBlock);
+                        effect = true;
+                    }
+                }
+            }
+        }
+        return effect;
     }
 
     /*
