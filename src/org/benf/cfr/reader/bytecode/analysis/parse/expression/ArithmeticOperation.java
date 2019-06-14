@@ -267,7 +267,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
     public boolean canThrow(ExceptionCheck caught) {
         return lhs.canThrow(caught) ||
                 rhs.canThrow(caught) ||
-                caught.checkAgainst(BasicExceptions.instances);
+                op.canThrow(this.getInferredJavaType(), caught, BasicExceptions.instances);
     }
 
     @Override

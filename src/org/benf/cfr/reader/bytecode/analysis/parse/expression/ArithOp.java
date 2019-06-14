@@ -1,8 +1,14 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
+import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+
+import java.util.Set;
 
 public enum ArithOp {
     LCMP("LCMP", true, Precedence.WEAKEST),
@@ -103,5 +109,18 @@ public enum ArithOp {
             default:
                 throw new ConfusedCFRException("Don't know arith op for " + instr);
         }
+    }
+
+    public boolean canThrow(InferredJavaType inferredJavaType, ExceptionCheck caught, Set<? extends JavaTypeInstance> instances) {
+        StackType stackType = inferredJavaType.getRawType().getStackType();
+        switch (stackType) {
+            case DOUBLE:
+            case FLOAT:
+            case INT:
+            case LONG:
+                if (this != DIVIDE) return false;
+                break;
+        }
+        return caught.checkAgainst(instances);
     }
 }
