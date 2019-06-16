@@ -120,6 +120,7 @@ public class NonStaticLifter {
         final List<Op04StructuredStatement> constructorCode = constructorCodeList.get(0);
         if (constructorCode.isEmpty()) return; // can't happen.
         Set<Expression> usedFvs = SetFactory.newSet();
+        int maxFieldIdx = -1;
         for (int x = 0; x < minSize; ++x) {
             StructuredStatement s1 = constructorCode.get(x).getStatement();
             for (int y = 1; y < numConstructors; ++y) {
@@ -153,29 +154,50 @@ public class NonStaticLifter {
                 }
                 return;
             }
-            usedFvs.add(fieldVariable.getObject());
 
-            ClassFileField f = fieldMap.get(fieldVariable.getFieldName()).getSecond();
-            // Ok, it doesn't use anything it shouldn't - change the initialiser.
+            Pair<Integer, ClassFileField> fieldPair = fieldMap.get(fieldVariable.getFieldName());
+            ClassFileField f = fieldPair.getSecond();
+
             Field field = f.getField();
-            // This is where it gets fun.  If it doesn't have a constant value, we can lift it, UNLESS it's
-            // a literal!!
-            if (field.testAccessFlag(AccessFlag.ACC_FINAL)
-                    && field.getConstantValue() == null
-                    && rValue instanceof Literal) {
-                // And it's being assigned to either a raw or a string
-                if (field.getJavaTypeInstance().isRaw() ||
-                    field.getJavaTypeInstance() == TypeConstants.STRING) {
+            boolean rLit = rValue instanceof Literal;
+            /* If it doesn't have a constant value, we can lift it, UNLESS it's a literal!!
+             * And it's being assigned to either a raw or a string.
+             * Why?  Because if it belonged in the declaration, it would have a constant
+             * value, and reflective access changes. (as you can, naughtily, edit private finals
+             * which have been assigned in the constructor, in some JVM versions).
+             */
+            if (field.testAccessFlag(AccessFlag.ACC_FINAL) &&
+                field.getConstantValue() == null &&
+                rLit &&
+                    (field.getJavaTypeInstance().isRaw() ||
+                    field.getJavaTypeInstance() == TypeConstants.STRING)
+            ) {
+                continue;
+            }
+
+            /*
+             * For every potentially liftable field - would lifting it cause it to change ordering
+             * with regards to another lifted field?
+             * We can ignore declaration order of fields which are initialised with constants.
+             */
+            if (!rLit) {
+                int fieldIdx = fieldPair.getFirst();
+                if (fieldIdx < maxFieldIdx) {
+                    // We can't lift this.  We can't lift any more non-literals.
+                    // (Ok, not strictly speaking true, but I'm not sure we want to slice code up like
+                    // that).
+                    maxFieldIdx = Integer.MAX_VALUE;
                     continue;
                 }
+                maxFieldIdx = fieldIdx;
             }
+
             f.setInitialValue(rValue);
             for (List<Op04StructuredStatement> constructorCodeLst1 : constructorCodeList) {
                 constructorCodeLst1.get(x).nopOut();
             }
+            usedFvs.add(fieldVariable.getObject());
         }
-
-
     }
 
     private boolean fromThisClass(FieldVariable fv) {
@@ -186,9 +208,7 @@ public class NonStaticLifter {
                             Set<Expression> usedFvs) {
         Pair<Integer, ClassFileField> thisField = fieldMap.get(lValue.getFieldName());
         if (thisField == null) return false;
-        ClassFileField classFileField = thisField.getSecond();
-        if (!hasLegitArgs(rValue, usedFvs)) return false;
-        return true;
+        return hasLegitArgs(rValue, usedFvs);
     }
 
     private boolean hasLegitArgs(Expression rValue, Set<Expression> usedFvs) {
