@@ -33,7 +33,9 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
          */
         ClassFile classFile = null;
         try {
-            classFile = dcCommonState.getClassFile(constructorInvokation.getMethodPrototype().getReturnType());
+            classFile = dcCommonState.getClassFile(
+                    constructorInvokation.getMethodPrototype().getReturnType().getDeGenerifiedType()
+            );
         } catch (CannotLoadClassException e) {
             // Can't find class - live with it.
         }

@@ -23,25 +23,27 @@ public class AnonymousClassConstructorRewriter extends AbstractExpressionRewrite
         expression = super.rewriteExpression(expression, ssaIdentifiers, statementContainer, flags);
         if (expression instanceof ConstructorInvokationAnonymousInner) {
             ClassFile classFile = ((ConstructorInvokationAnonymousInner) expression).getClassFile();
-            for (Method constructor : classFile.getConstructors()) {
-                Op04StructuredStatement analysis = constructor.getAnalysis();
-                /*
-                 * nop out initial super call, if present.
-                 */
-                if (!(analysis.getStatement() instanceof Block)) continue;
-                Block block = (Block)analysis.getStatement();
-                List<Op04StructuredStatement> statements = block.getBlockStatements();
-                for (Op04StructuredStatement stmCont : statements) {
-                    StructuredStatement stm = stmCont.getStatement();
-                    if (stm instanceof StructuredComment) continue;
-                    if (stm instanceof StructuredExpressionStatement) {
-                        Expression e = ((StructuredExpressionStatement) stm).getExpression();
-                        if (e instanceof SuperFunctionInvokation) {
-                            stmCont.nopOut();
-                            break;
+            if (classFile != null) {
+                for (Method constructor : classFile.getConstructors()) {
+                    Op04StructuredStatement analysis = constructor.getAnalysis();
+                    /*
+                     * nop out initial super call, if present.
+                     */
+                    if (!(analysis.getStatement() instanceof Block)) continue;
+                    Block block = (Block) analysis.getStatement();
+                    List<Op04StructuredStatement> statements = block.getBlockStatements();
+                    for (Op04StructuredStatement stmCont : statements) {
+                        StructuredStatement stm = stmCont.getStatement();
+                        if (stm instanceof StructuredComment) continue;
+                        if (stm instanceof StructuredExpressionStatement) {
+                            Expression e = ((StructuredExpressionStatement) stm).getExpression();
+                            if (e instanceof SuperFunctionInvokation) {
+                                stmCont.nopOut();
+                                break;
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
             }
         }
