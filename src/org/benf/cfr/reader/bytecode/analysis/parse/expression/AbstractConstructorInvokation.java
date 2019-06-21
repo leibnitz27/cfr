@@ -122,6 +122,11 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
         return overloadMethodSet;
     }
 
+    @Override
+    public boolean isValidStatement() {
+        return true;
+    }
+
     protected final MethodPrototype getMethodPrototype() {
         return methodPrototype;
     }

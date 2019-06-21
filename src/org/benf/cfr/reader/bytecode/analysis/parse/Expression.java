@@ -38,6 +38,8 @@ public interface Expression extends DumpableWithPrecedence, DeepCloneable<Expres
     // If this expression has any side effects, other than updating stackVar/locals it MUST return null, regardless.
     Literal getComputedLiteral(Map<LValue, Literal> display);
 
+    boolean isValidStatement();
+
     @Override
     Dumper dump(Dumper d);
 }

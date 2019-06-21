@@ -72,6 +72,11 @@ public class NewObject extends AbstractExpression {
     }
 
     @Override
+    public boolean isValidStatement() {
+        return true;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == null) return false;
         if (o == this) return true;

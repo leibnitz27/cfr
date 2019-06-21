@@ -756,12 +756,13 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new TypedBooleanTidier().transform(root);
     }
 
-    public static void miscKeyholeTransforms(Op04StructuredStatement root) {
+    public static void miscKeyholeTransforms(VariableFactory variableFactory, Op04StructuredStatement root) {
         new NakedNullCaster().transform(root);
         new LambdaCleaner().transform(root);
         new TernaryCastCleaner().transform(root);
         new InvalidBooleanCastCleaner().transform(root);
         new HexLiteralTidier().transform(root);
+        new InvalidExpressionStatementCleaner(variableFactory).transform(root);
     }
 
     public static void prettifyBadLoops(Op04StructuredStatement root) {

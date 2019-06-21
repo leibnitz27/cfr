@@ -70,6 +70,11 @@ public abstract class AbstractExpression implements Expression {
     }
 
     @Override
+    public boolean isValidStatement() {
+        return false;
+    }
+
+    @Override
     public final Dumper dump(Dumper d) {
         return dumpWithOuterPrecedence(d, Precedence.WEAKEST, Troolean.NEITHER);
     }

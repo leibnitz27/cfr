@@ -42,6 +42,8 @@ public class VariableNamerDefault implements VariableNamer {
         return ListFactory.newList(cached.values());
     }
 
+    private final Pattern indexedVarPattern = Pattern.compile("^(.*[^\\d]+)([\\d]+)$");
+
     @Override
     public void mutatingRenameUnClash(NamedVariable toRename) {
         Collection<NamedVariable> namedVars = cached.values();
@@ -51,8 +53,7 @@ public class VariableNamerDefault implements VariableNamer {
         }
 
         String name = toRename.getStringName();
-        Pattern p = Pattern.compile("^(.*[^\\d]+)([\\d]+)$");
-        Matcher m = p.matcher(name);
+        Matcher m = indexedVarPattern.matcher(name);
         int start = 2;
         String prefix = name;
         if (m.matches()) {

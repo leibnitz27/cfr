@@ -16,6 +16,7 @@ public class VariableFactory {
     private final VariableNamer variableNamer;
     private final Map<Integer, InferredJavaType> typedArgs;
     private final Method method;
+    private int ignored;
 
     private final Map<LValue, LValue> cache = MapFactory.newMap();
 
@@ -45,6 +46,9 @@ public class VariableFactory {
         return method.getMethodPrototype().getReturnType();
     }
 
+    public LValue ignoredVariable(InferredJavaType type) {
+        return new LocalVariable("cfr_ignored_" + ignored++, type);
+    }
     /*
      * NB: idx is slot, i.e. offset.
      */

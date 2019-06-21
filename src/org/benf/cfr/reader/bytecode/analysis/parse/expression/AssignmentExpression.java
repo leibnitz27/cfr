@@ -75,6 +75,11 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
     }
 
     @Override
+    public boolean isValidStatement() {
+        return true;
+    }
+
+    @Override
     public boolean isSelfMutatingOp1(LValue lValue, ArithOp arithOp) {
         return false;
     }

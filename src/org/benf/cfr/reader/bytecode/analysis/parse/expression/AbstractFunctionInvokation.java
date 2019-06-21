@@ -41,4 +41,8 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression {
         return methodPrototype.getFixedName();
     }
 
+    @Override
+    public boolean isValidStatement() {
+        return true;
+    }
 }

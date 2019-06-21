@@ -15,4 +15,8 @@ public abstract class AbstractMutatingAssignmentExpression extends AbstractAssig
         return !(getInferredJavaType().getJavaTypeInstance() instanceof RawJavaType);
     }
 
+    @Override
+    public boolean isValidStatement() {
+        return true;
+    }
 }

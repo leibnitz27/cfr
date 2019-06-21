@@ -497,6 +497,11 @@ public class WildcardMatch {
         }
 
         @Override
+        public boolean isValidStatement() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
             throw new UnsupportedOperationException();
         }
