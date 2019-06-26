@@ -9,7 +9,7 @@ public class QuotingUtils {
         char[] raw = s.toCharArray();
         StringBuilder stringBuilder = new StringBuilder();
         for (char c : raw) {
-            if (c < 32 || c > 128) {
+            if (c < 32 || c > 126) {
                 stringBuilder.append("\\u").append(String.format("%04x", (int) c));
             } else {
                 stringBuilder.append(c);
