@@ -613,7 +613,6 @@ public class SwitchReplacer {
         }
     }
 
-
     /*
     * If we end up in a situation like this
     *
@@ -640,21 +639,19 @@ public class SwitchReplacer {
         // Does following directly follow on from lastTgt, and is follwing NOT in the switch?
         if (following.getBlockIdentifiers().contains(switchBlock)) return;
 
-        // Check that lastTgt has multiple FOWARD JUMPING sources.
+        // Check that lastTgt has multiple FORWARD JUMPING sources.
         List<Op03SimpleStatement> forwardJumpSources = Functional.filter(lastTgt.getSources(), new Misc.IsForwardJumpTo(lastTgt.getIndex()));
         if (forwardJumpSources.size() <= 1) return;
 
         int idx = statements.indexOf(lastTgt);
         if (idx == 0) return;
-        Op03SimpleStatement justBefore = statements.get(idx - 1);
         if (idx >= statements.size() - 1) return;
         if (statements.get(idx + 1) != following) return;
 
         // For any sources which were pointing to the last target, (other than the switch statement itself),
         // we can re-point them at the instruction after it.
         for (Op03SimpleStatement forwardJumpSource : forwardJumpSources) {
-            if (forwardJumpSource == switchStatement ||
-                    forwardJumpSource == justBefore) continue;
+            if (forwardJumpSource == switchStatement) continue;
             forwardJumpSource.replaceTarget(lastTgt, following);
             lastTgt.removeSource(forwardJumpSource);
             following.addSource(forwardJumpSource);

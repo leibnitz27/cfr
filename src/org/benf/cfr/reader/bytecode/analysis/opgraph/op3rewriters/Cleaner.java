@@ -101,7 +101,7 @@ public class Cleaner {
         }
     }
 
-    public static void sortAndRenumberInPlace(List<Op03SimpleStatement> statements) {
+    static void sortAndRenumberInPlace(List<Op03SimpleStatement> statements) {
         // Sort result by existing index.
         Collections.sort(statements, new CompareByIndex());
         reindexInPlace(statements);
@@ -119,4 +119,13 @@ public class Cleaner {
         }
     }
 
+    public static void reLinkInPlace(List<Op03SimpleStatement> statements) {
+        Op03SimpleStatement prev = null;
+        for (Op03SimpleStatement statement : statements) {
+            statement.setLinearlyPrevious(prev);
+            statement.setLinearlyNext(null);
+            if (prev != null) prev.setLinearlyNext(statement);
+            prev = statement;
+        }
+    }
 }

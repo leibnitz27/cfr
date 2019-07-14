@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
@@ -18,11 +19,13 @@ import org.benf.cfr.reader.bytecode.opcode.DecodedSwitchEntry;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class KotlinSwitchHandler {
     /*
@@ -78,6 +81,39 @@ public class KotlinSwitchHandler {
         if (!test.equals(switchOn)) return false;
 
         Expression obj = testObj.getMatch();
+
+        /*
+         * If we've failed to spot an alias, due to some awkward dupping, or due to deliberate action, we
+         * might be switching on a different thing than we're comparing(!).
+         *
+         * Go back and gather immediate aliases.
+         */
+        Set<Expression> aliases = SetFactory.newSet();
+        aliases.add(obj);
+        if (swatch.getSources().size() == 1) {
+            Op03SimpleStatement backptr = swatch;
+            do {
+                backptr = backptr.getSources().get(0);
+                Statement backTest = backptr.getStatement();
+                if (backTest instanceof Nop) {
+                    // continue
+                } else if (backTest instanceof AssignmentSimple) {
+                    AssignmentSimple backAss = (AssignmentSimple)backTest;
+                    Expression lValue = new LValueExpression(backAss.getCreatedLValue());
+                    Expression rValue = backAss.getRValue();
+                    if (aliases.contains(lValue)) {
+                        aliases.add(rValue);
+                    } else if (aliases.contains(rValue)) {
+                        aliases.add(lValue);
+                    }
+                    break;
+                } else {
+                    break;
+                }
+            } while (backptr.getSources().size() == 1);
+        }
+        Expression matchObj = new WildcardMatch.AnyOneOfExpression(aliases);
+
         DecodedSwitch switchData = rawSwitchStatement.getSwitchData();
         List<DecodedSwitchEntry> jumpTargets = switchData.getJumpTargets();
         List<Op03SimpleStatement> targets = swatch.getTargets();
@@ -92,11 +128,12 @@ public class KotlinSwitchHandler {
         if (defaultBranchIdx == -1) return false;
         Op03SimpleStatement defaultTarget = targets.get(defaultBranchIdx);
 
-        IfStatement testIf = new IfStatement(new ComparisonOperation(wcm.getMemberFunction("equals", "equals", obj,
+        WildcardMatch.MemberFunctionInvokationWildcard eqFn = wcm.getMemberFunction("equals", "equals", matchObj,
                 new CastExpression(new InferredJavaType(TypeConstants.OBJECT, InferredJavaType.Source.UNKNOWN),
                         wcm.getExpressionWildCard("value"))
-        ), Literal.FALSE, CompOp.EQ));
-
+        );
+        IfStatement testIf = new IfStatement(new ComparisonOperation(eqFn, Literal.FALSE, CompOp.EQ));
+        IfStatement testNotIf = new IfStatement(new ComparisonOperation(eqFn, Literal.FALSE, CompOp.NE));
         final Map<Op03SimpleStatement, Op03SimpleStatement> reTargetSet = MapFactory.newIdentityMap();
         final Map<Op03SimpleStatement, DistinctSwitchTarget> reTargets = MapFactory.newIdentityLazyMap(new UnaryFunction<Op03SimpleStatement, DistinctSwitchTarget>() {
             @Override
@@ -106,7 +143,7 @@ public class KotlinSwitchHandler {
             }
         });
         List<List<OriginalSwitchLookupInfo>> matchesFound = ListFactory.newList();
-        List<Op03SimpleStatement> defaultSources = ListFactory.newList();
+        List<Pair<Op03SimpleStatement, Op03SimpleStatement>> transitiveDefaultSources = ListFactory.newList();
         for (int x=0;x<jumpTargets.size();++x) {
             Op03SimpleStatement caseStart = targets.get(x);
             DecodedSwitchEntry switchEntry = jumpTargets.get(x);
@@ -145,23 +182,122 @@ public class KotlinSwitchHandler {
                                 reTargets.get(stringMatch).add(match);
                                 nextCaseLoc = nextTest;
                                 if (nextCaseLoc == defaultTarget) {
-                                    defaultSources.add(currentCaseLoc);
+                                    transitiveDefaultSources.add(Pair.make(currentCaseLoc, defaultTarget));
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    /*
+                     * If we get here, it's possible that instead of
+                     * if (x.equals("bar")) goto tgt
+                     * goto default
+                     *
+                     * we've got
+                     *
+                     * if (!x.equals("bar")) goto default
+                     * goto tgt.
+                     *
+                     * This can only happen once.
+                     */
+                    if (testNotIf.equals(maybeIf)) {
+                        Expression value = wcm.getExpressionWildCard("value").getMatch();
+                        if (value instanceof Literal) {
+                            TypedLiteral literal = ((Literal) value).getValue();
+                            if (literal.getType() == TypedLiteral.LiteralType.String) {
+                                List<Op03SimpleStatement> nextStatements = currentCaseLoc.getTargets();
+                                Op03SimpleStatement nextTest = nextStatements.get(0);
+                                Op03SimpleStatement stringMatch = nextStatements.get(1);
+                                OriginalSwitchLookupInfo match = new OriginalSwitchLookupInfo(currentCaseLoc, null, literal, stringMatch);
+                                found.add(match);
+                                // We need to keep track of defaults as defaults need to be changed to point to nop
+                                // after the ORIGINAL block.
+                                reTargets.get(stringMatch).add(match);
+                                if (nextTest == defaultTarget) {
+                                    transitiveDefaultSources.add(Pair.make(currentCaseLoc, defaultTarget));
+                                    nextCaseLoc = nextTest;
+                                } else if (nextTest.getStatement().getClass() == GotoStatement.class) {
+                                    Op03SimpleStatement nextTarget = Misc.followNopGotoChainUntil(nextTest, defaultTarget, true, false);
+                                    // It's only valid to follow a chain if it ends up in the default.
+                                    if (nextTarget == defaultTarget) {
+                                        transitiveDefaultSources.add(Pair.make(nextTest, nextTest.getTargets().get(0)));
+                                        nextCaseLoc = nextTarget;
+                                    } else {
+                                        nextCaseLoc = nextTest;
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                if (nextCaseLoc == null) {
-                    return false;
-                }
+
                 if (nextCaseLoc == defaultTarget) {
                     break;
+                }
+                if (nextCaseLoc == null) {
+                    return false;
                 }
                 currentCaseLoc = nextCaseLoc;
             } while (true);
             matchesFound.add(found);
         }
-        /* If we've got as far as here, then we know that we can replace the top of our original switch statement with
+
+        /*
+         * FORM2
+         * We know by this point we're ok to rebuild.  But if we encountered the second type of switch,
+         * we have structures like this
+         *  switch (str.hash()) {
+         *  case HASH1:
+         *    if (str.equals("aa")) goto IMPL1
+         *    if (str.equals("bb")) goto IMPL2
+         *    goto default
+         *  case HASH2:
+         *    if (str.equals("cc")) goto IMPL1
+         *    goto default:
+         *  IMPL1:
+         *    // return/branch to after default
+         *  IMPL2:
+         *    // return/branch to after default
+         *  default:
+         *    BLAH
+         *    // return/fall through.
+         * }
+         *
+         * This is actually really nice, and as close as you can get to the intention.
+         * BUT it's a bitch to resugar into a nice switch statement!
+         * So we convert it into FORM1, which will further get converted into FORM0.
+         */
+        for (List<OriginalSwitchLookupInfo> matches : matchesFound) {
+            for (OriginalSwitchLookupInfo match : matches) {
+                if (match.stringMatchJump == null) {
+                    Op03SimpleStatement ifTest = match.ifTest;
+                    IfStatement statement = (IfStatement)ifTest.getStatement();
+                    statement.setCondition(statement.getCondition().getNegated());
+                    // replace
+                    // if (A) goto TGT
+                    // x:
+                    //
+                    // with
+                    // if (!A) goto x
+                    // goto TGT
+                    // x
+                    Op03SimpleStatement stringTgt = ifTest.getTargets().get(1);
+                    Op03SimpleStatement fallThrough = ifTest.getTargets().get(0);
+                    Op03SimpleStatement newFallThrough = new Op03SimpleStatement(fallThrough.getBlockIdentifiers(), new GotoStatement(), ifTest.getIndex().justAfter());
+                    in.add( newFallThrough);
+                    stringTgt.replaceSource(ifTest, newFallThrough);
+                    newFallThrough.addTarget(stringTgt);
+                    newFallThrough.addSource(ifTest);
+                    ifTest.getTargets().set(0, newFallThrough);
+                    ifTest.getTargets().set(1, fallThrough);
+                    match.stringMatchJump = newFallThrough;
+                }
+            }
+        }
+
+        /*
+         * FORM1
+         * If we've got as far as here, then we know that we can replace the top of our original switch statement with
          * a switch that sets a temp var, and snip the bottom from the original switch statement to replace it with
          * a switch that vectors directly to the choices.
          * (which sounds suspiciously like a project coin string switch, yay!)
@@ -188,7 +324,7 @@ public class KotlinSwitchHandler {
          *    // return/fall through.
          * }
          *
-         * -->
+         * --> FORM0.
          * tmp = -1;
          * switch (str.hash) {
          *  case HASH1:
@@ -243,9 +379,11 @@ public class KotlinSwitchHandler {
         /* Remove everything that was pointing at default
          * We'll link the start of the second switch instead.
          */
-        for (Op03SimpleStatement defaultSource : defaultSources) {
-            defaultTarget.removeSource(defaultSource);
-            defaultSource.removeGotoTarget(defaultTarget);
+        for (Pair<Op03SimpleStatement, Op03SimpleStatement> defaultSourceAndImmediate : transitiveDefaultSources) {
+            Op03SimpleStatement defaultSource = defaultSourceAndImmediate.getFirst();
+            Op03SimpleStatement localTarget = defaultSourceAndImmediate.getSecond();
+            localTarget.removeSource(defaultSource);
+            defaultSource.removeGotoTarget(localTarget);
         }
 
         List<Integer> defaultSecondary = ListFactory.newList();
@@ -268,7 +406,8 @@ public class KotlinSwitchHandler {
         // Place a nop at the end of the first switch.
         Op03SimpleStatement nopHolder = new Op03SimpleStatement(firstCase2.getBlockIdentifiers(), new Nop(), secondarySwitchStm.getIndex().justBefore());
         // Link all defaults to it.
-        for (Op03SimpleStatement defaultSource : defaultSources) {
+        for (Pair<Op03SimpleStatement, Op03SimpleStatement> defaultSourceAndImmediate : transitiveDefaultSources) {
+            Op03SimpleStatement defaultSource = defaultSourceAndImmediate.getFirst();
             defaultSource.addTarget(nopHolder);
             nopHolder.addSource(defaultSource);
         }
@@ -282,7 +421,6 @@ public class KotlinSwitchHandler {
                 from.addTarget(newJmp);
                 newJmp.addSource(from);
                 newJmp.addTarget(nopHolder);
-                // Super inefficient.  Should sort after.
                 in.add(newJmp);
                 nopHolder.addSource(newJmp);
             }

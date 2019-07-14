@@ -1,22 +1,29 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph;
 
-import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Cleaner;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.CompareByIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.TypeFilter;
-import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.CaseStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.GotoStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.JumpingStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.SwitchStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.WhileStatement;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.JumpType;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentAndAliasCondenser;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdent;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.entities.Method;
-import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -28,7 +35,12 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, Dumpable, StatementContainer<Statement>, IndexedStatement {
     private final List<Op03SimpleStatement> sources = ListFactory.newList();
@@ -640,13 +652,24 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                     if (caseStatement.isDefault()) {
                         if (tgt.targets.size() != 1) return;
                         Op03SimpleStatement afterTgt = tgt.targets.get(0);
-                        if (afterTgt.containedInBlocks.contains(switchBlock)) {
-                            return;
-                        } else {
+                        if (!afterTgt.containedInBlocks.contains(switchBlock)) {
                             // We can remove this.
                             tgt.nopOut();
                             return;
                         }
+                        // If the default contains a single statement which is a
+                        // break to the succeeding one, we can also remove it.
+                        if (afterTgt.getStatement().getClass() != GotoStatement.class
+                            || afterTgt.linearlyPrevious != tgt
+                            || afterTgt.getSources().size() != 1) {
+                            return;
+                        }
+                        if (afterTgt.linearlyNext == afterTgt.targets.get(0)) {
+                            tgt.nopOut();
+                            afterTgt.nopOut();
+                            return;
+                        }
+                        return;
                     }
                 }
             }
@@ -655,6 +678,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     public static void removePointlessSwitchDefaults(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> switches = Functional.filter(statements, new TypeFilter<SwitchStatement>(SwitchStatement.class));
+        if (switches.isEmpty()) return;
+        Cleaner.reLinkInPlace(statements);
 
         for (Op03SimpleStatement swtch : switches) {
             removePointlessSwitchDefault(swtch);

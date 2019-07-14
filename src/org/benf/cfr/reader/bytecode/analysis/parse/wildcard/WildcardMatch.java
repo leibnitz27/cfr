@@ -474,7 +474,7 @@ public class WildcardMatch {
         }
     }
 
-    private abstract class AbstractBaseExpressionWildcard extends DebugDumpable implements Expression {
+    private static abstract class AbstractBaseExpressionWildcard extends DebugDumpable implements Expression {
 
         @Override
         public Expression replaceSingleUsageLValues(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer) {
@@ -588,8 +588,35 @@ public class WildcardMatch {
         public void resetMatch() {
             matchedValue = null;
         }
-
     }
+
+    public static class AnyOneOfExpression extends AbstractBaseExpressionWildcard implements Wildcard<Expression> {
+
+        private Set<Expression> possibles;
+
+        public AnyOneOfExpression(Set<Expression> possibles) {
+            this.possibles = possibles;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Expression)) {
+                return false;
+            }
+            return possibles.contains(o);
+        }
+
+        @Override
+        public Expression getMatch() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void resetMatch() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
 
     public class NewArrayWildcard extends AbstractBaseExpressionWildcard implements Wildcard<AbstractNewArray> {
         private final int numSizedDims;
@@ -797,8 +824,7 @@ public class WildcardMatch {
 
             if (!(o instanceof BlockIdentifier)) return false;
 
-            BlockIdentifier other = (BlockIdentifier) o;
-            matchedValue = other;
+            matchedValue = (BlockIdentifier) o;
             return true;
         }
 
@@ -1084,9 +1110,7 @@ public class WildcardMatch {
                 return matchedValue.equals(o);
             }
 
-            ConditionalExpression other = (ConditionalExpression) o;
-
-            matchedValue = other;
+            matchedValue = (ConditionalExpression) o;
             return true;
         }
 
@@ -1154,9 +1178,7 @@ public class WildcardMatch {
                 return match == o;
             }
 
-            Block other = (Block) o;
-
-            match = other;
+            match = (Block) o;
             return true;
         }
     }

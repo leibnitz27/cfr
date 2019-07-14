@@ -211,8 +211,15 @@ public class Misc {
     }
 
     public static Op03SimpleStatement followNopGotoChain(Op03SimpleStatement in, boolean requireJustOneSource, boolean skipLabels) {
+        return followNopGotoChainUntil(in, null, requireJustOneSource, skipLabels);
+    }
+
+    public static Op03SimpleStatement followNopGotoChainUntil(Op03SimpleStatement in, Op03SimpleStatement until, boolean requireJustOneSource, boolean skipLabels) {
         if (in == null) return null;
         Set<Op03SimpleStatement> seen = SetFactory.newSet();
+        if (until != null) {
+            seen.add(until);
+        }
         do {
             if (!seen.add(in)) return in;
             Op03SimpleStatement next = followNopGoto(in, requireJustOneSource, skipLabels);

@@ -56,7 +56,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
         WildcardMatch wcm3 = new WildcardMatch();
 
         //noinspection unchecked
-        Matcher<StructuredStatement> m = new ResetAfterTest(wcm1, new MatchSequence(
+        Matcher<StructuredStatement> m = new ResetAfterTest(wcm1, "r1", new MatchSequence(
                 new CollectMatch("ass1", new StructuredAssignment(wcm1.getLValueWildCard("stringobject"), wcm1.getExpressionWildCard("originalstring"))),
                 new CollectMatch("ass2", new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm1.getExpressionWildCard("defaultintermed"))),
                 new CollectMatch("switch1",
@@ -65,12 +65,12 @@ public class SwitchStringRewriter implements Op04Rewriter {
                                 wcm1.getBlockIdentifier("switchblock"))),
                 new BeginBlock(null),
                 new KleenePlus(
-                        new ResetAfterTest(wcm2,
+                        new ResetAfterTest(wcm2, "r2",
                                 new MatchSequence(
                                         new StructuredCase(wcm2.getList("hashvals"), null, null, wcm2.getBlockIdentifier("case")),
                                         new BeginBlock(null),
                                         new KleeneStar(
-                                                new ResetAfterTest(wcm3,
+                                                new ResetAfterTest(wcm3,"r3",
                                                         new MatchSequence(
                                                                 new StructuredIf(new BooleanExpression(wcm3.getMemberFunction("collision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm3.getExpressionWildCard("stringvalue"))), null),
                                                                 new BeginBlock(null),
@@ -80,9 +80,21 @@ public class SwitchStringRewriter implements Op04Rewriter {
                                                         )
                                                 )
                                         ),
-                                        new StructuredIf(new NotOperation(new BooleanExpression(wcm2.getMemberFunction("anticollision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm2.getExpressionWildCard("stringvalue")))), null),
-                                        new StructuredBreak(wcm1.getBlockIdentifier("switchblock"), true),
-                                        new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm2.getExpressionWildCard("case2id")),
+                                        new MatchOneOf(
+                                                // Either an anticollision at the end
+                                                new MatchSequence(
+                                                    new StructuredIf(new NotOperation(new BooleanExpression(wcm2.getMemberFunction("anticollision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm2.getExpressionWildCard("stringvalue")))), null),
+                                                    new StructuredBreak(wcm1.getBlockIdentifier("switchblock"), true),
+                                                    new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm2.getExpressionWildCard("case2id"))
+                                                ),
+                                                // or a final collision.
+                                                new MatchSequence(
+                                                        new StructuredIf(new BooleanExpression(wcm2.getMemberFunction("collision", "equals", new LValueExpression(wcm1.getLValueWildCard("stringobject")), wcm2.getExpressionWildCard("stringvalue"))), null),
+                                                        new BeginBlock(null),
+                                                        new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm2.getExpressionWildCard("case2id")),
+                                                        new EndBlock(null)
+                                                )
+                                        ),
                                         // Strictly speaking wrong, but I want to capture a missing break at the end.
                                         new KleeneStar(new StructuredBreak(wcm1.getBlockIdentifier("switchblock"), true)),
                                         new EndBlock(null)
