@@ -339,8 +339,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         boolean superOnInterface = false;
         if (isSuper) {
             JavaTypeInstance superContainer = function.getClassEntry().getTypeInstance().getDeGenerifiedType();
-            JavaTypeInstance baseType = thisCallerMethod.getClassFile().getBaseClassType().getDeGenerifiedType();
-            superOnInterface = !baseType.equals(superContainer);
+            if (superContainer instanceof JavaRefTypeInstance) {
+                ClassFile classFile = ((JavaRefTypeInstance) superContainer).getClassFile();
+                if (classFile != null && classFile.isInterface()) {
+                    JavaTypeInstance baseType = thisCallerMethod.getClassFile().getBaseClassType().getDeGenerifiedType();
+                    superOnInterface = !baseType.equals(superContainer);
+                }
+            }
         }
 
         JavaTypeInstance bestType = object.getInferredJavaType().getJavaTypeInstance();
