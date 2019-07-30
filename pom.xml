@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>org.benf</groupId>
     <artifactId>cfr</artifactId>
     <version>0.147-SNAPSHOT</version>
-
     <name>cfr</name>
     <description>CFR Java decompiler</description>
     <url>https://www.benf.org/other/cfr</url>
@@ -19,23 +15,33 @@
             <url>https://www.benf.org/other/cfr/license.html</url>
         </license>
     </licenses>
-
     <developers>
         <developer>
             <name>Lee Benfield</name>
             <email>lee@benf.org</email>
         </developer>
     </developers>
-
     <scm>
         <connection>scm:git:git://github.com/leibnitz27/cfr_examples.git</connection>
         <developerConnection>scm:git:ssh://github.com:leibnitz27/cfr.git</developerConnection>
         <url>https://www.benf.org/other/cfr</url>
     </scm>
-
     <build>
         <sourceDirectory>src</sourceDirectory>
         <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.benf.cfr.reader.Main</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -115,7 +121,6 @@
             </plugin>
         </plugins>
     </build>
-    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
