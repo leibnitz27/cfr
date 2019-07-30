@@ -24,6 +24,11 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
         initializeFrom();
     }
 
+    @Override
+    public JavaRefTypeInstance getAnalysisType() {
+        return delegate.getAnalysisType();
+    }
+
     private void initializeFrom() {
         Set<JavaRefTypeInstance> outerInners = delegate.getUsedInnerClassTypes();
         for (JavaRefTypeInstance outerInner : outerInners) {

@@ -33,6 +33,11 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
     }
 
     @Override
+    public JavaRefTypeInstance getAnalysisType() {
+        return analysisType;
+    }
+
+    @Override
     public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
         return TypeUsageUtils.generateInnerClassShortName(clazz, analysisType, false);
     }

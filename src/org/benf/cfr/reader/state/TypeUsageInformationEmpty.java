@@ -8,6 +8,11 @@ import java.util.Set;
 
 public class TypeUsageInformationEmpty implements TypeUsageInformation {
     @Override
+    public JavaRefTypeInstance getAnalysisType() {
+        return null;
+    }
+
+    @Override
     public Set<JavaRefTypeInstance> getUsedClassTypes() {
         return SetFactory.newOrderedSet();
     }

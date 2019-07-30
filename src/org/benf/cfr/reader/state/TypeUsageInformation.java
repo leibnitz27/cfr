@@ -6,6 +6,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import java.util.Set;
 
 public interface TypeUsageInformation {
+    JavaRefTypeInstance getAnalysisType();
+
     Set<JavaRefTypeInstance> getShortenedClassTypes();
 
     Set<JavaRefTypeInstance> getUsedClassTypes();

@@ -51,6 +51,11 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
     }
 
     @Override
+    public JavaRefTypeInstance getAnalysisType() {
+        return delegate.getAnalysisType();
+    }
+
+    @Override
     public Set<JavaRefTypeInstance> getUsedClassTypes() {
         return delegate.getUsedClassTypes();
     }
