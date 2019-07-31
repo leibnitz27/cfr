@@ -4,12 +4,15 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.*;
 
@@ -26,8 +29,10 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
             return ListFactory.newLinkedList();
         }
     });
+    private final Predicate<String> allowShorten;
 
-    TypeUsageInformationImpl(JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes) {
+    TypeUsageInformationImpl(Options options, JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes) {
+        this.allowShorten = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.IMPORT_FILTER), true);
         this.analysisType = analysisType;
         initialiseFrom(usedRefTypes);
     }
@@ -78,6 +83,9 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
                 String name =  generateInnerClassShortName(type);
                 shortNames.get(name).addFirst(type);
             } else {
+                if (!allowShorten.test(type.getRawName())) {
+                    continue;
+                }
                 String name = type.getRawShortName();
                 shortNames.get(name).addLast(type);
             }
@@ -196,7 +204,8 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         //noinspection SuspiciousMethodCalls
         String res = displayName.get(type);
         if (res == null) {
-            // This should not happen.
+            // This should not happen, unless we're forcing
+            // import filter on a name.
             return type.getRawName();
         }
         return res;

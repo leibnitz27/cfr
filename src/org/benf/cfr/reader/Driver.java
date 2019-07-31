@@ -59,7 +59,7 @@ class Driver {
             /*
              * Perform a pass to determine what imports / classes etc we used / failed.
              */
-            TypeUsageCollector collectingDumper = new TypeUsageCollectorImpl(c);
+            TypeUsageCollector collectingDumper = new TypeUsageCollectorImpl(options, c);
             c.collectTypeUsages(collectingDumper);
 
             d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
@@ -224,7 +224,7 @@ class Driver {
                 // THEN analyse.
                 c.analyseTop(dcCommonState);
 
-                TypeUsageCollector collectingDumper = new TypeUsageCollectorImpl(c);
+                TypeUsageCollector collectingDumper = new TypeUsageCollectorImpl(options, c);
                 c.collectTypeUsages(collectingDumper);
                 d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
 

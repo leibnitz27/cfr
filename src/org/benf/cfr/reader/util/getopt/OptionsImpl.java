@@ -467,6 +467,10 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> LOMEM = new PermittedOptionProvider.Argument<Boolean>(
             "lomem", defaultFalseBooleanDecoder,
             "Be more agressive about uncaching in order to reduce memory footprint.");
+    public static final PermittedOptionProvider.Argument<String> IMPORT_FILTER = new PermittedOptionProvider.Argument<String>(
+            "importfilter", defaultNullStringDecoder,
+            "Substring regex - import classes only when fqn matches this pattern. (VNegate with !, eg !lang)");
+
 
     public OptionsImpl(Map<String, String> opts) {
         this.opts = new HashMap<String, String>(opts);
@@ -507,7 +511,7 @@ public class OptionsImpl implements Options {
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
                     DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
-                    OUTPUT_PATH, CLOBBER_FILES, JAR_FILTER,
+                    OUTPUT_PATH, CLOBBER_FILES, JAR_FILTER, IMPORT_FILTER,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SUGAR_STRINGCONCATFACTORY, SILENT, RECOVER, ECLIPSE, OVERRIDES, SHOW_INFERRABLE,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,

@@ -5,15 +5,18 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.Set;
 
 public class TypeUsageCollectorImpl extends AbstractTypeUsageCollector {
+    private final Options options;
     private final JavaRefTypeInstance analysisType;
     private final Set<JavaRefTypeInstance> typeInstanceSet = SetFactory.newSet();
     private final Set<JavaTypeInstance> seen = SetFactory.newSet();
 
-    public TypeUsageCollectorImpl(ClassFile analysisClass) {
+    public TypeUsageCollectorImpl(Options options, ClassFile analysisClass) {
+        this.options = options;
         this.analysisType = (JavaRefTypeInstance) analysisClass.getClassType().getDeGenerifiedType();
     }
 
@@ -37,7 +40,7 @@ public class TypeUsageCollectorImpl extends AbstractTypeUsageCollector {
     @Override
     public TypeUsageInformation getTypeUsageInformation() {
         /* Figure out what the imports are */
-        return new TypeUsageInformationImpl(analysisType, typeInstanceSet);
+        return new TypeUsageInformationImpl(options, analysisType, typeInstanceSet);
     }
 
     @Override
