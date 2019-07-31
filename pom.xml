@@ -27,6 +27,25 @@
         </developer>
     </developers>
 
+    <profiles>
+        <profile>
+            <id>jdk9plus</id>
+            <activation>
+                <jdk>[1.9,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <additionalOptions>-html5 -quiet</additionalOptions>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <scm>
         <connection>scm:git:git://github.com/leibnitz27/cfr_examples.git</connection>
         <developerConnection>scm:git:ssh://github.com:leibnitz27/cfr.git</developerConnection>
