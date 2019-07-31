@@ -90,7 +90,8 @@
                 <configuration>
                     <doctitle>CFR API</doctitle>
                     <title>CFR API</title>
-                    <additionalOptions>-html5 -quiet</additionalOptions>
+                    <!-- NB: We don't use -html5, as it requires j9+, which not everyone has -->
+                    <additionalOptions>-quiet</additionalOptions>
                     <!--<bottom>Copyright &#169; {inceptionYear}&#x2013;{currentYear} Lee Benfield - https://www.benf.org/other/cfr</bottom>-->
                     <subpackages>
                         org/benf/cfr/reader/api
