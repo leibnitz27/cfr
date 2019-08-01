@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ClassifyGotos {
-    public static void classifyGotos(List<Op03SimpleStatement> in) {
+class ClassifyGotos {
+    static void classifyGotos(List<Op03SimpleStatement> in) {
         List<Pair<Op03SimpleStatement, Integer>> gotos = ListFactory.newList();
         Map<BlockIdentifier, Op03SimpleStatement> tryStatementsByBlock = MapFactory.newMap();
         Map<BlockIdentifier, List<BlockIdentifier>> catchStatementsByBlock = MapFactory.newMap();
@@ -142,7 +142,7 @@ public class ClassifyGotos {
     }
 
 
-    public static void classifyAnonymousBlockGotos(List<Op03SimpleStatement> in, boolean agressive) {
+    static void classifyAnonymousBlockGotos(List<Op03SimpleStatement> in, boolean agressive) {
         int agressiveOffset = agressive ? 1 : 0;
 
         /*

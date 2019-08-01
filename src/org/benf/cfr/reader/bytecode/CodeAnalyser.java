@@ -458,6 +458,7 @@ public class CodeAnalyser {
             if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {
                 Op03Rewriters.propagateToReturn2(op03SimpleParseNodes);
             }
+            ExceptionRewriters.handleEmptyTries(op03SimpleParseNodes);
 
             op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, false);
 

@@ -13,9 +13,10 @@ import org.benf.cfr.reader.util.collections.Functional;
 
 import java.util.List;
 
-public class PointlessExpressions {
+class PointlessExpressions {
+
     // Expression statements which can't have any effect can be removed.
-    public static void removePointlessExpressionStatements(List<Op03SimpleStatement> statements) {
+    static void removePointlessExpressionStatements(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> exrps = Functional.filter(statements, new TypeFilter<ExpressionStatement>(ExpressionStatement.class));
         for (Op03SimpleStatement esc : exrps) {
             ExpressionStatement es = (ExpressionStatement) esc.getStatement();

@@ -21,12 +21,13 @@ import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.*;
 
 public class ExceptionRewriters {
 
-    public static List<Op03SimpleStatement> eliminateCatchTemporaries(List<Op03SimpleStatement> statements) {
+    static List<Op03SimpleStatement> eliminateCatchTemporaries(List<Op03SimpleStatement> statements) {
         List<Op03SimpleStatement> catches = Functional.filter(statements, new TypeFilter<CatchStatement>(CatchStatement.class));
         boolean effect = false;
         for (Op03SimpleStatement catchh : catches) {
@@ -79,7 +80,7 @@ public class ExceptionRewriters {
      * As soon as we hit something which /can't/ be in the catch block, we can
      * unwind all tentatives which assume that it was.
      */
-    public static void identifyCatchBlocks(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
+    static void identifyCatchBlocks(List<Op03SimpleStatement> in, BlockIdentifierFactory blockIdentifierFactory) {
         List<Op03SimpleStatement> catchStarts = Functional.filter(in, new TypeFilter<CatchStatement>(CatchStatement.class));
         for (Op03SimpleStatement catchStart : catchStarts) {
             CatchStatement catchStatement = (CatchStatement) catchStart.getStatement();
@@ -227,11 +228,15 @@ public class ExceptionRewriters {
 
     // Up to now, try and catch blocks, while related, are treated in isolation.
     // We need to make sure they're logically grouped, so we can see when a block constraint is being violated.
-    public static void combineTryCatchBlocks(List<Op03SimpleStatement> in) {
-        List<Op03SimpleStatement> tries = Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
+    static void combineTryCatchBlocks(List<Op03SimpleStatement> in) {
+        List<Op03SimpleStatement> tries = getTries(in);
         for (Op03SimpleStatement tryStatement : tries) {
             combineTryCatchBlocks(tryStatement);
         }
+    }
+
+    private static List<Op03SimpleStatement> getTries(List<Op03SimpleStatement> in) {
+        return Functional.filter(in, new TypeFilter<TryStatement>(TryStatement.class));
     }
 
 
@@ -313,7 +318,7 @@ public class ExceptionRewriters {
      * some issues.
      *
      */
-    public static void extractExceptionMiddle(List<Op03SimpleStatement> in) {
+    static void extractExceptionMiddle(List<Op03SimpleStatement> in) {
         List<Op03SimpleStatement> tryStatements = Functional.filter(in, new ExactTypeFilter<TryStatement>(TryStatement.class));
         if (tryStatements.isEmpty()) return;
         Collections.reverse(tryStatements);
@@ -330,6 +335,55 @@ public class ExceptionRewriters {
             }
             extractCatchEnd(in, trycatch);
         }
+    }
+
+    // If a try statement doesn't have a body at all, it could be elided.
+    // (as could the catch, if the try is the only source).
+    public static void handleEmptyTries(List<Op03SimpleStatement> in) {
+        Map<BlockIdentifier, Op03SimpleStatement> firstByBlock = null;
+        boolean effect = false;
+
+        List<Op03SimpleStatement> tries = getTries(in);
+        for (Op03SimpleStatement tryStatement : tries) {
+            BlockIdentifier block = ((TryStatement)tryStatement.getStatement()).getBlockIdentifier();
+            Op03SimpleStatement tgtStm = tryStatement.getTargets().get(0);
+            if (tgtStm.getBlockIdentifiers().contains(block)) {
+                continue;
+            }
+            // Ok, it doesn't contain it.  We now have to check if that block is used anywhere :(
+            if (firstByBlock == null) {
+                firstByBlock = getFirstByBlock(in);
+            }
+            if (firstByBlock.containsKey(block)) {
+                continue;
+            }
+            // Either remove altogether (not implemented yet), or insert a spurious statement
+            Op03SimpleStatement newStm = new Op03SimpleStatement(tryStatement.getBlockIdentifiers(),
+                    new CommentStatement("empty try"), tryStatement.getIndex().justAfter());
+            newStm.getBlockIdentifiers().add(block);
+            newStm.addSource(tryStatement);
+            newStm.addTarget(tgtStm);
+            tgtStm.replaceSource(tryStatement, newStm);
+            tryStatement.replaceTarget(tgtStm, newStm);
+            effect = true;
+        }
+
+        if (effect) {
+            Cleaner.sortAndRenumberInPlace(in);
+        }
+    }
+
+    private static Map<BlockIdentifier, Op03SimpleStatement> getFirstByBlock(List<Op03SimpleStatement> in) {
+        Map<BlockIdentifier, Op03SimpleStatement> res = MapFactory.newMap();
+        for (Op03SimpleStatement stm : in) {
+            for (BlockIdentifier i : stm.getBlockIdentifiers()) {
+                // probe then insert (eww) but we'll only be inserting once per block.
+                if (!res.containsKey(i)) {
+                    res.put(i, stm);
+                }
+            }
+        }
+        return res;
     }
 
     private static class SingleExceptionAddressing {
