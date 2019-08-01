@@ -19,7 +19,7 @@ public interface LValueRewriter<T> {
 
     boolean needLR();
 
-    LValueRewriter keepConstant(Collection<LValue> usedLValues);
+    LValueRewriter<T> keepConstant(Collection<LValue> usedLValues);
 
     class Util {
         public static void rewriteArgArray(LValueRewriter lValueRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, List<Expression> args) {

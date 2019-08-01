@@ -117,7 +117,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     }
 
     @Override
-    public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+    public LValueRewriter<Statement> keepConstant(Collection<LValue> usedLValues) {
         return new LValueAssignmentAndAliasCondenser(this, SetFactory.newSet(keepConstant, usedLValues));
     }
 
@@ -318,7 +318,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
-        public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+        public LValueRewriter<Statement> keepConstant(Collection<LValue> usedLValues) {
             return this;
         }
 
@@ -476,7 +476,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
-        public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+        public LValueRewriter<Statement> keepConstant(Collection<LValue> usedLValues) {
             return this;
         }
 
@@ -492,7 +492,6 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
 
         @Override
         public void checkPostConditions(LValue lValue, Expression rValue) {
-
         }
 
         /* Given an original statement (in which we're pre-incrementing x), and a number of uses of X at the value
@@ -564,7 +563,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         @Override
-        public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+        public LValueRewriter<Statement> keepConstant(Collection<LValue> usedLValues) {
             return this;
         }
 

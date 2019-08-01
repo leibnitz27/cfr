@@ -144,7 +144,7 @@ public class LValuePropSimple {
                         }
 
                         @Override
-                        public LValueRewriter keepConstant(Collection<LValue> usedLValues) {
+                        public LValueRewriter<Statement> keepConstant(Collection<LValue> usedLValues) {
                             return this;
                         }
 

@@ -3,19 +3,29 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
-import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
 
 public class AssignmentSimple extends AbstractAssignment {
     private LValue lvalue;
@@ -24,11 +34,6 @@ public class AssignmentSimple extends AbstractAssignment {
     public AssignmentSimple(LValue lvalue, Expression rvalue) {
         this.lvalue = lvalue;
         this.rvalue = lvalue.getInferredJavaType().chain(rvalue.getInferredJavaType()).performCastAction(rvalue, lvalue.getInferredJavaType());
-    }
-
-    public AssignmentSimple(InferredJavaType type, LValue lvalue, Expression rvalue) {
-        this.lvalue = lvalue;
-        this.rvalue = rvalue;
     }
 
     @Override
@@ -87,13 +92,13 @@ public class AssignmentSimple extends AbstractAssignment {
         while (localR instanceof CastExpression) localR = ((CastExpression) localR).getChild();
         if (localR instanceof ArithmeticOperation) {
             ArithmeticOperation arithmeticOperation = (ArithmeticOperation) localR;
-            if (arithmeticOperation.isLiteralFunctionOf(lvalue)) return true;
+            return arithmeticOperation.isLiteralFunctionOf(lvalue);
         } else if (localR instanceof MemberFunctionInvokation) {
             MemberFunctionInvokation memberFunctionInvokation = (MemberFunctionInvokation)localR;
             Expression object = memberFunctionInvokation.getObject();
             if (object instanceof LValueExpression) {
                 LValue memberLValue = ((LValueExpression) object).getLValue();
-                if (memberLValue.equals(lvalue)) return true;
+                return memberLValue.equals(lvalue);
             }
         }
         return false;
@@ -133,8 +138,9 @@ public class AssignmentSimple extends AbstractAssignment {
         lvalue = lvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
         LValueUsageCollectorSimple tmp = new LValueUsageCollectorSimple();
         lvalue.collectLValueUsage(tmp);
-        if (!tmp.getUsedLValues().isEmpty()) {
-            lValueRewriter = lValueRewriter.keepConstant(tmp.getUsedLValues());
+        Collection<LValue> usedLValues = tmp.getUsedLValues();
+        if (!usedLValues.isEmpty()) {
+            lValueRewriter = lValueRewriter.keepConstant(usedLValues);
         }
         rvalue = rvalue.replaceSingleUsageLValues(lValueRewriter, ssaIdentifiers, getContainer());
         // We need to make sure that we haven't violated any preconditions with a rewrite.
