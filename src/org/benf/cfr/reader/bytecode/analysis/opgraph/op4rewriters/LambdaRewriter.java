@@ -245,7 +245,16 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                 /*
                  * This is a local synthetic lambda - we'll try to inline it.
                  */
-                Op04StructuredStatement lambdaCode = lambdaMethod.getAnalysis();
+                Op04StructuredStatement lambdaCode;
+                try {
+                    /*
+                     * Why might this happen?  An immediately recursive lambda expression
+                     * might cause problems (scala code has been seen to do this).
+                     */
+                    lambdaCode = lambdaMethod.getAnalysis();
+                } catch (Exception e) {
+                    throw new CannotDelambaException();
+                }
                 int nLambdaArgs = targetFnArgTypes.size();
                 /* We will be
                  * \arg0 ... arg(n-1) -> curriedArgs, arg0 ... arg(n-1)

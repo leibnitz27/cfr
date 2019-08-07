@@ -1,8 +1,38 @@
 package org.benf.cfr.reader.bytecode;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.*;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.*;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op01WithProcessedDataAndByteJumps;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op02WithProcessedDataAndRefs;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03Blocks;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.GetClassTestInnerConstructor;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.GetClassTestLambda;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.Op02GetClassRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.Op02RedundantStoreRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecovery;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecoveryImpl;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecoveryNone;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.AnonymousArray;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.BadNarrowingArgRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Cleaner;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.ConditionalRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.ExceptionRewriters;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.FinallyRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.GenericInferer;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.InlineDeAssigner;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.IterLoopRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.KotlinSwitchHandler;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.LValueProp;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.LValuePropSimple;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.LoopIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.LoopLivenessClash;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.NullTypedLValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Op03Rewriters;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.RemoveDeterministicJumps;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.StaticInitReturnRewriter;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.SwitchReplacer;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.SynchronizedBlocks;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchEnumRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.SwitchStringRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.checker.IllegalReturnChecker;
@@ -12,6 +42,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExplicitTypeCallRew
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StringBuilderRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.XorRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.ClassFile;
@@ -22,6 +53,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionAggregator;
 import org.benf.cfr.reader.entities.exceptions.ExceptionTableEntry;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.Troolean;
@@ -32,7 +64,12 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class CodeAnalyser {
     private final AttributeCode originalCodeAttribute;
@@ -41,7 +78,7 @@ public class CodeAnalyser {
     private Method method;
 
     private Op04StructuredStatement analysed;
-
+    private static final Op04StructuredStatement POISON = new Op04StructuredStatement(new StructuredComment("Analysis utterly failed (Recursive inlining?)"));
 
     public CodeAnalyser(AttributeCode attributeCode) {
         this.originalCodeAttribute = attributeCode;
@@ -102,7 +139,20 @@ public class CodeAnalyser {
      * This method should not throw.  If it does, something serious has gone wrong.
      */
     public Op04StructuredStatement getAnalysis(DCCommonState dcCommonState) {
-        if (analysed != null) return analysed;
+        if (analysed == POISON) {
+            /*
+             * We shouldn't get here, unless a method needs to inline a copy of itself.
+             * (which can't end well!)
+             *
+             * Seen when decompiling scala - a lambda which (to java) looks like an
+             * intermediate.
+             */
+            throw new ConfusedCFRException("Recursive analysis");
+        }
+        if (analysed != null) {
+            return analysed;
+        }
+        analysed = POISON;
 
         Options options = dcCommonState.getOptions();
         List<Op01WithProcessedDataAndByteJumps> instrs = getInstrs();
