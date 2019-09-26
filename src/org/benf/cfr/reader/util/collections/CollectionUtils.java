@@ -16,4 +16,13 @@ public class CollectionUtils {
         }
         return sb.toString();
     }
+
+    public static String joinPostFix(Collection<?> in, String sep) {
+        StringBuilder sb = new StringBuilder();
+        for (Object o : in) {
+            sb.append(o.toString());
+            sb.append(sep);
+        }
+        return sb.toString();
+    }
 }

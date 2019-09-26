@@ -196,6 +196,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         boolean isInterface = accessFlags.contains(AccessFlag.ACC_INTERFACE);
         boolean isAnnotation = accessFlags.contains(AccessFlag.ACC_ANNOTATION);
+        boolean isModule = accessFlags.contains(AccessFlag.ACC_MODULE);
         /*
          * Choose a default dump helper.  This may be overwritten.
          */
@@ -206,7 +207,22 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 dumpHelper = new ClassFileDumperInterface(dcCommonState);
             }
         } else {
-            dumpHelper = new ClassFileDumperNormal(dcCommonState);
+            if (isModule) {
+                if (!methods.isEmpty()) {
+                    // This shouldn't be possible, but I suspect someone might try it!
+                    addComment("Class file marked as module, but has methods! Treated as a class file");
+                    isModule = false;
+                }
+                if (null == getAttributeByName(AttributeModule.ATTRIBUTE_NAME)) {
+                    addComment("Class file marked as module, but no module attribute!");
+                    isModule = false;
+                }
+            }
+            if (isModule) {
+                dumpHelper = new ClassFileDumperModule(dcCommonState);
+            } else {
+                dumpHelper = new ClassFileDumperNormal(dcCommonState);
+            }
         }
 
         /*

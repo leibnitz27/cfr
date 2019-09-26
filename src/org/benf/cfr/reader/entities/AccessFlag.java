@@ -22,7 +22,8 @@ public enum AccessFlag {
     ACC_STRICT("strictfp"),     // inferred from constructors.
     ACC_SYNTHETIC("/* synthetic */"),
     ACC_ANNOTATION("/* annotation */"),
-    ACC_ENUM("/* enum */");
+    ACC_ENUM("/* enum */"),
+    ACC_MODULE("/* module */");
 
     public final String name;
 
@@ -47,10 +48,10 @@ public enum AccessFlag {
         if (0 != (raw & 0x1000)) res.add(ACC_SYNTHETIC);
         if (0 != (raw & 0x2000)) res.add(ACC_ANNOTATION);
         if (0 != (raw & 0x4000)) res.add(ACC_ENUM);
+        if (0 != (raw & 0x8000)) res.add(ACC_MODULE);
 
         if (res.isEmpty()) return res;
-        Set<AccessFlag> resaf = EnumSet.copyOf(res);
-        return resaf;
+        return EnumSet.copyOf(res);
     }
 
     @Override

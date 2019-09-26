@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.entities.constantpool;
 
-import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -10,7 +10,6 @@ import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -122,6 +121,12 @@ public class ConstantPool {
                 case CPT_InvokeDynamic:
                     cpe = new ConstantPoolEntryInvokeDynamic(this, data);
                     break;
+                case CPT_ModuleInfo:
+                    cpe = new ConstantPoolEntryModuleInfo(this, data);
+                    break;
+                case CPT_PackageInfo:
+                    cpe = new ConstantPoolEntryPackageInfo(this, data);
+                    break;
                 default:
                     throw new ConfusedCFRException("Invalid constant pool entry : " + type);
             }
@@ -172,6 +177,14 @@ public class ConstantPool {
 
     public ConstantPoolEntryClass getClassEntry(int index) {
         return (ConstantPoolEntryClass) getEntry(index);
+    }
+
+    public ConstantPoolEntryModuleInfo getModuleEntry(int index) {
+        return (ConstantPoolEntryModuleInfo) getEntry(index);
+    }
+
+    public ConstantPoolEntryPackageInfo getPackageEntry(int index) {
+        return (ConstantPoolEntryPackageInfo) getEntry(index);
     }
 
     public ClassCache getClassCache() {

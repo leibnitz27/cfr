@@ -70,6 +70,12 @@ public class AttributeFactory {
                 return new AttributeScalaSig(raw);
             } else if (AttributeScala.ATTRIBUTE_NAME.equals(attributeName)) {
                 return new AttributeScala(raw);
+            } else if (AttributeModule.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeModule(raw, cp);
+            } else if (AttributeModulePackages.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeModulePackages(raw);
+            } else if (AttributeModuleClassMain.ATTRIBUTE_NAME.equals(attributeName)) {
+                return new AttributeModuleClassMain(raw);
             }
         } catch (Exception e) {
             // Can't handle it? Continue and process as an unknown attribute.

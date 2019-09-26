@@ -24,7 +24,9 @@ public interface ConstantPoolEntry {
         CPT_MethodHandle,
         CPT_MethodType,
         CPT_DynamicInfo,
-        CPT_InvokeDynamic;
+        CPT_InvokeDynamic,
+        CPT_ModuleInfo,
+        CPT_PackageInfo;
 
         private static final byte VAL_UTF8 = 1;
         private static final byte VAL_Integer = 3;
@@ -41,6 +43,8 @@ public interface ConstantPoolEntry {
         private static final byte VAL_MethodType = 16;
         private static final byte VAL_DynamicInfo = 17;
         private static final byte VAL_InvokeDynamic = 18;
+        private static final byte VAL_ModuleInfo = 19;
+        private static final byte VAL_PackageInfo = 20;
 
         public static Type get(byte val) {
             switch (val) {
@@ -74,6 +78,10 @@ public interface ConstantPoolEntry {
                     return CPT_DynamicInfo;
                 case VAL_InvokeDynamic:
                     return CPT_InvokeDynamic;
+                case VAL_ModuleInfo:
+                    return CPT_ModuleInfo;
+                case VAL_PackageInfo:
+                    return CPT_PackageInfo;
                 default:
                     throw new ConfusedCFRException("Invalid constant pool entry type : " + val);
             }
