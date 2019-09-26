@@ -20,8 +20,8 @@ public class Op03Rewriters {
         }
     }
 
-    public static void simplifyConditionals(List<Op03SimpleStatement> op03SimpleParseNodes, boolean aggressive) {
-        ConditionalSimplifier.simplifyConditionals(op03SimpleParseNodes, aggressive);
+    public static void simplifyConditionals(List<Op03SimpleStatement> op03SimpleParseNodes, boolean aggressive, Method method) {
+        ConditionalSimplifier.simplifyConditionals(op03SimpleParseNodes, aggressive, method);
     }
 
     public static void rewriteNegativeJumps(List<Op03SimpleStatement> statements, boolean requireChainedConditional) {

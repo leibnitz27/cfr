@@ -10,12 +10,14 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.ReturnValueStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.Troolean;
 
 import java.util.List;
 
 class ConditionalSimplifier {
-    static void simplifyConditionals(List<Op03SimpleStatement> statements, boolean aggressive) {
+    static void simplifyConditionals(List<Op03SimpleStatement> statements, boolean aggressive, Method method) {
+        boolean boolReturn = (method.getMethodPrototype().getReturnType() == RawJavaType.BOOLEAN);
         for (Op03SimpleStatement statement : statements) {
             if (!(statement.getStatement() instanceof IfStatement)) continue;
 
@@ -23,7 +25,9 @@ class ConditionalSimplifier {
             IfStatement ifStatement = (IfStatement) statement.getStatement();
             ifStatement.simplifyCondition();
 
-            replaceEclipseReturn(statement, ifStatement);
+            if (boolReturn) {
+                replaceEclipseReturn(statement, ifStatement);
+            }
         }
 
         // Fixme - surely simplifyConditional above should be in the rewriter!?

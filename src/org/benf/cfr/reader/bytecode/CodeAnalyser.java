@@ -564,7 +564,7 @@ public class CodeAnalyser {
 
         AnonymousArray.resugarAnonymousArrays(op03SimpleParseNodes);
 
-        Op03Rewriters.simplifyConditionals(op03SimpleParseNodes, false);
+        Op03Rewriters.simplifyConditionals(op03SimpleParseNodes, false, method);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
         // Rewrite conditionals which jump into an immediate jump (see specifics)
@@ -696,7 +696,7 @@ public class CodeAnalyser {
             Op03Rewriters.labelAnonymousBlocks(op03SimpleParseNodes, blockIdentifierFactory);
         }
 
-        Op03Rewriters.simplifyConditionals(op03SimpleParseNodes, true);
+        Op03Rewriters.simplifyConditionals(op03SimpleParseNodes, true, method);
         Op03Rewriters.extractExceptionMiddle(op03SimpleParseNodes);
         Op03Rewriters.removePointlessJumps(op03SimpleParseNodes);
 
