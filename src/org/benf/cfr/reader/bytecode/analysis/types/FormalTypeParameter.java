@@ -60,6 +60,6 @@ public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
 
     @Override
     public String toString() {
-        throw new IllegalStateException();
+        return name + " [ " + classBound + "|" + interfaceBound + "]";
     }
 }

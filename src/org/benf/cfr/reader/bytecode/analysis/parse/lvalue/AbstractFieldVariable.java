@@ -96,6 +96,13 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         return classFileField.getFieldName();
     }
 
+    protected boolean isHiddenDeclaration() {
+        if (classFileField == null) {
+            return false;
+        }
+        return classFileField.shouldNotDisplay();
+    }
+
     public String getRawFieldName() {
         if (classFileField == null) {
             return failureName;

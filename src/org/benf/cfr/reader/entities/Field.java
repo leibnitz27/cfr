@@ -141,7 +141,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
     }
 
-    public void dump(Dumper d, String name) {
+    public void dump(Dumper d, String name, ClassFile owner) {
         AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
         AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
         if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
@@ -151,6 +151,6 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
             d.print(prefix).print(' ');
         }
         JavaTypeInstance type = getJavaTypeInstance();
-        d.dump(type).print(' ').identifier(name);
+        d.dump(type).print(' ').fieldName(name, owner.getClassType(), false, false);
     }
 }

@@ -52,7 +52,9 @@ public class FileSummaryDumper implements SummaryDumper {
                 writer.write("\n\n" + controllingType.getRawName() + "\n----------------------------\n\n");
             }
             if (method != lastMethod) {
-                writer.write(method.getMethodPrototype().toString() + "\n");
+                if (method != null) {
+                    writer.write(method.getMethodPrototype().toString() + "\n");
+                }
                 lastMethod = method;
             }
             writer.write("  " + error + "\n");

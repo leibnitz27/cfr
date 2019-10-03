@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
@@ -54,6 +55,11 @@ public class ToStringDumper implements Dumper {
     @Override
     public Dumper identifier(String s) {
         return print(s);
+    }
+
+    @Override
+    public Dumper methodName(String s, MethodPrototype p, boolean special) {
+        return identifier(s);
     }
 
     @Override
@@ -133,6 +139,12 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
+    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic) {
+        identifier(name);
+        return this;
+    }
+
+    @Override
     public String toString() {
         return sb.toString();
     }
@@ -153,5 +165,10 @@ public class ToStringDumper implements Dumper {
     @Override
     public int getOutputCount() {
         return outputCount;
+    }
+
+    @Override
+    public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
+        return new TypeOverridingDumper(this, innerclassTypeUsageInformation);
     }
 }

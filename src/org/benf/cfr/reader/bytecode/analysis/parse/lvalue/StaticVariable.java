@@ -62,9 +62,9 @@ public class StaticVariable extends AbstractFieldVariable {
     @Override
     public Dumper dumpInner(Dumper d) {
         if (knownSimple) {
-            return d.identifier(getFieldName());
+            return d.fieldName(getFieldName(), getOwningClassType(), false, true);
         } else {
-            return d.dump(getOwningClassType()).print(".").identifier(getFieldName());
+            return d.dump(getOwningClassType()).print(".").fieldName(getFieldName(), getOwningClassType(), false, true);
         }
     }
 

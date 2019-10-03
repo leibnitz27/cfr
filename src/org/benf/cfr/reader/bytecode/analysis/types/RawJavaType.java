@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.state.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -35,6 +36,7 @@ public enum RawJavaType implements JavaTypeInstance {
 
     private static final Map<RawJavaType, Set<RawJavaType>> implicitCasts = MapFactory.newMap();
     private static final Map<String, RawJavaType> boxingTypes = MapFactory.newMap();
+    private static final Map<String, RawJavaType> podLookup = MapFactory.newMap();
 
     static {
         implicitCasts.put(FLOAT, SetFactory.newSet(DOUBLE));
@@ -47,13 +49,21 @@ public enum RawJavaType implements JavaTypeInstance {
             if (type.boxedName != null) {
                 boxingTypes.put(type.boxedName, type);
             }
+            if (type.usableType) {
+                podLookup.put(type.name, type);
+            }
         }
+        podLookup.put(VOID.name, VOID);
     }
 
     public static RawJavaType getUnboxedTypeFor(JavaTypeInstance type) {
         String rawName = type.getRawName();
         RawJavaType tgt = boxingTypes.get(rawName);
         return tgt;
+    }
+
+    public static RawJavaType getPodNamedType(String name) {
+        return podLookup.get(name);
     }
 
     RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber, boolean objectType) {
@@ -112,6 +122,11 @@ public enum RawJavaType implements JavaTypeInstance {
     @Override
     public JavaTypeInstance directImplOf(JavaTypeInstance other) {
         return other == this ? this : null;
+    }
+
+    @Override
+    public JavaTypeInstance deObfuscate(ObfuscationMapping obfuscationMapping) {
+        return this;
     }
 
     @Override
@@ -264,6 +279,8 @@ public enum RawJavaType implements JavaTypeInstance {
     @Override
     public void collectInto(TypeUsageCollector typeUsageCollector) {
     }
+
+
 
     @Override
     public String toString() {

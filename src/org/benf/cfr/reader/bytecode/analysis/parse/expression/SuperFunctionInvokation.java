@@ -79,7 +79,7 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
             if (this.typeName != null) {
                 d.dump(this.typeName).print(".");
             }
-            d.print("super.").print(methodPrototype.getFixedName()).print("(");
+            d.print("super.").methodName(methodPrototype.getFixedName(), methodPrototype, false).print("(");
         }
         boolean first = true;
 

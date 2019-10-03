@@ -24,4 +24,9 @@ public class StringStreamDumper extends StreamDumper {
     @Override
     public void addSummaryError(Method method, String s) {
     }
+
+    @Override
+    public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
+        return new TypeOverridingDumper(this, innerclassTypeUsageInformation);
+    }
 }

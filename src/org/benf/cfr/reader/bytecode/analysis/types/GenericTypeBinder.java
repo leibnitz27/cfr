@@ -24,6 +24,17 @@ public class GenericTypeBinder {
         return new GenericTypeBinder(MapFactory.<String, JavaTypeInstance>newMap());
     }
 
+    public static GenericTypeBinder create(List<FormalTypeParameter> ... ftps) {
+        Map<String, JavaTypeInstance> bounds = MapFactory.newMap();
+        for (List<FormalTypeParameter> ftp : ftps) {
+            if (ftp == null) continue;
+            for (FormalTypeParameter f : ftp) {
+                bounds.put(f.getName(), f.getBound());
+            }
+        }
+        return new GenericTypeBinder(bounds);
+    }
+
     static GenericTypeBinder bind(List<FormalTypeParameter> methodFormalTypeParameters,
                                   ClassSignature classSignature, List<JavaTypeInstance> args,
                                   JavaGenericRefTypeInstance boundInstance, List<JavaTypeInstance> boundArgs) {

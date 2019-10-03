@@ -70,7 +70,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
             if (!field.shouldNotDisplay()) {
-                field.dump(d);
+                field.dump(d, classFile);
                 first = false;
             }
         }

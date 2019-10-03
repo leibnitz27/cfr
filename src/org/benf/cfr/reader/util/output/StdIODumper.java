@@ -21,4 +21,9 @@ public class StdIODumper extends StreamDumper {
     @Override
     public void close() {
     }
+
+    @Override
+    public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
+        return new StdIODumper(innerclassTypeUsageInformation, options, illegalIdentifierDump);
+    }
 }

@@ -31,26 +31,30 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
     }
 
     public String getTextPath() {
-        return ClassNameUtils.convertFromPath(getCp().getUTF8Entry(nameIndex).getValue()) + ".class";
+        return ClassNameUtils.convertFromPath(getClassNameString(nameIndex)) + ".class";
     }
 
     public String getFilePath() {
-        return getCp().getUTF8Entry(nameIndex).getValue() + ".class";
+        return getClassNameString(nameIndex) + ".class";
+    }
+
+    private String getClassNameString(int index) {
+        return getCp().getUTF8Entry(index).getValue();
     }
 
     @Override
     public void dump(Dumper d) {
-        d.print("Class " + getCp().getUTF8Entry(nameIndex).getValue());
+        d.print("Class " + getClassNameString(nameIndex));
     }
 
     public String getPackageName() {
-        String full = ClassNameUtils.convertFromPath(getCp().getUTF8Entry(nameIndex).getValue());
+        String full = ClassNameUtils.convertFromPath(getClassNameString(nameIndex));
         int idx = full.lastIndexOf('.');
         if (idx == -1) return "";
         return full.substring(0, idx);
     }
 
-    public JavaTypeInstance convertFromString(String rawType) {
+    private JavaTypeInstance convertFromString(String rawType) {
         if (rawType.startsWith("[")) {
             return ConstantPoolUtils.decodeTypeTok(rawType, getCp());
         } else {
@@ -60,7 +64,7 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
 
     public JavaTypeInstance getTypeInstance() {
         if (javaTypeInstance == null) {
-            String rawType = getCp().getUTF8Entry(nameIndex).getValue();
+            String rawType = getClassNameString(nameIndex);
             javaTypeInstance = convertFromString(rawType);
         }
         return javaTypeInstance;
@@ -70,8 +74,8 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
         if (javaTypeInstance != null) {
             return javaTypeInstance;
         }
-        String thisInnerType = getCp().getUTF8Entry(nameIndex).getValue();
-        String thisOuterType = getCp().getUTF8Entry(outer.nameIndex).getValue();
+        String thisInnerType = getClassNameString(nameIndex);
+        String thisOuterType = getClassNameString(outer.nameIndex);
         Pair<JavaRefTypeInstance, JavaRefTypeInstance> pair = getCp().getClassCache().getRefClassForInnerOuterPair(thisInnerType, thisOuterType);
         javaTypeInstance = pair.getFirst();
         return javaTypeInstance;
@@ -81,8 +85,8 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
         if (javaTypeInstance != null) {
             return javaTypeInstance;
         }
-        String thisInnerType = getCp().getUTF8Entry(inner.nameIndex).getValue();
-        String thisOuterType = getCp().getUTF8Entry(nameIndex).getValue();
+        String thisInnerType = getClassNameString(inner.nameIndex);
+        String thisOuterType = getClassNameString(nameIndex);
         Pair<JavaRefTypeInstance, JavaRefTypeInstance> pair = getCp().getClassCache().getRefClassForInnerOuterPair(thisInnerType, thisOuterType);
         javaTypeInstance = pair.getSecond();
         return javaTypeInstance;

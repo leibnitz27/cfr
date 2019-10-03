@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.mapping.ClassMapping;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class ClassFileField {
@@ -52,6 +53,7 @@ public class ClassFileField {
         isSyntheticOuterRef = true;
     }
 
+    // This should be used only for local tidying - it will not rename referents.
     public void overrideName(String override) {
         overriddenName = override;
     }
@@ -65,8 +67,8 @@ public class ClassFileField {
         return getRawFieldName();
     }
 
-    public void dump(Dumper d) {
-        field.dump(d, getFieldName());
+    public void dump(Dumper d, ClassFile owner) {
+        field.dump(d, getFieldName(), owner);
         if (initialValue != null) {
             d.print(" = ").dump(initialValue);
         }

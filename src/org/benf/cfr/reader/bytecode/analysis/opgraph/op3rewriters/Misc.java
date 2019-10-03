@@ -3,7 +3,6 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.ExpressionReplacingRewriter;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.NOPSearchingExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -235,7 +234,6 @@ public class Misc {
             statement.markBlock(blockIdentifier);
         }
     }
-
 
     static boolean findHiddenIter(Statement statement, LValue lValue, Expression rValue, Set<Expression> poison) {
         AssignmentExpression needle = new AssignmentExpression(lValue, rValue);

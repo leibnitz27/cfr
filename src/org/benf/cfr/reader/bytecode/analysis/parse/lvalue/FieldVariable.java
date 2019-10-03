@@ -101,7 +101,7 @@ public class FieldVariable extends AbstractFieldVariable {
                 object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER).print(".");
             }
         }
-        return d.identifier(getFieldName());
+        return d.fieldName(getFieldName(), getOwningClassType(), isHiddenDeclaration(), false);
     }
 
     @Override

@@ -48,7 +48,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
         // Horrid, but an interface can have fields....
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
-            field.dump(d);
+            field.dump(d, classFile);
             first = false;
         }
         List<Method> methods = classFile.getMethods();

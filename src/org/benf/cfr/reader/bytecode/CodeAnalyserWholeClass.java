@@ -271,7 +271,8 @@ public class CodeAnalyserWholeClass {
         }
         JavaRefTypeInstance fieldRefType = (JavaRefTypeInstance) fieldType.getDeGenerifiedType();
         String name = fieldRefType.getRawShortName();
-        String explicitName = name + ".this";
+        // This hack causes problems when renaming classes......
+        String explicitName = name + MiscConstants.DOT_THIS;
         if (fieldRefType.getInnerClassHereInfo().isMethodScopedClass()) {
             // We're referring to a value captured from the anonymous class.
             // What we *Should* do is drop the field reference completely.

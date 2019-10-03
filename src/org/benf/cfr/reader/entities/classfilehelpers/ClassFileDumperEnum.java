@@ -48,10 +48,10 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         }
     }
 
-    private static void dumpEntry(Dumper d, Pair<StaticVariable, AbstractConstructorInvokation> entry, boolean last) {
+    private static void dumpEntry(Dumper d, Pair<StaticVariable, AbstractConstructorInvokation> entry, boolean last, JavaTypeInstance classType) {
         StaticVariable staticVariable = entry.getFirst();
         AbstractConstructorInvokation constructorInvokation = entry.getSecond();
-        d.print(staticVariable.getFieldName());
+        d.fieldName(staticVariable.getFieldName(), classType, false, true);
 
         if (constructorInvokation instanceof ConstructorInvokationSimple) {
             List<Expression> args = constructorInvokation.getArgs();
@@ -89,8 +89,10 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         d.print("{\n");
         d.indent(1);
 
+        JavaTypeInstance classType = classFile.getClassType();
+
         for (int x = 0, len = entries.size(); x < len; ++x) {
-            dumpEntry(d, entries.get(x), (x == len - 1));
+            dumpEntry(d, entries.get(x), (x == len - 1), classType);
         }
 
         d.print("\n");
@@ -98,7 +100,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
             if (field.shouldNotDisplay()) continue;
-            field.dump(d);
+            field.dump(d, classFile);
         }
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {

@@ -31,7 +31,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
     });
     private final Predicate<String> allowShorten;
 
-    TypeUsageInformationImpl(Options options, JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes) {
+    public TypeUsageInformationImpl(Options options, JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes) {
         this.allowShorten = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.IMPORT_FILTER), true);
         this.analysisType = analysisType;
         initialiseFrom(usedRefTypes);

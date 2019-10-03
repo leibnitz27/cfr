@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
@@ -21,6 +22,8 @@ public interface Dumper {
     Dumper removePendingCarriageReturn();
 
     Dumper print(String s);
+
+    Dumper methodName(String s, MethodPrototype p, boolean special);
 
     Dumper identifier(String s);
 
@@ -45,6 +48,10 @@ public interface Dumper {
     void addSummaryError(Method method, String s);
 
     boolean canEmitClass(JavaTypeInstance type);
+
+    Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic);
+
+    Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation);
 
     class CannotCreate extends RuntimeException {
         CannotCreate(String s) {

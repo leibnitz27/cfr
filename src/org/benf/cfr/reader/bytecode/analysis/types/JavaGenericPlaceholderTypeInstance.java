@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -107,8 +108,8 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     /*
-         * TODO : Strictly speaking we should only be adding the binding here if className is in formal parameters.
-         */
+     * TODO : Strictly speaking we should only be adding the binding here if className is in formal parameters.
+     */
     @Override
     public boolean tryFindBinding(JavaTypeInstance other, GenericTypeBinder target) {
         target.suggestBindingFor(className, other);
@@ -191,7 +192,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
 
     @Override
     public JavaTypeInstance getDeGenerifiedType() {
-        return TypeConstants.OBJECT;
+        return bound == null ? TypeConstants.OBJECT : bound.getDeGenerifiedType();
     }
 
     @Override
@@ -227,6 +228,11 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     public String suggestVarName() {
         if (className.equals(MiscConstants.UNBOUND_GENERIC)) { return "obj"; }
         return className;
+    }
+
+    @Override
+    public JavaTypeInstance deObfuscate(ObfuscationMapping obfuscationMapping) {
+        return new JavaGenericPlaceholderTypeInstance(className, cp, obfuscationMapping.get(bound));
     }
 
     @Override

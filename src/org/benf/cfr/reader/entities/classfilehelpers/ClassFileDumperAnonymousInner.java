@@ -64,7 +64,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
 
         List<ClassFileField> fields = classFile.getFields();
         for (ClassFileField field : fields) {
-            if (!field.shouldNotDisplay()) field.dump(d);
+            if (!field.shouldNotDisplay()) field.dump(d, classFile);
         }
         List<Method> methods = classFile.getMethods();
         if (!methods.isEmpty()) {

@@ -2,6 +2,7 @@ package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.getopt.Options;
@@ -12,7 +13,8 @@ import java.util.Set;
 
 public abstract class StreamDumper implements Dumper {
     private final TypeUsageInformation typeUsageInformation;
-    private final IllegalIdentifierDump illegalIdentifierDump;
+    protected final Options options;
+    protected final IllegalIdentifierDump illegalIdentifierDump;
     private final boolean convertUTF;
 
     private int outputCount = 0;
@@ -23,6 +25,7 @@ public abstract class StreamDumper implements Dumper {
 
     public StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
         this.typeUsageInformation = typeUsageInformation;
+        this.options = options;
         this.illegalIdentifierDump = illegalIdentifierDump;
         this.convertUTF = options.getOption(OptionsImpl.HIDE_UTF8);
     }
@@ -64,6 +67,11 @@ public abstract class StreamDumper implements Dumper {
     @Override
     public Dumper identifier(String s) {
         return print(illegalIdentifierDump.getLegalIdentifierFor(s));
+    }
+
+    @Override
+    public Dumper methodName(String s, MethodPrototype p, boolean special) {
+        return identifier(s);
     }
 
     @Override
@@ -130,6 +138,12 @@ public abstract class StreamDumper implements Dumper {
         for (Dumpable dumpable : d) {
             dumpable.dump(this);
         }
+    }
+
+    @Override
+    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic) {
+        identifier(name);
+        return this;
     }
 
     @Override

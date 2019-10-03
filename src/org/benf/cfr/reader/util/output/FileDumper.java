@@ -84,4 +84,9 @@ public class FileDumper extends StreamDumper {
     public void addSummaryError(Method method, String s) {
         summaryDumper.notifyError(type, method, s);
     }
+
+    @Override
+    public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
+        return new TypeOverridingDumper(this, innerclassTypeUsageInformation);
+    }
 }

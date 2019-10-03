@@ -187,7 +187,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (!isConstructor.isConstructor()) {
             d.dump(result).print(" ");
         }
-        d.identifier(methName).print("(");
+        d.methodName(methName, this, isConstructor.isConstructor()).print("(");
         /* We don't get a vararg type to change itself, as it's a function of the method, not the type
          */
 
@@ -443,6 +443,29 @@ public class MethodPrototype implements TypeUsageCollectable {
 
     public List<JavaTypeInstance> getArgs() {
         return args;
+    }
+
+    public List<JavaTypeInstance> getSignatureBoundArgs() {
+        if (classFile == null) {
+            return args;
+        }
+        ClassSignature sig = classFile.getClassSignature();
+        List<FormalTypeParameter> ftp = sig.getFormalTypeParameters();
+        if (ftp == null && formalTypeParameters == null) {
+            return args;
+        }
+        final GenericTypeBinder gtb = GenericTypeBinder.create(ftp, formalTypeParameters);
+        return Functional.map(args, new UnaryFunction<JavaTypeInstance, JavaTypeInstance>() {
+            @Override
+            public JavaTypeInstance invoke(JavaTypeInstance arg) {
+                JavaTypeInstance res = arg;
+                do {
+                    arg = res;
+                    res = gtb.getBindingFor(arg);
+                } while (res instanceof JavaGenericPlaceholderTypeInstance);
+                return res;
+            }
+        });
     }
 
     public int getVisibleArgCount() {

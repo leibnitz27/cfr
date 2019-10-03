@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.state.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.DecompilerComments;
@@ -240,6 +241,11 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     @Override
     public JavaGenericRefTypeInstance asGenericRefInstance(JavaTypeInstance other) {
         return null;
+    }
+
+    @Override
+    public JavaTypeInstance deObfuscate(ObfuscationMapping obfuscationMapping) {
+        return new JavaWildcardTypeInstance(wildcardType, obfuscationMapping.get(underlyingType));
     }
 
     @Override

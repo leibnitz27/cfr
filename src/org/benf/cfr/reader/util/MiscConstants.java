@@ -26,6 +26,7 @@ public interface MiscConstants {
 
     String INIT_METHOD = "<init>";
     String STATIC_INIT_METHOD = "<clinit>";
+    String DOT_THIS = ".this";
     String THIS = "this";
     String CLASS = "class";
     String UNBOUND_GENERIC = "?";

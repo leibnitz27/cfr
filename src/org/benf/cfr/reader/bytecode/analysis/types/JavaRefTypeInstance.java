@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeIn
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.*;
@@ -323,6 +324,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     @Override
     public RawJavaType getRawTypeOfSimpleType() {
         return RawJavaType.REF;
+    }
+
+    @Override
+    public JavaTypeInstance deObfuscate(ObfuscationMapping obfuscationMapping) {
+        return obfuscationMapping.get(this);
     }
 
     @Override
