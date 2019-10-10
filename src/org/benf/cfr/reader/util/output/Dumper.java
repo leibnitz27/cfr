@@ -5,8 +5,9 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
-import java.util.List;
-
+/*
+ * NB: This interface is NOT an externally visible one, and is subject to change.
+ */
 public interface Dumper {
 
     /*
@@ -15,17 +16,23 @@ public interface Dumper {
      */
     TypeUsageInformation getTypeUsageInformation();
 
-    void printLabel(String s);
+    Dumper label(String s, boolean inline);
 
     void enqueuePendingCarriageReturn();
 
     Dumper removePendingCarriageReturn();
 
+    Dumper operator(String s);
+
+    Dumper separator(String s);
+
+    Dumper literal(String s, Object o);
+
     Dumper print(String s);
 
-    Dumper methodName(String s, MethodPrototype p, boolean special);
+    Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines);
 
-    Dumper identifier(String s);
+    Dumper identifier(String s, boolean defines);
 
     Dumper print(char c);
 
@@ -33,15 +40,7 @@ public interface Dumper {
 
     Dumper endCodeln();
 
-    int getIndent();
-
     void indent(int diff);
-
-    void dump(List<? extends Dumpable> d);
-
-    Dumper dump(JavaTypeInstance javaTypeInstance);
-
-    Dumper dump(Dumpable d);
 
     void close();
 
@@ -49,9 +48,11 @@ public interface Dumper {
 
     boolean canEmitClass(JavaTypeInstance type);
 
-    Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic);
+    Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines);
 
     Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation);
+
+    Dumper comment(String s);
 
     class CannotCreate extends RuntimeException {
         CannotCreate(String s) {
@@ -69,5 +70,11 @@ public interface Dumper {
     }
 
     int getOutputCount();
+
+//////////////
+
+    Dumper dump(JavaTypeInstance javaTypeInstance);
+
+    Dumper dump(Dumpable d);
 
 }

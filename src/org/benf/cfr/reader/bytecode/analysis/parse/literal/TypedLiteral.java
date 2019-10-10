@@ -48,6 +48,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         }
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private static boolean definingType(Dumper d, String typeName) {
         JavaTypeInstance type = d.getTypeUsageInformation().getAnalysisType();
         return (type != null && typeName.equals(type.getRawName()));
@@ -144,15 +145,13 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     public long getLongValue() {
         if (type != LiteralType.Long) throw new IllegalStateException("Expecting long literal");
-        Long l = (Long) value;
-        return l;
+        return (Long) value;
     }
 
 
     public int getIntValue() {
         if (type != LiteralType.Integer) throw new IllegalStateException("Expecting integral literal");
-        Integer i = (Integer) value;
-        return i;
+        return (Integer) value;
     }
 
     public Boolean getMaybeBoolValue() {
@@ -163,8 +162,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     public JavaTypeInstance getClassValue() {
         if (type != LiteralType.Class) throw new IllegalStateException("Expecting Class literal");
-        JavaTypeInstance t = (JavaTypeInstance) value;
-        return t;
+        return (JavaTypeInstance) value;
     }
 
     // fixme - move into QuotingUtils.
@@ -275,23 +273,23 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
     public Dumper dumpWithHint(Dumper d, FormatHint hint) {
         switch (type) {
             case String:
-                return d.print(((String) value));
+                return d.literal((String)value, value);
             case NullObject:
-                return d.print("null");
+                return d.literal("null", null);
             case Integer:
                 switch (inferredJavaType.getRawType()) {
                     case CHAR:
-                        return d.print(charName(value));
+                        return d.literal(charName(value), value);
                     case BOOLEAN:
-                        return d.print(boolName(value));
+                        return d.literal(boolName(value), value);
                     default:
                         // It's tempting to add "(byte)/(short)" here, but JLS 5.2 specifically states that compile time
                         // narrowing of constants for assignment is not necessary.
                         // (but it is for calls, eg NarrowingTestXX).
-                        return d.print(integerName(d, value, hint));
+                        return d.literal(integerName(d, value, hint), value);
                 }
             case Long:
-                return d.print(longName(d, value, hint));
+                return d.literal(longName(d, value, hint), value);
             case MethodType:
                 return d.print(methodTypeName(value));
             case MethodHandle:
@@ -299,9 +297,9 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             case Class:
                 return d.dump((JavaTypeInstance) value).print(".class");
             case Double:
-                return d.print(doubleName(d, value));
+                return d.literal(doubleName(d, value), value);
             case Float:
-                return d.print(floatName(d, value));
+                return d.literal(floatName(d, value), value);
             default:
                 return d.print(value.toString());
         }
@@ -320,7 +318,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL), v);
     }
 
-    public static TypedLiteral getChar(int v) {
+    private static TypedLiteral getChar(int v) {
         return new TypedLiteral(LiteralType.Integer, new InferredJavaType(RawJavaType.CHAR, InferredJavaType.Source.LITERAL), v);
     }
 
@@ -352,13 +350,12 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return new TypedLiteral(LiteralType.NullObject, new InferredJavaType(RawJavaType.NULL, InferredJavaType.Source.LITERAL), null);
     }
 
-    public static TypedLiteral getMethodHandle(ConstantPoolEntryMethodHandle methodHandle, ConstantPool cp) {
+    private static TypedLiteral getMethodHandle(ConstantPoolEntryMethodHandle methodHandle, ConstantPool cp) {
         JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodHandle");
         return new TypedLiteral(LiteralType.MethodHandle, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodHandle);
     }
 
-    public static TypedLiteral getMethodType(ConstantPoolEntryMethodType methodType, ConstantPool cp) {
-//        ConstantPoolEntryUTF8 descriptor = methodType.getDescriptor();
+    private static TypedLiteral getMethodType(ConstantPoolEntryMethodType methodType, ConstantPool cp) {
         JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodType");
         return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodType);
     }

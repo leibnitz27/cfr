@@ -41,7 +41,7 @@ public class UnstructuredFor extends AbstractUnStructuredStatement {
             first = StringUtils.comma(first, dumper);
             dumper.dump(assignment);
         }
-        return dumper.print(")\n");
+        return dumper.separator(")").newln();
     }
 
     @Override

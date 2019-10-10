@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.api;
 
+import java.util.Set;
+
 /**
  * Sinks will accept (as defined by {@link org.benf.cfr.reader.api.OutputSinkFactory.SinkClass} various types
  * of messages.  All sink factories should provide a sink which accepts strings, however, these are types which
@@ -61,4 +63,53 @@ public interface SinkReturns {
         int getRuntimeFrom();
     }
 
+    enum TokenTypeFlags {
+        DEFINES
+    }
+
+    enum TokenType {
+        WHITESPACE,
+        OPERATOR,
+        SEPARATOR,
+        LITERAL,
+        COMMENT,
+        IDENTIFIER,
+        FIELD,
+        METHOD,
+        LABEL,
+        NEWLINE,
+        UNCLASSIFIED,
+        EOF(true),
+        INDENT(true),
+        UNINDENT(true);
+
+        private final boolean control;
+
+        TokenType() {
+            this.control = false;
+        }
+
+        TokenType(boolean control) {
+            this.control = control;
+        }
+
+        /**
+         * Is this a 'control' token?  I.e. do we want to change state based on it, not output.
+         *
+         * @return if this is a control token.
+         */
+        public boolean isControl() {
+            return control;
+        }
+    }
+
+    interface Token {
+        TokenType getTokenType();
+
+        String getText();
+
+        Object getRawValue();
+
+        Set<TokenTypeFlags> getFlags();
+    }
 }

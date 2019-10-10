@@ -25,7 +25,7 @@ public class UnstructuredSynchronized extends AbstractUnStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("** synchronized (").dump(monitor).print(")\n");
+        return dumper.print("** synchronized (").dump(monitor).separator(")").newln();
     }
 
     @Override

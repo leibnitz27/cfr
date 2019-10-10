@@ -10,7 +10,7 @@ public class UnstructuredGoto extends AbstractUnStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("** GOTO " + getContainer().getTargetLabel(0) + "\n");
+        return dumper.print("** GOTO " + getContainer().getTargetLabel(0)).newln();
     }
 
     @Override

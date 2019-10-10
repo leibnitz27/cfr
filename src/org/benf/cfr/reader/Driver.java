@@ -250,15 +250,15 @@ class Driver {
                 }
 
                 c.dump(d);
-                d.print("\n");
-                d.print("\n");
+                d.newln();
+                d.newln();
                 if (lomem) {
                     c.releaseCode();
                 }
             } catch (Dumper.CannotCreate e) {
                 throw e;
             } catch (RuntimeException e) {
-                d.print(e.toString()).print("\n").print("\n").print("\n");
+                d.print(e.toString()).newln().newln().newln();
             } finally {
                 if (d != null) d.close();
             }

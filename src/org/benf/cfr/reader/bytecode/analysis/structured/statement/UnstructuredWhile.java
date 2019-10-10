@@ -33,7 +33,7 @@ public class UnstructuredWhile extends AbstractUnStructuredStatement {
         } else {
             dumper.dump(condition);
         }
-        return dumper.print(")\n");
+        return dumper.separator(")").newln();
     }
 
     @Override

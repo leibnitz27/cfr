@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Vector;
 
 public abstract class AbstractStructuredStatement implements StructuredStatement {
-    Op04StructuredStatement container;
+    private Op04StructuredStatement container;
 
     @Override
     public Op04StructuredStatement getContainer() {

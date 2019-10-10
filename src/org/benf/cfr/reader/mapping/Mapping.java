@@ -4,7 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.ObfuscationMapping;
 import org.benf.cfr.reader.state.ObfuscationRewriter;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -14,7 +13,7 @@ import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
-import org.benf.cfr.reader.util.output.Dumpable;
+import org.benf.cfr.reader.util.output.DelegatingDumper;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -61,7 +60,7 @@ public class Mapping implements ObfuscationRewriter, ObfuscationMapping {
         return res;
     }
 
-    public ClassMapping getClassMapping(JavaTypeInstance type) {
+    ClassMapping getClassMapping(JavaTypeInstance type) {
         return erasedTypeMap.get(type.getDeGenerifiedType());
     }
 
@@ -115,17 +114,16 @@ public class Mapping implements ObfuscationRewriter, ObfuscationMapping {
         }
     }
 
-    private class ObfuscationWrappingDumper implements Dumper {
-        private final Dumper delegate;
+    private class ObfuscationWrappingDumper extends DelegatingDumper {
         private TypeUsageInformation mappingTypeUsage;
 
         private ObfuscationWrappingDumper(Dumper delegate) {
-            this.delegate = delegate;
+            super(delegate);
             this.mappingTypeUsage = null;
         }
 
         private ObfuscationWrappingDumper(Dumper delegate, TypeUsageInformation typeUsageInformation) {
-            this.delegate = delegate;
+            super(delegate);
             this.mappingTypeUsage = typeUsageInformation;
         }
 
@@ -147,88 +145,27 @@ public class Mapping implements ObfuscationRewriter, ObfuscationMapping {
         }
 
         @Override
-        public void printLabel(String s) {
-            delegate.printLabel(s);
-        }
-
-        @Override
-        public void enqueuePendingCarriageReturn() {
-            delegate.enqueuePendingCarriageReturn();
-        }
-
-        @Override
-        public Dumper removePendingCarriageReturn() {
-            delegate.removePendingCarriageReturn();
-            return this;
-        }
-
-        @Override
-        public Dumper print(String s) {
-            delegate.print(s);
-            return this;
-        }
-
-        @Override
-        public Dumper methodName(String s, MethodPrototype p, boolean special) {
+        public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
             ClassMapping c = erasedTypeMap.get(p.getClassType().getDeGenerifiedType());
             if (c == null || special) {
-                delegate.methodName(s, p, special);
+                delegate.methodName(s, p, special, defines);
                 return this;
             }
 
-            delegate.methodName(c.getMethodName(s, p.getSignatureBoundArgs(), Mapping.this, delegate), p, special);
+            delegate.methodName(c.getMethodName(s, p.getSignatureBoundArgs(), Mapping.this, delegate), p, special, defines);
             return this;
         }
 
         @Override
-        public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic) {
+        public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
             JavaTypeInstance deGenerifiedType = owner.getDeGenerifiedType();
             ClassMapping c = erasedTypeMap.get(deGenerifiedType);
             if (c == null || hiddenDeclaration) {
-                delegate.fieldName(name, owner, hiddenDeclaration, isStatic);
+                delegate.fieldName(name, owner, hiddenDeclaration, isStatic, defines);
             } else {
-                delegate.fieldName(c.getFieldName(name, deGenerifiedType,this, Mapping.this, isStatic), owner, hiddenDeclaration, isStatic);
+                delegate.fieldName(c.getFieldName(name, deGenerifiedType,this, Mapping.this, isStatic), owner, hiddenDeclaration, isStatic, defines);
             }
             return this;
-        }
-
-        @Override
-        public Dumper identifier(String s) {
-            delegate.identifier(s);
-            return this;
-        }
-
-        @Override
-        public Dumper print(char c) {
-            delegate.print(c);
-            return this;
-        }
-
-        @Override
-        public Dumper newln() {
-            delegate.newln();
-            return this;
-        }
-
-        @Override
-        public Dumper endCodeln() {
-            delegate.endCodeln();
-            return this;
-        }
-
-        @Override
-        public int getIndent() {
-            return delegate.getIndent();
-        }
-
-        @Override
-        public void indent(int diff) {
-            delegate.indent(diff);
-        }
-
-        @Override
-        public void dump(List<? extends Dumpable> d) {
-            delegate.dump(d);
         }
 
         @Override
@@ -236,35 +173,6 @@ public class Mapping implements ObfuscationRewriter, ObfuscationMapping {
             javaTypeInstance = javaTypeInstance.deObfuscate(Mapping.this);
             javaTypeInstance.dumpInto(this, getTypeUsageInformation());
             return this;
-        }
-
-        @Override
-        public Dumper dump(Dumpable d) {
-            // can't delegate, because it passes self.
-            if (d == null) {
-                return print("null");
-            }
-            return d.dump(this);
-        }
-
-        @Override
-        public void close() {
-            delegate.close();
-        }
-
-        @Override
-        public void addSummaryError(Method method, String s) {
-            delegate.addSummaryError(method, s);
-        }
-
-        @Override
-        public boolean canEmitClass(JavaTypeInstance type) {
-            return delegate.canEmitClass(type);
-        }
-
-        @Override
-        public int getOutputCount() {
-            return delegate.getOutputCount();
         }
 
         @Override

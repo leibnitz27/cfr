@@ -18,7 +18,7 @@ public class UnstructuredTry extends AbstractUnStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("** try " + exceptionGroup + " { \n");
+        return dumper.print("** try " + exceptionGroup + " { ").newln();
     }
 
     @Override

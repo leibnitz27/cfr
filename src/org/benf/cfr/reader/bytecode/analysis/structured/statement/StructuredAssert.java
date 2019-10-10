@@ -33,7 +33,7 @@ public class StructuredAssert extends AbstractStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("assert (").dump(conditionalExpression).print(")");
+        dumper.print("assert (").dump(conditionalExpression).separator(")");
         if (arg != null) {
             dumper.print(" : ").dump(arg);
         }

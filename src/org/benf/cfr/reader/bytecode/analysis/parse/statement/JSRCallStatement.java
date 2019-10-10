@@ -17,7 +17,7 @@ public class JSRCallStatement extends AbstractStatement {
      */
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("CALL " + getTargetStatement(0).getContainer().getLabel() + ";\n");
+        return dumper.print("CALL " + getTargetStatement(0).getContainer().getLabel() + ";").newln();
     }
 
     @Override

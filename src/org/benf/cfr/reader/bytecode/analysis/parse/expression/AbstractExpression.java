@@ -111,9 +111,9 @@ public abstract class AbstractExpression implements Expression {
             }
         }
         if (requires) {
-            d.print("(");
+            d.separator("(");
             dumpInner(d);
-            d.print(")");
+            d.separator(")");
         } else {
             dumpInner(d);
         }

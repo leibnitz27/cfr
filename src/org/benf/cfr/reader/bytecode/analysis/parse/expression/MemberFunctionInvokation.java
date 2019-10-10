@@ -51,8 +51,8 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
         getObject().dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
 
         MethodPrototype methodPrototype = getMethodPrototype();
-        if (!isInitMethod) d.print(".").methodName(getFixedName(), methodPrototype, false);
-        d.print("(");
+        if (!isInitMethod) d.separator(".").methodName(getFixedName(), methodPrototype, false, false);
+        d.separator("(");
         List<Expression> args = getArgs();
         boolean first = true;
         for (int x = 0; x < args.size(); ++x) {
@@ -61,7 +61,7 @@ public class MemberFunctionInvokation extends AbstractMemberFunctionInvokation {
             first = StringUtils.comma(first, d);
             methodPrototype.dumpAppropriatelyCastedArgumentString(arg, d);
         }
-        d.print(")");
+        d.separator(")");
         return d;
     }
 

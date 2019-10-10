@@ -75,14 +75,14 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
         boolean multi = args.size() != 1;
         boolean first = true;
         if (getInferredJavaType().getJavaTypeInstance() instanceof JavaIntersectionTypeInstance) {
-            d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
+            d.separator("(").dump(getInferredJavaType().getJavaTypeInstance()).separator(")");
         }
-        if (multi) d.print("(");
+        if (multi) d.separator("(");
         for (LValue lValue : args) {
             first = StringUtils.comma(first, d);
             d.dump(lValue);
         }
-        if (multi) d.print(")");
+        if (multi) d.separator(")");
         d.print(" -> ").dump(result);
         d.removePendingCarriageReturn();
         return d;

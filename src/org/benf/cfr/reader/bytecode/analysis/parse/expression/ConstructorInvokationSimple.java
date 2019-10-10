@@ -71,7 +71,7 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
             }
         }
 
-        d.print("new ").dump(clazz).print("(");
+        d.print("new ").dump(clazz).separator("(");
         boolean first = true;
         for (int i = 0; i < args.size(); ++i) {
             if (prototype.isHiddenArg(i)) continue;
@@ -80,7 +80,7 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
             first = false;
             d.dump(arg);
         }
-        d.print(")");
+        d.separator(")");
         return d;
     }
 

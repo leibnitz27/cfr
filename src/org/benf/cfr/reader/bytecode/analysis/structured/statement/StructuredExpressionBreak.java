@@ -28,7 +28,7 @@ public class StructuredExpressionBreak extends AbstractStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("break ").dump(value).print(";").newln();
+        return dumper.print("break ").dump(value).endCodeln();
     }
 
     @Override

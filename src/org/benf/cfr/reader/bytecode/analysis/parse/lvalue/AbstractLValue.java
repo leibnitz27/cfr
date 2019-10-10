@@ -78,9 +78,9 @@ public abstract class AbstractLValue implements LValue {
         Precedence innerP = getPrecedence();
         int cmp = innerP.compareTo(outerP);
         if (cmp > 0 || cmp == 0 && !innerP.isLtoR()) {
-            d.print("(");
+            d.separator("(");
             dumpInner(d);
-            d.print(")");
+            d.separator(")");
         } else {
             dumpInner(d);
         }

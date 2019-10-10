@@ -68,6 +68,5 @@ public class AccountingRewriter implements ExpressionRewriter {
             StackSSALabel stackSSALabel = entry.getKey();
             stackSSALabel.getStackEntry().forceUsageCount(entry.getValue());
         }
-//        System.out.println("-----\n");
     }
 }

@@ -7,7 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.mapping.MappingFactory;
 import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -19,7 +18,6 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.BinaryFunction;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
-import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.io.File;
 import java.util.*;

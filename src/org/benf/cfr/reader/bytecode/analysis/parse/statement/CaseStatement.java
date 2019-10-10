@@ -28,10 +28,10 @@ public class CaseStatement extends AbstractStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         if (values.isEmpty()) {
-            dumper.print("default:\n");
+            dumper.print("default").operator(":").newln();
         } else {
             for (Expression value : values) {
-                dumper.print("case ").dump(value).print(":\n");
+                dumper.print("case ").dump(value).operator(":").newln();
             }
         }
         return dumper;

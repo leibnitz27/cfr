@@ -59,7 +59,7 @@ public class StackSSALabel extends AbstractLValue {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        return d.print("v" + id + typeToString());
+        return d.identifier("v" + id + typeToString(), false);
     }
 
     @Override

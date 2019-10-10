@@ -15,7 +15,7 @@ public class DoStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("do\n");
+        return dumper.print("do").newln();
     }
 
     @Override

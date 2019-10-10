@@ -12,4 +12,6 @@ public interface NamedVariable extends Dumpable {
 
     @Override
     Dumper dump(Dumper d);
+
+    Dumper dump(Dumper d, boolean defines);
 }

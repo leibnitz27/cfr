@@ -287,7 +287,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         for (Op02WithProcessedDataAndRefs target : targets) {
             d.print(" " + target.index);
         }
-        d.print("\n");
+        d.newln();
         return d;
     }
 
@@ -1540,7 +1540,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
         } catch (ConfusedCFRException e) {
             Dumper dmp = new ToStringDumper();
-            dmp.print("----[known stack info]------------\n\n");
+            dmp.print("----[known stack info]------------").newln().newln();
             for (Op02WithProcessedDataAndRefs op : op2list) {
                 op.dump(dmp);
             }

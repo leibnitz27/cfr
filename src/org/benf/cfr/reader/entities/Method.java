@@ -316,7 +316,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
         if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
         if (isOverride) {
-            d.print("@Override\n");
+            d.print("@Override").newln();
         }
     }
 

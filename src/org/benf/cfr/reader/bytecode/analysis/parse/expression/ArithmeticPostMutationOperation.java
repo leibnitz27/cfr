@@ -45,7 +45,7 @@ public class ArithmeticPostMutationOperation extends AbstractMutatingAssignmentE
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        return d.dump(mutated).print((op == ArithOp.PLUS) ? "++" : "--");
+        return d.dump(mutated).operator((op == ArithOp.PLUS) ? "++" : "--");
     }
 
     @Override

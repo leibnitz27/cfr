@@ -7,7 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.statement.CommentStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
@@ -536,7 +535,7 @@ public class Block extends AbstractStructuredStatement {
         boolean isIndenting = isIndenting();
         if (blockIdentifier != null) {
             if (blockIdentifier.hasForeignReferences()) {
-                d.print(blockIdentifier.getName() + " : ");
+                d.label(blockIdentifier.getName(), true);
                 isIndenting = true;
             } else {
                 isIndenting = false;
@@ -544,15 +543,14 @@ public class Block extends AbstractStructuredStatement {
         }
         if (containedStatements.isEmpty()) {
             if (isIndenting) {
-                d.print("{}\n");
-            } else {
-                d.print("\n");
+                d.separator("{").separator("}");
             }
+            d.newln();
             return d;
         }
         try {
             if (isIndenting) {
-                d.print("{\n");
+                d.separator("{").newln();
                 d.indent(1);
             }
             for (Op04StructuredStatement structuredBlock : containedStatements) {
@@ -561,7 +559,7 @@ public class Block extends AbstractStructuredStatement {
         } finally {
             if (isIndenting) {
                 d.indent(-1);
-                d.print("}");
+                d.separator("}");
                 d.enqueuePendingCarriageReturn();
             }
         }

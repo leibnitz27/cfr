@@ -39,7 +39,7 @@ public class DynamicConstExpression extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.print(" /* dynamic constant */ (").dump(content.getInferredJavaType().getJavaTypeInstance()).print(")").dump(content);
+        d.print(" /* dynamic constant */ ").separator("(").dump(content.getInferredJavaType().getJavaTypeInstance()).separator(")").dump(content);
         return d;
     }
 

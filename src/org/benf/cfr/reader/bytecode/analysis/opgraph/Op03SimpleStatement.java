@@ -481,7 +481,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public void dumpInner(Dumper dumper) {
-        if (needsLabel()) dumper.print(getLabel() + ":\n");
+        if (needsLabel()) dumper.print(getLabel() + ":").newln();
         for (BlockIdentifier blockIdentifier : containedInBlocks) {
             dumper.print(blockIdentifier + " ");
         }
@@ -490,7 +490,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("**********\n");
+        dumper.print("**********").newln();
         List<Op03SimpleStatement> reachableNodes = ListFactory.newList();
         GraphVisitorCallee graphVisitorCallee = new GraphVisitorCallee(reachableNodes);
         GraphVisitor<Op03SimpleStatement> visitor = new GraphVisitorDFS<Op03SimpleStatement>(this, graphVisitorCallee);
@@ -504,7 +504,7 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         for (Op03SimpleStatement op : reachableNodes) {
             op.dumpInner(dumper);
         }
-        dumper.print("**********\n");
+        dumper.print("**********").newln();
         return dumper;
     }
 

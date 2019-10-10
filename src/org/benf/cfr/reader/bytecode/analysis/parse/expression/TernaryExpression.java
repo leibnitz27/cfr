@@ -75,9 +75,9 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
     @Override
     public Dumper dumpInner(Dumper d) {
         condition.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
-        d.print(" ? ");
+        d.operator(" ? ");
         lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
-        d.print(" : ");
+        d.operator(" : ");
         rhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
     }

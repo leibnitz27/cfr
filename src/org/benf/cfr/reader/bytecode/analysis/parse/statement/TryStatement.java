@@ -32,7 +32,7 @@ public class TryStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("try { ").print(exceptionGroup.getTryBlockIdentifier().toString()).print("\n");
+        return dumper.print("try { ").print(exceptionGroup.getTryBlockIdentifier().toString()).newln();
     }
 
     @Override

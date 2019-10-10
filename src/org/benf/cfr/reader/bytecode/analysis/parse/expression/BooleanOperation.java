@@ -103,7 +103,7 @@ public class BooleanOperation extends AbstractExpression implements ConditionalE
     @Override
     public Dumper dumpInner(Dumper d) {
         lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE);
-        d.print(" ").print(op.getShowAs()).print(" ");
+        d.print(" ").operator(op.getShowAs()).print(" ");
         rhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.FALSE);
         return d;
     }

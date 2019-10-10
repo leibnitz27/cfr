@@ -74,12 +74,12 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
             // Let there now be a rant about how default methods on super classes allowed
             // multiple inheritance to sneak in by the back door.  Seriously, what?!
             if (isOnInterface) {
-                d.dump(getFunction().getClassEntry().getTypeInstance()).print(".");
+                d.dump(getFunction().getClassEntry().getTypeInstance()).separator(".");
             }
             if (this.typeName != null) {
-                d.dump(this.typeName).print(".");
+                d.dump(this.typeName).separator(".");
             }
-            d.print("super.").methodName(methodPrototype.getFixedName(), methodPrototype, false).print("(");
+            d.print("super").separator(".").methodName(methodPrototype.getFixedName(), methodPrototype, false, false).separator("(");
         }
         boolean first = true;
 
@@ -90,7 +90,7 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
             first = false;
             methodPrototype.dumpAppropriatelyCastedArgumentString(arg, d);
         }
-        d.print(")");
+        d.separator(")");
         return d;
     }
 

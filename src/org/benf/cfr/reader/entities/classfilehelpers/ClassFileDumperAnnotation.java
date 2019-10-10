@@ -26,7 +26,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
 
         d.print("@interface ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
         getFormalParametersText(signature, d);
-        d.print("\n");
+        d.newln();
 
         d.removePendingCarriageReturn().print(" ");
     }
@@ -43,7 +43,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
         boolean first = true;
         dumpAnnotations(classFile, d);
         dumpHeader(classFile, innerClass, d);
-        d.print("{\n");
+        d.print("{").newln();
         d.indent(1);
         // Horrid, but an interface can have fields....
         List<ClassFileField> fields = classFile.getFields();
@@ -64,7 +64,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
         }
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
-        d.print("}\n");
+        d.print("}").newln();
         return d;
     }
 

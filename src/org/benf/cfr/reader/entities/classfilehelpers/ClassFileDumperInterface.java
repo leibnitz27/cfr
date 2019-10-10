@@ -27,7 +27,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
 
         d.print("interface ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
         getFormalParametersText(signature, d);
-        d.print("\n");
+        d.newln();
 
         List<JavaTypeInstance> interfaces = signature.getInterfaces();
         if (!interfaces.isEmpty()) {
@@ -35,7 +35,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
             int size = interfaces.size();
             for (int x = 0; x < size; ++x) {
                 JavaTypeInstance iface = interfaces.get(x);
-                d.dump(iface).print((x < (size - 1) ? ",\n" : "\n"));
+                d.dump(iface).print((x < (size - 1) ? "," : "")).newln();
             }
         }
         d.removePendingCarriageReturn().print(" ");
@@ -52,7 +52,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
         dumpAnnotations(classFile, d);
         dumpHeader(classFile, innerClass, d);
         boolean first = true;
-        d.print("{\n");
+        d.print("{").newln();
         d.indent(1);
         // Horrid, but an interface can have fields....
         List<ClassFileField> fields = classFile.getFields();
@@ -74,7 +74,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
         }
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
-        d.print("}\n");
+        d.print("}").newln();
         return d;
     }
 

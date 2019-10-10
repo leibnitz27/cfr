@@ -36,7 +36,7 @@ public class ForStatement extends AbstractStatement {
             dumper.dump(assignment);
         }
         dumper.print(") ");
-        dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";\n");
+        dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";").newln();
         return dumper;
     }
 

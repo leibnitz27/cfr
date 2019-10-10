@@ -2,9 +2,11 @@ package org.benf.cfr.reader.entities.classfilehelpers;
 
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -30,12 +32,12 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
 
         d.print("class ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
         getFormalParametersText(signature, d);
-        d.print("\n");
+        d.newln();
 
         JavaTypeInstance superClass = signature.getSuperClass();
         if (superClass != null) {
-            if (!superClass.getRawName().equals("java.lang.Object")) {
-                d.print("extends ").dump(superClass).print("\n");
+            if (!superClass.getRawName().equals(TypeConstants.objectName)) {
+                d.print("extends ").dump(superClass).newln();
             }
         }
 
@@ -45,7 +47,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
             int size = interfaces.size();
             for (int x = 0; x < size; ++x) {
                 JavaTypeInstance iface = interfaces.get(x);
-                d.dump(iface).print((x < (size - 1) ? ",\n" : "\n"));
+                d.dump(iface).print((x < (size - 1) ? "," : "")).newln();
             }
         }
         d.removePendingCarriageReturn().print(" ");
@@ -63,7 +65,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         dumpComments(classFile, d);
         dumpAnnotations(classFile, d);
         dumpHeader(classFile, innerClass, d);
-        d.print("{\n");
+        d.print("{").newln();
         d.indent(1);
         boolean first = true;
 
@@ -89,13 +91,12 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         }
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
-        d.print("}\n");
+        d.print("}").newln();
 
         return d;
     }
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
-
     }
 }

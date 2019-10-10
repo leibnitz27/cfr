@@ -21,7 +21,7 @@ public class UnstructuredFinally extends AbstractUnStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("** finally { \n");
+        dumper.print("** finally { ").newln();
         return dumper;
     }
 

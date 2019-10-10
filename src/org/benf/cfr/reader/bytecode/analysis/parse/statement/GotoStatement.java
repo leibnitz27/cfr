@@ -20,7 +20,7 @@ public class GotoStatement extends JumpingStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         try {
-            return dumper.print("" + jumpType + " " + getJumpTarget().getContainer().getLabel() + ";\n");
+            return dumper.print("" + jumpType + " " + getJumpTarget().getContainer().getLabel() + ";").newln();
         } catch (Exception e) {
             return dumper.print("!!! " + jumpType + " bad target");
         }

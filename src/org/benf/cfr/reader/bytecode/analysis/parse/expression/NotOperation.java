@@ -62,7 +62,7 @@ public class NotOperation extends AbstractExpression implements ConditionalExpre
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.print("!");
+        d.operator("!");
         inner.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
     }

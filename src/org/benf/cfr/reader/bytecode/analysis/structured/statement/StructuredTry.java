@@ -59,7 +59,7 @@ public class StructuredTry extends AbstractStructuredStatement {
     public Dumper dump(Dumper dumper) {
         dumper.print("try ");
         if (resourceBlock != null) {
-            dumper.print("(");
+            dumper.separator("(");
             boolean first = true;
             for (Op04StructuredStatement resource : resourceBlock) {
                 if (!first) dumper.print("     ");
@@ -67,7 +67,7 @@ public class StructuredTry extends AbstractStructuredStatement {
                 first = false;
             }
             dumper.removePendingCarriageReturn();
-            dumper.print(")");
+            dumper.separator(")");
         }
         tryBlock.dump(dumper);
         for (Op04StructuredStatement catchBlock : catchBlocks) {

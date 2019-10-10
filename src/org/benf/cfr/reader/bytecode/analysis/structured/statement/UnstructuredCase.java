@@ -26,10 +26,10 @@ public class UnstructuredCase extends AbstractUnStructuredStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         if (values.isEmpty()) {
-            dumper.print("** default:\n");
+            dumper.print("** default:").newln();
         } else {
             for (Expression value : values) {
-                dumper.print("** case ").dump(value).print(":\n");
+                dumper.print("** case ").dump(value).print(":").newln();
             }
         }
         return dumper;

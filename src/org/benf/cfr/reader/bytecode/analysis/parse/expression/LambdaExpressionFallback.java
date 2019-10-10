@@ -115,19 +115,23 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
         } else {
             int n = targetFnArgTypes.size();
             boolean multi = n != 1;
-            if (multi) d.print("(");
+            if (multi) {
+                d.separator("(");
+            }
             for (int x = 0; x < n; ++x) {
-                if (x > 0) d.print(", ");
-                d.print("arg_" + x);
+                if (x > 0) d.separator(", ");
+                d.identifier("arg_" + x, false);
             }
-            if (multi) d.print(")");
+            if (multi) {
+                d.separator(")");
+            }
+            d.operator(" -> ");
             if (instance) {
-                d = d.print(" -> ");
-                curriedArgs.get(0).dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE).print('.').print(lambdaFnName);
+                curriedArgs.get(0).dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE).separator(".").print(lambdaFnName);
             } else {
-                d.print(" -> ").dump(callClassType).print('.').print(lambdaFnName);
+                d.dump(callClassType).print('.').print(lambdaFnName);
             }
-            d.print("(");
+            d.separator("(");
             boolean first = true;
             for (int x = instance ? 1 : 0, cnt = curriedArgs.size(); x < cnt; ++x) {
                 Expression c = curriedArgs.get(x);
@@ -138,7 +142,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
                 first = StringUtils.comma(first, d);
                 d.print("arg_" + x);
             }
-            d.print(")");
+            d.separator(")");
         }
         return d;
     }

@@ -23,7 +23,12 @@ public class NamedVariableDefault implements NamedVariable {
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.print(name);
+        return dump(d, false);
+    }
+
+    @Override
+    public Dumper dump(Dumper d, boolean defines) {
+        return d.identifier(name, defines);
     }
 
     @Override

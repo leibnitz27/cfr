@@ -19,7 +19,7 @@ public class SwitchStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("switch (").dump(switchOn).print(") { // " + switchBlock + "\n");
+        return dumper.print("switch (").dump(switchOn).print(") { // " + switchBlock).newln();
     }
 
     @Override

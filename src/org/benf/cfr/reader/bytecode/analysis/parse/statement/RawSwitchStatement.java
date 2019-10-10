@@ -28,15 +28,15 @@ public class RawSwitchStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("switch (").dump(switchOn).print(") {\n");
+        dumper.print("switch (").dump(switchOn).print(") {").newln();
         List<DecodedSwitchEntry> targets = switchData.getJumpTargets();
         int targetIdx = 1;
         for (DecodedSwitchEntry decodedSwitchEntry : targets) {
             String tgtLbl = getTargetStatement(targetIdx++).getContainer().getLabel();
-            dumper.print(" case " + decodedSwitchEntry.getValue() + ": goto " + tgtLbl + ";\n");
+            dumper.print(" case " + decodedSwitchEntry.getValue() + ": goto " + tgtLbl + ";").newln();
         }
-        dumper.print(" default: goto " + getTargetStatement(0).getContainer().getLabel() + ";\n");
-        dumper.print("}\n");
+        dumper.print(" default: goto " + getTargetStatement(0).getContainer().getLabel() + ";").newln();
+        dumper.print("}").newln();
         return dumper;
     }
 

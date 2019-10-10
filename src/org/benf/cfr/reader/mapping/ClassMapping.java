@@ -1,7 +1,6 @@
 package org.benf.cfr.reader.mapping;
 
 import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
-import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;

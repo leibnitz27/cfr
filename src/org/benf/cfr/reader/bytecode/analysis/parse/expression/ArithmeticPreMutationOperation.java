@@ -32,7 +32,7 @@ public class ArithmeticPreMutationOperation extends AbstractMutatingAssignmentEx
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        return d.print(op == ArithOp.PLUS ? "++" : "--").dump(mutated);
+        return d.operator(op == ArithOp.PLUS ? "++" : "--").dump(mutated);
     }
 
     @Override

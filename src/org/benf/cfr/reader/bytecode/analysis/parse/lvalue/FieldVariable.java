@@ -98,10 +98,10 @@ public class FieldVariable extends AbstractFieldVariable {
             // I'd rather not have this check here, but I don't want to have a pass to get rid of
             // what is actually useful information.
             if (!objectIsIllegalThis()) {
-                object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER).print(".");
+                object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER).separator(".");
             }
         }
-        return d.fieldName(getFieldName(), getOwningClassType(), isHiddenDeclaration(), false);
+        return d.fieldName(getFieldName(), getOwningClassType(), isHiddenDeclaration(), false, false);
     }
 
     @Override

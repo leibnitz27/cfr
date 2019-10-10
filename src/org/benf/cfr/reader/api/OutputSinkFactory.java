@@ -22,7 +22,14 @@ public interface OutputSinkFactory {
         /** Sinks will accept {@link org.benf.cfr.reader.api.SinkReturns.DecompiledMultiVer} */
         DECOMPILED_MULTIVER(SinkReturns.DecompiledMultiVer.class),
         /** Sinks will accept {@link org.benf.cfr.reader.api.SinkReturns.ExceptionMessage} */
-        EXCEPTION_MESSAGE(SinkReturns.ExceptionMessage.class);
+        EXCEPTION_MESSAGE(SinkReturns.ExceptionMessage.class),
+        /**
+         * Sinks will accept a stream of {@link org.benf.cfr.reader.api.SinkReturns.Token},
+         * terminating in an EOF token for any given file.
+         *
+         * Note that these tokens may be reused, and should not be cached.
+         */
+        TOKEN_STREAM(SinkReturns.Token.class);
 
         /**
          * Get the type of message that the sink will be expected to take.

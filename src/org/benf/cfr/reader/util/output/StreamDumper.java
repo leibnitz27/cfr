@@ -8,7 +8,6 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
-import java.util.List;
 import java.util.Set;
 
 public abstract class StreamDumper implements Dumper {
@@ -38,10 +37,22 @@ public abstract class StreamDumper implements Dumper {
     protected abstract void write(String s);
 
     @Override
-    public void printLabel(String s) {
+    public Dumper label(String s, boolean inline) {
         processPendingCR();
-        write(s + ":\n");
-        atStart = true;
+        if (inline) {
+            doIndent();
+            write(s + ": ");
+        } else {
+            write(s + ":");
+            newln();
+        }
+        return this;
+    }
+
+    @Override
+    public Dumper comment(String s) {
+        print("// " + s);
+        return newln();
     }
 
     @Override
@@ -65,13 +76,13 @@ public abstract class StreamDumper implements Dumper {
     }
 
     @Override
-    public Dumper identifier(String s) {
+    public Dumper identifier(String s, boolean defines) {
         return print(illegalIdentifierDump.getLegalIdentifierFor(s));
     }
 
     @Override
-    public Dumper methodName(String s, MethodPrototype p, boolean special) {
-        return identifier(s);
+    public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
+        return identifier(s, defines);
     }
 
     @Override
@@ -79,7 +90,7 @@ public abstract class StreamDumper implements Dumper {
         processPendingCR();
         doIndent();
         boolean doNewLn = false;
-        if (s.endsWith("\n")) {
+        if (s.endsWith("\n")) { // this should never happen.
             s = s.substring(0, s.length() - 1);
             doNewLn = true;
         }
@@ -96,6 +107,24 @@ public abstract class StreamDumper implements Dumper {
     @Override
     public Dumper print(char c) {
         return print("" + c);
+    }
+
+    @Override
+    public Dumper operator(String s) {
+        print(s);
+        return this;
+    }
+
+    @Override
+    public Dumper separator(String s) {
+        print(s);
+        return this;
+    }
+
+    @Override
+    public Dumper literal(String s, Object o) {
+        print(s);
+        return this;
     }
 
     @Override
@@ -124,25 +153,13 @@ public abstract class StreamDumper implements Dumper {
     }
 
     @Override
-    public int getIndent() {
-        return indent;
-    }
-
-    @Override
     public void indent(int diff) {
         indent += diff;
     }
 
     @Override
-    public void dump(List<? extends Dumpable> d) {
-        for (Dumpable dumpable : d) {
-            dumpable.dump(this);
-        }
-    }
-
-    @Override
-    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic) {
-        identifier(name);
+    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
+        identifier(name, defines);
         return this;
     }
 

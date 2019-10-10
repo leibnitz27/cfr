@@ -47,7 +47,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
             d.dump(typeInstance);
         }
         if (!(isEnum && args.isEmpty())) {
-            d.print("(");
+            d.separator("(");
             boolean first = true;
             for (int i = 0, len = args.size(); i < len; ++i) {
                 if (usedMethod != null && usedMethod.isHiddenArg(i)) continue;
@@ -55,9 +55,9 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
                 first = StringUtils.comma(first, d);
                 d.dump(arg);
             }
-            d.print(")");
+            d.separator(")");
         }
-        d.print("{\n");
+        d.print("{").newln();
         d.indent(1);
         int outcrs = d.getOutputCount();
 
@@ -93,7 +93,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
         if (d.getOutputCount() == outcrs) {
             d.removePendingCarriageReturn();
         }
-        d.print("}\n");
+        d.print("}").newln();
 
         return d;
     }

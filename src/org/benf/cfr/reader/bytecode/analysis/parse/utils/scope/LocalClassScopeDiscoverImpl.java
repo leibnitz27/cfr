@@ -66,6 +66,11 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
         }
 
         @Override
+        public Dumper dump(Dumper d, boolean defines) {
+            return null;
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;

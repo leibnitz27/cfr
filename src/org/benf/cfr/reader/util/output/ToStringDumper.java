@@ -7,7 +7,6 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.collections.SetFactory;
 
-import java.util.List;
 import java.util.Set;
 
 public class ToStringDumper implements Dumper {
@@ -27,10 +26,16 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
-    public void printLabel(String s) {
+    public Dumper label(String s, boolean inline) {
         processPendingCR();
-        sb.append(s).append(":\n");
-        atStart = true;
+        sb.append(s).append(":");
+        return this;
+    }
+
+    @Override
+    public Dumper comment(String s) {
+        sb.append("// ").append(s).append("\n");
+        return this;
     }
 
     @Override
@@ -53,13 +58,13 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
-    public Dumper identifier(String s) {
+    public Dumper identifier(String s, boolean defines) {
         return print(s);
     }
 
     @Override
-    public Dumper methodName(String s, MethodPrototype p, boolean special) {
-        return identifier(s);
+    public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
+        return identifier(s, defines);
     }
 
     @Override
@@ -93,6 +98,24 @@ public class ToStringDumper implements Dumper {
         return this;
     }
 
+    @Override
+    public Dumper operator(String s) {
+        print(s);
+        return this;
+    }
+
+    @Override
+    public Dumper separator(String s) {
+        print(s);
+        return this;
+    }
+
+    @Override
+    public Dumper literal(String s, Object o) {
+        print(s);
+        return this;
+    }
+
     private void doIndent() {
         if (!atStart) return;
         String indents = "    ";
@@ -101,20 +124,8 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
-    public int getIndent() {
-        return indent;
-    }
-
-    @Override
     public void indent(int diff) {
         indent += diff;
-    }
-
-    @Override
-    public void dump(List<? extends Dumpable> d) {
-        for (Dumpable dumpable : d) {
-            dumpable.dump(this);
-        }
     }
 
     @Override
@@ -139,8 +150,8 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
-    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic) {
-        identifier(name);
+    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
+        identifier(name, defines);
         return this;
     }
 

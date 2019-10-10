@@ -176,18 +176,19 @@ public class MethodPrototype implements TypeUsageCollectable {
     public void dumpDeclarationSignature(Dumper d, String methName, Method.MethodConstructor isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
 
         if (formalTypeParameters != null) {
-            d.print('<');
+            //  according to the JLS, these are operators.  Tempting to define a new category.
+            d.operator("<");
             boolean first = true;
             for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
                 first = StringUtils.comma(first, d);
                 d.dump(formalTypeParameter);
             }
-            d.print("> ");
+            d.operator("> ");
         }
         if (!isConstructor.isConstructor()) {
             d.dump(result).print(" ");
         }
-        d.methodName(methName, this, isConstructor.isConstructor()).print("(");
+        d.methodName(methName, this, isConstructor.isConstructor(), true).separator("(");
         /* We don't get a vararg type to change itself, as it's a function of the method, not the type
          */
 
@@ -221,9 +222,10 @@ public class MethodPrototype implements TypeUsageCollectable {
             } else {
                 d.dump(arg);
             }
-            d.print(" ").dump(param.getName());
+            d.print(" ");
+            param.getName().dump(d, true);
         }
-        d.print(")");
+        d.separator(")");
     }
 
     public boolean parametersComputed() {

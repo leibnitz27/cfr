@@ -37,7 +37,7 @@ public class SinkDumperFactory implements DumperFactory {
 
     @Override
     public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-        List<OutputSinkFactory.SinkClass> supported = sinkFactory.getSupportedSinks(OutputSinkFactory.SinkType.JAVA, Arrays.asList(OutputSinkFactory.SinkClass.DECOMPILED_MULTIVER, OutputSinkFactory.SinkClass.DECOMPILED, OutputSinkFactory.SinkClass.STRING));
+        List<OutputSinkFactory.SinkClass> supported = sinkFactory.getSupportedSinks(OutputSinkFactory.SinkType.JAVA, Arrays.asList(OutputSinkFactory.SinkClass.DECOMPILED_MULTIVER, OutputSinkFactory.SinkClass.DECOMPILED, OutputSinkFactory.SinkClass.TOKEN_STREAM, OutputSinkFactory.SinkClass.STRING));
         if (supported == null) supported = justString;
         for (OutputSinkFactory.SinkClass sinkClass : supported) {
             switch (sinkClass) {
@@ -47,6 +47,8 @@ public class SinkDumperFactory implements DumperFactory {
                     return SinkSourceClassDumper(sinkFactory.<SinkReturns.Decompiled>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), classType, typeUsageInformation, illegalIdentifierDump);
                 case STRING:
                     return SinkStringClassDumper(sinkFactory.<String>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), typeUsageInformation, illegalIdentifierDump);
+                case TOKEN_STREAM:
+                    return TokenStreamClassDumper(sinkFactory.<SinkReturns.Token>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), version, classType, typeUsageInformation, illegalIdentifierDump);
                 default:
             }
         }
@@ -55,6 +57,10 @@ public class SinkDumperFactory implements DumperFactory {
             stringSink = new NopStringSink();
         }
         return SinkStringClassDumper(stringSink, typeUsageInformation, illegalIdentifierDump);
+    }
+
+    private Dumper TokenStreamClassDumper(final OutputSinkFactory.Sink<SinkReturns.Token> sink, int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+        return new TokenStreamDumper(sink, version, classType, typeUsageInformation, options, illegalIdentifierDump);
     }
 
     private Dumper SinkStringClassDumper(final OutputSinkFactory.Sink<String> sink, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {

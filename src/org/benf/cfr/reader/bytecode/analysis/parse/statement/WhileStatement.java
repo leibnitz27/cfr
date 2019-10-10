@@ -35,7 +35,7 @@ public class WhileStatement extends AbstractStatement {
             dumper.dump(condition);
         }
         dumper.print(") ");
-        dumper.print(" // ends " + getTargetStatement(getBackJumpIndex()).getContainer().getLabel() + ";\n");
+        dumper.print(" // ends " + getTargetStatement(getBackJumpIndex()).getContainer().getLabel() + ";").newln();
         return dumper;
     }
 

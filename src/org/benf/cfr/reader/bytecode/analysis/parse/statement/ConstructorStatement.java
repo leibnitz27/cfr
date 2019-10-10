@@ -25,7 +25,7 @@ public class ConstructorStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print(MiscConstants.INIT_METHOD).dump(invokation).print(";\n");
+        return dumper.print(MiscConstants.INIT_METHOD).dump(invokation).endCodeln();
     }
 
     @Override

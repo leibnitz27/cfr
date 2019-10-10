@@ -45,7 +45,7 @@ public class ArithmeticMutationOperation extends AbstractMutatingAssignmentExpre
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.dump(mutated).print(' ').print(op.getShowAs() + "=").print(' ');
+        d.dump(mutated).print(' ').operator(op.getShowAs() + "=").print(' ');
         mutation.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
     }

@@ -65,16 +65,16 @@ public class DynamicInvokation extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.print("(").dump(getInferredJavaType().getJavaTypeInstance()).print(")");
+        d.separator("(").dump(getInferredJavaType().getJavaTypeInstance()).separator(")");
         d.dump(innerInvokation);
-        d.print("(");
+        d.separator("(");
         boolean first = true;
         for (Expression arg : dynamicArgs) {
-            if (!first) d.print(", ");
+            if (!first) d.separator(", ");
             first = false;
             d.dump(arg);
         }
-        d.print(")");
+        d.separator(")");
         return d;
     }
 

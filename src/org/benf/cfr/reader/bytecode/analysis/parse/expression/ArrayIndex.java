@@ -53,7 +53,7 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
     @Override
     public Dumper dumpInner(Dumper d) {
         array.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
-        d.print("[").dump(index).print("]");
+        d.separator("[").dump(index).separator("]");
         return d;
     }
 

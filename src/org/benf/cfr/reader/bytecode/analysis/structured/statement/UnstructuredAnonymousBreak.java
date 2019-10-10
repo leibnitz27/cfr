@@ -17,7 +17,7 @@ public class UnstructuredAnonymousBreak extends AbstractUnStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("** break ").print(blockEnding.getName()).print("\n");
+        return dumper.print("** break ").print(blockEnding.getName()).newln();
     }
 
     @Override

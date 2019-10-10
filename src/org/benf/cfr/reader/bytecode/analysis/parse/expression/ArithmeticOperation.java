@@ -78,7 +78,7 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
     @Override
     public Dumper dumpInner(Dumper d) {
         lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE);
-        d.print(" " + op.getShowAs() + " ");
+        d.operator(" " + op.getShowAs() + " ");
         rhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.FALSE);
         return d;
     }

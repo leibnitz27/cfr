@@ -24,10 +24,11 @@ public class StructuredContinue extends AbstractStructuredContinue {
     @Override
     public Dumper dump(Dumper dumper) {
         if (localContinue) {
-            dumper.print("continue;\n");
+            dumper.print("continue;");
         } else {
-            dumper.print("continue " + continueTgt.getName() + ";\n");
+            dumper.print("continue " + continueTgt.getName() + ";");
         }
+        dumper.newln();
         return dumper;
     }
 

@@ -25,7 +25,7 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
+        if (block.hasForeignReferences()) dumper.label(block.getName(), true);
         dumper.print("do ");
         getBody().dump(dumper);
         dumper.removePendingCarriageReturn();
@@ -35,7 +35,7 @@ public class StructuredDo extends AbstractStructuredBlockStatement {
         } else {
             dumper.dump(condition);
         }
-        return dumper.print(");\n");
+        return dumper.print(");").newln();
     }
 
     @Override

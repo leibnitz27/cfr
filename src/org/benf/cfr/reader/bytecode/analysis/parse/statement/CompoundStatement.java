@@ -25,11 +25,11 @@ public class CompoundStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("{\n");
+        dumper.print("{").newln();
         for (Statement statement : statements) {
             statement.dump(dumper);
         }
-        dumper.print("}\n");
+        dumper.print("}").newln();
         return dumper;
     }
 
