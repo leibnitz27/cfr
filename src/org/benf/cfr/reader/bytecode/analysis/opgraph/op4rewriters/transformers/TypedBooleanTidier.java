@@ -65,14 +65,9 @@ public class TypedBooleanTidier implements StructuredStatementTransformer, Expre
         return res;
     }
 
-//    @Override
-//    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-//        return expression;
-//    }
-
     @Override
     public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        return lValue;
+        return lValue.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
     }
 
     @Override

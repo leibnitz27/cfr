@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -288,6 +289,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             this.expression = expression;
             this.statementContainer = statementContainer;
         }
+
+        @Override
+        public String toString() {
+            return statementContainer.toString();
+        }
     }
 
     public AliasRewriter getAliasRewriter() {
@@ -343,6 +349,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     if (((StackValue) rhs).getStackValue().equals(stackSSALabel)) {
                         possibleAliases.get(stackSSALabel).add(new LValueStatementContainer(assignmentSimple.getCreatedLValue(), statementContainer));
                     }
+                } else if (stackSSALabel.getInferredJavaType().getJavaTypeInstance() instanceof JavaArrayTypeInstance) {
+                    ExpressionStatement es = multiFound.get(stackSSALabel);
+                    if (es != null && es.expression instanceof LValueExpression) {
+                        possibleAliases.get(stackSSALabel).add(new LValueStatementContainer(((LValueExpression) es.expression).getLValue(), statementContainer));
+                    }
                 }
             }
             usages.get(stackSSALabel).add(statementContainer);
@@ -363,6 +374,15 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     guessAlias = lValueStatementContainer.lValue;
                     guessStatement = lValueStatementContainer.statementContainer;
                     break;
+                }
+            }
+            if (guessAlias == null) {
+                if (stackSSALabel.getInferredJavaType().getJavaTypeInstance() instanceof JavaArrayTypeInstance) {
+                    ExpressionStatement mf = multiFound.get(stackSSALabel);
+                    if (mf != null && mf.expression instanceof LValueExpression) {
+                        guessAlias = ((LValueExpression) mf.expression).getLValue();
+                        guessStatement = mf.statementContainer;
+                    }
                 }
             }
             if (guessAlias == null) return null;
