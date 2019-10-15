@@ -475,7 +475,39 @@ public class SwitchReplacer {
                 statement.markBlock(switchBlock);
             }
             if (indexLastCase != indexLastInLastBlock + 1) {
-                throw new ConfusedCFRException("Extractable last case doesn't follow previous");
+                /* This means we should have reordered the code - the fact we haven't probably
+                 * means the case is jumping to some common code, i.e. not following the standard
+                 * pattern.
+                 * This is painful to deal with - if we can duplicate the target, then we
+                 * can copy it into it's 'natural' location.
+                 *
+                 * For now, just consider cloning returns.
+                 */
+                Op03SimpleStatement lastInBlock = statements.get(indexLastInLastBlock);
+                Op03SimpleStatement target = statements.get(indexLastCase);
+                // We expect target to be our case statement - and IT should have 1 target.
+                boolean handled = false;
+                if (target.getStatement() instanceof CaseStatement) {
+                    Op03SimpleStatement t2 = target.getTargets().get(0);
+                    if (t2.getStatement() instanceof ReturnStatement) {
+                        Op03SimpleStatement dupCase = new Op03SimpleStatement(switchStatement.getBlockIdentifiers(), target.getStatement(), lastInBlock.getIndex().justAfter());
+                        indexLastCase = indexLastInLastBlock + 1;
+                        statements.add(indexLastCase, dupCase);
+                        target.removeSource(switchStatement);
+                        target.nopOut();
+                        switchStatement.replaceTarget(target, dupCase);
+                        dupCase.addSource(switchStatement);
+
+                        Op03SimpleStatement dupReturn = new Op03SimpleStatement(dupCase.getBlockIdentifiers(), t2.getStatement(), dupCase.getIndex().justAfter());
+                        statements.add(indexLastCase+1, dupReturn);
+                        dupCase.addTarget(dupReturn);
+                        dupReturn.addSource(dupCase);
+                        handled = true;
+                    }
+                }
+                if (!handled) {
+                    throw new ConfusedCFRException("Extractable last case doesn't follow previous, and can't clone.");
+                }
             }
             lastCase.markBlock(switchBlock);
             breakTarget = indexLastCase + 1;
