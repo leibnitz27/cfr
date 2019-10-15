@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.variables;
 
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.attributes.LocalVariableEntry;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -50,13 +51,18 @@ public class VariableNamerHinted implements VariableNamer {
             return missingNamer.getName(0, ident, sstackPos);
         }
 
-//        Pair<LocalVariableEntry, Ident> key = Pair.make(lve, ident);
         LocalVariableEntry key = lve;
         NamedVariable namedVariable = cache.get(key);
         if (namedVariable == null) {
             String name = cp.getUTF8Entry(lve.getNameIndex()).getValue();
             if (IllegalIdentifierReplacement.isIllegal(name)) {
                 namedVariable = new NamedVariableDefault(name);
+                // This is a bit of a hack - we bless the 'this' constant
+                // if used in a legit location, however we should also track if this
+                // is an instance method.
+                if (name.equals(MiscConstants.THIS) && ident.getIdx() == 0) {
+                    namedVariable.forceName(MiscConstants.THIS);
+                }
             } else {
                 int genIdx = 0;
                 namedVariable = new NamedVariableFromHint(name, lve.getIndex(), genIdx);
@@ -64,14 +70,6 @@ public class VariableNamerHinted implements VariableNamer {
             cache.put(key, namedVariable);
         }
         return namedVariable;
-
-//        if (lve.getIndex() == stackPosition &&
-//                lve.getStartPc() <= (originalRawOffset) &&
-//                (lve.getStartPc() + lve.getLength()) >= originalRawOffset) {
-//        } else {
-//            return cp.getUTF8Entry(lve.getNameIndex()).getValue();
-//        }
-
     }
 
     private static class OrderLocalVariables implements Comparator<LocalVariableEntry> {

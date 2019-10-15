@@ -8,10 +8,14 @@ import java.util.Map;
 
 public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
     private final Map<String, Integer> rewrites = MapFactory.newMap();
+    private static final Map<String, Boolean> known = MapFactory.newIdentityMap();
     private int next = 0;
 
     private static final IllegalIdentifierReplacement instance = new IllegalIdentifierReplacement();
 
+    static {
+        known.put(MiscConstants.THIS, true);
+    }
 
     private IllegalIdentifierReplacement() {
     }
@@ -45,6 +49,7 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
     public static boolean isIllegal(String identifier) {
         if (!isIllegal2(identifier)) return false;
         if (identifier.endsWith(".this")) return false;
+        if (known.containsKey(identifier)) return false;
         return true;
     }
 
