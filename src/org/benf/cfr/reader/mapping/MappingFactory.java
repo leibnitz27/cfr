@@ -132,7 +132,7 @@ public class MappingFactory {
     }
 
     private static final Pattern classPattern = Pattern.compile("^(.+) -> (.+):$");
-    // com.mojang.math.Quaternion -> a:
+    // com.blah.blah2.Example -> a:
     private ClassMapping parseClassMapping(String line) {
         Matcher m = classPattern.matcher(line);
         if (!m.matches()) {
