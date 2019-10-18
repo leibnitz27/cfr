@@ -102,8 +102,16 @@ public class LocalVariable extends AbstractLValue {
     }
 
     @Override
+    public Dumper dump(Dumper d, boolean defines) {
+        return name.dump(d, defines);
+    }
+
+    @Override
     public Dumper dumpInner(Dumper d) {
-        return name.dump(d).print(typeToString());
+        name.dump(d);
+        // Note that this print is only decorating when we have bad data.
+        d.print(typeToString());
+        return d;
     }
 
     public NamedVariable getName() {

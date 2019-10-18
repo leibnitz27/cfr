@@ -51,25 +51,26 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
-        dumper.print("for (");
+        if (block.hasForeignReferences()) dumper.label(block.getName(), true);
+        dumper.print("for ").separator("(");
         if (initial != null) {
-            // It's a big grotty to have creator here, but no worse that pushing it into Assignmentsimple
             if (isCreator) {
-                LValue.Creation.dump(dumper, initial.getCreatedLValue()).print(" ");
+                // The reason this looks wrong is because initial should be a structured definition here....
+                LValue.Creation.dump(dumper, initial.getCreatedLValue()).print(" = ").dump(initial.getRValue()).separator(";");
+            } else {
+                dumper.dump(initial);
             }
-            dumper.dump(initial);
             dumper.removePendingCarriageReturn();
         } else {
-            dumper.print(";");
+            dumper.separator(";");
         }
-        dumper.print(" ").dump(condition).print("; ");
+        dumper.print(" ").dump(condition).separator("; ");
         boolean first = true;
         for (Expression assignment : assignments) {
             first = StringUtils.comma(first, dumper);
             dumper.dump(assignment);
         }
-        dumper.print(") ");
+        dumper.separator(") ");
         getBody().dump(dumper);
         return dumper;
     }

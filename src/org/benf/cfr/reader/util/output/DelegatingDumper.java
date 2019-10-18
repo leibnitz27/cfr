@@ -65,8 +65,8 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
-    public Dumper identifier(String s, boolean defines) {
-        delegate.identifier(s, defines);
+    public Dumper identifier(String s, Object ref, boolean defines) {
+        delegate.identifier(s, ref, defines);
         return this;
     }
 

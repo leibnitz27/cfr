@@ -71,6 +71,11 @@ public abstract class AbstractLValue implements LValue {
     @Override
     public abstract Precedence getPrecedence();
 
+    @Override
+    public Dumper dump(Dumper d, boolean defines) {
+        return dumpInner(d);
+    }
+
     public abstract Dumper dumpInner(Dumper d);
 
     @Override

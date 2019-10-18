@@ -58,13 +58,13 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
-    public Dumper identifier(String s, boolean defines) {
+    public Dumper identifier(String s, Object ref, boolean defines) {
         return print(s);
     }
 
     @Override
     public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
-        return identifier(s, defines);
+        return identifier(s, null, defines);
     }
 
     @Override
@@ -151,7 +151,7 @@ public class ToStringDumper implements Dumper {
 
     @Override
     public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
-        identifier(name, defines);
+        identifier(name, null, defines);
         return this;
     }
 

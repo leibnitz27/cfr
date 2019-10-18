@@ -17,6 +17,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.Troolean;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -118,9 +119,12 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
             if (multi) {
                 d.separator("(");
             }
+            List<String> args = ListFactory.newList(n);
             for (int x = 0; x < n; ++x) {
                 if (x > 0) d.separator(", ");
-                d.identifier("arg_" + x, false);
+                String arg = "arg_" + x;
+                args.add(arg);
+                d.identifier(arg, arg, true);
             }
             if (multi) {
                 d.separator(")");
@@ -140,7 +144,8 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
             }
             for (int x = 0; x < n; ++x) {
                 first = StringUtils.comma(first, d);
-                d.print("arg_" + x);
+                String arg = args.get(x);
+                d.identifier(arg, arg, false);
             }
             d.separator(")");
         }

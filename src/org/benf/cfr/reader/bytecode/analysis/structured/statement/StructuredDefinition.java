@@ -36,7 +36,7 @@ public class StructuredDefinition extends AbstractStructuredStatement {
     public Dumper dump(Dumper dumper) {
         Class<?> clazz = scopedEntity.getClass();
         if (clazz == LocalVariable.class) {
-            return LValue.Creation.dump(dumper, scopedEntity).print(" ").dump(scopedEntity).endCodeln();
+            return LValue.Creation.dump(dumper, scopedEntity).endCodeln();
         } else if (clazz == SentinelLocalClassLValue.class) {
             JavaTypeInstance type = ((SentinelLocalClassLValue) scopedEntity).getLocalClassType().getDeGenerifiedType();
             if (type instanceof JavaRefTypeInstance) {

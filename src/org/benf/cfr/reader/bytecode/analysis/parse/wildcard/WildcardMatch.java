@@ -409,6 +409,11 @@ public class WildcardMatch {
         }
 
         @Override
+        public Dumper dump(Dumper d, boolean defines) {
+            return dump(d);
+        }
+
+        @Override
         public Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerPrecedence, Troolean isLhs) {
             return d;
         }

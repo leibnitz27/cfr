@@ -41,6 +41,8 @@ public interface LValue extends DumpableWithPrecedence, DeepCloneable<LValue>, T
 
     boolean isVar();
 
+    Dumper dump(Dumper d, boolean defines);
+
     class Creation {
         public static Dumper dump(Dumper d, LValue lValue) {
             JavaAnnotatedTypeInstance annotatedCreationType = lValue.getAnnotatedCreationType();
@@ -55,6 +57,8 @@ public interface LValue extends DumpableWithPrecedence, DeepCloneable<LValue>, T
                     d.dump(t);
                 }
             }
+            d.separator(" ");
+            lValue.dump(d, true);
             return d;
         }
     }

@@ -32,7 +32,7 @@ public interface Dumper {
 
     Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines);
 
-    Dumper identifier(String s, boolean defines);
+    Dumper identifier(String s, Object ref, boolean defines);
 
     Dumper print(char c);
 

@@ -6,10 +6,14 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import static org.benf.cfr.reader.api.SinkReturns.TokenType.*;
@@ -24,11 +28,18 @@ public class TokenStreamDumper implements Dumper {
     private final Options options;
     private final IllegalIdentifierDump illegalIdentifierDump;
 
+    // We don't want to expose internals - we are simply making a offering to allow consumers to associate tokens.
+    private final Map<Object, Object> refMap = MapFactory.newLazyMap(new IdentityHashMap<Object, Object>(), new UnaryFunction<Object, Object>() {
+        @Override
+        public Object invoke(Object arg) {
+            return new Object();
+        }
+    });
+
     private int outputCount = 0;
     private boolean atStart = true;
     private boolean pendingCR = false;
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
-
 
     TokenStreamDumper(OutputSinkFactory.Sink<SinkReturns.Token> sink, int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
         this.sink = sink;
@@ -82,6 +93,10 @@ public class TokenStreamDumper implements Dumper {
 
         Token(SinkReturns.TokenType type, String value, Object raw) {
             this(type, value, raw, Collections.<SinkReturns.TokenTypeFlags>emptySet());
+        }
+
+        Token(SinkReturns.TokenType type, String value, Object raw, SinkReturns.TokenTypeFlags flag) {
+            this(type, value, raw, Collections.singleton(flag));
         }
 
         Token(SinkReturns.TokenType type, String value, SinkReturns.TokenTypeFlags flag) {
@@ -142,7 +157,6 @@ public class TokenStreamDumper implements Dumper {
         }
     }
 
-
     @Override
     public Dumper label(String s, boolean inline) {
         sink(new Token(LABEL, s, SinkReturns.TokenTypeFlags.DEFINES));
@@ -202,11 +216,11 @@ public class TokenStreamDumper implements Dumper {
     }
 
     @Override
-    public Dumper identifier(String s, boolean defines) {
+    public Dumper identifier(String s, Object ref, boolean defines) {
         if (defines) {
-            sink(new Token(IDENTIFIER, s, SinkReturns.TokenTypeFlags.DEFINES));
+            sink(new Token(IDENTIFIER, s, ref, SinkReturns.TokenTypeFlags.DEFINES));
         } else {
-            sink(IDENTIFIER, s);
+            sink(new Token(IDENTIFIER, s, ref));
         }
         return this;
     }
@@ -288,6 +302,6 @@ public class TokenStreamDumper implements Dumper {
 
     @Override
     public int getOutputCount() {
-        return 0;
+        return outputCount;
     }
 }

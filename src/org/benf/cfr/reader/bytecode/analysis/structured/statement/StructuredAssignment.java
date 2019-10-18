@@ -54,9 +54,11 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
     public Dumper dump(Dumper dumper) {
         if (creator) {
             if (lvalue.isFinal()) dumper.print("final ");
-            LValue.Creation.dump(dumper, lvalue).print(" ");
+            LValue.Creation.dump(dumper, lvalue);
+        } else {
+            dumper.dump(lvalue);
         }
-        dumper.dump(lvalue).print(" = ").dump(rvalue).endCodeln();
+        dumper.print(" = ").dump(rvalue).endCodeln();
         return dumper;
     }
 

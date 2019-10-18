@@ -28,7 +28,7 @@ public class NamedVariableDefault implements NamedVariable {
 
     @Override
     public Dumper dump(Dumper d, boolean defines) {
-        return d.identifier(name, defines);
+        return d.identifier(name, this, defines);
     }
 
     @Override
