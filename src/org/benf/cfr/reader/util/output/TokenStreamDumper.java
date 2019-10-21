@@ -208,9 +208,9 @@ public class TokenStreamDumper implements Dumper {
     @Override
     public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
         if (defines) {
-            sink(new Token(METHOD, s, SinkReturns.TokenTypeFlags.DEFINES));
+            sink(new Token(METHOD, s, refMap.get(p), SinkReturns.TokenTypeFlags.DEFINES));
         } else {
-            sink(METHOD, s);
+            sink(new Token(METHOD, s, refMap.get(p)));
         }
         return this;
     }
@@ -218,9 +218,9 @@ public class TokenStreamDumper implements Dumper {
     @Override
     public Dumper identifier(String s, Object ref, boolean defines) {
         if (defines) {
-            sink(new Token(IDENTIFIER, s, ref, SinkReturns.TokenTypeFlags.DEFINES));
+            sink(new Token(IDENTIFIER, s, refMap.get(ref), SinkReturns.TokenTypeFlags.DEFINES));
         } else {
-            sink(new Token(IDENTIFIER, s, ref));
+            sink(new Token(IDENTIFIER, s, refMap.get(ref)));
         }
         return this;
     }
