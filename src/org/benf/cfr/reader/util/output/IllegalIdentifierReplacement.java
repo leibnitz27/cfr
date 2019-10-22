@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
 import org.benf.cfr.reader.bytecode.analysis.variables.Keywords;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -15,6 +16,7 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
 
     static {
         known.put(MiscConstants.THIS, true);
+        known.put(MiscConstants.NEW, true);
     }
 
     private IllegalIdentifierReplacement() {

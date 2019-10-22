@@ -12,6 +12,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -28,17 +29,21 @@ import java.util.List;
 public class LambdaExpressionFallback extends AbstractExpression implements LambdaExpressionCommon {
 
     private JavaTypeInstance callClassType;
-    private String lambdaFnName;
+    private MethodPrototype lambdaFn;
     private List<JavaTypeInstance> targetFnArgTypes;
     private List<Expression> curriedArgs;
     private boolean instance;
     private final boolean colon;
 
+    private String lambdaFnName() {
+        String lambdaFnName = lambdaFn.getName();
+        return lambdaFnName.equals(MiscConstants.INIT_METHOD) ? MiscConstants.NEW : lambdaFnName;
+    }
 
-    public LambdaExpressionFallback(JavaTypeInstance callClassType, InferredJavaType castJavaType, String lambdaFnName, List<JavaTypeInstance> targetFnArgTypes, List<Expression> curriedArgs, boolean instance) {
+    public LambdaExpressionFallback(JavaTypeInstance callClassType, InferredJavaType castJavaType, MethodPrototype lambdaFn, List<JavaTypeInstance> targetFnArgTypes, List<Expression> curriedArgs, boolean instance) {
         super(castJavaType);
         this.callClassType = callClassType;
-        this.lambdaFnName = lambdaFnName.equals(MiscConstants.INIT_METHOD) ? "new" : lambdaFnName;
+        this.lambdaFn = lambdaFn;
         this.targetFnArgTypes = targetFnArgTypes;
         this.curriedArgs = curriedArgs;
         this.instance = instance;
@@ -59,19 +64,19 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
         this.colon = isColon;
     }
 
-    private LambdaExpressionFallback(InferredJavaType inferredJavaType, boolean colon, boolean instance, List<Expression> curriedArgs, List<JavaTypeInstance> targetFnArgTypes, String lambdaFnName, JavaTypeInstance callClassType) {
+    private LambdaExpressionFallback(InferredJavaType inferredJavaType, boolean colon, boolean instance, List<Expression> curriedArgs, List<JavaTypeInstance> targetFnArgTypes, MethodPrototype lambdaFn, JavaTypeInstance callClassType) {
         super(inferredJavaType);
         this.colon = colon;
         this.instance = instance;
         this.curriedArgs = curriedArgs;
         this.targetFnArgTypes = targetFnArgTypes;
-        this.lambdaFnName = lambdaFnName;
+        this.lambdaFn = lambdaFn;
         this.callClassType = callClassType;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new LambdaExpressionFallback(getInferredJavaType(), colon, instance, cloneHelper.replaceOrClone(curriedArgs), targetFnArgTypes, lambdaFnName, callClassType);
+        return new LambdaExpressionFallback(getInferredJavaType(), colon, instance, cloneHelper.replaceOrClone(curriedArgs), targetFnArgTypes, lambdaFn, callClassType);
     }
 
     @Override
@@ -107,11 +112,13 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
 
     @Override
     public Dumper dumpInner(Dumper d) {
+        String name = lambdaFnName();
+        boolean special = name == MiscConstants.NEW;
         if (colon) {
             if (instance) {
-                curriedArgs.get(0).dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE).print("::").print(lambdaFnName);
+                curriedArgs.get(0).dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE).print("::").methodName(name, lambdaFn, special, false);
             } else {
-                d.dump(callClassType).print("::").print(lambdaFnName);
+                d.dump(callClassType).print("::").methodName(name, lambdaFn, special, false);
             }
         } else {
             int n = targetFnArgTypes.size();
@@ -131,9 +138,9 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
             }
             d.operator(" -> ");
             if (instance) {
-                curriedArgs.get(0).dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE).separator(".").print(lambdaFnName);
+                curriedArgs.get(0).dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE).separator(".").methodName(name, lambdaFn, special, false);
             } else {
-                d.dump(callClassType).print('.').print(lambdaFnName);
+                d.dump(callClassType).print('.').methodName(name, lambdaFn, special, false);
             }
             d.separator("(");
             boolean first = true;
@@ -168,7 +175,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
         if (callClassType != null ? !callClassType.equals(that.callClassType) : that.callClassType != null)
             return false;
         if (curriedArgs != null ? !curriedArgs.equals(that.curriedArgs) : that.curriedArgs != null) return false;
-        if (lambdaFnName != null ? !lambdaFnName.equals(that.lambdaFnName) : that.lambdaFnName != null) return false;
+        if (lambdaFn != null ? !lambdaFn.equals(that.lambdaFn) : that.lambdaFn != null) return false;
         if (targetFnArgTypes != null ? !targetFnArgTypes.equals(that.targetFnArgTypes) : that.targetFnArgTypes != null)
             return false;
 
@@ -183,7 +190,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
         LambdaExpressionFallback other = (LambdaExpressionFallback) o;
         if (instance != other.instance) return false;
         if (colon != other.colon) return false;
-        if (!constraint.equivalent(lambdaFnName, other.lambdaFnName)) return false;
+        if (!constraint.equivalent(lambdaFn, other.lambdaFn)) return false;
         if (!constraint.equivalent(curriedArgs, other.curriedArgs)) return false;
         return true;
     }

@@ -29,6 +29,7 @@ public interface MiscConstants {
     String DOT_THIS = ".this";
     String THIS = "this";
     String CLASS = "class";
+    String NEW = "new";
     String UNBOUND_GENERIC = "?";
     char INNER_CLASS_SEP_CHAR = '$';
     String INNER_CLASS_SEP_STR = "$";

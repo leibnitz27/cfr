@@ -206,7 +206,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
          * what it was going to do....
          */
         if (classFile == null) {
-            return new LambdaExpressionFallback(lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFnName, targetFnArgTypes, curriedArgs, instance);
+            return new LambdaExpressionFallback(lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFn, targetFnArgTypes, curriedArgs, instance);
         }
 
         if (curriedArgs.size() + targetFnArgTypes.size() - (instance ? 1 : 0) != lambdaFnArgTypes.size()) {
@@ -328,7 +328,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         }
 
         // Ok, just call the synthetic method directly.
-        return new LambdaExpressionFallback(lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFnName, targetFnArgTypes, curriedArgs, instance);
+        return new LambdaExpressionFallback(lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFn, targetFnArgTypes, curriedArgs, instance);
     }
 
     public static class LambdaInternalRewriter implements ExpressionRewriter {
