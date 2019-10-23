@@ -54,7 +54,9 @@ public class VariableFactory {
      */
     public LValue localVariable(int stackPosition, Ident ident, int origCodeRawOffset) {
         if (ident == null) {
-            throw new IllegalStateException();
+            // This isn't right, and indicates a failure, possibly in synthetic argument deduction.
+            // however, we can recover from here.
+            ident = new Ident(stackPosition, -1);
         }
         InferredJavaType varType = ident.getIdx() == 0 ? typedArgs.get(stackPosition) : null;
         if (varType == null) {
