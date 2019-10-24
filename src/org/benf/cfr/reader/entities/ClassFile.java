@@ -939,7 +939,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         for (Method method : methods) {
             method.releaseCode();
         }
-//        attributes.clear();
     }
 
     public JavaTypeInstance getClassType() {

@@ -216,6 +216,11 @@ public class TokenStreamDumper implements Dumper {
     }
 
     @Override
+    public Dumper packageName(String s, JavaTypeInstance t) {
+        return print(s);
+    }
+
+    @Override
     public Dumper identifier(String s, Object ref, boolean defines) {
         if (defines) {
             sink(new Token(IDENTIFIER, s, refMap.get(ref), SinkReturns.TokenTypeFlags.DEFINES));

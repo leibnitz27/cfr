@@ -236,7 +236,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     public String getPackageName() {
-        return ClassNameUtils.getPackageAndClassNames(getRawName()).getFirst();
+        return ClassNameUtils.getPackageAndClassNames(this).getFirst();
     }
 
     @Override

@@ -40,7 +40,7 @@ public class FileDumper extends StreamDumper {
         super(typeUsageInformation, options, illegalIdentifierDump);
         this.type = type;
         this.summaryDumper = summaryDumper;
-        Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(type.getRawName());
+        Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(type);
         try {
             String fileName = mkFilename(dir, names, summaryDumper);
             File file = new File(fileName);

@@ -68,6 +68,11 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
+    public Dumper packageName(String s, JavaTypeInstance t) {
+        return print(s);
+    }
+
+    @Override
     public Dumper print(String s) {
         processPendingCR();
         doIndent();

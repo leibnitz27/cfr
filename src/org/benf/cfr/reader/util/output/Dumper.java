@@ -32,6 +32,8 @@ public interface Dumper {
 
     Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines);
 
+    Dumper packageName(String s, JavaTypeInstance t);
+
     Dumper identifier(String s, Object ref, boolean defines);
 
     Dumper print(char c);

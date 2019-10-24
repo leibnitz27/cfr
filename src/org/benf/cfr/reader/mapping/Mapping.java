@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.mapping;
 
+import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -164,6 +165,18 @@ public class Mapping implements ObfuscationRewriter, ObfuscationMapping {
                 delegate.fieldName(name, owner, hiddenDeclaration, isStatic, defines);
             } else {
                 delegate.fieldName(c.getFieldName(name, deGenerifiedType,this, Mapping.this, isStatic), owner, hiddenDeclaration, isStatic, defines);
+            }
+            return this;
+        }
+
+        @Override
+        public Dumper packageName(String s, JavaTypeInstance t) {
+            JavaTypeInstance deGenerifiedType = t.getDeGenerifiedType();
+            ClassMapping c = erasedTypeMap.get(deGenerifiedType);
+            if (c == null) {
+                delegate.packageName(s, t);
+            } else {
+                delegate.packageName(c.getRealClass().getPackageName(), c.getRealClass());
             }
             return this;
         }

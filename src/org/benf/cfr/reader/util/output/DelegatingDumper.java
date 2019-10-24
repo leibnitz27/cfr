@@ -65,6 +65,12 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
+    public Dumper packageName(String s, JavaTypeInstance t) {
+        delegate.packageName(s, t);
+        return this;
+    }
+
+    @Override
     public Dumper identifier(String s, Object ref, boolean defines) {
         delegate.identifier(s, ref, defines);
         return this;

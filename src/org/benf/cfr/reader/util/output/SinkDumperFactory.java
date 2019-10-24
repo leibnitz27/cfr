@@ -75,7 +75,7 @@ public class SinkDumperFactory implements DumperFactory {
 
     private Dumper SinkSourceClassDumper(final OutputSinkFactory.Sink<SinkReturns.Decompiled> sink, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         final StringBuilder sb = new StringBuilder();
-        final Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(classType.getRawName());
+        final Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(classType);
 
         return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump) {
 
@@ -106,7 +106,7 @@ public class SinkDumperFactory implements DumperFactory {
 
     private Dumper SinkSourceClassDumper(final OutputSinkFactory.Sink<SinkReturns.Decompiled> sink, final int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         final StringBuilder sb = new StringBuilder();
-        final Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(classType.getRawName());
+        final Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(classType);
 
         return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump) {
 

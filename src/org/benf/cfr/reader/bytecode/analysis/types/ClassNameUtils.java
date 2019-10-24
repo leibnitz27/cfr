@@ -12,6 +12,10 @@ public class ClassNameUtils {
         return from.replace('.', '/');
     }
 
+    public static Pair<String, String> getPackageAndClassNames(JavaTypeInstance type) {
+        return getPackageAndClassNames(type.getRawName());
+    }
+
     public static Pair<String, String> getPackageAndClassNames(String rawName) {
         String full = ClassNameUtils.convertFromPath(rawName);
         int idx = full.lastIndexOf('.');
