@@ -16,6 +16,7 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 class IsolatedStackValue {
     static void nopIsolatedStackValues(List<Op03SimpleStatement> statements) {
@@ -32,8 +33,9 @@ class IsolatedStackValue {
             if (stm instanceof ExpressionStatement) {
                 Expression expression = ((ExpressionStatement) stm).getExpression();
                 if (expression instanceof StackValue) {
-                    StackSSALabel stackValue = ((StackValue) expression).getStackValue();
-                    if (consumptions.put(stackValue, statement) != null) {
+                    StackValue sv = (StackValue)expression;
+                    StackSSALabel stackValue = sv.getStackValue();
+                    if (consumptions.put(stackValue, statement) != null|| stackValue.getStackEntry().getUsageCount() > 1) {
                         blackList.add(stackValue);
                     }
                 }
