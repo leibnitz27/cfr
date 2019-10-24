@@ -191,11 +191,21 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         Matcher<StructuredStatement> test =
                 new ResetAfterTest(wcm1,
                         new MatchSequence(
-                            new StructuredAssignment(wcm1.getLValueWildCard("res"), new LValueExpression(wcm1.getLValueWildCard("static"))),
-                            new StructuredIf(new ComparisonOperation(new LValueExpression(wcm1.getLValueWildCard("res")), Literal.NULL,CompOp.NE), null),
-                            new BeginBlock(null),
-                            new StructuredReturn(new LValueExpression(wcm1.getLValueWildCard("res")), null),
-                            new EndBlock(null),
+                            new MatchOneOf(
+                                new MatchSequence(
+                                    new StructuredAssignment(wcm1.getLValueWildCard("res"), new LValueExpression(wcm1.getLValueWildCard("static"))),
+                                    new StructuredIf(new ComparisonOperation(new LValueExpression(wcm1.getLValueWildCard("res")), Literal.NULL,CompOp.NE), null),
+                                    new BeginBlock(null),
+                                    new StructuredReturn(new LValueExpression(wcm1.getLValueWildCard("res")), null),
+                                    new EndBlock(null)
+                                ),
+                                new MatchSequence(
+                                    new StructuredIf(new ComparisonOperation(new LValueExpression(wcm1.getLValueWildCard("static")), Literal.NULL,CompOp.NE), null),
+                                    new BeginBlock(null),
+                                    new StructuredReturn(new LValueExpression(wcm1.getLValueWildCard("static")), null),
+                                    new EndBlock(null)
+                                )
+                            ),
                             new StructuredAssignment(wcm1.getLValueWildCard("lookup"), new NewPrimitiveArray(
                             new ArrayLength(wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), null, "values")),
                             RawJavaType.INT)))
