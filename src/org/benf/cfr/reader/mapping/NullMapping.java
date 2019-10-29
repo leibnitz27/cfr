@@ -33,6 +33,11 @@ public class NullMapping implements ObfuscationMapping {
     }
 
     @Override
+    public List<JavaTypeInstance> get(List<JavaTypeInstance> types) {
+        return types;
+    }
+
+    @Override
     public List<InnerClassAttributeInfo> getInnerClassInfo(JavaTypeInstance classType) {
         return null;
     }

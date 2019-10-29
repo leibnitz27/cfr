@@ -5,6 +5,8 @@ import org.benf.cfr.reader.api.SinkReturns;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.mapping.NullMapping;
+import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
@@ -138,6 +140,11 @@ public class TokenStreamDumper implements Dumper {
     @Override
     public TypeUsageInformation getTypeUsageInformation() {
         return typeUsageInformation;
+    }
+
+    @Override
+    public ObfuscationMapping getObfuscationMapping() {
+        return NullMapping.INSTANCE;
     }
 
     private void sink(SinkReturns.TokenType type, String text) {

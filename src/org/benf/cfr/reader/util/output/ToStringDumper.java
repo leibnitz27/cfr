@@ -3,6 +3,8 @@ package org.benf.cfr.reader.util.output;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.mapping.NullMapping;
+import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationEmpty;
 import org.benf.cfr.reader.util.collections.SetFactory;
@@ -146,6 +148,11 @@ public class ToStringDumper implements Dumper {
     @Override
     public TypeUsageInformation getTypeUsageInformation() {
         return typeUsageInformation;
+    }
+
+    @Override
+    public ObfuscationMapping getObfuscationMapping() {
+        return NullMapping.INSTANCE;
     }
 
     @Override

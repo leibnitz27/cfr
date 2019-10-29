@@ -3,6 +3,7 @@ package org.benf.cfr.reader.util.output;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
 public abstract class DelegatingDumper implements Dumper {
@@ -15,6 +16,11 @@ public abstract class DelegatingDumper implements Dumper {
     @Override
     public TypeUsageInformation getTypeUsageInformation() {
         return delegate.getTypeUsageInformation();
+    }
+
+    @Override
+    public ObfuscationMapping getObfuscationMapping() {
+        return delegate.getObfuscationMapping();
     }
 
     @Override

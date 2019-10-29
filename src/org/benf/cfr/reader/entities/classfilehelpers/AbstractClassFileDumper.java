@@ -1,13 +1,20 @@
 package org.benf.cfr.reader.entities.classfilehelpers;
 
-import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
+import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfoUtils;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageInformation;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.DecompilerComments;
+import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
@@ -88,7 +95,11 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
     }
 
     void dumpImports(Dumper d, ClassFile classFile) {
-        List<JavaTypeInstance> classTypes = classFile.getAllClassTypes();
+        /*
+         * It's a bit irritating that we have to check obfuscations here, but we are stripping unused types,
+         * and don't want to strip obfuscated names.
+         */
+        List<JavaTypeInstance> classTypes = d.getObfuscationMapping().get(classFile.getAllClassTypes());
         Set<JavaRefTypeInstance> types = d.getTypeUsageInformation().getShortenedClassTypes();
         //noinspection SuspiciousMethodCalls
         types.removeAll(classTypes);

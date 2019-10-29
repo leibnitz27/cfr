@@ -63,6 +63,16 @@ public class Mapping implements ObfuscationMapping {
         return res;
     }
 
+    @Override
+    public List<JavaTypeInstance> get(List<JavaTypeInstance> types) {
+        return Functional.map(types, new UnaryFunction<JavaTypeInstance, JavaTypeInstance>() {
+            @Override
+            public JavaTypeInstance invoke(JavaTypeInstance arg) {
+                return get(arg);
+            }
+        });
+    }
+
     ClassMapping getClassMapping(JavaTypeInstance type) {
         return erasedTypeMap.get(type.getDeGenerifiedType());
     }
@@ -150,6 +160,11 @@ public class Mapping implements ObfuscationMapping {
                 mappingTypeUsage = new MappingTypeUsage(dtr, dti);
             }
             return mappingTypeUsage;
+        }
+
+        @Override
+        public ObfuscationMapping getObfuscationMapping() {
+            return Mapping.this;
         }
 
         @Override

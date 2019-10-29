@@ -3,6 +3,7 @@ package org.benf.cfr.reader.util.output;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 
 /*
@@ -15,6 +16,8 @@ public interface Dumper {
      * dumpers can dump the same code with different import shortening.
      */
     TypeUsageInformation getTypeUsageInformation();
+
+    ObfuscationMapping getObfuscationMapping();
 
     Dumper label(String s, boolean inline);
 
