@@ -7,6 +7,9 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.mapping.Mapping;
+import org.benf.cfr.reader.mapping.NullMapping;
+import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -31,6 +34,7 @@ public class DCCommonState {
     private final Map<String, ClassFile> classFileCache;
     private Set<JavaTypeInstance> versionCollisions;
     private transient LinkedHashSet<String> couldNotLoadClasses = new LinkedHashSet<String>();
+    private final ObfuscationMapping obfuscationMapping;
 
     public DCCommonState(Options options, ClassFileSource2 classFileSource) {
         this.options = options;
@@ -43,6 +47,7 @@ public class DCCommonState {
             }
         });
         this.versionCollisions = SetFactory.newSet();
+        this.obfuscationMapping = NullMapping.INSTANCE;
     }
 
     public DCCommonState(DCCommonState dcCommonState, final BinaryFunction<String, DCCommonState, ClassFile> cacheAccess) {
@@ -56,6 +61,17 @@ public class DCCommonState {
             }
         });
         this.versionCollisions = dcCommonState.versionCollisions;
+        this.obfuscationMapping = dcCommonState.obfuscationMapping;
+    }
+
+    // TODO : If we have any more of these, refactor to a builder!
+    public DCCommonState(DCCommonState dcCommonState, ObfuscationMapping mapping) {
+        this.options = dcCommonState.options;
+        this.classFileSource = dcCommonState.classFileSource;
+        this.classCache = dcCommonState.classCache;
+        this.classFileCache = dcCommonState.classFileCache;
+        this.versionCollisions = dcCommonState.versionCollisions;
+        this.obfuscationMapping = mapping;
     }
 
     public void setCollisions(Set<JavaTypeInstance> versionCollisions) {
@@ -184,5 +200,9 @@ public class DCCommonState {
         String lcPath = path.toLowerCase();
         if (lcPath.endsWith(".jar") || lcPath.endsWith(".war")) return AnalysisType.JAR;
         return AnalysisType.CLASS;
+    }
+
+    public ObfuscationMapping getObfuscationMapping() {
+        return obfuscationMapping;
     }
 }

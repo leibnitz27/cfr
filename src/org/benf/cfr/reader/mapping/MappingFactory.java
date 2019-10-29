@@ -4,11 +4,15 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.entities.AccessFlag;
+import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.state.ObfuscationRewriter;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
@@ -19,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,10 +36,10 @@ public class MappingFactory {
         this.classCache = classCache;
     }
 
-    public static ObfuscationRewriter get(Options options, DCCommonState state) {
+    public static ObfuscationMapping get(Options options, DCCommonState state) {
         String path = options.getOption(OptionsImpl.OBFUSCATION_PATH);
         if (path == null) {
-            return null;
+            return NullMapping.INSTANCE;
         }
         return new MappingFactory(options, state.getClassCache()).createFromPath(path);
     }
@@ -69,7 +74,66 @@ public class MappingFactory {
         } catch (IOException e) {
             throw new ConfusedCFRException(e);
         }
-        return new Mapping(options, classMappings);
+
+        Map<JavaRefTypeInstance, JavaRefTypeInstance> parents = MapFactory.newMap();
+        Map<JavaTypeInstance, List<InnerClassAttributeInfo>> innerInfo = inferInnerClasses(classMappings, parents);
+        /*
+         * We will have to ALTER the inner class info of each of the children, as that won't have been detected
+         * when they were created.
+         */
+        for (Map.Entry<JavaRefTypeInstance, JavaRefTypeInstance> pc : parents.entrySet()) {
+            JavaRefTypeInstance child = pc.getKey();
+            JavaRefTypeInstance parent = pc.getValue();
+            child.setUnexpectedInnerClassOf(parent);
+        }
+        return new Mapping(options, classMappings, innerInfo);
+    }
+
+    private Map<JavaTypeInstance, List<InnerClassAttributeInfo>> inferInnerClasses(List<ClassMapping> classMappings, Map<JavaRefTypeInstance, JavaRefTypeInstance> parents) {
+        Map<String, ClassMapping> byRealName = MapFactory.newMap();
+        for (ClassMapping classMapping : classMappings) {
+            String real = classMapping.getRealClass().getRawName();
+            byRealName.put(real, classMapping);
+        }
+        Map<JavaTypeInstance, List<JavaTypeInstance>> children = MapFactory.newLazyMap(new UnaryFunction<JavaTypeInstance, List<JavaTypeInstance>>() {
+            @Override
+            public List<JavaTypeInstance> invoke(JavaTypeInstance arg) {
+                return ListFactory.newList();
+            }
+        });
+        for (ClassMapping classMapping : classMappings) {
+            String real = classMapping.getRealClass().getRawName();
+            int idx = real.lastIndexOf(MiscConstants.INNER_CLASS_SEP_CHAR);
+            if (idx == -1) {
+                continue;
+            }
+            String prefix = real.substring(0, idx);
+            ClassMapping parent = byRealName.get(prefix);
+            if (parent == null) {
+                continue;
+            }
+            JavaRefTypeInstance parentClass = parent.getObClass();
+            JavaRefTypeInstance childClass = classMapping.getObClass();
+            parents.put(childClass, parentClass);
+            children.get(parentClass).add(childClass);
+        }
+        Map<JavaTypeInstance, List<InnerClassAttributeInfo>> res = MapFactory.newMap();
+        Map<JavaTypeInstance, List<InnerClassAttributeInfo>> lazyRes = MapFactory.newLazyMap(res, new UnaryFunction<JavaTypeInstance, List<InnerClassAttributeInfo>>() {
+            @Override
+            public List<InnerClassAttributeInfo> invoke(JavaTypeInstance arg) {
+                return ListFactory.newList();
+            }
+        });
+        for (Map.Entry<JavaTypeInstance, List<JavaTypeInstance>> entry : children.entrySet()) {
+            JavaTypeInstance parent = entry.getKey();
+            List<InnerClassAttributeInfo> parentIac = lazyRes.get(parent);
+            for (JavaTypeInstance child : entry.getValue()) {
+                InnerClassAttributeInfo iac = new InnerClassAttributeInfo(child, parent, null, Collections.<AccessFlag>emptySet());
+                parentIac.add(iac);
+                lazyRes.get(child).add(iac);
+            }
+        }
+        return res;
     }
 
     private static final Pattern fieldPattern = Pattern.compile("^\\s*(\\d+:\\d+:)?([^ ]+)\\s+(.*) -> (.*)$");

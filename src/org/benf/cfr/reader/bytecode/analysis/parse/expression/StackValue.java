@@ -43,8 +43,8 @@ public class StackValue extends AbstractExpression {
     }
 
     /*
-         * Makes no sense to modify so deep clone is this.
-         */
+     * Makes no sense to modify so deep clone is this.
+     */
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return this;

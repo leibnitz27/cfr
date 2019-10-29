@@ -1,11 +1,11 @@
 package org.benf.cfr.reader.mapping;
 
-import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.state.ObfuscationMapping;
+import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
+import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.ObfuscationRewriter;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationImpl;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class Mapping implements ObfuscationRewriter, ObfuscationMapping {
+public class Mapping implements ObfuscationMapping {
     // NB: This is a map of *erased* types.  If they type we're reconstructing is generic, we
     // need to reconstruct it.
     private final Map<JavaTypeInstance, ClassMapping> erasedTypeMap = MapFactory.newMap();
@@ -32,9 +32,11 @@ public class Mapping implements ObfuscationRewriter, ObfuscationMapping {
         }
     };
     private Options options;
+    private Map<JavaTypeInstance, List<InnerClassAttributeInfo>> innerInfo;
 
-    Mapping(Options options, List<ClassMapping> classMappings) {
+    Mapping(Options options, List<ClassMapping> classMappings, Map<JavaTypeInstance, List<InnerClassAttributeInfo>> innerInfo) {
         this.options = options;
+        this.innerInfo = innerInfo;
         for (ClassMapping cls : classMappings) {
             erasedTypeMap.put(cls.getObClass(), cls);
         }
@@ -63,6 +65,11 @@ public class Mapping implements ObfuscationRewriter, ObfuscationMapping {
 
     ClassMapping getClassMapping(JavaTypeInstance type) {
         return erasedTypeMap.get(type.getDeGenerifiedType());
+    }
+
+    @Override
+    public List<InnerClassAttributeInfo> getInnerClassInfo(JavaTypeInstance classType) {
+        return innerInfo.get(classType);
     }
 
     @Override

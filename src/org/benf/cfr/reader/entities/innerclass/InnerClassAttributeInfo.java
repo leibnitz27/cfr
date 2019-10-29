@@ -29,11 +29,11 @@ public class InnerClassAttributeInfo {
         return innerClassInfo;
     }
 
-    public JavaTypeInstance getOuterClassInfo() {
+    private JavaTypeInstance getOuterClassInfo() {
         return outerClassInfo;
     }
 
-    public String getInnerName() {
+    private String getInnerName() {
         return innerName;
     }
 

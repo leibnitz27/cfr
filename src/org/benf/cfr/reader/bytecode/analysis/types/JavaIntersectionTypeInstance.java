@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
-import org.benf.cfr.reader.state.ObfuscationMapping;
+import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -157,8 +157,8 @@ public class JavaIntersectionTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public JavaTypeInstance deObfuscate(ObfuscationMapping obfuscationMapping) {
-        return new JavaIntersectionTypeInstance(Functional.map(parts, obfuscationMapping.getter()));
+    public JavaTypeInstance deObfuscate(ObfuscationTypeMap obfuscationTypeMap) {
+        return new JavaIntersectionTypeInstance(Functional.map(parts, obfuscationTypeMap.getter()));
     }
 
     @Override

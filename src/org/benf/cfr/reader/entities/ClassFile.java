@@ -6,12 +6,39 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokat
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Triplet;
-import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
+import org.benf.cfr.reader.bytecode.analysis.types.BoundSuperCollector;
+import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
+import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
+import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
+import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerDefault;
-import org.benf.cfr.reader.entities.attributes.*;
-import org.benf.cfr.reader.entities.classfilehelpers.*;
-import org.benf.cfr.reader.entities.constantpool.*;
+import org.benf.cfr.reader.entities.attributes.Attribute;
+import org.benf.cfr.reader.entities.attributes.AttributeBootstrapMethods;
+import org.benf.cfr.reader.entities.attributes.AttributeEnclosingMethod;
+import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
+import org.benf.cfr.reader.entities.attributes.AttributeModule;
+import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
+import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
+import org.benf.cfr.reader.entities.attributes.AttributeSignature;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnnotation;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperInterface;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperModule;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperNormal;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryNameAndType;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
@@ -20,7 +47,13 @@ import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.InnerClassTypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.DecompilerComment;
+import org.benf.cfr.reader.util.DecompilerComments;
+import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -34,9 +67,13 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierReplacement;
-import org.benf.cfr.reader.util.output.TypeOverridingDumper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ClassFile implements Dumpable, TypeUsageCollectable {
     // Constants
@@ -179,7 +216,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
         this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
         AccessFlag.applyAttributes(attributes, accessFlags);
-        this.isInnerClass = testIsInnerClass();
+        this.isInnerClass = testIsInnerClass(dcCommonState);
 
         int superClassIndex = data.getU2At(OFFSET_OF_SUPER_CLASS);
         if (superClassIndex == 0) {
@@ -720,8 +757,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return false;
     }
 
-    private boolean testIsInnerClass() {
-        List<InnerClassAttributeInfo> innerClassAttributeInfoList = getInnerClassAttributeInfos();
+    private boolean testIsInnerClass(DCCommonState dcCommonState) {
+        List<InnerClassAttributeInfo> innerClassAttributeInfoList = getInnerClassAttributeInfos(dcCommonState);
         if (innerClassAttributeInfoList == null) return false;
         final JavaTypeInstance thisType = thisClass.getTypeInstance();
 
@@ -734,7 +771,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     // just after construction
     public void loadInnerClasses(DCCommonState dcCommonState) {
-        List<InnerClassAttributeInfo> innerClassAttributeInfoList = getInnerClassAttributeInfos();
+        List<InnerClassAttributeInfo> innerClassAttributeInfoList = getInnerClassAttributeInfos(dcCommonState);
         if (innerClassAttributeInfoList == null) return;
 
         final JavaTypeInstance thisType = thisClass.getTypeInstance();
@@ -778,13 +815,14 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
     }
 
-    private List<InnerClassAttributeInfo> getInnerClassAttributeInfos() {
+    private List<InnerClassAttributeInfo> getInnerClassAttributeInfos(DCCommonState state) {
         AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
         List<InnerClassAttributeInfo> innerClassAttributeInfoList = attributeInnerClasses == null ? null : attributeInnerClasses.getInnerClassAttributeInfoList();
-        if (innerClassAttributeInfoList == null) {
-            return null;
+        if (innerClassAttributeInfoList != null) {
+            return innerClassAttributeInfoList;
         }
-        return innerClassAttributeInfoList;
+        // If we don't have any inner class attributes, we might be dealing with obfuscated code that has stripped them.
+        return state.getObfuscationMapping().getInnerClassInfo(getClassType());
     }
 
     private void analyseInnerClassesPass1(DCCommonState state) {
@@ -965,11 +1003,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (accessFlags.contains(AccessFlag.ACC_PRIVATE)) {
             accessFlags.remove(AccessFlag.ACC_PROTECTED);
             accessFlags.remove(AccessFlag.ACC_PUBLIC);
-            return;
-        }
-        if (accessFlags.contains(AccessFlag.ACC_PROTECTED)) {
+        } else if (accessFlags.contains(AccessFlag.ACC_PROTECTED)) {
             accessFlags.remove(AccessFlag.ACC_PUBLIC);
-            return;
         }
     }
 

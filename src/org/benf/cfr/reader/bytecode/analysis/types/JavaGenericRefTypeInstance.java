@@ -6,7 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
-import org.benf.cfr.reader.state.ObfuscationMapping;
+import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.DecompilerComments;
@@ -359,9 +359,9 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
     }
 
     @Override
-    public JavaTypeInstance deObfuscate(ObfuscationMapping obfuscationMapping) {
-        JavaTypeInstance t = obfuscationMapping.get(typeInstance);
-        List<JavaTypeInstance> gs = Functional.map(genericTypes, obfuscationMapping.getter());
+    public JavaTypeInstance deObfuscate(ObfuscationTypeMap obfuscationTypeMap) {
+        JavaTypeInstance t = obfuscationTypeMap.get(typeInstance);
+        List<JavaTypeInstance> gs = Functional.map(genericTypes, obfuscationTypeMap.getter());
         return new JavaGenericRefTypeInstance(t, gs);
     }
 

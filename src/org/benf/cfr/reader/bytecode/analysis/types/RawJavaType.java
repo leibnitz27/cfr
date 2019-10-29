@@ -1,7 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
-import org.benf.cfr.reader.state.ObfuscationMapping;
+import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -125,7 +125,7 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
     @Override
-    public JavaTypeInstance deObfuscate(ObfuscationMapping obfuscationMapping) {
+    public JavaTypeInstance deObfuscate(ObfuscationTypeMap obfuscationTypeMap) {
         return this;
     }
 

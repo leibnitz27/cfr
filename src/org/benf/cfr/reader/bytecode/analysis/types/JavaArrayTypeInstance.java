@@ -2,7 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
-import org.benf.cfr.reader.state.ObfuscationMapping;
+import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.DecompilerComments;
@@ -232,8 +232,8 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public JavaTypeInstance deObfuscate(ObfuscationMapping obfuscationMapping) {
-        return new JavaArrayTypeInstance(dimensions, obfuscationMapping.get(underlyingType));
+    public JavaTypeInstance deObfuscate(ObfuscationTypeMap obfuscationTypeMap) {
+        return new JavaArrayTypeInstance(dimensions, obfuscationTypeMap.get(underlyingType));
     }
 
     @Override

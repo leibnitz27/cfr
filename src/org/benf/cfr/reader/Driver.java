@@ -5,10 +5,9 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.mapping.MappingFactory;
+import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.relationship.MemberNameResolver;
-import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.state.ObfuscationRewriter;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageCollectorImpl;
 import org.benf.cfr.reader.util.CannotLoadClassException;
@@ -21,7 +20,14 @@ import org.benf.cfr.reader.util.functors.BinaryFunction;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
-import org.benf.cfr.reader.util.output.*;
+import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.DumperFactory;
+import org.benf.cfr.reader.util.output.ExceptionDumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
+import org.benf.cfr.reader.util.output.NopSummaryDumper;
+import org.benf.cfr.reader.util.output.ProgressDumper;
+import org.benf.cfr.reader.util.output.SummaryDumper;
+import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,8 +38,8 @@ class Driver {
 
     static void doClass(DCCommonState dcCommonState, String path, boolean skipInnerClass, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
-
-        ObfuscationRewriter obfuscationRewriter = MappingFactory.get(options, dcCommonState);
+        ObfuscationMapping mapping = MappingFactory.get(options, dcCommonState);
+        dcCommonState = new DCCommonState(dcCommonState, mapping);
 
         IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
         Dumper d = new ToStringDumper(); // sentinel dumper.
@@ -69,9 +75,7 @@ class Driver {
             c.collectTypeUsages(collectingDumper);
 
             d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
-            if (obfuscationRewriter != null) {
-                d = obfuscationRewriter.wrap(d);
-            }
+            d = dcCommonState.getObfuscationMapping().wrap(d);
 
             String methname = options.getOption(OptionsImpl.METHODNAME);
             if (methname == null) {
@@ -96,7 +100,8 @@ class Driver {
     static void doJar(DCCommonState dcCommonState, String path, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
         IllegalIdentifierDump illegalIdentifierDump = IllegalIdentifierDump.Factory.get(options);
-        ObfuscationRewriter obfuscationRewriter = MappingFactory.get(options, dcCommonState);
+        ObfuscationMapping mapping = MappingFactory.get(options, dcCommonState);
+        dcCommonState = new DCCommonState(dcCommonState, mapping);
 
         SummaryDumper summaryDumper = null;
         try {
@@ -117,7 +122,7 @@ class Driver {
                 versionsSeen.add(forVersion);
                 List<Integer> localVersionsSeen = ListFactory.newList(versionsSeen);
                 List<JavaTypeInstance> types = entry.getValue();
-                doJarVersionTypes(forVersion, localVersionsSeen, dcCommonState, dumperFactory, illegalIdentifierDump, summaryDumper, progressDumper, types, obfuscationRewriter);
+                doJarVersionTypes(forVersion, localVersionsSeen, dcCommonState, dumperFactory, illegalIdentifierDump, summaryDumper, progressDumper, types);
             }
         } catch (Exception e) {
             dumperFactory.getExceptionDumper().noteException(path, "Exception analysing jar", e);
@@ -166,7 +171,7 @@ class Driver {
         return collisions;
     }
 
-    private static void doJarVersionTypes(int forVersion, final List<Integer> versionsSeen, DCCommonState dcCommonState, DumperFactory dumperFactory, IllegalIdentifierDump illegalIdentifierDump, SummaryDumper summaryDumper, ProgressDumper progressDumper, List<JavaTypeInstance> types, ObfuscationRewriter obfuscationRewriter) {
+    private static void doJarVersionTypes(int forVersion, final List<Integer> versionsSeen, DCCommonState dcCommonState, DumperFactory dumperFactory, IllegalIdentifierDump illegalIdentifierDump, SummaryDumper summaryDumper, ProgressDumper progressDumper, List<JavaTypeInstance> types) {
         Options options = dcCommonState.getOptions();
         final boolean lomem = options.getOption(OptionsImpl.LOMEM);
         final Predicate<String> matcher = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.JAR_FILTER), true);
@@ -227,9 +232,7 @@ class Driver {
                     continue;
                 }
                 if (!silent) {
-                    if (obfuscationRewriter != null) {
-                        type = obfuscationRewriter.get(type);
-                    }
+                    type = dcCommonState.getObfuscationMapping().get(type);
                     progressDumper.analysingType(type);
                 }
                 if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
@@ -241,13 +244,9 @@ class Driver {
                 TypeUsageCollector collectingDumper = new TypeUsageCollectorImpl(options, c);
                 c.collectTypeUsages(collectingDumper);
                 JavaTypeInstance classType = c.getClassType();
-                if (obfuscationRewriter != null) {
-                    classType = obfuscationRewriter.get(classType);
-                }
+                classType = dcCommonState.getObfuscationMapping().get(classType);
                 d = dumperFactory.getNewTopLevelDumper(classType, summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
-                if (obfuscationRewriter != null) {
-                    d = obfuscationRewriter.wrap(d);
-                }
+                d = dcCommonState.getObfuscationMapping().wrap(d);
 
                 c.dump(d);
                 d.newln();
