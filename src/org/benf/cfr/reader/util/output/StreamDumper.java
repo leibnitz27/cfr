@@ -18,17 +18,18 @@ public abstract class StreamDumper implements Dumper {
     protected final Options options;
     protected final IllegalIdentifierDump illegalIdentifierDump;
     private final boolean convertUTF;
+    protected int indent;
 
     private int outputCount = 0;
-    private int indent;
     private boolean atStart = true;
     private boolean pendingCR = false;
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
-    public StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
+    public StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, int indent) {
         this.typeUsageInformation = typeUsageInformation;
         this.options = options;
         this.illegalIdentifierDump = illegalIdentifierDump;
+        this.indent = indent;
         this.convertUTF = options.getOption(OptionsImpl.HIDE_UTF8);
     }
 

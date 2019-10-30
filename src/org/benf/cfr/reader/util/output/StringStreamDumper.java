@@ -8,7 +8,7 @@ public class StringStreamDumper extends StreamDumper {
     private final StringBuilder stringBuilder;
 
     public StringStreamDumper(StringBuilder sb, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
-        super(typeUsageInformation, options, illegalIdentifierDump);
+        super(typeUsageInformation, options, illegalIdentifierDump,0);
         this.stringBuilder = sb;
     }
 
