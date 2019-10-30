@@ -97,7 +97,7 @@ public abstract class StreamDumper implements Dumper {
     public Dumper packageName(JavaRefTypeInstance t) {
         String s = t.getPackageName();
         if (!s.isEmpty()) {
-            print("package ").print(s).endCodeln().newln();;
+            print("package ").print(s).endCodeln().newln();
         }
         return this;
     }
