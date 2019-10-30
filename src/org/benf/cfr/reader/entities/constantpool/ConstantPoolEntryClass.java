@@ -47,13 +47,6 @@ public class ConstantPoolEntryClass extends AbstractConstantPoolEntry implements
         d.print("Class " + getClassNameString(nameIndex));
     }
 
-    public String getPackageName() {
-        String full = ClassNameUtils.convertFromPath(getClassNameString(nameIndex));
-        int idx = full.lastIndexOf('.');
-        if (idx == -1) return "";
-        return full.substring(0, idx);
-    }
-
     private JavaTypeInstance convertFromString(String rawType) {
         if (rawType.startsWith("[")) {
             return ConstantPoolUtils.decodeTypeTok(rawType, getCp());

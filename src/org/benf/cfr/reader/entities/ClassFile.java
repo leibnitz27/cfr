@@ -983,7 +983,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return thisClass.getTypeInstance();
     }
 
-    public JavaRefTypeInstance getRefClasstype() {
+    public JavaRefTypeInstance getRefClassType() {
         return (JavaRefTypeInstance)thisClass.getTypeInstance();
     }
 

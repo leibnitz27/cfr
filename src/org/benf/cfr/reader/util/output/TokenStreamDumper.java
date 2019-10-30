@@ -2,6 +2,7 @@ package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.api.OutputSinkFactory;
 import org.benf.cfr.reader.api.SinkReturns;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
@@ -223,8 +224,12 @@ public class TokenStreamDumper implements Dumper {
     }
 
     @Override
-    public Dumper packageName(String s, JavaTypeInstance t) {
-        return print(s);
+    public Dumper packageName(JavaRefTypeInstance t) {
+        String s = t.getPackageName();
+        if (!s.isEmpty()) {
+            print("package ").print(s).endCodeln().newln();;
+        }
+        return this;
     }
 
     @Override

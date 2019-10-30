@@ -5,8 +5,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
-import org.benf.cfr.reader.state.ObfuscationTypeMap;
-import org.benf.cfr.reader.state.ObfuscationRewriter;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationImpl;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -192,13 +190,13 @@ public class Mapping implements ObfuscationMapping {
         }
 
         @Override
-        public Dumper packageName(String s, JavaTypeInstance t) {
+        public Dumper packageName(JavaRefTypeInstance t) {
             JavaTypeInstance deGenerifiedType = t.getDeGenerifiedType();
             ClassMapping c = erasedTypeMap.get(deGenerifiedType);
             if (c == null) {
-                delegate.packageName(s, t);
+                delegate.packageName(t);
             } else {
-                delegate.packageName(c.getRealClass().getPackageName(), c.getRealClass());
+                delegate.packageName(c.getRealClass());
             }
             return this;
         }

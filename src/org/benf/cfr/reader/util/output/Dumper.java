@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
@@ -35,7 +36,7 @@ public interface Dumper {
 
     Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines);
 
-    Dumper packageName(String s, JavaTypeInstance t);
+    Dumper packageName(JavaRefTypeInstance t);
 
     Dumper identifier(String s, Object ref, boolean defines);
 

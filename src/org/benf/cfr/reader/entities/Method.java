@@ -440,7 +440,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     private boolean isInnerVisibleTo(JavaTypeInstance maybeCaller) {
-        JavaRefTypeInstance thisClass = getClassFile().getRefClasstype();
+        JavaRefTypeInstance thisClass = getClassFile().getRefClassType();
             /*
              * If this is an inner class of maybeCaller (or the other way around), it's allowed, otherwise
              * not.
@@ -465,7 +465,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             return isInnerVisibleTo(maybeCaller);
         }
         // Otherwise, we're left with package visibility.
-        if (maybeCaller.getPackageName().equals(getClassFile().getRefClasstype().getPackageName())) return true;
+        if (maybeCaller.getPackageName().equals(getClassFile().getRefClassType().getPackageName())) return true;
         return false;
     }
 

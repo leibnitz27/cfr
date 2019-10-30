@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.Method;
@@ -71,8 +72,8 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
-    public Dumper packageName(String s, JavaTypeInstance t) {
-        delegate.packageName(s, t);
+    public Dumper packageName(JavaRefTypeInstance t) {
+        delegate.packageName(t);
         return this;
     }
 

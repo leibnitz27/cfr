@@ -312,7 +312,7 @@ public class MemberNameResolver {
                      * Only add visible ones.
                      */
                     for (Method method : methods) {
-                        if (method.isVisibleTo(classFile.getRefClasstype())) {
+                        if (method.isVisibleTo(classFile.getRefClassType())) {
                             add(key, returnType, method, true);
                         }
                     }

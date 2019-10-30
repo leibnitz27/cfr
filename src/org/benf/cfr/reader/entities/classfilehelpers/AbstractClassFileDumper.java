@@ -76,10 +76,8 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
             }
         }
         d.print(" */").newln();
-        String packageName = classFile.getThisClassConstpoolEntry().getPackageName();
-        if (!packageName.isEmpty()) {
-            d.print("package ").packageName(packageName, classFile.getClassType()).endCodeln().newln();
-        }
+        // package name may be empty, in which case it's ignored by dumper.
+        d.packageName(classFile.getRefClassType());
     }
 
     static void getFormalParametersText(ClassSignature signature, Dumper d) {
