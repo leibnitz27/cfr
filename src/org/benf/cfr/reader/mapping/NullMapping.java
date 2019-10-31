@@ -23,6 +23,11 @@ public class NullMapping implements ObfuscationMapping {
     }
 
     @Override
+    public boolean providesInnerClassInfo() {
+        return false;
+    }
+
+    @Override
     public Dumper wrap(Dumper d) {
         return d;
     }

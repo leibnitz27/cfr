@@ -46,6 +46,11 @@ public class Mapping implements ObfuscationMapping {
     }
 
     @Override
+    public boolean providesInnerClassInfo() {
+        return true;
+    }
+
+    @Override
     public JavaTypeInstance get(JavaTypeInstance type) {
         if (type == null) return null;
         int numDim = type.getNumArrayDimensions();

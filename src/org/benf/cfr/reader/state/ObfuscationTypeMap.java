@@ -7,6 +7,8 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import java.util.List;
 
 public interface ObfuscationTypeMap {
+    boolean providesInnerClassInfo();
+
     JavaTypeInstance get(JavaTypeInstance type);
 
     UnaryFunction<JavaTypeInstance, JavaTypeInstance> getter();

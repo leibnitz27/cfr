@@ -68,8 +68,13 @@ public class DCCommonState {
     public DCCommonState(DCCommonState dcCommonState, ObfuscationMapping mapping) {
         this.options = dcCommonState.options;
         this.classFileSource = dcCommonState.classFileSource;
-        this.classCache = dcCommonState.classCache;
-        this.classFileCache = dcCommonState.classFileCache;
+        this.classCache = new ClassCache(this);
+        this.classFileCache = MapFactory.newExceptionRetainingLazyMap(new UnaryFunction<String, ClassFile>() {
+            @Override
+            public ClassFile invoke(String arg) {
+                return loadClassFileAtPath(arg);
+            }
+        });
         this.versionCollisions = dcCommonState.versionCollisions;
         this.obfuscationMapping = mapping;
     }

@@ -294,7 +294,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
         JavaRefTypeInstance typeInstance = (JavaRefTypeInstance) thisClass.getTypeInstance();
         if (typeInstance.getInnerClassHereInfo().isInnerClass()) {
-            checkInnerClassAssumption(attributeInnerClasses, typeInstance);
+            checkInnerClassAssumption(attributeInnerClasses, typeInstance, dcCommonState);
         }
 
         /*
@@ -365,13 +365,17 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     /*
      * We might have to correct this, if an assumption has been made based on type name.
      */
-    private static void checkInnerClassAssumption(AttributeInnerClasses attributeInnerClasses, JavaRefTypeInstance typeInstance) {
+    private void checkInnerClassAssumption(AttributeInnerClasses attributeInnerClasses, JavaRefTypeInstance typeInstance, DCCommonState state) {
         if (attributeInnerClasses != null) {
             for (InnerClassAttributeInfo innerClassAttributeInfo : attributeInnerClasses.getInnerClassAttributeInfoList()) {
                 if (innerClassAttributeInfo.getInnerClassInfo().equals(typeInstance)) {
                     return;
                 }
             }
+        }
+        // If we're handling obfuscation where we've been given inner class info, then that might be more trustworthy.
+        if (state.getObfuscationMapping().providesInnerClassInfo()) {
+            return;
         }
         /*
          * No - we are NOT an inner class, regardless of what the guessed information says.
