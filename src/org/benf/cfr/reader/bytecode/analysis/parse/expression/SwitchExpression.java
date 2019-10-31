@@ -70,7 +70,7 @@ public class SwitchExpression extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.print("switch ").separator("(");
+        d.keyword("switch ").separator("(");
         d.dump(value);
         d.separator(") ").separator("{");
         d.newln();
@@ -79,9 +79,9 @@ public class SwitchExpression extends AbstractExpression {
             boolean first = true;
             List<Expression> cases = item.cases;
             if (cases.isEmpty()) {
-                d.print("default");
+                d.keyword("default");
             } else {
-                d.print("case ");
+                d.keyword("case ");
                 for (Expression e : cases) {
                     first = StringUtils.comma(first, d);
                     d.dump(e);
