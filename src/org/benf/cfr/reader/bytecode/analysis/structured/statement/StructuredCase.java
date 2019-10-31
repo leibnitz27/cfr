@@ -67,7 +67,7 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         if (values.isEmpty()) {
-            dumper.print("default: ");
+            dumper.keyword("default").separator(": ");
         } else {
             for (int x = 0, len = values.size(), last = len - 1; x < len; ++x) {
                 Expression value = values.get(x);
@@ -76,12 +76,12 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
                     // don't show the case part of that.
                     StaticVariable enumStatic = getEnumStatic(value);
                     if (enumStatic != null) {
-                        dumper.print("case ").fieldName(enumStatic.getFieldName(), enumStatic.getOwningClassType(), false, true, false).print(": ");
+                        dumper.keyword("case ").fieldName(enumStatic.getFieldName(), enumStatic.getOwningClassType(), false, true, false).separator(": ");
                         if (x != last) dumper.newln();
                         continue;
                     }
                 }
-                dumper.print("case ").dump(value).print(": ");
+                dumper.keyword("case ").dump(value).separator(": ");
                 if (x != last) dumper.newln();
             }
         }

@@ -50,8 +50,8 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
         Options options = dcCommonState.getOptions();
         String header = MiscConstants.CFR_HEADER_BRA +
                 (options.getOption(OptionsImpl.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
-        d.print("/*").newln();
-        d.print(" * ").print(header).newln();
+        d.comment("/*").newln();
+        d.comment(" * ").print(header).newln();
         if (options.getOption(OptionsImpl.DECOMPILER_COMMENTS)) {
             TypeUsageInformation typeUsageInformation = d.getTypeUsageInformation();
             List<JavaTypeInstance> couldNotLoad = ListFactory.newList();
@@ -68,14 +68,14 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
                 }
             }
             if (!couldNotLoad.isEmpty()) {
-                d.print(" * ").newln();
-                d.print(" * Could not load the following classes:").newln();
+                d.comment(" * ").newln();
+                d.comment(" * Could not load the following classes:").newln();
                 for (JavaTypeInstance type : couldNotLoad) {
-                    d.print(" *  ").print(type.getRawName()).newln();
+                    d.comment(" *  ").print(type.getRawName()).newln();
                 }
             }
         }
-        d.print(" */").newln();
+        d.comment(" */").newln();
         // package name may be empty, in which case it's ignored by dumper.
         d.packageName(classFile.getRefClassType());
     }
@@ -83,13 +83,13 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
     static void getFormalParametersText(ClassSignature signature, Dumper d) {
         List<FormalTypeParameter> formalTypeParameters = signature.getFormalTypeParameters();
         if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return;
-        d.print('<');
+        d.separator("<");
         boolean first = true;
         for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
             first = StringUtils.comma(first, d);
             d.dump(formalTypeParameter);
         }
-        d.print('>');
+        d.print(">");
     }
 
     void dumpImports(Dumper d, ClassFile classFile) {
