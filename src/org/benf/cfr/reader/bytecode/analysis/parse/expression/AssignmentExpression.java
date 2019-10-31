@@ -44,7 +44,7 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.dump(lValue).print(" = ");
+        d.dump(lValue).operator(" = ");
         rValue.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
         return d;
     }

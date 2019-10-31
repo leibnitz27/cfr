@@ -58,7 +58,7 @@ public class StructuredAssignment extends AbstractStructuredStatement implements
         } else {
             dumper.dump(lvalue);
         }
-        dumper.print(" = ").dump(rvalue).endCodeln();
+        dumper.operator(" = ").dump(rvalue).endCodeln();
         return dumper;
     }
 

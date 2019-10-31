@@ -17,7 +17,7 @@ public class StringUtils {
     }
 
     public static boolean comma(boolean first, Dumper d) {
-        if (!first) d.print(", ");
+        if (!first) d.separator(", ");
         return false;
     }
 

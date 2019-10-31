@@ -29,7 +29,7 @@ public class IfStatement extends GotoStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("if (").dump(condition).print(") ");
+        dumper.print("if").print(" ").separator("(").dump(condition).separator(")").print(" ");
         return super.dump(dumper);
     }
 

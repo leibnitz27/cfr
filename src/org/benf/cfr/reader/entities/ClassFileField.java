@@ -70,7 +70,7 @@ public class ClassFileField {
     public void dump(Dumper d, ClassFile owner) {
         field.dump(d, getFieldName(), owner);
         if (initialValue != null) {
-            d.print(" = ").dump(initialValue);
+            d.operator(" = ").dump(initialValue);
         }
         d.endCodeln();
     }

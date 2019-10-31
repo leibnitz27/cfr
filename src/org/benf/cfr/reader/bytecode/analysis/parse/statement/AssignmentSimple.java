@@ -38,7 +38,7 @@ public class AssignmentSimple extends AbstractAssignment {
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.dump(lvalue).print(" = ").dump(rvalue).endCodeln();
+        return d.dump(lvalue).operator(" = ").dump(rvalue).endCodeln();
     }
 
     @Override
