@@ -153,7 +153,7 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
         if (names.isEmpty()) return;
         Collections.sort(names);
         for (String name : names) {
-            d.print("import " + name + ";").newln();
+            d.keyword("import ").print(name + ";").newln();
         }
         d.newln();
     }

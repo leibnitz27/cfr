@@ -90,7 +90,7 @@ public class ConstructorInvokationAnonymousInner extends AbstractConstructorInvo
             throw new IllegalStateException("Inner class got unexpected class file - revert this change");
         }
 
-        d.print("new ");
+        d.keyword("new ");
         MethodPrototype prototype = this.constructorInvokation.getMethodPrototype();
         try {
             if (classFile != null) prototype = classFile.getMethodByPrototype(prototype).getMethodPrototype();

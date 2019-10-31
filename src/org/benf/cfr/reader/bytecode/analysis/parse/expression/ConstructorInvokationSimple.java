@@ -71,7 +71,7 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
             }
         }
 
-        d.print("new ").dump(clazz).separator("(");
+        d.keyword("new ").dump(clazz).separator("(");
         boolean first = true;
         for (int i = 0; i < args.size(); ++i) {
             if (prototype.isHiddenArg(i)) continue;

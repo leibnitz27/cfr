@@ -69,8 +69,8 @@ public class ClassFileDumperModule extends AbstractClassFileDumper {
                 continue;
             }
             ConstantPoolEntryPackageInfo pck = cp.getPackageEntry(r.getIndex());
-            d.print(CollectionUtils.joinPostFix(flags, " "));
-            d.print(prefix).print(' ').print(pck.getPackageName());
+            d.keyword(CollectionUtils.joinPostFix(flags, " "));
+            d.keyword(prefix).print(' ').print(pck.getPackageName());
             int[] to = r.getToIndex();
             if (to.length != 0) {
                 d.print(" to ");

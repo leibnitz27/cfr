@@ -74,7 +74,7 @@ public class ToStringDumper implements Dumper {
     public Dumper packageName(JavaRefTypeInstance t) {
         String s = t.getPackageName();
         if (!s.isEmpty()) {
-            print("package ").print(s).endCodeln().newln();
+            keyword("package ").print(s).endCodeln().newln();
         }
         return this;
     }
@@ -111,6 +111,12 @@ public class ToStringDumper implements Dumper {
     }
 
     @Override
+    public Dumper keyword(String s) {
+        print(s);
+        return this;
+    }
+
+    @Override
     public Dumper operator(String s) {
         print(s);
         return this;
@@ -143,7 +149,7 @@ public class ToStringDumper implements Dumper {
     @Override
     public Dumper dump(Dumpable d) {
         if (d == null) {
-            print("null");
+            keyword("null");
             return this;
         }
         d.dump(this);

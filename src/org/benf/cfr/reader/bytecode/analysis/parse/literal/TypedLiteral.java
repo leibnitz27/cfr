@@ -275,7 +275,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             case String:
                 return d.literal((String)value, value);
             case NullObject:
-                return d.literal("null", null);
+                return d.keyword("null");
             case Integer:
                 switch (inferredJavaType.getRawType()) {
                     case CHAR:

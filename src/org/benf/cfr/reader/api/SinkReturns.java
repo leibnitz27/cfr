@@ -69,6 +69,7 @@ public interface SinkReturns {
 
     enum TokenType {
         WHITESPACE,
+        KEYWORD,
         OPERATOR,
         SEPARATOR,
         LITERAL,

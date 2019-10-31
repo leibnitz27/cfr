@@ -23,7 +23,7 @@ import static org.benf.cfr.reader.api.SinkReturns.TokenType.*;
 
 public class TokenStreamDumper implements Dumper {
     private final RecycleToken tok = new RecycleToken();
-    private final Token cr = new Token(NEWLINE, "\n", (Object)null);
+    private final Token cr = new Token(NEWLINE, "\n", (Object) null);
     private final OutputSinkFactory.Sink<SinkReturns.Token> sink;
     private final int version;
     private final JavaTypeInstance classType;
@@ -190,6 +190,12 @@ public class TokenStreamDumper implements Dumper {
     }
 
     @Override
+    public Dumper keyword(String s) {
+        sink(KEYWORD, s);
+        return this;
+    }
+
+    @Override
     public Dumper operator(String s) {
         sink(OPERATOR, s);
         return this;
@@ -227,7 +233,7 @@ public class TokenStreamDumper implements Dumper {
     public Dumper packageName(JavaRefTypeInstance t) {
         String s = t.getPackageName();
         if (!s.isEmpty()) {
-            print("package ").print(s).endCodeln().newln();
+            keyword("package ").print(s).endCodeln().newln();
         }
         return this;
     }
@@ -244,7 +250,7 @@ public class TokenStreamDumper implements Dumper {
 
     @Override
     public Dumper print(char c) {
-        print("" +c);
+        print("" + c);
         return this;
     }
 
@@ -280,7 +286,7 @@ public class TokenStreamDumper implements Dumper {
     @Override
     public Dumper dump(Dumpable d) {
         if (d == null) {
-            print("null");
+            keyword("null");
         } else {
             d.dump(this);
         }

@@ -343,7 +343,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         if (!asClass) {
             if (codeAttribute != null && !accessFlags.contains(AccessFlagMethod.ACC_STATIC)
                     && !accessFlags.contains(AccessFlagMethod.ACC_PRIVATE)) {
-                d.print("default ");
+                d.keyword("default ");
             }
             // Dumping as interface.
             localAccessFlags = SetFactory.newSet(localAccessFlags);
@@ -352,7 +352,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         localAccessFlags.remove(AccessFlagMethod.ACC_VARARGS);
         String prefix = CollectionUtils.join(localAccessFlags, " ");
 
-        if (!prefix.isEmpty()) d.print(prefix);
+        if (!prefix.isEmpty()) d.keyword(prefix);
 
         if (isConstructor == MethodConstructor.STATIC_CONSTRUCTOR) {
             return;

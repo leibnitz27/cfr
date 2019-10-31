@@ -85,16 +85,16 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
     @Override
     public Dumper dumpInner(Dumper d) {
         if (!isCompletelyAnonymous) {
-            d.print("new ").dump(allocatedType);
+            d.keyword("new ").dump(allocatedType);
             for (int x = 0; x < numDims; ++x) d.print("[]");
         }
-        d.print("{");
+        d.separator("{");
         boolean first = true;
         for (Expression value : values) {
             first = StringUtils.comma(first, d);
             d.dump(value);
         }
-        d.print("}");
+        d.separator("}");
         return d;
     }
 

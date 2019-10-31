@@ -55,7 +55,7 @@ public class NewPrimitiveArray extends AbstractNewArray {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        return d.print("new " + type + "[").dump(size).print("]");
+        return d.keyword("new ").print(type.toString()).separator("[").dump(size).separator("]");
     }
 
     @Override

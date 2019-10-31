@@ -98,7 +98,7 @@ public abstract class StreamDumper implements Dumper {
     public Dumper packageName(JavaRefTypeInstance t) {
         String s = t.getPackageName();
         if (!s.isEmpty()) {
-            print("package ").print(s).endCodeln().newln();
+            keyword("package ").print(s).endCodeln().newln();
         }
         return this;
     }
@@ -125,6 +125,12 @@ public abstract class StreamDumper implements Dumper {
     @Override
     public Dumper print(char c) {
         return print("" + c);
+    }
+
+    @Override
+    public Dumper keyword(String s) {
+        print(s);
+        return this;
     }
 
     @Override
@@ -190,7 +196,7 @@ public abstract class StreamDumper implements Dumper {
     @Override
     public Dumper dump(Dumpable d) {
         if (d == null) {
-            return print("null");
+            return keyword("null");
         }
         return d.dump(this);
     }
