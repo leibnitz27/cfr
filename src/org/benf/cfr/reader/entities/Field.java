@@ -148,7 +148,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
         String prefix = CollectionUtils.join(accessFlags, " ");
         if (!prefix.isEmpty()) {
-            d.print(prefix).print(' ');
+            d.keyword(prefix).print(' ');
         }
         JavaTypeInstance type = getJavaTypeInstance();
         d.dump(type).print(' ').fieldName(name, owner.getClassType(), false, false, true);

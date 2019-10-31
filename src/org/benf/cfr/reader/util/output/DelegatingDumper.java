@@ -42,6 +42,12 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
+    public Dumper keyword(String s) {
+        delegate.keyword(s);
+        return this;
+    }
+
+    @Override
     public Dumper operator(String s) {
         delegate.operator(s);
         return this;
@@ -109,7 +115,7 @@ public abstract class DelegatingDumper implements Dumper {
     @Override
     public Dumper dump(Dumpable d) {
         if (d == null) {
-            return print("null");
+            return keyword("null");
         }
         return d.dump(this);
     }

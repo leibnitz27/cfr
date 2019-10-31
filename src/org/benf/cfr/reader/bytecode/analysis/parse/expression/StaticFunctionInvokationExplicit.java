@@ -50,7 +50,7 @@ public class StaticFunctionInvokationExplicit extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.dump(clazz).print(".").print(method).separator("(");
+        d.dump(clazz).separator(".").print(method).separator("(");
         boolean first = true;
         for (Expression arg : args) {
             first = StringUtils.comma(first, d);

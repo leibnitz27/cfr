@@ -26,6 +26,8 @@ public interface Dumper {
 
     Dumper removePendingCarriageReturn();
 
+    Dumper keyword(String s);
+
     Dumper operator(String s);
 
     Dumper separator(String s);

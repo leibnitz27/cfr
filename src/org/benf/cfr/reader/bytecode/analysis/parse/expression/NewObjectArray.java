@@ -59,12 +59,12 @@ public class NewObjectArray extends AbstractNewArray {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.print("new ").dump(allocatedType);
+        d.keyword("new ").dump(allocatedType);
         for (Expression dimSize : dimSizes) {
-            d.print("[").dump(dimSize).print("]");
+            d.separator("[").dump(dimSize).separator("]");
         }
         for (int x = dimSizes.size(); x < numDims; ++x) {
-            d.print("[]");
+            d.separator("[]");
         }
         return d;
     }
