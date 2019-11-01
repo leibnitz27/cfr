@@ -20,7 +20,7 @@ public class StructuredFakeDecompFailure extends StructuredComment {
         for (StackTraceElement ste : e.getStackTrace()) {
             dumper.comment(ste.toString());
         }
-        dumper.print("throw new IllegalStateException(\"Decompilation failed\")").endCodeln();
+        dumper.keyword("throw new ").print("IllegalStateException").separator("(").literal("Decompilation failed", "Decompilation failed").separator(")").endCodeln();
         dumper.indent(-1);
         dumper.separator("}");
         dumper.enqueuePendingCarriageReturn();
