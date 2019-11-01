@@ -12,7 +12,7 @@ public class StructuredFakeDecompFailure extends StructuredComment {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("{");
+        dumper.separator("{");
         dumper.indent(1);
         dumper.newln();
         dumper.comment("This method has failed to decompile.  When submitting a bug report, please provide this stack trace, and (if you hold appropriate legal rights) the relevant class file.");
@@ -22,7 +22,7 @@ public class StructuredFakeDecompFailure extends StructuredComment {
         }
         dumper.print("throw new IllegalStateException(\"Decompilation failed\")").endCodeln();
         dumper.indent(-1);
-        dumper.print("}");
+        dumper.separator("}");
         dumper.enqueuePendingCarriageReturn();
 
         return dumper;

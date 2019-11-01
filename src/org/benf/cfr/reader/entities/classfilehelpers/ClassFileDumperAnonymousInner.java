@@ -57,7 +57,7 @@ public class ClassFileDumperAnonymousInner extends AbstractClassFileDumper {
             }
             d.separator(")");
         }
-        d.print("{").newln();
+        d.separator("{").newln();
         d.indent(1);
         int outcrs = d.getOutputCount();
 

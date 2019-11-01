@@ -50,13 +50,13 @@ public class StructuredCatch extends AbstractStructuredStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         boolean first = true;
-        dumper.print("catch (");
+        dumper.keyword("catch ").separator("(");
         for (JavaRefTypeInstance catchType : catchTypes) {
-            if (!first) dumper.print(" | ");
+            if (!first) dumper.operator(" | ");
             dumper.dump(catchType);
             first = false;
         }
-        dumper.print(" ").dump(catching).print(") ");
+        dumper.print(" ").dump(catching).separator(") ");
         catchBlock.dump(dumper);
         return dumper;
     }
