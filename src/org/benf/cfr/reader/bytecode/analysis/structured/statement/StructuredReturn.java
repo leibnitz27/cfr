@@ -47,9 +47,9 @@ public class StructuredReturn extends AbstractStructuredStatement implements Box
     @Override
     public Dumper dump(Dumper dumper) {
         if (value == null) {
-            dumper.print("return;");
+            dumper.keyword("return").print(";");
         } else {
-            dumper.print("return ").dump(value).print(";");
+            dumper.keyword("return ").dump(value).print(";");
         }
         dumper.newln();
         return dumper;

@@ -27,7 +27,7 @@ public class ThrowStatement extends ReturnStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("throw ").dump(rvalue).endCodeln();
+        return dumper.keyword("throw ").dump(rvalue).endCodeln();
     }
 
     @Override
