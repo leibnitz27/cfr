@@ -86,7 +86,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         dumpComments(classFile, d);
         dumpAnnotations(classFile, d);
         dumpHeader(classFile, innerClass, d);
-        d.print("{").newln();
+        d.separator("{").newln();
         d.indent(1);
 
         JavaTypeInstance classType = classFile.getClassType();
