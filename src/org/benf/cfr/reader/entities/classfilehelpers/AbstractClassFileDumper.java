@@ -51,7 +51,7 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
         String header = MiscConstants.CFR_HEADER_BRA +
                 (options.getOption(OptionsImpl.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
         d.comment("/*").newln();
-        d.comment(" * ").print(header).newln();
+        d.comment(" * ").comment(header).newln();
         if (options.getOption(OptionsImpl.DECOMPILER_COMMENTS)) {
             TypeUsageInformation typeUsageInformation = d.getTypeUsageInformation();
             List<JavaTypeInstance> couldNotLoad = ListFactory.newList();
@@ -71,7 +71,7 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
                 d.comment(" * ").newln();
                 d.comment(" * Could not load the following classes:").newln();
                 for (JavaTypeInstance type : couldNotLoad) {
-                    d.comment(" *  ").print(type.getRawName()).newln();
+                    d.comment(" *  ").comment(type.getRawName()).newln();
                 }
             }
         }
