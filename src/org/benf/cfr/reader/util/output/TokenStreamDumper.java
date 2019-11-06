@@ -186,6 +186,7 @@ public class TokenStreamDumper implements Dumper {
     @Override
     public Dumper comment(String s) {
         sink(COMMENT, s);
+        newln();
         return this;
     }
 
