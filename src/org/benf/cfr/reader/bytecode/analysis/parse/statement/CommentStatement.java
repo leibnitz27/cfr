@@ -57,7 +57,7 @@ public class CommentStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new StructuredComment(text);
+        return new StructuredComment("// " + text);
     }
 
     @Override
