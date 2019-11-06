@@ -34,7 +34,7 @@ public class StructuredComment extends AbstractStructuredStatement {
     public Dumper dump(Dumper dumper) {
         String comment = expression.toString();
         if (comment.length() > 0) {
-            dumper.comment("// " + comment);
+            dumper.comment("// " + comment).newln();
         }
         return dumper;
     }
