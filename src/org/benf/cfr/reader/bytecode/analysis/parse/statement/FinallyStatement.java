@@ -16,7 +16,7 @@ public class FinallyStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("finally {").newln();
+        return dumper.keyword("finally ").separator("{").newln();
     }
 
     @Override
