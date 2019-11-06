@@ -61,7 +61,7 @@ public class DecompilerComment implements Dumpable {
 
     @Override
     public Dumper dump(Dumper d) {
-        return d.comment(comment);
+        return d.comment("// " + comment);
     }
 
     public String getSummaryMessage() {

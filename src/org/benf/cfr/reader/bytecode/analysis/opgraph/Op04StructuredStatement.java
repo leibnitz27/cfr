@@ -199,7 +199,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     @Override
     public Dumper dump(Dumper dumper) {
         if (hasUnstructuredSource()) {
-            dumper.label(instrIndex.toString(), false).comment(sources.size() + " sources");
+            dumper.label(instrIndex.toString(), false).comment("// " + sources.size() + " sources");
         }
         structuredStatement.dump(dumper);
         return dumper;
@@ -238,9 +238,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             if (stm instanceof EndBlock) continue;
             if (stm instanceof StructuredComment) continue;
             if (stm instanceof StructuredExpressionStatement) {
-                Expression expression  =((StructuredExpressionStatement)stm).getExpression();
+                Expression expression = ((StructuredExpressionStatement) stm).getExpression();
                 if (expression instanceof SuperFunctionInvokation) {
-                    if (((SuperFunctionInvokation)expression).isInit()) continue;
+                    if (((SuperFunctionInvokation) expression).isInit()) continue;
                 }
             }
             return false;
@@ -248,10 +248,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         return true;
     }
 
-    /* 
-    * Take all nodes pointing at old, and point them at me.
-    * Add an unconditional target of old.
-    */
+    /*
+     * Take all nodes pointing at old, and point them at me.
+     * Add an unconditional target of old.
+     */
     private void replaceAsSource(Op04StructuredStatement old) {
         replaceInSources(old, this);
         this.addTarget(old);
@@ -392,7 +392,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     private static BlockIdentifier getStartingBlocks(Stack<BlockIdentifier> wasIn, Set<BlockIdentifier> nowIn) {
-        /* 
+        /*
          * We /KNOW/ that we've already checked and dealt with blocks we've left.
          * So we're only entering a new block if |nowIn|>|wasIn|.
          */
@@ -450,10 +450,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     /*
-    *
-    */
+     *
+     */
     public static Op04StructuredStatement buildNestedBlocks(List<Op04StructuredStatement> containers) {
-        /* 
+        /*
          * the blocks we're in, and when we entered them.
          *
          * This is ugly, could keep track of this more cleanly.
@@ -467,11 +467,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
         for (Op04StructuredStatement container : containers) {
             /*
-             * if this statement has the same membership as blocksCurrentlyIn, it's in the same 
+             * if this statement has the same membership as blocksCurrentlyIn, it's in the same
              * block as the previous statement, so emit it into currentBlock.
-             * 
-             * If not, we end the blocks that have been left, in reverse order of arriving in them. 
-             * 
+             *
+             * If not, we end the blocks that have been left, in reverse order of arriving in them.
+             *
              * If we've started a new block.... start that.
              */
             Set<BlockIdentifier> endOfTheseBlocks = getEndingBlocks(blocksCurrentlyIn, container.blockMembership);
@@ -499,7 +499,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
 
         }
-        /* 
+        /*
          * End any blocks we're still in.
          */
         if (!stackedBlocks.isEmpty()) {
@@ -566,7 +566,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
             in.transformStructuredChildren(this, scope);
             if (in instanceof UnstructuredIf) {
-                in = ((UnstructuredIf)in).convertEmptyToGoto();
+                in = ((UnstructuredIf) in).convertEmptyToGoto();
             }
             return in;
         }
@@ -574,7 +574,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static StructuredStatement transformStructuredGotoWithScope(StructuredScope scope, StructuredStatement stm,
                                                                        Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> breaktargets
-                                                                       ) {
+    ) {
         Set<Op04StructuredStatement> nextFallThrough = scope.getNextFallThrough(stm);
         List<Op04StructuredStatement> targets = stm.getContainer().getTargets();
         // Targets is an invalid concept for op04 really, should get rid of it.
@@ -623,7 +623,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                 out.transformStructuredChildrenInReverse(this, scope);
                 out = doTransform(out, targets, scope);
                 if (out instanceof StructuredBreak) {
-                    out = ((StructuredBreak)out).maybeTightenToLocal(targets);
+                    out = ((StructuredBreak) out).maybeTightenToLocal(targets);
                 }
             } finally {
                 if (breakableBlock != null) {
@@ -639,7 +639,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         @Override
         protected StructuredStatement doTransform(StructuredStatement statement, Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> targets, StructuredScope scope) {
             if (statement instanceof UnstructuredGoto ||
-                statement instanceof UnstructuredAnonymousBreak) {
+                    statement instanceof UnstructuredAnonymousBreak) {
                 statement = transformStructuredGotoWithScope(scope, statement, targets);
             }
             return statement;
@@ -650,7 +650,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         @Override
         protected StructuredStatement doTransform(StructuredStatement statement, Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> targets, StructuredScope scope) {
             if (statement instanceof StructuredBreak) {
-                statement = ((StructuredBreak)statement).maybeTightenToLocal(targets);
+                statement = ((StructuredBreak) statement).maybeTightenToLocal(targets);
             }
             return statement;
         }
@@ -960,7 +960,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         final MethodPrototype prototype = method.getMethodPrototype();
 
         if (!processed.add(prototype)) return;
-        
+
         // A local class can have both synthetic parameters AND real ones....
         List<MethodPrototype.ParameterLValue> vars = prototype.getParameterLValues();
         if (vars.isEmpty()) return;
@@ -991,7 +991,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             List<Expression> args = usage.getArgs();
             MethodPrototype proto = usage.getConstructorPrototype();
             protos.put(proto, proto);
-            for (int x=0;x<vars.size();++x) {
+            for (int x = 0; x < vars.size(); ++x) {
                 MethodPrototype.ParameterLValue var = vars.get(x);
                 if (var.isHidden() || proto.isHiddenArg(x)) {
                     CaptureExpression capture = captured.get(var);
@@ -1025,10 +1025,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
                 }
         }
         if (callProto == null) return;
-        
+
         ClassFile classFile = method.getClassFile();
 
-        for (int x=0;x<vars.size();++x) {
+        for (int x = 0; x < vars.size(); ++x) {
             MethodPrototype.ParameterLValue parameterLValue = vars.get(x);
             CaptureExpression captureExpression = captured.get(parameterLValue);
 
@@ -1094,7 +1094,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             if (!(arg instanceof LValueExpression)) continue;
             LValue lValueArg = ((LValueExpression) arg).getLValue();
             String overrideName = getInnerClassOuterArgName(method, lValueArg);
-            if (overrideName == null){
+            if (overrideName == null) {
                 continue;
             }
 
@@ -1110,7 +1110,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
             LocalVariable localVariable = (LocalVariable) lValueArg;
             overrideName = localVariable.getName().getStringName();
         } else if (lValueArg instanceof FieldVariable) {
-            FieldVariable fv = (FieldVariable)lValueArg;
+            FieldVariable fv = (FieldVariable) lValueArg;
             JavaTypeInstance thisClass = method.getClassFile().getClassType();
             JavaTypeInstance fieldClass = fv.getOwningClassType();
             boolean isInner = thisClass.getInnerClassHereInfo().isTransitiveInnerClassOf(fieldClass);

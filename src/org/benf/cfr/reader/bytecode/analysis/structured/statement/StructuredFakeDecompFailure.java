@@ -15,10 +15,10 @@ public class StructuredFakeDecompFailure extends StructuredComment {
         dumper.separator("{");
         dumper.indent(1);
         dumper.newln();
-        dumper.comment("This method has failed to decompile.  When submitting a bug report, please provide this stack trace, and (if you hold appropriate legal rights) the relevant class file.");
-        dumper.comment(e.toString());
+        dumper.comment("// This method has failed to decompile.  When submitting a bug report, please provide this stack trace, and (if you hold appropriate legal rights) the relevant class file.");
+        dumper.comment("// " + e.toString());
         for (StackTraceElement ste : e.getStackTrace()) {
-            dumper.comment(ste.toString());
+            dumper.comment("// " + ste.toString());
         }
         dumper.keyword("throw new ").print("IllegalStateException").separator("(").literal("Decompilation failed", "Decompilation failed").separator(")").endCodeln();
         dumper.indent(-1);
