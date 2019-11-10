@@ -323,14 +323,6 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
-    public void removeLastGoto(Op04StructuredStatement toHere) {
-        if (structuredStatement instanceof Block) {
-            ((Block) structuredStatement).removeLastGoto(toHere);
-        } else {
-            throw new ConfusedCFRException("Trying to remove last goto, but statement isn't a block!");
-        }
-    }
-
     public UnstructuredWhile removeLastEndWhile() {
         if (structuredStatement instanceof Block) {
             return ((Block) structuredStatement).removeLastEndWhile();
@@ -411,7 +403,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         LinkedList<Op04StructuredStatement> currentBlock = ListFactory.newLinkedList();
     }
 
-    public static void processEndingBlocks(
+    private static void processEndingBlocks(
             final Set<BlockIdentifier> endOfTheseBlocks,
             final Stack<BlockIdentifier> blocksCurrentlyIn,
             final Stack<StackedBlock> stackedBlocks,
@@ -452,7 +444,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     /*
     *
     */
-    public static Op04StructuredStatement buildNestedBlocks(List<Op04StructuredStatement> containers) {
+    static Op04StructuredStatement buildNestedBlocks(List<Op04StructuredStatement> containers) {
         /* 
          * the blocks we're in, and when we entered them.
          *
@@ -572,9 +564,9 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         }
     }
 
-    public static StructuredStatement transformStructuredGotoWithScope(StructuredScope scope, StructuredStatement stm,
-                                                                       Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> breaktargets
-                                                                       ) {
+    private static StructuredStatement transformStructuredGotoWithScope(StructuredScope scope, StructuredStatement stm,
+                                                                        Stack<Triplet<StructuredStatement, BlockIdentifier, Set<Op04StructuredStatement>>> breaktargets
+    ) {
         Set<Op04StructuredStatement> nextFallThrough = scope.getNextFallThrough(stm);
         List<Op04StructuredStatement> targets = stm.getContainer().getTargets();
         // Targets is an invalid concept for op04 really, should get rid of it.
