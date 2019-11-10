@@ -1,4 +1,12 @@
+# IntelliJ
 .idea
 out
-target
 *.iml
+
+# Eclipse
+/.classpath
+/.project
+/.settings
+
+# Maven
+/target
