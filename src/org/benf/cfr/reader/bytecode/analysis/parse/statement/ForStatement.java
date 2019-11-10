@@ -27,7 +27,7 @@ public class ForStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("for (");
+        dumper.keyword("for ").separator("(");
         if (initial != null) dumper.dump(initial);
         dumper.print("; ").dump(condition).print("; ");
         boolean first = true;
@@ -35,8 +35,8 @@ public class ForStatement extends AbstractStatement {
             first = StringUtils.comma(first, dumper);
             dumper.dump(assignment);
         }
-        dumper.print(") ");
-        dumper.print(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";").newln();
+        dumper.separator(") ");
+        dumper.comment(" // ends " + getTargetStatement(1).getContainer().getLabel() + ";").newln();
         return dumper;
     }
 
@@ -50,7 +50,7 @@ public class ForStatement extends AbstractStatement {
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers) {
         condition = expressionRewriter.rewriteExpression(condition, ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE);
-        for (int i=0,len=assignments.size();i<len;++i) {
+        for (int i = 0, len = assignments.size(); i < len; ++i) {
             assignments.set(i, (AbstractAssignmentExpression) expressionRewriter.rewriteExpression(assignments.get(i), ssaIdentifiers, getContainer(), ExpressionRewriterFlags.RVALUE));
         }
     }

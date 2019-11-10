@@ -46,7 +46,7 @@ public class StructuredIf extends AbstractStructuredStatement implements CanRemo
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("if (").dump(conditionalExpression).print(") ");
+        dumper.keyword("if ").separator("(").dump(conditionalExpression).separator(") ");
         ifTaken.dump(dumper);
         if (elseBlock != null) {
             dumper.removePendingCarriageReturn();

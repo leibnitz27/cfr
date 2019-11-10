@@ -480,7 +480,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             AttributeAnnotationDefault annotationDefault = getAttributeByName(AttributeAnnotationDefault.ATTRIBUTE_NAME);
             if (annotationDefault != null) {
                 JavaTypeInstance resultType = methodPrototype.getReturnType();
-                d.print(" default ").dump(annotationDefault.getElementValue().withTypeHint(resultType));
+                d.keyword(" default ").dump(annotationDefault.getElementValue().withTypeHint(resultType));
             }
             d.endCodeln();
         } else {

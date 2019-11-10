@@ -43,7 +43,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
         boolean first = true;
         dumpAnnotations(classFile, d);
         dumpHeader(classFile, innerClass, d);
-        d.print("{").newln();
+        d.separator("{").newln();
         d.indent(1);
         // Horrid, but an interface can have fields....
         List<ClassFileField> fields = classFile.getFields();

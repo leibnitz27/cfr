@@ -37,7 +37,7 @@ public class ToStringDumper implements Dumper {
 
     @Override
     public Dumper comment(String s) {
-        sb.append("// ").append(s).append("\n");
+        sb.append(s);
         return this;
     }
 

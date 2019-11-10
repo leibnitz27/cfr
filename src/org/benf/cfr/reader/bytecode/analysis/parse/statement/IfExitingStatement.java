@@ -26,7 +26,7 @@ public class IfExitingStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("if (").dump(condition).print(") ");
+        dumper.keyword("if ").separator("(").dump(condition).separator(") ");
         statement.dump(dumper);
         return dumper;
     }

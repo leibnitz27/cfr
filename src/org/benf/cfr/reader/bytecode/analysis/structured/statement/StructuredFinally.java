@@ -22,7 +22,7 @@ public class StructuredFinally extends AbstractStructuredStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        dumper.print("finally ");
+        dumper.keyword("finally ");
         catchBlock.dump(dumper);
         return dumper;
     }
