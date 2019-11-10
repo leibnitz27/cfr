@@ -156,12 +156,14 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
          * Eliminate enclosing scopes where they were falsely detected, and
          * where scopes for the same variable exist, lift to the lowest common denominator.
          */
-        Map<ScopeKey, List<ScopeDefinition>> definitionsByType = Functional.groupToMapBy(discoveredCreations, new UnaryFunction<ScopeDefinition, ScopeKey>() {
-            @Override
-            public ScopeKey invoke(ScopeDefinition arg) {
-                return arg.getScopeKey();
-            }
-        });
+        Map<ScopeKey, List<ScopeDefinition>> definitionsByType = Functional.groupToMapBy(discoveredCreations,
+                MapFactory.<ScopeKey, List<ScopeDefinition>>newOrderedMap(),
+                new UnaryFunction<ScopeDefinition, ScopeKey>() {
+                    @Override
+                    public ScopeKey invoke(ScopeDefinition arg) {
+                        return arg.getScopeKey();
+                    }
+                });
 
         creation : for (Map.Entry<ScopeKey, List<ScopeDefinition>> entry : definitionsByType.entrySet()) {
             ScopeKey scopeKey = entry.getKey();
