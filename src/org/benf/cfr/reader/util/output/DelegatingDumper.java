@@ -159,6 +159,18 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
+    public Dumper beginBlockComment(boolean inline) {
+        delegate.beginBlockComment(inline);
+        return this;
+    }
+
+    @Override
+    public Dumper endBlockComment() {
+        delegate.endBlockComment();
+        return this;
+    }
+
+    @Override
     public int getOutputCount() {
         return delegate.getOutputCount();
     }

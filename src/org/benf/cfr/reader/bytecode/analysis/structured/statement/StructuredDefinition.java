@@ -23,7 +23,7 @@ public class StructuredDefinition extends AbstractStructuredStatement {
 
     private LValue scopedEntity;
 
-    public StructuredDefinition(LValue scopedEntity) {
+    StructuredDefinition(LValue scopedEntity) {
         this.scopedEntity = scopedEntity;
     }
 

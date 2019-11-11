@@ -29,11 +29,11 @@ public class DecompilerComments implements Dumpable {
     @Override
     public Dumper dump(Dumper d) {
         if (comments.isEmpty()) return d;
-        d.print("/*").newln();
+        d.beginBlockComment(false);
         for (DecompilerComment comment : comments) {
-            d.print(" * ").dump(comment).newln();
+            d.dump(comment);
         }
-        d.print(" */").newln();
+        d.endBlockComment();
         return d;
     }
 

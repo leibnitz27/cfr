@@ -34,7 +34,7 @@ public class ReturnValueStatement extends ReturnStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("return ").dump(rvalue).endCodeln();
+        return dumper.keyword("return ").dump(rvalue).endCodeln();
     }
 
     public Expression getReturnValue() {

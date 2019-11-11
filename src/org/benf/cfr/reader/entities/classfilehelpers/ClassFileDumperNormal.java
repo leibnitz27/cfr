@@ -26,28 +26,28 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
 
     private void dumpHeader(ClassFile c, InnerClassDumpType innerClassDumpType, Dumper d) {
         AccessFlag[] accessFlagsToDump = innerClassDumpType == InnerClassDumpType.INLINE_CLASS ? dumpableAccessFlagsInlineClass : dumpableAccessFlagsClass;
-        d.print(getAccessFlagsString(c.getAccessFlags(), accessFlagsToDump));
+        d.keyword(getAccessFlagsString(c.getAccessFlags(), accessFlagsToDump));
 
         ClassSignature signature = c.getClassSignature();
 
-        d.print("class ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
+        d.keyword("class ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
         getFormalParametersText(signature, d);
         d.newln();
 
         JavaTypeInstance superClass = signature.getSuperClass();
         if (superClass != null) {
             if (!superClass.getRawName().equals(TypeConstants.objectName)) {
-                d.print("extends ").dump(superClass).newln();
+                d.keyword("extends ").dump(superClass).newln();
             }
         }
 
         List<JavaTypeInstance> interfaces = signature.getInterfaces();
         if (!interfaces.isEmpty()) {
-            d.print("implements ");
+            d.keyword("implements ");
             int size = interfaces.size();
             for (int x = 0; x < size; ++x) {
                 JavaTypeInstance iface = interfaces.get(x);
-                d.dump(iface).print((x < (size - 1) ? "," : "")).newln();
+                d.dump(iface).separator((x < (size - 1) ? "," : "")).newln();
             }
         }
         d.removePendingCarriageReturn().print(" ");
@@ -65,7 +65,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         dumpComments(classFile, d);
         dumpAnnotations(classFile, d);
         dumpHeader(classFile, innerClass, d);
-        d.print("{").newln();
+        d.separator("{").newln();
         d.indent(1);
         boolean first = true;
 
@@ -91,7 +91,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         }
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
-        d.print("}").newln();
+        d.separator("}").newln();
 
         return d;
     }

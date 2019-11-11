@@ -52,11 +52,11 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         if (block.hasForeignReferences()) dumper.label(block.getName(), true);
-        dumper.print("for ").separator("(");
+        dumper.keyword("for ").separator("(");
         if (initial != null) {
             if (isCreator) {
                 // The reason this looks wrong is because initial should be a structured definition here....
-                LValue.Creation.dump(dumper, initial.getCreatedLValue()).print(" = ").dump(initial.getRValue()).separator(";");
+                LValue.Creation.dump(dumper, initial.getCreatedLValue()).operator(" = ").dump(initial.getRValue()).separator(";");
             } else {
                 dumper.dump(initial);
             }

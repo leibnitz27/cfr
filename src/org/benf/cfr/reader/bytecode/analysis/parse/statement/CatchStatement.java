@@ -63,7 +63,7 @@ public class CatchStatement extends AbstractStatement {
 
     @Override
     public Dumper dump(Dumper dumper) {
-        return dumper.print("catch ( " + exceptions + " ").dump(catching).separator(" ) ").separator("{").newln();
+        return dumper.keyword("catch ").separator("( " + exceptions + " ").dump(catching).separator(" ) ").separator("{").newln();
     }
 
     public BlockIdentifier getCatchBlockIdent() {

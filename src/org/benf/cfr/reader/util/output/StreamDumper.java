@@ -7,13 +7,14 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.mapping.NullMapping;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.Set;
 
-public abstract class StreamDumper implements Dumper {
+public abstract class StreamDumper extends AbstractDumper {
     private final TypeUsageInformation typeUsageInformation;
     protected final Options options;
     protected final IllegalIdentifierDump illegalIdentifierDump;
@@ -21,11 +22,9 @@ public abstract class StreamDumper implements Dumper {
     protected int indent;
 
     private int outputCount = 0;
-    private boolean atStart = true;
-    private boolean pendingCR = false;
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
-    public StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, int indent) {
+    StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, int indent) {
         this.typeUsageInformation = typeUsageInformation;
         this.options = options;
         this.illegalIdentifierDump = illegalIdentifierDump;
@@ -56,32 +55,6 @@ public abstract class StreamDumper implements Dumper {
             newln();
         }
         return this;
-    }
-
-    @Override
-    public Dumper comment(String s) {
-        print("// " + s);
-        return newln();
-    }
-
-    @Override
-    public void enqueuePendingCarriageReturn() {
-        pendingCR = true;
-    }
-
-    @Override
-    public Dumper removePendingCarriageReturn() {
-        pendingCR = false;
-        atStart = false;
-        return this;
-    }
-
-    private void processPendingCR() {
-        if (pendingCR) {
-            write("\n");
-            atStart = true;
-            pendingCR = false;
-        }
     }
 
     @Override
@@ -174,6 +147,15 @@ public abstract class StreamDumper implements Dumper {
         String indents = "    ";
         for (int x = 0; x < indent; ++x) write(indents);
         atStart = false;
+        if (inBlockComment != BlockCommentState.Not) write (" * ");
+    }
+
+    private void processPendingCR() {
+        if (pendingCR) {
+            write("\n");
+            atStart = true;
+            pendingCR = false;
+        }
     }
 
     @Override
