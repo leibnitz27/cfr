@@ -11,7 +11,6 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
  * NB: This interface is NOT an externally visible one, and is subject to change.
  */
 public interface Dumper {
-
     /*
      * A dumper is initialised with knowledge of the types, so that two
      * dumpers can dump the same code with different import shortening.
@@ -61,6 +60,10 @@ public interface Dumper {
     Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation);
 
     Dumper comment(String s);
+
+    Dumper beginBlockComment(boolean inline);
+
+    Dumper endBlockComment();
 
     class CannotCreate extends RuntimeException {
         CannotCreate(String s) {

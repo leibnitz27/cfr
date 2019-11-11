@@ -50,8 +50,8 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
         Options options = dcCommonState.getOptions();
         String header = MiscConstants.CFR_HEADER_BRA +
                 (options.getOption(OptionsImpl.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
-        d.comment("/*").newln();
-        d.comment(" * ").comment(header).newln();
+        d.beginBlockComment(false);
+        d.print(header).newln();
         if (options.getOption(OptionsImpl.DECOMPILER_COMMENTS)) {
             TypeUsageInformation typeUsageInformation = d.getTypeUsageInformation();
             List<JavaTypeInstance> couldNotLoad = ListFactory.newList();
@@ -68,14 +68,14 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
                 }
             }
             if (!couldNotLoad.isEmpty()) {
-                d.comment(" * ").newln();
-                d.comment(" * Could not load the following classes:").newln();
+                d.newln();
+                d.print("Could not load the following classes:").newln();
                 for (JavaTypeInstance type : couldNotLoad) {
-                    d.comment(" *  ").comment(type.getRawName()).newln();
+                    d.print(" ").print(type.getRawName()).newln();
                 }
             }
         }
-        d.comment(" */").newln();
+        d.endBlockComment();
         // package name may be empty, in which case it's ignored by dumper.
         d.packageName(classFile.getRefClassType());
     }

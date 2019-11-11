@@ -12,11 +12,9 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 
 import java.util.Set;
 
-public class ToStringDumper implements Dumper {
+public class ToStringDumper extends AbstractDumper {
     private int outputCount = 0;
     private int indent;
-    private boolean atStart = true;
-    private boolean pendingCR = false;
     private final StringBuilder sb = new StringBuilder();
     private final TypeUsageInformation typeUsageInformation = new TypeUsageInformationEmpty();
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
@@ -32,23 +30,6 @@ public class ToStringDumper implements Dumper {
     public Dumper label(String s, boolean inline) {
         processPendingCR();
         sb.append(s).append(":");
-        return this;
-    }
-
-    @Override
-    public Dumper comment(String s) {
-        sb.append(s);
-        return this;
-    }
-
-    @Override
-    public void enqueuePendingCarriageReturn() {
-        pendingCR = true;
-    }
-
-    @Override
-    public Dumper removePendingCarriageReturn() {
-        pendingCR = false;
         return this;
     }
 
@@ -139,6 +120,7 @@ public class ToStringDumper implements Dumper {
         String indents = "    ";
         for (int x = 0; x < indent; ++x) sb.append(indents);
         atStart = false;
+        if (inBlockComment != BlockCommentState.Not) sb.append(" * ");
     }
 
     @Override

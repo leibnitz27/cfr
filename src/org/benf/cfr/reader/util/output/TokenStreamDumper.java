@@ -21,7 +21,7 @@ import java.util.Set;
 
 import static org.benf.cfr.reader.api.SinkReturns.TokenType.*;
 
-public class TokenStreamDumper implements Dumper {
+public class TokenStreamDumper extends AbstractDumper {
     private final RecycleToken tok = new RecycleToken();
     private final Token cr = new Token(NEWLINE, "\n", (Object) null);
     private final OutputSinkFactory.Sink<SinkReturns.Token> sink;
@@ -30,6 +30,7 @@ public class TokenStreamDumper implements Dumper {
     private final TypeUsageInformation typeUsageInformation;
     private final Options options;
     private final IllegalIdentifierDump illegalIdentifierDump;
+    private BlockCommentState inBlockComment;
 
     // We don't want to expose internals - we are simply making a offering to allow consumers to associate tokens.
     private final Map<Object, Object> refMap = MapFactory.newLazyMap(new IdentityHashMap<Object, Object>(), new UnaryFunction<Object, Object>() {
@@ -150,7 +151,12 @@ public class TokenStreamDumper implements Dumper {
 
     private void sink(SinkReturns.TokenType type, String text) {
         flushPendingCR();
-        sink.write(tok.set(type, text));
+        sink.write(tok.set(adjustComment(type), text));
+    }
+
+    private SinkReturns.TokenType adjustComment(SinkReturns.TokenType type) {
+        // TODO : It may be preferable to introduce a new 'blockcommentmember' type.
+        return inBlockComment == BlockCommentState.Not ? type : COMMENT;
     }
 
     private void sink(Token token) {
@@ -186,6 +192,34 @@ public class TokenStreamDumper implements Dumper {
     @Override
     public Dumper comment(String s) {
         sink(COMMENT, s);
+        return this;
+    }
+
+    @Override
+    public Dumper beginBlockComment(boolean inline) {
+        if (inBlockComment != BlockCommentState.Not) {
+            throw new IllegalStateException("Attempt to nest block comments.");
+        }
+        inBlockComment = inline ? BlockCommentState.InLine : BlockCommentState.In;
+        print("/* ");
+        if (inline) newln();
+        return this;
+    }
+
+    @Override
+    public Dumper endBlockComment() {
+        if (inBlockComment == BlockCommentState.Not) {
+            throw new IllegalStateException("Attempt to end block comment when not in one.");
+        }
+        if (inBlockComment == BlockCommentState.In) {
+            if (!atStart) {
+                newln();
+            }
+            print(" */").newln();
+        } else {
+            print(" */ ");
+        }
+        inBlockComment = BlockCommentState.Not;
         return this;
     }
 
