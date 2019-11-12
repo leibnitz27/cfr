@@ -33,7 +33,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
     private List<JavaTypeInstance> targetFnArgTypes;
     private List<Expression> curriedArgs;
     private boolean instance;
-    private final boolean colon;
+    private final boolean methodRef;
 
     private String lambdaFnName() {
         String lambdaFnName = lambdaFn.getName();
@@ -47,26 +47,25 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
         this.targetFnArgTypes = targetFnArgTypes;
         this.curriedArgs = curriedArgs;
         this.instance = instance;
-        boolean isColon = false;
+        boolean isMethodRef = false;
         switch (curriedArgs.size()) {
             case 0:
-                isColon = targetFnArgTypes.size() <= 1 && !instance;
+                isMethodRef = true;
                 if (instance) {
                     /* Don't really understand what's going on here.... */
-                    isColon = true;
                     this.instance = false;
                 }
                 break;
             case 1:
-                isColon = targetFnArgTypes.size() <= 1 && instance;
+                isMethodRef = targetFnArgTypes.size() <= 1 && instance;
                 break;
         }
-        this.colon = isColon;
+        this.methodRef = isMethodRef;
     }
 
-    private LambdaExpressionFallback(InferredJavaType inferredJavaType, boolean colon, boolean instance, List<Expression> curriedArgs, List<JavaTypeInstance> targetFnArgTypes, MethodPrototype lambdaFn, JavaTypeInstance callClassType) {
+    private LambdaExpressionFallback(InferredJavaType inferredJavaType, boolean methodRef, boolean instance, List<Expression> curriedArgs, List<JavaTypeInstance> targetFnArgTypes, MethodPrototype lambdaFn, JavaTypeInstance callClassType) {
         super(inferredJavaType);
-        this.colon = colon;
+        this.methodRef = methodRef;
         this.instance = instance;
         this.curriedArgs = curriedArgs;
         this.targetFnArgTypes = targetFnArgTypes;
@@ -76,7 +75,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new LambdaExpressionFallback(getInferredJavaType(), colon, instance, cloneHelper.replaceOrClone(curriedArgs), targetFnArgTypes, lambdaFn, callClassType);
+        return new LambdaExpressionFallback(getInferredJavaType(), methodRef, instance, cloneHelper.replaceOrClone(curriedArgs), targetFnArgTypes, lambdaFn, callClassType);
     }
 
     @Override
@@ -113,8 +112,9 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
     @Override
     public Dumper dumpInner(Dumper d) {
         String name = lambdaFnName();
+        //noinspection StringEquality
         boolean special = name == MiscConstants.NEW;
-        if (colon) {
+        if (methodRef) {
             if (instance) {
                 curriedArgs.get(0).dumpWithOuterPrecedence(d, getPrecedence(), Troolean.TRUE).print("::").methodName(name, lambdaFn, special, false);
             } else {
@@ -170,7 +170,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
 
         LambdaExpressionFallback that = (LambdaExpressionFallback) o;
 
-        if (colon != that.colon) return false;
+        if (methodRef != that.methodRef) return false;
         if (instance != that.instance) return false;
         if (callClassType != null ? !callClassType.equals(that.callClassType) : that.callClassType != null)
             return false;
@@ -189,7 +189,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
         if (getClass() != o.getClass()) return false;
         LambdaExpressionFallback other = (LambdaExpressionFallback) o;
         if (instance != other.instance) return false;
-        if (colon != other.colon) return false;
+        if (methodRef != other.methodRef) return false;
         if (!constraint.equivalent(lambdaFn, other.lambdaFn)) return false;
         if (!constraint.equivalent(curriedArgs, other.curriedArgs)) return false;
         return true;
