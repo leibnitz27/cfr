@@ -126,7 +126,12 @@ public abstract class StreamDumper extends AbstractDumper {
 
     @Override
     public Dumper newln() {
-        if (pendingCR) write("\n");
+        if (pendingCR) {
+            write("\n");
+            if (atStart && inBlockComment != BlockCommentState.Not) {
+                doIndent();
+            }
+        }
         pendingCR = true;
         atStart = true;
         outputCount++;
