@@ -7,6 +7,7 @@ import org.benf.cfr.reader.state.ClassFileSourceImpl;
 import org.benf.cfr.reader.state.ClassFileSourceWrapper;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -49,7 +50,7 @@ public class PluginRunner {
 
     public List<String> addJarPath(String jarPath) {
         try {
-            List<JavaTypeInstance> types = dcCommonState.explicitlyLoadJar(jarPath).get(0);
+            List<JavaTypeInstance> types = dcCommonState.explicitlyLoadJar(jarPath, AnalysisType.JAR).get(0);
             return Functional.map(types, new UnaryFunction<JavaTypeInstance, String>() {
                 @Override
                 public String invoke(JavaTypeInstance arg) {

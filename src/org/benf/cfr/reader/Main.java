@@ -3,6 +3,7 @@ package org.benf.cfr.reader;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.getopt.GetOptParser;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -19,7 +20,7 @@ public class Main {
 
     @SuppressWarnings({"WeakerAccess", "unused"}) // too many people use it - left for historical reasons.
     public static void doJar(DCCommonState dcCommonState, String path, DumperFactory dumperFactory) {
-        Driver.doJar(dcCommonState, path, dumperFactory);
+        Driver.doJar(dcCommonState, path, AnalysisType.JAR, dumperFactory);
     }
 
     public static void main(String[] args) {

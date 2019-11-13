@@ -42,5 +42,6 @@ public interface MiscConstants {
     String MANIFEST_PATH = "META-INF/MANIFEST.MF";
     String MULTI_RELEASE_KEY = "Multi-Release";
     String MULTI_RELEASE_PREFIX = "META-INF/versions/";
+    String WAR_PREFIX = "WEB-INF/classes/";
     Pattern MULTI_RELEASE_PATH_PATTERN = Pattern.compile("^" + MULTI_RELEASE_PREFIX + "(\\d+)/(.*)$");
 }

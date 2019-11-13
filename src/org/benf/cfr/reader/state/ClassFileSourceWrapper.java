@@ -4,6 +4,7 @@ import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.apiunreleased.ClassFileSource2;
 import org.benf.cfr.reader.apiunreleased.JarContent;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.util.AnalysisType;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -22,10 +23,10 @@ public class ClassFileSourceWrapper implements ClassFileSource2 {
     }
 
     @Override
-    public JarContent addJarContent(String jarPath) {
+    public JarContent addJarContent(String jarPath, AnalysisType type) {
         return new JarContentImpl(
             classFileSource.addJar(jarPath),
-                Collections.<String, String>emptyMap());
+                Collections.<String, String>emptyMap(), type);
     }
 
     @Override

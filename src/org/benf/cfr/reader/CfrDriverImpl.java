@@ -62,7 +62,7 @@ public class CfrDriverImpl implements CfrDriver {
             }
 
             if (type == AnalysisType.JAR || type == AnalysisType.WAR) {
-                Driver.doJar(dcCommonState, path, dumperFactory);
+                Driver.doJar(dcCommonState, path, type, dumperFactory);
             } else if (type == AnalysisType.CLASS) {
                 Driver.doClass(dcCommonState, path, skipInnerClass, dumperFactory);
             }

@@ -117,8 +117,8 @@ public class DCCommonState {
         return Boolean.parseBoolean(val);
     }
 
-    public TreeMap<Integer, List<JavaTypeInstance>> explicitlyLoadJar(String path) {
-        JarContent jarContent = classFileSource.addJarContent(path);
+    public TreeMap<Integer, List<JavaTypeInstance>> explicitlyLoadJar(String path, AnalysisType type) {
+        JarContent jarContent = classFileSource.addJarContent(path, type);
 
         TreeMap<Integer, List<JavaTypeInstance>> baseRes = MapFactory.newTreeMap();
         Map<Integer, List<JavaTypeInstance>> res = MapFactory.newLazyMap(baseRes, new UnaryFunction<Integer, List<JavaTypeInstance>>() {
@@ -203,7 +203,8 @@ public class DCCommonState {
     // No fancy file identification right now, just very very simple.
     public AnalysisType detectClsJar(String path) {
         String lcPath = path.toLowerCase();
-        if (lcPath.endsWith(".jar") || lcPath.endsWith(".war")) return AnalysisType.JAR;
+        if (lcPath.endsWith(".jar")) return AnalysisType.JAR;
+        if (lcPath.endsWith(".war")) return AnalysisType.WAR;
         return AnalysisType.CLASS;
     }
 

@@ -3,6 +3,7 @@ package org.benf.cfr.reader.state;
 import org.benf.cfr.reader.apiunreleased.ClassFileSource2;
 import org.benf.cfr.reader.apiunreleased.JarContent;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.StringUtils;
@@ -33,7 +34,7 @@ import static org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils.getPack
 public class ClassFileSourceImpl implements ClassFileSource2 {
 
     private final Set<String> explicitJars = SetFactory.newSet();
-    private Map<String, String> classToPathMap;
+    private Map<String, JarSourceEntry> classToPathMap;
     // replace with BiDiMap
     private Map<String, String> classCollisionRenamerLCToReal;
     private Map<String, String> classCollisionRenamerRealToLC;
@@ -91,9 +92,9 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
 
     @Override
     public Pair<byte [], String> getClassFileContent(final String inputPath) throws IOException {
-        Map<String, String> classPathFiles = getClassPathClasses();
+        Map<String, JarSourceEntry> classPathFiles = getClassPathClasses();
 
-        String jarName = classPathFiles.get(inputPath);
+        JarSourceEntry jarEntry = classPathFiles.get(inputPath);
 
         // If path is an alias due to case insensitivity, restore to the correct name here, before
         // accessing zipfile.
@@ -122,15 +123,18 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
                 }
                 usePath = pathPrefix + usePath;
             }
-            boolean forceJar = explicitJars.contains(jarName);
+            boolean forceJar = jarEntry != null && explicitJars.contains(jarEntry.getPath());
             File file = forceJar ? null : new File(usePath);
             byte[] content;
             if (file != null && file.exists()) {
                 is = new FileInputStream(file);
                 length = file.length();
                 content = getBytesFromFile(is, length);
-            } else if (jarName != null) {
-                zipFile = new ZipFile(new File(jarName), ZipFile.OPEN_READ);
+            } else if (jarEntry != null) {
+                zipFile = new ZipFile(new File(jarEntry.getPath()), ZipFile.OPEN_READ);
+                if (jarEntry.analysisType == AnalysisType.WAR) {
+                    path = MiscConstants.WAR_PREFIX + path;
+                }
                 ZipEntry zipEntry = zipFile.getEntry(path);
                 length = zipEntry.getSize();
                 is = zipFile.getInputStream(zipEntry);
@@ -257,10 +261,10 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
 
     @Deprecated
     public Collection<String> addJar(String jarPath) {
-        return addJarContent(jarPath).getClassFiles();
+        return addJarContent(jarPath, AnalysisType.JAR).getClassFiles();
     }
 
-    public JarContent addJarContent(String jarPath) {
+    public JarContent addJarContent(String jarPath, AnalysisType analysisType) {
         // Make sure classpath is scraped first, so we'll overwrite it.
         getClassPathClasses();
 
@@ -269,10 +273,12 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
             throw new ConfusedCFRException("No such jar file " + jarPath);
         }
         jarPath = file.getAbsolutePath();
-        JarContent jarContent = processClassPathFile(file, false);
+        JarContent jarContent = processClassPathFile(file, false, analysisType);
         if (jarContent == null){
             throw new ConfusedCFRException("Failed to load jar " + jarPath);
         }
+
+        JarSourceEntry sourceEntry = new JarSourceEntry(analysisType, jarPath);
 
         Set<String> dedup;
         if (classCollisionRenamerLCToReal != null) {
@@ -301,7 +307,7 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
                     classCollisionRenamerRealToLC.put(classPath, renamed);
                     classPath = renamed;
                 }
-                classToPathMap.put(classPath, jarPath);
+                classToPathMap.put(classPath, sourceEntry);
                 output.add(classPath);
             }
         }
@@ -322,7 +328,25 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
         return testName;
     }
 
-    private Map<String, String> getClassPathClasses() {
+    private static class JarSourceEntry {
+        private final AnalysisType analysisType;
+        private final String path;
+
+        public JarSourceEntry(AnalysisType analysisType, String path) {
+            this.analysisType = analysisType;
+            this.path = path;
+        }
+
+        public AnalysisType getAnalysisType() {
+            return analysisType;
+        }
+
+        public String getPath() {
+            return path;
+        }
+    }
+
+    private Map<String, JarSourceEntry> getClassPathClasses() {
         if (classToPathMap == null) {
             boolean renameCase = (options.getOption(OptionsImpl.CASE_INSENSITIVE_FS_RENAME));
 
@@ -358,11 +382,11 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
                         File[] files = f.listFiles();
                         if (files != null) {
                             for (File file : files) {
-                                processClassPathFile(file, file.getAbsolutePath(), classToPathMap, dump);
+                                processClassPathFile(file, file.getAbsolutePath(), classToPathMap, AnalysisType.JAR, dump);
                             }
                         }
                     } else {
-                        processClassPathFile(f, path, classToPathMap, dump);
+                        processClassPathFile(f, path, classToPathMap, AnalysisType.JAR, dump);
                     }
                 } else {
                     if (dump) {
@@ -377,17 +401,18 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
         return classToPathMap;
     }
 
-    private void processClassPathFile(File file, String absolutePath, Map<String, String> classToPathMap, boolean dump) {
-        JarContent content = processClassPathFile(file, dump);
+    private void processClassPathFile(File file, String absolutePath, Map<String, JarSourceEntry> classToPathMap, AnalysisType analysisType, boolean dump) {
+        JarContent content = processClassPathFile(file, dump, analysisType);
         if (content == null) {
             return;
         }
+        JarSourceEntry sourceEntry = new JarSourceEntry(analysisType, absolutePath);
         for (String name : content.getClassFiles()) {
-            classToPathMap.put(name, absolutePath);
+            classToPathMap.put(name, sourceEntry);
         }
     }
 
-    private JarContent processClassPathFile(final File file, boolean dump) {
+    private JarContent processClassPathFile(final File file, boolean dump, AnalysisType analysisType) {
         List<String> content = ListFactory.newList();
         Map<String, String> manifest;
         try {
@@ -417,7 +442,23 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
         } catch (IOException e) {
             return null;
         }
-        return new JarContentImpl(content, manifest);
+        if (analysisType == AnalysisType.WAR) {
+            // Strip WEB-INF/classes from the front of class files.
+            final int prefixLen = MiscConstants.WAR_PREFIX.length();
+            content = Functional.map(Functional.filter(content, new Predicate<String>() {
+                @Override
+                public boolean test(String in) {
+                    return in.startsWith(MiscConstants.WAR_PREFIX);
+                }
+            }), new UnaryFunction<String, String>() {
+                @Override
+                public String invoke(String arg) {
+                    return arg.substring(prefixLen);
+                }
+            });
+        }
+
+        return new JarContentImpl(content, manifest, analysisType);
     }
 
     private Map<String, String> getManifestContent(ZipFile zipFile) {

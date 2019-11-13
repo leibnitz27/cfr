@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.apiunreleased;
 
+import org.benf.cfr.reader.util.AnalysisType;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -15,4 +17,9 @@ public interface JarContent {
      * @return Map of manifest entries.
      */
     Map<String, String> getManifestEntries();
+
+    /**
+     * @return source of data - jar? war?
+     */
+    AnalysisType getAnalysisType();
 }
