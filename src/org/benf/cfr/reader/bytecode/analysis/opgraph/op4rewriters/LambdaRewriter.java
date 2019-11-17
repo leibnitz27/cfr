@@ -297,15 +297,32 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                     lambdaStatement.rewriteExpressions(variableRenamer);
                 }
                 StructuredStatement lambdaStatement = lambdaCode.getStatement();
+
+                lambdaMethod.hideSynthetic();
+
                 if (structuredLambdaStatements.size() == 3 && (structuredLambdaStatements.get(1) instanceof StructuredReturn)) {
                     /*
                      * it's a single element lambda expression - we can just use a statement!
                      */
                     StructuredReturn structuredReturn = (StructuredReturn) structuredLambdaStatements.get(1);
-                    lambdaStatement = new StructuredExpressionStatement(structuredReturn.getValue(), true);
+
+                    Expression expression = structuredReturn.getValue();
+
+                    // special case x -> new XXX[x]
+                    if (isNewArrayLambda(expression, curriedArgs, anonymousLambdaArgs)) {
+                        /*
+                         * It'd be nice to just use a fallback lambda here, same as other method references.
+                         * However, we can't use one, as ::new on an array is not a real method
+                         * reference.
+                         *
+                         * Note also that we *COULD* tell original intent here.  Does the variable have a valid name?
+                         * Then it wasn't a method reference.
+                         */
+                        return new LambdaExpressionNewArray(dynamicExpression.getInferredJavaType(), expression.getInferredJavaType());
+                    }
+                    lambdaStatement = new StructuredExpressionStatement(expression, true);
                 }
 
-                lambdaMethod.hideSynthetic();
 
                 /*
                  * Any method scoped classes that were being used in the lambda method now belong to me.
@@ -329,6 +346,16 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
 
         // Ok, just call the synthetic method directly.
         return new LambdaExpressionFallback(lambdaTypeRefLocation, dynamicExpression.getInferredJavaType(), lambdaFn, targetFnArgTypes, curriedArgs, instance);
+    }
+
+    private static boolean isNewArrayLambda(Expression e, List<Expression> curriedArgs, List<LValue> anonymousLambdaArgs) {
+        if (!curriedArgs.isEmpty()) return false;
+        if (anonymousLambdaArgs.size() != 1) return false;
+
+        if (!(e instanceof AbstractNewArray)) return false;
+        AbstractNewArray ana = (AbstractNewArray)e;
+        if (ana.getNumDims() != 1) return false;
+        return ana.getDimSize(0).equals(new LValueExpression(anonymousLambdaArgs.get(0)));
     }
 
     public static class LambdaInternalRewriter implements ExpressionRewriter {
