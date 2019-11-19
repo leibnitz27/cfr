@@ -30,7 +30,7 @@ public class TokenStreamDumper extends AbstractDumper {
     private final TypeUsageInformation typeUsageInformation;
     private final Options options;
     private final IllegalIdentifierDump illegalIdentifierDump;
-    private BlockCommentState inBlockComment;
+    private BlockCommentState inBlockComment = BlockCommentState.Not;
 
     // We don't want to expose internals - we are simply making a offering to allow consumers to associate tokens.
     private final Map<Object, Object> refMap = MapFactory.newLazyMap(new IdentityHashMap<Object, Object>(), new UnaryFunction<Object, Object>() {
