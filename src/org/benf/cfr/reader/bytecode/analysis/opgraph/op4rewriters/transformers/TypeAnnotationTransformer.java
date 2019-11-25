@@ -15,22 +15,25 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaAnnotatedTypeIterator;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
-import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleTypeAnnotations;
+import org.benf.cfr.reader.entities.attributes.AttributeTypeAnnotations;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
 import org.benf.cfr.reader.entities.attributes.TypePathPart;
 import org.benf.cfr.reader.util.DecompilerComments;
+import org.benf.cfr.reader.util.collections.ListFactory;
 
 import java.util.List;
 import java.util.SortedMap;
 
 public class TypeAnnotationTransformer implements StructuredStatementTransformer, ExpressionRewriter {
 
-    private final AttributeRuntimeVisibleTypeAnnotations typeAnnotations;
+    private final AttributeTypeAnnotations vis;
+    private final AttributeTypeAnnotations invis;
     private final SortedMap<Integer, Integer> instrsByOffset;
     private final DecompilerComments comments;
 
-    public TypeAnnotationTransformer(AttributeRuntimeVisibleTypeAnnotations typeAnnotations, SortedMap<Integer, Integer> instrsByOffset, DecompilerComments comments) {
-        this.typeAnnotations = typeAnnotations;
+    public TypeAnnotationTransformer(AttributeTypeAnnotations vis, AttributeTypeAnnotations invis, SortedMap<Integer, Integer> instrsByOffset, DecompilerComments comments) {
+        this.vis = vis;
+        this.invis = invis;
         this.instrsByOffset = instrsByOffset;
         this.comments = comments;
     }
@@ -68,6 +71,15 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
         return lValue;
     }
 
+    private static <X> List<X> combinedOptimistic(List<X> a, List<X> b) {
+        if (a == null || a.isEmpty()) return b;
+        if (b == null || b.isEmpty()) return a;
+        List<X> res = ListFactory.newList();
+        res.addAll(a);
+        res.addAll(b);
+        return res;
+    }
+
     @Override
     public void handleStatement(StatementContainer statementContainer) {
         Object rawStatement = statementContainer.getStatement();
@@ -91,9 +103,12 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
                 SortedMap<Integer, Integer> heapMap = instrsByOffset.headMap(offset);
                 int offsetTolerance = heapMap.isEmpty() ? 1 : offset - heapMap.lastKey();
 
-                List<AnnotationTableTypeEntry<TypeAnnotationTargetInfo.TypeAnnotationLocalVarTarget>> entries = typeAnnotations.getLocalVariableAnnotations(offset, slot, offsetTolerance);
+                List<AnnotationTableTypeEntry<TypeAnnotationTargetInfo.TypeAnnotationLocalVarTarget>> entries =
+                        combinedOptimistic(
+                                vis == null ? null : vis.getLocalVariableAnnotations(offset, slot, offsetTolerance),
+                                invis == null ? null : invis.getLocalVariableAnnotations(offset, slot, offsetTolerance));
 
-                if (entries.isEmpty()) continue;
+                if (entries == null || entries.isEmpty()) continue;
 
                 JavaAnnotatedTypeInstance annotatedTypeInstance = localVariable.getAnnotatedCreationType();
                 if (annotatedTypeInstance == null) {

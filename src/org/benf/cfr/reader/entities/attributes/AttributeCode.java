@@ -120,6 +120,10 @@ public class AttributeCode extends Attribute {
         return getAttributeByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME);
     }
 
+    public AttributeRuntimeInvisibleTypeAnnotations getRuntimeInvisibleTypeAnnotations() {
+        return getAttributeByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME);
+    }
+
     public ByteData getRawData() {
         return rawData;
     }

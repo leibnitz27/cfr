@@ -27,7 +27,7 @@ public class MethodPrototypeAnnotationsHelper {
         }
     }
 
-    public void addAnnotationTextForParameterInto(int idx, Dumper d) {
+    void addAnnotationTextForParameterInto(int idx, Dumper d) {
         addAnnotation(runtimeVisibleParameterAnnotations, idx, d);
         addAnnotation(runtimeInvisibleParameterAnnotations, idx, d);
     }

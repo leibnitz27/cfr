@@ -24,7 +24,7 @@ public abstract class AttributeAnnotations extends Attribute implements TypeUsag
 
     private final int length;
 
-    public AttributeAnnotations(ByteData raw, ConstantPool cp) {
+    AttributeAnnotations(ByteData raw, ConstantPool cp) {
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
         int numAnnotations = raw.getU2At(OFFSET_OF_NUMBER_OF_ANNOTATIONS);
         long offset = OFFSET_OF_ANNOTATION_TABLE;

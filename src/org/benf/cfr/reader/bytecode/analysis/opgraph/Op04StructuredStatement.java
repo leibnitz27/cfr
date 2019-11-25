@@ -31,6 +31,7 @@ import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleTypeAnnotations;
+import org.benf.cfr.reader.entities.attributes.AttributeTypeAnnotations;
 import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -708,9 +709,12 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void applyTypeAnnotations(AttributeCode code, Op04StructuredStatement root, SortedMap<Integer, Integer> instrsByOffset,
                                             DecompilerComments comments) {
-        AttributeRuntimeVisibleTypeAnnotations typeAnnotations = code.getRuntimeVisibleTypeAnnotations();
-        if (typeAnnotations == null) return;
-        TypeAnnotationTransformer transformer = new TypeAnnotationTransformer(typeAnnotations, instrsByOffset, comments);
+        AttributeTypeAnnotations vis = code.getRuntimeVisibleTypeAnnotations();
+        AttributeTypeAnnotations invis = code.getRuntimeInvisibleTypeAnnotations();
+        if (vis == null && invis == null) {
+            return;
+        }
+        TypeAnnotationTransformer transformer = new TypeAnnotationTransformer(vis, invis, instrsByOffset, comments);
         transformer.transform(root);
     }
 
