@@ -19,8 +19,6 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 
@@ -39,7 +37,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     private final long length;
     private final int descriptorIndex;
     private final Set<AccessFlag> accessFlags;
-    private final Map<String, Attribute> attributes;
+    private final AttributeMap attributes;
     private final TypedLiteral constantValue;
     private final String fieldName;
     private boolean disambiguate;
@@ -54,12 +52,12 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         long attributesLength = ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), attributes_count, tmpAttributes,
                 AttributeFactory.getBuilder(cp, classFileVersion));
 
-        this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
+        this.attributes = new AttributeMap(tmpAttributes);
         AccessFlag.applyAttributes(attributes, accessFlags);
         this.descriptorIndex = raw.getU2At(OFFSET_OF_DESCRIPTOR_INDEX);
         int nameIndex = raw.getU2At(OFFSET_OF_NAME_INDEX);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
-        Attribute cvAttribute = attributes.get(AttributeConstantValue.ATTRIBUTE_NAME);
+        AttributeConstantValue cvAttribute = attributes.getByName(AttributeConstantValue.ATTRIBUTE_NAME);
         this.fieldName = cp.getUTF8Entry(nameIndex).getValue();
         this.disambiguate = false;
         TypedLiteral constValue = null;
@@ -83,9 +81,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     }
 
     private AttributeSignature getSignatureAttribute() {
-        Attribute attribute = attributes.get(AttributeSignature.ATTRIBUTE_NAME);
-        if (attribute == null) return null;
-        return (AttributeSignature) attribute;
+        return attributes.getByName(AttributeSignature.ATTRIBUTE_NAME);
     }
 
     public JavaTypeInstance getJavaTypeInstance() {
@@ -126,24 +122,16 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         return constantValue;
     }
 
-    private <T extends Attribute> T getAttributeByName(String name) {
-        Attribute attribute = attributes.get(name);
-        if (attribute == null) return null;
-        @SuppressWarnings("unchecked")
-        T tmp = (T) attribute;
-        return tmp;
-    }
-
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(getJavaTypeInstance());
-        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
     }
 
     public void dump(Dumper d, String name, ClassFile owner) {
-        AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
-        AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
+        AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
+        AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
         if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
         if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
         String prefix = CollectionUtils.join(accessFlags, " ");

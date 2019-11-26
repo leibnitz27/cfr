@@ -24,6 +24,7 @@ import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeBootstrapMethods;
 import org.benf.cfr.reader.entities.attributes.AttributeEnclosingMethod;
 import org.benf.cfr.reader.entities.attributes.AttributeInnerClasses;
+import org.benf.cfr.reader.entities.attributes.AttributeMap;
 import org.benf.cfr.reader.entities.attributes.AttributeModule;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
@@ -95,7 +96,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private final boolean isInnerClass;
     private final Map<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
 
-    private final Map<String, Attribute> attributes;
+    private final AttributeMap attributes;
     private final ConstantPoolEntryClass thisClass;
     @SuppressWarnings("FieldCanBeLocal")
     private final ConstantPoolEntryClass rawSuperClass;
@@ -214,7 +215,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 AttributeFactory.getBuilder(constantPool, classFileVersion)
         );
 
-        this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
+        this.attributes = new AttributeMap(tmpAttributes);
         AccessFlag.applyAttributes(attributes, accessFlags);
         this.isInnerClass = testIsInnerClass(dcCommonState);
 
@@ -250,7 +251,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                     addComment("Class file marked as module, but has methods! Treated as a class file");
                     isModule = false;
                 }
-                if (null == getAttributeByName(AttributeModule.ATTRIBUTE_NAME)) {
+                if (null == attributes.getByName(AttributeModule.ATTRIBUTE_NAME)) {
                     addComment("Class file marked as module, but no module attribute!");
                     isModule = false;
                 }
@@ -267,7 +268,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
          */
         if (classFileVersion.before(ClassFileVersion.JAVA_6)) {
             boolean hasSignature = false;
-            if (null != getAttributeByName(AttributeSignature.ATTRIBUTE_NAME)) hasSignature = true;
+            if (null != attributes.getByName(AttributeSignature.ATTRIBUTE_NAME)) hasSignature = true;
             if (!hasSignature) {
                 for (Method method : methods) {
                     if (null != method.getSignatureAttribute()) {
@@ -291,7 +292,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
          * If the type instance for this class has decided that it's an inner class, but the class meta data does not
          * believe so, correct the type instance!
          */
-        AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
+        AttributeInnerClasses attributeInnerClasses = attributes.getByName(AttributeInnerClasses.ATTRIBUTE_NAME);
         JavaRefTypeInstance typeInstance = (JavaRefTypeInstance) thisClass.getTypeInstance();
         if (typeInstance.getInnerClassHereInfo().isInnerClass()) {
             checkInnerClassAssumption(attributeInnerClasses, typeInstance, dcCommonState);
@@ -356,7 +357,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         } catch (Exception ignore) {
         }
         // If it's there.  Don't have a flag to hide attributes (should do, really).
-        AttributeRuntimeVisibleAnnotations annotations = getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
+        AttributeRuntimeVisibleAnnotations annotations = attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
         if (annotations != null) {
             annotations.hide(TypeConstants.SCALA_SIGNATURE);
         }
@@ -434,8 +435,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             innerClassFile.collectTypeUsages(collector);
         }
         collector.collectFrom(dumpHelper);
-        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
     }
 
     private void getAllClassTypes(List<JavaTypeInstance> tgt) {
@@ -700,16 +701,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return res;
     }
 
-    public <X extends Attribute> X getAttributeByName(String name) {
-        Attribute attribute = attributes.get(name);
-        if (attribute == null) return null;
-        @SuppressWarnings("unchecked")
-        X tmp = (X) attribute;
-        return tmp;
-    }
-
     public AttributeBootstrapMethods getBootstrapMethods() {
-        return getAttributeByName(AttributeBootstrapMethods.ATTRIBUTE_NAME);
+        return attributes.getByName(AttributeBootstrapMethods.ATTRIBUTE_NAME);
     }
 
     public ConstantPoolEntryClass getThisClassConstpoolEntry() {
@@ -735,7 +728,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             return true;
         }
 
-        AttributeEnclosingMethod encloser = getAttributeByName(AttributeEnclosingMethod.ATTRIBUTE_NAME);
+        AttributeEnclosingMethod encloser = attributes.getByName(AttributeEnclosingMethod.ATTRIBUTE_NAME);
         if (encloser == null) return false;
         int classIndex = encloser.getClassIndex();
         if (classIndex == 0) return false;
@@ -820,7 +813,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
     private List<InnerClassAttributeInfo> getInnerClassAttributeInfos(DCCommonState state) {
-        AttributeInnerClasses attributeInnerClasses = getAttributeByName(AttributeInnerClasses.ATTRIBUTE_NAME);
+        AttributeInnerClasses attributeInnerClasses = attributes.getByName(AttributeInnerClasses.ATTRIBUTE_NAME);
         List<InnerClassAttributeInfo> innerClassAttributeInfoList = attributeInnerClasses == null ? null : attributeInnerClasses.getInnerClassAttributeInfoList();
         if (innerClassAttributeInfoList != null) {
             return innerClassAttributeInfoList;
@@ -1015,7 +1008,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private ClassSignature getSignature(ConstantPool cp,
                                         ConstantPoolEntryClass rawSuperClass,
                                         List<ConstantPoolEntryClass> rawInterfaces) {
-        AttributeSignature signatureAttribute = getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
+        AttributeSignature signatureAttribute = attributes.getByName(AttributeSignature.ATTRIBUTE_NAME);
 
         if (signatureAttribute != null) {
             try {
@@ -1238,5 +1231,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         } else {
             return signature.getInterfaces().get(0);
         }
+    }
+
+    public AttributeMap getAttributes() {
+        return attributes;
     }
 }

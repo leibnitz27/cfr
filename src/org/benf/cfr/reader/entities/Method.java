@@ -75,7 +75,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
     private final long length;
     private final EnumSet<AccessFlagMethod> accessFlags;
-    private final Map<String, Attribute> attributes;
+    private final AttributeMap attributes;
     private final MethodConstructor isConstructor;
     private final int descriptorIndex;
     private final AttributeCode codeAttribute;
@@ -106,7 +106,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         long attributesLength = ContiguousEntityFactory.build(raw.getOffsetData(OFFSET_OF_ATTRIBUTES), numAttributes, tmpAttributes,
                 AttributeFactory.getBuilder(cp, classFileVersion));
 
-        this.attributes = ContiguousEntityFactory.addToMap(new HashMap<String, Attribute>(), tmpAttributes);
+        this.attributes = new AttributeMap(tmpAttributes);
         AccessFlagMethod.applyAttributes(attributes, accessFlags);
         this.length = OFFSET_OF_ATTRIBUTES + attributesLength;
 
@@ -123,13 +123,13 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             classFile.getAccessFlags().add(AccessFlag.ACC_STRICT);
         }
 
-        Attribute codeAttribute = attributes.get(AttributeCode.ATTRIBUTE_NAME);
+        AttributeCode codeAttribute = attributes.getByName(AttributeCode.ATTRIBUTE_NAME);
         if (codeAttribute == null) {
             // Because we don't have a code attribute, we don't have a local variable table.
             this.variableNamer = VariableNamerFactory.getNamer(null, cp);
             this.codeAttribute = null;
         } else {
-            this.codeAttribute = (AttributeCode) codeAttribute;
+            this.codeAttribute = codeAttribute;
             AttributeLocalVariableTable variableTable = options.getOption(OptionsImpl.USE_NAME_TABLE) ? this.codeAttribute.getLocalVariableTable() : null;
             this.variableNamer = VariableNamerFactory.getNamer(variableTable, cp);
             // This rigamarole is neccessary because we don't provide the factory for the code attribute enough information
@@ -156,17 +156,17 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         methodPrototype.collectTypeUsages(collector);
-        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(getAttributeByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(getAttributeByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
         if (codeAttribute != null) {
             codeAttribute.collectTypeUsages(collector);
             codeAttribute.analyse().collectTypeUsages(collector);
         }
         collector.collect(localClasses.keySet());
-        collector.collectFrom(getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME));
     }
 
     public boolean copyLocalClassesFrom(Method other) {
@@ -197,15 +197,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     AttributeSignature getSignatureAttribute() {
-        return this.getAttributeByName(AttributeSignature.ATTRIBUTE_NAME);
-    }
-
-    private <T extends Attribute> T getAttributeByName(String name) {
-        Attribute attribute = attributes.get(name);
-        if (attribute == null) return null;
-        @SuppressWarnings("unchecked")
-        T tmp = (T) attribute;
-        return tmp;
+        return attributes.getByName(AttributeSignature.ATTRIBUTE_NAME);
     }
 
     public VariableNamer getVariableNamer() {
@@ -311,8 +303,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     private void dumpMethodAnnotations(Dumper d) {
-        AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = getAttributeByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
-        AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = getAttributeByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
+        AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
+        AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
         if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
         if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
         if (isOverride) {
@@ -323,7 +315,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     public Set<JavaTypeInstance> getThrownTypes() {
         if (thrownTypes == null) {
             thrownTypes = SetFactory.newOrderedSet();
-            AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
+            AttributeExceptions exceptionsAttribute = attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME);
             if (exceptionsAttribute != null) {
                 List<ConstantPoolEntryClass> exceptionClasses = exceptionsAttribute.getExceptionClassList();
                 for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
@@ -361,8 +353,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         if (!prefix.isEmpty()) d.print(' ');
 
         MethodPrototypeAnnotationsHelper paramAnnotationsHelper = new MethodPrototypeAnnotationsHelper(
-                this.<AttributeRuntimeVisibleParameterAnnotations>getAttributeByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME),
-                this.<AttributeRuntimeInvisibleParameterAnnotations>getAttributeByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME)
+                attributes.<AttributeRuntimeVisibleParameterAnnotations>getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME),
+                attributes.<AttributeRuntimeInvisibleParameterAnnotations>getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME)
         );
 
         String displayName = isConstructor.isConstructor() ?
@@ -370,7 +362,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
                 methodPrototype.getFixedName();
 
         getMethodPrototype().dumpDeclarationSignature(d, displayName, isConstructor, paramAnnotationsHelper);
-        AttributeExceptions exceptionsAttribute = getAttributeByName(AttributeExceptions.ATTRIBUTE_NAME);
+        AttributeExceptions exceptionsAttribute = attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
             d.print(" throws ");
             boolean first = true;
@@ -477,7 +469,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         dumpComments(d);
         dumpSignatureText(asClass, d);
         if (codeAttribute == null) {
-            AttributeAnnotationDefault annotationDefault = getAttributeByName(AttributeAnnotationDefault.ATTRIBUTE_NAME);
+            AttributeAnnotationDefault annotationDefault = attributes.getByName(AttributeAnnotationDefault.ATTRIBUTE_NAME);
             if (annotationDefault != null) {
                 JavaTypeInstance resultType = methodPrototype.getReturnType();
                 d.keyword(" default ").dump(annotationDefault.getElementValue().withTypeHint(resultType));

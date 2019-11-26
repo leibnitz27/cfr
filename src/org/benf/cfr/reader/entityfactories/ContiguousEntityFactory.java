@@ -34,13 +34,4 @@ public class ContiguousEntityFactory {
         }
         return data.getOffset(); // will be count * itemLength, of course....
     }
-
-    public static<X extends KnowsRawName> Map<String, X> addToMap(Map<String, X> tgt, List<X> source)
-    {
-        for (X item : source)
-        {
-            tgt.put(item.getRawName(), item);
-        }
-        return tgt;
-    }
 }

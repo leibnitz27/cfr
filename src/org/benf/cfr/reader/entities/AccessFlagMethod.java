@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.entities.attributes.Attribute;
+import org.benf.cfr.reader.entities.attributes.AttributeMap;
 import org.benf.cfr.reader.entities.attributes.AttributeSynthetic;
 
 import java.util.EnumSet;
@@ -55,7 +56,7 @@ public enum AccessFlagMethod {
         return name;
     }
 
-    public static void applyAttributes(Map<String, Attribute> attributeMap, Set<AccessFlagMethod> accessFlagSet) {
+    public static void applyAttributes(AttributeMap attributeMap, Set<AccessFlagMethod> accessFlagSet) {
         if (attributeMap.containsKey(AttributeSynthetic.ATTRIBUTE_NAME)) accessFlagSet.add(ACC_SYNTHETIC);
     }
 
