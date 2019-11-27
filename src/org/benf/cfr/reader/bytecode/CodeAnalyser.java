@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecove
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecoveryImpl;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op2rewriters.TypeHintRecoveryNone;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.AnonymousArray;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.BadBoolAssignmentRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.BadNarrowingArgRewriter;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Cleaner;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.ConditionalRewriter;
@@ -402,7 +403,7 @@ public class CodeAnalyser {
         // Before we get complicated, see if there are any values which have been left with null/void types, but have
         // known base information which can improve it.
         Op03Rewriters.rewriteWith(op03SimpleParseNodes, new NullTypedLValueRewriter());
-
+        Op03Rewriters.rewriteWith(op03SimpleParseNodes, new BadBoolAssignmentRewriter());
         // Very early, we make a pass through collecting all the method calls for a given type
         // SPECIFICALLY by type pointer, don't alias identical types.
         // We then see if we can infer information from RHS <- LHS re generics, but make sure that we

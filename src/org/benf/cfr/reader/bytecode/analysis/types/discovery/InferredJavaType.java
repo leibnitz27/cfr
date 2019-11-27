@@ -982,6 +982,9 @@ public class InferredJavaType {
         }
     }
 
+    // This won't (and can't) catch all uses of bool needing to be represented as something
+    // else.
+    // bool ^ bool is perfectly legitimate.
     public static void useInArithOp(InferredJavaType lhs, InferredJavaType rhs, ArithOp op) {
         boolean forbidBool = true;
         if (op == ArithOp.OR || op == ArithOp.AND || op == ArithOp.XOR) {
