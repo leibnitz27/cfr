@@ -3,10 +3,15 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.TernaryExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 
@@ -26,6 +31,11 @@ public class BadCastChainRewriter extends AbstractExpressionRewriter {
                                 child, true)
                     );
                 }
+            } else if (childType == RawJavaType.BOOLEAN && child instanceof ConditionalExpression) {
+                child = new TernaryExpression((ConditionalExpression)child, Literal.INT_ONE, Literal.INT_ZERO);
+                expression = new CastExpression(
+                        expression.getInferredJavaType(), child
+                        );
             }
         }
         return expression;
