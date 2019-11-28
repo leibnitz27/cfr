@@ -353,7 +353,12 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
             boolean dump = options.getOption(OptionsImpl.DUMP_CLASS_PATH);
 
             classToPathMap = MapFactory.newMap();
-            String classPath = System.getProperty("java.class.path") + File.pathSeparatorChar + System.getProperty("sun.boot.class.path");
+            String classPath = System.getProperty("java.class.path");
+            String sunBootClassPath = System.getProperty("sun.boot.class.path");
+            if (sunBootClassPath != null) {
+                classPath += File.pathSeparatorChar + sunBootClassPath;
+            }
+
             if (dump) {
                 System.out.println("/* ClassPath Diagnostic - searching :" + classPath);
             }
