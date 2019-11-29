@@ -7,7 +7,6 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.mapping.NullMapping;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
-import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
@@ -19,16 +18,13 @@ public abstract class StreamDumper extends AbstractDumper {
     protected final Options options;
     protected final IllegalIdentifierDump illegalIdentifierDump;
     private final boolean convertUTF;
-    protected int indent;
-
-    private int outputCount = 0;
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
-    StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, int indent) {
+    StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, MovableDumperContext context) {
+        super(context);
         this.typeUsageInformation = typeUsageInformation;
         this.options = options;
         this.illegalIdentifierDump = illegalIdentifierDump;
-        this.indent = indent;
         this.convertUTF = options.getOption(OptionsImpl.HIDE_UTF8);
     }
 
@@ -87,11 +83,11 @@ public abstract class StreamDumper extends AbstractDumper {
         }
         if (convertUTF) s = QuotingUtils.enquoteUTF(s);
         write(s);
-        atStart = false;
+        context.atStart = false;
         if (doNewLn) {
             newln();
         }
-        outputCount++;
+        context.outputCount++;
         return this;
     }
 
@@ -126,46 +122,46 @@ public abstract class StreamDumper extends AbstractDumper {
 
     @Override
     public Dumper newln() {
-        if (pendingCR) {
+        if (context.pendingCR) {
             write("\n");
-            if (atStart && inBlockComment != BlockCommentState.Not) {
+            if (context.atStart && context.inBlockComment != BlockCommentState.Not) {
                 doIndent();
             }
         }
-        pendingCR = true;
-        atStart = true;
-        outputCount++;
+        context.pendingCR = true;
+        context.atStart = true;
+        context.outputCount++;
         return this;
     }
 
     @Override
     public Dumper endCodeln() {
         write(";");
-        pendingCR = true;
-        atStart = true;
-        outputCount++;
+        context.pendingCR = true;
+        context.atStart = true;
+        context.outputCount++;
         return this;
     }
 
     private void doIndent() {
-        if (!atStart) return;
+        if (!context.atStart) return;
         String indents = "    ";
-        for (int x = 0; x < indent; ++x) write(indents);
-        atStart = false;
-        if (inBlockComment != BlockCommentState.Not) write (" * ");
+        for (int x = 0; x < context.indent; ++x) write(indents);
+        context.atStart = false;
+        if (context.inBlockComment != BlockCommentState.Not) write (" * ");
     }
 
     private void processPendingCR() {
-        if (pendingCR) {
+        if (context.pendingCR) {
             write("\n");
-            atStart = true;
-            pendingCR = false;
+            context.atStart = true;
+            context.pendingCR = false;
         }
     }
 
     @Override
     public void indent(int diff) {
-        indent += diff;
+        context.indent += diff;
     }
 
     @Override
@@ -195,6 +191,6 @@ public abstract class StreamDumper extends AbstractDumper {
 
     @Override
     public int getOutputCount() {
-        return outputCount;
+        return context.outputCount;
     }
 }

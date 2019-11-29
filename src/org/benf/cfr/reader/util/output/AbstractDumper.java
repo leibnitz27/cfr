@@ -1,20 +1,15 @@
 package org.benf.cfr.reader.util.output;
 
 abstract class AbstractDumper implements Dumper {
+    final MovableDumperContext context;
 
-    enum BlockCommentState {
-        InLine,
-        In,
-        Not
+    AbstractDumper(MovableDumperContext context) {
+        this.context = context;
     }
-
-    BlockCommentState inBlockComment = BlockCommentState.Not;
-    boolean atStart = true;
-    boolean pendingCR = false;
 
     @Override
     public Dumper beginBlockComment(boolean inline) {
-        if (inBlockComment != BlockCommentState.Not) {
+        if (context.inBlockComment != BlockCommentState.Not) {
             throw new IllegalStateException("Attempt to nest block comments.");
         }
         if (inline) {
@@ -22,20 +17,20 @@ abstract class AbstractDumper implements Dumper {
         } else {
             print("/*").newln();
         }
-        inBlockComment = inline ? BlockCommentState.InLine : BlockCommentState.In;
+        context.inBlockComment = inline ? BlockCommentState.InLine : BlockCommentState.In;
         return this;
     }
 
     @Override
     public Dumper endBlockComment() {
 
-        if (inBlockComment == BlockCommentState.Not) {
+        if (context.inBlockComment == BlockCommentState.Not) {
             throw new IllegalStateException("Attempt to end block comment when not in one.");
         }
-        BlockCommentState old = inBlockComment;
-        inBlockComment = BlockCommentState.Not;
+        BlockCommentState old = context.inBlockComment;
+        context.inBlockComment = BlockCommentState.Not;
         if (old == BlockCommentState.In) {
-            if (!atStart) {
+            if (!context.atStart) {
                 newln();
             }
             print(" */").newln();
@@ -47,7 +42,7 @@ abstract class AbstractDumper implements Dumper {
 
     @Override
     public Dumper comment(String s) {
-        if (inBlockComment == BlockCommentState.Not) {
+        if (context.inBlockComment == BlockCommentState.Not) {
             print("// " + s);
         } else {
             print(s);
@@ -57,13 +52,13 @@ abstract class AbstractDumper implements Dumper {
 
     @Override
     public void enqueuePendingCarriageReturn() {
-        pendingCR = true;
+        context.pendingCR = true;
     }
 
     @Override
     public Dumper removePendingCarriageReturn() {
-        pendingCR = false;
-        atStart = false;
+        context.pendingCR = false;
+        context.atStart = false;
         return this;
     }
 }

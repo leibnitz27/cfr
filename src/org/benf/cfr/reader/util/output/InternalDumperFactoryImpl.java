@@ -60,7 +60,7 @@ public class InternalDumperFactoryImpl implements DumperFactory {
     public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         Pair<String, Boolean> targetInfo = getPathAndClobber();
 
-        if (targetInfo == null) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump, 0);
+        if (targetInfo == null) return new StdIODumper(typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
 
         FileDumper res = new FileDumper(targetInfo.getFirst() + prefix, targetInfo.getSecond(), classType, summaryDumper, typeUsageInformation, options, illegalIdentifierDump);
         if (checkDupes) {

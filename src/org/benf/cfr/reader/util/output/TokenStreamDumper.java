@@ -30,7 +30,6 @@ public class TokenStreamDumper extends AbstractDumper {
     private final TypeUsageInformation typeUsageInformation;
     private final Options options;
     private final IllegalIdentifierDump illegalIdentifierDump;
-    private BlockCommentState inBlockComment = BlockCommentState.Not;
 
     // We don't want to expose internals - we are simply making a offering to allow consumers to associate tokens.
     private final Map<Object, Object> refMap = MapFactory.newLazyMap(new IdentityHashMap<Object, Object>(), new UnaryFunction<Object, Object>() {
@@ -40,12 +39,10 @@ public class TokenStreamDumper extends AbstractDumper {
         }
     });
 
-    private int outputCount = 0;
-    private boolean atStart = true;
-    private boolean pendingCR = false;
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
-    TokenStreamDumper(OutputSinkFactory.Sink<SinkReturns.Token> sink, int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
+    TokenStreamDumper(OutputSinkFactory.Sink<SinkReturns.Token> sink, int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, MovableDumperContext context) {
+        super(context);
         this.sink = sink;
         this.version = version;
         this.classType = classType;
@@ -156,7 +153,7 @@ public class TokenStreamDumper extends AbstractDumper {
 
     private SinkReturns.TokenType adjustComment(SinkReturns.TokenType type) {
         // TODO : It may be preferable to introduce a new 'blockcommentmember' type.
-        return inBlockComment == BlockCommentState.Not ? type : COMMENT;
+        return context.inBlockComment == BlockCommentState.Not ? type : COMMENT;
     }
 
     private void sink(Token token) {
@@ -165,8 +162,8 @@ public class TokenStreamDumper extends AbstractDumper {
     }
 
     private void flushPendingCR() {
-        if (pendingCR) {
-            pendingCR = false;
+        if (context.pendingCR) {
+            context.pendingCR = false;
             sink.write(cr);
         }
     }
@@ -179,13 +176,13 @@ public class TokenStreamDumper extends AbstractDumper {
 
     @Override
     public void enqueuePendingCarriageReturn() {
-        pendingCR = true;
+        context.pendingCR = true;
     }
 
     @Override
     public Dumper removePendingCarriageReturn() {
-        pendingCR = false;
-        atStart = false;
+        context.pendingCR = false;
+        context.atStart = false;
         return this;
     }
 
@@ -197,10 +194,10 @@ public class TokenStreamDumper extends AbstractDumper {
 
     @Override
     public Dumper beginBlockComment(boolean inline) {
-        if (inBlockComment != BlockCommentState.Not) {
+        if (context.inBlockComment != BlockCommentState.Not) {
             throw new IllegalStateException("Attempt to nest block comments.");
         }
-        inBlockComment = inline ? BlockCommentState.InLine : BlockCommentState.In;
+        context.inBlockComment = inline ? BlockCommentState.InLine : BlockCommentState.In;
         print("/* ");
         if (inline) newln();
         return this;
@@ -208,18 +205,18 @@ public class TokenStreamDumper extends AbstractDumper {
 
     @Override
     public Dumper endBlockComment() {
-        if (inBlockComment == BlockCommentState.Not) {
+        if (context.inBlockComment == BlockCommentState.Not) {
             throw new IllegalStateException("Attempt to end block comment when not in one.");
         }
-        if (inBlockComment == BlockCommentState.In) {
-            if (!atStart) {
+        if (context.inBlockComment == BlockCommentState.In) {
+            if (!context.atStart) {
                 newln();
             }
             print(" */").newln();
         } else {
             print(" */ ");
         }
-        inBlockComment = BlockCommentState.Not;
+        context.inBlockComment = BlockCommentState.Not;
         return this;
     }
 
@@ -290,19 +287,19 @@ public class TokenStreamDumper extends AbstractDumper {
 
     @Override
     public Dumper newln() {
-        if (pendingCR) sink(cr);
-        pendingCR = true;
-        atStart = true;
-        outputCount++;
+        if (context.pendingCR) sink(cr);
+        context.pendingCR = true;
+        context.atStart = true;
+        context.outputCount++;
         return this;
     }
 
     @Override
     public Dumper endCodeln() {
         sink(UNCLASSIFIED, ";");
-        pendingCR = true;
-        atStart = true;
-        outputCount++;
+        context.pendingCR = true;
+        context.atStart = true;
+        context.outputCount++;
         return this;
     }
 
@@ -354,11 +351,11 @@ public class TokenStreamDumper extends AbstractDumper {
 
     @Override
     public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
-        return new TokenStreamDumper(sink, version, classType, innerclassTypeUsageInformation, options, illegalIdentifierDump);
+        return new TokenStreamDumper(sink, version, classType, innerclassTypeUsageInformation, options, illegalIdentifierDump, context);
     }
 
     @Override
     public int getOutputCount() {
-        return outputCount;
+        return context.outputCount;
     }
 }

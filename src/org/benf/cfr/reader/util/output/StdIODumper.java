@@ -5,8 +5,8 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.getopt.Options;
 
 public class StdIODumper extends StreamDumper {
-    public StdIODumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, int indent) {
-        super(typeUsageInformation, options, illegalIdentifierDump, indent);
+    StdIODumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, MovableDumperContext context) {
+        super(typeUsageInformation, options, illegalIdentifierDump, context);
     }
 
     @Override
@@ -24,6 +24,6 @@ public class StdIODumper extends StreamDumper {
 
     @Override
     public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
-        return new StdIODumper(innerclassTypeUsageInformation, options, illegalIdentifierDump, indent);
+        return new StdIODumper(innerclassTypeUsageInformation, options, illegalIdentifierDump, context);
     }
 }

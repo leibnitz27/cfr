@@ -37,7 +37,7 @@ public class FileDumper extends StreamDumper {
     }
 
     FileDumper(String dir, boolean clobber, JavaTypeInstance type, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
-        super(typeUsageInformation, options, illegalIdentifierDump, 0);
+        super(typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
         this.type = type;
         this.summaryDumper = summaryDumper;
         Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(type);

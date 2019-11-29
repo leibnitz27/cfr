@@ -60,12 +60,12 @@ public class SinkDumperFactory implements DumperFactory {
     }
 
     private Dumper TokenStreamClassDumper(final OutputSinkFactory.Sink<SinkReturns.Token> sink, int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-        return new TokenStreamDumper(sink, version, classType, typeUsageInformation, options, illegalIdentifierDump);
+        return new TokenStreamDumper(sink, version, classType, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
     }
 
     private Dumper SinkStringClassDumper(final OutputSinkFactory.Sink<String> sink, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         final StringBuilder sb = new StringBuilder();
-        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump) {
+        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext()) {
             @Override
             public void close() {
                 sink.write(sb.toString());
@@ -77,7 +77,7 @@ public class SinkDumperFactory implements DumperFactory {
         final StringBuilder sb = new StringBuilder();
         final Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(classType);
 
-        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump) {
+        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext()) {
 
             @Override
             public void close() {
@@ -108,7 +108,7 @@ public class SinkDumperFactory implements DumperFactory {
         final StringBuilder sb = new StringBuilder();
         final Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(classType);
 
-        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump) {
+        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext()) {
 
             @Override
             public void close() {

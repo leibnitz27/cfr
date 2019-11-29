@@ -13,17 +13,17 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import java.util.Set;
 
 public class ToStringDumper extends AbstractDumper {
-    private int outputCount = 0;
-    private int indent;
     private final StringBuilder sb = new StringBuilder();
     private final TypeUsageInformation typeUsageInformation = new TypeUsageInformationEmpty();
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
     public static String toString(Dumpable d) {
+        // TODO: By using a new context here, we explicitly reset tab etc.
         return new ToStringDumper().dump(d).toString();
     }
 
     public ToStringDumper() {
+        super(new MovableDumperContext());
     }
 
     @Override
@@ -34,10 +34,10 @@ public class ToStringDumper extends AbstractDumper {
     }
 
     private void processPendingCR() {
-        if (pendingCR) {
+        if (context.pendingCR) {
             sb.append('\n');
-            atStart = true;
-            pendingCR = false;
+            context.atStart = true;
+            context.pendingCR = false;
         }
     }
 
@@ -65,8 +65,8 @@ public class ToStringDumper extends AbstractDumper {
         processPendingCR();
         doIndent();
         sb.append(s);
-        atStart = (s.endsWith("\n"));
-        outputCount++;
+        context.atStart = (s.endsWith("\n"));
+        context.outputCount++;
         return this;
     }
 
@@ -78,16 +78,16 @@ public class ToStringDumper extends AbstractDumper {
     @Override
     public Dumper newln() {
         sb.append("\n");
-        atStart = true;
-        outputCount++;
+        context.atStart = true;
+        context.outputCount++;
         return this;
     }
 
     @Override
     public Dumper endCodeln() {
         sb.append(";\n");
-        atStart = true;
-        outputCount++;
+        context.atStart = true;
+        context.outputCount++;
         return this;
     }
 
@@ -116,16 +116,16 @@ public class ToStringDumper extends AbstractDumper {
     }
 
     private void doIndent() {
-        if (!atStart) return;
+        if (!context.atStart) return;
         String indents = "    ";
-        for (int x = 0; x < indent; ++x) sb.append(indents);
-        atStart = false;
-        if (inBlockComment != BlockCommentState.Not) sb.append(" * ");
+        for (int x = 0; x < context.indent; ++x) sb.append(indents);
+        context.atStart = false;
+        if (context.inBlockComment != BlockCommentState.Not) sb.append(" * ");
     }
 
     @Override
     public void indent(int diff) {
-        indent += diff;
+        context.indent += diff;
     }
 
     @Override
@@ -180,7 +180,7 @@ public class ToStringDumper extends AbstractDumper {
 
     @Override
     public int getOutputCount() {
-        return outputCount;
+        return context.outputCount;
     }
 
     @Override
