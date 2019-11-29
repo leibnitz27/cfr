@@ -1034,8 +1034,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     public void dumpNamedInnerClasses(Dumper d) {
         if (innerClassesByTypeInfo == null || innerClassesByTypeInfo.isEmpty()) return;
 
-        d.newln();
-
         for (Pair<InnerClassAttributeInfo, ClassFile> innerClassEntry : innerClassesByTypeInfo.values()) {
             // catchy!
             InnerClassInfo innerClassInfo = innerClassEntry.getFirst().getInnerClassInfo().getInnerClassHereInfo();
@@ -1051,10 +1049,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             }
             TypeUsageInformation typeUsageInformation = d.getTypeUsageInformation();
             TypeUsageInformation innerclassTypeUsageInformation = new InnerClassTypeUsageInformation(typeUsageInformation, (JavaRefTypeInstance) classFile.getClassType());
-            Dumper d2 = d.withTypeUsageInformation(innerclassTypeUsageInformation);
-
-            classFile.dumpHelper.dump(classFile, ClassFileDumper.InnerClassDumpType.INNER_CLASS, d2);
             d.newln();
+            Dumper d2 = d.withTypeUsageInformation(innerclassTypeUsageInformation);
+            classFile.dumpHelper.dump(classFile, ClassFileDumper.InnerClassDumpType.INNER_CLASS, d2);
         }
     }
 
