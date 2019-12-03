@@ -7,6 +7,8 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import java.util.Set;
 
 public class TypeUsageInformationEmpty implements TypeUsageInformation {
+    public static final TypeUsageInformation INSTANCE = new TypeUsageInformationEmpty();
+
     @Override
     public JavaRefTypeInstance getAnalysisType() {
         return null;

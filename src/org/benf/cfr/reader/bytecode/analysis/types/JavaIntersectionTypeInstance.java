@@ -123,7 +123,7 @@ public class JavaIntersectionTypeInstance implements JavaTypeInstance {
                 d.print(" & ");
             }
             first = false;
-            t.dumpInto(d, typeUsageInformation);
+            d.dump(t);
         }
     }
 

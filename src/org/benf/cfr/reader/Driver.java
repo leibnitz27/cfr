@@ -8,8 +8,8 @@ import org.benf.cfr.reader.mapping.MappingFactory;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.relationship.MemberNameResolver;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.state.TypeUsageCollector;
-import org.benf.cfr.reader.state.TypeUsageCollectorImpl;
+import org.benf.cfr.reader.state.TypeUsageCollectingDumper;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -72,10 +72,12 @@ class Driver {
             /*
              * Perform a pass to determine what imports / classes etc we used / failed.
              */
-            TypeUsageCollector collectingDumper = new TypeUsageCollectorImpl(options, c);
-            c.collectTypeUsages(collectingDumper);
+            TypeUsageCollectingDumper collectingDumper = new TypeUsageCollectingDumper(options, c);
+            c.dump(collectingDumper);
 
-            d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
+            TypeUsageInformation typeUsageInformation = collectingDumper.getRealTypeUsageInformation();
+
+            d = dumperFactory.getNewTopLevelDumper(c.getClassType(), summaryDumper, typeUsageInformation, illegalIdentifierDump);
             d = dcCommonState.getObfuscationMapping().wrap(d);
 
             String methname = options.getOption(OptionsImpl.METHODNAME);
@@ -242,11 +244,12 @@ class Driver {
                 // THEN analyse.
                 c.analyseTop(dcCommonState);
 
-                TypeUsageCollector collectingDumper = new TypeUsageCollectorImpl(options, c);
-                c.collectTypeUsages(collectingDumper);
+                TypeUsageCollectingDumper collectingDumper = new TypeUsageCollectingDumper(options, c);
+                c.dump(collectingDumper);
+
                 JavaTypeInstance classType = c.getClassType();
                 classType = dcCommonState.getObfuscationMapping().get(classType);
-                d = dumperFactory.getNewTopLevelDumper(classType, summaryDumper, collectingDumper.getTypeUsageInformation(), illegalIdentifierDump);
+                d = dumperFactory.getNewTopLevelDumper(classType, summaryDumper, collectingDumper.getRealTypeUsageInformation(), illegalIdentifierDump);
                 d = dcCommonState.getObfuscationMapping().wrap(d);
 
                 c.dump(d);

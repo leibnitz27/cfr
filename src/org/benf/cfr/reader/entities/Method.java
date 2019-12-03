@@ -481,7 +481,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
              */
             if (!localClasses.isEmpty()) {
                 TypeUsageInformation overrides = new LocalClassAwareTypeUsageInformation(localClasses, d.getTypeUsageInformation());
-                d = new TypeOverridingDumper(d, overrides);
+                d = d.withTypeUsageInformation(overrides);
             }
             d.print(' ').dump(codeAttribute);
         }

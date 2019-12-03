@@ -280,12 +280,8 @@ public enum RawJavaType implements JavaTypeInstance {
     public void collectInto(TypeUsageCollector typeUsageCollector) {
     }
 
-
-
     @Override
     public String toString() {
         return name;
     }
-
-
 }
