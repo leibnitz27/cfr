@@ -7,27 +7,32 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractConstructo
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 
 import java.util.List;
+import java.util.Map;
 
-public class IllegalGenericRewriter implements ExpressionRewriter {
+public class IllegalGenericRewriter extends AbstractExpressionRewriter {
     private final ConstantPool cp;
+    private final Map<String, FormalTypeParameter> formalParams;
 
-    public IllegalGenericRewriter(ConstantPool cp) {
+    public IllegalGenericRewriter(ConstantPool cp, Map<String, FormalTypeParameter> formalParams) {
         this.cp = cp;
+        this.formalParams = formalParams;
     }
 
     private boolean hasIllegalGenerics(JavaTypeInstance javaTypeInstance, boolean constructor) {
         if (!(javaTypeInstance instanceof JavaGenericBaseInstance)) return false;
         JavaGenericBaseInstance genericBaseInstance = (JavaGenericBaseInstance) javaTypeInstance;
-        return genericBaseInstance.hasForeignUnbound(cp, 0, constructor);
+        return genericBaseInstance.hasForeignUnbound(cp, 0, constructor, formalParams);
     }
 
     private void maybeRewriteExpressionType(InferredJavaType inferredJavaType, boolean constructor) {
@@ -50,11 +55,6 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
     }
 
     @Override
-    public void handleStatement(StatementContainer statementContainer) {
-
-    }
-
-    @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
         if (expression instanceof AbstractFunctionInvokation) {
@@ -65,19 +65,8 @@ public class IllegalGenericRewriter implements ExpressionRewriter {
     }
 
     @Override
-    public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        ConditionalExpression res = (ConditionalExpression) expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        return res;
-    }
-
-    @Override
     public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         maybeRewriteExpressionType(lValue.getInferredJavaType(), false);
-        return lValue;
-    }
-
-    @Override
-    public StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         return lValue;
     }
 }

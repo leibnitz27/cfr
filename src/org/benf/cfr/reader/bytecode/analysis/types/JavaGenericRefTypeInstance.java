@@ -18,6 +18,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
+import java.util.Map;
 
 public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, ComparableUnderEC {
     private static final WildcardConstraint WILDCARD_CONSTRAINT = new WildcardConstraint();
@@ -123,12 +124,12 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
     }
 
     @Override
-    public boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard) {
+    public boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard, Map<String, FormalTypeParameter> externals) {
         if (!hasUnbound) return false;
         depth++;
         for (JavaTypeInstance type : genericTypes) {
             if (type instanceof JavaGenericBaseInstance) {
-                if (((JavaGenericBaseInstance) type).hasForeignUnbound(cp, depth, noWildcard)) return true;
+                if (((JavaGenericBaseInstance) type).hasForeignUnbound(cp, depth, noWildcard, externals)) return true;
             }
         }
         return false;

@@ -18,6 +18,8 @@ import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /*
@@ -155,7 +157,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         boolean ignore = false;
         if (argType instanceof JavaGenericBaseInstance) {
             // TODO : Should check flag for ignore bad generics?
-            ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp, 0, false);
+            ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(cp, 0, false, null);
         }
         /*
          * Lambda types will always look wrong.

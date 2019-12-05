@@ -19,6 +19,7 @@ import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
@@ -55,14 +56,14 @@ public class CodeAnalyserWholeClass {
         }
 
         if (options.getOption(OptionsImpl.SUGAR_ASSERTS)) {
-            resugarAsserts(classFile, options);
+            resugarAsserts(classFile);
         }
 
         tidyAnonymousConstructors(classFile);
 
         if (options.getOption(OptionsImpl.LIFT_CONSTRUCTOR_INIT)) {
-            liftStaticInitialisers(classFile, options);
-            liftNonStaticInitialisers(classFile, options);
+            liftStaticInitialisers(classFile);
+            liftNonStaticInitialisers(classFile);
         }
 
         if (options.getOption(OptionsImpl.JAVA_4_CLASS_OBJECTS, classFile.getClassFileVersion())) {
@@ -349,13 +350,13 @@ public class CodeAnalyserWholeClass {
      * b) interfaces MAY have static initialisers, but MAY NOT have clinit methods.
      *    (in java 1.7)
      */
-    private static void liftStaticInitialisers(ClassFile classFile, Options state) {
+    private static void liftStaticInitialisers(ClassFile classFile) {
         Method staticInit = getStaticConstructor(classFile);
         if (staticInit == null) return;
         new StaticLifter(classFile).liftStatics(staticInit);
     }
 
-    private static void liftNonStaticInitialisers(ClassFile classFile, Options state) {
+    private static void liftNonStaticInitialisers(ClassFile classFile) {
         new NonStaticLifter(classFile).liftNonStatics();
     }
 
@@ -469,15 +470,26 @@ public class CodeAnalyserWholeClass {
     /* Performed prior to lifting code into fields, just check code */
     private static void removeIllegalGenerics(ClassFile classFile, Options state) {
         ConstantPool cp = classFile.getConstantPool();
-        ExpressionRewriter r = new IllegalGenericRewriter(cp);
+        JavaRefTypeInstance classType = classFile.getRefClassType();
+        Map<String, FormalTypeParameter> params = FormalTypeParameter.getMap(classFile.getClassSignature().getFormalTypeParameters());
 
         for (Method m : classFile.getMethods()) {
-            if (!m.hasCodeAttribute()) return;
+            if (!m.hasCodeAttribute()) continue;
             Op04StructuredStatement code = m.getAnalysis();
             if (!code.isFullyStructured()) continue;
 
             List<StructuredStatement> statements = MiscStatementTools.linearise(code);
-            if (statements == null) return;
+            if (statements == null) continue;
+
+            boolean bStatic = m.testAccessFlag(AccessFlagMethod.ACC_STATIC);
+            Map<String, FormalTypeParameter> formalParams = MapFactory.newMap();
+            if (!bStatic) {
+                formalParams.putAll(params);
+            }
+            // if the method or the class (for instance) has unbound generics, these are allowed.
+            formalParams.putAll(m.getMethodPrototype().getFormalParameterMap());
+
+            ExpressionRewriter r = new IllegalGenericRewriter(cp, formalParams);
 
             for (StructuredStatement statement : statements) {
                 statement.rewriteExpressions(r);
@@ -489,7 +501,7 @@ public class CodeAnalyserWholeClass {
         }
     }
 
-    private static void resugarAsserts(ClassFile classFile, Options state) {
+    private static void resugarAsserts(ClassFile classFile) {
         Method staticInit = getStaticConstructor(classFile);
         if (staticInit != null) {
             new AssertRewriter(classFile).sugarAsserts(staticInit);

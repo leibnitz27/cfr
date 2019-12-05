@@ -3,8 +3,12 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
+
+import java.util.List;
+import java.util.Map;
 
 public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
     private String name;
@@ -15,6 +19,16 @@ public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
         this.name = name;
         this.classBound = classBound;
         this.interfaceBound = interfaceBound;
+    }
+
+    public static Map<String, FormalTypeParameter> getMap(List<FormalTypeParameter> formalTypeParameters) {
+        Map<String, FormalTypeParameter> res = MapFactory.newMap();
+        if (formalTypeParameters != null) {
+            for (FormalTypeParameter p : formalTypeParameters) {
+                res.put(p.getName(), p);
+            }
+        }
+        return res;
     }
 
     public String getName() {

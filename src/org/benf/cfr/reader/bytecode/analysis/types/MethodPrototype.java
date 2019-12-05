@@ -150,11 +150,7 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     public Map<String, FormalTypeParameter> getFormalParameterMap() {
-        Map<String, FormalTypeParameter> res = MapFactory.newMap();
-        for (FormalTypeParameter p : formalTypeParameters) {
-            res.put(p.getName(), p);
-        }
-        return res;
+        return FormalTypeParameter.getMap(formalTypeParameters);
     }
 
     public void setDescriptorProto(MethodPrototype descriptorProto) {

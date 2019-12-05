@@ -12,6 +12,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
+import java.util.Map;
 
 public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     private final WildcardType wildcardType;
@@ -112,9 +113,9 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard) {
+    public boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard, Map<String, FormalTypeParameter> externals) {
         if (underlyingType instanceof JavaGenericBaseInstance) {
-            return ((JavaGenericBaseInstance) underlyingType).hasForeignUnbound(cp, depth, noWildcard);
+            return ((JavaGenericBaseInstance) underlyingType).hasForeignUnbound(cp, depth, noWildcard, externals);
         }
         return false;
     }

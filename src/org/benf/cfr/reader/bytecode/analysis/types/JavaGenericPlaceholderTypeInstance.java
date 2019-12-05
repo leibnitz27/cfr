@@ -11,6 +11,7 @@ import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
+import java.util.Map;
 
 public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstance {
     private final String className;
@@ -98,13 +99,16 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     @Override
-    public boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard) {
+    public boolean hasForeignUnbound(ConstantPool cp, int depth, boolean noWildcard, Map<String, FormalTypeParameter> externals) {
         // can't do reference equality on cp, because some types might come from the second load.
         // This needs reworking.
         if (className.equals(MiscConstants.UNBOUND_GENERIC)) {
             return depth == 0 || noWildcard;
         }
-        return !cp.equals(this.cp);
+        if (!cp.equals(this.cp)) return true;
+
+        if (externals == null) return false;
+        return !externals.containsKey(className);
     }
 
     /*

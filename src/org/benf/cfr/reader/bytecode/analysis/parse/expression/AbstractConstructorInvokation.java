@@ -18,6 +18,7 @@ import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractConstructorInvokation extends AbstractExpression implements BoxingProcessor {
@@ -174,7 +175,7 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
                 boolean ignore = false;
                 if (argType instanceof JavaGenericBaseInstance) {
                     // TODO : Should check flag for ignore bad generics?
-                    ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(function.getCp(), 0, false);
+                    ignore = ((JavaGenericBaseInstance) argType).hasForeignUnbound(function.getCp(), 0, false, Collections.<String, FormalTypeParameter>emptyMap());
                 }
                 /*
                  * Lambda types will always look wrong.
