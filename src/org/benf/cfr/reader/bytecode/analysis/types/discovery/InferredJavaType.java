@@ -1118,7 +1118,9 @@ public class InferredJavaType {
         JavaTypeInstance typeInstanceOther = other.getDeGenerifiedType();
         if (!typeInstanceOther.equals(typeInstanceThis)) {
             if (TypeConstants.OBJECT != typeInstanceThis) {
-                throw new ConfusedCFRException("Incompatible types : " + typeInstanceThis.getClass() + "[" + typeInstanceThis + "] / " + typeInstanceOther.getClass() + "[" + typeInstanceOther + "]");
+                // We've got completely confused, tried to combine two unrelated type parameters.
+                value.forceType(TypeConstants.OBJECT, true);
+                return;
             }
         }
         value.forceType(other, true);
