@@ -17,6 +17,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperatio
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticPostMutationOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticPreMutationOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
@@ -377,6 +378,11 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
             if (appliedArg instanceof LValueExpression) {
                 LValue appliedLvalue = ((LValueExpression) appliedArg).getLValue();
                 lValueReplacements.put(methodArg, appliedLvalue);
+            }
+            if (methodArg.getInferredJavaType().getJavaTypeInstance().equals(otherType)) {
+                if (!appliedArg.getInferredJavaType().getJavaTypeInstance().equals(otherType)) {
+                    appliedArg = new CastExpression(methodArg.getInferredJavaType(), appliedArg);
+                }
             }
             expressionReplacements.put(new LValueExpression(methodArg), appliedArg);
         }
