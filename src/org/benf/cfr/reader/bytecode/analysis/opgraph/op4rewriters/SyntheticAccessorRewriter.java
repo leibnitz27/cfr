@@ -276,6 +276,7 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
                 LValue appliedLvalue = ((LValueExpression) appliedArg).getLValue();
                 lValueReplacements.put(methodArg, appliedLvalue);
             }
+            appliedArg = getCastFriendArg(otherType, methodArg, appliedArg);
             expressionReplacements.put(new LValueExpression(methodArg), appliedArg);
         }
         CloneHelper cloneHelper = new CloneHelper(expressionReplacements, lValueReplacements);
@@ -379,15 +380,20 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
                 LValue appliedLvalue = ((LValueExpression) appliedArg).getLValue();
                 lValueReplacements.put(methodArg, appliedLvalue);
             }
-            if (methodArg.getInferredJavaType().getJavaTypeInstance().equals(otherType)) {
-                if (!appliedArg.getInferredJavaType().getJavaTypeInstance().equals(otherType)) {
-                    appliedArg = new CastExpression(methodArg.getInferredJavaType(), appliedArg);
-                }
-            }
+            appliedArg = getCastFriendArg(otherType, methodArg, appliedArg);
             expressionReplacements.put(new LValueExpression(methodArg), appliedArg);
         }
         CloneHelper cloneHelper = new CloneHelper(expressionReplacements, lValueReplacements);
         return cloneHelper.replaceOrClone(funcMatchCollector.functionInvokation);
+    }
+
+    private Expression getCastFriendArg(JavaTypeInstance otherType, LocalVariable methodArg, Expression appliedArg) {
+        if (methodArg.getInferredJavaType().getJavaTypeInstance().equals(otherType)) {
+            if (!appliedArg.getInferredJavaType().getJavaTypeInstance().equals(otherType)) {
+                appliedArg = new CastExpression(methodArg.getInferredJavaType(), appliedArg);
+            }
+        }
+        return appliedArg;
     }
 
     private class FuncMatchCollector extends AbstractMatchResultIterator {
