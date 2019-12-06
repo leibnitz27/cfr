@@ -50,7 +50,7 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
     // Ending in .this is a hack, need to fix .this appending elsewhere.
     public static boolean isIllegal(String identifier) {
         if (!isIllegal2(identifier)) return false;
-        if (identifier.endsWith(".this")) return false;
+        if (identifier.endsWith(MiscConstants.DOT_THIS)) return false;
         if (known.containsKey(identifier)) return false;
         return true;
     }

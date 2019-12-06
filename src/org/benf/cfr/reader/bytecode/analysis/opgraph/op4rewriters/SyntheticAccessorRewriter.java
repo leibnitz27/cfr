@@ -1,15 +1,30 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.AbstractMatchResultIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchOneOf;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchSequence;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.ResetAfterTest;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticMutationOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticPostMutationOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticPreMutationOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.StackValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
@@ -18,7 +33,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -36,7 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewriter {
+public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implements Op04Rewriter {
 
     private final DCCommonState state;
     private final JavaTypeInstance thisClassType;
@@ -57,14 +74,9 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
         }
     }
 
-
-    @Override
-    public void handleStatement(StatementContainer statementContainer) {
-    }
-
     /*
-         * Expression rewriter boilerplate - note that we can't expect ssaIdentifiers to be non-null.
-         */
+     * Expression rewriter boilerplate - note that we can't expect ssaIdentifiers to be non-null.
+     */
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         // TODO : In practice, the rewrites are ALWAYS done in terms of static functions.
@@ -74,31 +86,9 @@ public class SyntheticAccessorRewriter implements Op04Rewriter, ExpressionRewrit
             /*
              * REWRITE INSIDE OUT! First, rewrite args, THEN rewrite expression.
              */
-            return rewriteFunctionExpression((StaticFunctionInvokation) expression);
+            expression = rewriteFunctionExpression((StaticFunctionInvokation) expression);
         }
         return expression;
-    }
-
-    @Override
-    public ConditionalExpression rewriteExpression(ConditionalExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        return (ConditionalExpression) res;
-    }
-
-//    @Override
-//    public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-//        Expression res = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-//        return (AbstractAssignmentExpression) res;
-//    }
-
-    @Override
-    public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        return lValue;
-    }
-
-    @Override
-    public StackSSALabel rewriteExpression(StackSSALabel lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        return lValue;
     }
 
     private Expression rewriteFunctionExpression(final StaticFunctionInvokation functionInvokation) {

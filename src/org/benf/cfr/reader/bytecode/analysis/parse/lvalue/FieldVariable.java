@@ -66,6 +66,20 @@ public class FieldVariable extends AbstractFieldVariable {
         return object;
     }
 
+    // Eclipse has a nasty habit of chaining outer accessors, leading to
+    // a.this.b.this.c.this.xxx
+    private boolean objectIsEclipseOuterThis() {
+        if (object instanceof LValueExpression) {
+            LValue lValue = ((LValueExpression) object).getLValue();
+            if (lValue instanceof FieldVariable) {
+                if (((FieldVariable) lValue).getClassFileField().getFieldName().endsWith(MiscConstants.DOT_THIS)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private boolean objectIsThis() {
         if (object instanceof LValueExpression) {
             LValue lValue = ((LValueExpression) object).getLValue();
@@ -94,7 +108,7 @@ public class FieldVariable extends AbstractFieldVariable {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        if (!(isOuterRef() && objectIsThis())) {
+        if (!(isOuterRef() && (objectIsThis() || objectIsEclipseOuterThis()))) {
             // I'd rather not have this check here, but I don't want to have a pass to get rid of
             // what is actually useful information.
             if (!objectIsIllegalThis()) {
