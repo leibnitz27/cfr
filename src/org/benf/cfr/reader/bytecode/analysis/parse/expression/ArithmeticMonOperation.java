@@ -19,7 +19,9 @@ public class ArithmeticMonOperation extends AbstractExpression {
 
     private static InferredJavaType inferredType(InferredJavaType orig) {
         if (orig.getJavaTypeInstance() != RawJavaType.BOOLEAN) return orig;
-        return new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.OPERATION);
+        InferredJavaType res = new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.OPERATION);
+        orig.useInArithOp(res, RawJavaType.INT, true);
+        return res;
     }
 
     public ArithmeticMonOperation(Expression lhs, ArithOp op) {
