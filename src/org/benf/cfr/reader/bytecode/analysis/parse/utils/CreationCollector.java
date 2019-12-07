@@ -4,11 +4,13 @@ import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.ExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.stack.StackEntry;
 import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
@@ -88,6 +90,10 @@ public class CreationCollector {
             markConstruction(lValue, rValue, container);
             return;
         }
+        if (expression instanceof NewObject) {
+            markConstruction(null, rValue, container);
+            return;
+        }
     }
 
 
@@ -106,21 +112,23 @@ public class CreationCollector {
             if (constructionValue == null) continue;
 
             InstrIndex idx = constructionValue.getLocation().getIndex();
-            if (!collectedCreations.containsKey(lValue)) continue;
-            List<StatementContainer> creations = collectedCreations.get(lValue);
-            boolean found = false;
-            for (StatementContainer creation : creations) {
-                // This is a terrible heuristic.
-                if (creation.getIndex().isBackJumpFrom(idx)) {
-                    found = true;
-                    break;
+            if (lValue != null) {
+                if (!collectedCreations.containsKey(lValue)) continue;
+                List<StatementContainer> creations = collectedCreations.get(lValue);
+                boolean found = false;
+                for (StatementContainer creation : creations) {
+                    // This is a terrible heuristic.
+                    if (creation.getIndex().isBackJumpFrom(idx)) {
+                        found = true;
+                        break;
+                    }
                 }
+                if (!found) continue;
             }
-            if (!found) continue;
 
             MemberFunctionInvokation memberFunctionInvokation = constructionValue.getValue();
             JavaTypeInstance lValueType = memberFunctionInvokation.getClassTypeInstance();
-            InferredJavaType inferredJavaType = lValue.getInferredJavaType();
+            InferredJavaType inferredJavaType = lValue == null ? memberFunctionInvokation.getInferredJavaType() : lValue.getInferredJavaType();
 
 
             AbstractConstructorInvokation constructorInvokation = null;
@@ -201,14 +209,18 @@ public class CreationCollector {
                 }
             }
 
+            Statement replacement = null;
+            if (lValue == null) {
+                replacement = new ExpressionStatement(constructorInvokation);
+            } else {
+                replacement = new AssignmentSimple(lValue, constructorInvokation);
 
-            AssignmentSimple replacement = new AssignmentSimple(lValue, constructorInvokation);
-
-            if (lValue instanceof StackSSALabel) {
-                StackSSALabel stackSSALabel = (StackSSALabel) lValue;
-                StackEntry stackEntry = stackSSALabel.getStackEntry();
-                stackEntry.decrementUsage();
-                stackEntry.incSourceCount();
+                if (lValue instanceof StackSSALabel) {
+                    StackSSALabel stackSSALabel = (StackSSALabel) lValue;
+                    StackEntry stackEntry = stackSSALabel.getStackEntry();
+                    stackEntry.decrementUsage();
+                    stackEntry.incSourceCount();
+                }
             }
             StatementContainer constructionContainer = constructionValue.getLocation();
             //noinspection unchecked

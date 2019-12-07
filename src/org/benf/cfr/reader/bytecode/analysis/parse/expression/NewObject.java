@@ -41,7 +41,7 @@ public class NewObject extends AbstractExpression {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        return d.keyword("new ").print(getTypeInstance().toString());
+        return d.keyword("new ").dump(getTypeInstance());
     }
 
     @Override
