@@ -60,18 +60,7 @@ public class ClassFileDumperInterface extends AbstractClassFileDumper {
             field.dump(d, classFile);
             first = false;
         }
-        List<Method> methods = classFile.getMethods();
-        if (!methods.isEmpty()) {
-            for (Method method : methods) {
-                if (method.hiddenState() != Method.Visibility.Visible) continue;
-                if (!first) {
-                    d.newln();
-                }
-                first = false;
-                // Java 8 supports 'defender' interfaces, i.e. method bodies on interfaces (eww).
-                method.dump(d, false);
-            }
-        }
+        dumpMethods(classFile, d, first, false);
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
         d.print("}").newln();

@@ -51,17 +51,7 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
             field.dump(d, classFile);
             first = false;
         }
-        List<Method> methods = classFile.getMethods();
-        if (!methods.isEmpty()) {
-            for (Method meth : methods) {
-                if (!first) {
-                    d.newln();
-                }
-                first = false;
-                // Java 8 supports 'defender' interfaces, i.e. method bodies on interfaces (eww).
-                meth.dump(d, false);
-            }
-        }
+        dumpMethods(classFile, d, first, false);
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
         d.print("}").newln();

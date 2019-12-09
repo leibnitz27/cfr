@@ -64,7 +64,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     {
         Visible,
         HiddenSynthetic,
-        HiddenBridge
+        HiddenBridge,
+        HiddenDeadCode // dead, or pointless.
     }
 
     private static final long OFFSET_OF_ACCESS_FLAGS = 0;
@@ -182,6 +183,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
     public void hideSynthetic() {
         this.hidden = Visibility.HiddenSynthetic;
+    }
+
+    public void hideDead() {
+        this.hidden = Visibility.HiddenDeadCode;
     }
 
     public Visibility hiddenState() {

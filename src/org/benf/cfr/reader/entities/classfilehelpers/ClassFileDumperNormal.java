@@ -76,19 +76,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
                 first = false;
             }
         }
-        List<Method> methods = classFile.getMethods();
-        if (!methods.isEmpty()) {
-            for (Method method : methods) {
-                if (method.hiddenState() != Method.Visibility.Visible) {
-                    continue;
-                }
-                if (!first) {
-                    d.newln();
-                }
-                first = false;
-                method.dump(d, true);
-            }
-        }
+        dumpMethods(classFile, d, first, true);
         classFile.dumpNamedInnerClasses(d);
         d.indent(-1);
         d.separator("}").newln();

@@ -559,11 +559,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return methods;
     }
 
-    public void removePointlessMethod(Method method) {
-        methodsByName.remove(method.getName());
-        methods.remove(method);
-    }
-
     private List<Method> getMethodsWithMatchingName(final MethodPrototype prototype) {
         return Functional.filter(methods, new Predicate<Method>() {
             @Override

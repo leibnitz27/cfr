@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.entities.attributes.AttributeMap;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
@@ -157,6 +158,22 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
             d.keyword("import ").print(name + ";").newln();
         }
         d.newln();
+    }
+
+    void dumpMethods(ClassFile classFile, Dumper d, boolean first, boolean asClass) {
+        List<Method> methods = classFile.getMethods();
+        if (!methods.isEmpty()) {
+            for (Method method : methods) {
+                if (method.hiddenState() != Method.Visibility.Visible) {
+                    continue;
+                }
+                if (!first) {
+                    d.newln();
+                }
+                first = false;
+                method.dump(d, asClass);
+            }
+        }
     }
 
     void dumpComments(ClassFile classFile, Dumper d) {

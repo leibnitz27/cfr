@@ -21,8 +21,7 @@ public class DeadMethodRemover {
                 return;
             }
         }
-
-        classFile.removePointlessMethod(method);
+        method.hideDead();
     }
 
 }

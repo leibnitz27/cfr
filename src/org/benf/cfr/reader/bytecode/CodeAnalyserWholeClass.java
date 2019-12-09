@@ -464,7 +464,7 @@ public class CodeAnalyserWholeClass {
         }
 
         if (!MiscStatementTools.isDeadCode(constructor.getAnalysis())) return;
-        classFile.removePointlessMethod(constructor);
+        constructor.hideDead();
     }
 
     /* Performed prior to lifting code into fields, just check code */
