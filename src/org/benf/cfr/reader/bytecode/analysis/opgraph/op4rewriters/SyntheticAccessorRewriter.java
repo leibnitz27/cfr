@@ -92,6 +92,12 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
         return expression;
     }
 
+    @Override
+    public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        // Ecj will bury synthetic accessors in lvalues..... (see AnonymousInnerClassTest11c2).
+        return lValue.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+    }
+
     private Expression rewriteFunctionExpression(final StaticFunctionInvokation functionInvokation) {
         Expression res = rewriteFunctionExpression2(functionInvokation);
         // Just a cheat to allow me to return null.
@@ -103,6 +109,7 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
     private static final String MUTATION1 = "mutation1";
     private static final String MUTATION2 = "mutation2";
     private static final String MUTATION3 = "mutation3";
+    private static final String ASSIGNMENT1 = "assignment1";
     private static final String PRE_INC = "preinc";
     private static final String POST_INC = "postinc";
     private static final String PRE_DEC = "predec";
@@ -194,6 +201,9 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
                                 new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
                                 new StructuredReturn(new LValueExpression(wcm.getLValueWildCard("lvalue")), null)
                         )),
+                        new ResetAfterTest(wcm, ASSIGNMENT1, new MatchSequence(
+                                new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue"))
+                        )),
                         new ResetAfterTest(wcm, MUTATION2, new MatchSequence(
                                 new StructuredAssignment(wcm.getLValueWildCard("lvalue"), wcm.getExpressionWildCard("rvalue")),
                                 new StructuredReturn(wcm.getExpressionWildCard("rvalue"), null)
@@ -281,7 +291,7 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
         }
         CloneHelper cloneHelper = new CloneHelper(expressionReplacements, lValueReplacements);
 
-        if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
+        if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2) || matchType.equals(ASSIGNMENT1)) {
             AssignmentExpression assignmentExpression = new AssignmentExpression(accessorMatchCollector.lValue, accessorMatchCollector.rValue);
             return cloneHelper.replaceOrClone(assignmentExpression);
         } else if (matchType.equals(MUTATION3)) {
@@ -322,7 +332,7 @@ public class SyntheticAccessorRewriter extends AbstractExpressionRewriter implem
         public void collectMatches(String name, WildcardMatch wcm) {
             this.matchType = name;
             this.lValue = wcm.getLValueWildCard("lvalue").getMatch();
-            if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2)) {
+            if (matchType.equals(MUTATION1) || matchType.equals(MUTATION2) || matchType.equals(ASSIGNMENT1)) {
                 this.rValue = wcm.getExpressionWildCard("rvalue").getMatch();
             }
             if (matchType.equals(MUTATION3)) {
