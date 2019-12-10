@@ -9,17 +9,22 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.F
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterHelper;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
-import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
-import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /*

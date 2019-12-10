@@ -33,6 +33,13 @@ public class OverloadMethodSet {
         private final MethodPrototype methodPrototype;
         private final List<JavaTypeInstance> methodArgs;
         private final int size;
+        private static MethodData POISON = new MethodData();
+
+        private MethodData() {
+            this.methodPrototype = null;
+            this.methodArgs = null;
+            this.size = 0;
+        }
 
         private MethodData(MethodPrototype methodPrototype, List<JavaTypeInstance> methodArgs) {
             this.methodPrototype = methodPrototype;
@@ -128,7 +135,7 @@ public class OverloadMethodSet {
         /*
          * Don't even consider any of the matches which have too many required arguments
          */
-        Set<MethodData> possibleMatches = SetFactory.newSet(
+        Set<MethodData> possibleMatches = SetFactory.newOrderedSet(
                 Functional.filter(allPrototypes, new Predicate<MethodData>() {
                     @Override
                     public boolean test(MethodData in) {
@@ -143,14 +150,16 @@ public class OverloadMethodSet {
             }
         });
 
-        for (int x = 0, len = args.size(); x < len; ++x) {
-            Expression arg = args.get(x);
-            boolean isNull = Literal.NULL.equals(arg);
-            JavaTypeInstance actual = arg.getInferredJavaType().getJavaTypeInstance();
-            actual = actual.getDeGenerifiedType();
-            Iterator<MethodData> possiter = possibleMatches.iterator();
-            while (possiter.hasNext()) {
-                MethodData prototype = possiter.next();
+        Iterator<MethodData> possiter = possibleMatches.iterator();
+        MethodData perfectMatch = null;
+        pi : while (possiter.hasNext()) {
+            boolean perfect = true;
+            MethodData prototype = possiter.next();
+            for (int x = 0, len = args.size(); x < len; ++x) {
+                Expression arg = args.get(x);
+                boolean isNull = Literal.NULL.equals(arg);
+                JavaTypeInstance actual = arg.getInferredJavaType().getJavaTypeInstance();
+                actual = actual.getDeGenerifiedType();
                 JavaTypeInstance argType = prototype.getArgType(x, actual);
                 if (argType != null) {
                     argType = argType.getDeGenerifiedType();
@@ -158,6 +167,7 @@ public class OverloadMethodSet {
                     // BUT - it will preferentially satisfy an exact object type to OBJECT, so
                     // just because there are two valid ones, doesn't mean we have an ambiguity.
                     if (isNull) {
+                        perfect = false;
                         if (argType.isObject()) {
                             if (TypeConstants.OBJECT.equals(argType)) {
                                 weakMatches.get(x).add(prototype);
@@ -165,18 +175,31 @@ public class OverloadMethodSet {
                             continue;
                         } else {
                             possiter.remove();
-                            continue;
+                            continue pi;
                         }
                     }
-                    // If it was equal, it would have been satisfied previously.
+                    // Need to check unboxed exact, as otherwise varargs Integer might decide to call int.
+                    JavaTypeInstance unboxedExactActual = unbox(actual);
+                    JavaTypeInstance unboxedExactArg = unbox(argType);
+                    if (unboxedExactActual.equals(unboxedExactArg)) {
+                        if (perfect && x == len-1) {
+                            perfectMatch = perfectMatch == null ? prototype : MethodData.POISON;
+                        }
+                        continue;
+                    }
                     if ((actual.implicitlyCastsTo(argType, gtb) && actual.impreciseCanCastTo(argType, gtb))) {
+                        perfect = false;
                         continue;
                     }
                 }
                 possiter.remove();
+                continue pi;
             }
         }
         if (possibleMatches.isEmpty()) return false;
+        if (perfectMatch != null && perfectMatch != MethodData.POISON) {
+            return perfectMatch.methodPrototype.equals(actualPrototype.methodPrototype);
+        }
 
         if (possibleMatches.size() > 1 && !weakMatches.isEmpty()) {
             /* Of our matches, is one strongest?
@@ -243,6 +266,11 @@ public class OverloadMethodSet {
             return methodData.methodPrototype.equals(actualPrototype.methodPrototype);
         }
         return false;
+    }
+
+    private JavaTypeInstance unbox(JavaTypeInstance actual) {
+        JavaTypeInstance unboxed = RawJavaType.getUnboxedTypeFor(actual);
+        return unboxed == null ? actual : unboxed;
     }
 
     /*
