@@ -109,8 +109,11 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         if (cVal != null && !definingType(d, TypeConstants.boxingNameInt)) {
             return cVal;
         }
-        if (formatHint == FormatHint.Hex) {
-            return "0x" + Integer.toHexString(i).toUpperCase();
+        if (i > 0xfffffL || formatHint == FormatHint.Hex) {
+            String hex = Integer.toHexString(i).toUpperCase();
+            if (formatHint == FormatHint.Hex || hexTest(hex)) {
+                return "0x" + hex;
+            }
         }
         return o.toString();
     }
@@ -272,6 +275,23 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return null;
     }
 
+    private static boolean hexTest(String hex) {
+        int diff = 0;
+        byte[] bytes = hex.getBytes();
+        byte[] count = new byte[16];
+        for (byte b : bytes) {
+            if (b >= '0' && b <= '9') {
+                if (++count[b - '0'] == 1) diff++;
+            } else if (b >= 'A' && b <= 'F') {
+                if (++count[b - 'A' + 10] == 1) diff++;
+            } else {
+                return false;
+            }
+        }
+        // Many hex constants are rgb colors in the form of FFAA00 with up to 3 different hex digits
+        return diff <= 3;
+    }
+
     private static String longName(Dumper d, Object o, FormatHint formatHint) {
         if (!(o instanceof Long)) return o.toString();
         long l = (Long) o;
@@ -284,24 +304,10 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         if (l == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
         String longString = null;
         if (l > 0xfffffL || formatHint == FormatHint.Hex) {
-            String hexTest = Long.toHexString(l).toUpperCase();
-            int diff = 0;
-            if (formatHint != FormatHint.Hex) {
-                // If we're not hinted to go hex, see if it's .... ugly.
-                byte[] bytes = hexTest.getBytes();
-                byte[] count = new byte[16];
-                for (byte b : bytes) {
-                    if (b >= '0' && b <= '9') {
-                        if (++count[b - '0'] == 1) diff++;
-                    } else if (b >= 'A' && b <= 'F') {
-                        if (++count[b - 'A' + 10] == 1) diff++;
-                    } else {
-                        diff = 10;
-                        break;
-                    }
-                }
+            String hex = Long.toHexString(l).toUpperCase();
+            if (formatHint == FormatHint.Hex || hexTest(hex)) {
+                longString = "0x" + hex;
             }
-            if (diff <= 2) longString = "0x" + hexTest;
         }
         if (longString == null) longString = o.toString();
 
