@@ -39,7 +39,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     private static void registerPi(double value, String expr) {
         PI_DOUBLE.put(value, expr);
-        PI_FLOAT.put((float) value, "(float)" + expr + ")");
+        PI_FLOAT.put((float) value, "(float)" + expr);
     }
 
     private static void registerPiMultiple(int factor) {
