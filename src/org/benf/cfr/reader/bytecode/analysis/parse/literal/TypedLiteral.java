@@ -12,6 +12,9 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     public enum LiteralType {
@@ -29,6 +32,45 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
     public enum FormatHint {
         None,
         Hex
+    }
+
+    private static final Map<Double, String> PI_DOUBLE = new HashMap<Double, String>();
+    private static final Map<Float, String> PI_FLOAT = new HashMap<Float, String>();
+
+    private static void registerPi(double value, String expr) {
+        PI_DOUBLE.put(value, expr);
+        PI_FLOAT.put((float) value, "(float)" + expr + ")");
+    }
+
+    private static void registerPiMultiple(int factor) {
+        if (factor == 0) return;
+        if (factor == 1) {
+            registerPi(Math.PI, "Math.PI");
+        } else if (factor == -1) {
+            registerPi(-Math.PI, "-Math.PI");
+        } else {
+            registerPi(Math.PI * factor, "(Math.PI * " + factor + ")");
+        }
+    }
+
+    private static void registerPiFraction(int divisor) {
+        if (divisor == 0) return;
+        if (divisor == 1) {
+            registerPi(Math.PI, "Math.PI");
+        } else if (divisor == -1) {
+            registerPi(-Math.PI, "-Math.PI");
+        } else {
+            registerPi(Math.PI / divisor, "(Math.PI / " + divisor + ")");
+        }
+    }
+
+    static {
+        for (int i = -10; i <= 10; i++) {
+            registerPiMultiple(i);
+        }
+        registerPiFraction(90);
+        registerPiFraction(180);
+        registerPiFraction(360);
     }
 
     private final InferredJavaType inferredJavaType;
@@ -108,6 +150,9 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             String doubleRepr = o.toString();
             return castedFloat.length() < doubleRepr.length() ? castedFloat : doubleRepr;
         }
+        if (PI_DOUBLE.containsKey(d)) {
+            return PI_DOUBLE.get(d);
+        }
         return o.toString();
     }
 
@@ -139,6 +184,9 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             if (Float.isNaN(d)) {
                 return "0.0f / 0.0f";
             }
+        }
+        if (PI_FLOAT.containsKey(d)) {
+            return PI_FLOAT.get(d);
         }
         return o.toString() + "f";
     }
