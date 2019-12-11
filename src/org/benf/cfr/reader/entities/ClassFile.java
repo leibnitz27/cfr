@@ -323,6 +323,10 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         if (dcCommonState.getVersionCollisions().contains(getClassType())) {
             addComment(DecompilerComment.MULTI_VERSION);
         }
+        DecompilerComment renamedClass = dcCommonState.renamedTypeComment(getClassType().getRawName());
+        if (renamedClass != null) {
+            addComment(renamedClass);
+        }
     }
 
     /*

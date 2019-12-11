@@ -2,7 +2,7 @@ package org.benf.cfr.reader.util.output;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
-import org.benf.cfr.reader.state.CaseSensitiveFileSystemHelper;
+import org.benf.cfr.reader.state.OsInfo;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -23,7 +23,7 @@ public class InternalDumperFactoryImpl implements DumperFactory {
 
 
     public InternalDumperFactoryImpl(Options options) {
-        this.checkDupes = CaseSensitiveFileSystemHelper.IsCaseSensitive() && !options.getOption(OptionsImpl.CASE_INSENSITIVE_FS_RENAME);
+        this.checkDupes = OsInfo.OS().isCaseInsensitive() && !options.getOption(OptionsImpl.CASE_INSENSITIVE_FS_RENAME);
         this.options = options;
         if (!options.getOption(OptionsImpl.SILENT) && (options.optionIsSet(OptionsImpl.OUTPUT_DIR) || options.optionIsSet(OptionsImpl.OUTPUT_PATH))) {
             progressDumper = new ProgressDumperStdErr();

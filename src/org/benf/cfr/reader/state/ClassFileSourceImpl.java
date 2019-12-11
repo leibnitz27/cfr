@@ -32,13 +32,10 @@ import java.util.zip.ZipFile;
 import static org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils.getPackageAndClassNames;
 
 public class ClassFileSourceImpl implements ClassFileSource2 {
-
     private final Set<String> explicitJars = SetFactory.newSet();
     private Map<String, JarSourceEntry> classToPathMap;
-    // replace with BiDiMap
-    private Map<String, String> classCollisionRenamerLCToReal;
-    private Map<String, String> classCollisionRenamerRealToLC;
     private final Options options;
+    private ClassRenamer classRenamer;
     /*
      * Initialisation info
      */
@@ -84,8 +81,8 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
 
     @Override
     public String getPossiblyRenamedPath(String path) {
-        if (classCollisionRenamerRealToLC == null) return path;
-        String res = classCollisionRenamerRealToLC.get(path + ".class");
+        if (classRenamer == null) return path;
+        String res = classRenamer.getRenamedClass(path + ".class");
         if (res == null) return path;
         return res.substring(0, res.length()-6);
     }
@@ -99,11 +96,8 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
         // If path is an alias due to case insensitivity, restore to the correct name here, before
         // accessing zipfile.
         String path = inputPath;
-        if (classCollisionRenamerLCToReal != null) {
-            String actualName = classCollisionRenamerLCToReal.get(path);
-            if (actualName != null) {
-                path = actualName;
-            }
+        if (classRenamer != null) {
+            path = classRenamer.getOriginalClass(path);
         }
 
         ZipFile zipFile = null;
@@ -280,32 +274,16 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
 
         JarSourceEntry sourceEntry = new JarSourceEntry(analysisType, jarPath);
 
-        Set<String> dedup;
-        if (classCollisionRenamerLCToReal != null) {
-            final Map<String, List<String>> map = Functional.groupToMapBy(jarContent.getClassFiles(), new UnaryFunction<String, String>() {
-                @Override
-                public String invoke(String arg) {
-                    return arg.toLowerCase();
-                }
-            });
-            dedup = SetFactory.newSet(Functional.filter(map.keySet(), new Predicate<String>() {
-                @Override
-                public boolean test(String in) {
-                    return map.get(in).size() > 1;
-                }
-            }));
-        } else {
-            dedup = SetFactory.newSet();
+        if (classRenamer != null) {
+            classRenamer.notifyClassFiles(jarContent.getClassFiles());
         }
 
         List < String > output = ListFactory.newList();
         for (String classPath : jarContent.getClassFiles()) {
             if (classPath.toLowerCase().endsWith(".class")) {
                 // nb : entry.value will always be the jar here, but ....
-                if (classCollisionRenamerLCToReal != null) {
-                    String renamed = addDedupName(classPath, dedup, classCollisionRenamerLCToReal);
-                    classCollisionRenamerRealToLC.put(classPath, renamed);
-                    classPath = renamed;
+                if (classRenamer != null) {
+                    classPath = classRenamer.getRenamedClass(classPath);
                 }
                 classToPathMap.put(classPath, sourceEntry);
                 output.add(classPath);
@@ -315,28 +293,16 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
         return jarContent;
     }
 
-    private static String addDedupName(String potDup, Set<String> collisions, Map<String, String> data) {
-        String n = potDup.toLowerCase();
-        String name = n.substring(0, n.length()-6);
-        int next = 0;
-        if (!collisions.contains(n)) return potDup;
-        String testName = name + "_" + next + ".class";
-        while (data.containsKey(testName)) {
-            testName = name + "_" + ++next + ".class";
-        }
-        data.put(testName, potDup);
-        return testName;
-    }
-
     private static class JarSourceEntry {
         private final AnalysisType analysisType;
         private final String path;
 
-        public JarSourceEntry(AnalysisType analysisType, String path) {
+        JarSourceEntry(AnalysisType analysisType, String path) {
             this.analysisType = analysisType;
             this.path = path;
         }
 
+        @SuppressWarnings("unused")
         public AnalysisType getAnalysisType() {
             return analysisType;
         }
@@ -348,8 +314,6 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
 
     private Map<String, JarSourceEntry> getClassPathClasses() {
         if (classToPathMap == null) {
-            boolean renameCase = (options.getOption(OptionsImpl.CASE_INSENSITIVE_FS_RENAME));
-
             boolean dump = options.getOption(OptionsImpl.DUMP_CLASS_PATH);
 
             classToPathMap = MapFactory.newMap();
@@ -367,10 +331,7 @@ public class ClassFileSourceImpl implements ClassFileSource2 {
                 classPath = classPath + File.pathSeparatorChar + extraClassPath;
             }
 
-            if (renameCase) {
-                classCollisionRenamerLCToReal = MapFactory.newMap();
-                classCollisionRenamerRealToLC = MapFactory.newMap();
-            }
+            classRenamer = ClassRenamer.create(options);
 
             String[] classPaths = classPath.split("" + File.pathSeparatorChar);
             for (String path : classPaths) {

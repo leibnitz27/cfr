@@ -17,6 +17,7 @@ public class ClassCache {
     // We want to avoid generating names which collide with classes.
     // This is a nice simple check.
     private final Set<String> simpleClassNamesSeen = SetFactory.newSet();
+    private final Map<String, String> renamedClasses = MapFactory.newMap();
 
     private final DCCommonState dcCommonState;
 
@@ -35,20 +36,31 @@ public class ClassCache {
          * we need to replace with the deduplicated version - otherwise the file
          * will not match the type.
          */
-        rawClassName = ClassNameUtils.convertToPath(rawClassName);
-        rawClassName = dcCommonState.getPossiblyRenamedFileFromClassFileSource(rawClassName);
+        String originalRawClassName = ClassNameUtils.convertToPath(rawClassName);
+        rawClassName = dcCommonState.getPossiblyRenamedFileFromClassFileSource(originalRawClassName);
         String name = ClassNameUtils.convertFromPath(rawClassName);
         JavaRefTypeInstance typeInstance = refClassTypeCache.get(name);
+        String originalName = null;
+        if (!rawClassName.equals(originalRawClassName)) {
+            originalName = ClassNameUtils.convertFromPath(originalRawClassName);
+        }
         if (typeInstance == null) {
             typeInstance = JavaRefTypeInstance.create(name, dcCommonState);
-            add(name, typeInstance);
+            add(name, originalName, typeInstance);
         }
         return typeInstance;
     }
 
     private void add(String name, JavaRefTypeInstance typeInstance) {
+        add(name, null, typeInstance);
+    }
+
+    private void add(String name, String originalName, JavaRefTypeInstance typeInstance) {
         refClassTypeCache.put(name, typeInstance);
         simpleClassNamesSeen.add(typeInstance.getRawShortName());
+        if (originalName != null) {
+            renamedClasses.put(name, originalName);
+        }
     }
 
     public boolean isClassName(String name) {
@@ -76,5 +88,9 @@ public class ClassCache {
 
     public Collection<JavaRefTypeInstance> getLoadedTypes() {
         return refClassTypeCache.values();
+    }
+
+    String getOriginalName(String typeName) {
+        return renamedClasses.get(typeName);
     }
 }

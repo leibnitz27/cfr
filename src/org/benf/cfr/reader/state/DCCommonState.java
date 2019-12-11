@@ -7,11 +7,11 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
-import org.benf.cfr.reader.mapping.Mapping;
 import org.benf.cfr.reader.mapping.NullMapping;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.bytestream.BaseByteData;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -23,7 +23,11 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 
 import java.io.File;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 
 public class DCCommonState {
@@ -109,6 +113,14 @@ public class DCCommonState {
             couldNotLoadClasses.add(path);
             throw new CannotLoadClassException(path, e);
         }
+    }
+
+    public DecompilerComment renamedTypeComment(String typeName) {
+        String originalName = classCache.getOriginalName(typeName);
+        if (originalName != null) {
+            return new DecompilerComment("Renamed from " + originalName);
+        }
+        return null;
     }
 
     private static boolean isMultiReleaseJar(JarContent jarContent) {
