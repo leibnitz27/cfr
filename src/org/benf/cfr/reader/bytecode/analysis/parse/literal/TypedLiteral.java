@@ -102,6 +102,12 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
                 return "0.0d / 0.0";
             }
         }
+        float nearestFloat = (float) d;
+        if (Double.compare(nearestFloat, d) == 0) {
+            String castedFloat = "(double)" + floatName(dumper, nearestFloat);
+            String doubleRepr = o.toString();
+            return castedFloat.length() < doubleRepr.length() ? castedFloat : doubleRepr;
+        }
         return o.toString();
     }
 
