@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.CodeAnalyserWholeClass;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationAnonymousInner;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConstructorInvokationSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.LiteralRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Triplet;
 import org.benf.cfr.reader.bytecode.analysis.types.BindingSuperContainer;
@@ -175,8 +176,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                     }
                 });
         this.fields = ListFactory.newList();
+        LiteralRewriter rewriter = new LiteralRewriter(this.getClassType());
         for (Field tmpField : tmpFields) {
-            fields.add(new ClassFileField(tmpField));
+            fields.add(new ClassFileField(tmpField, rewriter));
         }
 
         final long OFFSET_OF_METHODS_COUNT = OFFSET_OF_FIELDS + fieldsLength;

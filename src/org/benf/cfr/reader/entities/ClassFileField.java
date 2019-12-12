@@ -4,7 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.LiteralRewriter;
-import org.benf.cfr.reader.mapping.ClassMapping;
 import org.benf.cfr.reader.util.output.Dumper;
 
 public class ClassFileField {
@@ -18,13 +17,13 @@ public class ClassFileField {
     // Should use NamedVariable?
     private String overriddenName;
 
-    public ClassFileField(Field field) {
+    public ClassFileField(Field field, LiteralRewriter literalRewriter) {
         this.field = field;
         TypedLiteral constantValue = field.getConstantValue();
         // TODO : Rewrite literals selectively based on flags.
         initialValue = constantValue == null ?
                 null :
-                LiteralRewriter.INSTANCE.rewriteExpression(new Literal(constantValue), null, null, null);
+                literalRewriter.rewriteExpression(new Literal(constantValue), null, null, null);
         isHidden = false;
         isSyntheticOuterRef = false;
     }

@@ -1,16 +1,17 @@
-package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers;
+package org.benf.cfr.reader.bytecode.analysis.parse.rewriters;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticMonOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithmeticOperation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
-import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
-import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -19,20 +20,13 @@ import org.benf.cfr.reader.util.Optional;
 import java.util.HashSet;
 import java.util.Set;
 
-// TODO: handle the actual definitions of the constants differently
-public strictfp class LiteralRewriter extends AbstractExpressionRewriter implements StructuredStatementTransformer {
-    public static final LiteralRewriter INSTANCE = new LiteralRewriter();
+public class LiteralRewriter extends AbstractExpressionRewriter {
+    public static final LiteralRewriter INSTANCE = new LiteralRewriter(TypeConstants.OBJECT);
 
-    public void transform(Op04StructuredStatement root) {
-        StructuredScope structuredScope = new StructuredScope();
-        root.transform(this, structuredScope);
-    }
+    private final JavaTypeInstance testType;
 
-    @Override
-    public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
-        in.transformStructuredChildren(this, scope);
-        in.rewriteExpressions(this);
-        return in;
+    public LiteralRewriter(JavaTypeInstance testType) {
+        this.testType = testType;
     }
 
     @Override
@@ -57,8 +51,10 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter impleme
     private static final StaticVariable I_MIN_VALUE = new StaticVariable(INFERRED_INT, TypeConstants.INTEGER, "MIN_VALUE");
 
     private Expression rewriteInteger(Literal literal, int value) {
-        if (value == Integer.MAX_VALUE) return new LValueExpression(I_MAX_VALUE);
-        if (value == Integer.MIN_VALUE) return new LValueExpression(I_MIN_VALUE);
+        if (!testType.equals(TypeConstants.INTEGER)) {
+            if (value == Integer.MAX_VALUE) return new LValueExpression(I_MAX_VALUE);
+            if (value == Integer.MIN_VALUE) return new LValueExpression(I_MIN_VALUE);
+        }
         return literal;
     }
 
@@ -68,8 +64,10 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter impleme
 
 
     private Expression rewriteLong(Literal literal, long value) {
-        if (value == Long.MAX_VALUE) return new LValueExpression(J_MAX_VALUE);
-        if (value == Long.MIN_VALUE) return new LValueExpression(J_MIN_VALUE);
+        if (!testType.equals(TypeConstants.LONG)) {
+            if (value == Long.MAX_VALUE) return new LValueExpression(J_MAX_VALUE);
+            if (value == Long.MIN_VALUE) return new LValueExpression(J_MIN_VALUE);
+        }
         if (value == Integer.MAX_VALUE) return new LValueExpression(I_MAX_VALUE);
         if (value == Integer.MIN_VALUE) return new LValueExpression(I_MIN_VALUE);
         return literal;
@@ -84,12 +82,24 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter impleme
     private static final StaticVariable F_POSITIVE_INFINITY = new StaticVariable(INFERRED_FLOAT, TypeConstants.FLOAT, "POSITIVE_INFINITY");
 
     private Expression rewriteFloat(Literal literal, float value) {
-        if (Float.isNaN(value)) return new LValueExpression(F_NAN);
-        if (Float.compare(Float.NEGATIVE_INFINITY, value) == 0) return new LValueExpression(F_NEGATIVE_INFINITY);
-        if (Float.compare(Float.POSITIVE_INFINITY, value) == 0) return new LValueExpression(F_POSITIVE_INFINITY);
-        if (Float.compare(Float.MAX_VALUE, value) == 0) return new LValueExpression(F_MAX_VALUE);
-        if (Float.compare(Float.MIN_VALUE, value) == 0) return new LValueExpression(F_MIN_VALUE);
-        if (Float.compare(Float.MIN_NORMAL, value) == 0) return new LValueExpression(F_MIN_NORMAL);
+        if (testType.equals(TypeConstants.FLOAT)) {
+            if (Float.isNaN(value)) {
+                return new ArithmeticOperation(new Literal(TypedLiteral.getFloat(0.0f)), new Literal(TypedLiteral.getFloat(0.0f)), ArithOp.DIVIDE);
+            }
+            if (Float.compare(Float.NEGATIVE_INFINITY, value) == 0) {
+                return new ArithmeticOperation(new Literal(TypedLiteral.getFloat(-1.0f)), new Literal(TypedLiteral.getFloat(0.0f)), ArithOp.DIVIDE);
+            }
+            if (Float.compare(Float.POSITIVE_INFINITY, value) == 0) {
+                return new ArithmeticOperation(new Literal(TypedLiteral.getFloat(1.0f)), new Literal(TypedLiteral.getFloat(0.0f)), ArithOp.DIVIDE);
+            }
+        } else {
+            if (Float.isNaN(value)) return new LValueExpression(F_NAN);
+            if (Float.compare(Float.NEGATIVE_INFINITY, value) == 0) return new LValueExpression(F_NEGATIVE_INFINITY);
+            if (Float.compare(Float.POSITIVE_INFINITY, value) == 0) return new LValueExpression(F_POSITIVE_INFINITY);
+            if (Float.compare(Float.MAX_VALUE, value) == 0) return new LValueExpression(F_MAX_VALUE);
+            if (Float.compare(Float.MIN_VALUE, value) == 0) return new LValueExpression(F_MIN_VALUE);
+            if (Float.compare(Float.MIN_NORMAL, value) == 0) return new LValueExpression(F_MIN_NORMAL);
+        }
         if (Float.compare((float) Math.E, value) == 0) return new CastExpression(INFERRED_FLOAT, new LValueExpression(MATH_E));
         Optional<Expression> piExpr = maybeGetPiExpression(value);
         if (piExpr.isSet()) return piExpr.getValue();
@@ -107,22 +117,36 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter impleme
     private static final StaticVariable MATH_E = new StaticVariable(INFERRED_DOUBLE, TypeConstants.MATH, "E");
 
     private Expression rewriteDouble(Literal literal, double value) {
-        if (Double.isNaN(value)) return new LValueExpression(D_NAN);
-        if (Double.compare(Double.NEGATIVE_INFINITY, value) == 0) return new LValueExpression(D_NEGATIVE_INFINITY);
-        if (Double.compare(Double.POSITIVE_INFINITY, value) == 0) return new LValueExpression(D_POSITIVE_INFINITY);
-        if (Double.compare(Double.MAX_VALUE, value) == 0) return new LValueExpression(D_MAX_VALUE);
-        if (Double.compare(Double.MIN_VALUE, value) == 0) return new LValueExpression(D_MIN_VALUE);
-        if (Double.compare(Double.MIN_NORMAL, value) == 0) return new LValueExpression(D_MIN_NORMAL);
-        if (Double.compare(Math.E, value) == 0) return new LValueExpression(MATH_E);
-        float nearestFloat = (float) value;
-        if (Double.compare(nearestFloat, value) == 0) {
-            // "(double)".length() == 8, "f" suffix is one more
-            if (Float.toString(nearestFloat).length() + 9 < Double.toString(value).length()) {
-                return new CastExpression(INFERRED_DOUBLE, new Literal(TypedLiteral.getFloat(nearestFloat)));
+        if (testType.equals(TypeConstants.DOUBLE)) {
+            if (Double.isNaN(value)) {
+                return new ArithmeticOperation(new Literal(TypedLiteral.getDouble(0.0)), new Literal(TypedLiteral.getDouble(0.0)), ArithOp.DIVIDE);
             }
+            if (Double.compare(Double.NEGATIVE_INFINITY, value) == 0) {
+                return new ArithmeticOperation(new Literal(TypedLiteral.getDouble(-1.0)), new Literal(TypedLiteral.getDouble(0.0)), ArithOp.DIVIDE);
+            }
+            if (Double.compare(Double.POSITIVE_INFINITY, value) == 0) {
+                return new ArithmeticOperation(new Literal(TypedLiteral.getDouble(1.0)), new Literal(TypedLiteral.getDouble(0.0)), ArithOp.DIVIDE);
+            }
+        } else {
+            if (Double.isNaN(value)) return new LValueExpression(D_NAN);
+            if (Double.compare(Double.NEGATIVE_INFINITY, value) == 0) return new LValueExpression(D_NEGATIVE_INFINITY);
+            if (Double.compare(Double.POSITIVE_INFINITY, value) == 0) return new LValueExpression(D_POSITIVE_INFINITY);
+            if (Double.compare(Double.MAX_VALUE, value) == 0) return new LValueExpression(D_MAX_VALUE);
+            if (Double.compare(Double.MIN_VALUE, value) == 0) return new LValueExpression(D_MIN_VALUE);
+            if (Double.compare(Double.MIN_NORMAL, value) == 0) return new LValueExpression(D_MIN_NORMAL);
         }
-        Optional<Expression> piExpr = maybeGetPiExpression(value);
-        if (piExpr.isSet()) return piExpr.getValue();
+        if (!testType.equals(TypeConstants.MATH)) {
+            if (Double.compare(Math.E, value) == 0) return new LValueExpression(MATH_E);
+            float nearestFloat = (float) value;
+            if (Double.compare(nearestFloat, value) == 0) {
+                // "(double)".length() == 8, "f" suffix is one more
+                if (Float.toString(nearestFloat).length() + 9 < Double.toString(value).length()) {
+                    return new CastExpression(INFERRED_DOUBLE, new Literal(TypedLiteral.getFloat(nearestFloat)));
+                }
+            }
+            Optional<Expression> piExpr = maybeGetPiExpression(value);
+            if (piExpr.isSet()) return piExpr.getValue();
+        }
         return literal;
     }
 
@@ -171,4 +195,5 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter impleme
             return new ArithmeticOperation(new LValueExpression(MATH_PI), new Literal(TypedLiteral.getInt(factor)), ArithOp.MULTIPLY);
         }
     }
+
 }
