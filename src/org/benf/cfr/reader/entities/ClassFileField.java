@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.LiteralRewriter;
 import org.benf.cfr.reader.mapping.ClassMapping;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -20,7 +21,10 @@ public class ClassFileField {
     public ClassFileField(Field field) {
         this.field = field;
         TypedLiteral constantValue = field.getConstantValue();
-        initialValue = constantValue == null ? null : new Literal(constantValue);
+        // TODO : Rewrite literals selectively based on flags.
+        initialValue = constantValue == null ?
+                null :
+                LiteralRewriter.INSTANCE.rewriteExpression(new Literal(constantValue), null, null, null);
         isHidden = false;
         isSyntheticOuterRef = false;
     }

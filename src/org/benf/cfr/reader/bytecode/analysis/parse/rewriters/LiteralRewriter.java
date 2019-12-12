@@ -20,6 +20,8 @@ import java.util.Set;
 
 // TODO: handle the actual definitions of the constants differently
 public class LiteralRewriter extends AbstractExpressionRewriter implements StructuredStatementTransformer {
+    public static final LiteralRewriter INSTANCE = new LiteralRewriter();
+
     public void transform(Op04StructuredStatement root) {
         StructuredScope structuredScope = new StructuredScope();
         root.transform(this, structuredScope);
