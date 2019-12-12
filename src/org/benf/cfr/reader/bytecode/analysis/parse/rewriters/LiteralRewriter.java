@@ -15,10 +15,10 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.util.Optional;
+import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.functors.NonaryFunction;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 
 public class LiteralRewriter extends AbstractExpressionRewriter {
     public static final LiteralRewriter INSTANCE = new LiteralRewriter(TypeConstants.OBJECT);
@@ -102,9 +102,10 @@ public class LiteralRewriter extends AbstractExpressionRewriter {
             if (Float.compare(Float.MIN_VALUE, value) == 0) return new LValueExpression(F_MIN_VALUE);
             if (Float.compare(Float.MIN_NORMAL, value) == 0) return new LValueExpression(F_MIN_NORMAL);
         }
+        // Don't have to guard, not Math.E is double.
         if (Float.compare((float) Math.E, value) == 0) return new CastExpression(INFERRED_FLOAT, new LValueExpression(MATH_E));
-        Optional<Expression> piExpr = maybeGetPiExpression(value);
-        if (piExpr.isSet()) return piExpr.getValue();
+        Expression piExpr = maybeGetPiExpression(value);
+        if (piExpr != null) return piExpr;
         return literal;
     }
 
@@ -146,56 +147,103 @@ public class LiteralRewriter extends AbstractExpressionRewriter {
                     return new CastExpression(INFERRED_DOUBLE, new Literal(TypedLiteral.getFloat(nearestFloat)));
                 }
             }
-            Optional<Expression> piExpr = maybeGetPiExpression(value);
-            if (piExpr.isSet()) return piExpr.getValue();
+            Expression piExpr = maybeGetPiExpression(value);
+            if (piExpr != null) return piExpr;
         }
         return literal;
     }
 
     // NB : Normal 'set of ieee754' complaint doesn't occur here, as these are comparing against
     // compile time constants (and we're calculating them with strictfp to match).
-    private static final Set<Double> PI_DOUBLES = new HashSet<Double>();
-    private static final Set<Float> PI_FLOATS = new HashSet<Float>();
+    private static final Map<Double, NonaryFunction<Expression>> PI_DOUBLES = MapFactory.newMap();
+    private static final Map<Float, NonaryFunction<Expression>> PI_FLOATS = MapFactory.newMap();
 
     static {
+        final Expression pi = new LValueExpression(MATH_PI);
+        final Expression npi = new ArithmeticMonOperation(pi, ArithOp.MINUS);
         for (int i = -10; i <= 10; i++) {
             if (i == 0) continue;
-            PI_DOUBLES.add(Math.PI * i);
-            PI_FLOATS.add((float)(Math.PI * i));
+
+            final int ii = i;
+            NonaryFunction<Expression> pifn = new NonaryFunction<Expression>() {
+                @Override
+                public Expression invoke() {
+                    switch (ii) {
+                        case 1:
+                            return pi;
+                        case -1:
+                            return npi;
+                        default:
+                            return new ArithmeticOperation(pi, new Literal(TypedLiteral.getInt(ii)), ArithOp.MULTIPLY);
+                    }
+                }
+            };
+            PI_DOUBLES.put(Math.PI * i, pifn);
+
+            pifn = new NonaryFunction<Expression>() {
+                @Override
+                public Expression invoke() {
+                    switch (ii) {
+                        case 1:
+                            return new CastExpression(INFERRED_FLOAT, pi);
+                        case -1:
+                            return new CastExpression(INFERRED_FLOAT, npi);
+                        default:
+                            return new CastExpression(INFERRED_FLOAT, new ArithmeticOperation(pi, new Literal(TypedLiteral.getInt(ii)), ArithOp.MULTIPLY));
+                    }
+                }
+            };
+            PI_FLOATS.put((float)(Math.PI * i), pifn);
+
+            if (Math.abs(i) < 2) continue;
+
+            pifn = new NonaryFunction<Expression>() {
+                @Override
+                public Expression invoke() {
+                    return new ArithmeticOperation(new CastExpression(INFERRED_FLOAT, pi), new Literal(TypedLiteral.getInt(ii)), ArithOp.MULTIPLY);
+                }
+            };
+            PI_FLOATS.put((float)(Math.PI) * i, pifn);
         }
         for (int i = -4; i <= 4; i++) {
-            if (i >= -1 && i <= 1) continue;
-            PI_DOUBLES.add(Math.PI / (90 * i));
-            PI_FLOATS.add((float)(Math.PI / (90 * i)));
+            if (i == 0) continue;
+            final int ii = i;
+            final Expression p = i < 0 ? npi : pi;
+            NonaryFunction<Expression> pifn = new NonaryFunction<Expression>() {
+                @Override
+                public Expression invoke() {
+                    return new ArithmeticOperation(p, new Literal(TypedLiteral.getInt(90 * Math.abs(ii))), ArithOp.DIVIDE);
+                }
+            };
+            PI_DOUBLES.put(Math.PI / (90 * i), pifn);
+
+            pifn = new NonaryFunction<Expression>() {
+                @Override
+                public Expression invoke() {
+                    return new CastExpression(INFERRED_FLOAT, new ArithmeticOperation(p, new Literal(TypedLiteral.getInt(90 * Math.abs(ii))), ArithOp.DIVIDE));
+                }
+            };
+            PI_FLOATS.put((float)(Math.PI / (90 * i)), pifn);
+
+            pifn = new NonaryFunction<Expression>() {
+                @Override
+                public Expression invoke() {
+                    return new ArithmeticOperation(new CastExpression(INFERRED_FLOAT, p), new Literal(TypedLiteral.getInt(90 * Math.abs(ii))), ArithOp.DIVIDE);
+                }
+            };
+            PI_FLOATS.put((float)(Math.PI) / (90 * i), pifn);
         }
     }
 
-    private static Optional<Expression> maybeGetPiExpression(float value) {
-        if (!PI_FLOATS.contains(value)) return Optional.empty();
-        return Optional.<Expression>of(new CastExpression(INFERRED_FLOAT, getPiExpression(value)));
+    private static Expression maybeGetPiExpression(float value) {
+        NonaryFunction<Expression> e = PI_FLOATS.get(value);
+        if (null == e) return null;
+        return e.invoke();
     }
 
-    private static Optional<Expression> maybeGetPiExpression(double value) {
-        if (!PI_DOUBLES.contains(value)) return Optional.empty();
-        return Optional.of(getPiExpression(value));
+    private static Expression maybeGetPiExpression(double value) {
+        NonaryFunction<Expression> e = PI_DOUBLES.get(value);
+        if (null == e) return null;
+        return e.invoke();
     }
-
-    private static Expression getPiExpression(double value) {
-        if (Math.abs(value) < Math.PI) {
-            int divisor = (int) Math.round(Math.PI / value);
-            if (divisor < 0) {
-                // -Math.PI / n
-                return new ArithmeticOperation(new ArithmeticMonOperation(new LValueExpression(MATH_PI), ArithOp.MINUS), new Literal(TypedLiteral.getInt(-divisor)), ArithOp.DIVIDE);
-            }
-            // Math.PI / n
-            return new ArithmeticOperation(new LValueExpression(MATH_PI), new Literal(TypedLiteral.getInt(divisor)), ArithOp.DIVIDE);
-        } else {
-            int factor = (int) Math.round(value / Math.PI);
-            if (factor == 1) return new LValueExpression(MATH_PI);
-            if (factor == -1) return new ArithmeticMonOperation(new LValueExpression(MATH_PI), ArithOp.MINUS);
-            // Math.PI * n
-            return new ArithmeticOperation(new LValueExpression(MATH_PI), new Literal(TypedLiteral.getInt(factor)), ArithOp.MULTIPLY);
-        }
-    }
-
 }
