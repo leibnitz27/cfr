@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 // TODO: handle the actual definitions of the constants differently
-public class LiteralRewriter extends AbstractExpressionRewriter implements StructuredStatementTransformer {
+public strictfp class LiteralRewriter extends AbstractExpressionRewriter implements StructuredStatementTransformer {
     public static final LiteralRewriter INSTANCE = new LiteralRewriter();
 
     public void transform(Op04StructuredStatement root) {
@@ -125,6 +125,8 @@ public class LiteralRewriter extends AbstractExpressionRewriter implements Struc
         return literal;
     }
 
+    // NB : Normal 'set of ieee754' complaint doesn't occur here, as these are comparing against
+    // compile time constants (and we're calculating them with strictfp to match).
     private static final Set<Double> PI_DOUBLES = new HashSet<Double>();
     private static final Set<Float> PI_FLOATS = new HashSet<Float>();
 
