@@ -23,6 +23,8 @@ import java.util.Set;
 public class LiteralRewriter extends AbstractExpressionRewriter {
     public static final LiteralRewriter INSTANCE = new LiteralRewriter(TypeConstants.OBJECT);
 
+    // Keep track of what type we're transforming.  Note that we don't want to end up with
+    // (for example) Math.Double defining that Infinity = Math.Double.Infinity ;)
     private final JavaTypeInstance testType;
 
     public LiteralRewriter(JavaTypeInstance testType) {
@@ -84,13 +86,13 @@ public class LiteralRewriter extends AbstractExpressionRewriter {
     private Expression rewriteFloat(Literal literal, float value) {
         if (testType.equals(TypeConstants.FLOAT)) {
             if (Float.isNaN(value)) {
-                return new ArithmeticOperation(new Literal(TypedLiteral.getFloat(0.0f)), new Literal(TypedLiteral.getFloat(0.0f)), ArithOp.DIVIDE);
+                return new ArithmeticOperation(Literal.FLOAT_ZERO, Literal.FLOAT_ZERO, ArithOp.DIVIDE);
             }
             if (Float.compare(Float.NEGATIVE_INFINITY, value) == 0) {
-                return new ArithmeticOperation(new Literal(TypedLiteral.getFloat(-1.0f)), new Literal(TypedLiteral.getFloat(0.0f)), ArithOp.DIVIDE);
+                return new ArithmeticOperation(Literal.FLOAT_MINUS_ONE, Literal.FLOAT_ZERO, ArithOp.DIVIDE);
             }
             if (Float.compare(Float.POSITIVE_INFINITY, value) == 0) {
-                return new ArithmeticOperation(new Literal(TypedLiteral.getFloat(1.0f)), new Literal(TypedLiteral.getFloat(0.0f)), ArithOp.DIVIDE);
+                return new ArithmeticOperation(Literal.FLOAT_ONE, Literal.FLOAT_ZERO, ArithOp.DIVIDE);
             }
         } else {
             if (Float.isNaN(value)) return new LValueExpression(F_NAN);
@@ -119,13 +121,13 @@ public class LiteralRewriter extends AbstractExpressionRewriter {
     private Expression rewriteDouble(Literal literal, double value) {
         if (testType.equals(TypeConstants.DOUBLE)) {
             if (Double.isNaN(value)) {
-                return new ArithmeticOperation(new Literal(TypedLiteral.getDouble(0.0)), new Literal(TypedLiteral.getDouble(0.0)), ArithOp.DIVIDE);
+                return new ArithmeticOperation(Literal.DOUBLE_ZERO, Literal.DOUBLE_ZERO, ArithOp.DIVIDE);
             }
             if (Double.compare(Double.NEGATIVE_INFINITY, value) == 0) {
-                return new ArithmeticOperation(new Literal(TypedLiteral.getDouble(-1.0)), new Literal(TypedLiteral.getDouble(0.0)), ArithOp.DIVIDE);
+                return new ArithmeticOperation(Literal.DOUBLE_MINUS_ONE, Literal.DOUBLE_ZERO, ArithOp.DIVIDE);
             }
             if (Double.compare(Double.POSITIVE_INFINITY, value) == 0) {
-                return new ArithmeticOperation(new Literal(TypedLiteral.getDouble(1.0)), new Literal(TypedLiteral.getDouble(0.0)), ArithOp.DIVIDE);
+                return new ArithmeticOperation(Literal.DOUBLE_ONE, Literal.DOUBLE_ZERO, ArithOp.DIVIDE);
             }
         } else {
             if (Double.isNaN(value)) return new LValueExpression(D_NAN);

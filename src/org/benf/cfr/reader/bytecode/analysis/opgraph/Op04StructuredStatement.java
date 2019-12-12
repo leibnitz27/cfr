@@ -755,7 +755,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new TernaryCastCleaner().transform(root);
         new InvalidBooleanCastCleaner().transform(root);
         new HexLiteralTidier().transform(root);
-        root.transform(new ExpressionRewriterTransformer(LiteralRewriter.INSTANCE), new StructuredScope());
+        new ExpressionRewriterTransformer(LiteralRewriter.INSTANCE).transform(root);
         new InvalidExpressionStatementCleaner(variableFactory).transform(root);
     }
 

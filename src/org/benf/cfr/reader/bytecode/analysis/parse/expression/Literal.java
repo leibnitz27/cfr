@@ -32,6 +32,14 @@ public class Literal extends AbstractExpression {
     public static final Literal INT_ONE = new Literal(TypedLiteral.getInt(1));
     private static final Literal LONG_ONE = new Literal(TypedLiteral.getLong(1));
 
+    public static final Literal DOUBLE_ZERO = new Literal(TypedLiteral.getDouble(0.0));
+    public static final Literal DOUBLE_ONE = new Literal(TypedLiteral.getDouble(1.0));
+    public static final Literal DOUBLE_MINUS_ONE = new Literal(TypedLiteral.getDouble(-1.0));
+
+    public static final Literal FLOAT_ZERO = new Literal(TypedLiteral.getFloat(0.0f));
+    public static final Literal FLOAT_ONE = new Literal(TypedLiteral.getFloat(1.0f));
+    public static final Literal FLOAT_MINUS_ONE = new Literal(TypedLiteral.getFloat(-1.0f));
+
     protected final TypedLiteral value;
 
     public Literal(TypedLiteral value) {
