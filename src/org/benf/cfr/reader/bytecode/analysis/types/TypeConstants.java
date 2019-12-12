@@ -15,6 +15,8 @@ public interface TypeConstants {
     JavaRefTypeInstance SUPPLIER = JavaRefTypeInstance.createTypeConstant("java.util.function.Supplier", "Object");
     JavaRefTypeInstance SCALA_SIGNATURE = JavaRefTypeInstance.createTypeConstant("scala.reflect.ScalaSignature", "Object");
     JavaRefTypeInstance NOCLASSDEFFOUND_ERROR = JavaRefTypeInstance.createTypeConstant("java.lang.NoClassDefFoundError", "NoClassDefFoundError");
+    JavaRefTypeInstance COMPARABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Comparable", "Comparable", OBJECT);
+    JavaRefTypeInstance MATH = JavaRefTypeInstance.createTypeConstant("java.lang.Math", "Math", OBJECT);
 
     String boxingNameBoolean = "java.lang.Boolean";
     String boxingNameByte = "java.lang.Byte";
@@ -25,6 +27,12 @@ public interface TypeConstants {
     String boxingNameFloat = "java.lang.Float";
     String boxingNameDouble = "java.lang.Double";
     String boxingNameNumber = "java.lang.Number";
+
+    JavaRefTypeInstance NUMBER = JavaRefTypeInstance.createTypeConstant(boxingNameNumber, "Number", OBJECT, SERIALIZABLE);
+    JavaRefTypeInstance INTEGER = JavaRefTypeInstance.createTypeConstant(boxingNameInt, "Integer", NUMBER, COMPARABLE);
+    JavaRefTypeInstance LONG = JavaRefTypeInstance.createTypeConstant(boxingNameLong, "Long", NUMBER, COMPARABLE);
+    JavaRefTypeInstance DOUBLE = JavaRefTypeInstance.createTypeConstant(boxingNameDouble, "Double", NUMBER, COMPARABLE);
+    JavaRefTypeInstance FLOAT = JavaRefTypeInstance.createTypeConstant(boxingNameFloat, "Float", NUMBER, COMPARABLE);
 
     String objectsName = "java.util.Objects";
     String throwableName = "java.lang.Throwable";

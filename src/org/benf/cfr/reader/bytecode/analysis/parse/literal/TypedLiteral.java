@@ -34,45 +34,6 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         Hex
     }
 
-    private static final Map<Double, String> PI_DOUBLE = new HashMap<Double, String>();
-    private static final Map<Float, String> PI_FLOAT = new HashMap<Float, String>();
-
-    private static void registerPi(double value, String expr) {
-        PI_DOUBLE.put(value, expr);
-        PI_FLOAT.put((float) value, "(float)" + expr);
-    }
-
-    private static void registerPiMultiple(int factor) {
-        if (factor == 0) return;
-        if (factor == 1) {
-            registerPi(Math.PI, "Math.PI");
-        } else if (factor == -1) {
-            registerPi(-Math.PI, "-Math.PI");
-        } else {
-            registerPi(Math.PI * factor, "(Math.PI * " + factor + ")");
-        }
-    }
-
-    private static void registerPiFraction(int divisor) {
-        if (divisor == 0) return;
-        if (divisor == 1) {
-            registerPi(Math.PI, "Math.PI");
-        } else if (divisor == -1) {
-            registerPi(-Math.PI, "-Math.PI");
-        } else {
-            registerPi(Math.PI / divisor, "(Math.PI / " + divisor + ")");
-        }
-    }
-
-    static {
-        for (int i = -10; i <= 10; i++) {
-            registerPiMultiple(i);
-        }
-        registerPiFraction(90);
-        registerPiFraction(180);
-        registerPiFraction(360);
-    }
-
     private final InferredJavaType inferredJavaType;
     private final LiteralType type;
     private final Object value;
@@ -96,19 +57,9 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return (type != null && typeName.equals(type.getRawName()));
     }
 
-    private static String integerConstantName(int i) {
-        if (i == Integer.MAX_VALUE) return "Integer.MAX_VALUE";
-        if (i == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
-        return null;
-    }
-
-    private static String integerName(Dumper d, Object o, FormatHint formatHint) {
+    private static String integerName(Object o, FormatHint formatHint) {
         if (!(o instanceof Integer)) return o.toString();
         int i = (Integer) o;
-        String cVal = integerConstantName(i);
-        if (cVal != null && !definingType(d, TypeConstants.boxingNameInt)) {
-            return cVal;
-        }
         if (i > 0xfffffL || formatHint == FormatHint.Hex) {
             String hex = Integer.toHexString(i).toUpperCase();
             if (formatHint == FormatHint.Hex || hexTest(hex)) {
@@ -116,82 +67,6 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             }
         }
         return o.toString();
-    }
-
-    private static String doubleConstantName(double d) {
-        if (Double.isInfinite(d)) {
-            return d < 0 ? "Double.NEGATIVE_INFINITY" : "Double.POSITIVE_INFINITY";
-        }
-        if (Double.compare(d, Double.MAX_VALUE) == 0) return "Double.MAX_VALUE";
-        if (Double.compare(d, Double.MIN_VALUE) == 0) return "Double.MIN_VALUE";
-        if (Double.compare(d, Double.MIN_NORMAL) == 0) return "Double.MIN_NORMAL";
-        if (Double.isNaN(d)) {
-            return "Double.NaN";
-        }
-        return null;
-    }
-
-    private static String doubleName(Dumper dumper, Object o) {
-        if (!(o instanceof Double)) return o.toString();
-        double d = (Double)o;
-        String cVal = doubleConstantName(d);
-        if (cVal != null) {
-            if (!definingType(dumper, TypeConstants.boxingNameDouble)) {
-                return cVal;
-            }
-            // Still need special case handling for +inf, -inf, nan.
-            if (Double.isInfinite(d)) {
-                return d < 0 ? "-1.0d / 0.0" : "1.0d / 0.0";
-            }
-            if (Double.isNaN(d)) {
-                return "0.0d / 0.0";
-            }
-        }
-        float nearestFloat = (float) d;
-        if (Double.compare(nearestFloat, d) == 0) {
-            String castedFloat = "(double)" + floatName(dumper, nearestFloat);
-            String doubleRepr = o.toString();
-            return castedFloat.length() < doubleRepr.length() ? castedFloat : doubleRepr;
-        }
-        if (PI_DOUBLE.containsKey(d)) {
-            return PI_DOUBLE.get(d);
-        }
-        return o.toString();
-    }
-
-    private static String floatConstantName(float f) {
-        if (Float.isInfinite(f)) {
-            return f < 0 ? "Float.NEGATIVE_INFINITY" : "Float.POSITIVE_INFINITY";
-        }
-        if (Float.compare(f, Float.MAX_VALUE) == 0) return "Float.MAX_VALUE";
-        if (Float.compare(f, Float.MIN_VALUE) == 0) return "Float.MIN_VALUE";
-        if (Float.compare(f, Float.MIN_NORMAL) == 0) return "Float.MIN_NORMAL";
-        if (Float.isNaN(f)) {
-            return "Float.NaN";
-        }
-        return null;
-    }
-
-    private static String floatName(Dumper dumper, Object o) {
-        if (!(o instanceof Float)) return o.toString() + "f";
-        float d = (Float)o;
-        String cVal = floatConstantName(d);
-        if (cVal != null) {
-            if (!definingType(dumper, TypeConstants.boxingNameFloat)) {
-                return cVal;
-            }
-            // Still need special case handling for +inf, -inf, nan.
-            if (Float.isInfinite(d)) {
-                return d < 0 ? "-1.0f / 0.0f" : "1.0f / 0.0f";
-            }
-            if (Float.isNaN(d)) {
-                return "0.0f / 0.0f";
-            }
-        }
-        if (PI_FLOAT.containsKey(d)) {
-            return PI_FLOAT.get(d);
-        }
-        return o.toString() + "f";
     }
 
     public boolean getBoolValue() {
@@ -205,10 +80,19 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return (Long) value;
     }
 
-
     public int getIntValue() {
         if (type != LiteralType.Integer) throw new IllegalStateException("Expecting integral literal");
         return (Integer) value;
+    }
+
+    public float getFloatValue() {
+        if (type != LiteralType.Float) throw new IllegalStateException("Expecting float literal");
+        return (Float) value;
+    }
+
+    public double getDoubleValue() {
+        if (type != LiteralType.Double) throw new IllegalStateException("Expecting double literal");
+        return (Double) value;
     }
 
     public Boolean getMaybeBoolValue() {
@@ -269,12 +153,6 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         }
     }
 
-    private static String longConstantName(long l) {
-        if (l == Long.MAX_VALUE) return "Long.MAX_VALUE";
-        if (l == Long.MIN_VALUE) return "Long.MIN_VALUE";
-        return null;
-    }
-
     private static boolean hexTest(String hex) {
         int diff = 0;
         byte[] bytes = hex.getBytes();
@@ -292,16 +170,9 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return diff <= 3;
     }
 
-    private static String longName(Dumper d, Object o, FormatHint formatHint) {
+    private static String longName(Object o, FormatHint formatHint) {
         if (!(o instanceof Long)) return o.toString();
         long l = (Long) o;
-        String cVal = longConstantName(l);
-        if (cVal != null && !definingType(d, TypeConstants.boxingNameLong)) {
-            return cVal;
-        }
-        // Helpers, will be upcast.
-        if (l == Integer.MAX_VALUE) return "Integer.MAX_VALUE";
-        if (l == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
         String longString = null;
         if (l > 0xfffffL || formatHint == FormatHint.Hex) {
             String hex = Long.toHexString(l).toUpperCase();
@@ -346,10 +217,10 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
                         // It's tempting to add "(byte)/(short)" here, but JLS 5.2 specifically states that compile time
                         // narrowing of constants for assignment is not necessary.
                         // (but it is for calls, eg NarrowingTestXX).
-                        return d.literal(integerName(d, value, hint), value);
+                        return d.literal(integerName(value, hint), value);
                 }
             case Long:
-                return d.literal(longName(d, value, hint), value);
+                return d.literal(longName(value, hint), value);
             case MethodType:
                 return d.print(methodTypeName(value));
             case MethodHandle:
@@ -357,9 +228,9 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             case Class:
                 return d.dump((JavaTypeInstance) value).print(".class");
             case Double:
-                return d.literal(doubleName(d, value), value);
+                return d.literal(value.toString(), value);
             case Float:
-                return d.literal(floatName(d, value), value);
+                return d.literal(value.toString() + "f", value);
             default:
                 return d.print(value.toString());
         }

@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.LiteralRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverImpl;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
@@ -755,6 +756,7 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         new TernaryCastCleaner().transform(root);
         new InvalidBooleanCastCleaner().transform(root);
         new HexLiteralTidier().transform(root);
+        new LiteralRewriter().transform(root);
         new InvalidExpressionStatementCleaner(variableFactory).transform(root);
     }
 
