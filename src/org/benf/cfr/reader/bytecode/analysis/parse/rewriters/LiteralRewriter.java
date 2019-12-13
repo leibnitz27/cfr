@@ -20,7 +20,7 @@ import org.benf.cfr.reader.util.functors.NonaryFunction;
 
 import java.util.Map;
 
-public class LiteralRewriter extends AbstractExpressionRewriter {
+public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
     public static final LiteralRewriter INSTANCE = new LiteralRewriter(TypeConstants.OBJECT);
 
     // Keep track of what type we're transforming.  Note that we don't want to end up with
