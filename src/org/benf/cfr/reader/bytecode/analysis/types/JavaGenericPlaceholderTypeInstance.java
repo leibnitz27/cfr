@@ -9,6 +9,7 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 import java.util.List;
 import java.util.Map;
@@ -148,6 +149,11 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     @Override
     public String getRawName() {
         return className;
+    }
+
+    @Override
+    public String getRawName(IllegalIdentifierDump iid) {
+        return getRawName();
     }
 
     @Override

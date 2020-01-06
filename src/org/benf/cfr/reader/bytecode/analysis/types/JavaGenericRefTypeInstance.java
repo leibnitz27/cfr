@@ -15,6 +15,7 @@ import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
@@ -232,13 +233,17 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
 
     @Override
     public int hashCode() {
-        int hash = 31 + typeInstance.hashCode();
-        return hash;
+        return 31 + typeInstance.hashCode();
     }
 
     @Override
     public String getRawName() {
         return new ToStringDumper().dump(this).toString();
+    }
+
+    @Override
+    public String getRawName(IllegalIdentifierDump iid) {
+        return getRawName();
     }
 
     @Override

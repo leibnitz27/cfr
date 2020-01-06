@@ -1,6 +1,5 @@
 package org.benf.cfr.reader.util.output;
 
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters.Misc;
 import org.benf.cfr.reader.bytecode.analysis.variables.Keywords;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.MiscConstants;
@@ -8,7 +7,8 @@ import org.benf.cfr.reader.util.MiscConstants;
 import java.util.Map;
 
 public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
-    private final Map<String, Integer> rewrites = MapFactory.newMap();
+    private final Map<String, Integer> identifiers = MapFactory.newMap();
+    private final Map<String, String> classes = MapFactory.newMap();
     private static final Map<String, Boolean> known = MapFactory.newIdentityMap();
     private int next = 0;
 
@@ -22,8 +22,8 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
     private IllegalIdentifierReplacement() {
     }
 
-    private String illegal(String key) {
-        return "cfr_renamed_" + rewrites.get(key);
+    private String renamedIdent(Integer key) {
+        return "cfr_renamed_" + key;
     }
 
     /*
@@ -34,7 +34,7 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
      * However, if you look at the content of java.lang.CharacterData00, you can see why I'd rather not
      * reimplement this particular wheel.
      */
-    private static boolean isIllegal2(String identifier) {
+    private static boolean isIllegalIdentifier(String identifier) {
         if (Keywords.isAKeyword(identifier)) return true;
         if (identifier.length() == 0) return false;
         char[] chars = identifier.toCharArray();
@@ -49,7 +49,7 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
 
     // Ending in .this is a hack, need to fix .this appending elsewhere.
     public static boolean isIllegal(String identifier) {
-        if (!isIllegal2(identifier)) return false;
+        if (!isIllegalIdentifier(identifier)) return false;
         if (identifier.endsWith(MiscConstants.DOT_THIS)) return false;
         if (known.containsKey(identifier)) return false;
         return true;
@@ -64,16 +64,39 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
 
     @Override
     public String getLegalIdentifierFor(String identifier) {
-        if (rewrites.containsKey(identifier)) {
-            return illegal(identifier);
+        Integer idx = identifiers.get(identifier);
+        if (idx != null) {
+            if (idx == -1) return identifier;
+            return renamedIdent(idx);
         }
         if (isIllegal(identifier)) {
-            rewrites.put(identifier, next++);
-            return illegal(identifier);
+            idx = next++;
+            identifiers.put(identifier, idx);
+            return renamedIdent(idx);
+        } else {
+            identifiers.put(identifier, -1);
+            return identifier;
         }
-        return identifier;
     }
 
-    public static IllegalIdentifierDump getInstance() { return instance; }
+    @Override
+    public String getLegalShortName(String shortName) {
+        String key = classes.get(shortName);
+        if (key != null) {
+            if (key.isEmpty()) return shortName;
+            return key;
+        }
+        if (isIllegal(shortName)) {
+            String testPrefix = "_" + shortName;
+            String replace = isIllegal(testPrefix) ? "CfrRenamed" + (classes.size()) : testPrefix;
+            classes.put(shortName, replace);
+            return replace;
+        } else {
+            classes.put(shortName, "");
+            return shortName;
+        }
+    }
+
+    public static IllegalIdentifierReplacement getInstance() { return instance; }
 
 }

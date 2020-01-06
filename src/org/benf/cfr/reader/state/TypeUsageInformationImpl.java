@@ -13,11 +13,12 @@ import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 import java.util.*;
 
 public class TypeUsageInformationImpl implements TypeUsageInformation {
-
+    private final IllegalIdentifierDump iid;
     private final JavaRefTypeInstance analysisType;
     private final Set<JavaRefTypeInstance> usedRefTypes = SetFactory.newOrderedSet();
     private final Set<JavaRefTypeInstance> shortenedRefTypes = SetFactory.newOrderedSet();
@@ -34,7 +35,13 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
     public TypeUsageInformationImpl(Options options, JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes) {
         this.allowShorten = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.IMPORT_FILTER), true);
         this.analysisType = analysisType;
+        this.iid = IllegalIdentifierDump.Factory.getOrNull(options);
         initialiseFrom(usedRefTypes);
+    }
+
+    @Override
+    public IllegalIdentifierDump getIid() {
+        return iid;
     }
 
     @Override
@@ -44,15 +51,15 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
 
     @Override
     public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
-        return TypeUsageUtils.generateInnerClassShortName(clazz, analysisType, false);
+        return TypeUsageUtils.generateInnerClassShortName(iid, clazz, analysisType, false);
     }
 
     @Override
     public String generateOverriddenName(JavaRefTypeInstance clazz) {
         if (clazz.getInnerClassHereInfo().isInnerClass()) {
-            return TypeUsageUtils.generateInnerClassShortName(clazz, analysisType, true);
+            return TypeUsageUtils.generateInnerClassShortName(iid, clazz, analysisType, true);
         }
-        return clazz.getRawName();
+        return clazz.getRawName(iid);
     }
 
     private void initialiseFrom(Set<JavaRefTypeInstance> usedRefTypes) {
@@ -60,7 +67,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         Collections.sort(usedRefs, new Comparator<JavaRefTypeInstance>() {
             @Override
             public int compare(JavaRefTypeInstance a, JavaRefTypeInstance b) {
-                return a.getRawName().compareTo(b.getRawName());
+                return a.getRawName(iid).compareTo(b.getRawName(iid));
             }
         });
         this.usedRefTypes.addAll(usedRefs);
@@ -80,13 +87,13 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         for (JavaRefTypeInstance type : types) {
             InnerClassInfo innerClassInfo = type.getInnerClassHereInfo();
             if (innerClassInfo.isInnerClass()) {
-                String name =  generateInnerClassShortName(type);
+                String name = generateInnerClassShortName(type);
                 shortNames.get(name).addFirst(type);
             } else {
-                if (!allowShorten.test(type.getRawName())) {
+                if (!allowShorten.test(type.getRawName(iid))) {
                     continue;
                 }
-                String name = type.getRawShortName();
+                String name = type.getRawShortName(iid);
                 shortNames.get(name).addLast(type);
             }
         }
@@ -176,7 +183,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
                     shortenedRefTypes.add(priClass.type);
                     displayName.put(priClass.type, useName);
                 } else {
-                    String useName = priClass.type.getRawName();
+                    String useName = priClass.type.getRawName(iid);
                     displayName.put(priClass.type, useName);
                 }
             }
@@ -206,7 +213,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         if (res == null) {
             // This should not happen, unless we're forcing
             // import filter on a name.
-            return type.getRawName();
+            return type.getRawName(iid);
         }
         return res;
     }

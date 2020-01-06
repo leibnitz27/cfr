@@ -9,6 +9,7 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
@@ -147,6 +148,11 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     @Override
     public String getRawName() {
         return toString();
+    }
+
+    @Override
+    public String getRawName(IllegalIdentifierDump iid) {
+        return getRawName();
     }
 
     @Override

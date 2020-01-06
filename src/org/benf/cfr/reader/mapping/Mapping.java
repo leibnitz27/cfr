@@ -14,6 +14,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.DelegatingDumper;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 import java.util.List;
 import java.util.Map;
@@ -97,6 +98,11 @@ public class Mapping implements ObfuscationMapping {
         private MappingTypeUsage(TypeUsageInformation delegateRemapped, TypeUsageInformation delegateOriginal) {
             this.delegateRemapped = delegateRemapped;
             this.delegateOriginal = delegateOriginal;
+        }
+
+        @Override
+        public IllegalIdentifierDump getIid() {
+            return delegateOriginal.getIid();
         }
 
         @Override

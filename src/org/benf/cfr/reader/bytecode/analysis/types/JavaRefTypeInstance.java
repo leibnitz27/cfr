@@ -13,6 +13,7 @@ import org.benf.cfr.reader.util.annotation.Nullable;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
@@ -21,9 +22,9 @@ import java.util.Set;
 
 public class JavaRefTypeInstance implements JavaTypeInstance {
     private final String className;
-    private transient String shortName; // may not be unique
-    private transient String suggestedVarName;
-    private transient InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
+    private String shortName; // may not be unique
+    private String suggestedVarName;
+    private InnerClassInfo innerClassInfo; // info about this class AS AN INNER CLASS.
     //    private final Options options;
     private final DCCommonState dcCommonState; // Shouldn't need this here...
     private BindingSuperContainer cachedBindingSupers = BindingSuperContainer.POISON;
@@ -268,6 +269,26 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
 
     public String getRawShortName() {
         return shortName;
+    }
+
+    @Override
+    public String getRawName(IllegalIdentifierDump iid) {
+        if (iid != null) {
+            String replaceShortName = getRawShortName(iid);
+            //noinspection StringEquality
+            if (shortName == replaceShortName) {
+                return className;
+            }
+            return className.substring(0, className.length() - shortName.length()) + replaceShortName;
+        }
+        return getRawName();
+    }
+
+    public String getRawShortName(IllegalIdentifierDump iid) {
+        if (iid != null) {
+            return iid.getLegalShortName(shortName);
+        }
+        return getRawShortName();
     }
 
     @Override

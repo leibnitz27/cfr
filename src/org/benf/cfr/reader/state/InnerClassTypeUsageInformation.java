@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +13,7 @@ import java.util.Set;
  * Strips the outer class name off anything which preceeds this inner class.
  */
 public class InnerClassTypeUsageInformation implements TypeUsageInformation {
+    private final IllegalIdentifierDump iid;
     private final TypeUsageInformation delegate;
     private final JavaRefTypeInstance analysisInnerClass;
     private final Map<JavaRefTypeInstance, String> localTypeNames = MapFactory.newMap();
@@ -21,7 +23,13 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
     public InnerClassTypeUsageInformation(TypeUsageInformation delegate, JavaRefTypeInstance analysisInnerClass) {
         this.delegate = delegate;
         this.analysisInnerClass = analysisInnerClass;
+        this.iid = delegate.getIid();
         initializeFrom();
+    }
+
+    @Override
+    public IllegalIdentifierDump getIid() {
+        return iid;
     }
 
     @Override
@@ -34,7 +42,7 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
         for (JavaRefTypeInstance outerInner : outerInners) {
             if (outerInner.getInnerClassHereInfo().isTransitiveInnerClassOf(analysisInnerClass)) {
                 usedInnerClassTypes.add(outerInner);
-                String name = TypeUsageUtils.generateInnerClassShortName(outerInner, analysisInnerClass, false);
+                String name = TypeUsageUtils.generateInnerClassShortName(iid, outerInner, analysisInnerClass, false);
                 if (!usedLocalTypeNames.contains(name)) {
                     localTypeNames.put(outerInner, name);
                     usedLocalTypeNames.add(name);

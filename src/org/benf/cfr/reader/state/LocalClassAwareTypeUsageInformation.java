@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +49,11 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
             localTypeNames.put(localType, usedName);
             usedLocalTypeNames.add(usedName);
         }
+    }
+
+    @Override
+    public IllegalIdentifierDump getIid() {
+        return delegate.getIid();
     }
 
     @Override

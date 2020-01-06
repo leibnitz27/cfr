@@ -7,6 +7,7 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 import java.util.List;
 
@@ -74,6 +75,11 @@ public class JavaIntersectionTypeInstance implements JavaTypeInstance {
     @Override
     public String getRawName() {
         return "<intersection#"  +id + ">";
+    }
+
+    @Override
+    public String getRawName(IllegalIdentifierDump iid) {
+        return getRawName();
     }
 
     @Override

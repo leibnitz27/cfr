@@ -37,6 +37,17 @@ import java.util.Set;
 
 class Driver {
 
+    /*
+     * When analysing individual classes, we behave a bit differently to jars - this *Could* probably
+     * be refactored to a call to doJarVersionTypes, however, we need to cope with a few oddities.
+     *
+     * * we don't know all available classes up front - we might be analysing one class file in a temp directory.
+     *   If we scan the entire directory in advance (i.e. pretend it's in a jar), we'll potentially process many
+     *   files which are irrelevant, at significant cost.
+     * * class file names may not match class files! - this isn't likely to happen inside a jar, because the JRE
+     *   mandates file names match declared names, but absolutely could happen when analysing randomly named class
+     *   files in a junk directory.
+     */
     static void doClass(DCCommonState dcCommonState, String path, boolean skipInnerClass, DumperFactory dumperFactory) {
         Options options = dcCommonState.getOptions();
         ObfuscationMapping mapping = MappingFactory.get(options, dcCommonState);
@@ -249,7 +260,8 @@ class Driver {
 
                 JavaTypeInstance classType = c.getClassType();
                 classType = dcCommonState.getObfuscationMapping().get(classType);
-                d = dumperFactory.getNewTopLevelDumper(classType, summaryDumper, collectingDumper.getRealTypeUsageInformation(), illegalIdentifierDump);
+                TypeUsageInformation typeUsageInformation = collectingDumper.getRealTypeUsageInformation();
+                d = dumperFactory.getNewTopLevelDumper(classType, summaryDumper, typeUsageInformation, illegalIdentifierDump);
                 d = dcCommonState.getObfuscationMapping().wrap(d);
 
                 c.dump(d);

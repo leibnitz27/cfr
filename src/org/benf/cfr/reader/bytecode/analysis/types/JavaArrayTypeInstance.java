@@ -9,6 +9,7 @@ import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
@@ -121,6 +122,12 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     @Override
     public String getRawName() {
         return new ToStringDumper().dump(this).toString();
+    }
+
+    @Override
+    public String getRawName(IllegalIdentifierDump iid) {
+        // shouldn't ever need to get raw name of an array type for decoration purposes.
+        return getRawName();
     }
 
     @Override

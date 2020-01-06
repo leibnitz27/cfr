@@ -6,10 +6,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class ClassNameFunctionIllegal implements ClassNameFunction {
+public class ClassNameFunctionInvalid implements ClassNameFunction {
     private final Set<String> illegalNames;
 
-    ClassNameFunctionIllegal(boolean caseInsensitive, Set<String> illegalNames) {
+    ClassNameFunctionInvalid(boolean caseInsensitive, Set<String> illegalNames) {
         if (caseInsensitive) {
             Set<String> ciNames = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
             ciNames.addAll(illegalNames);
@@ -24,7 +24,7 @@ public class ClassNameFunctionIllegal implements ClassNameFunction {
         Map<String, String> res = MapFactory.newOrderedMap();
         for (Map.Entry<String, String> entry : names.entrySet()) {
             String val = entry.getValue();
-            if (illegalName(entry.getValue())) {
+            if (illegalName(val)) {
                 val = val.substring(0, val.length()-6) + "_.class";
             }
             res.put(entry.getKey(), val);

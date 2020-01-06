@@ -24,6 +24,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -45,6 +46,7 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
 
     AbstractClassFileDumper(DCCommonState dcCommonState) {
         this.dcCommonState = dcCommonState;
+
     }
 
     void dumpTopHeader(ClassFile classFile, Dumper d) {
@@ -130,6 +132,7 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
         }));
 
         Options options = dcCommonState.getOptions();
+        final IllegalIdentifierDump iid = IllegalIdentifierDump.Factory.getOrNull(options);
 
         Collection<JavaRefTypeInstance> importTypes = types;
         if (options.getOption(OptionsImpl.HIDE_LANG_IMPORTS)) {
@@ -145,10 +148,10 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
             @Override
             public String invoke(JavaRefTypeInstance arg) {
                 if (arg.getInnerClassHereInfo().isInnerClass()) {
-                    String name = arg.getRawName();
+                    String name = arg.getRawName(iid);
                     return name.replace(MiscConstants.INNER_CLASS_SEP_CHAR, '.');
                 }
-                return arg.getRawName();
+                return arg.getRawName(iid);
             }
         });
 

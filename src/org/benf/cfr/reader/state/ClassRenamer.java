@@ -27,7 +27,7 @@ public class ClassRenamer {
 
         List<ClassNameFunction> functions = ListFactory.newList();
         if (!invalidNames.isEmpty()) {
-            functions.add(new ClassNameFunctionIllegal(renameCase, invalidNames));
+            functions.add(new ClassNameFunctionInvalid(renameCase, invalidNames));
         }
         if (renameCase) {
             functions.add(new ClassNameFunctionCase());

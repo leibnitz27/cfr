@@ -7,6 +7,7 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 import java.util.Map;
 import java.util.Set;
@@ -58,8 +59,7 @@ public enum RawJavaType implements JavaTypeInstance {
 
     public static RawJavaType getUnboxedTypeFor(JavaTypeInstance type) {
         String rawName = type.getRawName();
-        RawJavaType tgt = boxingTypes.get(rawName);
-        return tgt;
+        return boxingTypes.get(rawName);
     }
 
     public static RawJavaType getPodNamedType(String name) {
@@ -184,6 +184,11 @@ public enum RawJavaType implements JavaTypeInstance {
     @Override
     public String getRawName() {
         return name;
+    }
+
+    @Override
+    public String getRawName(IllegalIdentifierDump iid) {
+        return getRawName();
     }
 
     @Override

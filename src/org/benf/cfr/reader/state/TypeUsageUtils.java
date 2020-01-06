@@ -4,11 +4,12 @@ import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.StringUtils;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 import java.util.LinkedList;
 
 class TypeUsageUtils {
-    static String generateInnerClassShortName(final JavaRefTypeInstance clazz, JavaRefTypeInstance analysisType, boolean prefixAnalysisType) {
+    static String generateInnerClassShortName(final IllegalIdentifierDump iid, final JavaRefTypeInstance clazz, JavaRefTypeInstance analysisType, boolean prefixAnalysisType) {
         LinkedList<JavaRefTypeInstance> classStack = ListFactory.newLinkedList();
 
         boolean analysisTypeFound = false;
@@ -54,20 +55,20 @@ class TypeUsageUtils {
              * if we've been overridden, we need to prefix the analysis type. (See ShortNameTest5)
              */
             if (prefixAnalysisType) {
-                sb.append(analysisType.getRawShortName());
+                sb.append(analysisType.getRawShortName(iid));
                 first = false;
             }
 
             for (JavaRefTypeInstance stackClass : classStack) {
                 first = StringUtils.dot(first, sb);
-                sb.append(stackClass.getRawShortName());
+                sb.append(stackClass.getRawShortName(iid));
             }
             return sb.toString();
         } else {
             // string approximation.
-            String clazzRawName = clazz.getRawName();
+            String clazzRawName = clazz.getRawName(iid);
             // Cheat using $.
-            String analysisTypeRawName = analysisType.getRawName();
+            String analysisTypeRawName = analysisType.getRawName(iid);
 
             if (clazzRawName.equals(analysisTypeRawName)) {
                 int idx = clazzRawName.lastIndexOf('.');

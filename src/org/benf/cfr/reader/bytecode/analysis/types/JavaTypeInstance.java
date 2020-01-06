@@ -5,6 +5,7 @@ import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
 public interface JavaTypeInstance {
 
@@ -49,6 +50,8 @@ public interface JavaTypeInstance {
     int getNumArrayDimensions();
 
     String getRawName();
+
+    String getRawName(IllegalIdentifierDump iid);
 
     //    public boolean isInnerClassOf(JavaTypeInstance possibleParent);
     // Get info about this class as an inner class, not inner classes of this.....
