@@ -139,7 +139,7 @@ public class EnumClassRewriter {
 
         List<Pair<StaticVariable, AbstractConstructorInvokation>> entries = ListFactory.newList();
         for (Map.Entry<StaticVariable, CollectedEnumData<? extends AbstractConstructorInvokation>> entry : entryMap.entrySet()) {
-            entries.add(Pair.make(entry.getKey(), entry.getValue().getData()));
+            entries.add(Pair.<StaticVariable, AbstractConstructorInvokation>make(entry.getKey(), entry.getValue().getData()));
         }
         classFile.setDumpHelper(new ClassFileDumperEnum(state, entries));
 
