@@ -58,6 +58,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.Troolean;
+import org.benf.cfr.reader.util.UnverifiableJumpException;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -211,7 +212,18 @@ public class CodeAnalyser {
     }
 
     /*
+     * Expensive mechanism for getting a single bytecode instruction.  We should only use this when recovering
+     * from illegal instructions.
+     */
+    Op01WithProcessedDataAndByteJumps getSingleInstr(ByteData rawCode, int offset) {
+        OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(offset);
+        JVMInstr instr = JVMInstr.find(bdCode.getS1At(0));
+        return instr.createOperation(bdCode, cp, offset);
+    }
+
+    /*
      * This list isn't going to change with recovery passes, so avoid recomputing.
+     * (though we may infer additional items from it if we recover from illegal bytecode)
      */
     private List<Op01WithProcessedDataAndByteJumps> getInstrs() {
         ByteData rawCode = originalCodeAttribute.getRawData();
@@ -286,10 +298,26 @@ public class CodeAnalyser {
             op2list.add(op2);
         }
 
-
-        for (int x = 0, len = instrs.size(); x < len; ++x) {
+        // If there are any op01 which refer to instructions that are illegal intra-instructions
+        // (https://anthony.som.codes/blog/2019-12-30-jvm-hackery-noverify/), and we're allowing that,
+        // then re-interpret the raw bytestream at that point until we sync up with real instructions, and
+        // clone into new instructions.
+        for (int x = 0, len = op1list.size(); x < len; ++x) {
             int offsetOfThisInstruction = lutByIdx.get(x);
-            int[] targetIdxs = op1list.get(x).getAbsoluteIndexJumps(offsetOfThisInstruction, lutByOffset);
+            int[] targetIdxs;
+            try {
+                targetIdxs = op1list.get(x).getAbsoluteIndexJumps(offsetOfThisInstruction, lutByOffset);
+            } catch (UnverifiableJumpException e) {
+                comments.addComment(DecompilerComment.UNVERIFIABLE_BYTECODE_BAD_JUMP);
+                // we can handle this if we fall back and reprocess the bytecode.
+                generateUnverifiable(x, op1list, op2list, lutByIdx, lutByOffset);
+                try {
+                    targetIdxs = op1list.get(x).getAbsoluteIndexJumps(offsetOfThisInstruction, lutByOffset);
+                } catch (UnverifiableJumpException e2) {
+                    throw new ConfusedCFRException("Can't recover from unverifiable jumps at " + offsetOfThisInstruction);
+                }
+                len = op1list.size();
+            }
             Op02WithProcessedDataAndRefs source = op2list.get(x);
             for (int targetIdx : targetIdxs) {
                 if (targetIdx < len) {
@@ -857,6 +885,56 @@ public class CodeAnalyser {
         return new AnalysisResultSuccessful(comments, block, anonymousClassUsage);
     }
 
+    private void generateUnverifiable(int x, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset) {
+        Op01WithProcessedDataAndByteJumps instr = op1list.get(x);
+        int thisRaw = instr.getOriginalRawOffset();
+        int[] thisTargets = instr.getRawTargetOffsets();
+        for (int target : thisTargets) {
+            if (null == lutByOffset.get(target + thisRaw)) {
+                generateUnverifiableInstr(target + thisRaw, op1list, op2list, lutByIdx, lutByOffset);
+            }
+        }
+    }
+
+    private void generateUnverifiableInstr(int offset, List<Op01WithProcessedDataAndByteJumps> op1list, List<Op02WithProcessedDataAndRefs> op2list, Map<Integer, Integer> lutByIdx, SortedMap<Integer, Integer> lutByOffset) {
+        ByteData rawData = originalCodeAttribute.getRawData();
+        int codeLength = originalCodeAttribute.getCodeLength();
+        do {
+            Op01WithProcessedDataAndByteJumps op01 = getSingleInstr(rawData, offset);
+            // we can't cope if this instruction has multiple successors.
+            int[] targets = op01.getRawTargetOffsets();
+            boolean noTargets = false;
+            if (targets != null) {
+                if (targets.length == 0) {
+                    noTargets = true;
+                } else {
+                    throw new ConfusedCFRException("Can't currently recover from branching unverifiable instructions.");
+                }
+            }
+            int targetIdx = op1list.size();
+            op1list.add(op01);
+            lutByIdx.put(targetIdx, offset);
+            lutByOffset.put(offset, targetIdx);
+            Op02WithProcessedDataAndRefs op02 = op01.createOp2(cp, targetIdx);
+            op2list.add(op02);
+            if (noTargets) return;
+            int nextOffset = offset + op01.getInstructionLength();
+            if (lutByOffset.containsKey(nextOffset)) {
+                // fine.  We now have to create a jump back to here.
+                targetIdx = op1list.size();
+                int fakeOffset = -op1list.size();
+                lutByIdx.put(targetIdx, fakeOffset);
+                lutByOffset.put(fakeOffset, targetIdx);
+                int[] rawTargets = new int[1];
+                rawTargets[0] = nextOffset - fakeOffset;
+                Op01WithProcessedDataAndByteJumps fakeGoto = new Op01WithProcessedDataAndByteJumps(JVMInstr.GOTO, null, rawTargets, fakeOffset);
+                op1list.add(fakeGoto);
+                op2list.add(fakeGoto.createOp2(cp, targetIdx));
+                return;
+            }
+            offset = nextOffset;
+        } while (offset < codeLength);
+    }
 
     public void dump(Dumper d) {
         d.newln();

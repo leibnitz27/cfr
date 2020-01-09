@@ -32,6 +32,7 @@ public class DecompilerComment implements Dumpable {
     public static DecompilerComment CASE_CLASH_FS = new DecompilerComment("Classes with case insensitive name clashes seen, and your FS appears to be case insensitive - consider using --" + OptionsImpl.CASE_INSENSITIVE_FS_RENAME.getName() + " true");
     public static DecompilerComment DYNAMIC_CONSTANTS = new DecompilerComment("Uses jvm11+ dynamic constants - pseudocode provided - see https://www.benf.org/other/cfr/dynamic-constants.html");
     public static DecompilerComment MULTI_VERSION = new DecompilerComment("Multiple versions of this class in jar - see https://www.benf.org/other/cfr/multi-version-jar.html");
+    public static DecompilerComment UNVERIFIABLE_BYTECODE_BAD_JUMP = new DecompilerComment("Handled unverifiable bytecode (illegal jump).", false);
 
     private final String comment;
     private final String summaryMessage;

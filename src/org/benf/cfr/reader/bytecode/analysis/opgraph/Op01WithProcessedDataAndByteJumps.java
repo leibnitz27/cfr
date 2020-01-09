@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph;
 import org.benf.cfr.reader.bytecode.opcode.JVMInstr;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
+import org.benf.cfr.reader.util.UnverifiableJumpException;
 
 import java.util.Map;
 
@@ -11,6 +12,7 @@ public class Op01WithProcessedDataAndByteJumps {
     /* For 0 argument opcodes, the below should be irrelevant, indeed we could have singletons. */
     // Raw arguments after this opcode
     private final byte[] data;
+
     private final int[] rawTargetOffsets;
     private final ConstantPoolEntry[] constantPoolEntries;
     private final int originalRawOffset;
@@ -35,6 +37,14 @@ public class Op01WithProcessedDataAndByteJumps {
         return instruction;
     }
 
+    public int[] getRawTargetOffsets() {
+        return rawTargetOffsets;
+    }
+
+    public int getOriginalRawOffset() {
+        return originalRawOffset;
+    }
+
     public byte[] getData() {
         return data;
     }
@@ -51,10 +61,15 @@ public class Op01WithProcessedDataAndByteJumps {
         // Otherwise, figure out what the relative byte offsets we have are as instruction offsets,
         // and create a branching indexed operation.
 
-        int targetIndexes[] = new int[rawTargetOffsets.length];
+        int[] targetIndexes = new int[rawTargetOffsets.length];
         for (int x = 0; x < rawTargetOffsets.length; ++x) {
             int targetRawAddress = thisOpByteIndex + rawTargetOffsets[x];
-            int targetIndex = lutByOffset.get(targetRawAddress);
+            Integer targetIndex = lutByOffset.get(targetRawAddress);
+            if (targetIndex == null) {
+                // Oh this is fun.  We have a jump-to-middle of instruction.
+                // (https://anthony.som.codes/blog/2019-12-30-jvm-hackery-noverify/)
+                throw new UnverifiableJumpException();
+            }
             targetIndexes[x] = targetIndex;
         }
         return targetIndexes;
