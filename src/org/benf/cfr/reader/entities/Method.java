@@ -248,8 +248,18 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
         boolean isSynthetic = accessFlags.contains(AccessFlagMethod.ACC_SYNTHETIC);
         DCCommonState state = cp.getDCCommonState();
-        MethodPrototype res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, prototype, cp, isVarargs, isSynthetic, variableNamer);
-
+        MethodPrototype res;
+        try {
+            res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, prototype, cp, isVarargs, isSynthetic, variableNamer);
+        } catch (MalformedPrototypeException e) {
+            // If we've failed to parse, and we're using the signature, we have to fall back to the descriptor.
+            if (prototype == signature) {
+                prototype = descriptor;
+                res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, prototype, cp, isVarargs, isSynthetic, variableNamer);
+            } else {
+                throw e;
+            }
+        }
         /*
          * Work around bug in inner class signatures.
          *

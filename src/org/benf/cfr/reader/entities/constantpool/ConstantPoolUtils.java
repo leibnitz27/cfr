@@ -9,6 +9,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.MalformedPrototypeException;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -293,48 +294,46 @@ public class ConstantPoolUtils {
 
     public static MethodPrototype parseJavaMethodPrototype(DCCommonState state, ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, ConstantPoolEntryUTF8 prototype, ConstantPool cp, boolean varargs, boolean synthetic, VariableNamer variableNamer) {
         String proto = prototype.getValue();
-        int curridx = 0;
-        /*
-         * Method is itself generic...
-         */
-        Pair<Integer, List<FormalTypeParameter>> formalTypeParametersRes = parseFormalTypeParameters(proto, cp, curridx);
-        curridx = formalTypeParametersRes.getFirst();
-        List<FormalTypeParameter> formalTypeParameters = formalTypeParametersRes.getSecond();
-        Map<String, JavaTypeInstance> ftpMap;
-        if (formalTypeParameters == null) {
-            ftpMap = Collections.emptyMap();
-        } else {
-            ftpMap = MapFactory.newMap();
-            for (FormalTypeParameter ftp : formalTypeParameters) {
-                ftpMap.put(ftp.getName(), ftp.getBound());
+        try {
+            int curridx = 0;
+            /*
+             * Method is itself generic...
+             */
+            Pair<Integer, List<FormalTypeParameter>> formalTypeParametersRes = parseFormalTypeParameters(proto, cp, curridx);
+            curridx = formalTypeParametersRes.getFirst();
+            List<FormalTypeParameter> formalTypeParameters = formalTypeParametersRes.getSecond();
+            Map<String, JavaTypeInstance> ftpMap;
+            if (formalTypeParameters == null) {
+                ftpMap = Collections.emptyMap();
+            } else {
+                ftpMap = MapFactory.newMap();
+                for (FormalTypeParameter ftp : formalTypeParameters) {
+                    ftpMap.put(ftp.getName(), ftp.getBound());
+                }
             }
-        }
 
-        if (proto.charAt(curridx) != '(') throw new ConfusedCFRException("Prototype " + proto + " is invalid");
-        curridx++;
-        List<JavaTypeInstance> args = ListFactory.newList();
-        // could use parseTypeList below.
-        while (proto.charAt(curridx) != ')') {
-            String typeTok = getNextTypeTok(proto, curridx);
-            JavaTypeInstance type = decodeTypeTok(typeTok, cp);
-            if (type instanceof JavaGenericPlaceholderTypeInstance) {
-                type = ((JavaGenericPlaceholderTypeInstance) type).withBound(ftpMap.get(type.getRawName()));
+            if (proto.charAt(curridx) != '(') throw new ConfusedCFRException("Prototype " + proto + " is invalid");
+            curridx++;
+            List<JavaTypeInstance> args = ListFactory.newList();
+            // could use parseTypeList below.
+            while (proto.charAt(curridx) != ')') {
+                String typeTok = getNextTypeTok(proto, curridx);
+                JavaTypeInstance type = decodeTypeTok(typeTok, cp);
+                if (type instanceof JavaGenericPlaceholderTypeInstance) {
+                    type = ((JavaGenericPlaceholderTypeInstance) type).withBound(ftpMap.get(type.getRawName()));
+                }
+                args.add(type);
+                curridx += typeTok.length();
             }
-            args.add(type);
-            curridx += typeTok.length();
-        }
-        curridx++;
-        JavaTypeInstance resultType = RawJavaType.VOID;
-        switch (proto.charAt(curridx)) {
-            case 'V':
-                break;
-            default:
+            curridx++;
+            JavaTypeInstance resultType = RawJavaType.VOID;
+            if (proto.charAt(curridx) != 'V') {
                 resultType = decodeTypeTok(getNextTypeTok(proto, curridx), cp);
-                break;
+            }
+            return new MethodPrototype(state, classFile, classType, name, instanceMethod, constructorFlag, formalTypeParameters, args, resultType, varargs, variableNamer, synthetic);
+        } catch (StringIndexOutOfBoundsException e) {
+            throw new MalformedPrototypeException(proto, e);
         }
-        MethodPrototype res = new MethodPrototype(state, classFile, classType, name, instanceMethod, constructorFlag, formalTypeParameters, args, resultType, varargs, variableNamer, synthetic);
-//        logger.info("Parsed prototype " + proto + " as " + res);
-        return res;
     }
 
     private static Pair<List<JavaTypeInstance>, Integer> parseTypeList(String proto, ConstantPool cp) {
