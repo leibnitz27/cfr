@@ -19,6 +19,10 @@ public class LocalVariableEntry {
         return startPc;
     }
 
+    public int getEndPc() {
+        return startPc + length;
+    }
+
     public int getLength() {
         return length;
     }

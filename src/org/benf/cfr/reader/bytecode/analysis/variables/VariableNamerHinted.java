@@ -38,21 +38,24 @@ public class VariableNamerHinted implements VariableNamer {
 
     @Override
     public NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition) {
-        originalRawOffset += 2;
-
+        // Slightly crappy heuristic for dealing with slight fibbing in offsets by compilers.
+        // clamp 0 to 0 to handle empty functions, as that is not incorrectly reported.
+        originalRawOffset = originalRawOffset > 0 ? originalRawOffset + 2 : 0;
         int sstackPos = (int) stackPosition;
         if (!localVariableEntryTreeSet.containsKey(sstackPos)) {
             return missingNamer.getName(0, ident, sstackPos);
         }
         LocalVariableEntry tmp = new LocalVariableEntry(originalRawOffset, (short) 1, (short) -1, (short) -1, (short) stackPosition);
-        LocalVariableEntry lve = localVariableEntryTreeSet.get(sstackPos).floor(tmp);
+        TreeSet<LocalVariableEntry> lveSet = localVariableEntryTreeSet.get(sstackPos);
+        LocalVariableEntry lve = lveSet.floor(tmp);
 
-        if (lve == null) {
+        // We'd expect that we could just do a range test, not check start and falling off end.
+        // See ScopeTest18 for counterexample.
+        if (lve == null || originalRawOffset > lve.getEndPc() && null == lveSet.ceiling(tmp)) {
             return missingNamer.getName(0, ident, sstackPos);
         }
 
-        LocalVariableEntry key = lve;
-        NamedVariable namedVariable = cache.get(key);
+        NamedVariable namedVariable = cache.get(lve);
         if (namedVariable == null) {
             String name = cp.getUTF8Entry(lve.getNameIndex()).getValue();
             if (IllegalIdentifierReplacement.isIllegal(name)) {
@@ -67,7 +70,7 @@ public class VariableNamerHinted implements VariableNamer {
                 int genIdx = 0;
                 namedVariable = new NamedVariableFromHint(name, lve.getIndex(), genIdx);
             }
-            cache.put(key, namedVariable);
+            cache.put(lve, namedVariable);
         }
         return namedVariable;
     }
