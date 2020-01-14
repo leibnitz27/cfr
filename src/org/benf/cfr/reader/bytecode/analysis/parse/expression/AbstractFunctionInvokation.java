@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.expression;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
@@ -45,4 +46,6 @@ public abstract class AbstractFunctionInvokation extends AbstractExpression {
     public boolean isValidStatement() {
         return true;
     }
+
+    public abstract List<Expression> getArgs();
 }

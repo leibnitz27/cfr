@@ -6,7 +6,19 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscState
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractNewArray;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.DynamicInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpressionCommon;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpressionFallback;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpressionNewArray;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewObjectArray;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -17,16 +29,30 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.expression.StructuredStatementExpression;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
-import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.DynamicInvokeType;
+import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.*;
-import org.benf.cfr.reader.entities.constantpool.*;
+import org.benf.cfr.reader.entities.AccessFlagMethod;
+import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodHandle;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.state.DCCommonState;
-import org.benf.cfr.reader.util.*;
+import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.lambda.LambdaUtils;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +62,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
     private final ClassFile thisClassFile;
     private final JavaTypeInstance typeInstance;
     private final Method method;
+    private final LinkedList<Expression> processingStack = ListFactory.newLinkedList();
 
     public LambdaRewriter(DCCommonState state, Method method) {
         this.state = state;
@@ -70,35 +97,40 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
      */
     @Override
     public Expression rewriteExpression(Expression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-        expression = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
-        if (expression instanceof DynamicInvokation) {
-            expression = rewriteDynamicExpression((DynamicInvokation) expression);
-        }
-        Expression res = expression;
-        if (res instanceof CastExpression) {
-            Expression child = ((CastExpression) res).getChild();
-            if (child instanceof LambdaExpressionCommon) {
-                JavaTypeInstance resType = res.getInferredJavaType().getJavaTypeInstance();
-                JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
-                if (childType.implicitlyCastsTo(resType, null)) {
-                    return child;
-                } else {
-                    /*
-                     * This is more interesting - the cast doesn't work?  This means we might need to explicitly label
-                     * the lambda expression type.
-                     */
-                    Expression tmp = new CastExpression(child.getInferredJavaType(), child, true);
-                    res = new CastExpression(res.getInferredJavaType(), tmp);
-                    return res;
+        try {
+            processingStack.push(expression);
+            expression = expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
+            if (expression instanceof DynamicInvokation) {
+                expression = rewriteDynamicExpression((DynamicInvokation) expression);
+            }
+            Expression res = expression;
+            if (res instanceof CastExpression) {
+                Expression child = ((CastExpression) res).getChild();
+                if (child instanceof LambdaExpressionCommon) {
+                    JavaTypeInstance resType = res.getInferredJavaType().getJavaTypeInstance();
+                    JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
+                    if (childType.implicitlyCastsTo(resType, null)) {
+                        return child;
+                    } else {
+                        /*
+                         * This is more interesting - the cast doesn't work?  This means we might need to explicitly label
+                         * the lambda expression type.
+                         */
+                        Expression tmp = new CastExpression(child.getInferredJavaType(), child, true);
+                        res = new CastExpression(res.getInferredJavaType(), tmp);
+                        return res;
+                    }
+                }
+            } else if (res instanceof MemberFunctionInvokation) {
+                MemberFunctionInvokation invoke = (MemberFunctionInvokation) res;
+                if (invoke.getObject() instanceof LambdaExpressionCommon) {
+                    res = invoke.withReplacedObject(new CastExpression(invoke.getObject().getInferredJavaType(), invoke.getObject()));
                 }
             }
-        } else if (res instanceof MemberFunctionInvokation) {
-            MemberFunctionInvokation invoke = (MemberFunctionInvokation)res;
-            if (invoke.getObject() instanceof LambdaExpressionCommon) {
-                res = invoke.withReplacedObject(new CastExpression(invoke.getObject().getInferredJavaType(), invoke.getObject()));
-            }
+            return res;
+        } finally {
+            processingStack.pop();
         }
-        return res;
     }
 
     @Override
@@ -132,9 +164,73 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
         Expression functionCall = dynamicExpression.getInnerInvokation();
         if (functionCall instanceof StaticFunctionInvokation) {
             Expression res = rewriteDynamicExpression(dynamicExpression, (StaticFunctionInvokation) functionCall, curriedArgs);
+            if (res == dynamicExpression) {
+                return dynamicExpression;
+            }
+            // If the direct container is a member function invokation, and by NOT stating the argument type, we're
+            // making it ambiguous, we need to force an explicit argument type.
+            if (res instanceof LambdaExpression && processingStack.size() > 1) {
+                Expression e = processingStack.get(1);
+                couldBeAmbiguous(e, dynamicExpression, (LambdaExpression)res);
+            }
             return res;
         }
         return dynamicExpression;
+    }
+
+    private void couldBeAmbiguous(Expression fn, Expression arg, LambdaExpression res) {
+        if (!(fn instanceof AbstractFunctionInvokation) || thisClassFile == null) return;
+        AbstractFunctionInvokation afi = (AbstractFunctionInvokation)fn;
+        OverloadMethodSet oms = thisClassFile.getOverloadMethodSet(afi.getMethodPrototype());
+        if (oms.size() < 2) return;
+        // Find the index of this argument in the original invokation.
+        List<Expression> args = afi.getArgs();
+        int idx = args.indexOf(arg);
+        if (idx == -1) return;
+        // We may have very limited information about what the possible argument types are.
+        // err on the side of caution, unless we can prove we aren't ambiguous.
+        List<JavaTypeInstance> types = Functional.filter(oms.getPossibleArgTypes(idx, arg.getInferredJavaType().getJavaTypeInstance()),
+                new Predicate<JavaTypeInstance>() {
+                    @Override
+                    public boolean test(JavaTypeInstance in) {
+                        return in instanceof JavaRefTypeInstance || in instanceof JavaGenericRefTypeInstance;
+                    }
+                });
+        if (types.size() == 1) return;
+        JavaTypeInstance functionArgType = afi.getMethodPrototype().getArgs().get(idx);
+        res.setExplicitArgTypes(getExplicitLambdaTypes(functionArgType));
+    }
+
+    private List<JavaTypeInstance> getExplicitLambdaTypes(JavaTypeInstance functionArgType) {
+        ClassFile classFile = null;
+        try {
+            classFile = state.getClassFile(functionArgType.getDeGenerifiedType());
+        } catch (CannotLoadClassException ignore) {
+        }
+        if (classFile == null || !classFile.isInterface()) return null;
+        // Find the one method which has no body.
+        List<Method> methods = Functional.filter(classFile.getMethods(), new Predicate<Method>() {
+            @Override
+            public boolean test(Method in) {
+                return in.getCodeAttribute() == null;
+            }
+        });
+        if (methods.size() != 1) return null;
+        Method method = methods.get(0);
+        List<JavaTypeInstance> args = method.getMethodPrototype().getArgs();
+        if (functionArgType instanceof JavaGenericRefTypeInstance) {
+            final GenericTypeBinder genericTypeBinder = classFile.getGenericTypeBinder((JavaGenericRefTypeInstance) functionArgType);
+            args = Functional.map(args, new UnaryFunction<JavaTypeInstance, JavaTypeInstance>() {
+                @Override
+                public JavaTypeInstance invoke(JavaTypeInstance arg) {
+                    return genericTypeBinder.getBindingFor(arg);
+                }
+            });
+        }
+        for (JavaTypeInstance arg : args) {
+            if (arg == null) return null;
+        }
+        return args;
     }
 
     private static class CannotDelambaException extends IllegalStateException {
@@ -339,7 +435,7 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                 StructuredScope scope = new StructuredScope();
                 placeHolder.transform(new LocalDeclarationRemover(), scope);
 
-                return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaStatement));
+                return new LambdaExpression(dynamicExpression.getInferredJavaType(), anonymousLambdaArgs, null, new StructuredStatementExpression(new InferredJavaType(lambdaMethod.getMethodPrototype().getReturnType(), InferredJavaType.Source.EXPRESSION), lambdaStatement));
             } catch (CannotDelambaException ignore) {
             }
         }

@@ -32,7 +32,7 @@ public class LambdaCleaner extends AbstractExpressionRewriter implements Structu
     }
 
     private static LambdaExpression rebuildLambda(LambdaExpression e, Expression body) {
-        return new LambdaExpression(e.getInferredJavaType(), e.getArgs(), body);
+        return new LambdaExpression(e.getInferredJavaType(), e.getArgs(), e.explicitArgTypes(), body);
     }
 
     @Override

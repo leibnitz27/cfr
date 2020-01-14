@@ -129,6 +129,13 @@ public class OverloadMethodSet {
         return actualPrototype.getArgType(idx, used);
     }
 
+    public List<JavaTypeInstance> getPossibleArgTypes(int idx, JavaTypeInstance used) {
+        List<JavaTypeInstance> res = ListFactory.newList();
+        for (MethodData proto : allPrototypes) {
+            res.add(proto.getArgType(idx, used));
+        }
+        return res;
+    }
 
     public boolean callsCorrectEntireMethod(List<Expression> args, GenericTypeBinder gtb) {
         final int argCount = args.size();
@@ -266,6 +273,10 @@ public class OverloadMethodSet {
             return methodData.methodPrototype.equals(actualPrototype.methodPrototype);
         }
         return false;
+    }
+
+    public int size() {
+        return allPrototypes.size();
     }
 
     private JavaTypeInstance unbox(JavaTypeInstance actual) {

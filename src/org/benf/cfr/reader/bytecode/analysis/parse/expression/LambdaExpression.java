@@ -13,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaIntersectionTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.StringUtils;
@@ -23,23 +24,36 @@ import java.util.List;
 public class LambdaExpression extends AbstractExpression implements LambdaExpressionCommon {
 
     private List<LValue> args;
+    private List<JavaTypeInstance> explicitArgTypes;
     private Expression result;
 
-    public LambdaExpression(InferredJavaType castJavaType, List<LValue> args, Expression result) {
+    public LambdaExpression(InferredJavaType castJavaType, List<LValue> args, List<JavaTypeInstance> explicitArgType, Expression result) {
         super(castJavaType);
         this.args = args;
+        this.explicitArgTypes = explicitArgType;
         this.result = result;
     }
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new LambdaExpression(getInferredJavaType(), cloneHelper.replaceOrClone(args), cloneHelper.replaceOrClone(result));
+        return new LambdaExpression(getInferredJavaType(), cloneHelper.replaceOrClone(args), explicitArgTypes(), cloneHelper.replaceOrClone(result));
     }
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collectFrom(args);
+        collector.collect(explicitArgTypes);
         result.collectTypeUsages(collector);
+    }
+
+    public void setExplicitArgTypes(List<JavaTypeInstance> types) {
+        if (types == null || types.size() == args.size()) {
+            explicitArgTypes = types;
+        }
+    }
+
+    public List<JavaTypeInstance> explicitArgTypes() {
+        return explicitArgTypes;
     }
 
     @Override
@@ -74,15 +88,30 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
     public Dumper dumpInner(Dumper d) {
         boolean multi = args.size() != 1;
         boolean first = true;
+        // If we need to CAST the lambda to something, we have to do this.
         if (getInferredJavaType().getJavaTypeInstance() instanceof JavaIntersectionTypeInstance) {
             d.separator("(").dump(getInferredJavaType().getJavaTypeInstance()).separator(")");
         }
-        if (multi) d.separator("(");
-        for (LValue lValue : args) {
-            first = StringUtils.comma(first, d);
-            d.dump(lValue);
+        if (explicitArgTypes != null && explicitArgTypes.size() == args.size()) {
+            d.separator("(");
+            for (int i=0;i<args.size();++i) {
+                LValue lValue = args.get(i);
+                JavaTypeInstance explicitType = explicitArgTypes.get(i);
+                first = StringUtils.comma(first, d);
+                if (explicitType != null) {
+                    d.dump(explicitType).print(" ");
+                }
+                d.dump(lValue);
+            }
+            d.separator(")");
+        } else {
+            if (multi) d.separator("(");
+            for (LValue lValue : args) {
+                first = StringUtils.comma(first, d);
+                d.dump(lValue);
+            }
+            if (multi) d.separator(")");
         }
-        if (multi) d.separator(")");
         d.print(" -> ").dump(result);
         d.removePendingCarriageReturn();
         return d;
