@@ -139,9 +139,9 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         if (isForced()) {
             return false;
         }
+        JavaTypeInstance thisType = getInferredJavaType().getJavaTypeInstance();
         while (child instanceof CastExpression) {
             CastExpression childCast = (CastExpression) child;
-            JavaTypeInstance thisType = getInferredJavaType().getJavaTypeInstance();
             JavaTypeInstance childType = childCast.getInferredJavaType().getJavaTypeInstance();
             Expression grandChild = childCast.child;
             JavaTypeInstance grandChildType = grandChild.getInferredJavaType().getJavaTypeInstance();
@@ -165,10 +165,15 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
                 break;
             }
         }
-        Expression newchild = boxingRewriter.sugarNonParameterBoxing(child, getInferredJavaType().getJavaTypeInstance());
-        if (child != newchild &&
-            newchild.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(child.getInferredJavaType().getJavaTypeInstance(), null)) {
-            child = newchild;
+        Expression newchild = boxingRewriter.sugarNonParameterBoxing(child, thisType);
+        JavaTypeInstance childType = child.getInferredJavaType().getJavaTypeInstance();
+        JavaTypeInstance newChildType = newchild.getInferredJavaType().getJavaTypeInstance();
+        if (child != newchild && newChildType.implicitlyCastsTo(childType, null)) {
+            // We can do this, but only if the original cast wasn't deliberately lossy.
+            if (childType.implicitlyCastsTo(thisType, null) ==
+            newChildType.implicitlyCastsTo(thisType, null)) {
+                child = newchild;
+            }
         }
         return false;
     }
