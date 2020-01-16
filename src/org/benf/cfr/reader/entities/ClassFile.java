@@ -47,6 +47,7 @@ import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.relationship.MemberNameResolver;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.InnerClassTypeUsageInformation;
+import org.benf.cfr.reader.state.OverloadMethodSetCache;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
@@ -106,6 +107,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private final ClassSignature classSignature;
     private ClassFileVersion classFileVersion;
     private DecompilerComments decompilerComments;
+    private final Map<MethodPrototype, OverloadMethodSet> omsCache = MapFactory.newIdentityMap();
 
     private boolean begunAnalysis;
 
@@ -574,19 +576,50 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         });
     }
 
-    public OverloadMethodSet getOverloadMethodSet(final MethodPrototype prototype) {
-        List<Method> named = getMethodsWithMatchingName(prototype);
+    private void collectMethods(MethodPrototype prototype, List<Method> tgt, Set<JavaTypeInstance> seen) {
+        tgt.addAll(getMethodsWithMatchingName(prototype));
+        if (classSignature == null) return;
+        collectTypeMethods(prototype, tgt, seen, classSignature.getSuperClass());
+        for (JavaTypeInstance intf : classSignature.getInterfaces()) {
+            collectTypeMethods(prototype, tgt, seen, intf);
+        }
+    }
+
+    private void collectTypeMethods(MethodPrototype prototype, List<Method> tgt, Set<JavaTypeInstance> seen, JavaTypeInstance clazz) {
+        if (clazz == null) return;
+        clazz = clazz.getDeGenerifiedType();
+        if (!(clazz instanceof JavaRefTypeInstance)) return;
+        if (!seen.add(clazz)) return;
+        ClassFile classFile = constantPool.getDCCommonState().getClassFileOrNull(clazz);
+        if (classFile != null) classFile.collectMethods(prototype, tgt, seen);
+    }
+
+    public OverloadMethodSet getOverloadMethodSet(MethodPrototype prototype) {
+        OverloadMethodSetCache cache = constantPool.getDCCommonState().getOverloadMethodSetCache();
+        OverloadMethodSet res = cache.get(this, prototype);
+        if (res == null) {
+            res = getOverloadMethodSetInner(prototype);
+            cache.set(this, prototype, res);
+        }
+        return res;
+    }
+
+    private OverloadMethodSet getOverloadMethodSetInner(final MethodPrototype prototype) {
+        final JavaRefTypeInstance thiz = getRefClassType();
         /*
          * Filter this list to find all methods with the name number of args.
          */
         final boolean isInstance = prototype.isInstanceMethod();
         final int numArgs = prototype.getArgs().size();
+        List<Method> named = ListFactory.newList();
+        collectMethods(prototype, named, SetFactory.<JavaTypeInstance>newIdentitySet());
         final boolean isVarArgs = (prototype.isVarArgs());
         named = Functional.filter(named, new Predicate<Method>() {
             @Override
             public boolean test(Method in) {
                 MethodPrototype other = in.getMethodPrototype();
                 if (other.isInstanceMethod() != isInstance) return false;
+                if (!in.isVisibleTo(thiz)) return false;
                 boolean otherIsVarargs = other.isVarArgs();
                 if (isVarArgs) {
                     if (otherIsVarargs) return true;

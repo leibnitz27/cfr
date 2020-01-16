@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -57,6 +58,11 @@ public class SuperFunctionInvokation extends AbstractMemberFunctionInvokation {
 
     public boolean isInit() {
         return getMethodPrototype().getName().equals(MiscConstants.INIT_METHOD);
+    }
+
+    @Override
+    protected OverloadMethodSet getOverloadMethodSetInner(JavaTypeInstance objectType) {
+        return null;
     }
 
     @Override

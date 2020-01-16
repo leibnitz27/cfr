@@ -108,12 +108,11 @@ public abstract class AbstractConstructorInvokation extends AbstractExpression i
         return true;
     }
 
-
     /*
      * Duplicate code with abstractFunctionInvokation
      */
     final OverloadMethodSet getOverloadMethodSet() {
-        OverloadMethodSet overloadMethodSet = function.getOverloadMethodSet();
+        OverloadMethodSet overloadMethodSet = methodPrototype.getOverloadMethodSet();
         if (overloadMethodSet == null) return null;
         JavaTypeInstance objectType = getInferredJavaType().getJavaTypeInstance();
         if (objectType instanceof JavaGenericRefTypeInstance) {

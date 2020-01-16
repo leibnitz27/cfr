@@ -16,9 +16,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.GenericTypeBinder;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericBaseInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodRef;
@@ -136,14 +138,34 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
     }
 
     private OverloadMethodSet getOverloadMethodSet() {
-        OverloadMethodSet overloadMethodSet = getFunction().getOverloadMethodSet();
-        if (overloadMethodSet == null) return null;
         JavaTypeInstance objectType = object.getInferredJavaType().getJavaTypeInstance();
+        OverloadMethodSet overloadMethodSet = getOverloadMethodSetInner(objectType);
+        if (overloadMethodSet == null) {
+            overloadMethodSet = getMethodPrototype().getOverloadMethodSet();
+        }
+        if (overloadMethodSet == null) return null;
         if (objectType instanceof JavaGenericRefTypeInstance) {
             JavaGenericRefTypeInstance genericType = (JavaGenericRefTypeInstance) objectType;
             return overloadMethodSet.specialiseTo(genericType);
         }
         return overloadMethodSet;
+    }
+
+    protected OverloadMethodSet getOverloadMethodSetInner(JavaTypeInstance objectType) {
+        JavaTypeInstance deGenerifiedObjectType = objectType.getDeGenerifiedType();
+        if (deGenerifiedObjectType !=
+          getFunction().getMethodPrototype().getClassType().getDeGenerifiedType()) {
+            // TODO : This is more expensive than I'd like.
+            OverloadMethodSet overloadMethodSet = getMethodPrototype().getOverloadMethodSet();
+            if (deGenerifiedObjectType instanceof JavaRefTypeInstance) {
+                ClassFile classFile = ((JavaRefTypeInstance) deGenerifiedObjectType).getClassFile();
+                if (classFile != null) {
+                    overloadMethodSet = classFile.getOverloadMethodSet(getMethodPrototype());
+                }
+            }
+            return overloadMethodSet;
+        }
+        return null;
     }
 
     @Override
@@ -183,7 +205,6 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         /*
          * Ignore completely for lambda, etc.
          */
-
         OverloadMethodSet overloadMethodSet = getOverloadMethodSet();
         if (overloadMethodSet == null) {
             boxingRewriter.removeRedundantCastOnly(args);

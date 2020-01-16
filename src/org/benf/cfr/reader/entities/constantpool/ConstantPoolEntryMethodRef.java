@@ -23,7 +23,6 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
     private final boolean interfaceMethod;
     private static final VariableNamer fakeNamer = new VariableNamerDefault();
     private MethodPrototype methodPrototype = null;
-    private OverloadMethodSet overloadMethodSet = null;
 
     private final int classIndex;
     private final int nameAndTypeIndex;
@@ -114,7 +113,6 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
                     break findBetterMethod;
                 }
 
-                overloadMethodSet = classFile.getOverloadMethodSet(replacement);
                 basePrototype = replacement;
             } catch (CannotLoadClassException ignore) {
             }
@@ -122,11 +120,6 @@ public class ConstantPoolEntryMethodRef extends AbstractConstantPoolEntry {
             methodPrototype = basePrototype;
         }
         return methodPrototype;
-    }
-
-
-    public OverloadMethodSet getOverloadMethodSet() {
-        return overloadMethodSet;
     }
 
     public String getName() {

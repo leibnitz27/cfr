@@ -135,7 +135,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
     public void rewriteVarArgs(VarArgsRewriter varArgsRewriter) {
         MethodPrototype methodPrototype = getMethodPrototype();
         if (!methodPrototype.isVarArgs()) return;
-        OverloadMethodSet overloadMethodSet = getFunction().getOverloadMethodSet();
+        OverloadMethodSet overloadMethodSet = methodPrototype.getOverloadMethodSet();
         if (overloadMethodSet == null) return;
         GenericTypeBinder gtb = methodPrototype.getTypeBinderFor(args);
         varArgsRewriter.rewriteVarArgsArg(overloadMethodSet, methodPrototype, getArgs(), gtb);
@@ -143,7 +143,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
 
     public boolean rewriteBoxing(PrimitiveBoxingRewriter boxingRewriter) {
-        OverloadMethodSet overloadMethodSet = getFunction().getOverloadMethodSet();
+        OverloadMethodSet overloadMethodSet = getMethodPrototype().getOverloadMethodSet();
         if (overloadMethodSet == null) {
             return false;
         }

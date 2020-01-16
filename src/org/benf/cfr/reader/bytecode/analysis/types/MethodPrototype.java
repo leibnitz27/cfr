@@ -11,6 +11,7 @@ import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.*;
@@ -131,6 +132,11 @@ public class MethodPrototype implements TypeUsageCollectable {
         this.name = name;
         this.fixedName = null;
         this.classFile = classFile;
+    }
+
+    public OverloadMethodSet getOverloadMethodSet() {
+        if (classFile == null) return null;
+        return classFile.getOverloadMethodSet(this);
     }
 
     public void unbreakEnumConstructor() {

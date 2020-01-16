@@ -39,6 +39,7 @@ public class DCCommonState {
     private Set<JavaTypeInstance> versionCollisions;
     private transient LinkedHashSet<String> couldNotLoadClasses = new LinkedHashSet<String>();
     private final ObfuscationMapping obfuscationMapping;
+    private final OverloadMethodSetCache overloadMethodSetCache;
 
     public DCCommonState(Options options, ClassFileSource2 classFileSource) {
         this.options = options;
@@ -52,6 +53,7 @@ public class DCCommonState {
         });
         this.versionCollisions = SetFactory.newSet();
         this.obfuscationMapping = NullMapping.INSTANCE;
+        this.overloadMethodSetCache = new OverloadMethodSetCache();
     }
 
     public DCCommonState(DCCommonState dcCommonState, final BinaryFunction<String, DCCommonState, ClassFile> cacheAccess) {
@@ -66,6 +68,7 @@ public class DCCommonState {
         });
         this.versionCollisions = dcCommonState.versionCollisions;
         this.obfuscationMapping = dcCommonState.obfuscationMapping;
+        this.overloadMethodSetCache = dcCommonState.overloadMethodSetCache;
     }
 
     // TODO : If we have any more of these, refactor to a builder!
@@ -81,6 +84,7 @@ public class DCCommonState {
         });
         this.versionCollisions = dcCommonState.versionCollisions;
         this.obfuscationMapping = mapping;
+        this.overloadMethodSetCache = dcCommonState.overloadMethodSetCache;
     }
 
     public void setCollisions(Set<JavaTypeInstance> versionCollisions) {
@@ -190,6 +194,14 @@ public class DCCommonState {
         return getClassFile(path);
     }
 
+    public ClassFile getClassFileOrNull(JavaTypeInstance classInfo) {
+        try {
+            return getClassFile(classInfo);
+        } catch (CannotLoadClassException ignore) {
+            return null;
+        }
+    }
+
     public ClassFile getClassFileMaybePath(String pathOrName) throws CannotLoadClassException {
         if (pathOrName.endsWith(".class")) {
             // Fine - we're sure it's a class file.
@@ -222,5 +234,9 @@ public class DCCommonState {
 
     public ObfuscationMapping getObfuscationMapping() {
         return obfuscationMapping;
+    }
+
+    public OverloadMethodSetCache getOverloadMethodSetCache() {
+        return overloadMethodSetCache;
     }
 }

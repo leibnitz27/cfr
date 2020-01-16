@@ -22,7 +22,6 @@ import java.util.List;
  */
 public class PrimitiveBoxingRewriter implements ExpressionRewriter {
 
-
     public PrimitiveBoxingRewriter() {
     }
 
