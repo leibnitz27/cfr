@@ -231,7 +231,12 @@ public class OverloadMethodSet {
             // Otherwise - if one of them is the most specific type....
             // Doesn't work if unrelated. (see JLS 15.12.2)
             for (int x=0, len=args.size();x<len;++x) {
+                boolean unkNull = false;
                 JavaTypeInstance argTypeUsed = args.get(x).getInferredJavaType().getJavaTypeInstance();
+                if (argTypeUsed == RawJavaType.NULL) {
+                    unkNull = true;
+                    argTypeUsed = TypeConstants.OBJECT;
+                }
                 JavaTypeInstance mostDefined = null;
                 int best = -1;
                 for (int y = 0, len2 = remaining.size(); y < len2; ++y) {
@@ -252,6 +257,9 @@ public class OverloadMethodSet {
                         if (ainb) {
                             mostDefined = t;
                             best = y;
+                        } else if (unkNull) {
+                            best = -1;
+                            break;
                         }
                         // else do nothing
                     } else {

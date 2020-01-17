@@ -19,6 +19,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
@@ -239,7 +240,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
 
             arg = boxingRewriter.rewriteExpression(arg, null, null, null);
             arg = boxingRewriter.sugarParameterBoxing(arg, x, overloadMethodSet, gtb, methodPrototype);
-            nullsPresent |= (Literal.NULL.equals(arg));
+            nullsPresent |= isResolveNull(arg);
             args.set(x, arg);
         }
         if (nullsPresent) {
@@ -247,7 +248,7 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
             if (!callsCorrectEntireMethod) {
                 for (int x = 0; x < args.size(); ++x) {
                     Expression arg = args.get(x);
-                    if (Literal.NULL.equals(arg)) {
+                    if (isResolveNull(arg)) {
                         arg = insertCastOrIgnore(arg, overloadMethodSet, x);
                         args.set(x, arg);
                     }
@@ -256,6 +257,10 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
         }
 
         return true;
+    }
+
+    private static boolean isResolveNull(Expression arg) {
+        return (Literal.NULL.equals(arg)) || arg.getInferredJavaType().getJavaTypeInstance() == RawJavaType.NULL;
     }
 
     @Override
