@@ -79,6 +79,7 @@ public class AttributeFactory {
             }
         } catch (Exception e) {
             // Can't handle it? Continue and process as an unknown attribute.
+            int x = 1;
         }
         return new AttributeUnknown(raw, attributeName);
     }

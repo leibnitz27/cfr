@@ -49,6 +49,7 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
 
     }
 
+
     void dumpTopHeader(ClassFile classFile, Dumper d) {
         if (dcCommonState == null) return;
         Options options = dcCommonState.getOptions();
@@ -82,18 +83,6 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
         d.endBlockComment();
         // package name may be empty, in which case it's ignored by dumper.
         d.packageName(classFile.getRefClassType());
-    }
-
-    static void getFormalParametersText(ClassSignature signature, Dumper d) {
-        List<FormalTypeParameter> formalTypeParameters = signature.getFormalTypeParameters();
-        if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return;
-        d.separator("<");
-        boolean first = true;
-        for (FormalTypeParameter formalTypeParameter : formalTypeParameters) {
-            first = StringUtils.comma(first, d);
-            d.dump(formalTypeParameter);
-        }
-        d.print(">");
     }
 
     void dumpImports(Dumper d, ClassFile classFile) {

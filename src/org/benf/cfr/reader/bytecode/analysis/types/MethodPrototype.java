@@ -11,6 +11,8 @@ import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
+import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryValue;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -175,6 +177,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         return innerOuterThis;
     }
 
+    @SuppressWarnings("ConstantConditions")
     public void dumpDeclarationSignature(Dumper d, String methName, Method.MethodConstructor isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
 
         if (formalTypeParameters != null) {
@@ -188,15 +191,35 @@ public class MethodPrototype implements TypeUsageCollectable {
             d.operator("> ");
         }
         if (!isConstructor.isConstructor()) {
+            MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(
+                annotationsHelper.getTypeTargetAnnotations(TypeAnnotationEntryValue.type_ret_or_new),
+                d);
             d.dump(result).print(" ");
         }
         d.methodName(methName, this, isConstructor.isConstructor(), true).separator("(");
-        /* We don't get a vararg type to change itself, as it's a function of the method, not the type
-         */
 
+        // We don't get a vararg type to change itself, as it's a function of the method, not the type
         List<LocalVariable> parameterLValues = getComputedParameters();
         int argssize = args.size();
         boolean first = true;
+        List<AnnotationTableTypeEntry> receiverAnnotations = null;
+        if (isInstanceMethod() || isConstructor.isConstructor()) {
+            receiverAnnotations = annotationsHelper.getTypeTargetAnnotations(TypeAnnotationEntryValue.type_receiver);
+        }
+        if (receiverAnnotations != null) {
+            if (isConstructor.isConstructor()) {
+                if (classFile.isInnerClass()) {
+                    MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(receiverAnnotations, d);
+                    d.dump(args.get(0));
+                    d.print(' ').dump(args.get(0)).print(MiscConstants.DOT_THIS);
+                    first = StringUtils.comma(first, d);
+                }
+            } else {
+                classFile.dumpReceiverClassIdentity(receiverAnnotations, d);
+                d.print(' ').print(MiscConstants.THIS);
+                first = StringUtils.comma(first, d);
+            }
+        }
         int offset = 0;
         for (int i = 0; i < argssize && (offset + i < parameterLValues.size()); ++i) {
             JavaTypeInstance arg = args.get(i);
@@ -217,12 +240,13 @@ public class MethodPrototype implements TypeUsageCollectable {
             if (varargs && (i == argssize - 1)) {
                 if (!(arg instanceof JavaArrayTypeInstance)) {
                     d.print(" /* corrupt varargs signature?! */ ");
+                    annotationsHelper.dumpParamType(arg, paramIdx, d);
                     d.dump(arg);
                 } else {
                     ((JavaArrayTypeInstance) arg).toVarargString(d);
                 }
             } else {
-                d.dump(arg);
+                annotationsHelper.dumpParamType(arg, paramIdx, d);
             }
             d.print(" ");
             param.getName().dump(d, true);

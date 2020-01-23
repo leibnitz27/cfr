@@ -25,7 +25,7 @@ public class MapFactory {
         return new TreeMap<X, Y>();
     }
 
-    public static <X, Y> Map<X, Y> newLazyMap(UnaryFunction<X, Y> factory) {
+    public static <X, Y> LazyMap<X, Y> newLazyMap(UnaryFunction<X, Y> factory) {
         return new LazyMap<X, Y>(MapFactory.<X, Y>newMap(), factory);
     }
 

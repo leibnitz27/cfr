@@ -1,14 +1,19 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
+import org.benf.cfr.reader.util.DecompilerComments;
+import org.benf.cfr.reader.util.StringUtils;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -90,14 +95,49 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
     private class Annotated implements JavaAnnotatedTypeInstance {
+        private final List<AnnotationTableTypeEntry> entries = ListFactory.newList();
+
         @Override
         public JavaAnnotatedTypeIterator pathIterator() {
-            throw new UnsupportedOperationException();
+            return new Iterator();
         }
 
         @Override
         public Dumper dump(Dumper d) {
+            for (AnnotationTableTypeEntry entry : entries) {
+                entry.dump(d);
+                d.print(' ');
+            }
+            d.dump(RawJavaType.this);
             return d;
+        }
+
+        private class Iterator implements JavaAnnotatedTypeIterator {
+            // Return this - wrong, but tolerable.
+            @Override
+            public JavaAnnotatedTypeIterator moveArray(DecompilerComments comments) {
+                return this;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveBound(DecompilerComments comments) {
+                return this;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveNested(DecompilerComments comments) {
+                return this;
+            }
+
+            @Override
+            public JavaAnnotatedTypeIterator moveParameterized(int index, DecompilerComments comments) {
+                return this;
+            }
+
+            @Override
+            public void apply(AnnotationTableTypeEntry entry) {
+                entries.add(entry);
+            }
         }
     }
 

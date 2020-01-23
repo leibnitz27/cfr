@@ -1,5 +1,8 @@
 package org.benf.cfr.reader.util.collections;
 
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
+import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
+
 import java.util.*;
 
 public class ListFactory {
@@ -35,6 +38,16 @@ public class ListFactory {
         for (X x : list) {
             if (tmp.add(x)) res.add(x);
         }
+        return res;
+    }
+
+    // Note that you can't expect to mutate the result.
+    public static <X> List<X> combinedOptimistic(List<X> a, List<X> b) {
+        if (a == null || a.isEmpty()) return b;
+        if (b == null || b.isEmpty()) return a;
+        List<X> res = ListFactory.newList();
+        res.addAll(a);
+        res.addAll(b);
         return res;
     }
 }

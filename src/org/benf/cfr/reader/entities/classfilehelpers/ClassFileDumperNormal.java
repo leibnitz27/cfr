@@ -1,12 +1,13 @@
 package org.benf.cfr.reader.entities.classfilehelpers;
 
 import org.benf.cfr.reader.bytecode.analysis.types.ClassSignature;
+import org.benf.cfr.reader.bytecode.analysis.types.FormalTypeParameter;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.TypeUsageCollector;
-import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -28,12 +29,11 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         AccessFlag[] accessFlagsToDump = innerClassDumpType == InnerClassDumpType.INLINE_CLASS ? dumpableAccessFlagsInlineClass : dumpableAccessFlagsClass;
         d.keyword(getAccessFlagsString(c.getAccessFlags(), accessFlagsToDump));
 
-        ClassSignature signature = c.getClassSignature();
-
-        d.keyword("class ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
-        getFormalParametersText(signature, d);
+        d.keyword("class ");
+        c.dumpClassIdentity(d);
         d.newln();
 
+        ClassSignature signature = c.getClassSignature();
         JavaTypeInstance superClass = signature.getSuperClass();
         if (superClass != null) {
             if (!superClass.getRawName().equals(TypeConstants.objectName)) {

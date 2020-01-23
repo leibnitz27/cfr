@@ -1,10 +1,12 @@
 package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
@@ -19,13 +21,14 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.collections.CollectionUtils;
+import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
-import org.benf.cfr.reader.util.output.TypeOverridingDumper;
 
 import java.util.*;
 
@@ -154,11 +157,27 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         attributes.clear();
     }
 
+    // While a method might (according to the descriptor and code) look like it can
+    // be elided, we might have annotations which need to be emitted.
+    // https://github.com/leibnitz27/cfr/issues/93
+    public boolean hasDumpableAttributes() {
+        return attributes.any(
+                AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME,
+                AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME,
+                AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME,
+                AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME,
+                AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME,
+                AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME
+                );
+    }
+
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         methodPrototype.collectTypeUsages(collector);
         collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
         collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
         collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
         collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
         collector.collectFrom(attributes.getByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
@@ -367,23 +386,36 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
         if (!prefix.isEmpty()) d.print(' ');
 
-        MethodPrototypeAnnotationsHelper paramAnnotationsHelper = new MethodPrototypeAnnotationsHelper(
-                attributes.<AttributeRuntimeVisibleParameterAnnotations>getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME),
-                attributes.<AttributeRuntimeInvisibleParameterAnnotations>getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME)
-        );
+        MethodPrototypeAnnotationsHelper annotationsHelper = new MethodPrototypeAnnotationsHelper(attributes);
 
         String displayName = isConstructor.isConstructor() ?
                 d.getTypeUsageInformation().getName(classFile.getClassType()) :
                 methodPrototype.getFixedName();
 
-        getMethodPrototype().dumpDeclarationSignature(d, displayName, isConstructor, paramAnnotationsHelper);
+        getMethodPrototype().dumpDeclarationSignature(d, displayName, isConstructor, annotationsHelper);
         AttributeExceptions exceptionsAttribute = attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
+            List<AnnotationTableTypeEntry> att = annotationsHelper.getTypeTargetAnnotations(TypeAnnotationEntryValue.type_throws);
             d.print(" throws ");
             boolean first = true;
+            int idx = -1;
             for (JavaTypeInstance typeInstance : getThrownTypes()) {
+                ++idx;
                 first = StringUtils.comma(first, d);
-                d.dump(typeInstance);
+                if (att != null) {
+                    JavaAnnotatedTypeInstance jat = typeInstance.getAnnotatedInstance();
+                    final int sidx = idx;
+                    AnnotationTableTypeEntry e = Functional.findOrNull(att, new Predicate<AnnotationTableTypeEntry>() {
+                        @Override
+                        public boolean test(AnnotationTableTypeEntry in) {
+                            return sidx == ((TypeAnnotationTargetInfo.TypeAnnotationThrowsTarget)in.getTargetInfo()).getIndex();
+                        }
+                    });
+                    TypeAnnotationHelper.apply(jat, e, new DecompilerComments());
+                    d.dump(jat);
+                } else {
+                    d.dump(typeInstance);
+                }
             }
         }
     }

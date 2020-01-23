@@ -18,9 +18,12 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeAnnotationHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerDefault;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.attributes.Attribute;
 import org.benf.cfr.reader.entities.attributes.AttributeBootstrapMethods;
 import org.benf.cfr.reader.entities.attributes.AttributeEnclosingMethod;
@@ -30,6 +33,8 @@ import org.benf.cfr.reader.entities.attributes.AttributeModule;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeSignature;
+import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryValue;
+import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumper;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnnotation;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperInterface;
@@ -56,6 +61,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -1105,6 +1111,84 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     @Override
     public String toString() {
         return thisClass.getTextPath();
+    }
+
+
+    private static void getFormalParametersText(ClassSignature signature, TypeAnnotationHelper ah,
+                                                UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> preFact,
+                                                UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> innerFact,
+                                                Dumper d) {
+        List<FormalTypeParameter> formalTypeParameters = signature.getFormalTypeParameters();
+        if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return;
+        d.separator("<");
+        boolean first = true;
+        for (int idx=0,len=formalTypeParameters.size();idx<len;idx++) {
+            FormalTypeParameter formalTypeParameter = formalTypeParameters.get(idx);
+            first = StringUtils.comma(first, d);
+            if (ah != null) {
+                List<AnnotationTableTypeEntry> pre = Functional.filter(ah.getEntries(), preFact.invoke(idx));
+                List<AnnotationTableTypeEntry> inner = Functional.filter(ah.getEntries(), innerFact.invoke(idx));
+                if (!(pre.isEmpty() && inner.isEmpty())) {
+                    // TODO : preprocess - don't do this at dumper.
+                    formalTypeParameter.dump(d, pre, inner);
+                    continue;
+                }
+            }
+            formalTypeParameter.dump(d);
+        }
+        d.print(">");
+    }
+
+    public void dumpReceiverClassIdentity(List<AnnotationTableTypeEntry> recieverAnnotations, Dumper d) {
+        Pair<List<AnnotationTableTypeEntry>, List<AnnotationTableTypeEntry>> split = Functional.partition(recieverAnnotations, new Predicate<AnnotationTableTypeEntry>() {
+            @Override
+            public boolean test(AnnotationTableTypeEntry in) {
+                return in.getTypePath().segments.isEmpty();
+            }
+        });
+        List<AnnotationTableTypeEntry> pre = split.getFirst();
+        List<AnnotationTableTypeEntry> type = split.getSecond();
+        if (!pre.isEmpty()) {
+            pre.get(0).dump(d);
+            d.print(" ");
+        }
+        JavaTypeInstance t = classSignature.getThisGeneralTypeClass(this.getClassType(), constantPool);
+        JavaAnnotatedTypeInstance jat = t.getAnnotatedInstance();
+        TypeAnnotationHelper.apply(jat, type, new DecompilerComments());
+        d.dump(jat);
+    }
+
+    public void dumpClassIdentity(Dumper d) {
+        d.dump(getThisClassConstpoolEntry().getTypeInstance());
+        TypeAnnotationHelper typeAnnotations = TypeAnnotationHelper.create(attributes,
+                TypeAnnotationEntryValue.type_generic_class_interface,
+                TypeAnnotationEntryValue.type_type_parameter_class_interface);
+        UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> outerFact = new UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>>() {
+            @Override
+            public Predicate<AnnotationTableTypeEntry> invoke(final Integer arg) {
+                return new Predicate<AnnotationTableTypeEntry>() {
+                    @Override
+                    public boolean test(AnnotationTableTypeEntry in) {
+                        if (in.getValue() != TypeAnnotationEntryValue.type_generic_class_interface) return false;
+                        // TODO : Cleaner way pls!
+                        return ((TypeAnnotationTargetInfo.TypeAnnotationParameterTarget) in.getTargetInfo()).getIndex() == arg;
+                    }
+                };
+            }
+        };
+        UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> innerFact = new UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>>() {
+            @Override
+            public Predicate<AnnotationTableTypeEntry> invoke(final Integer arg) {
+                return new Predicate<AnnotationTableTypeEntry>() {
+                    @Override
+                    public boolean test(AnnotationTableTypeEntry in) {
+                        if (in.getValue() != TypeAnnotationEntryValue.type_type_parameter_class_interface) return false;
+                        return ((TypeAnnotationTargetInfo.TypeAnnotationParameterBoundTarget) in.getTargetInfo()).getIndex() == arg;
+                    }
+                };
+            }
+        };
+        getFormalParametersText(getClassSignature(), typeAnnotations, outerFact, innerFact, d);
     }
 
     /*

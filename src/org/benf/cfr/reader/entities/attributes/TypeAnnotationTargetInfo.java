@@ -11,13 +11,17 @@ public interface TypeAnnotationTargetInfo {
     class TypeAnnotationParameterTarget implements TypeAnnotationTargetInfo {
         private final short type_parameter_index;
 
-        private TypeAnnotationParameterTarget(short type_parameter_index) {
+        TypeAnnotationParameterTarget(short type_parameter_index) {
             this.type_parameter_index = type_parameter_index;
         }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             short type_parameter_index = raw.getU1At(offset++);
             return Pair.<Long, TypeAnnotationTargetInfo>make(offset, new TypeAnnotationParameterTarget(type_parameter_index));
+        }
+
+        public short getIndex() {
+            return type_parameter_index;
         }
     }
 
@@ -28,7 +32,7 @@ public interface TypeAnnotationTargetInfo {
             this.supertype_index = supertype_index;
         }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             int supertype_index = raw.getU2At(offset);
             offset += 2;
             return Pair.<Long, TypeAnnotationTargetInfo>make(offset, new TypeAnnotationSupertypeTarget(supertype_index));
@@ -45,18 +49,25 @@ public interface TypeAnnotationTargetInfo {
             this.bound_index = bound_index;
         }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             short type_parameter_index = raw.getU1At(offset++);
             short bound_index = raw.getU1At(offset++);
             return Pair.<Long, TypeAnnotationTargetInfo>make(offset, new TypeAnnotationParameterBoundTarget(type_parameter_index, bound_index));
         }
 
+        public short getIndex() {
+            return type_parameter_index;
+        }
     }
 
     class TypeAnnotationEmptyTarget implements TypeAnnotationTargetInfo {
+        private static TypeAnnotationTargetInfo INSTANCE = new TypeAnnotationEmptyTarget();
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+            return Pair.<Long, TypeAnnotationTargetInfo>make(offset, INSTANCE);
+        }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
-            return Pair.<Long, TypeAnnotationTargetInfo>make(offset, new TypeAnnotationEmptyTarget());
+        public static TypeAnnotationTargetInfo getInstance() {
+            return INSTANCE;
         }
     }
 
@@ -67,11 +78,14 @@ public interface TypeAnnotationTargetInfo {
             this.formal_parameter_index = formal_parameter_index;
         }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             short formal_parameter_index = raw.getU1At(offset++);
             return Pair.<Long, TypeAnnotationTargetInfo>make(offset, new TypeAnnotationFormalParameterTarget(formal_parameter_index));
         }
 
+        public int getIndex() {
+            return formal_parameter_index;
+        }
     }
 
     class TypeAnnotationThrowsTarget implements TypeAnnotationTargetInfo {
@@ -81,13 +95,15 @@ public interface TypeAnnotationTargetInfo {
             this.throws_type_index = throws_type_index;
         }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             int throws_type_index = raw.getU2At(offset);
             offset += 2;
             return Pair.<Long, TypeAnnotationTargetInfo>make(offset, new TypeAnnotationThrowsTarget(throws_type_index));
         }
 
-
+        public int getIndex() {
+            return throws_type_index;
+        }
     }
 
     class LocalVarTarget {
@@ -95,7 +111,7 @@ public interface TypeAnnotationTargetInfo {
         private final int length;
         private final int index;
 
-        public LocalVarTarget(int start, int length, int index) {
+        LocalVarTarget(int start, int length, int index) {
             this.start = start;
             this.length = length;
             this.index = index;
@@ -110,7 +126,7 @@ public interface TypeAnnotationTargetInfo {
 
         private final List<LocalVarTarget> targets;
 
-        public TypeAnnotationLocalVarTarget(List<LocalVarTarget> targets) {
+        TypeAnnotationLocalVarTarget(List<LocalVarTarget> targets) {
             this.targets = targets;
         }
 
@@ -121,7 +137,7 @@ public interface TypeAnnotationTargetInfo {
             return false;
         }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             int count = raw.getU2At(offset);
             offset += 2;
             List<LocalVarTarget> targetList = ListFactory.newList();
@@ -145,11 +161,12 @@ public interface TypeAnnotationTargetInfo {
             this.exception_table_index = exception_table_index;
         }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             int exception_table_index = raw.getU2At(offset);
             offset += 2;
             return Pair.<Long, TypeAnnotationTargetInfo>make(offset, new TypeAnnotationCatchTarget(exception_table_index));
         }
+
     }
 
     class TypeAnnotationOffsetTarget implements TypeAnnotationTargetInfo {
@@ -159,7 +176,7 @@ public interface TypeAnnotationTargetInfo {
             this.offset = offset;
         }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             int offset_val = raw.getU2At(offset);
             offset += 2;
             return Pair.<Long, TypeAnnotationTargetInfo>make(offset, new TypeAnnotationOffsetTarget(offset_val));
@@ -175,7 +192,7 @@ public interface TypeAnnotationTargetInfo {
             this.type_argument_index = type_argument_index;
         }
 
-        public static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
+        static Pair<Long, TypeAnnotationTargetInfo> Read(ByteData raw, long offset) {
             int offset_val = raw.getU2At(offset);
             offset += 2;
             short type_argument_index = raw.getU1At(offset++);

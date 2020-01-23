@@ -127,6 +127,7 @@ public class StructuredCatch extends AbstractStructuredStatement {
 
     @Override
     public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
+        expressionRewriter.handleStatement(this.getContainer());
     }
 
     public Set<BlockIdentifier> getPossibleTryBlocks() {

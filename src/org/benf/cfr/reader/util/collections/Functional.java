@@ -43,6 +43,13 @@ public class Functional {
         return result;
     }
 
+    public static <X> X findOrNull(Collection<X> input, Predicate<X> predicate) {
+        List<X> result = ListFactory.newList();
+        for (X item : input) {
+            if (predicate.test(item)) return item;
+        }
+        return null;
+    }
 
     public static <X> Set<X> filterSet(Collection<X> input, Predicate<X> predicate) {
         Set<X> result = SetFactory.newSet();

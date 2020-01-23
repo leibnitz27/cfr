@@ -12,30 +12,42 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.types.JavaAnnotatedTypeIterator;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredCatch;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeAnnotationHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.attributes.AttributeTypeAnnotations;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
-import org.benf.cfr.reader.entities.attributes.TypePathPart;
 import org.benf.cfr.reader.util.DecompilerComments;
+import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.SortedMap;
 
+import static org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryValue.*;
+
 public class TypeAnnotationTransformer implements StructuredStatementTransformer, ExpressionRewriter {
 
-    private final AttributeTypeAnnotations vis;
-    private final AttributeTypeAnnotations invis;
+    private List<AnnotationTableTypeEntry> variableAnnotations;
+    private List<AnnotationTableTypeEntry> catchAnnotations;
+
     private final SortedMap<Integer, Integer> instrsByOffset;
     private final DecompilerComments comments;
 
     public TypeAnnotationTransformer(AttributeTypeAnnotations vis, AttributeTypeAnnotations invis, SortedMap<Integer, Integer> instrsByOffset, DecompilerComments comments) {
-        this.vis = vis;
-        this.invis = invis;
         this.instrsByOffset = instrsByOffset;
         this.comments = comments;
+        this.variableAnnotations = ListFactory.combinedOptimistic(
+                vis == null ? null : vis.getAnnotationsFor(type_localvar, type_resourcevar),
+                invis == null ? null : invis.getAnnotationsFor(type_localvar, type_resourcevar));
+
+        this.catchAnnotations = ListFactory.combinedOptimistic(
+                vis == null ? null : vis.getAnnotationsFor(type_throws),
+                invis == null ? null : invis.getAnnotationsFor(type_throws));
+
     }
 
     public void transform(Op04StructuredStatement root) {
@@ -71,13 +83,21 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
         return lValue;
     }
 
-    private static <X> List<X> combinedOptimistic(List<X> a, List<X> b) {
-        if (a == null || a.isEmpty()) return b;
-        if (b == null || b.isEmpty()) return a;
-        List<X> res = ListFactory.newList();
-        res.addAll(a);
-        res.addAll(b);
-        return res;
+    // TODO : this is a scan PER USE.  It's woefully expensive. (Though why on earth would code be liberally scattered with
+    // annotations?)
+    private List<AnnotationTableTypeEntry> getLocalVariableAnnotations(final int offset, final int slot, final int tolerance) {
+        // CFR may hold the offset the variable was /created/ at, which is 1 before it becomes valid.
+        List<AnnotationTableTypeEntry> entries = variableAnnotations;
+        if (entries.isEmpty()) return Collections.emptyList();
+
+        entries = Functional.filter(entries, new Predicate<AnnotationTableTypeEntry>() {
+            @Override
+            public boolean test(AnnotationTableTypeEntry in) {
+                TypeAnnotationTargetInfo.TypeAnnotationLocalVarTarget tgt = (TypeAnnotationTargetInfo.TypeAnnotationLocalVarTarget)in.getTargetInfo();
+                return tgt.matches(offset, slot, tolerance);
+            }
+        });
+        return entries;
     }
 
     @Override
@@ -86,6 +106,12 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
         if (!(rawStatement instanceof StructuredStatement)) return;
         StructuredStatement stm = (StructuredStatement)rawStatement;
 
+        if (stm instanceof StructuredCatch) {
+            handleCatchStatement((StructuredCatch)stm);
+            return;
+        }
+
+        if (variableAnnotations == null) return;
         /*
          * get anything created here.
          */
@@ -103,11 +129,7 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
                 SortedMap<Integer, Integer> heapMap = instrsByOffset.headMap(offset);
                 int offsetTolerance = heapMap.isEmpty() ? 1 : offset - heapMap.lastKey();
 
-                List<AnnotationTableTypeEntry<TypeAnnotationTargetInfo.TypeAnnotationLocalVarTarget>> entries =
-                        combinedOptimistic(
-                                vis == null ? null : vis.getLocalVariableAnnotations(offset, slot, offsetTolerance),
-                                invis == null ? null : invis.getLocalVariableAnnotations(offset, slot, offsetTolerance));
-
+                List<AnnotationTableTypeEntry> entries = getLocalVariableAnnotations(offset, slot, offsetTolerance);
                 if (entries == null || entries.isEmpty()) continue;
 
                 JavaAnnotatedTypeInstance annotatedTypeInstance = localVariable.getAnnotatedCreationType();
@@ -116,15 +138,14 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
                     localVariable.setCustomCreationType(annotatedTypeInstance);
                 }
 
-                for (AnnotationTableTypeEntry<TypeAnnotationTargetInfo.TypeAnnotationLocalVarTarget> entry : entries) {
-                    JavaAnnotatedTypeIterator iterator = annotatedTypeInstance.pathIterator();
-                    for (TypePathPart part : entry.getTypePath().segments) {
-                        iterator = part.apply(iterator, comments);
-                    }
-                    iterator.apply(entry);
-                }
+                TypeAnnotationHelper.apply(annotatedTypeInstance, entries, comments);
             }
         }
+    }
+
+    private void handleCatchStatement(StructuredCatch stm) {
+        // Need to link our catch back to the ORIGINAL catch index.
+        // TODO : NYI - we need to link up.
     }
 
 }

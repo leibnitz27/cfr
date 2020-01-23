@@ -81,4 +81,8 @@ public class LazyMap<X, Y> implements Map<X, Y> {
     public Set<Entry<X, Y>> entrySet() {
         return inner.entrySet();
     }
+
+    public Y getWithout(X x) {
+        return inner.get(x);
+    }
 }

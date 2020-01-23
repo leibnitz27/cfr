@@ -2,6 +2,7 @@ package org.benf.cfr.reader.entities.annotations;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryKind;
+import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryValue;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationLocation;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
 import org.benf.cfr.reader.entities.attributes.TypePath;
@@ -9,19 +10,13 @@ import org.benf.cfr.reader.entities.attributes.TypePath;
 import java.util.Map;
 
 public class AnnotationTableTypeEntry<T extends TypeAnnotationTargetInfo> extends AnnotationTableEntry {
-
-    private final TypeAnnotationEntryKind kind;
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
-    private final TypeAnnotationLocation location;
-
+    private final TypeAnnotationEntryValue value;
     private final T targetInfo;
-
     private final TypePath typePath;
 
-    public AnnotationTableTypeEntry(TypeAnnotationEntryKind kind, TypeAnnotationLocation location, T targetInfo, TypePath typePath, JavaTypeInstance type, Map<String, ElementValue> elementValueMap) {
+    public AnnotationTableTypeEntry(TypeAnnotationEntryValue value, T targetInfo, TypePath typePath, JavaTypeInstance type, Map<String, ElementValue> elementValueMap) {
         super(type, elementValueMap);
-        this.kind = kind;
-        this.location = location;
+        this.value = value;
         this.targetInfo = targetInfo;
         this.typePath = typePath;
     }
@@ -30,8 +25,10 @@ public class AnnotationTableTypeEntry<T extends TypeAnnotationTargetInfo> extend
         return typePath;
     }
 
+    public TypeAnnotationEntryValue getValue() { return value; }
+
     public TypeAnnotationEntryKind getKind() {
-        return kind;
+        return value.getKind();
     }
 
     public T getTargetInfo() {

@@ -1,6 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.state.TypeUsageCollector;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -72,8 +75,27 @@ public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
         return d;
     }
 
+    // TODO: This really shouldn't be at display time.
+    public Dumper dump(Dumper d, List<AnnotationTableTypeEntry> e1, List<AnnotationTableTypeEntry> e2) {
+        JavaTypeInstance dispInterface = getBound();
+        if (!e1.isEmpty()) {
+            e1.get(0).dump(d);
+            d.print(' ');
+        }
+        d.print(name);
+        if (dispInterface != null) {
+            JavaAnnotatedTypeInstance ati = dispInterface.getAnnotatedInstance();
+            TypeAnnotationHelper.apply(ati, e2, new DecompilerComments());
+            if (!"java.lang.Object".equals(dispInterface.getRawName())) {
+                d.print(" extends ").dump(ati);
+            }
+        }
+        return d;
+    }
+
     @Override
     public String toString() {
         return name + " [ " + classBound + "|" + interfaceBound + "]";
     }
+
 }

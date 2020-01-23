@@ -464,6 +464,8 @@ public class CodeAnalyserWholeClass {
         }
 
         if (!MiscStatementTools.isDeadCode(constructor.getAnalysis())) return;
+        // Don't hide if any parameters have annotations.
+        if (constructor.hasDumpableAttributes()) return;
         constructor.hideDead();
     }
 

@@ -4,6 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeAnnotationHelper;
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
@@ -12,6 +14,7 @@ import org.benf.cfr.reader.entityfactories.AttributeFactory;
 import org.benf.cfr.reader.entityfactories.ContiguousEntityFactory;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.CollectionUtils;
 import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
@@ -127,18 +130,31 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         collector.collect(getJavaTypeInstance());
         collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
         collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME));
+        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
     }
 
     public void dump(Dumper d, String name, ClassFile owner) {
-        AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
-        AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
-        if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
-        if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
+        dumpIfAttribute(d, AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
+        dumpIfAttribute(d, AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
         String prefix = CollectionUtils.join(accessFlags, " ");
         if (!prefix.isEmpty()) {
             d.keyword(prefix).print(' ');
         }
+        TypeAnnotationHelper tah = TypeAnnotationHelper.create(attributes, TypeAnnotationEntryValue.type_field);
         JavaTypeInstance type = getJavaTypeInstance();
-        d.dump(type).print(' ').fieldName(name, owner.getClassType(), false, false, true);
+        if (tah == null) {
+            d.dump(type);
+        } else {
+            JavaAnnotatedTypeInstance jah = type.getAnnotatedInstance();
+            TypeAnnotationHelper.apply(jah, tah.getEntries(), new DecompilerComments());
+            d.dump(jah);
+        }
+        d.print(' ').fieldName(name, owner.getClassType(), false, false, true);
+    }
+
+    private void dumpIfAttribute(Dumper d, String attributeName) {
+        Attribute a = attributes.getByName(attributeName);
+        if (a != null) a.dump(d);
     }
 }

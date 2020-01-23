@@ -22,13 +22,9 @@ public class ClassFileDumperAnnotation extends AbstractClassFileDumper {
 
         d.print(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsInterface));
 
-        ClassSignature signature = c.getClassSignature();
-
-        d.print("@interface ").dump(c.getThisClassConstpoolEntry().getTypeInstance());
-        getFormalParametersText(signature, d);
-        d.newln();
-
-        d.removePendingCarriageReturn().print(" ");
+        d.print("@interface ");
+        c.dumpClassIdentity(d);
+        d.print(" ");
     }
 
 

@@ -101,77 +101,8 @@ class AnnotationHelpers {
 
     static Pair<Long, AnnotationTableTypeEntry> getTypeAnnotation(ByteData raw, long offset, ConstantPool cp) {
         short targetType = raw.getU1At(offset++);
-        TypeAnnotationEntryKind kind;
-        switch (targetType) {
-            case 0x00:
-            case 0x01:
-                kind = TypeAnnotationEntryKind.type_parameter_target;
-                break;
-            case 0x10:
-                kind = TypeAnnotationEntryKind.supertype_target;
-                break;
-            case 0x11:
-            case 0x12:
-                kind = TypeAnnotationEntryKind.type_parameter_bound_target;
-                break;
-            case 0x13:
-            case 0x14:
-            case 0x15:
-                kind = TypeAnnotationEntryKind.empty_target;
-                break;
-            case 0x16:
-                kind = TypeAnnotationEntryKind.method_formal_parameter_target;
-                break;
-            case 0x17:
-                kind = TypeAnnotationEntryKind.throws_target;
-                break;
-            case 0x40:
-            case 0x41:
-                kind = TypeAnnotationEntryKind.localvar_target;
-                break;
-            case 0x42:
-                kind = TypeAnnotationEntryKind.catch_target;
-                break;
-            case 0x43:
-            case 0x44:
-            case 0x45:
-            case 0x46:
-                kind = TypeAnnotationEntryKind.offset_target;
-                break;
-            case 0x47:
-            case 0x48:
-            case 0x49:
-            case 0x4a:
-            case 0x4b:
-                kind = TypeAnnotationEntryKind.localvar_target;
-                break;
-            default:
-                // Shouldn't happen - fallback for compatibility.
-                throw new BadAttributeException();
-        }
-        TypeAnnotationLocation location;
-        switch (targetType) {
-            case 0x00:
-            case 0x10:
-            case 0x11:
-                location = TypeAnnotationLocation.ClassFile;
-                break;
-            case 0x01:
-            case 0x12:
-            case 0x14:
-            case 0x15:
-            case 0x16:
-            case 0x17:
-                location = TypeAnnotationLocation.method_info;
-                break;
-            case 0x13:
-                location = TypeAnnotationLocation.field_info;
-                break;
-            default:
-                location = TypeAnnotationLocation.Code;
-                break;
-        }
-        Pair<Long, TypeAnnotationTargetInfo> targetInfoPair = readTypeAnnotationTargetInfo(kind, raw, offset);
+        TypeAnnotationEntryValue typeAnnotationEntryValue = TypeAnnotationEntryValue.get(targetType);
+        Pair<Long, TypeAnnotationTargetInfo> targetInfoPair = readTypeAnnotationTargetInfo(typeAnnotationEntryValue.getKind(), raw, offset);
         offset = targetInfoPair.getFirst();
         TypeAnnotationTargetInfo targetInfo = targetInfoPair.getSecond();
 
@@ -210,7 +141,7 @@ class AnnotationHelpers {
             offset = getElementValuePair(raw, offset, cp, elementValueMap);
         }
 
-        AnnotationTableTypeEntry res = new AnnotationTableTypeEntry<TypeAnnotationTargetInfo>(kind, location, targetInfo, path, type, elementValueMap);
+        AnnotationTableTypeEntry res = new AnnotationTableTypeEntry<TypeAnnotationTargetInfo>(typeAnnotationEntryValue, targetInfo, path, type, elementValueMap);
 
         return new Pair<Long, AnnotationTableTypeEntry>(offset, res);
     }

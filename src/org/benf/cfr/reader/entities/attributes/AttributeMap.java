@@ -44,4 +44,11 @@ public class AttributeMap implements TypeUsageCollectable {
             attribute.collectTypeUsages(collector);
         }
     }
+
+    public boolean any(String ... attributeNames) {
+        for (String name : attributeNames) {
+            if (attributes.containsKey(name)) return true;
+        }
+        return false;
+    }
 }
