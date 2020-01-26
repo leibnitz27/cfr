@@ -42,7 +42,7 @@ public class OptionsImpl implements Options {
     }
     private static final OptionDecoder<Integer> default0intDecoder = new DefaultingIntDecoder(0);
 
-    private static class DefaultNullEnumDecoder<EnumType extends Enum> implements OptionDecoder<EnumType> {
+    private static class DefaultNullEnumDecoder<EnumType extends Enum<EnumType>> implements OptionDecoder<EnumType> {
         private final Class<EnumType> clazz;
 
         DefaultNullEnumDecoder(Class<EnumType> clazz) {
@@ -62,9 +62,7 @@ public class OptionsImpl implements Options {
         @Override
         public EnumType invoke(String arg1, Void arg2, Options arg3) {
             if (arg1 == null) return null;
-            // javac6 needs this ;)
-            //noinspection RedundantCast
-            return (EnumType)Enum.valueOf(clazz, arg1);
+            return Enum.valueOf(clazz, arg1);
         }
     }
 
@@ -122,12 +120,12 @@ public class OptionsImpl implements Options {
 
         @Override
         public String getRangeDescription() {
-            return null;
+            return "boolean";
         }
 
         @Override
         public String getDefaultValue() {
-            return null;
+            return "Value of option '" + chain.getName() + "'";
         }
 
         @Override
@@ -234,14 +232,14 @@ public class OptionsImpl implements Options {
 
     }
 
-    private static final String CFR_WEBSITE = "http://www.benf.org/other/cfr/";
+    private static final String CFR_WEBSITE = "https://benf.org/other/cfr/";
 
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGBUFFER = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "stringbuffer", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, false),
-            "Convert new Stringbuffer().add.add.add to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
+            "Convert new StringBuffer().append.append.append to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGBUILDER = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "stringbuilder", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
-            "Convert new Stringbuilder().add.add.add to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
+            "Convert new StringBuilder().append.append.append to string + string + string - see " + CFR_WEBSITE + "stringbuilder-vs-concatenation.html");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SUGAR_STRINGCONCATFACTORY = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "stringconcat", new VersionSpecificDefaulter(ClassFileVersion.JAVA_9, true),
             "Convert usages of StringConcatFactor to string + string + string - see " + CFR_WEBSITE + "java9stringconcat.html");
@@ -256,14 +254,14 @@ public class OptionsImpl implements Options {
             "Re-sugar switch on String - see " + CFR_WEBSITE + "java7switchonstring.html");
     public static final PermittedOptionProvider.Argument<Boolean> PREVIEW_FEATURES = new PermittedOptionProvider.Argument<Boolean>(
             "previewfeatures", defaultTrueBooleanDecoder,
-            "Decompile preview features if class was compiled with (jdk --enable-preview).");
+            "Decompile preview features if class was compiled with 'javac --enable-preview'");
     public static final ExperimentalVersionSpecificDefaulter switchExpressionVersion = new ExperimentalVersionSpecificDefaulter(ClassFileVersion.JAVA_13, true, ClassFileVersion.JAVA_12);
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SWITCH_EXPRESSION = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "switchexpression", switchExpressionVersion,
-            "Re-sugar switch expression.");
+            "Re-sugar switch expression");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ARRAY_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
-            "Re-sugar array based iteration.");
+            "Re-sugar array based iteration");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> COLLECTION_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "collectioniter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
             "Re-sugar collection based iteration");
@@ -287,7 +285,7 @@ public class OptionsImpl implements Options {
             "Hide very long strings - useful if obfuscators have placed fake code in strings");
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_BOILERPLATE = new PermittedOptionProvider.Argument<Boolean>(
             "removeboilerplate", defaultTrueBooleanDecoder,
-            "Remove boilderplate functions - constructor boilerplate, lambda deserialisation etc");
+            "Remove boilderplate functions - constructor boilerplate, lambda deserialisation etc.");
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_INNER_CLASS_SYNTHETICS = new PermittedOptionProvider.Argument<Boolean>(
             "removeinnerclasssynthetics", defaultTrueBooleanDecoder,
             "Remove (where possible) implicit outer class references in inner classes");
@@ -302,7 +300,7 @@ public class OptionsImpl implements Options {
             "Lift initialisation code common to all constructors into member initialisation");
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_DEAD_METHODS = new PermittedOptionProvider.Argument<Boolean>(
             "removedeadmethods", defaultTrueBooleanDecoder,
-            "Remove pointless methods - default constructor etc");
+            "Remove pointless methods - default constructor etc.");
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_BAD_GENERICS = new PermittedOptionProvider.Argument<Boolean>(
             "removebadgenerics", defaultTrueBooleanDecoder,
             "Hide generics where we've obviously got it wrong, and fallback to non-generic");
@@ -314,38 +312,37 @@ public class OptionsImpl implements Options {
             "Where possible, remove pointless boxing wrappers");
     public static final PermittedOptionProvider.Argument<Boolean> SHOW_CFR_VERSION = new PermittedOptionProvider.Argument<Boolean>(
             "showversion", defaultTrueBooleanDecoder,
-            "Show CFR version used in header (handy to turn off when regression testing)");
+            "Show used CFR version in header (handy to turn off when regression testing)");
     public static final PermittedOptionProvider.Argument<Boolean> DECODE_FINALLY = new PermittedOptionProvider.Argument<Boolean>(
             "decodefinally", defaultTrueBooleanDecoder,
             "Re-sugar finally statements");
     public static final PermittedOptionProvider.Argument<Boolean> TIDY_MONITORS = new PermittedOptionProvider.Argument<Boolean>(
             "tidymonitors", defaultTrueBooleanDecoder,
-            "Remove support code for monitors - eg catch blocks just to exit a monitor");
+            "Remove support code for monitors - e.g. catch blocks just to exit a monitor");
     public static final PermittedOptionProvider.Argument<Boolean> COMMENT_MONITORS = new PermittedOptionProvider.Argument<Boolean>(
             "commentmonitors", defaultFalseBooleanDecoder,
             "Replace monitors with comments - useful if we're completely confused");
     public static final PermittedOptionProvider.Argument<Boolean> LENIENT = new PermittedOptionProvider.Argument<Boolean>(
             "lenient", defaultFalseBooleanDecoder,
-            "Be a bit more lenient in situations where we'd normally throw an exception"
-    );
+            "Be a bit more lenient in situations where we'd normally throw an exception");
     public static final PermittedOptionProvider.Argument<Boolean> DUMP_CLASS_PATH = new PermittedOptionProvider.Argument<Boolean>(
             "dumpclasspath", defaultFalseBooleanDecoder,
             "Dump class path for debugging purposes");
     public static final PermittedOptionProvider.Argument<Boolean> DECOMPILER_COMMENTS = new PermittedOptionProvider.Argument<Boolean>(
             "comments", defaultTrueBooleanDecoder,
-            "Output comments describing decompiler status, fallback flags etc");
+            "Output comments describing decompiler status, fallback flags etc.");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Troolean>(
             "forcetopsort", defaultNeitherTrooleanDecoder,
             "Force basic block sorting.  Usually not necessary for code emitted directly from javac, but required in the case of obfuscation (or dex2jar!).  Will be enabled in recovery.");
     public static final PermittedOptionProvider.Argument<Troolean> FOR_LOOP_CAPTURE = new PermittedOptionProvider.Argument<Troolean>(
             "forloopaggcapture", defaultNeitherTrooleanDecoder,
-            "Allow for loops to aggresively roll mutations into update section, even if they don't appear to be involved with the predicate");
+            "Allow for loops to aggressively roll mutations into update section, even if they don't appear to be involved with the predicate");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT_EXTRA = new PermittedOptionProvider.Argument<Troolean>(
             "forcetopsortaggress", defaultNeitherTrooleanDecoder,
             "Force extra aggressive topsort options");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT_NOPULL = new PermittedOptionProvider.Argument<Troolean>(
             "forcetopsortnopull", defaultNeitherTrooleanDecoder,
-            "Force topsort not to pull try blocks.");
+            "Force topsort not to pull try blocks");
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_COND_PROPAGATE = new PermittedOptionProvider.Argument<Troolean>(
             "forcecondpropagate", defaultNeitherTrooleanDecoder,
             "Pull results of deterministic jumps back through some constant assignments");
@@ -372,16 +369,16 @@ public class OptionsImpl implements Options {
             "Split lifetimes where analysis caused type clash");
     public static final PermittedOptionProvider.Argument<Troolean> USE_RECOVERED_ITERATOR_TYPE_HINTS = new PermittedOptionProvider.Argument<Troolean>(
             "recovertypehints", defaultNeitherTrooleanDecoder,
-            "Recover type hints for iterators from first pass.");
+            "Recover type hints for iterators from first pass");
     public static final PermittedOptionProvider.Argument<String> OUTPUT_DIR = new PermittedOptionProvider.Argument<String>(
             "outputdir", defaultNullStringDecoder,
-            "Decompile to files in [directory] (outputpath + clobber) (historic compatibility)");
+            "Decompile to files in [directory] (= options 'outputpath' + 'clobber') (historic compatibility)");
     public static final PermittedOptionProvider.Argument<String> OUTPUT_PATH = new PermittedOptionProvider.Argument<String>(
             "outputpath", defaultNullStringDecoder,
             "Decompile to files in [directory]");
     public static final PermittedOptionProvider.Argument<Troolean> CLOBBER_FILES = new PermittedOptionProvider.Argument<Troolean>(
             "clobber", defaultNeitherTrooleanDecoder,
-            "Overwrite files when using outputpath");
+            "Overwrite files when using option 'outputpath'");
     public static final PermittedOptionProvider.Argument<Boolean> SILENT = new PermittedOptionProvider.Argument<Boolean>(
             "silent", defaultFalseBooleanDecoder,
             "Don't display state while decompiling");
@@ -390,13 +387,13 @@ public class OptionsImpl implements Options {
             "Allow more and more aggressive options to be set if decompilation fails");
     public static final PermittedOptionProvider.Argument<Boolean> ECLIPSE = new PermittedOptionProvider.Argument<Boolean>(
             "eclipse", defaultTrueBooleanDecoder,
-            "Enable transformations to handle eclipse code better");
+            "Enable transformations to handle Eclipse code better");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> OVERRIDES = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "override", new VersionSpecificDefaulter(ClassFileVersion.JAVA_6, true),
             "Generate @Override annotations (if method is seen to implement interface method, or override a base class method)");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SHOW_INFERRABLE = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "showinferrable", new VersionSpecificDefaulter(ClassFileVersion.JAVA_7, false),
-            "Decorate methods with explicit types if not implied by arguments.");
+            "Decorate methods with explicit types if not implied by arguments");
     public static final PermittedOptionProvider.Argument<String> HELP = new PermittedOptionProvider.Argument<String>(
             "help", defaultNullStringDecoder,
             "Show help for a given parameter");
@@ -420,10 +417,10 @@ public class OptionsImpl implements Options {
             "Force file to be analysed as 'jar' or 'class'");
     public static final PermittedOptionProvider.Argument<String> JAR_FILTER = new PermittedOptionProvider.Argument<String>(
             "jarfilter", defaultNullStringDecoder,
-            "Substring regex - analyse only classes where the fqn matches this pattern. (when analysing jar).");
+            "Substring regex - analyse only classes where the fqn matches this pattern. (when analysing jar)");
     private static final PermittedOptionProvider.Argument<Boolean> RENAME_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
             "rename", defaultFalseBooleanDecoder,
-            "Synonym for 'renamedupmembers' + 'renameillegalidents' + 'renameenummembers'");
+            "Synonym for 'renamedupmembers' + 'renameillegalidents' + 'renameenumidents'");
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_DUP_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
             "renamedupmembers", new DefaultChainBooleanDecoder(RENAME_MEMBERS),
             "Rename ambiguous/duplicate fields.  Note - this WILL break reflection based access, so is not automatically enabled.");
@@ -447,22 +444,22 @@ public class OptionsImpl implements Options {
             "Use local variable name table if present");
     public static final PermittedOptionProvider.Argument<String> METHODNAME = new PermittedOptionProvider.Argument<String>(
             "methodname", defaultNullStringDecoder,
-            "Name of method to analyse.");
+            "Name of method to analyse");
     public static final PermittedOptionProvider.Argument<String> EXTRA_CLASS_PATH = new PermittedOptionProvider.Argument<String>(
             "extraclasspath", defaultNullStringDecoder,
             "additional class path - classes in this classpath will be used if needed.");
     public static final PermittedOptionProvider.Argument<Boolean> PULL_CODE_CASE = new PermittedOptionProvider.Argument<Boolean>(
             "pullcodecase", defaultFalseBooleanDecoder,
-            "Pull code into case statements agressively.");
+            "Pull code into case statements agressively");
     public static final PermittedOptionProvider.Argument<Boolean> ELIDE_SCALA = new PermittedOptionProvider.Argument<Boolean>(
             "elidescala", defaultFalseBooleanDecoder,
-            "Elide things which aren't helpful in scala output (serialVersionUID, @ScalaSignature).");
+            "Elide things which aren't helpful in scala output (serialVersionUID, @ScalaSignature)");
     public static final PermittedOptionProvider.Argument<Boolean> CASE_INSENSITIVE_FS_RENAME = new PermittedOptionProvider.Argument<Boolean>(
             "caseinsensitivefs", new DefaultingBooleanDecoder(OsInfo.OS().isCaseInsensitive()),
-            "Cope with case insensitive file systems by renaming colliding classes.");
+            "Cope with case insensitive file systems by renaming colliding classes");
     public static final PermittedOptionProvider.Argument<Boolean> LOMEM = new PermittedOptionProvider.Argument<Boolean>(
             "lomem", defaultFalseBooleanDecoder,
-            "Be more agressive about uncaching in order to reduce memory footprint.");
+            "Be more agressive about uncaching in order to reduce memory footprint");
     public static final PermittedOptionProvider.Argument<String> IMPORT_FILTER = new PermittedOptionProvider.Argument<String>(
             "importfilter", defaultNullStringDecoder,
             "Substring regex - import classes only when fqn matches this pattern. (VNegate with !, eg !lang)");
