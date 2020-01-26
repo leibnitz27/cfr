@@ -111,7 +111,7 @@ public class GetOptParser {
         printErrHeader();
         printUsage();
         System.err.println("Parameter error : " + e.getMessage() + "\n");
-        System.err.println("Please specify '--help' to get option list, or '--help optionname' for specifics, eg\n   --help " + OptionsImpl.PULL_CODE_CASE.getName());
+        System.err.println("Please specify '--help' to get option list, or '--help optionname' for specifics, e.g.\n   --help " + OptionsImpl.PULL_CODE_CASE.getName());
     }
 
     public void showOptionHelp(PermittedOptionProvider permittedOptionProvider, Options options, PermittedOptionProvider.ArgumentParam<String, Void> helpArg) {
