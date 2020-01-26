@@ -190,10 +190,14 @@ public class MethodPrototype implements TypeUsageCollectable {
             }
             d.operator("> ");
         }
-        if (!isConstructor.isConstructor()) {
-            MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(
+
+        if (MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(
                 annotationsHelper.getTypeTargetAnnotations(TypeAnnotationEntryValue.type_ret_or_new),
-                d);
+                annotationsHelper.getMethodAnnotations(),
+                d)) {
+            d.newln();
+        }
+        if (!isConstructor.isConstructor()) {
             d.dump(result).print(" ");
         }
         d.methodName(methName, this, isConstructor.isConstructor(), true).separator("(");
@@ -209,7 +213,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (receiverAnnotations != null) {
             if (isConstructor.isConstructor()) {
                 if (classFile.isInnerClass()) {
-                    MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(receiverAnnotations, d);
+                    MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(receiverAnnotations, null, d);
                     d.dump(args.get(0));
                     d.print(' ').dump(args.get(0)).print(MiscConstants.DOT_THIS);
                     first = StringUtils.comma(first, d);
@@ -236,7 +240,6 @@ public class MethodPrototype implements TypeUsageCollectable {
             int paramIdx = i + offset;
             LocalVariable param = parameterLValues.get(paramIdx);
             if (param.isFinal()) d.print("final ");
-            annotationsHelper.addAnnotationTextForParameterInto(paramIdx, d);
             if (varargs && (i == argssize - 1)) {
                 if (!(arg instanceof JavaArrayTypeInstance)) {
                     d.print(" /* corrupt varargs signature?! */ ");

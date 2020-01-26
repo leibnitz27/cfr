@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.ObfuscationTypeMap;
@@ -96,7 +97,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     private static class Annotated implements JavaAnnotatedTypeInstance {
-        private final List<AnnotationTableTypeEntry> entries = ListFactory.newList();
+        private final List<AnnotationTableEntry> entries = ListFactory.newList();
         private final JavaAnnotatedTypeInstance inner;
         private final JavaRefTypeInstance outerThis;
         private final boolean isInner;
@@ -115,7 +116,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         public Dumper dump(Dumper d) {
             if (!entries.isEmpty()) {
                 if (isInner) d.print(' ');
-                for (AnnotationTableTypeEntry entry : entries) {
+                for (AnnotationTableEntry entry : entries) {
                     entry.dump(d);
                     d.print(' ');
                 }
@@ -151,7 +152,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             }
 
             @Override
-            public void apply(AnnotationTableTypeEntry entry) {
+            public void apply(AnnotationTableEntry entry) {
                 entries.add(entry);
             }
         }

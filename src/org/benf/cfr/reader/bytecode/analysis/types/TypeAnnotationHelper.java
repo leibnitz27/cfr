@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.attributes.AttributeMap;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleTypeAnnotations;
@@ -10,8 +11,10 @@ import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryValue;
 import org.benf.cfr.reader.entities.attributes.TypePathPart;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 
 import java.util.List;
+import java.util.Set;
 
 public class TypeAnnotationHelper {
     private final List<AnnotationTableTypeEntry> entries;
@@ -38,16 +41,33 @@ public class TypeAnnotationHelper {
         return null;
     }
 
-    public static void apply(JavaAnnotatedTypeInstance annotatedTypeInstance, List<AnnotationTableTypeEntry> entries, DecompilerComments comments) {
-        for (AnnotationTableTypeEntry entry : entries) {
-            apply(annotatedTypeInstance, entry, comments);
+    public static void apply(JavaAnnotatedTypeInstance annotatedTypeInstance,
+                             List<AnnotationTableTypeEntry> typeEntries,
+                             List<AnnotationTableEntry> entries,
+                             DecompilerComments comments) {
+        Set<JavaTypeInstance> collisions = (entries != null && typeEntries != null) ? SetFactory.<JavaTypeInstance>newSet() : null;
+        if (typeEntries != null) {
+            for (AnnotationTableTypeEntry typeEntry : typeEntries) {
+                apply(annotatedTypeInstance, typeEntry, collisions, comments);
+            }
+        }
+        if (entries != null) {
+            for (AnnotationTableEntry entry : entries) {
+                if (entry == null) continue;
+                if (collisions != null && collisions.contains(entry.getClazz())) continue;
+                annotatedTypeInstance.pathIterator().apply(entry);
+            }
         }
     }
 
-    public static void apply(JavaAnnotatedTypeInstance annotatedTypeInstance, AnnotationTableTypeEntry entry, DecompilerComments comments) {
+    public static void apply(JavaAnnotatedTypeInstance annotatedTypeInstance, AnnotationTableTypeEntry entry, Set<JavaTypeInstance> collisions, DecompilerComments comments) {
         if (entry == null) return;
         JavaAnnotatedTypeIterator iterator = annotatedTypeInstance.pathIterator();
-        for (TypePathPart part : entry.getTypePath().segments) {
+        List<TypePathPart> segments = entry.getTypePath().segments;
+        if (collisions != null && segments.isEmpty()) {
+            collisions.add(entry.getClazz());
+        }
+        for (TypePathPart part : segments) {
             iterator = part.apply(iterator, comments);
         }
         iterator.apply(entry);

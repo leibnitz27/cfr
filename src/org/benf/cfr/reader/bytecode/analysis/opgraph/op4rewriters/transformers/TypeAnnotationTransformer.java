@@ -138,7 +138,7 @@ public class TypeAnnotationTransformer implements StructuredStatementTransformer
                     localVariable.setCustomCreationType(annotatedTypeInstance);
                 }
 
-                TypeAnnotationHelper.apply(annotatedTypeInstance, entries, comments);
+                TypeAnnotationHelper.apply(annotatedTypeInstance, entries, null, comments);
             }
         }
     }

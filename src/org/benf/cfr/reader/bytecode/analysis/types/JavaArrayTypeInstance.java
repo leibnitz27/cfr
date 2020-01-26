@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -25,13 +26,13 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     private class Annotated implements JavaAnnotatedTypeInstance {
-        private final List<List<AnnotationTableTypeEntry>> entries;
+        private final List<List<AnnotationTableEntry>> entries;
         private final JavaAnnotatedTypeInstance annotatedUnderlyingType;
 
         Annotated() {
             entries = ListFactory.newList();
             for (int x=0;x<dimensions;++x) {
-                entries.add(ListFactory.<AnnotationTableTypeEntry>newList());
+                entries.add(ListFactory.<AnnotationTableEntry>newList());
             }
             annotatedUnderlyingType = underlyingType.getAnnotatedInstance();
         }
@@ -40,10 +41,10 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         public Dumper dump(Dumper d) {
             annotatedUnderlyingType.dump(d);
             boolean isFirst = !entries.get(0).isEmpty();
-            for (List<AnnotationTableTypeEntry> entry : entries) {
+            for (List<AnnotationTableEntry> entry : entries) {
                 if (!entry.isEmpty()) {
                     isFirst = StringUtils.space(isFirst, d);
-                    for (AnnotationTableTypeEntry oneEntry : entry) {
+                    for (AnnotationTableEntry oneEntry : entry) {
                         oneEntry.dump(d);
                         d.print(' ');
                     }
@@ -76,7 +77,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
             }
 
             @Override
-            public void apply(AnnotationTableTypeEntry entry) {
+            public void apply(AnnotationTableEntry entry) {
                 entries.get(curIdx).add(entry);
             }
         }

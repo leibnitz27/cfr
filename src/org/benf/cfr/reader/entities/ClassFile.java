@@ -1154,7 +1154,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
         JavaTypeInstance t = classSignature.getThisGeneralTypeClass(this.getClassType(), constantPool);
         JavaAnnotatedTypeInstance jat = t.getAnnotatedInstance();
-        TypeAnnotationHelper.apply(jat, type, new DecompilerComments());
+        TypeAnnotationHelper.apply(jat, type, null, new DecompilerComments());
         d.dump(jat);
     }
 

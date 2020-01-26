@@ -1,12 +1,11 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
-import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.DecompilerComments;
-import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
@@ -95,7 +94,7 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
     private class Annotated implements JavaAnnotatedTypeInstance {
-        private final List<AnnotationTableTypeEntry> entries = ListFactory.newList();
+        private final List<AnnotationTableEntry> entries = ListFactory.newList();
 
         @Override
         public JavaAnnotatedTypeIterator pathIterator() {
@@ -104,7 +103,7 @@ public enum RawJavaType implements JavaTypeInstance {
 
         @Override
         public Dumper dump(Dumper d) {
-            for (AnnotationTableTypeEntry entry : entries) {
+            for (AnnotationTableEntry entry : entries) {
                 entry.dump(d);
                 d.print(' ');
             }
@@ -135,7 +134,7 @@ public enum RawJavaType implements JavaTypeInstance {
             }
 
             @Override
-            public void apply(AnnotationTableTypeEntry entry) {
+            public void apply(AnnotationTableEntry entry) {
                 entries.add(entry);
             }
         }

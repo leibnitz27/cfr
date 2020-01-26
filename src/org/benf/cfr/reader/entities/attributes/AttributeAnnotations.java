@@ -20,6 +20,7 @@ public abstract class AttributeAnnotations extends Attribute implements TypeUsag
     private static final long OFFSET_OF_REMAINDER = 6;
     private static final long OFFSET_OF_NUMBER_OF_ANNOTATIONS = 6;
     private static final long OFFSET_OF_ANNOTATION_TABLE = 8;
+
     private final List<AnnotationTableEntry> annotationTableEntryList = ListFactory.newList();
 
     private final int length;
@@ -56,6 +57,10 @@ public abstract class AttributeAnnotations extends Attribute implements TypeUsag
             }
         }
         return d;
+    }
+
+    public List<AnnotationTableEntry> getEntryList() {
+        return annotationTableEntryList;
     }
 
     @Override

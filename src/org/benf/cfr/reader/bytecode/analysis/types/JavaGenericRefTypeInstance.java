@@ -4,7 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.ComparableUnderEC;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.DefaultEquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
-import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -113,7 +113,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
             }
 
             @Override
-            public void apply(AnnotationTableTypeEntry entry) {
+            public void apply(AnnotationTableEntry entry) {
                 typeAnnotated.pathIterator().apply(entry);
             }
         }

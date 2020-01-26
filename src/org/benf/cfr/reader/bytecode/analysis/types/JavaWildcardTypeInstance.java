@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.ObfuscationTypeMap;
@@ -40,7 +41,7 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     private class Annotated implements JavaAnnotatedTypeInstance {
-        private final List<AnnotationTableTypeEntry> entries = ListFactory.newList();
+        private final List<AnnotationTableEntry> entries = ListFactory.newList();
         private final JavaAnnotatedTypeInstance underlyingAnnotated;
 
         private Annotated() {
@@ -54,7 +55,7 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
 
         @Override
         public Dumper dump(Dumper d) {
-            for (AnnotationTableTypeEntry entry : entries) {
+            for (AnnotationTableEntry entry : entries) {
                 entry.dump(d);
                 d.print(' ');
             }
@@ -71,7 +72,7 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
             }
 
             @Override
-            public void apply(AnnotationTableTypeEntry entry) {
+            public void apply(AnnotationTableEntry entry) {
                 entries.add(entry);
             }
         }

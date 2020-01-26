@@ -3,9 +3,12 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.MiscAnnotations;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeAnnotationHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
@@ -22,6 +25,7 @@ import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 
@@ -135,26 +139,22 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     }
 
     public void dump(Dumper d, String name, ClassFile owner) {
-        dumpIfAttribute(d, AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
-        dumpIfAttribute(d, AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
         String prefix = CollectionUtils.join(accessFlags, " ");
         if (!prefix.isEmpty()) {
             d.keyword(prefix).print(' ');
         }
         TypeAnnotationHelper tah = TypeAnnotationHelper.create(attributes, TypeAnnotationEntryValue.type_field);
+        List<AnnotationTableTypeEntry> e1 = tah == null ? null : tah.getEntries();
+        List<AnnotationTableEntry> e2 = MiscAnnotations.BasicAnnotations(attributes);
+
         JavaTypeInstance type = getJavaTypeInstance();
-        if (tah == null) {
+        if (e1 == null && e2 == null) {
             d.dump(type);
         } else {
             JavaAnnotatedTypeInstance jah = type.getAnnotatedInstance();
-            TypeAnnotationHelper.apply(jah, tah.getEntries(), new DecompilerComments());
+            TypeAnnotationHelper.apply(jah, e1, e2, new DecompilerComments());
             d.dump(jah);
         }
         d.print(' ').fieldName(name, owner.getClassType(), false, false, true);
-    }
-
-    private void dumpIfAttribute(Dumper d, String attributeName) {
-        Attribute a = attributes.getByName(attributeName);
-        if (a != null) a.dump(d);
     }
 }

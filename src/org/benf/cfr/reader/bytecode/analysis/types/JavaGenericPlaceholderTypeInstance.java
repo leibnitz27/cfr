@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.ObfuscationTypeMap;
@@ -47,7 +48,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
     }
 
     private class Annotated implements JavaAnnotatedTypeInstance {
-        private final List<AnnotationTableTypeEntry> entries = ListFactory.newList();
+        private final List<AnnotationTableEntry> entries = ListFactory.newList();
 
         @Override
         public JavaAnnotatedTypeIterator pathIterator() {
@@ -57,7 +58,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
         @Override
         public Dumper dump(Dumper d) {
             if (!entries.isEmpty()) {
-                for (AnnotationTableTypeEntry entry : entries) {
+                for (AnnotationTableEntry entry : entries) {
                     entry.dump(d);
                     d.print(' ');
                 }
@@ -68,7 +69,7 @@ public class JavaGenericPlaceholderTypeInstance implements JavaGenericBaseInstan
 
         private class Iterator extends JavaAnnotatedTypeIterator.BaseAnnotatedTypeIterator {
             @Override
-            public void apply(AnnotationTableTypeEntry entry) {
+            public void apply(AnnotationTableEntry entry) {
                 entries.add(entry);
             }
         }

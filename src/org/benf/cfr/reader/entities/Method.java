@@ -337,10 +337,6 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     private void dumpMethodAnnotations(Dumper d) {
-        AttributeRuntimeVisibleAnnotations runtimeVisibleAnnotations = attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME);
-        AttributeRuntimeInvisibleAnnotations runtimeInvisibleAnnotations = attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME);
-        if (runtimeVisibleAnnotations != null) runtimeVisibleAnnotations.dump(d);
-        if (runtimeInvisibleAnnotations != null) runtimeInvisibleAnnotations.dump(d);
         if (isOverride) {
             d.print("@Override").newln();
         }
@@ -411,7 +407,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
                             return sidx == ((TypeAnnotationTargetInfo.TypeAnnotationThrowsTarget)in.getTargetInfo()).getIndex();
                         }
                     });
-                    TypeAnnotationHelper.apply(jat, e, new DecompilerComments());
+                    TypeAnnotationHelper.apply(jat, e, null, new DecompilerComments());
                     d.dump(jat);
                 } else {
                     d.dump(typeInstance);

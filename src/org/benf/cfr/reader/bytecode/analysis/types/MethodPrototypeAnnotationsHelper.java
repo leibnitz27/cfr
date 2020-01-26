@@ -4,35 +4,28 @@ import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeIn
 import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.attributes.AttributeMap;
-import org.benf.cfr.reader.entities.attributes.AttributeParameterAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleParameterAnnotations;
-import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleTypeAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleParameterAnnotations;
-import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleTypeAnnotations;
-import org.benf.cfr.reader.entities.attributes.AttributeTypeAnnotations;
-import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryKind;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryValue;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class MethodPrototypeAnnotationsHelper {
-    private final AttributeRuntimeVisibleParameterAnnotations runtimeVisibleParameterAnnotations;
-    private final AttributeRuntimeInvisibleParameterAnnotations runtimeInvisibleParameterAnnotations;
+    private final AttributeMap attributeMap;
     private final TypeAnnotationHelper typeAnnotationHelper;
 
     public MethodPrototypeAnnotationsHelper(AttributeMap attributes) {
-        this.runtimeVisibleParameterAnnotations = attributes.getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME);
-        this.runtimeInvisibleParameterAnnotations = attributes.getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME);
+        this.attributeMap = attributes;
         this.typeAnnotationHelper = TypeAnnotationHelper.create(attributes,
                 TypeAnnotationEntryValue.type_generic_method_constructor,
                 TypeAnnotationEntryValue.type_ret_or_new,
@@ -42,26 +35,28 @@ public class MethodPrototypeAnnotationsHelper {
                 );
     }
 
-    private static void addAnnotation(AttributeParameterAnnotations annotations, int idx, Dumper d) {
-        if (annotations == null) return;
-        List<AnnotationTableEntry> annotationTableEntries = annotations.getAnnotationsForParamIdx(idx);
-        dumpAnnotationTableEntries(annotationTableEntries, d);
+    static boolean dumpAnnotationTableEntries(
+            List<? extends AnnotationTableTypeEntry> annotationTableTypeEntries,
+                                           List<AnnotationTableEntry> annotationTableEntries,
+                                           Dumper d) {
+        Set<JavaTypeInstance> collisions = (annotationTableEntries != null && annotationTableTypeEntries != null) ? SetFactory.<JavaTypeInstance>newSet() : null;
+        boolean t1 = dumpAnnotationTableEntries(annotationTableTypeEntries, collisions, d);
+        boolean t2 = dumpAnnotationTableEntries(annotationTableEntries, collisions, d);
+        return t1 || t2;
     }
 
-    static void dumpAnnotationTableEntries(List<? extends AnnotationTableEntry> annotationTableEntries, Dumper d) {
-        if (annotationTableEntries == null || annotationTableEntries.isEmpty()) return;
-        for (AnnotationTableEntry annotationTableEntry : annotationTableEntries) {
-            annotationTableEntry.dump(d);
+    private static boolean dumpAnnotationTableEntries(List<? extends AnnotationTableEntry> entries, Set<JavaTypeInstance> collisions, Dumper d) {
+        if (entries == null) return false;
+        boolean done = false;
+        for (AnnotationTableEntry entry : entries) {
+            if (collisions != null && !collisions.add(entry.getClazz())) {
+                continue;
+            }
+            done = true;
+            entry.dump(d);
             d.print(' ');
         }
-    }
-
-    void addAnnotationTextForParameterInto(int idx, Dumper d) {
-        if (typeAnnotationHelper == null) {
-            // This is a subset of type annotations - todo - what if there's both?
-            addAnnotation(runtimeVisibleParameterAnnotations, idx, d);
-            addAnnotation(runtimeInvisibleParameterAnnotations, idx, d);
-        }
+        return done;
     }
 
     // TODO: Linear scans here, could be replaced with index.
@@ -77,20 +72,40 @@ public class MethodPrototypeAnnotationsHelper {
         return res;
     }
 
-    void dumpParamType(JavaTypeInstance arg, final int paramIdx, Dumper d) {
-        List<AnnotationTableTypeEntry> params = getTypeTargetAnnotations(TypeAnnotationEntryValue.type_formal);
-        if (params == null) {
-            d.dump(arg);
-            return;
-        }
-        params = Functional.filter(params, new Predicate<AnnotationTableTypeEntry>() {
+    public List<AnnotationTableEntry> getMethodAnnotations() {
+        return MiscAnnotations.BasicAnnotations(attributeMap);
+    }
+
+    private List<AnnotationTableEntry> getParameterAnnotations(int idx) {
+        AttributeRuntimeVisibleParameterAnnotations a1 = attributeMap.getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME);
+        AttributeRuntimeInvisibleParameterAnnotations a2 = attributeMap.getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME);
+        List<AnnotationTableEntry> e1 = a1 == null ? null : a1.getAnnotationsForParamIdx(idx);
+        List<AnnotationTableEntry> e2 = a2 == null ? null : a2.getAnnotationsForParamIdx(idx);
+        return ListFactory.combinedOptimistic(e1,e2);
+    }
+
+    private List<AnnotationTableTypeEntry> getTypeParameterAnnotations(final int paramIdx) {
+        List<AnnotationTableTypeEntry> typeEntries = getTypeTargetAnnotations(TypeAnnotationEntryValue.type_formal);
+        if (typeEntries == null) return null;
+        typeEntries = Functional.filter(typeEntries, new Predicate<AnnotationTableTypeEntry>() {
             @Override
             public boolean test(AnnotationTableTypeEntry in) {
                 return ((TypeAnnotationTargetInfo.TypeAnnotationFormalParameterTarget)in.getTargetInfo()).getIndex() == paramIdx;
             }
         });
+        if (typeEntries.isEmpty()) return null;
+        return typeEntries;
+    }
+
+    void dumpParamType(JavaTypeInstance arg, final int paramIdx, Dumper d) {
+        List<AnnotationTableEntry> entries = getParameterAnnotations(paramIdx);
+        List<AnnotationTableTypeEntry> typeEntries = getTypeParameterAnnotations(paramIdx);
+        if (typeEntries == null && entries == null) {
+            d.dump(arg);
+            return;
+        }
         JavaAnnotatedTypeInstance jat = arg.getAnnotatedInstance();
-        TypeAnnotationHelper.apply(jat, params, new DecompilerComments());
+        TypeAnnotationHelper.apply(jat, typeEntries, entries, new DecompilerComments());
         d.dump(jat);
     }
 }

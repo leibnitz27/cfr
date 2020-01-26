@@ -1,6 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
-import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.DecompilerComments;
 
@@ -10,7 +10,7 @@ public interface JavaAnnotatedTypeIterator {
     JavaAnnotatedTypeIterator moveBound(DecompilerComments comments);
     JavaAnnotatedTypeIterator moveNested(DecompilerComments comments);
     JavaAnnotatedTypeIterator moveParameterized(int index, DecompilerComments comments);
-    void apply(AnnotationTableTypeEntry entry);
+    void apply(AnnotationTableEntry entry);
 
     abstract class BaseAnnotatedTypeIterator implements JavaAnnotatedTypeIterator {
         protected void addBadComment(DecompilerComments comments) {
