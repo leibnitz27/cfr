@@ -5,7 +5,6 @@ import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
-import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
@@ -120,28 +119,7 @@ public enum RawJavaType implements JavaTypeInstance {
             return d;
         }
 
-        private class Iterator implements JavaAnnotatedTypeIterator {
-            // Return this - wrong, but tolerable.
-            @Override
-            public JavaAnnotatedTypeIterator moveArray(DecompilerComments comments) {
-                return this;
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveBound(DecompilerComments comments) {
-                return this;
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveNested(DecompilerComments comments) {
-                return this;
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveParameterized(int index, DecompilerComments comments) {
-                return this;
-            }
-
+        private class Iterator extends JavaAnnotatedTypeIterator.BaseAnnotatedTypeIterator {
             @Override
             public void apply(AnnotationTableEntry entry) {
                 entries.add(entry);
