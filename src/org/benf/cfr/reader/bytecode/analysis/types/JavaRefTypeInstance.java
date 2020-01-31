@@ -120,7 +120,11 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
                     d.print(' ');
                 }
             }
-            d.print(outerThis.getRawShortName());
+            if (!isInner) {
+                d.dump(outerThis);
+            } else {
+                d.print(outerThis.getRawShortName());
+            }
             if (inner != null) {
                 d.print('.');
                 inner.dump(d);
@@ -128,26 +132,10 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             return d;
         }
 
-        private class Iterator implements JavaAnnotatedTypeIterator {
-            // Return this - wrong, but tolerable.
-            @Override
-            public JavaAnnotatedTypeIterator moveArray(DecompilerComments comments) {
-                return this;
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveBound(DecompilerComments comments) {
-                return this;
-            }
-
+        private class Iterator extends JavaAnnotatedTypeIterator.BaseAnnotatedTypeIterator {
             @Override
             public JavaAnnotatedTypeIterator moveNested(DecompilerComments comments) {
                 return inner.pathIterator();
-            }
-
-            @Override
-            public JavaAnnotatedTypeIterator moveParameterized(int index, DecompilerComments comments) {
-                return this;
             }
 
             @Override
