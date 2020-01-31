@@ -1,24 +1,34 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
 public interface TypeConstants {
-    JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant("java.lang.Object", "Object");
-    JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstant("java.lang.Enum", "Enum", OBJECT);
-    JavaRefTypeInstance ASSERTION_ERROR = JavaRefTypeInstance.createTypeConstant("java.lang.AssertionError", "AssertionError", OBJECT);
-    JavaRefTypeInstance CHAR_SEQUENCE = JavaRefTypeInstance.createTypeConstant("java.lang.CharSequence", "CharSequence", OBJECT);
-    JavaRefTypeInstance STRING = JavaRefTypeInstance.createTypeConstant("java.lang.String", "String", OBJECT, CHAR_SEQUENCE);
-    JavaRefTypeInstance CLASS = JavaRefTypeInstance.createTypeConstant("java.lang.Class", "Class", OBJECT);
-    JavaRefTypeInstance ITERABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Iterable", "Iterable", OBJECT);
-    JavaRefTypeInstance CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.io.Closeable", "Closeable", OBJECT);
-    JavaRefTypeInstance SERIALIZABLE = JavaRefTypeInstance.createTypeConstant("java.io.Serializable", "Serializable", OBJECT);
-    JavaRefTypeInstance THROWABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Throwable", "Throwable", OBJECT);
-    JavaRefTypeInstance AUTO_CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.lang.AutoCloseable", "AutoCloseable");
+    String objectsName = "java.util.Objects";
+    String throwableName = "java.lang.Throwable";
+    String stringName = "java.lang.String";
+    String charSequenceName = "java.lang.CharSequence";
+    String stringBuilderName = "java.lang.StringBuilder";
+    String stringBufferName = "java.lang.StringBuffer";
+    String className = "java.lang.Class";
+    String objectName = "java.lang.Object";
+    
+    JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant(objectName);
+    JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Enum");
+    JavaRefTypeInstance ASSERTION_ERROR = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.AssertionError");
+    JavaRefTypeInstance CHAR_SEQUENCE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(charSequenceName);
+    JavaRefTypeInstance STRING = JavaRefTypeInstance.createTypeConstant(stringName, OBJECT, CHAR_SEQUENCE);
+    JavaRefTypeInstance CLASS = JavaRefTypeInstance.createTypeConstantWithObjectSuper(className);
+    JavaRefTypeInstance ITERABLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Iterable");
+    JavaRefTypeInstance CLOSEABLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.io.Closeable");
+    JavaRefTypeInstance SERIALIZABLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.io.Serializable");
+    JavaRefTypeInstance THROWABLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(throwableName);
+    JavaRefTypeInstance AUTO_CLOSEABLE = JavaRefTypeInstance.createTypeConstant("java.lang.AutoCloseable");
     JavaRefTypeInstance SUPPLIER = JavaRefTypeInstance.createTypeConstant("java.util.function.Supplier", "Object");
     JavaRefTypeInstance SCALA_SIGNATURE = JavaRefTypeInstance.createTypeConstant("scala.reflect.ScalaSignature", "Object");
-    JavaRefTypeInstance NOCLASSDEFFOUND_ERROR = JavaRefTypeInstance.createTypeConstant("java.lang.NoClassDefFoundError", "NoClassDefFoundError");
-    JavaRefTypeInstance COMPARABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Comparable", "Comparable", OBJECT);
-    JavaRefTypeInstance MATH = JavaRefTypeInstance.createTypeConstant("java.lang.Math", "Math", OBJECT);
-    JavaRefTypeInstance RECORD = JavaRefTypeInstance.createTypeConstant("java.lang.Record", "Record", OBJECT);
-    JavaRefTypeInstance OBJECTMETHODS = JavaRefTypeInstance.createTypeConstant("java.lang.runtime.ObjectMethods", "ObjectMethods", OBJECT);
+    JavaRefTypeInstance NOCLASSDEFFOUND_ERROR = JavaRefTypeInstance.createTypeConstant("java.lang.NoClassDefFoundError");
+    JavaRefTypeInstance COMPARABLE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Comparable");
+    JavaRefTypeInstance MATH = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Math");
+    JavaRefTypeInstance OVERRIDE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Override");
+    JavaRefTypeInstance RECORD = JavaRefTypeInstance.createTypeConstant("java.lang.Record");
+    JavaRefTypeInstance OBJECTMETHODS = JavaRefTypeInstance.createTypeConstant("java.lang.runtime.ObjectMethods");
 
     String boxingNameBoolean = "java.lang.Boolean";
     String boxingNameByte = "java.lang.Byte";
@@ -30,20 +40,11 @@ public interface TypeConstants {
     String boxingNameDouble = "java.lang.Double";
     String boxingNameNumber = "java.lang.Number";
 
-    JavaRefTypeInstance NUMBER = JavaRefTypeInstance.createTypeConstant(boxingNameNumber, "Number", OBJECT, SERIALIZABLE);
-    JavaRefTypeInstance INTEGER = JavaRefTypeInstance.createTypeConstant(boxingNameInt, "Integer", NUMBER, COMPARABLE);
-    JavaRefTypeInstance LONG = JavaRefTypeInstance.createTypeConstant(boxingNameLong, "Long", NUMBER, COMPARABLE);
-    JavaRefTypeInstance DOUBLE = JavaRefTypeInstance.createTypeConstant(boxingNameDouble, "Double", NUMBER, COMPARABLE);
-    JavaRefTypeInstance FLOAT = JavaRefTypeInstance.createTypeConstant(boxingNameFloat, "Float", NUMBER, COMPARABLE);
-
-    String objectsName = "java.util.Objects";
-    String throwableName = "java.lang.Throwable";
-    String stringName = "java.lang.String";
-    String charSequenceName = "java.lang.CharSequence";
-    String stringBuilderName = "java.lang.StringBuilder";
-    String stringBufferName = "java.lang.StringBuffer";
-    String className = "java.lang.Class";
-    String objectName = "java.lang.Object";
+    JavaRefTypeInstance NUMBER = JavaRefTypeInstance.createTypeConstant(boxingNameNumber, OBJECT, SERIALIZABLE);
+    JavaRefTypeInstance INTEGER = JavaRefTypeInstance.createTypeConstant(boxingNameInt, NUMBER, COMPARABLE);
+    JavaRefTypeInstance LONG = JavaRefTypeInstance.createTypeConstant(boxingNameLong, NUMBER, COMPARABLE);
+    JavaRefTypeInstance DOUBLE = JavaRefTypeInstance.createTypeConstant(boxingNameDouble, NUMBER, COMPARABLE);
+    JavaRefTypeInstance FLOAT = JavaRefTypeInstance.createTypeConstant(boxingNameFloat, NUMBER, COMPARABLE);
 
     String methodHandlesName = "java.lang.invoke.MethodHandles";
     String methodHandlesLookupName = "java.lang.invoke.MethodHandles$Lookup";
