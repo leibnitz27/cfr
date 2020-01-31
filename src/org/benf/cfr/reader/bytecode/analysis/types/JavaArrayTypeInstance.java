@@ -40,10 +40,9 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
         @Override
         public Dumper dump(Dumper d) {
             annotatedUnderlyingType.dump(d);
-            boolean isFirst = !entries.get(0).isEmpty();
             for (List<AnnotationTableEntry> entry : entries) {
                 if (!entry.isEmpty()) {
-                    isFirst = StringUtils.space(isFirst, d);
+                    d.print(' ');
                     for (AnnotationTableEntry oneEntry : entry) {
                         oneEntry.dump(d);
                         d.print(' ');
