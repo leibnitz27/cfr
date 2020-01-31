@@ -68,7 +68,7 @@ public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
         JavaTypeInstance dispInterface = getBound();
         d.print(name);
         if (dispInterface != null) {
-            if (!"java.lang.Object".equals(dispInterface.getRawName())) {
+            if (!TypeConstants.objectName.equals(dispInterface.getRawName())) {
                 d.print(" extends ").dump(dispInterface);
             }
         }
@@ -86,7 +86,7 @@ public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
         if (dispInterface != null) {
             JavaAnnotatedTypeInstance ati = dispInterface.getAnnotatedInstance();
             TypeAnnotationHelper.apply(ati, e2, null, new DecompilerComments());
-            if (!"java.lang.Object".equals(dispInterface.getRawName())) {
+            if (!TypeConstants.objectName.equals(dispInterface.getRawName())) {
                 d.print(" extends ").dump(ati);
             }
         }

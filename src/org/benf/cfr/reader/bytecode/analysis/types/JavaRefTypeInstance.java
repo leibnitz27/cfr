@@ -224,11 +224,25 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         return Pair.make(innerType, outerType);
     }
 
-    /*
-     * ONLY call from TypeConstants.
+    /**
+     * ONLY call when creating type constants.
      */
-    public static JavaRefTypeInstance createTypeConstant(String rawClassName, String displayableName, JavaRefTypeInstance... supers) {
+    static JavaRefTypeInstance createTypeConstant(String rawClassName, String displayableName, JavaRefTypeInstance... supers) {
         return new JavaRefTypeInstance(rawClassName, displayableName, supers);
+    }
+
+    /**
+     * ONLY call when creating type constants.
+     */
+    public static JavaRefTypeInstance createTypeConstant(String rawClassName, JavaRefTypeInstance... supers) {
+        return createTypeConstant(rawClassName, getShortName(rawClassName), supers);
+    }
+
+    /**
+     * ONLY call when creating type constants.
+     */
+    static JavaRefTypeInstance createTypeConstantWithObjectSuper(String rawClassName) {
+        return createTypeConstant(rawClassName, getShortName(rawClassName), TypeConstants.OBJECT);
     }
 
     @Override
@@ -454,13 +468,17 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         }
     }
 
+    private static String getShortName(String fullClassName) {
+        int idxlast = fullClassName.lastIndexOf('.');
+        String partname = idxlast == -1 ? fullClassName : fullClassName.substring(idxlast + 1);
+        return partname;
+    }
+
     private static String getShortName(String fullClassName, InnerClassInfo innerClassInfo) {
         if (innerClassInfo.isInnerClass()) {
             fullClassName = fullClassName.replace(MiscConstants.INNER_CLASS_SEP_CHAR, '.');
         }
-        int idxlast = fullClassName.lastIndexOf('.');
-        String partname = idxlast == -1 ? fullClassName : fullClassName.substring(idxlast + 1);
-        return partname;
+        return getShortName(fullClassName);
     }
 
     @Override
