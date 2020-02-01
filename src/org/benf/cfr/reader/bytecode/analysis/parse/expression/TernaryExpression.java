@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.B
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -138,6 +139,10 @@ public class TernaryExpression extends AbstractExpression implements BoxingProce
     public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
     }
 
+    @Override
+    public <T> T visit(ExpressionVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 
     @Override
     public boolean equals(Object o) {

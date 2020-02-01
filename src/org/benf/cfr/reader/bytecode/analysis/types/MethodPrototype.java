@@ -377,20 +377,20 @@ public class MethodPrototype implements TypeUsageCollectable {
             // TODO : It's not a valid assumption that synthetic args are at the front!
             for (Slot synthetic : syntheticArgs) {
                 JavaTypeInstance typeInstance = synthetic.getJavaTypeInstance();
-                parameterLValues.add(new ParameterLValue(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true)), HiddenReason.HiddenOuterReference));
+                parameterLValues.add(new ParameterLValue(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, false, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true)), HiddenReason.HiddenOuterReference));
                 offset += typeInstance.getStackType().getComputationCategory();
             }
         }
 
         for (JavaTypeInstance arg : args) {
             Ident ident = slotToIdentMap.get(offset);
-            parameterLValues.add(new ParameterLValue(new LocalVariable(offset, ident, variableNamer, 0, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)), HiddenReason.NotHidden));
+            parameterLValues.add(new ParameterLValue(new LocalVariable(offset, ident, variableNamer, 0, false, new InferredJavaType(arg, InferredJavaType.Source.FIELD, true)), HiddenReason.NotHidden));
             offset += arg.getStackType().getComputationCategory();
         }
 
         for (Slot synthetic : syntheticCaptureArgs) {
             JavaTypeInstance typeInstance = synthetic.getJavaTypeInstance();
-            parameterLValues.add(new ParameterLValue(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true)), HiddenReason.HiddenCapture));
+            parameterLValues.add(new ParameterLValue(new LocalVariable(offset, slotToIdentMap.get(synthetic.getIdx()), variableNamer, 0, false, new InferredJavaType(typeInstance, InferredJavaType.Source.FIELD, true)), HiddenReason.HiddenCapture));
             offset += typeInstance.getStackType().getComputationCategory();
         }
 

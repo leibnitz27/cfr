@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
@@ -299,6 +300,11 @@ public class ArithmeticOperation extends AbstractExpression implements BoxingPro
 
     public ArithOp getOp() {
         return op;
+    }
+
+    @Override
+    public <T> T visit(ExpressionVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     /*

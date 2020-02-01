@@ -28,9 +28,9 @@ public class LocalVariable extends AbstractLValue {
     private final int originalRawOffset;
     private JavaAnnotatedTypeInstance customCreationType;
 
-    public LocalVariable(int stackPosition, Ident ident, VariableNamer variableNamer, int originalRawOffset, InferredJavaType inferredJavaType) {
+    public LocalVariable(int stackPosition, Ident ident, VariableNamer variableNamer, int originalRawOffset, boolean clashed, InferredJavaType inferredJavaType) {
         super(inferredJavaType);
-        this.name = variableNamer.getName(originalRawOffset, ident, stackPosition);
+        this.name = variableNamer.getName(originalRawOffset, ident, stackPosition, clashed);
         this.idx = stackPosition;
         this.ident = ident;
         this.guessedFinal = false;

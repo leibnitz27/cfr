@@ -17,11 +17,11 @@ import java.util.Map;
 import java.util.Set;
 
 public enum RawJavaType implements JavaTypeInstance {
-    BOOLEAN("boolean", "bl", StackType.INT, true, TypeConstants.boxingNameBoolean, false, false),
-    BYTE("byte", "by", StackType.INT, true, TypeConstants.boxingNameByte, true, false),
-    CHAR("char", "c", StackType.INT, true, TypeConstants.boxingNameChar, false, false),
-    SHORT("short", "s", StackType.INT, true, TypeConstants.boxingNameShort, true, false),
-    INT("int", "n", StackType.INT, true, TypeConstants.boxingNameInt, true, false),
+    BOOLEAN("boolean", "bl", StackType.INT, true, TypeConstants.boxingNameBoolean, false, false, 0, 1),
+    BYTE("byte", "by", StackType.INT, true, TypeConstants.boxingNameByte, true, false, Byte.MIN_VALUE, Byte.MAX_VALUE),
+    CHAR("char", "c", StackType.INT, true, TypeConstants.boxingNameChar, false, false, Character.MIN_VALUE, Character.MAX_VALUE),
+    SHORT("short", "s", StackType.INT, true, TypeConstants.boxingNameShort, true, false, Short.MIN_VALUE, Short.MAX_VALUE),
+    INT("int", "n", StackType.INT, true, TypeConstants.boxingNameInt, true, false, Integer.MIN_VALUE, Integer.MAX_VALUE),
     LONG("long", "l", StackType.LONG, true, TypeConstants.boxingNameLong, true, false),
     FLOAT("float", "f", StackType.FLOAT, true, TypeConstants.boxingNameFloat, true, false),
     DOUBLE("double", "d", StackType.DOUBLE, true, TypeConstants.boxingNameDouble, true, false),
@@ -38,6 +38,8 @@ public enum RawJavaType implements JavaTypeInstance {
     private final String boxedName;
     private final boolean isNumber;
     private final boolean isObject;
+    private final int intMin;
+    private final int intMax;
 
     private static final Map<RawJavaType, Set<RawJavaType>> implicitCasts = MapFactory.newMap();
     private static final Map<String, RawJavaType> boxingTypes = MapFactory.newMap();
@@ -70,7 +72,7 @@ public enum RawJavaType implements JavaTypeInstance {
         return podLookup.get(name);
     }
 
-    RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber, boolean objectType) {
+    RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber, boolean objectType, int intMin, int intMax) {
         this.name = name;
         this.stackType = stackType;
         this.usableType = usableType;
@@ -78,9 +80,16 @@ public enum RawJavaType implements JavaTypeInstance {
         this.suggestedVarName = suggestedVarName;
         this.isNumber = isNumber;
         this.isObject = objectType;
+        this.intMin = intMin;
+        this.intMax = intMax;
     }
 
-    RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, boolean objectType) {
+    RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, String boxedName, boolean isNumber, boolean objectType) {
+        this(name, suggestedVarName, stackType, usableType, boxedName, isNumber, objectType, Integer.MAX_VALUE, Integer.MIN_VALUE);
+    }
+
+
+        RawJavaType(String name, String suggestedVarName, StackType stackType, boolean usableType, boolean objectType) {
         this(name, suggestedVarName, stackType, usableType, null, false, objectType);
     }
 
@@ -166,6 +175,10 @@ public enum RawJavaType implements JavaTypeInstance {
     @Override
     public JavaTypeInstance deObfuscate(ObfuscationTypeMap obfuscationTypeMap) {
         return this;
+    }
+
+    public boolean inIntRange(int value) {
+        return value >= intMin && value <= intMax;
     }
 
     @Override

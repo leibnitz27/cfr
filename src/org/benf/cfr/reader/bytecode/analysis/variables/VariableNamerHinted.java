@@ -37,13 +37,13 @@ public class VariableNamerHinted implements VariableNamer {
     }
 
     @Override
-    public NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition) {
+    public NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition, boolean clashed) {
         // Slightly crappy heuristic for dealing with slight fibbing in offsets by compilers.
         // clamp 0 to 0 to handle empty functions, as that is not incorrectly reported.
         originalRawOffset = originalRawOffset > 0 ? originalRawOffset + 2 : 0;
         int sstackPos = (int) stackPosition;
-        if (!localVariableEntryTreeSet.containsKey(sstackPos)) {
-            return missingNamer.getName(0, ident, sstackPos);
+        if (clashed || !localVariableEntryTreeSet.containsKey(sstackPos)) {
+            return missingNamer.getName(originalRawOffset, ident, sstackPos, clashed);
         }
         LocalVariableEntry tmp = new LocalVariableEntry(originalRawOffset, (short) 1, (short) -1, (short) -1, (short) stackPosition);
         TreeSet<LocalVariableEntry> lveSet = localVariableEntryTreeSet.get(sstackPos);
@@ -52,7 +52,7 @@ public class VariableNamerHinted implements VariableNamer {
         // We'd expect that we could just do a range test, not check start and falling off end.
         // See ScopeTest18 for counterexample.
         if (lve == null || originalRawOffset > lve.getEndPc() && null == lveSet.ceiling(tmp)) {
-            return missingNamer.getName(0, ident, sstackPos);
+            return missingNamer.getName(originalRawOffset, ident, sstackPos, clashed);
         }
 
         NamedVariable namedVariable = cache.get(lve);

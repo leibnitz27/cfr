@@ -1,5 +1,6 @@
 package org.benf.cfr.reader.bytecode.analysis.variables;
 
+import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -11,17 +12,20 @@ import org.benf.cfr.reader.util.collections.MapFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class VariableFactory {
     private final VariableNamer variableNamer;
     private final Map<Integer, InferredJavaType> typedArgs;
+    private final Set<Integer> clashes;
     private final Method method;
     private int ignored;
 
     private final Map<LValue, LValue> cache = MapFactory.newMap();
 
-    public VariableFactory(Method method) {
+    public VariableFactory(Method method, BytecodeMeta bytecodeMeta) {
         this.variableNamer = method.getVariableNamer();
+        this.clashes = bytecodeMeta.getLivenessClashes();
         MethodPrototype methodPrototype = method.getMethodPrototype();
         List<JavaTypeInstance> args = methodPrototype.getArgs();
         this.typedArgs = MapFactory.newMap();
@@ -62,7 +66,13 @@ public class VariableFactory {
         if (varType == null) {
             varType = new InferredJavaType(RawJavaType.VOID, InferredJavaType.Source.UNKNOWN);
         }
-        LValue tmp = new LocalVariable(stackPosition, ident, variableNamer, origCodeRawOffset, varType);
+
+        LValue tmp = new LocalVariable(stackPosition, ident, variableNamer, origCodeRawOffset,
+                clashes.contains(stackPosition)
+                // TODO : This is a hack disabling explicit clashes, to avoid breaking Tower. (see tests)
+                // However, it will need to be fixed to deal with bug #87
+                && typedArgs.get(stackPosition) == null,
+                varType);
         LValue val = cache.get(tmp);
         if (val == null) {
             cache.put(tmp, tmp);

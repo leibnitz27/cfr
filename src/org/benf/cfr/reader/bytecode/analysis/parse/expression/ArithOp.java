@@ -11,31 +11,33 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import java.util.Set;
 
 public enum ArithOp {
-    LCMP("LCMP", true, Precedence.WEAKEST),
-    DCMPL("DCMPL", true, Precedence.WEAKEST),
-    DCMPG("DCMPG", true, Precedence.WEAKEST),
-    FCMPL("FCMPL", true, Precedence.WEAKEST),
-    FCMPG("FCMPG", true, Precedence.WEAKEST),
-    PLUS("+", false, Precedence.ADD_SUB),
-    MINUS("-", false, Precedence.ADD_SUB),
-    MULTIPLY("*", false, Precedence.MUL_DIV_MOD),
-    DIVIDE("/", false, Precedence.MUL_DIV_MOD),
-    REM("%", false, Precedence.MUL_DIV_MOD),
-    OR("|", false, Precedence.BIT_OR),
-    AND("&", false, Precedence.BIT_AND),
-    SHR(">>", false, Precedence.BITWISE_SHIFT),
-    SHL("<<", false, Precedence.BITWISE_SHIFT),
-    SHRU(">>>", false, Precedence.BITWISE_SHIFT),
-    XOR("^", false, Precedence.BIT_XOR),
-    NEG("~", false, Precedence.UNARY_OTHER);
+    LCMP("LCMP", true, false, Precedence.WEAKEST),
+    DCMPL("DCMPL", true, false, Precedence.WEAKEST),
+    DCMPG("DCMPG", true, false, Precedence.WEAKEST),
+    FCMPL("FCMPL", true, false, Precedence.WEAKEST),
+    FCMPG("FCMPG", true, false, Precedence.WEAKEST),
+    PLUS("+", false, false, Precedence.ADD_SUB),
+    MINUS("-", false, false,Precedence.ADD_SUB),
+    MULTIPLY("*", false, false, Precedence.MUL_DIV_MOD),
+    DIVIDE("/", false, false, Precedence.MUL_DIV_MOD),
+    REM("%", false,false, Precedence.MUL_DIV_MOD),
+    OR("|", false, true, Precedence.BIT_OR),
+    AND("&", false, true, Precedence.BIT_AND),
+    SHR(">>", false, false, Precedence.BITWISE_SHIFT),
+    SHL("<<", false, false, Precedence.BITWISE_SHIFT),
+    SHRU(">>>", false, false, Precedence.BITWISE_SHIFT),
+    XOR("^", false,true, Precedence.BIT_XOR),
+    NEG("~", false, false, Precedence.UNARY_OTHER);
 
     private final String showAs;
     private final boolean temporary;
+    private final boolean boolSafe;
     private final Precedence precedence;
 
-    ArithOp(String showAs, boolean temporary, Precedence precedence) {
+    ArithOp(String showAs, boolean temporary, boolean boolSafe, Precedence precedence) {
         this.showAs = showAs;
         this.temporary = temporary;
+        this.boolSafe = boolSafe;
         this.precedence = precedence;
     }
 
@@ -122,5 +124,9 @@ public enum ArithOp {
                 break;
         }
         return caught.checkAgainst(instances);
+    }
+
+    public boolean isBoolSafe() {
+        return boolSafe;
     }
 }

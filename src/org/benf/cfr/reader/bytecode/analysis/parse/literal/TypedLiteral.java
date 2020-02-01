@@ -342,6 +342,12 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         return inferredJavaType;
     }
 
+    public boolean checkIntegerUsage(RawJavaType rawType) {
+        if (type != LiteralType.Integer) return false;
+        int x = getIntValue();
+        return rawType.inIntRange(x);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;

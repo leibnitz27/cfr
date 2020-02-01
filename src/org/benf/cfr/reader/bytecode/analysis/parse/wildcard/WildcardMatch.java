@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -563,6 +564,11 @@ public class WildcardMatch {
         @Override
         public Literal getComputedLiteral(Map<LValue, Literal> display) {
             return null;
+        }
+
+        @Override
+        public <T> T visit(ExpressionVisitor<T> visitor) {
+            return visitor.visit(this);
         }
     }
 

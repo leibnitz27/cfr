@@ -4,7 +4,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.DeepCloneable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
@@ -40,6 +42,9 @@ public interface Expression extends DumpableWithPrecedence, DeepCloneable<Expres
 
     boolean isValidStatement();
 
+    <T> T visit(ExpressionVisitor<T> visitor);
+
     @Override
     Dumper dump(Dumper d);
+
 }

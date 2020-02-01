@@ -417,7 +417,7 @@ public class CodeAnalyser {
         Op02WithProcessedDataAndRefs.discoverStorageLiveness(method, comments, op2list, bytecodeMeta);
 
         // Create a non final version...
-        final VariableFactory variableFactory = new VariableFactory(method);
+        final VariableFactory variableFactory = new VariableFactory(method, bytecodeMeta);
 
         TypeHintRecovery typeHintRecovery = options.optionIsSet(OptionsImpl.USE_RECOVERED_ITERATOR_TYPE_HINTS) ?
                 new TypeHintRecoveryImpl(bytecodeMeta) : TypeHintRecoveryNone.INSTANCE;
@@ -869,6 +869,9 @@ public class CodeAnalyser {
             Op04StructuredStatement.applyChecker(new IllegalReturnChecker(), block, comments);
 
             Op04StructuredStatement.flattenNonReferencedBlocks(block);
+
+            Op04StructuredStatement.reduceClashDeclarations(block, bytecodeMeta);
+
             /*
              * And apply any type annotations we can.
              */

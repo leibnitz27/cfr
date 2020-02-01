@@ -12,11 +12,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.FieldVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
-import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.LiteralRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverImpl;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.AbstractLValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LocalClassScopeDiscoverImpl;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
@@ -26,8 +24,6 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.Be
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
-import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.attributes.AttributeCode;
@@ -101,6 +97,11 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
 
     public static void switchExpression(Op04StructuredStatement root, DecompilerComments comments, ClassFileVersion classFileVersion) {
         root.transform(new SwitchExpressionRewriter(comments, classFileVersion), new StructuredScope());
+    }
+
+    public static void reduceClashDeclarations(Op04StructuredStatement root, BytecodeMeta bytecodeMeta) {
+        if (bytecodeMeta.getLivenessClashes().isEmpty()) return;
+        root.transform(new ClashDeclarationReducer(bytecodeMeta.getLivenessClashes()), new StructuredScope());
     }
 
     // TODO: This isn't quite right.  Should actually be removing the node.
@@ -824,78 +825,12 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         scopeDiscoverer.markDiscoveredCreations();
     }
 
-    public static class LValueTypeClashCheck implements LValueScopeDiscoverer, StructuredStatementTransformer {
-
-        Set<Integer> clashes = SetFactory.newSet();
-
-        @Override
-        public void processOp04Statement(Op04StructuredStatement statement) {
-            statement.getStatement().traceLocalVariableScope(this);
-        }
-
-        @Override
-        public void enterBlock(StructuredStatement structuredStatement) {
-        }
-
-        @Override
-        public void leaveBlock(StructuredStatement structuredStatement) {
-        }
-
-        @Override
-        public void mark(StatementContainer<StructuredStatement> mark) {
-        }
-
-        @Override
-        public void collect(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-            collect(lValue);
-        }
-
-        @Override
-        public void collectMultiUse(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-            collect(lValue);
-        }
-
-        @Override
-        public void collectMutatedLValue(LValue lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-            collect(lValue);
-        }
-
-        @Override
-        public void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value) {
-            collect(localVariable);
-        }
-
-        public void collect(LValue lValue) {
-            lValue.collectLValueUsage(this);
-            InferredJavaType inferredJavaType = lValue.getInferredJavaType();
-            if (inferredJavaType != null) {
-                if (inferredJavaType.isClash() || inferredJavaType.getJavaTypeInstance() == RawJavaType.REF) {
-                    if (lValue instanceof LocalVariable) {
-                        int idx = ((LocalVariable) lValue).getIdx();
-                        if (idx >= 0) clashes.add(idx);
-                    }
-                }
-            }
-        }
-
-        @Override
-        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
-            in.traceLocalVariableScope(this);
-            in.transformStructuredChildren(this, scope);
-            return in;
-        }
-
-        @Override
-        public boolean descendLambdas() {
-            return false;
-        }
-    }
-
     public static boolean checkTypeClashes(Op04StructuredStatement block, BytecodeMeta bytecodeMeta) {
         LValueTypeClashCheck clashCheck = new LValueTypeClashCheck();
         clashCheck.processOp04Statement(block);
-        if (!clashCheck.clashes.isEmpty()) {
-            bytecodeMeta.informLivenessClashes(clashCheck.clashes);
+        Set<Integer> clashes = clashCheck.getClashes();
+        if (!clashes.isEmpty()) {
+            bytecodeMeta.informLivenessClashes(clashes);
             return true;
         }
         return false;

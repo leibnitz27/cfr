@@ -67,11 +67,19 @@ public class LoopLivenessClash {
         }
         if (listIterType == null) return res;
         if (iterType.equals(listIterType)) return res;
+
         // We've probably screwed up the types by failing to get the correct list type instead.
         // If it's appropriate, collect the 'better' type.
         if (listIterType instanceof JavaGenericPlaceholderTypeInstance) {
             bytecodeMeta.takeIteratedTypeHint(inferredListType, iterType);
             return res;
+        }
+        // Or if we're unboxed-looping round a boxed type - this isn't a clash.
+        boolean listIterTypeRaw = listIterType.isRaw();
+        if (listIterTypeRaw ^ iterType.isRaw()) {
+            JavaTypeInstance raw = listIterTypeRaw ? listIterType : iterType;
+            JavaTypeInstance oth = listIterTypeRaw ? iterType : listIterType;
+            if (raw == RawJavaType.getUnboxedTypeFor(oth)) return res;
         }
 
         /*

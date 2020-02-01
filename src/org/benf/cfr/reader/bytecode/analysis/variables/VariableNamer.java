@@ -3,7 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.variables;
 import java.util.List;
 
 public interface VariableNamer {
-    NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition);
+    NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition, boolean clashed);
 
     List<NamedVariable> getNamedVariables();
 

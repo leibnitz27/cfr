@@ -1037,6 +1037,11 @@ public class InferredJavaType {
                 // Find the 'least' specific, tie to that.
                 int cmp = thisRaw.compareTypePriorityTo(otherRaw);
                 if (cmp > 0) {
+                    // NB: We could take note of the fact that we have a LITERAL source here,
+                    // which would allow us to check if we're forcing something out of bounds.
+                    // HOWEVER - That makes life significantly harder when dealing with chars,
+                    // etc, as we have to selectively upcast, which we can't necessarily do without
+                    // following any arithmetic involved.
                     this.value.forceType(otherRaw, false);
                 } else if (cmp < 0) {
                     // This special case is because we aggressively try to treat 0/1 as boolean,

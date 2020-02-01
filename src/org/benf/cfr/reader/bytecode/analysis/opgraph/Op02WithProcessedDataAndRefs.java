@@ -1979,7 +1979,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                                 if (slotkey.getSecond().getComparisonType() instanceof StackType) {
                                     s2 = (StackType)innerslotkey.getSecond().getComparisonType();
                                 }
-                                if (!(s1 == s2 && s1.isClosed())) {
+                                if (!(s1 == s2 && s1.isClosed()) || s1 == StackType.INT) {
                                     return;
                                 }
                             }

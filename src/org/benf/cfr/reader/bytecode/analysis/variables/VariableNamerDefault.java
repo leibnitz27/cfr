@@ -17,7 +17,7 @@ public class VariableNamerDefault implements VariableNamer {
     }
 
     @Override
-    public NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition) {
+    public NamedVariable getName(int originalRawOffset, Ident ident, long stackPosition, boolean clashed) {
         NamedVariable res = cached.get(ident);
         if (res == null) {
             res = new NamedVariableDefault("var" + ident);

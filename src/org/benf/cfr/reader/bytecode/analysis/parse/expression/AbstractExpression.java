@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -85,6 +86,11 @@ public abstract class AbstractExpression implements Expression {
     public abstract Dumper dumpInner(Dumper d);
 
     @Override
+    public <T> T visit(ExpressionVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
     public final Dumper dumpWithOuterPrecedence(Dumper d, Precedence outerP, Troolean isLhs) {
         Precedence innerP = getPrecedence();
         int cmp = innerP.compareTo(outerP);
@@ -119,4 +125,5 @@ public abstract class AbstractExpression implements Expression {
         }
         return d;
     }
+
 }
