@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.types;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
+import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.state.DCCommonState;
@@ -81,54 +82,96 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     @Override
     public JavaAnnotatedTypeInstance getAnnotatedInstance() {
         JavaRefTypeInstance rti = this;
-        JavaAnnotatedTypeInstance prev = null;
+        Annotated prev = null;
+        boolean couldLoadOuterClasses = true;
+
         do {
             InnerClassInfo ici = rti.getInnerClassHereInfo();
             boolean isInner = ici.isInnerClass();
-            prev = new Annotated(prev, rti, isInner);
-            if (isInner) {
+            prev = new Annotated(prev, rti);
+            /*
+             * JLS 9.7.4 ("admissible"):
+             * Annotation relates to runtime object, so if inner class is non-static, an instance of outer
+             * class exists as runtime object and can therefore be annotated. However, for static nested
+             * classes no instance of outer class exists, so outer class is just a name and cannot be
+             * annotated.
+             */
+            ClassFile classFile = rti.getClassFile();
+            if (isInner && (classFile == null || !rti.getClassFile().testAccessFlag(AccessFlag.ACC_STATIC))) {
                 rti = ici.getOuterClass();
+
+                // Annotation placement might be incorrect if determining whether outer
+                // is static is not possible
+                if (couldLoadOuterClasses && classFile == null) {
+                    couldLoadOuterClasses = false;
+                }
             } else {
                 rti = null;
             }
         } while (rti != null);
+
+        if (!couldLoadOuterClasses) {
+            prev.setComment(DecompilerComment.BAD_ANNOTATION_ON_INNER);
+        }
+
         return prev;
     }
 
     private static class Annotated implements JavaAnnotatedTypeInstance {
         private final List<AnnotationTableEntry> entries = ListFactory.newList();
-        private final JavaAnnotatedTypeInstance inner;
+        private final Annotated inner;
         private final JavaRefTypeInstance outerThis;
-        private final boolean isInner;
+        private DecompilerComment nullableComment = null;
 
-        private Annotated(JavaAnnotatedTypeInstance inner, JavaRefTypeInstance outerThis, boolean isInner) {
+        private Annotated(Annotated inner, JavaRefTypeInstance outerThis) {
             this.inner = inner;
             this.outerThis = outerThis;
-            this.isInner = isInner;
+        }
+
+        public void setComment(DecompilerComment comment) {
+            this.nullableComment = comment;
         }
 
         public JavaAnnotatedTypeIterator pathIterator() {
             return new Iterator();
         }
 
-        @Override
-        public Dumper dump(Dumper d) {
+        private void dump(Dumper d, boolean hasDumpedType) {
+            if (nullableComment != null) {
+                d.dump(nullableComment);
+            }
+
             if (!entries.isEmpty()) {
-                if (isInner) d.print(' ');
+                if (hasDumpedType) d.print(' ');
                 for (AnnotationTableEntry entry : entries) {
                     entry.dump(d);
                     d.print(' ');
                 }
             }
-            if (!isInner) {
-                d.dump(outerThis);
+
+            /*
+             * Only dump type for first actually annotated type.
+             * E.g. with A, B and C all being inner (= non-static) classes, having
+             * `A.B.@TypeUse C` should dump `@TypeUse C`
+             */
+            if (entries.isEmpty() && !hasDumpedType && inner != null) {
+                inner.dump(d, hasDumpedType);
             } else {
-                d.print(outerThis.getRawShortName());
+                if (!hasDumpedType) {
+                    d.dump(outerThis);
+                } else {
+                    d.print(outerThis.getRawShortName());
+                }
+                if (inner != null) {
+                    d.print('.');
+                    inner.dump(d, true);
+                }
             }
-            if (inner != null) {
-                d.print('.');
-                inner.dump(d);
-            }
+        }
+
+        @Override
+        public Dumper dump(Dumper d) {
+            dump(d, false);
             return d;
         }
 
