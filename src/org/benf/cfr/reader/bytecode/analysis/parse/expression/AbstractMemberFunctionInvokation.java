@@ -154,8 +154,9 @@ public abstract class AbstractMemberFunctionInvokation extends AbstractFunctionI
 
     protected OverloadMethodSet getOverloadMethodSetInner(JavaTypeInstance objectType) {
         JavaTypeInstance deGenerifiedObjectType = objectType.getDeGenerifiedType();
-        if (deGenerifiedObjectType !=
-          getFunction().getMethodPrototype().getClassType().getDeGenerifiedType()) {
+        // Could well be null....
+        JavaTypeInstance protoClassType = getFunction().getMethodPrototype().getClassType();
+        if (protoClassType == null || deGenerifiedObjectType != protoClassType.getDeGenerifiedType()) {
             // TODO : This is more expensive than I'd like.
             OverloadMethodSet overloadMethodSet = getMethodPrototype().getOverloadMethodSet();
             if (deGenerifiedObjectType instanceof JavaRefTypeInstance) {
