@@ -7,6 +7,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.output.MethodErrorCollector.SummaryDumperMethodErrorCollector;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,16 +40,17 @@ public class SinkDumperFactory implements DumperFactory {
     public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         List<OutputSinkFactory.SinkClass> supported = sinkFactory.getSupportedSinks(OutputSinkFactory.SinkType.JAVA, Arrays.asList(OutputSinkFactory.SinkClass.DECOMPILED_MULTIVER, OutputSinkFactory.SinkClass.DECOMPILED, OutputSinkFactory.SinkClass.TOKEN_STREAM, OutputSinkFactory.SinkClass.STRING));
         if (supported == null) supported = justString;
+        MethodErrorCollector methodErrorCollector = new SummaryDumperMethodErrorCollector(classType, summaryDumper);
         for (OutputSinkFactory.SinkClass sinkClass : supported) {
             switch (sinkClass) {
                 case DECOMPILED_MULTIVER:
-                    return SinkSourceClassDumper(sinkFactory.<SinkReturns.Decompiled>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), version, classType, typeUsageInformation, illegalIdentifierDump);
+                    return SinkSourceClassDumper(sinkFactory.<SinkReturns.Decompiled>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), version, classType, methodErrorCollector, typeUsageInformation, illegalIdentifierDump);
                 case DECOMPILED:
-                    return SinkSourceClassDumper(sinkFactory.<SinkReturns.Decompiled>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), classType, typeUsageInformation, illegalIdentifierDump);
+                    return SinkSourceClassDumper(sinkFactory.<SinkReturns.Decompiled>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), classType, methodErrorCollector, typeUsageInformation, illegalIdentifierDump);
                 case STRING:
-                    return SinkStringClassDumper(sinkFactory.<String>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), typeUsageInformation, illegalIdentifierDump);
+                    return SinkStringClassDumper(sinkFactory.<String>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), methodErrorCollector, typeUsageInformation, illegalIdentifierDump);
                 case TOKEN_STREAM:
-                    return TokenStreamClassDumper(sinkFactory.<SinkReturns.Token>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), version, classType, typeUsageInformation, illegalIdentifierDump);
+                    return TokenStreamClassDumper(sinkFactory.<SinkReturns.Token>getSink(OutputSinkFactory.SinkType.JAVA, sinkClass), version, classType, methodErrorCollector, typeUsageInformation, illegalIdentifierDump);
                 default:
             }
         }
@@ -56,16 +58,16 @@ public class SinkDumperFactory implements DumperFactory {
         if (stringSink == null) {
             stringSink = new NopStringSink();
         }
-        return SinkStringClassDumper(stringSink, typeUsageInformation, illegalIdentifierDump);
+        return SinkStringClassDumper(stringSink, methodErrorCollector, typeUsageInformation, illegalIdentifierDump);
     }
 
-    private Dumper TokenStreamClassDumper(final OutputSinkFactory.Sink<SinkReturns.Token> sink, int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-        return new TokenStreamDumper(sink, version, classType, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
+    private Dumper TokenStreamClassDumper(final OutputSinkFactory.Sink<SinkReturns.Token> sink, int version, JavaTypeInstance classType, MethodErrorCollector methodErrorCollector, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+        return new TokenStreamDumper(sink, version, classType, methodErrorCollector, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
     }
 
-    private Dumper SinkStringClassDumper(final OutputSinkFactory.Sink<String> sink, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+    private Dumper SinkStringClassDumper(final OutputSinkFactory.Sink<String> sink, MethodErrorCollector methodErrorCollector, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         final StringBuilder sb = new StringBuilder();
-        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext()) {
+        return new StringStreamDumper(methodErrorCollector, sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext()) {
             @Override
             public void close() {
                 sink.write(sb.toString());
@@ -73,11 +75,11 @@ public class SinkDumperFactory implements DumperFactory {
         };
     }
 
-    private Dumper SinkSourceClassDumper(final OutputSinkFactory.Sink<SinkReturns.Decompiled> sink, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+    private Dumper SinkSourceClassDumper(final OutputSinkFactory.Sink<SinkReturns.Decompiled> sink, JavaTypeInstance classType, MethodErrorCollector methodErrorCollector, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         final StringBuilder sb = new StringBuilder();
         final Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(classType);
 
-        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext()) {
+        return new StringStreamDumper(methodErrorCollector, sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext()) {
 
             @Override
             public void close() {
@@ -104,11 +106,11 @@ public class SinkDumperFactory implements DumperFactory {
         };
     }
 
-    private Dumper SinkSourceClassDumper(final OutputSinkFactory.Sink<SinkReturns.Decompiled> sink, final int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
+    private Dumper SinkSourceClassDumper(final OutputSinkFactory.Sink<SinkReturns.Decompiled> sink, final int version, JavaTypeInstance classType, MethodErrorCollector methodErrorCollector, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
         final StringBuilder sb = new StringBuilder();
         final Pair<String, String> names = ClassNameUtils.getPackageAndClassNames(classType);
 
-        return new StringStreamDumper(sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext()) {
+        return new StringStreamDumper(methodErrorCollector, sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext()) {
 
             @Override
             public void close() {

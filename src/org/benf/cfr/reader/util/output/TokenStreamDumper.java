@@ -27,6 +27,7 @@ public class TokenStreamDumper extends AbstractDumper {
     private final OutputSinkFactory.Sink<SinkReturns.Token> sink;
     private final int version;
     private final JavaTypeInstance classType;
+    private final MethodErrorCollector methodErrorCollector;
     private final TypeUsageInformation typeUsageInformation;
     private final Options options;
     private final IllegalIdentifierDump illegalIdentifierDump;
@@ -41,11 +42,12 @@ public class TokenStreamDumper extends AbstractDumper {
 
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
 
-    TokenStreamDumper(OutputSinkFactory.Sink<SinkReturns.Token> sink, int version, JavaTypeInstance classType, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, MovableDumperContext context) {
+    TokenStreamDumper(OutputSinkFactory.Sink<SinkReturns.Token> sink, int version, JavaTypeInstance classType, MethodErrorCollector methodErrorCollector, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, MovableDumperContext context) {
         super(context);
         this.sink = sink;
         this.version = version;
         this.classType = classType;
+        this.methodErrorCollector = methodErrorCollector;
         this.typeUsageInformation = typeUsageInformation;
         this.options = options;
         this.illegalIdentifierDump = illegalIdentifierDump;
@@ -331,7 +333,7 @@ public class TokenStreamDumper extends AbstractDumper {
 
     @Override
     public void addSummaryError(Method method, String s) {
-        // none currently.
+        methodErrorCollector.addSummaryError(method, s);
     }
 
     @Override
@@ -351,7 +353,7 @@ public class TokenStreamDumper extends AbstractDumper {
 
     @Override
     public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
-        return new TokenStreamDumper(sink, version, classType, innerclassTypeUsageInformation, options, illegalIdentifierDump, context);
+        return new TokenStreamDumper(sink, version, classType, methodErrorCollector, innerclassTypeUsageInformation, options, illegalIdentifierDump, context);
     }
 
     @Override

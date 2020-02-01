@@ -14,6 +14,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.*;
+import org.benf.cfr.reader.util.output.MethodErrorCollector.SummaryDumperMethodErrorCollector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,7 +75,7 @@ public class PluginRunner {
         }
 
         public Dumper getNewTopLevelDumper(JavaTypeInstance classType, SummaryDumper summaryDumper, TypeUsageInformation typeUsageInformation, IllegalIdentifierDump illegalIdentifierDump) {
-            return new StringStreamDumper(outBuffer, typeUsageInformation, options, this.illegalIdentifierDump);
+            return new StringStreamDumper(new SummaryDumperMethodErrorCollector(classType, summaryDumper), outBuffer, typeUsageInformation, options, this.illegalIdentifierDump);
         }
 
         /*
