@@ -10,7 +10,7 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 /*
  * NB: This interface is NOT an externally visible one, and is subject to change.
  */
-public interface Dumper {
+public interface Dumper extends MethodErrorCollector {
     /*
      * A dumper is initialised with knowledge of the types, so that two
      * dumpers can dump the same code with different import shortening.
@@ -51,6 +51,7 @@ public interface Dumper {
 
     void close();
 
+    @Override
     void addSummaryError(Method method, String s);
 
     boolean canEmitClass(JavaTypeInstance type);

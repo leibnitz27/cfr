@@ -5,14 +5,16 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.getopt.Options;
 
 public class StringStreamDumper extends StreamDumper {
+    private final MethodErrorCollector methodErrorCollector;
     private final StringBuilder stringBuilder;
 
-    public StringStreamDumper(StringBuilder sb, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
-        this(sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
+    public StringStreamDumper(MethodErrorCollector methodErrorCollector, StringBuilder sb, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump) {
+        this(methodErrorCollector, sb, typeUsageInformation, options, illegalIdentifierDump, new MovableDumperContext());
     }
 
-    public StringStreamDumper(StringBuilder sb, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, MovableDumperContext context) {
+    public StringStreamDumper(MethodErrorCollector methodErrorCollector, StringBuilder sb, TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, MovableDumperContext context) {
         super(typeUsageInformation, options, illegalIdentifierDump,context);
+        this.methodErrorCollector = methodErrorCollector;
         this.stringBuilder = sb;
     }
 
@@ -27,6 +29,7 @@ public class StringStreamDumper extends StreamDumper {
 
     @Override
     public void addSummaryError(Method method, String s) {
+        methodErrorCollector.addSummaryError(method, s);
     }
 
     @Override
