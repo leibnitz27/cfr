@@ -76,12 +76,6 @@ public class NewAnonymousArray extends AbstractNewArray implements BoxingProcess
         return new NewAnonymousArray(getInferredJavaType(), numDims, cloneHelper.replaceOrClone(values), isCompletelyAnonymous);
     }
 
-
-    @Override
-    public Precedence getPrecedence() {
-        return Precedence.PAREN_SUB_MEMBER;
-    }
-
     @Override
     public Dumper dumpInner(Dumper d) {
         if (!isCompletelyAnonymous) {

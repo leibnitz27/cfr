@@ -53,11 +53,6 @@ public class NewObjectArray extends AbstractNewArray {
     }
 
     @Override
-    public Precedence getPrecedence() {
-        return Precedence.PAREN_SUB_MEMBER;
-    }
-
-    @Override
     public Dumper dumpInner(Dumper d) {
         d.keyword("new ").dump(allocatedType);
         for (Expression dimSize : dimSizes) {

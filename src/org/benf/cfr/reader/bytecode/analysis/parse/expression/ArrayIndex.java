@@ -52,7 +52,13 @@ public class ArrayIndex extends AbstractExpression implements BoxingProcessor {
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        array.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
+        // This is a little dirty - we don't want to have 'correct' precedence for new
+        // arrays, as it would cause
+        // new int[3].length
+        // etc to gain additional braces.
+        // (compare ArrayTest5*).
+        Precedence p = (array instanceof AbstractNewArray) ? Precedence.HIGHEST : getPrecedence();
+        array.dumpWithOuterPrecedence(d, p, Troolean.NEITHER);
         d.separator("[").dump(index).separator("]");
         return d;
     }

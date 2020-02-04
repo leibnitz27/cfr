@@ -49,11 +49,6 @@ public class NewPrimitiveArray extends AbstractNewArray {
     }
 
     @Override
-    public Precedence getPrecedence() {
-        return Precedence.PAREN_SUB_MEMBER;
-    }
-
-    @Override
     public Dumper dumpInner(Dumper d) {
         return d.keyword("new ").print(type.toString()).separator("[").dump(size).separator("]");
     }
