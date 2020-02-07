@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
+import java.util.Collections;
 import java.util.Set;
 
 public class TypeUsageInformationEmpty implements TypeUsageInformation {
@@ -18,6 +19,16 @@ public class TypeUsageInformationEmpty implements TypeUsageInformation {
     @Override
     public IllegalIdentifierDump getIid() {
         return null;
+    }
+
+    @Override
+    public boolean isStaticImport(JavaTypeInstance clazz, String fixedName) {
+        return false;
+    }
+
+    @Override
+    public Set<DetectedStaticImport> getDetectedStaticImports() {
+        return Collections.emptySet();
     }
 
     @Override

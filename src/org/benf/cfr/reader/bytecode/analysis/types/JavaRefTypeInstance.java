@@ -4,7 +4,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
-import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.ObfuscationTypeMap;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -495,6 +494,14 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
         void collectTransitiveDegenericParents(Set<JavaTypeInstance> parents) {
             parents.add(outerClass);
             outerClass.getInnerClassHereInfo().collectTransitiveDegenericParents(parents);
+        }
+
+        @Override
+        public boolean getFullInnerPath(StringBuilder sb) {
+            if (outerClass.getInnerClassHereInfo().getFullInnerPath(sb)) {
+                sb.append(outerClass.shortName).append('.');
+            }
+            return true;
         }
 
         @Override

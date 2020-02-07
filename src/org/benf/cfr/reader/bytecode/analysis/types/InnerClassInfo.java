@@ -31,6 +31,8 @@ public interface InnerClassInfo {
 
     JavaRefTypeInstance getOuterClass();
 
+    boolean getFullInnerPath(StringBuilder sb);
+
     InnerClassInfo NOT = new InnerClassInfo() {
         @Override
         public boolean isInnerClass() {
@@ -87,6 +89,11 @@ public interface InnerClassInfo {
 
         @Override
         public boolean isHideSyntheticThis() {
+            return false;
+        }
+
+        @Override
+        public boolean getFullInnerPath(StringBuilder sb) {
             return false;
         }
     };

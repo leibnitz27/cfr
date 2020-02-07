@@ -78,13 +78,8 @@ class Driver {
                 MemberNameResolver.resolveNames(dcCommonState, ListFactory.newList(dcCommonState.getClassCache().getLoadedTypes()));
             }
 
-            // THEN analyse.
-            c.analyseTop(dcCommonState);
-            /*
-             * Perform a pass to determine what imports / classes etc we used / failed.
-             */
             TypeUsageCollectingDumper collectingDumper = new TypeUsageCollectingDumper(options, c);
-            c.dump(collectingDumper);
+            c.analyseTop(dcCommonState, collectingDumper);
 
             TypeUsageInformation typeUsageInformation = collectingDumper.getRealTypeUsageInformation();
 
@@ -252,11 +247,9 @@ class Driver {
                 if (options.getOption(OptionsImpl.DECOMPILE_INNER_CLASSES)) {
                     c.loadInnerClasses(dcCommonState);
                 }
-                // THEN analyse.
-                c.analyseTop(dcCommonState);
 
                 TypeUsageCollectingDumper collectingDumper = new TypeUsageCollectingDumper(options, c);
-                c.dump(collectingDumper);
+                c.analyseTop(dcCommonState, collectingDumper);
 
                 JavaTypeInstance classType = c.getClassType();
                 classType = dcCommonState.getObfuscationMapping().get(classType);

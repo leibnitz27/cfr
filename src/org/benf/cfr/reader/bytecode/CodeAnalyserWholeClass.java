@@ -17,6 +17,8 @@ import org.benf.cfr.reader.entities.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.state.ClassCache;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.TypeUsageCollectingDumper;
+import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.*;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.MapFactory;
@@ -519,7 +521,7 @@ public class CodeAnalyserWholeClass {
      *
      * This is the point at which we can perform analysis like rewriting references like accessors inner -> outer.
      */
-    public static void wholeClassAnalysisPass3(ClassFile classFile, DCCommonState state) {
+    public static void wholeClassAnalysisPass3(ClassFile classFile, DCCommonState state, TypeUsageCollectingDumper typeUsage) {
         Options options = state.getOptions();
         if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
             removeRedundantSupers(classFile);
@@ -528,6 +530,12 @@ public class CodeAnalyserWholeClass {
         if (options.getOption(OptionsImpl.REMOVE_DEAD_METHODS)) {
             removeDeadMethods(classFile);
         }
+
+        rewriteUnreachableStatics(classFile, typeUsage);
+    }
+
+    private static void rewriteUnreachableStatics(ClassFile classFile, TypeUsageCollectingDumper typeUsage) {
+        UnreachableStaticRewriter.rewrite(classFile, typeUsage);
     }
 
     /*

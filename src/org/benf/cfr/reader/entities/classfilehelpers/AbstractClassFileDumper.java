@@ -12,6 +12,7 @@ import org.benf.cfr.reader.entities.attributes.AttributeMap;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.state.DetectedStaticImport;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
 import org.benf.cfr.reader.util.DecompilerComments;
@@ -144,12 +145,34 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
             }
         });
 
-        if (names.isEmpty()) return;
-        Collections.sort(names);
-        for (String name : names) {
-            d.keyword("import ").print(name + ";").newln();
+        boolean action = false;
+        if (!names.isEmpty()) {
+            Collections.sort(names);
+            for (String name : names) {
+                d.keyword("import ").print(name).endCodeln();
+            }
+            action = true;
         }
-        d.newln();
+
+        Set<DetectedStaticImport> staticImports = d.getTypeUsageInformation().getDetectedStaticImports();
+        if (!staticImports.isEmpty()) {
+            List<String> sis = Functional.map(staticImports, new UnaryFunction<DetectedStaticImport, String>() {
+                @Override
+                public String invoke(DetectedStaticImport arg) {
+                    String name = arg.getClazz().getRawName(iid);
+                    return name.replace(MiscConstants.INNER_CLASS_SEP_CHAR, '.') + '.' + arg.getName();
+                }
+            });
+            Collections.sort(sis);
+            for (String si : sis) {
+                d.keyword("import").print(' ').keyword("static").print(" " + si).endCodeln();
+            }
+            action = true;
+        }
+
+        if (action) {
+            d.newln();
+        }
     }
 
     void dumpMethods(ClassFile classFile, Dumper d, boolean first, boolean asClass) {

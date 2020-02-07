@@ -96,7 +96,9 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.dump(clazz).separator(".");
+        if (!d.getTypeUsageInformation().isStaticImport(clazz.getDeGenerifiedType(), getFixedName())) {
+            d.dump(clazz).separator(".");
+        }
         if (explicitGenerics != null && !explicitGenerics.isEmpty()) {
             d.operator("<");
             boolean first = true;
@@ -190,5 +192,4 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
         if (!constraint.equivalent(args, other.args)) return false;
         return true;
     }
-
 }

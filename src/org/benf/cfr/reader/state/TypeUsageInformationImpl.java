@@ -19,6 +19,7 @@ import java.util.*;
 
 public class TypeUsageInformationImpl implements TypeUsageInformation {
     private final IllegalIdentifierDump iid;
+    private Set<DetectedStaticImport> staticImports;
     private final JavaRefTypeInstance analysisType;
     private final Set<JavaRefTypeInstance> usedRefTypes = SetFactory.newOrderedSet();
     private final Set<JavaRefTypeInstance> shortenedRefTypes = SetFactory.newOrderedSet();
@@ -32,10 +33,11 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
     });
     private final Predicate<String> allowShorten;
 
-    public TypeUsageInformationImpl(Options options, JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes) {
+    public TypeUsageInformationImpl(Options options, JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes, Set<DetectedStaticImport> staticImports) {
         this.allowShorten = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.IMPORT_FILTER), true);
         this.analysisType = analysisType;
         this.iid = IllegalIdentifierDump.Factory.getOrNull(options);
+        this.staticImports = staticImports;
         initialiseFrom(usedRefTypes);
     }
 
@@ -204,6 +206,17 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
     @Override
     public Set<JavaRefTypeInstance> getUsedInnerClassTypes() {
         return usedLocalInnerTypes;
+    }
+
+
+    @Override
+    public boolean isStaticImport(JavaTypeInstance clazz, String fixedName) {
+        return staticImports.contains(new DetectedStaticImport(clazz, fixedName));
+    }
+
+    @Override
+    public Set<DetectedStaticImport> getDetectedStaticImports() {
+        return staticImports;
     }
 
     @Override

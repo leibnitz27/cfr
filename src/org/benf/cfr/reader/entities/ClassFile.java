@@ -53,6 +53,7 @@ import org.benf.cfr.reader.relationship.MemberNameResolver;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.InnerClassTypeUsageInformation;
 import org.benf.cfr.reader.state.OverloadMethodSetCache;
+import org.benf.cfr.reader.state.TypeUsageCollectingDumper;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
@@ -884,7 +885,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
     }
 
-    public void analyseTop(final DCCommonState dcCommonState) {
+    public void analyseTop(final DCCommonState dcCommonState, final TypeUsageCollectingDumper typeUsageCollectingDumper) {
         analyseMid(dcCommonState);
         analysePassOuterFirst(new UnaryProcedure<ClassFile>() {
             @Override
@@ -892,10 +893,14 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 CodeAnalyserWholeClass.wholeClassAnalysisPass2(arg, dcCommonState);
             }
         });
+        /*
+         * Perform a pass to determine what imports / classes etc we used / failed.
+         */
+        this.dump(typeUsageCollectingDumper);
         analysePassOuterFirst(new UnaryProcedure<ClassFile>() {
             @Override
             public void call(ClassFile arg) {
-                CodeAnalyserWholeClass.wholeClassAnalysisPass3(arg, dcCommonState);
+                CodeAnalyserWholeClass.wholeClassAnalysisPass3(arg, dcCommonState, typeUsageCollectingDumper);
             }
         });
     }

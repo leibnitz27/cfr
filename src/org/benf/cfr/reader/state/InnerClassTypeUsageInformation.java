@@ -6,6 +6,8 @@ import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -78,6 +80,16 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
     @Override
     public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
         return delegate.generateInnerClassShortName(clazz);
+    }
+
+    @Override
+    public boolean isStaticImport(JavaTypeInstance clazz, String fixedName) {
+        return false;
+    }
+
+    @Override
+    public Set<DetectedStaticImport> getDetectedStaticImports() {
+        return Collections.emptySet();
     }
 
     @Override

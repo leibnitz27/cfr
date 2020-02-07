@@ -21,6 +21,11 @@ public class TypeUsageCollectingDumper implements Dumper {
     private final JavaRefTypeInstance analysisType;
     private final Set<JavaRefTypeInstance> refTypeInstanceSet = SetFactory.newSet();
     private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
+    private final Set<DetectedStaticImport> staticImports = SetFactory.newSet();
+
+    public void addStaticUsage(JavaRefTypeInstance clazz, String name) {
+        staticImports.add(new DetectedStaticImport(clazz, name));
+    }
 
     public TypeUsageCollectingDumper(Options options, ClassFile analysisClass) {
         this.options = options;
@@ -30,7 +35,7 @@ public class TypeUsageCollectingDumper implements Dumper {
 
     public TypeUsageInformation getRealTypeUsageInformation() {
         /* Figure out what the imports are */
-        return new TypeUsageInformationImpl(options, analysisType, refTypeInstanceSet);
+        return new TypeUsageInformationImpl(options, analysisType, refTypeInstanceSet, staticImports);
     }
 
     @Override

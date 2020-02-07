@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
+import org.benf.cfr.reader.state.DetectedStaticImport;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.state.TypeUsageInformationImpl;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -106,6 +107,16 @@ public class Mapping implements ObfuscationMapping {
         }
 
         @Override
+        public boolean isStaticImport(JavaTypeInstance clazz, String fixedName) {
+            return delegateOriginal.isStaticImport(clazz, fixedName);
+        }
+
+        @Override
+        public Set<DetectedStaticImport> getDetectedStaticImports() {
+            return delegateOriginal.getDetectedStaticImports();
+        }
+
+        @Override
         public JavaRefTypeInstance getAnalysisType() {
             return delegateRemapped.getAnalysisType();
         }
@@ -165,7 +176,7 @@ public class Mapping implements ObfuscationMapping {
                             public JavaRefTypeInstance invoke(JavaRefTypeInstance arg) {
                                 return (JavaRefTypeInstance)get(arg);
                             }
-                        })));
+                        })), SetFactory.<DetectedStaticImport>newSet());
                 mappingTypeUsage = new MappingTypeUsage(dtr, dti);
             }
             return mappingTypeUsage;

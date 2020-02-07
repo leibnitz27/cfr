@@ -7,6 +7,7 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,6 +55,16 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
     @Override
     public IllegalIdentifierDump getIid() {
         return delegate.getIid();
+    }
+
+    @Override
+    public boolean isStaticImport(JavaTypeInstance clazz, String fixedName) {
+        return false;
+    }
+
+    @Override
+    public Set<DetectedStaticImport> getDetectedStaticImports() {
+        return Collections.emptySet();
     }
 
     @Override

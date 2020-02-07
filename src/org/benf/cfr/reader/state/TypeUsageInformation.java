@@ -22,4 +22,8 @@ public interface TypeUsageInformation {
     String generateOverriddenName(JavaRefTypeInstance clazz);
 
     IllegalIdentifierDump getIid();
+
+    boolean isStaticImport(JavaTypeInstance clazz, String fixedName);
+
+    Set<DetectedStaticImport> getDetectedStaticImports();
 }
