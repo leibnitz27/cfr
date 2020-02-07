@@ -269,7 +269,7 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
                 // Expecting a break.
                 if (in instanceof StructuredBreak) {
                     if (((StructuredBreak) in).isLocalBreak()) {
-                        replacements.add(Pair.make(in.getContainer(), (StructuredStatement)new StructuredExpressionBreak(pendingAssignment)));
+                        replacements.add(Pair.make(in.getContainer(), (StructuredStatement)new StructuredExpressionYield(pendingAssignment)));
                         pendingAssignment = null;
                         lastOk = LastOk.Ok;
                         return in;
@@ -345,7 +345,7 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
             if (!last) return null;
             int lastReplacement = replacements.size() - 1;
             Op04StructuredStatement stm = replacements.get(lastReplacement).getFirst();
-            replacements.set(lastReplacement, Pair.make(stm, (StructuredStatement)new StructuredExpressionBreak(transformer.pendingAssignment)));
+            replacements.set(lastReplacement, Pair.make(stm, (StructuredStatement)new StructuredExpressionYield(transformer.pendingAssignment)));
         }
         return new StructuredStatementExpression(target.getInferredJavaType(), body.getStatement());
     }
