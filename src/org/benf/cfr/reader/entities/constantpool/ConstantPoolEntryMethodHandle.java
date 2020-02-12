@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.entities.constantpool;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
 import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
+import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 
@@ -34,6 +36,30 @@ public class ConstantPoolEntryMethodHandle extends AbstractConstantPoolEntry {
 
     public ConstantPoolEntryMethodRef getMethodRef() {
         return getCp().getMethodRefEntry(referenceIndex);
+    }
+
+    public ConstantPoolEntryFieldRef getFieldRef() {
+        return getCp().getFieldRefEntry(referenceIndex);
+    }
+
+    public boolean isFieldRef() {
+        switch (referenceKind) {
+            case GET_FIELD:
+            case GET_STATIC:
+            case PUT_FIELD:
+            case PUT_STATIC:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public String getLiteralName() {
+        if (isFieldRef()) {
+            return QuotingUtils.enquoteString(getFieldRef().getLocalName());
+        } else {
+            return getMethodRef().getMethodPrototype().toString();
+        }
     }
 
     @Override

@@ -18,7 +18,7 @@ public abstract class StreamDumper extends AbstractDumper {
     protected final Options options;
     protected final IllegalIdentifierDump illegalIdentifierDump;
     private final boolean convertUTF;
-    private final Set<JavaTypeInstance> emitted = SetFactory.newSet();
+    protected final Set<JavaTypeInstance> emitted;
 
     StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, MovableDumperContext context) {
         super(context);
@@ -26,6 +26,16 @@ public abstract class StreamDumper extends AbstractDumper {
         this.options = options;
         this.illegalIdentifierDump = illegalIdentifierDump;
         this.convertUTF = options.getOption(OptionsImpl.HIDE_UTF8);
+        this.emitted = SetFactory.newSet();
+    }
+
+    StreamDumper(TypeUsageInformation typeUsageInformation, Options options, IllegalIdentifierDump illegalIdentifierDump, MovableDumperContext context, Set<JavaTypeInstance> emitted) {
+        super(context);
+        this.typeUsageInformation = typeUsageInformation;
+        this.options = options;
+        this.illegalIdentifierDump = illegalIdentifierDump;
+        this.convertUTF = options.getOption(OptionsImpl.HIDE_UTF8);
+        this.emitted = emitted;
     }
 
     @Override

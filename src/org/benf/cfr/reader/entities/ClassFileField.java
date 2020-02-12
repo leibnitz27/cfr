@@ -71,10 +71,20 @@ public class ClassFileField {
     }
 
     public void dump(Dumper d, ClassFile owner) {
-        field.dump(d, getFieldName(), owner);
+        field.dump(d, getFieldName(), owner,false);
         if (initialValue != null) {
             d.operator(" = ").dump(initialValue);
         }
         d.endCodeln();
     }
+
+    public void dumpAsRecord(Dumper d, ClassFile owner) {
+        field.dump(d, getFieldName(), owner, true);
+        // No, we can't have initial values on records.
+        // I'm leaving this in just in case one exists!
+        if (initialValue != null) {
+            d.operator(" = ").dump(initialValue);
+        }
+    }
+
 }

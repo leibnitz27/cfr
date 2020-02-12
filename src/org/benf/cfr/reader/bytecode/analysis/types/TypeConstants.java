@@ -17,6 +17,8 @@ public interface TypeConstants {
     JavaRefTypeInstance NOCLASSDEFFOUND_ERROR = JavaRefTypeInstance.createTypeConstant("java.lang.NoClassDefFoundError", "NoClassDefFoundError");
     JavaRefTypeInstance COMPARABLE = JavaRefTypeInstance.createTypeConstant("java.lang.Comparable", "Comparable", OBJECT);
     JavaRefTypeInstance MATH = JavaRefTypeInstance.createTypeConstant("java.lang.Math", "Math", OBJECT);
+    JavaRefTypeInstance RECORD = JavaRefTypeInstance.createTypeConstant("java.lang.Record", "Record", OBJECT);
+    JavaRefTypeInstance OBJECTMETHODS = JavaRefTypeInstance.createTypeConstant("java.lang.runtime.ObjectMethods", "ObjectMethods", OBJECT);
 
     String boxingNameBoolean = "java.lang.Boolean";
     String boxingNameByte = "java.lang.Byte";

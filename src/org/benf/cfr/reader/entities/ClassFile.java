@@ -40,6 +40,7 @@ import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnnotation;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperInterface;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperModule;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperNormal;
+import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperRecord;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
@@ -114,7 +115,6 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private final ClassSignature classSignature;
     private ClassFileVersion classFileVersion;
     private DecompilerComments decompilerComments;
-    private final Map<MethodPrototype, OverloadMethodSet> omsCache = MapFactory.newIdentityMap();
 
     private boolean begunAnalysis;
 

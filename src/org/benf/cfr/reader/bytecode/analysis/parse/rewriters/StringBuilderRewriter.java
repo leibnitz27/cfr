@@ -58,7 +58,8 @@ public class StringBuilderRewriter implements ExpressionRewriter {
     }
 
     private Expression extractStringConcatSimple(StaticFunctionInvokation staticFunctionInvokation) {
-        List<Expression> args = staticFunctionInvokation.getArgs();
+        List<Expression> args = ListFactory.newList(staticFunctionInvokation.getArgs());
+        args.remove(0);
         // Amazingly, "" + foo generates a stringconcat, even though it's a 1 arg one!
         if (args.size() < 1) return null;
         List<Expression> tmp = ListFactory.newList(args);
@@ -74,9 +75,9 @@ public class StringBuilderRewriter implements ExpressionRewriter {
 
     private Expression extractStringConcat(StaticFunctionInvokation staticFunctionInvokation) {
         List<Expression> args = staticFunctionInvokation.getArgs();
-        if (args.size() <= 1) return null;
-        Expression arg0 = args.get(0);
-        int argIdx = 1;
+        if (args.size() <= 2) return null;
+        Expression arg0 = args.get(1);
+        int argIdx = 2;
         int maxArgs = args.size();
         if (!(arg0 instanceof NewAnonymousArray)) return null;
         NewAnonymousArray naArg0 = (NewAnonymousArray)arg0;

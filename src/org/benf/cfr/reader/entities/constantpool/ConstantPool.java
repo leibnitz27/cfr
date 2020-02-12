@@ -172,7 +172,13 @@ public class ConstantPool {
     }
 
     ConstantPoolEntryMethodRef getMethodRefEntry(int index) {
-        return (ConstantPoolEntryMethodRef) getEntry(index);
+        ConstantPoolEntry entry = getEntry(index);
+        return (ConstantPoolEntryMethodRef) entry;
+    }
+
+    ConstantPoolEntryFieldRef getFieldRefEntry(int index) {
+        ConstantPoolEntry entry = getEntry(index);
+        return (ConstantPoolEntryFieldRef) entry;
     }
 
     public ConstantPoolEntryClass getClassEntry(int index) {

@@ -125,6 +125,10 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         return accessFlags.contains(accessFlag);
     }
 
+    public Set<AccessFlag> getAccessFlags() {
+        return accessFlags;
+    }
+
     public TypedLiteral getConstantValue() {
         return constantValue;
     }
@@ -138,10 +142,12 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
     }
 
-    public void dump(Dumper d, String name, ClassFile owner) {
-        String prefix = CollectionUtils.join(accessFlags, " ");
-        if (!prefix.isEmpty()) {
-            d.keyword(prefix).print(' ');
+    public void dump(Dumper d, String name, ClassFile owner, boolean hideFlags) {
+        if (!hideFlags) {
+            String prefix = CollectionUtils.join(accessFlags, " ");
+            if (!prefix.isEmpty()) {
+                d.keyword(prefix).print(' ');
+            }
         }
         TypeAnnotationHelper tah = TypeAnnotationHelper.create(attributes, TypeAnnotationEntryValue.type_field);
         List<AnnotationTableTypeEntry> e1 = tah == null ? null : tah.getEntries();

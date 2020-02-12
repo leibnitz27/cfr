@@ -30,6 +30,10 @@ public interface MiscConstants {
     String THIS = "this";
     String CLASS = "class";
     String NEW = "new";
+    String EQUALS = "equals";
+    String HASHCODE = "hashCode";
+    String TOSTRING = "toString";
+
     String UNBOUND_GENERIC = "?";
     char INNER_CLASS_SEP_CHAR = '$';
     String INNER_CLASS_SEP_STR = "$";

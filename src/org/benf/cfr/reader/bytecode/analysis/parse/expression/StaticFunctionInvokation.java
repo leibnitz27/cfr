@@ -26,7 +26,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 import java.util.List;
 
 public class StaticFunctionInvokation extends AbstractFunctionInvokation implements FunctionProcessor, BoxingProcessor {
-    private final List<Expression> args;
+    protected final List<Expression> args;
     private final JavaTypeInstance clazz;
     private @Nullable
     List<JavaTypeInstance> explicitGenerics;
@@ -166,7 +166,6 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
     @Override
     public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-
     }
 
     @Override

@@ -259,6 +259,10 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> SWITCH_EXPRESSION = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "switchexpression", switchExpressionVersion,
             "Re-sugar switch expression");
+    public static final ExperimentalVersionSpecificDefaulter recordTypesVersion = new ExperimentalVersionSpecificDefaulter(ClassFileVersion.JAVA_14, true, ClassFileVersion.JAVA_14);
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> RECORD_TYPES = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "recordtypes", recordTypesVersion,
+            "Re-sugar record types");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ARRAY_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
             "Re-sugar array based iteration");
@@ -500,7 +504,7 @@ public class OptionsImpl implements Options {
         @Override
         @SuppressWarnings("unchecked")
         public List<? extends ArgumentParam<?, ?>> getArguments() {
-            return ListFactory.newImmutableList(ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, SWITCH_EXPRESSION, PREVIEW_FEATURES,
+            return ListFactory.newImmutableList(ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, SWITCH_EXPRESSION, RECORD_TYPES, PREVIEW_FEATURES,
                     ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,

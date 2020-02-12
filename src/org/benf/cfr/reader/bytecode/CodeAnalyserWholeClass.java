@@ -83,6 +83,14 @@ public class CodeAnalyserWholeClass {
             // Synthetic constructor friends can exist on OUTER classes, when an inner makes a call out.
             removeInnerClassSyntheticConstructorFriends(classFile);
         }
+
+        if (options.getOption(OptionsImpl.RECORD_TYPES, classFile.getClassFileVersion())) {
+            resugarRecords(classFile, state);
+        }
+    }
+
+    private static void resugarRecords(ClassFile classFile, DCCommonState state) {
+        RecordRewriter.rewrite(classFile, state);
     }
 
     private static void removeRedundantSupers(ClassFile classFile) {

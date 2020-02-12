@@ -384,11 +384,12 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         ConstantPoolEntryNameAndType nameAndType = invokeDynamic.getNameAndTypeEntry();
         int idx = invokeDynamic.getBootstrapMethodAttrIndex();
         ConstantPoolEntryUTF8 descriptor = nameAndType.getDescriptor();
+        ConstantPoolEntryUTF8 name = nameAndType.getName();
         MethodPrototype dynamicPrototype = ConstantPoolUtils.parseJavaMethodPrototype(dcCommonState, null, null, "", false, Method.MethodConstructor.NOT, descriptor, cp, false, false, new VariableNamerDefault());
-        return buildInvokeDynamic(method.getClassFile(), dcCommonState, dynamicPrototype, idx, false);
+        return buildInvokeDynamic(method.getClassFile(), dcCommonState, name.getValue(), dynamicPrototype, idx, false);
     }
 
-    private Statement buildInvokeDynamic(ClassFile classFile, DCCommonState dcCommonState, MethodPrototype dynamicPrototype,
+    private Statement buildInvokeDynamic(ClassFile classFile, DCCommonState dcCommonState, String name, MethodPrototype dynamicPrototype,
                                          int idx, boolean showBoilerArgs) {
 
         BootstrapMethodInfo bootstrapMethodInfo = classFile.getBootstrapMethods().getBootStrapMethodInfo(idx);
@@ -413,6 +414,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                         dynamicPrototype.tightenArgs(null, dynamicArgs);
                     }
                 }
+                // Todo : This isn't going to generate 'compilable' code.
+                callargs.add(0, new Literal(TypedLiteral.getString(QuotingUtils.enquoteString(name))));
                 callargs.addAll(dynamicArgs);
                 Expression funcCall = new StaticFunctionInvokation(methodRef, callargs);
                 if (stackProduced.size() == 0) {
@@ -1487,7 +1490,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         MethodPrototype dynamicProto = new MethodPrototype(cp.getDCCommonState(), classFile, classFile.getClassType(), "???",
                 false, Method.MethodConstructor.NOT, Collections.<FormalTypeParameter>emptyList(), Collections.<JavaTypeInstance>emptyList(),
                 nameAndType.decodeTypeTok(), false, new VariableNamerDefault(), false);
-        Statement s =  buildInvokeDynamic(classFile, cp.getDCCommonState(), dynamicProto, idx, true);
+        Statement s =  buildInvokeDynamic(classFile, cp.getDCCommonState(), nameAndType.getName().getValue(), dynamicProto, idx, true);
         if (!(s instanceof AssignmentSimple)) {
             throw new ConfusedCFRException("Expected a result from a dynamic literal");
         }

@@ -26,9 +26,11 @@ import java.util.Map;
 public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
     private final Map<JavaTypeInstance, Boolean> localClassTypes = MapFactory.newIdentityMap();
     private final TypeUsageSpotter typeUsageSpotter = new TypeUsageSpotter();
+    private final JavaTypeInstance scopeType;
 
     public LocalClassScopeDiscoverImpl(Method method, VariableFactory variableFactory) {
         super(method.getMethodPrototype(), variableFactory);
+        scopeType = method.getMethodPrototype().getClassType();
 
         JavaTypeInstance thisClassType = method.getClassFile().getClassType();
         while (thisClassType != null) {
@@ -108,6 +110,7 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
             SentinelLocalClassLValue localClassLValue = (SentinelLocalClassLValue) lValue;
 
             JavaTypeInstance type = localClassLValue.getLocalClassType();
+            if (type.getDeGenerifiedType() == scopeType) return;
             defineHere(lValue, type, true);
 
         }  else if (lValueClass == FieldVariable.class) {

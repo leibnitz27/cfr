@@ -51,12 +51,6 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         }
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private static boolean definingType(Dumper d, String typeName) {
-        JavaTypeInstance type = d.getTypeUsageInformation().getAnalysisType();
-        return (type != null && typeName.equals(type.getRawName()));
-    }
-
     private static String integerName(Object o, FormatHint formatHint) {
         if (!(o instanceof Integer)) return o.toString();
         int i = (Integer) o;
@@ -99,6 +93,11 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
         if (type != LiteralType.Integer) return null;
         Integer i = (Integer) value;
         return (i == 0) ? Boolean.FALSE : Boolean.TRUE;
+    }
+
+    public ConstantPoolEntryMethodHandle getMethodHandle() {
+        if (type != LiteralType.MethodHandle) throw new IllegalStateException("Expecting MethodHandle literal");
+        return (ConstantPoolEntryMethodHandle) value;
     }
 
     public JavaTypeInstance getClassValue() {
@@ -187,8 +186,7 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     private static String methodHandleName(Object o) {
         ConstantPoolEntryMethodHandle methodHandle = (ConstantPoolEntryMethodHandle) o;
-        ConstantPoolEntryMethodRef methodRef = methodHandle.getMethodRef();
-        return methodRef.getMethodPrototype().toString();
+        return methodHandle.getLiteralName();
     }
 
     private static String methodTypeName(Object o) {
