@@ -111,6 +111,11 @@ public class RecordRewriter {
             return false;
         }
         Method canonicalCons = splitCons.getFirst().get(0);
+
+        Method.MethodConstructor constructorFlag = canonicalCons.getConstructorFlag();
+        if (!constructorFlag.isConstructor()) return false;
+        if (constructorFlag.isEnumConstructor()) return false;
+
         List<Method> otherCons = splitCons.getSecond();
         for (Method other : otherCons) {
             MethodPrototype chain = ConstructorUtils.getDelegatingPrototype(other);
@@ -124,6 +129,8 @@ public class RecordRewriter {
         // they can hidden / removed.
         // If there is no code after this, the canonical can be hidden as implicit.
         removeImplicitAssignments(canonicalCons, instances, thisType);
+        // Mark the canonical constructor for later.
+        canonicalCons.setConstructorFlag(Method.MethodConstructor.RECORD_CANONICAL_CONSTRUCTOR);
         // Now if it's empty, hide altogether.
         hideConstructorIfEmpty(canonicalCons);
 

@@ -200,7 +200,15 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (!isConstructor.isConstructor()) {
             d.dump(result).print(" ");
         }
-        d.methodName(methName, this, isConstructor.isConstructor(), true).separator("(");
+        d.methodName(methName, this, isConstructor.isConstructor(), true);
+
+        if (isConstructor == Method.MethodConstructor.RECORD_CANONICAL_CONSTRUCTOR) {
+            // If we have annotations, we proceed as normal, otherwise it's boilerplate.
+            if (null == annotationsHelper.getTypeTargetAnnotations(TypeAnnotationEntryValue.type_formal)) {
+                return;
+            }
+        }
+        d.separator("(");
 
         // We don't get a vararg type to change itself, as it's a function of the method, not the type
         List<LocalVariable> parameterLValues = getComputedParameters();

@@ -42,6 +42,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         NOT(false, false),
         STATIC_CONSTRUCTOR(false, false),
         CONSTRUCTOR(true, false),
+        RECORD_CANONICAL_CONSTRUCTOR(true, false),
         ENUM_CONSTRUCTOR(true, true),
         // Eclipse enums behave like normal enums, except they declare arguments.
         ECLIPSE_ENUM_CONSTRUCTOR(true, true);
@@ -80,7 +81,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final long length;
     private final EnumSet<AccessFlagMethod> accessFlags;
     private final AttributeMap attributes;
-    private final MethodConstructor isConstructor;
+    private MethodConstructor isConstructor;
     private final int descriptorIndex;
     private final AttributeCode codeAttribute;
     private final ConstantPool cp;
@@ -218,6 +219,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
     public MethodConstructor getConstructorFlag() {
         return isConstructor;
+    }
+
+    public void setConstructorFlag(MethodConstructor flag) {
+        isConstructor = flag;
     }
 
     AttributeSignature getSignatureAttribute() {
