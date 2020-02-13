@@ -528,8 +528,18 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
              * Override the dumper with a proxy which makes sure that local classes defined here are 'better'.
              */
             if (!localClasses.isEmpty()) {
-                TypeUsageInformation overrides = new LocalClassAwareTypeUsageInformation(localClasses, d.getTypeUsageInformation());
-                d = d.withTypeUsageInformation(overrides);
+                TypeUsageInformation tui = d.getTypeUsageInformation();
+                Map<JavaRefTypeInstance, String> filteredLocalClasses = MapFactory.newMap();
+                // We may have better information already though (see InnerClassTest31).
+                for (Map.Entry<JavaRefTypeInstance, String> entry : localClasses.entrySet()) {
+                    if (!(entry.getValue() == null && tui.hasLocalInstance(entry.getKey()))) {
+                        filteredLocalClasses.put(entry.getKey(), entry.getValue());
+                    }
+                }
+                if (!filteredLocalClasses.isEmpty()) {
+                    TypeUsageInformation overrides = new LocalClassAwareTypeUsageInformation(filteredLocalClasses, d.getTypeUsageInformation());
+                    d = d.withTypeUsageInformation(overrides);
+                }
             }
             d.print(' ').dump(codeAttribute);
         }

@@ -104,6 +104,11 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
     }
 
     @Override
+    public boolean hasLocalInstance(JavaRefTypeInstance type) {
+        return localTypeNames.containsKey(type);
+    }
+
+    @Override
     public String generateOverriddenName(JavaRefTypeInstance clazz) {
         return delegate.generateOverriddenName(clazz);
     }

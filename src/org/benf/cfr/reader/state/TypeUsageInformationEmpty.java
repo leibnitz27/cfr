@@ -60,4 +60,9 @@ public class TypeUsageInformationEmpty implements TypeUsageInformation {
     public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
         return clazz.getRawName();
     }
+
+    @Override
+    public boolean hasLocalInstance(JavaRefTypeInstance type) {
+        return false;
+    }
 }

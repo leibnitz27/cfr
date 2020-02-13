@@ -142,6 +142,11 @@ public class Mapping implements ObfuscationMapping {
         }
 
         @Override
+        public boolean hasLocalInstance(JavaRefTypeInstance type) {
+            return delegateOriginal.hasLocalInstance(type);
+        }
+
+        @Override
         public String generateInnerClassShortName(JavaRefTypeInstance clazz) {
             return delegateRemapped.generateInnerClassShortName((JavaRefTypeInstance)get(clazz));
         }

@@ -208,6 +208,10 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         return usedLocalInnerTypes;
     }
 
+    @Override
+    public boolean hasLocalInstance(JavaRefTypeInstance type) {
+        return false;
+    }
 
     @Override
     public boolean isStaticImport(JavaTypeInstance clazz, String fixedName) {

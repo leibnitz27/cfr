@@ -6,7 +6,6 @@ import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -61,6 +60,11 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
     @Override
     public Set<JavaRefTypeInstance> getUsedInnerClassTypes() {
         return usedInnerClassTypes;
+    }
+
+    @Override
+    public boolean hasLocalInstance(JavaRefTypeInstance type) {
+        return localTypeNames.get(type) != null;
     }
 
     @Override

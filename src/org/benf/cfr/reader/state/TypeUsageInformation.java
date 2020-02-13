@@ -15,6 +15,8 @@ public interface TypeUsageInformation {
 
     Set<JavaRefTypeInstance> getUsedInnerClassTypes();
 
+    boolean hasLocalInstance(JavaRefTypeInstance type);
+
     String getName(JavaTypeInstance type);
 
     String generateInnerClassShortName(JavaRefTypeInstance clazz);
