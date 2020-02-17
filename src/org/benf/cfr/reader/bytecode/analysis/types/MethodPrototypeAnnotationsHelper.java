@@ -1,24 +1,21 @@
 package org.benf.cfr.reader.bytecode.analysis.types;
 
+import org.benf.cfr.reader.bytecode.analysis.types.DeclarationAnnotationHelper.DeclarationAnnotationsInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.attributes.AttributeMap;
-import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleParameterAnnotations;
-import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleParameterAnnotations;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryValue;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
-import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
-import java.util.Set;
 
 public class MethodPrototypeAnnotationsHelper {
     private final AttributeMap attributeMap;
@@ -35,28 +32,14 @@ public class MethodPrototypeAnnotationsHelper {
                 );
     }
 
-    static boolean dumpAnnotationTableEntries(
-            List<? extends AnnotationTableTypeEntry> annotationTableTypeEntries,
-                                           List<AnnotationTableEntry> annotationTableEntries,
-                                           Dumper d) {
-        Set<JavaTypeInstance> collisions = (annotationTableEntries != null && annotationTableTypeEntries != null) ? SetFactory.<JavaTypeInstance>newSet() : null;
-        boolean t1 = dumpAnnotationTableEntries(annotationTableTypeEntries, collisions, d);
-        boolean t2 = dumpAnnotationTableEntries(annotationTableEntries, collisions, d);
-        return t1 || t2;
+    static void dumpAnnotationTableEntries(List<? extends AnnotationTableEntry> annotationTableEntries, Dumper d) {
+        for (AnnotationTableEntry annotation : annotationTableEntries) {
+            annotation.dump(d).print(' ');
+        }
     }
 
-    private static boolean dumpAnnotationTableEntries(List<? extends AnnotationTableEntry> entries, Set<JavaTypeInstance> collisions, Dumper d) {
-        if (entries == null) return false;
-        boolean done = false;
-        for (AnnotationTableEntry entry : entries) {
-            if (collisions != null && !collisions.add(entry.getClazz())) {
-                continue;
-            }
-            done = true;
-            entry.dump(d);
-            d.print(' ');
-        }
-        return done;
+    public List<AnnotationTableTypeEntry> getMethodReturnAnnotations() {
+        return getTypeTargetAnnotations(TypeAnnotationEntryValue.type_ret_or_new);
     }
 
     // TODO: Linear scans here, could be replaced with index.
@@ -100,12 +83,26 @@ public class MethodPrototypeAnnotationsHelper {
     void dumpParamType(JavaTypeInstance arg, final int paramIdx, Dumper d) {
         List<AnnotationTableEntry> entries = getParameterAnnotations(paramIdx);
         List<AnnotationTableTypeEntry> typeEntries = getTypeParameterAnnotations(paramIdx);
-        if (typeEntries == null && entries == null) {
+        DeclarationAnnotationsInfo annotationsInfo = DeclarationAnnotationHelper.getDeclarationInfo(arg, entries, typeEntries);
+        /*
+         * TODO: This is incorrect, but currently cannot easily influence whether the dumped type is admissible
+         * Therefore assume it is always admissible unless required not to
+         * (even though then the dumped type might still be admissible)
+         */
+        boolean usesAdmissibleType = !annotationsInfo.requiresNonAdmissibleType();
+        List<AnnotationTableEntry> declAnnotationsToDump = annotationsInfo.getDeclarationAnnotations(usesAdmissibleType);
+        List<AnnotationTableTypeEntry> typeAnnotationsToDump = annotationsInfo.getTypeAnnotations(usesAdmissibleType);
+
+        dumpAnnotationTableEntries(declAnnotationsToDump, d);
+
+        if (typeAnnotationsToDump.isEmpty()) {
             d.dump(arg);
-            return;
+        } else {
+            JavaAnnotatedTypeInstance jat = arg.getAnnotatedInstance();
+            DecompilerComments comments = new DecompilerComments();
+            TypeAnnotationHelper.apply(jat, typeAnnotationsToDump, comments);
+            d.dump(comments);
+            d.dump(jat);
         }
-        JavaAnnotatedTypeInstance jat = arg.getAnnotatedInstance();
-        TypeAnnotationHelper.apply(jat, typeEntries, entries, new DecompilerComments());
-        d.dump(jat);
     }
 }

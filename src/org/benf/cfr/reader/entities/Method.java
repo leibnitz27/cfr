@@ -6,7 +6,10 @@ import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamer;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableNamerFactory;
 import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.DeclarationAnnotationHelper.DeclarationAnnotationsInfo;
+import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
+import org.benf.cfr.reader.entities.annotations.ElementValue;
 import org.benf.cfr.reader.entities.attributes.*;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
@@ -77,6 +80,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private static final long OFFSET_OF_DESCRIPTOR_INDEX = 4;
     private static final long OFFSET_OF_ATTRIBUTES_COUNT = 6;
     private static final long OFFSET_OF_ATTRIBUTES = 8;
+
+    private static final AnnotationTableEntry OVERRIDE_ANNOTATION = new AnnotationTableEntry(TypeConstants.OVERRIDE, Collections.<String, ElementValue>emptyMap());
 
     private final long length;
     private final EnumSet<AccessFlagMethod> accessFlags;
@@ -341,9 +346,15 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         markUsedLocalClassType(javaTypeInstance, null);
     }
 
-    private void dumpMethodAnnotations(Dumper d) {
+    private void dumpMethodAnnotations(Dumper d, List<AnnotationTableEntry> nullableDeclAnnotations) {
+        if (nullableDeclAnnotations != null) {
+            for (AnnotationTableEntry annotation : nullableDeclAnnotations) {
+                annotation.dump(d).newln();
+            }
+        }
+
         if (isOverride) {
-            d.print("@Override").newln();
+            OVERRIDE_ANNOTATION.dump(d).newln();
         }
     }
 
@@ -363,17 +374,24 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     private void dumpSignatureText(boolean asClass, Dumper d) {
+        MethodPrototypeAnnotationsHelper annotationsHelper = new MethodPrototypeAnnotationsHelper(attributes);
+        JavaTypeInstance nullableReturnType = getMethodPrototype().getReturnType();
+        DeclarationAnnotationsInfo annotationsInfo = DeclarationAnnotationHelper.getDeclarationInfo(nullableReturnType, annotationsHelper.getMethodAnnotations(), annotationsHelper.getMethodReturnAnnotations());
+        /*
+         * TODO: This is incorrect, but currently cannot easily influence whether the dumped type is admissible
+         * Therefore assume it is always admissible unless required not to
+         * (even though then the dumped type might still be admissible)
+         */
+        boolean usesAdmissibleType = !annotationsInfo.requiresNonAdmissibleType();
+        dumpMethodAnnotations(d, annotationsInfo.getDeclarationAnnotations(usesAdmissibleType));
 
-        dumpMethodAnnotations(d);
-
-        EnumSet<AccessFlagMethod> localAccessFlags = accessFlags;
+        EnumSet<AccessFlagMethod> localAccessFlags = SetFactory.newSet(accessFlags);
         if (!asClass) {
             if (codeAttribute != null && !accessFlags.contains(AccessFlagMethod.ACC_STATIC)
                     && !accessFlags.contains(AccessFlagMethod.ACC_PRIVATE)) {
                 d.keyword("default ");
             }
             // Dumping as interface.
-            localAccessFlags = SetFactory.newSet(localAccessFlags);
             localAccessFlags.remove(AccessFlagMethod.ACC_ABSTRACT);
         }
         localAccessFlags.remove(AccessFlagMethod.ACC_VARARGS);
@@ -387,13 +405,11 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
 
         if (!prefix.isEmpty()) d.print(' ');
 
-        MethodPrototypeAnnotationsHelper annotationsHelper = new MethodPrototypeAnnotationsHelper(attributes);
-
         String displayName = isConstructor.isConstructor() ?
                 d.getTypeUsageInformation().getName(classFile.getClassType()) :
                 methodPrototype.getFixedName();
 
-        getMethodPrototype().dumpDeclarationSignature(d, displayName, isConstructor, annotationsHelper);
+        getMethodPrototype().dumpDeclarationSignature(d, displayName, isConstructor, annotationsHelper, annotationsInfo.getTypeAnnotations(usesAdmissibleType));
         AttributeExceptions exceptionsAttribute = attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
             List<AnnotationTableTypeEntry> att = annotationsHelper.getTypeTargetAnnotations(TypeAnnotationEntryValue.type_throws);

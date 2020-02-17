@@ -2,10 +2,12 @@ package org.benf.cfr.reader.entities;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
+import org.benf.cfr.reader.bytecode.analysis.types.DeclarationAnnotationHelper;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MiscAnnotations;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeAnnotationHelper;
+import org.benf.cfr.reader.bytecode.analysis.types.DeclarationAnnotationHelper.DeclarationAnnotationsInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
@@ -19,6 +21,8 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.CollectionUtils;
+import org.benf.cfr.reader.util.collections.Functional;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -143,22 +147,40 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     }
 
     public void dump(Dumper d, String name, ClassFile owner, boolean hideFlags) {
+        JavaTypeInstance type = getJavaTypeInstance();
+
+        List<AnnotationTableEntry> declarationAnnotations = MiscAnnotations.BasicAnnotations(attributes);
+        TypeAnnotationHelper tah = TypeAnnotationHelper.create(attributes, TypeAnnotationEntryValue.type_field);
+        List<AnnotationTableTypeEntry> fieldTypeAnnotations = tah == null ? null : tah.getEntries();
+
+        DeclarationAnnotationsInfo annotationsInfo = DeclarationAnnotationHelper.getDeclarationInfo(type, declarationAnnotations, fieldTypeAnnotations);
+        /*
+         * TODO: This is incorrect, but currently cannot easily influence whether the dumped type is admissible
+         * Therefore assume it is always admissible unless required not to
+         * (even though then the dumped type might still be admissible)
+         */
+        boolean usesAdmissibleType = !annotationsInfo.requiresNonAdmissibleType();
+        List<AnnotationTableEntry> declAnnotationsToDump = annotationsInfo.getDeclarationAnnotations(usesAdmissibleType);
+        List<AnnotationTableTypeEntry> typeAnnotationsToDump = annotationsInfo.getTypeAnnotations(usesAdmissibleType);
+
+        for (AnnotationTableEntry annotation : declAnnotationsToDump) {
+            annotation.dump(d).newln();
+        }
+
         if (!hideFlags) {
             String prefix = CollectionUtils.join(accessFlags, " ");
             if (!prefix.isEmpty()) {
                 d.keyword(prefix).print(' ');
             }
         }
-        TypeAnnotationHelper tah = TypeAnnotationHelper.create(attributes, TypeAnnotationEntryValue.type_field);
-        List<AnnotationTableTypeEntry> e1 = tah == null ? null : tah.getEntries();
-        List<AnnotationTableEntry> e2 = MiscAnnotations.BasicAnnotations(attributes);
 
-        JavaTypeInstance type = getJavaTypeInstance();
-        if (e1 == null && e2 == null) {
+        if (typeAnnotationsToDump.isEmpty()) {
             d.dump(type);
         } else {
             JavaAnnotatedTypeInstance jah = type.getAnnotatedInstance();
-            TypeAnnotationHelper.apply(jah, e1, e2, new DecompilerComments());
+            DecompilerComments comments = new DecompilerComments();
+            TypeAnnotationHelper.apply(jah, typeAnnotationsToDump, comments);
+            d.dump(comments);
             d.dump(jah);
         }
         d.print(' ').fieldName(name, owner.getClassType(), false, false, true);

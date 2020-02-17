@@ -55,4 +55,8 @@ public class AnnotationTableEntry implements TypeUsageCollectable {
             }
         }
     }
+
+    public boolean isAnnotationEqual(AnnotationTableEntry other) {
+        return clazz.equals(other.getClazz()) && elementValueMap.equals(other.elementValueMap);
+    }
 }

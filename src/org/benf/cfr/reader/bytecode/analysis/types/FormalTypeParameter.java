@@ -76,16 +76,18 @@ public class FormalTypeParameter implements Dumpable, TypeUsageCollectable {
     }
 
     // TODO: This really shouldn't be at display time.
-    public Dumper dump(Dumper d, List<AnnotationTableTypeEntry> e1, List<AnnotationTableTypeEntry> e2) {
+    public Dumper dump(Dumper d, List<AnnotationTableTypeEntry> typeAnnotations, List<AnnotationTableTypeEntry> typeBoundAnnotations) {
         JavaTypeInstance dispInterface = getBound();
-        if (!e1.isEmpty()) {
-            e1.get(0).dump(d);
+        if (!typeAnnotations.isEmpty()) {
+            typeAnnotations.get(0).dump(d);
             d.print(' ');
         }
         d.print(name);
         if (dispInterface != null) {
             JavaAnnotatedTypeInstance ati = dispInterface.getAnnotatedInstance();
-            TypeAnnotationHelper.apply(ati, e2, null, new DecompilerComments());
+            DecompilerComments comments = new DecompilerComments();
+            TypeAnnotationHelper.apply(ati, typeBoundAnnotations, comments);
+            d.dump(comments);
             if (!TypeConstants.objectName.equals(dispInterface.getRawName())) {
                 d.print(" extends ").dump(ati);
             }

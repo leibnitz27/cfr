@@ -25,4 +25,18 @@ public class ElementValueAnnotation implements ElementValue {
     public ElementValue withTypeHint(JavaTypeInstance hint) {
         return this;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        else if (obj instanceof ElementValueAnnotation) {
+            ElementValueAnnotation other = (ElementValueAnnotation) obj;
+            return annotationTableEntry.equals(other.annotationTableEntry);
+        }
+        else {
+            return false;
+        }
+    }
 }

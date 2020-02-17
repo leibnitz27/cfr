@@ -34,6 +34,4 @@ public class AnnotationTableTypeEntry<T extends TypeAnnotationTargetInfo> extend
     public T getTargetInfo() {
         return targetInfo;
     }
-
-
 }

@@ -25,4 +25,18 @@ public class ElementValueClass implements ElementValue {
     public ElementValue withTypeHint(JavaTypeInstance hint) {
         return this;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        else if (obj instanceof ElementValueClass) {
+            ElementValueClass other = (ElementValueClass) obj;
+            return classType.equals(other.classType);
+        }
+        else {
+            return false;
+        }
+    }
 }

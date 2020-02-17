@@ -37,4 +37,18 @@ public class ElementValueArray implements ElementValue {
     public ElementValue withTypeHint(JavaTypeInstance hint) {
         return this;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        else if (obj instanceof ElementValueArray) {
+            ElementValueArray other = (ElementValueArray) obj;
+            return content.equals(other.content);
+        }
+        else {
+            return false;
+        }
+    }
 }

@@ -1120,8 +1120,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
 
     private static void getFormalParametersText(ClassSignature signature, TypeAnnotationHelper ah,
-                                                UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> preFact,
-                                                UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> innerFact,
+                                                UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> typeAnnPredicateFact,
+                                                UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> typeBoundAnnPredicateFact,
                                                 Dumper d) {
         List<FormalTypeParameter> formalTypeParameters = signature.getFormalTypeParameters();
         if (formalTypeParameters == null || formalTypeParameters.isEmpty()) return;
@@ -1131,11 +1131,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             FormalTypeParameter formalTypeParameter = formalTypeParameters.get(idx);
             first = StringUtils.comma(first, d);
             if (ah != null) {
-                List<AnnotationTableTypeEntry> pre = Functional.filter(ah.getEntries(), preFact.invoke(idx));
-                List<AnnotationTableTypeEntry> inner = Functional.filter(ah.getEntries(), innerFact.invoke(idx));
-                if (!(pre.isEmpty() && inner.isEmpty())) {
+                List<AnnotationTableTypeEntry> typeAnnotations = Functional.filter(ah.getEntries(), typeAnnPredicateFact.invoke(idx));
+                List<AnnotationTableTypeEntry> typeBoundAnnotations = Functional.filter(ah.getEntries(), typeBoundAnnPredicateFact.invoke(idx));
+                if (!(typeAnnotations.isEmpty() && typeBoundAnnotations.isEmpty())) {
                     // TODO : preprocess - don't do this at dumper.
-                    formalTypeParameter.dump(d, pre, inner);
+                    formalTypeParameter.dump(d, typeAnnotations, typeBoundAnnotations);
                     continue;
                 }
             }
@@ -1159,7 +1159,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         }
         JavaTypeInstance t = classSignature.getThisGeneralTypeClass(this.getClassType(), constantPool);
         JavaAnnotatedTypeInstance jat = t.getAnnotatedInstance();
-        TypeAnnotationHelper.apply(jat, type, null, new DecompilerComments());
+        DecompilerComments comments = new DecompilerComments();
+        TypeAnnotationHelper.apply(jat, type, comments);
+        d.dump(comments);
         d.dump(jat);
     }
 
@@ -1168,7 +1170,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         TypeAnnotationHelper typeAnnotations = TypeAnnotationHelper.create(attributes,
                 TypeAnnotationEntryValue.type_generic_class_interface,
                 TypeAnnotationEntryValue.type_type_parameter_class_interface);
-        UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> outerFact = new UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>>() {
+        UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> typeAnnPredicateFact = new UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>>() {
             @Override
             public Predicate<AnnotationTableTypeEntry> invoke(final Integer arg) {
                 return new Predicate<AnnotationTableTypeEntry>() {
@@ -1181,7 +1183,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 };
             }
         };
-        UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> innerFact = new UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>>() {
+        UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>> typeBoundAnnPredicateFact = new UnaryFunction<Integer, Predicate<AnnotationTableTypeEntry>>() {
             @Override
             public Predicate<AnnotationTableTypeEntry> invoke(final Integer arg) {
                 return new Predicate<AnnotationTableTypeEntry>() {
@@ -1193,7 +1195,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                 };
             }
         };
-        getFormalParametersText(getClassSignature(), typeAnnotations, outerFact, innerFact, d);
+        getFormalParametersText(getClassSignature(), typeAnnotations, typeAnnPredicateFact, typeBoundAnnPredicateFact, d);
     }
 
     /*
