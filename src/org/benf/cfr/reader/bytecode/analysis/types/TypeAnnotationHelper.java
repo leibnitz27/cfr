@@ -46,19 +46,6 @@ public class TypeAnnotationHelper {
             }
         }
     }
-
-    public static void apply(JavaAnnotatedTypeInstance annotatedTypeInstance, AnnotationTableTypeEntry entry, Set<JavaTypeInstance> collisions, DecompilerComments comments) {
-        if (entry == null) return;
-        JavaAnnotatedTypeIterator iterator = annotatedTypeInstance.pathIterator();
-        List<TypePathPart> segments = entry.getTypePath().segments;
-        if (collisions != null && segments.isEmpty()) {
-            collisions.add(entry.getClazz());
-        }
-        for (TypePathPart part : segments) {
-            iterator = part.apply(iterator, comments);
-        }
-        iterator.apply(entry);
-    }
     
     private static void apply(JavaAnnotatedTypeInstance annotatedTypeInstance, AnnotationTableTypeEntry typeEntry, DecompilerComments comments) {
         JavaAnnotatedTypeIterator iterator = annotatedTypeInstance.pathIterator();
