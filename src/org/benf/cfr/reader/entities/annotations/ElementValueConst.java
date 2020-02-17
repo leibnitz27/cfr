@@ -27,4 +27,18 @@ public class ElementValueConst implements ElementValue {
         if (hint == RawJavaType.BOOLEAN) return new ElementValueConst(TypedLiteral.shrinkTo(value, RawJavaType.BOOLEAN));
         return this;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        else if (obj instanceof ElementValueArray) {
+            ElementValueConst other = (ElementValueConst) obj;
+            return value.equals(other.value);
+        }
+        else {
+            return false;
+        }
+    }
 }

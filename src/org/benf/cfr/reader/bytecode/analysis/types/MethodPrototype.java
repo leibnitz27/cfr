@@ -5,6 +5,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdent;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.Ident;
 import org.benf.cfr.reader.bytecode.analysis.variables.Slot;
@@ -178,7 +179,7 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     @SuppressWarnings("ConstantConditions")
-    public void dumpDeclarationSignature(Dumper d, String methName, Method.MethodConstructor isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper) {
+    public void dumpDeclarationSignature(Dumper d, String methName, Method.MethodConstructor isConstructor, MethodPrototypeAnnotationsHelper annotationsHelper, List<AnnotationTableTypeEntry> returnTypeAnnotations) {
 
         if (formalTypeParameters != null) {
             //  according to the JLS, these are operators.  Tempting to define a new category.
@@ -191,14 +192,20 @@ public class MethodPrototype implements TypeUsageCollectable {
             d.operator("> ");
         }
 
-        if (MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(
-                annotationsHelper.getTypeTargetAnnotations(TypeAnnotationEntryValue.type_ret_or_new),
-                annotationsHelper.getMethodAnnotations(),
-                d)) {
-            d.newln();
-        }
-        if (!isConstructor.isConstructor()) {
-            d.dump(result).print(" ");
+        if (isConstructor.isConstructor()) {
+            MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(returnTypeAnnotations, d);
+        } else {
+            if (!returnTypeAnnotations.isEmpty()) {
+                JavaAnnotatedTypeInstance jah = result.getAnnotatedInstance();
+                DecompilerComments comments = new DecompilerComments();
+                TypeAnnotationHelper.apply(jah, returnTypeAnnotations, comments);
+                d.dump(comments);
+                jah.dump(d);
+            } else {
+                d.dump(result);
+            }
+
+            d.print(' ');
         }
         d.methodName(methName, this, isConstructor.isConstructor(), true);
 
@@ -221,7 +228,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         if (receiverAnnotations != null) {
             if (isConstructor.isConstructor()) {
                 if (classFile.isInnerClass()) {
-                    MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(receiverAnnotations, null, d);
+                    MethodPrototypeAnnotationsHelper.dumpAnnotationTableEntries(receiverAnnotations, d);
                     d.dump(args.get(0));
                     d.print(' ').dump(args.get(0)).print(MiscConstants.DOT_THIS);
                     first = StringUtils.comma(first, d);
@@ -591,7 +598,7 @@ public class MethodPrototype implements TypeUsageCollectable {
             // AARGH.
             JavaTypeInstance exprType = expression.getInferredJavaType().getJavaTypeInstance();
             if (isGenericArg(exprType)) {
-                continue;   
+                continue;
             }
             if (exprType == RawJavaType.NULL) {
                 continue;

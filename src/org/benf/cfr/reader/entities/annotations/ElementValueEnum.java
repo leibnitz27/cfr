@@ -27,4 +27,18 @@ public class ElementValueEnum implements ElementValue {
     public ElementValue withTypeHint(JavaTypeInstance hint) {
         return this;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        else if (obj instanceof ElementValueEnum) {
+            ElementValueEnum other = (ElementValueEnum) obj;
+            return type.equals(other.type) && valueName.equals(other.valueName);
+        }
+        else {
+            return false;
+        }
+    }
 }

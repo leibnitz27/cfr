@@ -40,22 +40,11 @@ public class TypeAnnotationHelper {
         if (!res.isEmpty()) return new TypeAnnotationHelper(res);
         return null;
     }
-
-    public static void apply(JavaAnnotatedTypeInstance annotatedTypeInstance,
-                             List<AnnotationTableTypeEntry> typeEntries,
-                             List<AnnotationTableEntry> entries,
-                             DecompilerComments comments) {
-        Set<JavaTypeInstance> collisions = (entries != null && typeEntries != null) ? SetFactory.<JavaTypeInstance>newSet() : null;
+    
+    public static void apply(JavaAnnotatedTypeInstance annotatedTypeInstance, List<? extends AnnotationTableTypeEntry> typeEntries, DecompilerComments comments) {
         if (typeEntries != null) {
             for (AnnotationTableTypeEntry typeEntry : typeEntries) {
-                apply(annotatedTypeInstance, typeEntry, collisions, comments);
-            }
-        }
-        if (entries != null) {
-            for (AnnotationTableEntry entry : entries) {
-                if (entry == null) continue;
-                if (collisions != null && collisions.contains(entry.getClazz())) continue;
-                annotatedTypeInstance.pathIterator().apply(entry);
+                apply(annotatedTypeInstance, typeEntry, comments);
             }
         }
     }
@@ -71,6 +60,15 @@ public class TypeAnnotationHelper {
             iterator = part.apply(iterator, comments);
         }
         iterator.apply(entry);
+    }
+    
+    private static void apply(JavaAnnotatedTypeInstance annotatedTypeInstance, AnnotationTableTypeEntry typeEntry, DecompilerComments comments) {
+        JavaAnnotatedTypeIterator iterator = annotatedTypeInstance.pathIterator();
+        List<TypePathPart> segments = typeEntry.getTypePath().segments;
+        for (TypePathPart part : segments) {
+            iterator = part.apply(iterator, comments);
+        }
+        iterator.apply(typeEntry);
     }
 
     // TODO : Find usages of this, ensure linear scans are small.
