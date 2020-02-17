@@ -13,8 +13,6 @@ import org.benf.cfr.reader.util.MalformedPrototypeException;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
-import org.benf.cfr.reader.util.getopt.Options;
-import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.Collections;
 import java.util.List;

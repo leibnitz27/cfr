@@ -1,13 +1,11 @@
 package org.benf.cfr.reader.entityfactories;
 
-import org.benf.cfr.reader.util.KnowsRawName;
 import org.benf.cfr.reader.util.KnowsRawSize;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.bytestream.OffsettingByteData;
 
 import java.util.List;
-import java.util.Map;
 
 public class ContiguousEntityFactory {
 
