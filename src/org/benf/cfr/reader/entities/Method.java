@@ -358,17 +358,24 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         }
     }
 
+    private List<JavaTypeInstance> getDeclaredThrownTypes() {
+        AttributeExceptions exceptionsAttribute = attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME);
+        if (exceptionsAttribute != null) {
+            return Functional.map(exceptionsAttribute.getExceptionClassList(), new UnaryFunction<ConstantPoolEntryClass, JavaTypeInstance>() {
+                @Override
+                public JavaTypeInstance invoke(ConstantPoolEntryClass arg) {
+                    return arg.getTypeInstance();
+                }
+            });
+        }
+        else {
+            return Collections.emptyList();
+        }
+    }
+
     public Set<JavaTypeInstance> getThrownTypes() {
         if (thrownTypes == null) {
-            thrownTypes = SetFactory.newOrderedSet();
-            AttributeExceptions exceptionsAttribute = attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME);
-            if (exceptionsAttribute != null) {
-                List<ConstantPoolEntryClass> exceptionClasses = exceptionsAttribute.getExceptionClassList();
-                for (ConstantPoolEntryClass exceptionClass : exceptionClasses) {
-                    JavaTypeInstance typeInstance = exceptionClass.getTypeInstance();
-                    thrownTypes.add(typeInstance);
-                }
-            }
+            thrownTypes = new LinkedHashSet<JavaTypeInstance>(getDeclaredThrownTypes());
         }
         return thrownTypes;
     }
@@ -416,19 +423,21 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             d.print(" throws ");
             boolean first = true;
             int idx = -1;
-            for (JavaTypeInstance typeInstance : getThrownTypes()) {
+            for (JavaTypeInstance typeInstance : getDeclaredThrownTypes()) {
                 ++idx;
                 first = StringUtils.comma(first, d);
                 if (att != null) {
                     JavaAnnotatedTypeInstance jat = typeInstance.getAnnotatedInstance();
                     final int sidx = idx;
-                    AnnotationTableTypeEntry e = Functional.findOrNull(att, new Predicate<AnnotationTableTypeEntry>() {
+                    List<AnnotationTableTypeEntry> exceptionAnnotations = Functional.filter(att, new Predicate<AnnotationTableTypeEntry>() {
                         @Override
                         public boolean test(AnnotationTableTypeEntry in) {
                             return sidx == ((TypeAnnotationTargetInfo.TypeAnnotationThrowsTarget)in.getTargetInfo()).getIndex();
                         }
                     });
-                    TypeAnnotationHelper.apply(jat, e, null, new DecompilerComments());
+                    DecompilerComments comments = new DecompilerComments();
+                    TypeAnnotationHelper.apply(jat, exceptionAnnotations, comments);
+                    d.dump(comments);
                     d.dump(jat);
                 } else {
                     d.dump(typeInstance);
