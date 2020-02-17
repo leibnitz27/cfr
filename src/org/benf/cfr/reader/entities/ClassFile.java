@@ -40,7 +40,6 @@ import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperAnnotation;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperInterface;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperModule;
 import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperNormal;
-import org.benf.cfr.reader.entities.classfilehelpers.ClassFileDumperRecord;
 import org.benf.cfr.reader.entities.classfilehelpers.OverloadMethodSet;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;

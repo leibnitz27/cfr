@@ -3,7 +3,6 @@ package org.benf.cfr.reader.entities.constantpool;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
 import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
-import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.bytestream.ByteData;
 import org.benf.cfr.reader.util.output.Dumper;
 

@@ -12,9 +12,6 @@ import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class TypedLiteral implements TypeUsageCollectable, Dumpable {
 
     public enum LiteralType {

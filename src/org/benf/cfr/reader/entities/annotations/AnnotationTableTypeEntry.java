@@ -3,7 +3,6 @@ package org.benf.cfr.reader.entities.annotations;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryKind;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationEntryValue;
-import org.benf.cfr.reader.entities.attributes.TypeAnnotationLocation;
 import org.benf.cfr.reader.entities.attributes.TypeAnnotationTargetInfo;
 import org.benf.cfr.reader.entities.attributes.TypePath;
 
