@@ -811,15 +811,15 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * Note - because this may lift variables to an earlier scoped declaration, we have a second pass to tidy
      * (eg remove spurious 'this.', VariableNameTidier).
      */
-    public static void discoverVariableScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
-        AbstractLValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverImpl(method.getMethodPrototype(), variableFactory);
+    public static void discoverVariableScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory, Options options, ClassFileVersion classFileVersion) {
+        AbstractLValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverImpl(options, method.getMethodPrototype(), variableFactory, classFileVersion);
         scopeDiscoverer.processOp04Statement(root);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
     }
 
-    public static void discoverLocalClassScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory) {
-        AbstractLValueScopeDiscoverer scopeDiscoverer = new LocalClassScopeDiscoverImpl(method, variableFactory);
+    public static void discoverLocalClassScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory, Options options) {
+        AbstractLValueScopeDiscoverer scopeDiscoverer = new LocalClassScopeDiscoverImpl(options, method, variableFactory);
         scopeDiscoverer.processOp04Statement(root);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();

@@ -12,11 +12,18 @@ import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.MiscConstants;
+import org.benf.cfr.reader.util.getopt.Options;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 public class LValueScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
-    public LValueScopeDiscoverImpl(MethodPrototype prototype, VariableFactory variableFactory) {
-        super(prototype, variableFactory);
+    private final boolean instanceOfDefines;
+
+    public LValueScopeDiscoverImpl(Options options, MethodPrototype prototype, VariableFactory variableFactory, ClassFileVersion version) {
+        super(options, prototype, variableFactory);
+        instanceOfDefines = options.getOption(OptionsImpl.INSTANCEOF_PATTERN, version);
+
     }
 
     @Override
@@ -93,5 +100,10 @@ public class LValueScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
     @Override
     public boolean descendLambdas() {
         return false;
+    }
+
+    @Override
+    public boolean ifCanDefine() {
+        return instanceOfDefines;
     }
 }

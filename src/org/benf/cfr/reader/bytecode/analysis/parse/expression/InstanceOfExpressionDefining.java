@@ -7,7 +7,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
@@ -17,21 +20,16 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.Troolean;
 import org.benf.cfr.reader.util.output.Dumper;
 
-public class InstanceOfExpression extends AbstractExpression {
+public class InstanceOfExpressionDefining extends AbstractExpression {
     private Expression lhs;
     private JavaTypeInstance typeInstance;
+    private LValue defines;
 
-    public InstanceOfExpression(Expression lhs, ConstantPoolEntry cpe) {
-        super(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.EXPRESSION));
-        this.lhs = lhs;
-        ConstantPoolEntryClass cpec = (ConstantPoolEntryClass) cpe;
-        this.typeInstance = cpec.getTypeInstance();
-    }
-
-    public InstanceOfExpression(InferredJavaType inferredJavaType, Expression lhs, JavaTypeInstance typeInstance) {
+    public InstanceOfExpressionDefining(InferredJavaType inferredJavaType, Expression lhs, JavaTypeInstance typeInstance, LValue defines) {
         super(inferredJavaType);
         this.lhs = lhs;
         this.typeInstance = typeInstance;
+        this.defines = defines;
     }
 
     @Override
@@ -42,7 +40,7 @@ public class InstanceOfExpression extends AbstractExpression {
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new InstanceOfExpression(getInferredJavaType(), cloneHelper.replaceOrClone(lhs), typeInstance);
+        return new InstanceOfExpressionDefining(getInferredJavaType(), cloneHelper.replaceOrClone(lhs), typeInstance, defines);
     }
 
     @Override
@@ -53,7 +51,9 @@ public class InstanceOfExpression extends AbstractExpression {
     @Override
     public Dumper dumpInner(Dumper d) {
         lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);
-        return d.print(" instanceof ").dump(typeInstance);
+        d.print(" instanceof ").dump(typeInstance);
+        d.print(" ").dump(defines);
+        return d;
     }
 
     @Override
@@ -83,10 +83,11 @@ public class InstanceOfExpression extends AbstractExpression {
     public boolean equals(Object o) {
         if (o == null) return false;
         if (o == this) return true;
-        if (!(o instanceof InstanceOfExpression)) return false;
-        InstanceOfExpression other = (InstanceOfExpression) o;
+        if (!(o instanceof InstanceOfExpressionDefining)) return false;
+        InstanceOfExpressionDefining other = (InstanceOfExpressionDefining) o;
         if (!lhs.equals(other.lhs)) return false;
         if (!typeInstance.equals(other.typeInstance)) return false;
+        if (!defines.equals(other.defines)) return false;
         return true;
     }
 
@@ -95,9 +96,10 @@ public class InstanceOfExpression extends AbstractExpression {
         if (o == null) return false;
         if (o == this) return true;
         if (getClass() != o.getClass()) return false;
-        InstanceOfExpression other = (InstanceOfExpression) o;
+        InstanceOfExpressionDefining other = (InstanceOfExpressionDefining) o;
         if (!constraint.equivalent(lhs, other.lhs)) return false;
         if (!constraint.equivalent(typeInstance, other.typeInstance)) return false;
+        if (!constraint.equivalent(defines, other.defines)) return false;
         return true;
     }
 

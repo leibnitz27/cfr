@@ -522,7 +522,7 @@ public class CodeAnalyser {
 
         // Condense again, now we've simplified constructors.
         // Inline assingments need to be dealt with HERE (!).
-        Op03Rewriters.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options);
+        Op03Rewriters.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options, classFileVersion);
         LValueProp.condenseLValues(op03SimpleParseNodes);
         op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
 
@@ -575,7 +575,7 @@ public class CodeAnalyser {
         do {
             Op03Rewriters.rewriteNegativeJumps(op03SimpleParseNodes, true);
 
-            Op03Rewriters.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options);
+            Op03Rewriters.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options, classFileVersion);
 
             // Collapse conditionals into || / &&
             reloop = Op03Rewriters.condenseConditionals(op03SimpleParseNodes);
@@ -815,6 +815,8 @@ public class CodeAnalyser {
             // If we are, this indicates that var was used.
             Op04StructuredStatement.rewriteExplicitTypeUsages(method, block, anonymousClassUsage, classFile);
 
+//            Op04StructuredStatement.normalizeInstanceOf(method, block, options, classFileVersion);
+
             // Now we've got everything nicely block structured, we can have an easier time
             // We *have* to discover variable scopes BEFORE we rewrite lambdas, because
             // otherwise we have to perform some seriously expensive scope rewriting to
@@ -824,7 +826,7 @@ public class CodeAnalyser {
             // The downside of this is local classes inside lambdas are not handled correctly.
             // We therefore need a SEPARATE pass, post lambda, to ensure that local classes are
             // correctly processed.
-            Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory);
+            Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory, options, classFileVersion);
             if (options.getOption(OptionsImpl.REWRITE_TRY_RESOURCES, classFileVersion)) {
                 Op04StructuredStatement.removeEndResource(method.getClassFile(), block);
             }
@@ -837,7 +839,7 @@ public class CodeAnalyser {
             // Now lambdas have been rewritten, reprocess ONLY to insert local class
             // definitions.
             // Note that local class definitions are removed at the point of lambda rewrite.
-            Op04StructuredStatement.discoverLocalClassScopes(method, block, variableFactory);
+            Op04StructuredStatement.discoverLocalClassScopes(method, block, variableFactory, options);
                                             
             if (options.getOption(OptionsImpl.REMOVE_BOILERPLATE)) {
                 // Note - we ALSO try to do this in whole pass analysis.

@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.collections.SetUtil;
@@ -23,7 +24,17 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import java.util.List;
 import java.util.Set;
 
-public class ConditionalConsenser {
+public class ConditionalCondenser {
+
+    private boolean testEclipse;
+    private boolean notInstanceOf;
+
+    private ConditionalCondenser(boolean testEclipse, boolean notInstanceOf) {
+
+        this.testEclipse = testEclipse;
+        this.notInstanceOf = notInstanceOf;
+    }
+
     /* If there is a chain of assignments before this conditional,
      * AND following single parents back, there is only conditionals and assignments,
      * AND this chain terminates in a back jump.....
@@ -78,7 +89,7 @@ public class ConditionalConsenser {
     // if (b==a)
     //
     // --> if ((b=x)==(a=y))
-    private static void collapseAssignmentsIntoConditional(Op03SimpleStatement ifStatement, boolean testEclipse) {
+    private void collapseAssignmentsIntoConditional(Op03SimpleStatement ifStatement) {
 
         if (!(appropriateForIfAssignmentCollapse1(ifStatement) ||
                 appropriateForIfAssignmentCollapse2(ifStatement))) return;
@@ -204,12 +215,16 @@ public class ConditionalConsenser {
      * We will always have the former, but (ONLY!) just after a backjump, (with only conditionals and assignments, and
      * single parents), we will want to run them together.
      */
-    public static void collapseAssignmentsIntoConditionals(List<Op03SimpleStatement> statements, Options options) {
+    public static void collapseAssignmentsIntoConditionals(List<Op03SimpleStatement> statements, Options options, ClassFileVersion classFileVersion) {
         // find all conditionals.
         List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
+        if (ifStatements.isEmpty()) return;
+
         boolean testEclipse = options.getOption(OptionsImpl.ECLIPSE);
+        boolean notBeforeInstanceOf = options.getOption(OptionsImpl.INSTANCEOF_PATTERN, classFileVersion);
+        ConditionalCondenser c = new ConditionalCondenser(testEclipse, notBeforeInstanceOf);
         for (Op03SimpleStatement statement : ifStatements) {
-            collapseAssignmentsIntoConditional(statement, testEclipse);
+            c.collapseAssignmentsIntoConditional(statement);
         }
     }
 

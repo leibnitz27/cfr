@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.ScopeDiscoverInfoCache;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.util.functors.Predicate;
@@ -81,7 +82,7 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     }
 
     @Override
-    public boolean canDefine(LValue scopedEntity) {
+    public boolean canDefine(LValue scopedEntity, ScopeDiscoverInfoCache factCache) {
         return true;
     }
 

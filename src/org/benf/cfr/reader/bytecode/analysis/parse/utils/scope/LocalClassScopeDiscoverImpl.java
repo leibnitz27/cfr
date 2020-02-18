@@ -19,6 +19,7 @@ import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.AbstractTypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
@@ -28,8 +29,8 @@ public class LocalClassScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
     private final TypeUsageSpotter typeUsageSpotter = new TypeUsageSpotter();
     private final JavaTypeInstance scopeType;
 
-    public LocalClassScopeDiscoverImpl(Method method, VariableFactory variableFactory) {
-        super(method.getMethodPrototype(), variableFactory);
+    public LocalClassScopeDiscoverImpl(Options options, Method method, VariableFactory variableFactory) {
+        super(options, method.getMethodPrototype(), variableFactory);
         scopeType = method.getMethodPrototype().getClassType();
 
         JavaTypeInstance thisClassType = method.getClassFile().getClassType();

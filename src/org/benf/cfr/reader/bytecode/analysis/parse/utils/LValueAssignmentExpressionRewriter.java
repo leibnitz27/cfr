@@ -36,6 +36,8 @@ public class LValueAssignmentExpressionRewriter extends AbstractExpressionRewrit
             LValue lValue = ((LValueExpression) expression).getLValue();
             if (!lValue.equals(this.lValue)) return expression;
             if (!ssaIdentifiers.isValidReplacement(lValue, statementContainer.getSSAIdentifiers())) return expression;
+            SSAIdent ssaIdentOnEntry = source.getSSAIdentifiers().getSSAIdentOnEntry(lValue);
+            statementContainer.getSSAIdentifiers().setKnownIdentifierOnEntry(lValue, ssaIdentOnEntry);
             source.nopOut();
             terminated = true;
             return lValueReplacement;
@@ -44,6 +46,7 @@ public class LValueAssignmentExpressionRewriter extends AbstractExpressionRewrit
         if (expression instanceof AbstractFunctionInvokation) {
             terminated = true;
         }
+
         return res;
     }
 

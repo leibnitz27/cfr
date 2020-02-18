@@ -29,5 +29,7 @@ public interface LValueScopeDiscoverer extends LValueUsageCollector, LValueAssig
 
     void collect(LValue lValue);
 
+    boolean ifCanDefine();
+
     boolean descendLambdas();
 }

@@ -9,6 +9,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.ScopeDiscoverInfoCache;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
 import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.output.Dumpable;
@@ -53,7 +54,7 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
 
     boolean alwaysDefines(LValue scopedEntity);
 
-    boolean canDefine(LValue scopedEntity);
+    boolean canDefine(LValue scopedEntity, ScopeDiscoverInfoCache factCache);
 
     boolean supportsContinueBreak();
 

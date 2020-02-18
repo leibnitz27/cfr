@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.ScopeDiscoverInfoCache;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -94,7 +95,7 @@ public class StructuredIter extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public boolean canDefine(LValue scopedEntity) {
+    public boolean canDefine(LValue scopedEntity, ScopeDiscoverInfoCache factCache) {
         if (scopedEntity == null) return false;
         return scopedEntity.equals(iterator);
     }

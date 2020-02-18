@@ -263,6 +263,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> RECORD_TYPES = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "recordtypes", recordTypesVersion,
             "Re-sugar record types");
+    public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> INSTANCEOF_PATTERN = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
+            "instanceofpattern", recordTypesVersion,
+            "Re-sugar instanceof pattern matches");
     public static final PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion> ARRAY_ITERATOR = new PermittedOptionProvider.ArgumentParam<Boolean, ClassFileVersion>(
             "arrayiter", new VersionSpecificDefaulter(ClassFileVersion.JAVA_5, true),
             "Re-sugar array based iteration");
@@ -504,7 +507,8 @@ public class OptionsImpl implements Options {
         @Override
         @SuppressWarnings("unchecked")
         public List<? extends ArgumentParam<?, ?>> getArguments() {
-            return ListFactory.newImmutableList(ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, SWITCH_EXPRESSION, RECORD_TYPES, PREVIEW_FEATURES,
+            return ListFactory.newImmutableList(ENUM_SWITCH, ENUM_SUGAR, STRING_SWITCH, SWITCH_EXPRESSION, RECORD_TYPES,
+                    INSTANCEOF_PATTERN, PREVIEW_FEATURES,
                     ARRAY_ITERATOR,
                     COLLECTION_ITERATOR, DECOMPILE_INNER_CLASSES, REMOVE_BOILERPLATE,
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,

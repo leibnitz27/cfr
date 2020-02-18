@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.getopt.Options;
 
@@ -36,8 +37,8 @@ public class Op03Rewriters {
         ReturnRewriter.propagateToReturn2(op03SimpleParseNodes);
     }
 
-    public static void collapseAssignmentsIntoConditionals(List<Op03SimpleStatement> op03SimpleParseNodes, Options options) {
-        ConditionalConsenser.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options);
+    public static void collapseAssignmentsIntoConditionals(List<Op03SimpleStatement> op03SimpleParseNodes, Options options, ClassFileVersion classFileVersion) {
+        ConditionalCondenser.collapseAssignmentsIntoConditionals(op03SimpleParseNodes, options, classFileVersion);
     }
 
     public static void extendTryBlocks(DCCommonState dcCommonState, List<Op03SimpleStatement> op03SimpleParseNodes) {

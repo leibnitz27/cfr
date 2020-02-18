@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils.scope;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.InstanceOfAssignRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
@@ -26,6 +27,7 @@ import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
+import org.benf.cfr.reader.util.getopt.Options;
 
 import java.util.*;
 
@@ -49,9 +51,12 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
     final List<ScopeDefinition> discoveredCreations = ListFactory.newList();
     final VariableFactory variableFactory;
     StatementContainer<StructuredStatement> currentMark = null;
+    Options options;
     private final MethodPrototype prototype;
+    private final ScopeDiscoverInfoCache factCache = new ScopeDiscoverInfoCache();
 
-    AbstractLValueScopeDiscoverer(MethodPrototype prototype, VariableFactory variableFactory) {
+    AbstractLValueScopeDiscoverer(Options options, MethodPrototype prototype, VariableFactory variableFactory) {
+        this.options = options;
         this.prototype = prototype;
         final List<LocalVariable> parameters = prototype.getComputedParameters();
         this.variableFactory = variableFactory;
@@ -70,6 +75,11 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
         }
         currentBlock.push(container);
         currentDepth++;
+    }
+
+    @Override
+    public boolean ifCanDefine() {
+        return false;
     }
 
     @Override
@@ -181,6 +191,7 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
                     statement.markCreator(scopedEntity, null);
                     continue;
                 }
+
                 List<StatementContainer<StructuredStatement>> scopeList = definition.getNestedScope();
                 if (scopeList.isEmpty()) scopeList = null;
 
@@ -295,7 +306,7 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
         for (ScopeDefinition def : definitions) {
             if (def.nestedScope.size() <= commonScopeSize) return false;
             StatementContainer<StructuredStatement> innerDef = def.nestedScope.get(commonScopeSize);
-            if (!innerDef.getStatement().canDefine(scopedEntity)) return false;
+            if (!innerDef.getStatement().canDefine(scopedEntity, factCache)) return false;
             if (usedPoints.add(innerDef)) {
                 foundPoints.add(def);
             }
@@ -331,7 +342,14 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
         return la.subList(0, sameLen);
     }
 
-    static class ScopeDefinition {
+    private JavaTypeInstance getUnclashedType(InferredJavaType inferredJavaType) {
+        if (inferredJavaType.isClash()) {
+            inferredJavaType.collapseTypeClash();
+        }
+        return inferredJavaType.getJavaTypeInstance();
+    }
+
+    class ScopeDefinition {
         private final int depth;
         private boolean immediate;
         // Keeping this nested scope is woefully inefficient.... fixme.
@@ -346,13 +364,6 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
         ScopeDefinition(int depth, Stack<StatementContainer<StructuredStatement>> nestedScope, StatementContainer<StructuredStatement> exactStatement,
                         LValue lValue, InferredJavaType inferredJavaType, NamedVariable name) {
             this(depth, nestedScope, exactStatement, lValue, getUnclashedType(inferredJavaType), name, null, true);
-        }
-
-        private static JavaTypeInstance getUnclashedType(InferredJavaType inferredJavaType) {
-            if (inferredJavaType.isClash()) {
-                inferredJavaType.collapseTypeClash();
-            }
-            return inferredJavaType.getJavaTypeInstance();
         }
 
         StatementContainer<StructuredStatement> getExactStatement() {
@@ -374,7 +385,7 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
         }
 
         // nestedScope == null ? null : ListFactory.newList(nestedScope);
-        private static Pair< List<StatementContainer<StructuredStatement>>, StatementContainer<StructuredStatement>> getBestScopeFor(
+        private Pair< List<StatementContainer<StructuredStatement>>, StatementContainer<StructuredStatement>> getBestScopeFor(
                                      LValue lValue,
                                      Collection<StatementContainer<StructuredStatement>> nestedScope,
                                      StatementContainer<StructuredStatement> exactStatement) {
@@ -384,7 +395,7 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
             if (scope.isEmpty()) return Pair.make(scope, exactStatement);
             for (int x=scope.size()-1;x>=0;--x) {
                 StatementContainer<StructuredStatement> scopeTest = scope.get(x);
-                if (scopeTest.getStatement().canDefine(lValue)) break;
+                if (scopeTest.getStatement().canDefine(lValue, factCache)) break;
                 scope.remove(x);
             }
             if (scope.size() == nestedScope.size()) return Pair.make(scope, exactStatement);

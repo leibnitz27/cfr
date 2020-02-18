@@ -15,6 +15,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.ScopeDiscoverInfoCache;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
@@ -138,7 +139,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
     }
 
     @Override
-    public boolean canDefine(LValue scopedEntity) {
+    public boolean canDefine(LValue scopedEntity, ScopeDiscoverInfoCache factCache) {
         LValue lValue = null;
         if (initial != null) lValue = initial.getCreatedLValue();
         if (scopedEntity == null) return false;

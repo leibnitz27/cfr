@@ -46,6 +46,11 @@ public class LValueTypeClashCheck implements LValueScopeDiscoverer, StructuredSt
     }
 
     @Override
+    public boolean ifCanDefine() {
+        return false;
+    }
+
+    @Override
     public void collect(StackSSALabel lValue, StatementContainer<StructuredStatement> statementContainer, Expression value) {
         collect(lValue, value);
     }
