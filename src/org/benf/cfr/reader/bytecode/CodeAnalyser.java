@@ -815,7 +815,7 @@ public class CodeAnalyser {
             // If we are, this indicates that var was used.
             Op04StructuredStatement.rewriteExplicitTypeUsages(method, block, anonymousClassUsage, classFile);
 
-//            Op04StructuredStatement.normalizeInstanceOf(method, block, options, classFileVersion);
+            Op04StructuredStatement.normalizeInstanceOf(block, options, classFileVersion);
 
             // Now we've got everything nicely block structured, we can have an easier time
             // We *have* to discover variable scopes BEFORE we rewrite lambdas, because

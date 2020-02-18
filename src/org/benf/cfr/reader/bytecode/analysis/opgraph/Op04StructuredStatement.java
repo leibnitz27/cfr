@@ -104,6 +104,13 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         root.transform(new ClashDeclarationReducer(bytecodeMeta.getLivenessClashes()), new StructuredScope());
     }
 
+    // Later stages assume that certain instanceof operations are leaf nodes in boolean op trees.
+    public static void normalizeInstanceOf(Op04StructuredStatement root, Options options, ClassFileVersion classFileVersion) {
+        if (options.getOption(OptionsImpl.INSTANCEOF_PATTERN, classFileVersion)) {
+            new InstanceOfTreeTransformer().transform(root);
+        }
+    }
+
     // TODO: This isn't quite right.  Should actually be removing the node.
     public Op04StructuredStatement nopThisAndReplace() {
         Op04StructuredStatement replacement = new Op04StructuredStatement(instrIndex, blockMembership, structuredStatement);
