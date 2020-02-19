@@ -25,6 +25,7 @@ public class ConstantPoolUtils {
         int idxStart = 0;
 
         if (idxGen != -1) {
+            tok = tok.replace(">.", ">$");
             List<JavaTypeInstance> genericTypes;
             StringBuilder already = new StringBuilder();
             while (true) {
@@ -34,13 +35,14 @@ public class ConstantPoolUtils {
                 Pair<List<JavaTypeInstance>, Integer> genericTypePair = parseTypeList(gen, cp);
                 genericTypes = genericTypePair.getFirst();
                 idxStart = idxGen + genericTypePair.getSecond() + 1;
-                if (idxStart < gen.length()) {
+                if (idxStart < idxGen + gen.length()) {
                     if (tok.charAt(idxStart) != '>') {
                         throw new IllegalStateException();
                     }
                     idxStart++;
                     idxGen = tok.indexOf('<', idxStart);
                     if (idxGen == -1) {
+                        // At this point we're parsing an inner class.
                         // Append rest, treat as if no generics.
                         already.append(tok.substring(idxStart));
                         return cp.getClassCache().getRefClassFor(already.toString());
@@ -48,7 +50,6 @@ public class ConstantPoolUtils {
                     /*
                      * At this point we're discarding the outer generics info - that's not good....
                      */
-
                 } else {
                     break;
                 }
