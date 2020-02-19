@@ -347,14 +347,15 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     private void dumpMethodAnnotations(Dumper d, List<AnnotationTableEntry> nullableDeclAnnotations) {
+        // Explicitly dump override first.
+        if (isOverride) {
+            OVERRIDE_ANNOTATION.dump(d).newln();
+        }
+
         if (nullableDeclAnnotations != null) {
             for (AnnotationTableEntry annotation : nullableDeclAnnotations) {
                 annotation.dump(d).newln();
             }
-        }
-
-        if (isOverride) {
-            OVERRIDE_ANNOTATION.dump(d).newln();
         }
     }
 
