@@ -144,7 +144,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
     }
 
-    public void dump(Dumper d, String name, ClassFile owner, boolean hideFlags) {
+    public void dump(Dumper d, String name, ClassFile owner, boolean asRecordField) {
         JavaTypeInstance type = getJavaTypeInstance();
 
         List<AnnotationTableEntry> declarationAnnotations = MiscAnnotations.BasicAnnotations(attributes);
@@ -162,10 +162,15 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
         List<AnnotationTableTypeEntry> typeAnnotationsToDump = annotationsInfo.getTypeAnnotations(usesAdmissibleType);
 
         for (AnnotationTableEntry annotation : declAnnotationsToDump) {
-            annotation.dump(d).newln();
+            annotation.dump(d);
+            if (asRecordField) {
+                d.print(" ");
+            } else {
+                d.newln();
+            }
         }
 
-        if (!hideFlags) {
+        if (!asRecordField) {
             String prefix = CollectionUtils.join(accessFlags, " ");
             if (!prefix.isEmpty()) {
                 d.keyword(prefix).print(' ');
