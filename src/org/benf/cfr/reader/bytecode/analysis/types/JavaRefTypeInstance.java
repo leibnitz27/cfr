@@ -97,7 +97,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
              * annotated.
              */
             ClassFile classFile = rti.getClassFile();
-            if (isInner && (classFile == null || !rti.getClassFile().testAccessFlag(AccessFlag.ACC_STATIC))) {
+            if (isInner && (classFile == null || !classFile.testAccessFlag(AccessFlag.ACC_STATIC))) {
                 rti = ici.getOuterClass();
 
                 // Annotation placement might be incorrect if determining whether outer
@@ -149,13 +149,12 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
                 }
             }
 
-            /*
-             * Only dump type for first actually annotated type.
-             * E.g. with A, B and C all being inner (= non-static) classes, having
-             * `A.B.@TypeUse C` should dump `@TypeUse C`
-             */
-            if (entries.isEmpty() && !hasDumpedType && inner != null) {
-                inner.dump(d, hasDumpedType);
+            // Only dump type for first actually annotated type.
+            // E.g. with A, B and C all being inner (= non-static) classes, having
+            // `A.B.@TypeUse C` should dump `@TypeUse C`
+            // See AnnotationTestInnerDisplay.
+            if (!hasDumpedType && entries.isEmpty() && inner != null) {
+                inner.dump(d, false);
             } else {
                 if (!hasDumpedType) {
                     d.dump(outerThis);
@@ -169,9 +168,28 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             }
         }
 
+        Annotated getFirstWithEntries() {
+            if (inner == null) return null;
+            if (entries.isEmpty()) return inner.getFirstWithEntries();
+            return this;
+        }
+
         @Override
         public Dumper dump(Dumper d) {
-            dump(d, false);
+            boolean hasDumpedType = false;
+
+            // We can only take advantage of hasDumpedType if the first type that will be
+            // dumped has an explicit match to it's raw name.  Otherwise, we will appear to
+            // move annotations to an outer class.
+            // (See AnnotationTestCode5)
+            Annotated firstEntryType = getFirstWithEntries();
+            if (firstEntryType != null) {
+                JavaRefTypeInstance typ = firstEntryType.outerThis;
+                String display = d.getTypeUsageInformation().getName(typ);
+                String raw = typ.getRawShortName();
+                if (!raw.equals(display)) hasDumpedType = true;
+            }
+            dump(d, hasDumpedType);
             return d;
         }
 
