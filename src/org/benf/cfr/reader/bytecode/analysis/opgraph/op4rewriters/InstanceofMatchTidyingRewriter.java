@@ -38,11 +38,7 @@ public class InstanceofMatchTidyingRewriter {
     private void doRewrite(Op04StructuredStatement block) {
         ExpressionRewriterTransformer et = new SearchPass(new SearchPassRewriter());
         et.transform(block);
-        Set<LocalVariable> localsKeep = SetFactory.newSet();
-        for (Map.Entry<LocalVariable, Integer> entry : locals.entrySet()) {
-            if (entry.getValue() > 0) localsKeep.add(entry.getKey());
-        }
-        removeCandidates.removeAll(localsKeep);
+        removeCandidates.removeAll(locals.keySet());
         //noinspection SuspiciousMethodCalls
         removeCandidates.retainAll(definitions.keySet());
         if (removeCandidates.isEmpty()) return;
