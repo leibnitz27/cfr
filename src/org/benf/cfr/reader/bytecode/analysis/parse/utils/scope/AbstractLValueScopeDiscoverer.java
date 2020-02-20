@@ -67,6 +67,10 @@ public abstract class AbstractLValueScopeDiscoverer implements LValueScopeDiscov
         }
     }
 
+    ScopeDiscoverInfoCache getFactCache() {
+        return factCache;
+    }
+
     @Override
     public void enterBlock(StructuredStatement structuredStatement) {
         StatementContainer<StructuredStatement> container = structuredStatement.getContainer();

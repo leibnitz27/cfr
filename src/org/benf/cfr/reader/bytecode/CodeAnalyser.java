@@ -826,7 +826,10 @@ public class CodeAnalyser {
             // The downside of this is local classes inside lambdas are not handled correctly.
             // We therefore need a SEPARATE pass, post lambda, to ensure that local classes are
             // correctly processed.
-            Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory, options, classFileVersion);
+            Op04StructuredStatement.discoverVariableScopes(method, block, variableFactory, options, classFileVersion, bytecodeMeta);
+            if (bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.INSTANCE_OF_MATHCES)) {
+                Op04StructuredStatement.tidyInstanceMatches(block);
+            }
             if (options.getOption(OptionsImpl.REWRITE_TRY_RESOURCES, classFileVersion)) {
                 Op04StructuredStatement.removeEndResource(method.getClassFile(), block);
             }

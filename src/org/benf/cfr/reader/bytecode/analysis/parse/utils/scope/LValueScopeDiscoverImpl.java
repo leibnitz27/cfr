@@ -23,7 +23,6 @@ public class LValueScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
     public LValueScopeDiscoverImpl(Options options, MethodPrototype prototype, VariableFactory variableFactory, ClassFileVersion version) {
         super(options, prototype, variableFactory);
         instanceOfDefines = options.getOption(OptionsImpl.INSTANCEOF_PATTERN, version);
-
     }
 
     @Override
@@ -70,6 +69,12 @@ public class LValueScopeDiscoverImpl extends AbstractLValueScopeDiscoverer {
             earliestDefinitionsByLevel.get(currentDepth).put(name, true);
             discoveredCreations.add(scopeDefinition);
         }
+    }
+
+    public boolean didDetectInstanceOfMatching() {
+        if (!instanceOfDefines) return false;
+        ScopeDiscoverInfoCache sdi = getFactCache();
+        return sdi.anyFound();
     }
 
     @Override

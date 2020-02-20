@@ -215,7 +215,7 @@ public class ConditionalCondenser {
      * We will always have the former, but (ONLY!) just after a backjump, (with only conditionals and assignments, and
      * single parents), we will want to run them together.
      */
-    public static void collapseAssignmentsIntoConditionals(List<Op03SimpleStatement> statements, Options options, ClassFileVersion classFileVersion) {
+    static void collapseAssignmentsIntoConditionals(List<Op03SimpleStatement> statements, Options options, ClassFileVersion classFileVersion) {
         // find all conditionals.
         List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
         if (ifStatements.isEmpty()) return;

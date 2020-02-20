@@ -38,6 +38,10 @@ public class InstanceOfExpressionDefining extends AbstractExpression {
         collector.collect(typeInstance);
     }
 
+    public InstanceOfExpressionDefining withReplacedExpression(Expression e) {
+        return new InstanceOfExpressionDefining(this.getInferredJavaType(), e, typeInstance, defines);
+    }
+
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
         return new InstanceOfExpressionDefining(getInferredJavaType(), cloneHelper.replaceOrClone(lhs), typeInstance, defines);
@@ -77,6 +81,10 @@ public class InstanceOfExpressionDefining extends AbstractExpression {
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         lhs.collectUsedLValues(lValueUsageCollector);
+    }
+
+    public Expression getLhs() {
+        return lhs;
     }
 
     @Override

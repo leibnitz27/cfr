@@ -23,7 +23,8 @@ public class BytecodeMeta {
         LIVENESS_CLASH,
         ITERATED_TYPE_HINTS,
         // Kotlin uses string switches, even though it marks class files as java6.
-        STRING_SWITCHES
+        STRING_SWITCHES,
+        INSTANCE_OF_MATHCES
     }
 
     private final EnumSet<CodeInfoFlag> flags = EnumSet.noneOf(CodeInfoFlag.class);

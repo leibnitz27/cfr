@@ -15,4 +15,11 @@ public class ScopeDiscoverInfoCache {
     public void put(StructuredStatement structuredStatement, Boolean b) {
         tests.put(structuredStatement, b);
     }
+
+    boolean anyFound() {
+        for (Boolean value : tests.values()) {
+            if (value) return true;
+        }
+        return false;
+    }
 }

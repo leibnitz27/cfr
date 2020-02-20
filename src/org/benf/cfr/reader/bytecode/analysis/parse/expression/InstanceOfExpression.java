@@ -50,6 +50,10 @@ public class InstanceOfExpression extends AbstractExpression {
         return Precedence.REL_CMP_INSTANCEOF;
     }
 
+    public Expression getLhs() {
+        return lhs;
+    }
+
     @Override
     public Dumper dumpInner(Dumper d) {
         lhs.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER);

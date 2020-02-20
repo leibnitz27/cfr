@@ -818,11 +818,14 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
      * Note - because this may lift variables to an earlier scoped declaration, we have a second pass to tidy
      * (eg remove spurious 'this.', VariableNameTidier).
      */
-    public static void discoverVariableScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory, Options options, ClassFileVersion classFileVersion) {
-        AbstractLValueScopeDiscoverer scopeDiscoverer = new LValueScopeDiscoverImpl(options, method.getMethodPrototype(), variableFactory, classFileVersion);
+    public static void discoverVariableScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory, Options options, ClassFileVersion classFileVersion, BytecodeMeta bytecodeMeta) {
+        LValueScopeDiscoverImpl scopeDiscoverer = new LValueScopeDiscoverImpl(options, method.getMethodPrototype(), variableFactory, classFileVersion);
         scopeDiscoverer.processOp04Statement(root);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
+        if (scopeDiscoverer.didDetectInstanceOfMatching()) {
+            bytecodeMeta.set(BytecodeMeta.CodeInfoFlag.INSTANCE_OF_MATHCES);
+        }
     }
 
     public static void discoverLocalClassScopes(Method method, Op04StructuredStatement root, VariableFactory variableFactory, Options options) {
@@ -830,6 +833,10 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
         scopeDiscoverer.processOp04Statement(root);
         // We should have found scopes, now update to reflect this.
         scopeDiscoverer.markDiscoveredCreations();
+    }
+
+    public static void tidyInstanceMatches(Op04StructuredStatement block) {
+        InstanceofMatchTidyingRewriter.rewrite(block);
     }
 
     public static boolean checkTypeClashes(Op04StructuredStatement block, BytecodeMeta bytecodeMeta) {

@@ -41,7 +41,11 @@ import java.util.Set;
  * by now, we will simply abort if there are any unextractable assignments, or method calls (that we're not extracting)
  */
 public class InlineDeAssigner {
-    private static class Deassigner extends AbstractExpressionRewriter {
+
+    private InlineDeAssigner() {
+    }
+
+    private class Deassigner extends AbstractExpressionRewriter {
 
         Set<LValue> read = SetFactory.newSet();
         Set<LValue> write = SetFactory.newSet();
@@ -49,14 +53,7 @@ public class InlineDeAssigner {
         List<AssignmentExpression> extracted = ListFactory.newList();
 
         boolean noFurther = false;
-        /*
-         * We need to go inside out, so recurse first.
-         */
-//        @Override
-//        public AbstractAssignmentExpression rewriteExpression(AbstractAssignmentExpression expression, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
-//            if (noFurther) return expression;
-//            return super.rewriteExpression(expression, ssaIdentifiers, statementContainer, flags);
-//        }
+
 
         /*
          * Verify that the lhs has not been used at all, and that the values in the RHS have not been
@@ -178,7 +175,7 @@ public class InlineDeAssigner {
      * only a = ( b = 12 ) > (c = 43)
      * So should descend any immediate assignments first.....
      */
-    private static void deAssign(AssignmentSimple assignmentSimple, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
+    private void deAssign(AssignmentSimple assignmentSimple, Op03SimpleStatement container, List<Op03SimpleStatement> added) {
         Expression rhs = assignmentSimple.getRValue();
         if (rhs instanceof LValueExpression || rhs instanceof Literal) return;
         Deassigner deassigner = new Deassigner();
@@ -198,25 +195,26 @@ public class InlineDeAssigner {
         rewrite(deassigner, container, added);
     }
 
-    private static void deAssign(Op03SimpleStatement container, List<Op03SimpleStatement> added) {
+    private void deAssign(Op03SimpleStatement container, List<Op03SimpleStatement> added) {
         Deassigner deassigner = new Deassigner();
         container.rewrite(deassigner);
         rewrite(deassigner, container, added);
     }
 
     public static void extractAssignments(List<Op03SimpleStatement> statements) {
+        InlineDeAssigner inlineDeAssigner = new InlineDeAssigner();
         List<Op03SimpleStatement> newStatements = ListFactory.newList();
         for (Op03SimpleStatement statement : statements) {
             if (statement.getSources().size() != 1) continue;
             Statement stmt = statement.getStatement();
             Class<? extends Statement> clazz = stmt.getClass();
             if (clazz == AssignmentSimple.class) {
-                deAssign((AssignmentSimple) stmt, statement, newStatements);
+                inlineDeAssigner.deAssign((AssignmentSimple) stmt, statement, newStatements);
             } else if (clazz == WhileStatement.class) {
                 // skip. (just looks better!)
                 MiscUtils.handyBreakPoint();
             } else {
-                deAssign(statement, newStatements);
+                inlineDeAssigner.deAssign(statement, newStatements);
             }
         }
         if (newStatements.isEmpty()) return;
