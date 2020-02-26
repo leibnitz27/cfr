@@ -316,23 +316,41 @@ public class ConstantPoolUtils {
             List<JavaTypeInstance> args = ListFactory.newList();
             // could use parseTypeList below.
             while (proto.charAt(curridx) != ')') {
-                String typeTok = getNextTypeTok(proto, curridx);
-                JavaTypeInstance type = decodeTypeTok(typeTok, cp);
-                if (type instanceof JavaGenericPlaceholderTypeInstance) {
-                    type = ((JavaGenericPlaceholderTypeInstance) type).withBound(ftpMap.get(type.getRawName()));
-                }
-                args.add(type);
-                curridx += typeTok.length();
+                curridx = processTypeEntry(cp, proto, curridx, ftpMap, args);
             }
             curridx++;
             JavaTypeInstance resultType = RawJavaType.VOID;
-            if (proto.charAt(curridx) != 'V') {
-                resultType = decodeTypeTok(getNextTypeTok(proto, curridx), cp);
+            if (proto.charAt(curridx) == 'V') {
+                curridx++;
+            } else {
+                String resTypeTok = getNextTypeTok(proto, curridx);
+                curridx += resTypeTok.length();
+                resultType = decodeTypeTok(resTypeTok, cp);
             }
-            return new MethodPrototype(state, classFile, classType, name, instanceMethod, constructorFlag, formalTypeParameters, args, resultType, varargs, variableNamer, synthetic);
+            // And process any exceptions....
+            List<JavaTypeInstance> exceptions = Collections.emptyList();
+            if (curridx < proto.length()) {
+                exceptions = ListFactory.newList();
+                while (curridx < proto.length() && proto.charAt(curridx) == '^') {
+                    curridx++;
+                    curridx = processTypeEntry(cp, proto, curridx, ftpMap, exceptions);
+                }
+            }
+            return new MethodPrototype(state, classFile, classType, name, instanceMethod, constructorFlag, formalTypeParameters, args, resultType, exceptions, varargs, variableNamer, synthetic);
         } catch (StringIndexOutOfBoundsException e) {
             throw new MalformedPrototypeException(proto, e);
         }
+    }
+
+    private static int processTypeEntry(ConstantPool cp, String proto, int curridx, Map<String, JavaTypeInstance> ftpMap, List<JavaTypeInstance> args) {
+        String typeTok = getNextTypeTok(proto, curridx);
+        JavaTypeInstance type = decodeTypeTok(typeTok, cp);
+        if (type instanceof JavaGenericPlaceholderTypeInstance) {
+            type = ((JavaGenericPlaceholderTypeInstance) type).withBound(ftpMap.get(type.getRawName()));
+        }
+        args.add(type);
+        curridx += typeTok.length();
+        return curridx;
     }
 
     private static Pair<List<JavaTypeInstance>, Integer> parseTypeList(String proto, ConstantPool cp) {

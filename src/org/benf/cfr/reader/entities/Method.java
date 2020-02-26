@@ -361,7 +361,28 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         }
     }
 
+    // We can get the declared thrown types from an attribute, or from the signature.
+    // Of course, the signature can lie.
     private List<JavaTypeInstance> getDeclaredThrownTypes() {
+        List<JavaTypeInstance> attributeTypes = getAttributeDeclaredThrownTypes();
+        List<JavaTypeInstance> prototypeExceptionTypes = methodPrototype.getExceptionTypes();
+        // trust the attributes before the signature.
+        int len = attributeTypes.size();
+        if (len != prototypeExceptionTypes.size()) return attributeTypes;
+        List<JavaTypeInstance> boundProtoExceptionTypes = methodPrototype.getSignatureBoundExceptions();
+
+        for (int x=0; x<len; ++x) {
+            JavaTypeInstance signatureType = boundProtoExceptionTypes.get(x);
+            JavaTypeInstance attributeType = attributeTypes.get(x);
+            // be VERY paranoid.
+            if (!attributeType.equals(signatureType)) {
+                return attributeTypes;
+            }
+        }
+        return prototypeExceptionTypes;
+    }
+
+    private List<JavaTypeInstance> getAttributeDeclaredThrownTypes() {
         AttributeExceptions exceptionsAttribute = attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME);
         if (exceptionsAttribute != null) {
             return Functional.map(exceptionsAttribute.getExceptionClassList(), new UnaryFunction<ConstantPoolEntryClass, JavaTypeInstance>() {

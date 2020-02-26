@@ -62,6 +62,7 @@ public class MethodPrototype implements TypeUsageCollectable {
     private MethodPrototype descriptorProto;
     private final List<FormalTypeParameter> formalTypeParameters;
     private final List<JavaTypeInstance> args;
+    private final List<JavaTypeInstance> exceptionTypes;
     private final Set<Integer> hidden = SetFactory.newSet();
     private boolean innerOuterThis = false;
     private JavaTypeInstance result;
@@ -79,7 +80,7 @@ public class MethodPrototype implements TypeUsageCollectable {
 //    private static int sid = 0;
 //    private final int id = sid++;
 
-    public MethodPrototype(DCCommonState state, ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
+    public MethodPrototype(DCCommonState state, ClassFile classFile, JavaTypeInstance classType, String name, boolean instanceMethod, Method.MethodConstructor constructorFlag, List<FormalTypeParameter> formalTypeParameters, List<JavaTypeInstance> args, JavaTypeInstance result, List<JavaTypeInstance> exceptionTypes, boolean varargs, VariableNamer variableNamer, boolean synthetic) {
         this.formalTypeParameters = formalTypeParameters;
         this.instanceMethod = instanceMethod;
         /*
@@ -130,6 +131,7 @@ public class MethodPrototype implements TypeUsageCollectable {
             resultType = result;
         }
         this.result = resultType;
+        this.exceptionTypes = exceptionTypes;
         this.varargs = varargs;
         this.variableNamer = variableNamer;
         this.name = name;
@@ -492,16 +494,28 @@ public class MethodPrototype implements TypeUsageCollectable {
     }
 
     public List<JavaTypeInstance> getSignatureBoundArgs() {
-        if (classFile == null) {
-            return args;
+        return getSignatureBoundTypes(args);
+    }
+
+    public List<JavaTypeInstance> getExceptionTypes() {
+        return exceptionTypes;
+    }
+
+    public List<JavaTypeInstance> getSignatureBoundExceptions() {
+        return getSignatureBoundTypes(exceptionTypes);
+    }
+
+    private List<JavaTypeInstance> getSignatureBoundTypes(List<JavaTypeInstance> types) {
+        if (classFile == null || types.isEmpty()) {
+            return types;
         }
         ClassSignature sig = classFile.getClassSignature();
         List<FormalTypeParameter> ftp = sig.getFormalTypeParameters();
         if (ftp == null && formalTypeParameters == null) {
-            return args;
+            return types;
         }
         final GenericTypeBinder gtb = GenericTypeBinder.create(ftp, formalTypeParameters);
-        return Functional.map(args, new UnaryFunction<JavaTypeInstance, JavaTypeInstance>() {
+        return Functional.map(types, new UnaryFunction<JavaTypeInstance, JavaTypeInstance>() {
             @Override
             public JavaTypeInstance invoke(JavaTypeInstance arg) {
                 JavaTypeInstance res = arg;

@@ -1489,7 +1489,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         int idx = cpe.getBootstrapMethodAttrIndex();
         MethodPrototype dynamicProto = new MethodPrototype(cp.getDCCommonState(), classFile, classFile.getClassType(), "???",
                 false, Method.MethodConstructor.NOT, Collections.<FormalTypeParameter>emptyList(), Collections.<JavaTypeInstance>emptyList(),
-                nameAndType.decodeTypeTok(), false, new VariableNamerDefault(), false);
+                nameAndType.decodeTypeTok(), Collections.<JavaTypeInstance>emptyList(), false, new VariableNamerDefault(), false);
         Statement s =  buildInvokeDynamic(classFile, cp.getDCCommonState(), nameAndType.getName().getValue(), dynamicProto, idx, true);
         if (!(s instanceof AssignmentSimple)) {
             throw new ConfusedCFRException("Expected a result from a dynamic literal");
