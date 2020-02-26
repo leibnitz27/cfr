@@ -11,6 +11,7 @@ import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.ToStringDumper;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.List;
 import java.util.Map;
@@ -135,7 +136,7 @@ public class JavaWildcardTypeInstance implements JavaGenericBaseInstance {
     }
 
     @Override
-    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation, TypeContext typeContext) {
         d.print("? ").print(wildcardType.toString()).print(' ');
         d.dump(underlyingType);
     }

@@ -196,7 +196,7 @@ public class VariableNameTidier implements StructuredStatementTransformer {
                             if (owningClassType.equals(clazz)) {
                                 return staticVariable.getSimpleCopy();
                             }
-                            if (classFile.hasField(fieldName)) break;
+                            if (classFile.hasLocalField(fieldName)) break;
                             innerClassInfo = clazz.getInnerClassHereInfo();
                         }
                     }

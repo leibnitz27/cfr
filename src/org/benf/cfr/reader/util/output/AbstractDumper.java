@@ -1,5 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+
 abstract class AbstractDumper implements Dumper {
     final MovableDumperContext context;
 
@@ -53,6 +55,11 @@ abstract class AbstractDumper implements Dumper {
     @Override
     public void enqueuePendingCarriageReturn() {
         context.pendingCR = true;
+    }
+
+    @Override
+    public Dumper dump(JavaTypeInstance javaTypeInstance) {
+        return dump(javaTypeInstance, TypeContext.None);
     }
 
     @Override

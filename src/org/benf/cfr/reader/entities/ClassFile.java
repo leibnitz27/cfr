@@ -492,11 +492,38 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return formalTypeParameters != null && !formalTypeParameters.isEmpty();
     }
 
-    public boolean hasField(String name) {
+    private void ensureFieldsByName() {
         if (fieldsByName == null) {
             calculateFieldsByName();
         }
+    }
+
+    public boolean hasLocalField(String name) {
+        ensureFieldsByName();
         return fieldsByName.containsKey(name);
+    }
+
+    public boolean hasAccessibleField(String name, JavaRefTypeInstance maybeCaller) {
+        ensureFieldsByName();
+        Map<JavaTypeInstance, ClassFileField> fields = fieldsByName.get(name);
+        if (fields == null)
+        {
+            JavaTypeInstance baseClassType = getBaseClassType();
+            if (baseClassType == null) return false;
+            baseClassType = baseClassType.getDeGenerifiedType();
+            if (baseClassType instanceof JavaRefTypeInstance) {
+                ClassFile baseClass = ((JavaRefTypeInstance) baseClassType).getClassFile();
+                if (baseClass == null) return false;
+                return baseClass.hasAccessibleField(name, maybeCaller);
+            }
+            return false;
+        }
+        for (ClassFileField field : fields.values()) {
+            if (field.getField().isAccessibleFrom(maybeCaller, this)) return true;
+        }
+        // Ouch. There are multiple? Shouldn't be the case, probably been obfuscated.
+        // For now, let's just get the first one.
+        return false;
     }
 
     public ClassFileField getFieldByName(String name, JavaTypeInstance type) throws NoSuchFieldException {

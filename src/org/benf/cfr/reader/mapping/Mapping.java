@@ -16,6 +16,7 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.DelegatingDumper;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.List;
 import java.util.Map;
@@ -137,8 +138,13 @@ public class Mapping implements ObfuscationMapping {
         }
 
         @Override
-        public String getName(JavaTypeInstance type) {
-            return delegateRemapped.getName(get(type));
+        public String getName(JavaTypeInstance type, TypeContext typeContext) {
+            return delegateRemapped.getName(get(type), typeContext);
+        }
+
+        @Override
+        public boolean isNameClash(JavaTypeInstance type, String name, TypeContext typeContext) {
+            return delegateRemapped.isNameClash(type, name, typeContext);
         }
 
         @Override
@@ -230,8 +236,14 @@ public class Mapping implements ObfuscationMapping {
 
         @Override
         public Dumper dump(JavaTypeInstance javaTypeInstance) {
+            dump(javaTypeInstance, TypeContext.None);
+            return this;
+        }
+
+        @Override
+        public Dumper dump(JavaTypeInstance javaTypeInstance, TypeContext typeContext) {
             javaTypeInstance = javaTypeInstance.deObfuscate(Mapping.this);
-            javaTypeInstance.dumpInto(this, getTypeUsageInformation());
+            javaTypeInstance.dumpInto(this, getTypeUsageInformation(), typeContext);
             return this;
         }
 

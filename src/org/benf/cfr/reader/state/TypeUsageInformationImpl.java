@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -14,6 +15,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.*;
 
@@ -32,6 +34,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         }
     });
     private final Predicate<String> allowShorten;
+    private final Map<String, Boolean> clashNames = MapFactory.newLazyMap(new FieldClash());
 
     public TypeUsageInformationImpl(Options options, JavaRefTypeInstance analysisType, Set<JavaRefTypeInstance> usedRefTypes, Set<DetectedStaticImport> staticImports) {
         this.allowShorten = MiscUtils.mkRegexFilter(options.getOption(OptionsImpl.IMPORT_FILTER), true);
@@ -192,6 +195,19 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
         }
     }
 
+    private class FieldClash implements UnaryFunction<String, Boolean> {
+        @Override
+        public Boolean invoke(String name) {
+            return fieldClash(name);
+        }
+    }
+
+    private boolean fieldClash(String name) {
+        // Does analysisType (or any of its outer classes) have a field of this name?
+        ClassFile classFile = analysisType.getClassFile();
+        if (classFile == null) return false;
+        return classFile.hasAccessibleField(name, analysisType);
+    }
 
     @Override
     public Set<JavaRefTypeInstance> getUsedClassTypes() {
@@ -224,7 +240,7 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
     }
 
     @Override
-    public String getName(JavaTypeInstance type) {
+    public String getName(JavaTypeInstance type, TypeContext typeContext) {
         //noinspection SuspiciousMethodCalls
         String res = displayName.get(type);
         if (res == null) {
@@ -232,6 +248,17 @@ public class TypeUsageInformationImpl implements TypeUsageInformation {
             // import filter on a name.
             return type.getRawName(iid);
         }
+        if (isNameClash(type, res, typeContext)) {
+            return type.getRawName(iid);
+        }
         return res;
+    }
+
+    @Override
+    public boolean isNameClash(JavaTypeInstance type, String name, TypeContext typeContext) {
+        if (typeContext == TypeContext.Static && clashNames.get(name)) {
+            return true;
+        }
+        return false;
     }
 }

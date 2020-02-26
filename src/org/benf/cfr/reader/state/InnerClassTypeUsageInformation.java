@@ -2,9 +2,11 @@ package org.benf.cfr.reader.state;
 
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.Collections;
 import java.util.Map;
@@ -26,6 +28,15 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
         this.analysisInnerClass = analysisInnerClass;
         this.iid = delegate.getIid();
         initializeFrom();
+    }
+
+    private boolean clashesWithField(String name) {
+        JavaRefTypeInstance type = analysisInnerClass;
+        if (type == null) return false;
+        ClassFile classFile = type.getClassFile();
+        if (classFile == null) return false;
+        if (classFile.hasLocalField(name)) return true;
+        return false;
     }
 
     @Override
@@ -68,18 +79,30 @@ public class InnerClassTypeUsageInformation implements TypeUsageInformation {
     }
 
     @Override
-    public String getName(JavaTypeInstance type) {
+    public String getName(JavaTypeInstance type, TypeContext typeContext) {
         //noinspection SuspiciousMethodCalls - if it fails it fails....
         String local = localTypeNames.get(type);
-        if (local != null) return local;
+        if (local != null) {
+            return local;
+        }
 
-        String res = delegate.getName(type);
+        String res = delegate.getName(type, typeContext);
         if (usedLocalTypeNames.contains(res)) {
-            return type.getRawName();
+            return type.getRawName(iid);
+        }
+        if (isNameClash(type, res, typeContext)) {
+            return type.getRawName(iid);
         }
         return res;
     }
 
+    @Override
+    public boolean isNameClash(JavaTypeInstance type, String name, TypeContext typeContext) {
+        if (typeContext == TypeContext.Static && (clashesWithField(name) || delegate.isNameClash(type, name, typeContext))) {
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public String generateInnerClassShortName(JavaRefTypeInstance clazz) {

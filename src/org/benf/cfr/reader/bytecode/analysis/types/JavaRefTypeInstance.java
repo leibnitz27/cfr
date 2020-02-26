@@ -16,6 +16,7 @@ import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.ToStringDumper;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.List;
 import java.util.Map;
@@ -185,7 +186,7 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
             Annotated firstEntryType = getFirstWithEntries();
             if (firstEntryType != null) {
                 JavaRefTypeInstance typ = firstEntryType.outerThis;
-                String display = d.getTypeUsageInformation().getName(typ);
+                String display = d.getTypeUsageInformation().getName(typ, TypeContext.None);
                 String raw = typ.getRawShortName();
                 if (!raw.equals(display)) hasDumpedType = true;
             }
@@ -300,8 +301,8 @@ public class JavaRefTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
-        String res = typeUsageInformation.getName(this);
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation, TypeContext typeContext) {
+        String res = typeUsageInformation.getName(this, typeContext);
         if (res == null) throw new IllegalStateException();
         d.print(res);
     }

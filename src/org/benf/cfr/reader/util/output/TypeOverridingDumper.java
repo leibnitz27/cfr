@@ -6,7 +6,7 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 public class TypeOverridingDumper extends DelegatingDumper {
     private final TypeUsageInformation typeUsageInformation;
 
-    public TypeOverridingDumper(Dumper delegate, TypeUsageInformation typeUsageInformation) {
+    TypeOverridingDumper(Dumper delegate, TypeUsageInformation typeUsageInformation) {
         super(delegate);
         this.typeUsageInformation = typeUsageInformation;
     }
@@ -18,7 +18,12 @@ public class TypeOverridingDumper extends DelegatingDumper {
 
     @Override
     public Dumper dump(JavaTypeInstance javaTypeInstance) {
-        javaTypeInstance.dumpInto(this, typeUsageInformation);
+        return dump(javaTypeInstance, TypeContext.None);
+    }
+
+    @Override
+    public Dumper dump(JavaTypeInstance javaTypeInstance, TypeContext typeContext) {
+        javaTypeInstance.dumpInto(this, typeUsageInformation, typeContext);
         return this;
     }
 

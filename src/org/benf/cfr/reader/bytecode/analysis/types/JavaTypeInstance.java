@@ -6,6 +6,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 public interface JavaTypeInstance {
 
@@ -70,7 +71,7 @@ public interface JavaTypeInstance {
 
     String suggestVarName();
 
-    void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation);
+    void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation, TypeContext typeContext);
 
     void collectInto(TypeUsageCollector typeUsageCollector);
 

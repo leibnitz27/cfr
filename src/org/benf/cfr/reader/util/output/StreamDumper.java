@@ -181,8 +181,8 @@ public abstract class StreamDumper extends AbstractDumper {
     }
 
     @Override
-    public Dumper dump(JavaTypeInstance javaTypeInstance) {
-        javaTypeInstance.dumpInto(this, typeUsageInformation);
+    public Dumper dump(JavaTypeInstance javaTypeInstance, TypeContext typeContext) {
+        javaTypeInstance.dumpInto(this, typeUsageInformation, typeContext);
         return this;
     }
 

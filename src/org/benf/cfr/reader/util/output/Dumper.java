@@ -85,6 +85,8 @@ public interface Dumper extends MethodErrorCollector {
 
 //////////////
 
+    Dumper dump(JavaTypeInstance javaTypeInstance, TypeContext typeContext);
+
     Dumper dump(JavaTypeInstance javaTypeInstance);
 
     Dumper dump(Dumpable d);

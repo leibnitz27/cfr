@@ -22,6 +22,7 @@ import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.annotation.Nullable;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.List;
 
@@ -97,7 +98,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
     @Override
     public Dumper dumpInner(Dumper d) {
         if (!d.getTypeUsageInformation().isStaticImport(clazz.getDeGenerifiedType(), getFixedName())) {
-            d.dump(clazz).separator(".");
+            d.dump(clazz, TypeContext.Static).separator(".");
         }
         if (explicitGenerics != null && !explicitGenerics.isEmpty()) {
             d.operator("<");

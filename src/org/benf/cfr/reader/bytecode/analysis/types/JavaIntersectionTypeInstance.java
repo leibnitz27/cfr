@@ -8,6 +8,7 @@ import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.List;
 
@@ -122,7 +123,7 @@ public class JavaIntersectionTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation, TypeContext typeContext) {
         boolean first = true;
         for (JavaTypeInstance t : parts) {
             if (!first) {

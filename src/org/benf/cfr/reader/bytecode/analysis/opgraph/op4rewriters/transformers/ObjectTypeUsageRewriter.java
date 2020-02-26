@@ -156,7 +156,7 @@ public class ObjectTypeUsageRewriter extends AbstractExpressionRewriter implemen
         class FieldCheck implements UnaryFunction<ClassFile, Boolean> {
             @Override
             public Boolean invoke(ClassFile classFile) {
-                return classFile.hasField(fieldVariable.getFieldName());
+                return classFile.hasLocalField(fieldVariable.getFieldName());
             }
         }
 

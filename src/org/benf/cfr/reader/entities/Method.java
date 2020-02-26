@@ -11,6 +11,7 @@ import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.annotations.ElementValue;
 import org.benf.cfr.reader.entities.attributes.*;
+import org.benf.cfr.reader.entities.classfilehelpers.VisibilityHelper;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
@@ -32,6 +33,7 @@ import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.*;
 
@@ -414,7 +416,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         if (!prefix.isEmpty()) d.print(' ');
 
         String displayName = isConstructor.isConstructor() ?
-                d.getTypeUsageInformation().getName(classFile.getClassType()) :
+                d.getTypeUsageInformation().getName(classFile.getClassType(), TypeContext.None) :
                 methodPrototype.getFixedName();
 
         getMethodPrototype().dumpDeclarationSignature(d, displayName, isConstructor, annotationsHelper, annotationsInfo.getTypeAnnotations(usesAdmissibleType));
@@ -505,34 +507,12 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         this.comments = comments;
     }
 
-    private boolean isInnerVisibleTo(JavaTypeInstance maybeCaller) {
-        JavaRefTypeInstance thisClass = getClassFile().getRefClassType();
-            /*
-             * If this is an inner class of maybeCaller (or the other way around), it's allowed, otherwise
-             * not.
-             */
-        if (maybeCaller.getInnerClassHereInfo().isTransitiveInnerClassOf(thisClass)) return true;
-        if (thisClass.getInnerClassHereInfo().isTransitiveInnerClassOf(maybeCaller)) return true;
-        return false;
-    }
-
     public boolean isVisibleTo(JavaRefTypeInstance maybeCaller) {
-        if (accessFlags.contains(AccessFlagMethod.ACC_PUBLIC)) return true;
-        if (maybeCaller.equals(getClassFile().getClassType())) return true;
-        if (accessFlags.contains(AccessFlagMethod.ACC_PRIVATE)) {
-            return isInnerVisibleTo(maybeCaller);
-        }
-        if (accessFlags.contains(AccessFlagMethod.ACC_PROTECTED)) {
-            // If it's derived, it can see it - if it's inner, it can see it.
-            BindingSuperContainer bindingSuperContainer = maybeCaller.getBindingSupers();
-            // paranoia.
-            if (bindingSuperContainer == null) return false;
-            if (bindingSuperContainer.containsBase(getClassFile().getClassType())) return true;
-            return isInnerVisibleTo(maybeCaller);
-        }
-        // Otherwise, we're left with package visibility.
-        if (maybeCaller.getPackageName().equals(getClassFile().getRefClassType().getPackageName())) return true;
-        return false;
+        return VisibilityHelper.isVisibleTo(maybeCaller, getClassFile(),
+                accessFlags.contains(AccessFlagMethod.ACC_PUBLIC),
+                accessFlags.contains(AccessFlagMethod.ACC_PRIVATE),
+                accessFlags.contains(AccessFlagMethod.ACC_PROTECTED)
+        );
     }
 
     public void dump(Dumper d, boolean asClass) {

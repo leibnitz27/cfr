@@ -6,6 +6,7 @@ import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.Collections;
 import java.util.Map;
@@ -83,11 +84,11 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
     }
 
     @Override
-    public String getName(JavaTypeInstance type) {
+    public String getName(JavaTypeInstance type, TypeContext typeContext) {
         String local = localTypeNames.get(type);
         if (local != null) return local;
 
-        String res = delegate.getName(type);
+        String res = delegate.getName(type, typeContext);
         if (usedLocalTypeNames.contains(res)) {
             if (type instanceof JavaRefTypeInstance) {
                 return delegate.generateOverriddenName((JavaRefTypeInstance) type);
@@ -96,6 +97,11 @@ public class LocalClassAwareTypeUsageInformation implements TypeUsageInformation
             }
         }
         return res;
+    }
+
+    @Override
+    public boolean isNameClash(JavaTypeInstance type, String name, TypeContext typeContext) {
+        return delegate.isNameClash(type, name, typeContext);
     }
 
     @Override

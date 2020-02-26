@@ -17,6 +17,7 @@ import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.ToStringDumper;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.List;
 import java.util.Map;
@@ -196,7 +197,7 @@ public class JavaGenericRefTypeInstance implements JavaGenericBaseInstance, Comp
     }
 
     @Override
-    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation, TypeContext typeContext) {
         d.dump(typeInstance).print('<');
         boolean first = true;
         for (JavaTypeInstance type : genericTypes) {

@@ -13,6 +13,7 @@ import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 public class StaticVariable extends AbstractFieldVariable {
 
@@ -64,7 +65,7 @@ public class StaticVariable extends AbstractFieldVariable {
         if (knownSimple) {
             return d.fieldName(getFieldName(), getOwningClassType(), false, true, false);
         } else {
-            return d.dump(getOwningClassType()).separator(".").fieldName(getFieldName(), getOwningClassType(), false, true, false);
+            return d.dump(getOwningClassType(), TypeContext.Static).separator(".").fieldName(getFieldName(), getOwningClassType(), false, true, false);
         }
     }
 

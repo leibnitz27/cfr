@@ -12,6 +12,7 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.output.Dumpable;
 import org.benf.cfr.reader.util.output.Dumper;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.Set;
 
@@ -169,10 +170,15 @@ public class TypeUsageCollectingDumper implements Dumper {
 
     @Override
     public Dumper dump(JavaTypeInstance javaTypeInstance) {
+        return dump(javaTypeInstance, TypeContext.None);
+    }
+
+    @Override
+    public Dumper dump(JavaTypeInstance javaTypeInstance, TypeContext typeContext) {
         if (javaTypeInstance instanceof JavaRefTypeInstance) {
             refTypeInstanceSet.add((JavaRefTypeInstance)javaTypeInstance);
         }
-        javaTypeInstance.dumpInto(this, getTypeUsageInformation());
+        javaTypeInstance.dumpInto(this, getTypeUsageInformation(), typeContext);
         return this;
     }
 

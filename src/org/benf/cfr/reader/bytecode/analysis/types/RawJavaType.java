@@ -10,6 +10,7 @@ import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.List;
 import java.util.Map;
@@ -303,9 +304,9 @@ public enum RawJavaType implements JavaTypeInstance {
     }
 
     @Override
-    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation, TypeContext typeContext) {
         if (this == NULL) {
-            TypeConstants.OBJECT.dumpInto(d, typeUsageInformation);
+            TypeConstants.OBJECT.dumpInto(d, typeUsageInformation, typeContext);
             return;
         }
         d.print(toString());

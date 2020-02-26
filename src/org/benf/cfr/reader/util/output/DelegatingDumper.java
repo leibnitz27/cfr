@@ -127,6 +127,12 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
+    public Dumper dump(JavaTypeInstance javaTypeInstance, TypeContext typeContext) {
+        delegate.dump(javaTypeInstance, typeContext);
+        return this;
+    }
+
+    @Override
     public void close() {
         delegate.close();
     }

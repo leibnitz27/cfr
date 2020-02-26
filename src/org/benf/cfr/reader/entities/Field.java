@@ -3,6 +3,7 @@ package org.benf.cfr.reader.entities;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.types.ClassNameUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.DeclarationAnnotationHelper;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MiscAnnotations;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
@@ -12,6 +13,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.annotated.JavaAnnotatedTypeIn
 import org.benf.cfr.reader.entities.annotations.AnnotationTableEntry;
 import org.benf.cfr.reader.entities.annotations.AnnotationTableTypeEntry;
 import org.benf.cfr.reader.entities.attributes.*;
+import org.benf.cfr.reader.entities.classfilehelpers.VisibilityHelper;
 import org.benf.cfr.reader.entities.constantpool.ConstantPool;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolUtils;
@@ -187,5 +189,12 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
             d.dump(jah);
         }
         d.print(' ').fieldName(name, owner.getClassType(), false, false, true);
+    }
+
+    public boolean isAccessibleFrom(JavaRefTypeInstance maybeCaller, ClassFile classFile) {
+        return VisibilityHelper.isVisibleTo(maybeCaller, classFile,
+                testAccessFlag(AccessFlag.ACC_PUBLIC),
+                testAccessFlag(AccessFlag.ACC_PRIVATE),
+                testAccessFlag(AccessFlag.ACC_PROTECTED));
     }
 }

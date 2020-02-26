@@ -10,6 +10,7 @@ import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.IllegalIdentifierDump;
 import org.benf.cfr.reader.util.output.ToStringDumper;
+import org.benf.cfr.reader.util.output.TypeContext;
 
 import java.util.List;
 
@@ -91,7 +92,7 @@ public class JavaArrayTypeInstance implements JavaTypeInstance {
     }
 
     @Override
-    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation) {
+    public void dumpInto(Dumper d, TypeUsageInformation typeUsageInformation, TypeContext typeContext) {
         toCommonString(getNumArrayDimensions(), d);
     }
 
