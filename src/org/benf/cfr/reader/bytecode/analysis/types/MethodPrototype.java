@@ -522,7 +522,7 @@ public class MethodPrototype implements TypeUsageCollectable {
                 do {
                     arg = res;
                     res = gtb.getBindingFor(arg);
-                } while (res instanceof JavaGenericPlaceholderTypeInstance);
+                } while (res instanceof JavaGenericPlaceholderTypeInstance && res != arg);
                 return res;
             }
         });
