@@ -114,6 +114,10 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         return classFileField;
     }
 
+    public Field getField() {
+        return classFileField == null ? null : classFileField.getField();
+    }
+
     @Override
     public SSAIdentifiers<LValue> collectVariableMutation(SSAIdentifierFactory<LValue, ?> ssaIdentifierFactory) {
         //noinspection unchecked

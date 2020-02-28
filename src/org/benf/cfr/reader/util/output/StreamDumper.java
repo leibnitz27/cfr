@@ -4,6 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
+import org.benf.cfr.reader.entities.Field;
 import org.benf.cfr.reader.mapping.NullMapping;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -64,22 +66,41 @@ public abstract class StreamDumper extends AbstractDumper {
     }
 
     @Override
-    public Dumper identifier(String s, Object ref, boolean defines) {
-        return print(illegalIdentifierDump.getLegalIdentifierFor(s));
-    }
-
-    @Override
-    public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
-        return identifier(s, null, defines);
-    }
-
-    @Override
     public Dumper packageName(JavaRefTypeInstance t) {
         String s = t.getPackageName();
         if (!s.isEmpty()) {
             keyword("package ").print(s).endCodeln().newln();
         }
         return this;
+    }
+
+    @Override
+    public Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines) {
+        identifier(name, null, defines);
+        return this;
+    }
+
+    @Override
+    public Dumper methodName(String name, MethodPrototype method, boolean special, boolean defines) {
+        identifier(name, null, defines);
+        return this;
+    }
+
+    @Override
+    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
+        identifier(name, null, defines);
+        return this;
+    }
+
+    @Override
+    public Dumper variableName(String name, NamedVariable variable, boolean defines) {
+        identifier(name, null, defines);
+        return this;
+    }
+
+    @Override
+    public Dumper identifier(String s, Object ref, boolean defines) {
+        return print(illegalIdentifierDump.getLegalIdentifierFor(s));
     }
 
     @Override
@@ -172,12 +193,6 @@ public abstract class StreamDumper extends AbstractDumper {
     @Override
     public void indent(int diff) {
         context.indent += diff;
-    }
-
-    @Override
-    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
-        identifier(name, null, defines);
-        return this;
     }
 
     @Override

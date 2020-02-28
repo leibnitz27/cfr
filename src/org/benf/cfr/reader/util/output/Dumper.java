@@ -3,6 +3,8 @@ package org.benf.cfr.reader.util.output;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
+import org.benf.cfr.reader.entities.Field;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -35,11 +37,17 @@ public interface Dumper extends MethodErrorCollector {
 
     Dumper print(String s);
 
-    Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines);
-
     Dumper packageName(JavaRefTypeInstance t);
 
-    Dumper identifier(String s, Object ref, boolean defines);
+    Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines);
+
+    Dumper methodName(String name, MethodPrototype method, boolean special, boolean defines);
+
+    Dumper parameterName(String name, MethodPrototype method, int index, boolean defines);
+
+    Dumper variableName(String name, NamedVariable variable, boolean defines);
+
+    Dumper identifier(String name, Object ref, boolean defines);
 
     Dumper print(char c);
 
@@ -55,8 +63,6 @@ public interface Dumper extends MethodErrorCollector {
     void addSummaryError(Method method, String s);
 
     boolean canEmitClass(JavaTypeInstance type);
-
-    Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines);
 
     Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation);
 
@@ -89,6 +95,7 @@ public interface Dumper extends MethodErrorCollector {
 
     Dumper dump(JavaTypeInstance javaTypeInstance);
 
-    Dumper dump(Dumpable d);
+    Dumper dump(JavaTypeInstance javaTypeInstance, boolean defines);
 
+    Dumper dump(Dumpable d);
 }

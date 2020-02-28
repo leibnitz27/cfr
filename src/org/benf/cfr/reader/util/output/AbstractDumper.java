@@ -63,6 +63,11 @@ abstract class AbstractDumper implements Dumper {
     }
 
     @Override
+    public Dumper dump(JavaTypeInstance javaTypeInstance, boolean defines) {
+        return dump(javaTypeInstance);
+    }
+
+    @Override
     public Dumper removePendingCarriageReturn() {
         context.pendingCR = false;
         context.atStart = false;

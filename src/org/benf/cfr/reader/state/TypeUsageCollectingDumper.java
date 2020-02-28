@@ -4,7 +4,9 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
 import org.benf.cfr.reader.entities.ClassFile;
+import org.benf.cfr.reader.entities.Field;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.mapping.NullMapping;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
@@ -89,12 +91,27 @@ public class TypeUsageCollectingDumper implements Dumper {
     }
 
     @Override
-    public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
+    public Dumper packageName(JavaRefTypeInstance t) {
         return this;
     }
 
     @Override
-    public Dumper packageName(JavaRefTypeInstance t) {
+    public Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines) {
+        return this;
+    }
+
+    @Override
+    public Dumper methodName(String name, MethodPrototype method, boolean special, boolean defines) {
+        return this;
+    }
+
+    @Override
+    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
+        return this;
+    }
+
+    @Override
+    public Dumper variableName(String name, NamedVariable variable, boolean defines) {
         return this;
     }
 
@@ -139,11 +156,6 @@ public class TypeUsageCollectingDumper implements Dumper {
     }
 
     @Override
-    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
-        return this;
-    }
-
-    @Override
     public Dumper withTypeUsageInformation(TypeUsageInformation innerclassTypeUsageInformation) {
         return this;
     }
@@ -171,6 +183,11 @@ public class TypeUsageCollectingDumper implements Dumper {
     @Override
     public Dumper dump(JavaTypeInstance javaTypeInstance) {
         return dump(javaTypeInstance, TypeContext.None);
+    }
+
+    @Override
+    public Dumper dump(JavaTypeInstance javaTypeInstance, boolean defines) {
+        return dump(javaTypeInstance);
     }
 
     @Override

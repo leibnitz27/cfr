@@ -3,6 +3,8 @@ package org.benf.cfr.reader.util.output;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
+import org.benf.cfr.reader.entities.Field;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.mapping.NullMapping;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
@@ -42,22 +44,37 @@ public class ToStringDumper extends AbstractDumper {
     }
 
     @Override
-    public Dumper identifier(String s, Object ref, boolean defines) {
-        return print(s);
-    }
-
-    @Override
-    public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
-        return identifier(s, null, defines);
-    }
-
-    @Override
     public Dumper packageName(JavaRefTypeInstance t) {
         String s = t.getPackageName();
         if (!s.isEmpty()) {
             keyword("package ").print(s).endCodeln().newln();
         }
         return this;
+    }
+
+    @Override
+    public Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines) {
+        return identifier(name, null, defines);
+    }
+
+    @Override
+    public Dumper methodName(String name, MethodPrototype method, boolean special, boolean defines) {
+        return identifier(name, null, defines);
+    }
+
+    @Override
+    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
+        return identifier(name, null, defines);
+    }
+
+    @Override
+    public Dumper variableName(String name, NamedVariable variable, boolean defines) {
+        return identifier(name, null, defines);
+    }
+
+    @Override
+    public Dumper identifier(String s, Object ref, boolean defines) {
+        return print(s);
     }
 
     @Override
@@ -151,12 +168,6 @@ public class ToStringDumper extends AbstractDumper {
     @Override
     public Dumper dump(JavaTypeInstance javaTypeInstance, TypeContext typeContext) {
         javaTypeInstance.dumpInto(this, typeUsageInformation, typeContext);
-        return this;
-    }
-
-    @Override
-    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
-        identifier(name, null, defines);
         return this;
     }
 

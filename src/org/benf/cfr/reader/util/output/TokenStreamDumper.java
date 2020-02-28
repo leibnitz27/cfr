@@ -5,6 +5,8 @@ import org.benf.cfr.reader.api.SinkReturns;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
+import org.benf.cfr.reader.entities.Field;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.mapping.NullMapping;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
@@ -253,22 +255,42 @@ public class TokenStreamDumper extends AbstractDumper {
     }
 
     @Override
-    public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
-        if (defines) {
-            sink(new Token(METHOD, s, refMap.get(p), SinkReturns.TokenTypeFlags.DEFINES));
-        } else {
-            sink(new Token(METHOD, s, refMap.get(p)));
-        }
-        return this;
-    }
-
-    @Override
     public Dumper packageName(JavaRefTypeInstance t) {
         String s = t.getPackageName();
         if (!s.isEmpty()) {
             keyword("package ").print(s).endCodeln().newln();
         }
         return this;
+    }
+
+    @Override
+    public Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines) {
+        if (defines) {
+            sink(new Token(FIELD, name, SinkReturns.TokenTypeFlags.DEFINES));
+        } else {
+            sink(FIELD, name);
+        }
+        return this;
+    }
+
+    @Override
+    public Dumper methodName(String s, MethodPrototype method, boolean special, boolean defines) {
+        if (defines) {
+            sink(new Token(METHOD, s, refMap.get(method), SinkReturns.TokenTypeFlags.DEFINES));
+        } else {
+            sink(new Token(METHOD, s, refMap.get(method)));
+        }
+        return this;
+    }
+
+    @Override
+    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
+        return identifier(name, null, defines);
+    }
+
+    @Override
+    public Dumper variableName(String name, NamedVariable variable, boolean defines) {
+        return identifier(name, null, defines);
     }
 
     @Override
@@ -339,16 +361,6 @@ public class TokenStreamDumper extends AbstractDumper {
     @Override
     public boolean canEmitClass(JavaTypeInstance type) {
         return emitted.add(type);
-    }
-
-    @Override
-    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
-        if (defines) {
-            sink(new Token(FIELD, name, SinkReturns.TokenTypeFlags.DEFINES));
-        } else {
-            sink(FIELD, name);
-        }
-        return this;
     }
 
     @Override

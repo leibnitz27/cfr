@@ -1192,7 +1192,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
     public void dumpClassIdentity(Dumper d) {
-        d.dump(getThisClassConstpoolEntry().getTypeInstance());
+        d.dump(getThisClassConstpoolEntry().getTypeInstance(), true);
         TypeAnnotationHelper typeAnnotations = TypeAnnotationHelper.create(attributes,
                 TypeAnnotationEntryValue.type_generic_class_interface,
                 TypeAnnotationEntryValue.type_type_parameter_class_interface);

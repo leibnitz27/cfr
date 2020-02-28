@@ -1,9 +1,13 @@
 package org.benf.cfr.reader.mapping;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.AbstractFieldVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StaticVariable;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.entities.AccessFlag;
+import org.benf.cfr.reader.entities.Field;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.state.DetectedStaticImport;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -199,25 +203,30 @@ public class Mapping implements ObfuscationMapping {
         }
 
         @Override
-        public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
-            ClassMapping c = erasedTypeMap.get(p.getClassType().getDeGenerifiedType());
+        public Dumper methodName(String s, MethodPrototype method, boolean special, boolean defines) {
+            ClassMapping c = erasedTypeMap.get(method.getClassType().getDeGenerifiedType());
             if (c == null || special) {
-                delegate.methodName(s, p, special, defines);
+                delegate.methodName(s, method, special, defines);
                 return this;
             }
 
-            delegate.methodName(c.getMethodName(s, p.getSignatureBoundArgs(), Mapping.this, delegate), p, special, defines);
+            delegate.methodName(c.getMethodName(s, method.getSignatureBoundArgs(), Mapping.this, delegate), method, special, defines);
             return this;
         }
 
         @Override
-        public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
+        public Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines) {
             JavaTypeInstance deGenerifiedType = owner.getDeGenerifiedType();
             ClassMapping c = erasedTypeMap.get(deGenerifiedType);
             if (c == null || hiddenDeclaration) {
-                delegate.fieldName(name, owner, hiddenDeclaration, isStatic, defines);
+                delegate.fieldName(name, field, owner, hiddenDeclaration, defines);
             } else {
-                delegate.fieldName(c.getFieldName(name, deGenerifiedType,this, Mapping.this, isStatic), owner, hiddenDeclaration, isStatic, defines);
+                delegate.fieldName(
+                        c.getFieldName(name, deGenerifiedType,this, Mapping.this, field.testAccessFlag(AccessFlag.ACC_STATIC)),
+                        field,
+                        owner,
+                        hiddenDeclaration,
+                        defines);
             }
             return this;
         }
@@ -238,6 +247,11 @@ public class Mapping implements ObfuscationMapping {
         public Dumper dump(JavaTypeInstance javaTypeInstance) {
             dump(javaTypeInstance, TypeContext.None);
             return this;
+        }
+
+        @Override
+        public Dumper dump(JavaTypeInstance javaTypeInstance, boolean defines) {
+            return dump(javaTypeInstance);
         }
 
         @Override

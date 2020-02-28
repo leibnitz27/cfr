@@ -76,7 +76,7 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
                     // don't show the case part of that.
                     StaticVariable enumStatic = getEnumStatic(value);
                     if (enumStatic != null) {
-                        dumper.keyword("case ").fieldName(enumStatic.getFieldName(), enumStatic.getOwningClassType(), false, true, false).separator(": ");
+                        dumper.keyword("case ").fieldName(enumStatic.getFieldName(), enumStatic.getField(), enumStatic.getOwningClassType(), false, false).separator(": ");
                         if (x != last) dumper.newln();
                         continue;
                     }

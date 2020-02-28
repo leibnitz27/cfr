@@ -3,6 +3,8 @@ package org.benf.cfr.reader.util.output;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.MethodPrototype;
+import org.benf.cfr.reader.bytecode.analysis.variables.NamedVariable;
+import org.benf.cfr.reader.entities.Field;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.mapping.ObfuscationMapping;
 import org.benf.cfr.reader.state.TypeUsageInformation;
@@ -72,14 +74,32 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
-    public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
-        delegate.methodName(s, p, special, defines);
+    public Dumper packageName(JavaRefTypeInstance t) {
+        delegate.packageName(t);
         return this;
     }
 
     @Override
-    public Dumper packageName(JavaRefTypeInstance t) {
-        delegate.packageName(t);
+    public Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines) {
+        delegate.fieldName(name, field, owner, hiddenDeclaration, defines);
+        return this;
+    }
+
+    @Override
+    public Dumper methodName(String name, MethodPrototype method, boolean special, boolean defines) {
+        delegate.methodName(name, method, special, defines);
+        return this;
+    }
+
+    @Override
+    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
+        delegate.parameterName(name, method, index, defines);
+        return this;
+    }
+
+    @Override
+    public Dumper variableName(String name, NamedVariable variable, boolean defines) {
+        delegate.variableName(name, variable, defines);
         return this;
     }
 
@@ -127,6 +147,12 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
+    public Dumper dump(JavaTypeInstance javaTypeInstance, boolean defines) {
+        delegate.dump(javaTypeInstance, defines);
+        return this;
+    }
+
+    @Override
     public Dumper dump(JavaTypeInstance javaTypeInstance, TypeContext typeContext) {
         delegate.dump(javaTypeInstance, typeContext);
         return this;
@@ -145,12 +171,6 @@ public abstract class DelegatingDumper implements Dumper {
     @Override
     public boolean canEmitClass(JavaTypeInstance type) {
         return delegate.canEmitClass(type);
-    }
-
-    @Override
-    public Dumper fieldName(String name, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
-        delegate.fieldName(name, owner, hiddenDeclaration, isStatic, defines);
-        return this;
     }
 
     @Override
