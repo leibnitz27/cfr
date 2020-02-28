@@ -9,6 +9,11 @@ import org.benf.cfr.reader.state.TypeUsageInformation;
 
 /*
  * NB: This interface is NOT an externally visible one, and is subject to change.
+ *
+ * Please don't implement this (it's public because Java6's crappy access protection
+ * means that subpackage visibility is required.).
+ *
+ * If you find yourself tempted to implement this, please see https://www.benf.org/other/cfr/api
  */
 public interface Dumper extends MethodErrorCollector {
     /*

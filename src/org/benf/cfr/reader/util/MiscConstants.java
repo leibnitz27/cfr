@@ -33,6 +33,7 @@ public interface MiscConstants {
     String EQUALS = "equals";
     String HASHCODE = "hashCode";
     String TOSTRING = "toString";
+    String PACKAGE_INFO = "package-info";
 
     String UNBOUND_GENERIC = "?";
     char INNER_CLASS_SEP_CHAR = '$';

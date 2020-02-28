@@ -245,6 +245,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         boolean isInterface = accessFlags.contains(AccessFlag.ACC_INTERFACE);
         boolean isAnnotation = accessFlags.contains(AccessFlag.ACC_ANNOTATION);
         boolean isModule = accessFlags.contains(AccessFlag.ACC_MODULE);
+
         /*
          * Choose a default dump helper.  This may be overwritten.
          */
@@ -412,7 +413,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     }
 
     public void addComment(String comment) {
-        if (decompilerComments == null) decompilerComments = new DecompilerComments();
+        ensureDecompilerComments();
         decompilerComments.addComment(comment);
     }
 
@@ -420,7 +421,12 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         addComment(new DecompilerComment(comment, e));
     }
 
-    public DecompilerComments getDecompilerComments() {
+    public DecompilerComments getNullableDecompilerComments() {
+        return decompilerComments;
+    }
+
+    public DecompilerComments ensureDecompilerComments() {
+        if (decompilerComments == null) decompilerComments = new DecompilerComments();
         return decompilerComments;
     }
 

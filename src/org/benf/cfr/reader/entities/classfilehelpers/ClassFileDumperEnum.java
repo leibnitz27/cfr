@@ -79,7 +79,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
     public Dumper dump(ClassFile classFile, InnerClassDumpType innerClass, Dumper d) {
 
         if (!innerClass.isInnerClass()) {
-            dumpTopHeader(classFile, d);
+            dumpTopHeader(classFile, d, true);
             dumpImports(d, classFile);
         }
 

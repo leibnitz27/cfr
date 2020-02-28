@@ -56,7 +56,7 @@ public class ClassFileDumperNormal extends AbstractClassFileDumper {
         if (!d.canEmitClass(classFile.getClassType())) return d;
 
         if (!innerClass.isInnerClass()) {
-            dumpTopHeader(classFile, d);
+            dumpTopHeader(classFile, d, true);
             dumpImports(d, classFile);
         }
 

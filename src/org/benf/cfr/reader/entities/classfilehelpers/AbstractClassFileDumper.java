@@ -48,7 +48,7 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
     }
 
 
-    void dumpTopHeader(ClassFile classFile, Dumper d) {
+    void dumpTopHeader(ClassFile classFile, Dumper d, boolean showPackage) {
         if (dcCommonState == null) return;
         Options options = dcCommonState.getOptions();
         String header = MiscConstants.CFR_HEADER_BRA +
@@ -80,7 +80,9 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
         }
         d.endBlockComment();
         // package name may be empty, in which case it's ignored by dumper.
-        d.packageName(classFile.getRefClassType());
+        if (showPackage) {
+            d.packageName(classFile.getRefClassType());
+        }
     }
 
     void dumpImports(Dumper d, ClassFile classFile) {
@@ -189,7 +191,7 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
     }
 
     void dumpComments(ClassFile classFile, Dumper d) {
-        DecompilerComments comments = classFile.getDecompilerComments();
+        DecompilerComments comments = classFile.getNullableDecompilerComments();
         if (comments == null) return;
         comments.dump(d);
     }
