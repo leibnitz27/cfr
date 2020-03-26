@@ -31,6 +31,7 @@ import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.IllegalIdentifierReplacement;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -225,13 +226,16 @@ public class EnumClassRewriter {
         InferredJavaType clazzAIJT = new InferredJavaType(arrayType, InferredJavaType.Source.UNKNOWN, true);
         Matcher<StructuredStatement> matcher = new MatchSequence(
                 new BeginBlock(null),
-                new KleenePlus(
+                new KleeneStar(
                         new MatchOneOf(
                                 new ResetAfterTest(wcm, new CollectMatch("entry", new StructuredAssignment(wcm.getStaticVariable("e", classType, clazzIJT), wcm.getConstructorSimpleWildcard("c", classType)))),
                                 new ResetAfterTest(wcm, new CollectMatch("entryderived", new StructuredAssignment(wcm.getStaticVariable("e2", classType, clazzIJT, false), wcm.getConstructorAnonymousWildcard("c2", null))))
                         )
                 ),
-                new ResetAfterTest(wcm, new CollectMatch("values", new StructuredAssignment(wcm.getStaticVariable("v", classType, clazzAIJT), wcm.getNewArrayWildCard("v", 0, 1))))
+                new MatchOneOf(
+                    new ResetAfterTest(wcm, new CollectMatch("values", new StructuredAssignment(wcm.getStaticVariable("v", classType, clazzAIJT), wcm.getNewArrayWildCard("v", 0, 1)))),
+                    new ResetAfterTest(wcm, new CollectMatch("noValues", new StructuredAssignment(wcm.getStaticVariable("v", classType, clazzAIJT), new NewObjectArray(Collections.<Expression>singletonList(Literal.INT_ZERO), arrayType))))
+                )
         );
 
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(statements);
@@ -297,8 +301,10 @@ public class EnumClassRewriter {
                 if (abstractNewArray instanceof NewAnonymousArray) {
                     matchedArray = new CollectedEnumData<NewAnonymousArray>(statement.getContainer(), (NewAnonymousArray) abstractNewArray);
                 }
-                return;
+            } else if (name.equals("noValues")) {
+                matchedArray = new CollectedEnumData<NewAnonymousArray>(statement.getContainer(), new NewAnonymousArray(new InferredJavaType(classType, InferredJavaType.Source.TEST),1, Collections.<Expression>emptyList(), true));
             }
+
         }
 
         boolean isValid() {
