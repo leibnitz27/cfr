@@ -96,7 +96,8 @@ public class Op04StructuredStatement implements MutableGraph<Op04StructuredState
     }
 
     public static void switchExpression(Op04StructuredStatement root, DecompilerComments comments, ClassFileVersion classFileVersion) {
-        root.transform(new SwitchExpressionRewriter(comments, classFileVersion), new StructuredScope());
+        SwitchExpressionRewriter switchExpressionRewriter = new SwitchExpressionRewriter(comments, classFileVersion);
+        switchExpressionRewriter.transform(root);
     }
 
     public static void reduceClashDeclarations(Op04StructuredStatement root, BytecodeMeta bytecodeMeta) {

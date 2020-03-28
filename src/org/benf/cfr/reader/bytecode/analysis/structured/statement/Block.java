@@ -27,6 +27,9 @@ import java.util.*;
  * TODO : Block implements way more functionality than it should - move into callers.
  */
 public class Block extends AbstractStructuredStatement {
+    // TODO : LL is not unreasonable here, but many of the usages below require random access.
+    // replace LL (some usages of getBlockStatements also expect RA).
+
     private LinkedList<Op04StructuredStatement> containedStatements;
     private boolean indenting;
     private BlockIdentifier blockIdentifier;

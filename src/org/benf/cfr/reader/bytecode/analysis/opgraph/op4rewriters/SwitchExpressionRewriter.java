@@ -1,16 +1,21 @@
 package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.ExpressionRewriterTransformer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.transformers.StructuredStatementTransformer;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SwitchExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.CommentStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
@@ -24,15 +29,112 @@ import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
+import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SwitchExpressionRewriter extends AbstractExpressionRewriter implements StructuredStatementTransformer {
     private final boolean experimental;
     private DecompilerComments comments;
+    private Map<StructuredStatement, List<Op04StructuredStatement>> blockSwitches = MapFactory.newOrderedMap();
+
+    public SwitchExpressionRewriter(DecompilerComments comments, ClassFileVersion classFileVersion) {
+        this.comments = comments;
+        this.experimental = OptionsImpl.switchExpressionVersion.isExperimentalIn(classFileVersion);
+    }
+
+    public void transform(Op04StructuredStatement root) {
+        root.transform(this, new StructuredScope());
+        rewriteBlockSwitches(root);
+    }
+
+    private static class LValueSingleUsageCheckingRewriter extends AbstractExpressionRewriter {
+        Map<LValue, Boolean> usages = MapFactory.newMap();
+        Map<LValue, Op04StructuredStatement> usageSites = MapFactory.newMap();
+
+        private Set<StatementContainer> creators;
+
+        LValueSingleUsageCheckingRewriter(Set<StatementContainer> creators) {
+            this.creators = creators;
+        }
+
+        @Override
+        public LValue rewriteExpression(LValue lValue, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+            Boolean prev = usages.get(lValue);
+            if (prev == Boolean.FALSE) {
+                return lValue;
+            } else if (prev == null) {
+                if (creators.contains(statementContainer)) return lValue;
+                usages.put(lValue, Boolean.TRUE);
+                usageSites.put(lValue, (Op04StructuredStatement)statementContainer);
+            } else {
+                usages.put(lValue, Boolean.FALSE);
+            }
+            return lValue;
+        }
+    }
+
+    private void rewriteBlockSwitches(Op04StructuredStatement root) {
+        if (blockSwitches.isEmpty()) return;
+
+        Set<StatementContainer> creators = SetFactory.newSet();
+        for (List<Op04StructuredStatement> list : blockSwitches.values()) {
+            creators.addAll(list);
+        }
+        LValueSingleUsageCheckingRewriter scr = new LValueSingleUsageCheckingRewriter(creators);
+        root.transform(new ExpressionRewriterTransformer(scr), new StructuredScope());
+
+        for (Map.Entry<StructuredStatement, List<Op04StructuredStatement>> entry : blockSwitches.entrySet()) {
+            List<Op04StructuredStatement> switches = entry.getValue();
+            StructuredStatement stm = entry.getKey();
+            if (!(stm instanceof Block)) continue;
+
+            List<Op04StructuredStatement> statements = ((Block) stm).getBlockStatements();
+
+            Set<Op04StructuredStatement> usages = SetFactory.newOrderedSet();
+            Set<Op04StructuredStatement> swtchSet = SetFactory.newSet();
+            for (Op04StructuredStatement swtch : switches) {
+                if (!(swtch.getStatement() instanceof StructuredAssignment)) continue;
+                StructuredAssignment sa = (StructuredAssignment)swtch.getStatement();
+                if (!sa.isCreator(sa.getLvalue())) continue;
+                swtchSet.add(swtch);
+                Op04StructuredStatement usage = scr.usageSites.get(sa.getLvalue());
+                if (usage == null) continue;
+                usages.add(usage);
+            }
+
+            for (Op04StructuredStatement usage : usages) {
+                int usageIdx = statements.indexOf(usage);
+
+                for (int x = usageIdx-1;x>=0;--x) {
+                    Op04StructuredStatement backstm = statements.get(x);
+                    if (backstm.getStatement().isEffectivelyNOP()) continue;
+                    if (swtchSet.contains(backstm)) {
+                        StructuredStatement stss = backstm.getStatement();
+                        if (!(stss instanceof StructuredAssignment)) {
+                            // This should not happen, but if we have a multiple rewrite?
+                            break;
+                        }
+                        StructuredAssignment sa = (StructuredAssignment)stss;
+                        ExpressionReplacingRewriter err = new ExpressionReplacingRewriter(new LValueExpression(sa.getLvalue()), sa.getRvalue());
+                        usage.getStatement().rewriteExpressions(err);
+                        backstm.nopOut();
+                        continue;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+
 
     @Override
     public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
@@ -45,13 +147,10 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         return in;
     }
 
-    public SwitchExpressionRewriter(DecompilerComments comments, ClassFileVersion classFileVersion) {
-        this.comments = comments;
-        this.experimental = OptionsImpl.switchExpressionVersion.isExperimentalIn(classFileVersion);
-    }
-
     // TODO : This is a very common pattern - linearize is treated as a util - we should just walk.
     public void rewrite(Op04StructuredStatement root, StructuredScope scope) {
+        // While we're linearising inside a recursion here, this isn't as bad as it looks, because we only
+        // do it for switch statements.
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;
 
@@ -136,7 +235,17 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         StructuredAssignment switchStatement =
                 new StructuredAssignment(target, new SwitchExpression(target.getInferredJavaType(), swatch.getSwitchOn(), items));
         swat.getContainer().replaceStatement(switchStatement);
-        switchStatement.markCreator(target, switchStatement.getContainer());
+        Op04StructuredStatement switchStatementContainer = switchStatement.getContainer();
+        switchStatement.markCreator(target, switchStatementContainer);
+        StructuredStatement parent = scope.get(1);
+        if (parent != null) {
+            List<Op04StructuredStatement> targetPairs = blockSwitches.get(parent);
+            if (targetPairs == null) {
+                targetPairs = ListFactory.newList();
+                blockSwitches.put(parent, targetPairs);
+            }
+            targetPairs.add(switchStatementContainer);
+        }
         return true;
     }
 
