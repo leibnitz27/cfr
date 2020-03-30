@@ -347,6 +347,7 @@ public class IterLoopRewriter {
 
         LValue sugarIter = wildcardMatch.getLValueWildCard("sugariter").getMatch();
 
+        if (!sugarIter.validIterator()) return;
         if (!wildcardMatch.match(
                 new AssignmentSimple(wildcardMatch.getLValueWildCard("iterable"),
                         wildcardMatch.getMemberFunction("iterator", "iterator", wildcardMatch.getExpressionWildCard("iteratorsource"))),

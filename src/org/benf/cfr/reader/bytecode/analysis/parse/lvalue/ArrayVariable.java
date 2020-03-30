@@ -43,6 +43,11 @@ public class ArrayVariable extends AbstractLValue {
     }
 
     @Override
+    public boolean validIterator() {
+        return false;
+    }
+
+    @Override
     public LValue deepClone(CloneHelper cloneHelper) {
         return new ArrayVariable((ArrayIndex) cloneHelper.replaceOrClone(arrayIndex));
     }

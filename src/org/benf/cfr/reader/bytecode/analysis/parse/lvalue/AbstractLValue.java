@@ -59,6 +59,11 @@ public abstract class AbstractLValue implements LValue {
     }
 
     @Override
+    public boolean validIterator() {
+        return true;
+    }
+
+    @Override
     public final String toString() {
         return ToStringDumper.toString(this);
     }

@@ -41,6 +41,8 @@ public interface LValue extends DumpableWithPrecedence, DeepCloneable<LValue>, T
 
     boolean isVar();
 
+    boolean validIterator();
+
     Dumper dump(Dumper d, boolean defines);
 
     class Creation {

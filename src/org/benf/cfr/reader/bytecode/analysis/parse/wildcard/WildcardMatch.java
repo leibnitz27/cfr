@@ -347,6 +347,11 @@ public class WildcardMatch {
         }
 
         @Override
+        public boolean validIterator() {
+            return false;
+        }
+
+        @Override
         public void collectTypeUsages(TypeUsageCollector collector) {
         }
 
