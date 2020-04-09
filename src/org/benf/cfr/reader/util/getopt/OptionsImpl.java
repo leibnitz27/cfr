@@ -461,6 +461,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> ELIDE_SCALA = new PermittedOptionProvider.Argument<Boolean>(
             "elidescala", defaultFalseBooleanDecoder,
             "Elide things which aren't helpful in scala output (serialVersionUID, @ScalaSignature)");
+    public static final PermittedOptionProvider.Argument<Boolean> USE_SIGNATURES = new PermittedOptionProvider.Argument<Boolean>(
+            "usesignatures", defaultTrueBooleanDecoder,
+            "Use signatures in addition to descriptors (when they are not obviously incorrect)");
     public static final PermittedOptionProvider.Argument<Boolean> CASE_INSENSITIVE_FS_RENAME = new PermittedOptionProvider.Argument<Boolean>(
             "caseinsensitivefs", new DefaultingBooleanDecoder(OsInfo.OS().isCaseInsensitive()),
             "Cope with case insensitive file systems by renaming colliding classes");
@@ -521,7 +524,7 @@ public class OptionsImpl implements Options {
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
-                    RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS, USE_NAME_TABLE,
+                    RENAME_SMALL_MEMBERS, RENAME_ILLEGAL_IDENTS, RENAME_MEMBERS, USE_NAME_TABLE, USE_SIGNATURES,
                     AGGRESSIVE_SIZE_REDUCTION_THRESHOLD, EXTRA_CLASS_PATH, PULL_CODE_CASE, HELP, ELIDE_SCALA,
                     CASE_INSENSITIVE_FS_RENAME, RELINK_CONSTANT_STRINGS, REWRITE_TRY_RESOURCES, IGNORE_EXCEPTIONS,
                     IGNORE_EXCEPTIONS_ALWAYS, METHODNAME, SKIP_BATCH_INNER_CLASSES,

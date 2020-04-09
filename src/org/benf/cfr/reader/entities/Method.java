@@ -148,7 +148,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             // to get the Method (this).
             this.codeAttribute.setMethod(this);
         }
-        this.methodPrototype = generateMethodPrototype(initialName, methodConstructor);
+        this.methodPrototype = generateMethodPrototype(options, initialName, methodConstructor);
         if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
                 // javac only ever generates bridges into instances,
                 // however kotlin loses useful info if we hide them.
@@ -260,52 +260,87 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
      * Descriptor ConstantUTF8[(Ljava/lang/String;I)V]
      * Signature Signature:ConstantUTF8[()V]
      */
-    private MethodPrototype generateMethodPrototype(String initialName, MethodConstructor constructorFlag) {
-        AttributeSignature sig = getSignatureAttribute();
+    private MethodPrototype generateMethodPrototype(Options options, String initialName, MethodConstructor constructorFlag) {
+        AttributeSignature sig = options.getOption(OptionsImpl.USE_SIGNATURES) ?getSignatureAttribute() : null;
         ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
         ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
-        ConstantPoolEntryUTF8 prototype;
-        if (signature == null) {
-            // This is 'fun'.  Eclipse doesn't provide a signature, and its descriptor is honest.
-            // java does, which means that javac's signature disagrees with the descriptor.
-            if (constructorFlag == MethodConstructor.ENUM_CONSTRUCTOR) {
-                constructorFlag = MethodConstructor.ECLIPSE_ENUM_CONSTRUCTOR;
-            }
-            prototype = descriptor;
-        } else {
-            prototype = signature;
-        }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
         boolean isSynthetic = accessFlags.contains(AccessFlagMethod.ACC_SYNTHETIC);
         DCCommonState state = cp.getDCCommonState();
-        MethodPrototype res;
-        try {
-            res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, prototype, cp, isVarargs, isSynthetic, variableNamer);
-        } catch (MalformedPrototypeException e) {
-            // If we've failed to parse, and we're using the signature, we have to fall back to the descriptor.
-            if (prototype == signature) {
-                prototype = descriptor;
-                res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, prototype, cp, isVarargs, isSynthetic, variableNamer);
-            } else {
-                throw e;
+        MethodPrototype sigproto = null;
+        MethodPrototype desproto;
+        boolean isEnum = constructorFlag == MethodConstructor.ENUM_CONSTRUCTOR;
+        if (signature == null) {
+            // This is 'fun'.  Eclipse doesn't provide a signature, and its descriptor is honest.
+            // java does, which means that javac's signature disagrees with the descriptor.
+            if (isEnum) {
+                constructorFlag = MethodConstructor.ECLIPSE_ENUM_CONSTRUCTOR;
             }
+        }
+        if (signature != null) {
+            try {
+                sigproto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, signature, cp, isVarargs, isSynthetic, variableNamer);
+            } catch (MalformedPrototypeException e) {
+                // deliberately empty.
+            }
+        }
+        try {
+            desproto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, descriptor, cp, isVarargs, isSynthetic, variableNamer);
+        } catch (MalformedPrototypeException e) {
+            if (sigproto == null) throw e;
+            // this shouln't be possible, but we might be able to handle it.
+            desproto = sigproto;
         }
         /*
          * Work around bug in inner class signatures.
          *
          * http://stackoverflow.com/questions/15131040/java-inner-class-inconsistency-between-descriptor-and-signature-attribute-clas
          */
-        if (classFile.isInnerClass()) {
-            if (signature != null) {
-                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, descriptor, cp, isVarargs, isSynthetic, variableNamer);
-                if (descriptorProto.getArgs().size() != res.getArgs().size()) {
-                    // error due to inner class sig bug.
-                    fixupInnerClassSignature(descriptorProto, res);
-                }
+        if (classFile.isInnerClass() && sigproto != null) {
+            if (desproto.getArgs().size() != sigproto.getArgs().size()) {
+                // error due to inner class sig bug.
+                fixupInnerClassSignature(desproto, sigproto);
             }
         }
-        return res;
+        if (sigproto == null) {
+            return desproto;
+        }
+        if (checkSigProto(desproto, sigproto, isEnum, classFile.isInnerClass() && constructorFlag.isConstructor())) {
+            return sigproto;
+        } else {
+            addComment(DecompilerComment.BAD_SIGNATURE);
+            return desproto;
+        }
+    }
+
+    private static boolean checkSigProto(MethodPrototype desproto, MethodPrototype sigproto, boolean isEnumConstructor, boolean isInnerConstructor) {
+        if (sigproto == null) return false;
+
+        List<JavaTypeInstance> desargs = desproto.getArgs();
+        List<JavaTypeInstance> sigargs = sigproto.getArgs();
+
+        int offset = 0;
+        if (desargs.size() != sigargs.size()) {
+            if (isInnerConstructor || isEnumConstructor) {
+                // anonymous inner classes will not map correctly unless we can infer
+                return true;
+            } else {
+                return false;
+            }
+        }
+        for (int x=0,len=sigargs.size();x<len;++x) {
+            JavaTypeInstance desarg = desargs.get(x+offset).getArrayStrippedType();
+            JavaTypeInstance sigarg = sigargs.get(x).getArrayStrippedType();
+            if (sigarg instanceof JavaGenericPlaceholderTypeInstance) {
+                // This could be a stronger check.
+                continue;
+            }
+            if (!sigarg.getDeGenerifiedType().equals(desarg.getDeGenerifiedType())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static void fixupInnerClassSignature(MethodPrototype descriptor, MethodPrototype signature) {
@@ -525,7 +560,18 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     public void setComments(DecompilerComments comments) {
-        this.comments = comments;
+        if (this.comments == null) {
+            this.comments = comments;
+        } else {
+            this.comments.addComments(comments.getCommentCollection());
+        }
+    }
+
+    private void addComment(DecompilerComment comment) {
+        if (comments == null) {
+            comments = new DecompilerComments();
+        }
+        comments.addComment(comment);
     }
 
     public boolean isVisibleTo(JavaRefTypeInstance maybeCaller) {

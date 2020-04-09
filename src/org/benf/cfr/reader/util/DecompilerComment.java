@@ -35,6 +35,7 @@ public class DecompilerComment implements Dumpable {
     public static final DecompilerComment DYNAMIC_CONSTANTS = new DecompilerComment("Uses jvm11+ dynamic constants - pseudocode provided - see https://www.benf.org/other/cfr/dynamic-constants.html");
     public static final DecompilerComment MULTI_VERSION = new DecompilerComment("Multiple versions of this class in jar - see https://www.benf.org/other/cfr/multi-version-jar.html");
     public static final DecompilerComment UNVERIFIABLE_BYTECODE_BAD_JUMP = new DecompilerComment("Handled unverifiable bytecode (illegal jump).", false);
+    public static final DecompilerComment BAD_SIGNATURE = new DecompilerComment("Ignored method signature, as it can't be verified against descriptor", false);
 
     private final String comment;
     private final String summaryMessage;
