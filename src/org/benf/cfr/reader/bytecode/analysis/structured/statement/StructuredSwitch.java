@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.rewriteinterface.B
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -112,4 +113,18 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
         switchOn = expressionRewriter.rewriteExpression(switchOn, null, this.getContainer(), null);
     }
 
+    public boolean isOnlyEmptyDefault() {
+        StructuredStatement stm = getBody().getStatement();
+        if (!(stm instanceof Block)) return false;
+        Pair<Boolean, Op04StructuredStatement> onestm = ((Block) stm).getOneStatementIfPresent();
+        if (onestm.getSecond() == null) return false;
+        StructuredStatement single = onestm.getSecond().getStatement();
+        // should be!
+        if (!(single instanceof StructuredCase)) return false;
+        StructuredCase cs = (StructuredCase)single;
+        if (!cs.isDefault()) return false;
+        StructuredStatement caseBody = cs.getBody().getStatement();
+        if (!(caseBody instanceof Block)) return false;
+        return caseBody.isEffectivelyNOP();
+    }
 }

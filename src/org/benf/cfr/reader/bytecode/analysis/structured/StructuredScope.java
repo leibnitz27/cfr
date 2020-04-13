@@ -43,6 +43,14 @@ public class StructuredScope {
         return scope.get(skipN).statement;
     }
 
+    public List<StructuredStatement> getAll() {
+        List<StructuredStatement> ret = ListFactory.newList();
+        for (AtLevel atLevel : scope) {
+            ret.add(atLevel.statement);
+        }
+        return ret;
+    }
+
     public void setNextAtThisLevel(StructuredStatement statement, int next) {
         AtLevel atLevel = scope.getFirst();
         if (atLevel.statement != statement) {

@@ -10,7 +10,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.ArrayVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.ExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaArrayTypeInstance;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheckSimple;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.MiscUtils;
 import org.benf.cfr.reader.util.collections.ListFactory;
@@ -28,7 +30,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     //
     // Found states that key can be replaced with value.
     //
-    private final Map<StackSSALabel, ExpressionStatement> found;
+    private final Map<StackSSALabel, ExpressionStatementPair> found;
     private final Set<StackSSALabel> blacklisted;
     private final Set<LValue> keepConstant;
 
@@ -46,13 +48,13 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
     // into
     // c = 1+1
     // d = c
-    private final Map<StackSSALabel, ExpressionStatement> multiFound;
+    private final Map<StackSSALabel, ExpressionStatementPair> multiFound;
 
     //
     // When we're EXPLICITLY being told that this NON SSA value can be moved to later in the
     // code (i.e.  ++x;  if (x) -> if (++x) )
     //
-    private final Map<VersionedLValue, ExpressionStatement> mutableFound;
+    private final Map<VersionedLValue, ExpressionStatementPair> mutableFound;
 
     public LValueAssignmentAndAliasCondenser() {
         found = MapFactory.newOrderedMap();
@@ -74,19 +76,19 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
 
     @Override
     public void collect(StackSSALabel lValue, StatementContainer<Statement> statementContainer, Expression value) {
-        found.put(lValue, new ExpressionStatement(value, statementContainer));
+        found.put(lValue, new ExpressionStatementPair(value, statementContainer));
     }
 
     @Override
     public void collectMultiUse(StackSSALabel lValue, StatementContainer<Statement> statementContainer, Expression value) {
-        multiFound.put(lValue, new ExpressionStatement(value, statementContainer));
+        multiFound.put(lValue, new ExpressionStatementPair(value, statementContainer));
     }
 
     @Override
     public void collectMutatedLValue(LValue lValue, StatementContainer<Statement> statementContainer, Expression value) {
         //noinspection unchecked
         SSAIdent version = statementContainer.getSSAIdentifiers().getSSAIdentOnExit(lValue);
-        if (null != mutableFound.put(new VersionedLValue(lValue, version), new ExpressionStatement(value, statementContainer))) {
+        if (null != mutableFound.put(new VersionedLValue(lValue, version), new ExpressionStatementPair(value, statementContainer))) {
             throw new ConfusedCFRException("Duplicate versioned SSA Ident.");
         }
     }
@@ -141,7 +143,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         if (blacklisted.contains(stackSSALabel)) {
             return null;
         }
-        ExpressionStatement pair = found.get(stackSSALabel);
+        ExpressionStatementPair pair = found.get(stackSSALabel);
         // res is a valid replacement for lValue in an rValue, IF no mutable fields have different version
         // identifiers (SSA tags)
         StatementContainer<Statement> statementContainer = pair.statementContainer;
@@ -220,12 +222,18 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         if (statementContainer != null) {
+            /*
+             * Try a simple rewind, but if we jump OVER any method calls, this is illegal.
+             */
+            if (!isSimple(res) && jumpsMethods((Op03SimpleStatement)lvSc, (Op03SimpleStatement)statementContainer)) {
+                return null;
+            }
             lvSc.copyBlockInformationFrom(statementContainer);
             statementContainer.nopOut();
         }
         stackSSALabel.getStackEntry().decrementUsage();
         if (aliasReplacements.containsKey(stackSSALabel)) {
-            found.put(stackSSALabel, new ExpressionStatement(aliasReplacements.get(stackSSALabel), null));
+            found.put(stackSSALabel, new ExpressionStatementPair(aliasReplacements.get(stackSSALabel), null));
             aliasReplacements.remove(stackSSALabel);
         }
 
@@ -247,6 +255,27 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         cache.put(new StackValue(stackSSALabel), prev);
 
         return prev;
+    }
+
+    private boolean isSimple(Expression res) {
+        if (res instanceof StackValue) return true;
+        return !res.canThrow(ExceptionCheckSimple.INSTANCE);
+    }
+
+    private boolean jumpsMethods(Op03SimpleStatement lvSc, Op03SimpleStatement statementContainer) {
+        if (statementContainer.getTargets().size() == 0) return false;
+        Op03SimpleStatement cur = lvSc;
+        while (cur.getSources().size() == 1) {
+            cur = cur.getSources().get(0);
+            if (cur == statementContainer) return false;
+            if (cur.getStatement() instanceof ExpressionStatement) {
+                Expression ee = ((ExpressionStatement) cur .getStatement()).getExpression();
+                if (ee instanceof AbstractFunctionInvokation) {
+                    return true;
+                }
+            }
+        }
+        return true;
     }
 
     @Override
@@ -281,11 +310,11 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
     }
 
-    private static class ExpressionStatement {
+    private static class ExpressionStatementPair {
         private final Expression expression;
         private final StatementContainer<Statement> statementContainer;
 
-        private ExpressionStatement(Expression expression, StatementContainer<Statement> statementContainer) {
+        private ExpressionStatementPair(Expression expression, StatementContainer<Statement> statementContainer) {
             this.expression = expression;
             this.statementContainer = statementContainer;
         }
@@ -350,7 +379,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                         possibleAliases.get(stackSSALabel).add(new LValueStatementContainer(assignmentSimple.getCreatedLValue(), statementContainer));
                     }
                 } else if (stackSSALabel.getInferredJavaType().getJavaTypeInstance() instanceof JavaArrayTypeInstance) {
-                    ExpressionStatement es = multiFound.get(stackSSALabel);
+                    ExpressionStatementPair es = multiFound.get(stackSSALabel);
                     if (es != null && es.expression instanceof LValueExpression) {
                         possibleAliases.get(stackSSALabel).add(new LValueStatementContainer(((LValueExpression) es.expression).getLValue(), statementContainer));
                     }
@@ -364,7 +393,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
          * If all the others, when used, can be seen to be at the same version as the first one.
          * (the first one which is NOT a stackSSALabel)
          */
-        private LValue getAlias(StackSSALabel stackSSALabel, ExpressionStatement target) {
+        private LValue getAlias(StackSSALabel stackSSALabel, ExpressionStatementPair target) {
             List<LValueStatementContainer> possibleAliasList = possibleAliases.get(stackSSALabel);
             if (possibleAliasList.isEmpty()) return null;
             LValue guessAlias = null;
@@ -378,7 +407,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
             }
             if (guessAlias == null) {
                 if (stackSSALabel.getInferredJavaType().getJavaTypeInstance() instanceof JavaArrayTypeInstance) {
-                    ExpressionStatement mf = multiFound.get(stackSSALabel);
+                    ExpressionStatementPair mf = multiFound.get(stackSSALabel);
                     if (mf != null && mf.expression instanceof LValueExpression) {
                         guessAlias = ((LValueExpression) mf.expression).getLValue();
                         guessStatement = mf.statementContainer;
@@ -434,7 +463,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
         }
 
         public void inferAliases() {
-            for (Map.Entry<StackSSALabel, ExpressionStatement> multi : multiFound.entrySet()) {
+            for (Map.Entry<StackSSALabel, ExpressionStatementPair> multi : multiFound.entrySet()) {
                 /*
                  * How many aliases does this have?
                  */
@@ -548,7 +577,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
              */
             Map<VersionedLValue, StatementContainer> replacableUses = MapFactory.newMap();
             for (Map.Entry<VersionedLValue, Set<StatementContainer>> entry : mutableUseFound.entrySet()) {
-                ExpressionStatement definition = mutableFound.get(entry.getKey());
+                ExpressionStatementPair definition = mutableFound.get(entry.getKey());
                 StatementContainer uniqueParent = getUniqueParent(definition.statementContainer, entry.getValue());
                 if (uniqueParent != null) {
                     replacableUses.put(entry.getKey(), uniqueParent);
@@ -594,7 +623,7 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 VersionedLValue versionedLValue = new VersionedLValue(lValue, ssaIdent);
                 StatementContainer canReplaceIn = mutableReplacable.get(versionedLValue);
                 if (canReplaceIn == statementContainer) {
-                    ExpressionStatement replaceWith = mutableFound.get(versionedLValue);
+                    ExpressionStatementPair replaceWith = mutableFound.get(versionedLValue);
                     StatementContainer<Statement> replacement = replaceWith.statementContainer;
                     if (replacement == statementContainer) return null;
 

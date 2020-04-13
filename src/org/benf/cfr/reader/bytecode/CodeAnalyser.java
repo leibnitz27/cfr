@@ -835,7 +835,7 @@ public class CodeAnalyser {
             }
 
             if (options.getOption(OptionsImpl.SWITCH_EXPRESSION, classFileVersion)) {
-                Op04StructuredStatement.switchExpression(block, comments, classFileVersion);
+                Op04StructuredStatement.switchExpression(method, block, comments);
             }
 
             Op04StructuredStatement.rewriteLambdas(dcCommonState, method, block);

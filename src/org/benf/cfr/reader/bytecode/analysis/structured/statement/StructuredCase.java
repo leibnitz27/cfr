@@ -133,4 +133,7 @@ public class StructuredCase extends AbstractStructuredBlockStatement {
         // Values in a case statement must be literals, not amenable.
     }
 
+    public boolean isDefault() {
+        return values.isEmpty();
+    }
 }

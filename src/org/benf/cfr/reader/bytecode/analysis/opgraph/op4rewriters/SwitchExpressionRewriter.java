@@ -8,11 +8,16 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.SuperFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.SwitchExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.AbstractExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.CommentStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.Nop;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredScope;
@@ -24,40 +29,48 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredBrea
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredCase;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredDefinition;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionYield;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredReturn;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredSwitch;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredThrow;
-import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
-import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.DecompilerComment;
 import org.benf.cfr.reader.util.DecompilerComments;
-import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.functors.Predicate;
+import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class SwitchExpressionRewriter extends AbstractExpressionRewriter implements StructuredStatementTransformer {
     private final boolean experimental;
+    private final Method method;
     private DecompilerComments comments;
-    private Map<StructuredStatement, List<Op04StructuredStatement>> blockSwitches = MapFactory.newOrderedMap();
+    private final Set<StructuredStatement> classifiedEmpty = SetFactory.newIdentitySet();
 
-    public SwitchExpressionRewriter(DecompilerComments comments, ClassFileVersion classFileVersion) {
+    public SwitchExpressionRewriter(DecompilerComments comments, Method method) {
         this.comments = comments;
-        this.experimental = OptionsImpl.switchExpressionVersion.isExperimentalIn(classFileVersion);
+        this.experimental = OptionsImpl.switchExpressionVersion.isExperimentalIn(method.getClassFile().getClassFileVersion());
+        this.method = method;
     }
 
     public void transform(Op04StructuredStatement root) {
-        root.transform(this, new StructuredScope());
+        doTransform(root);
+        doAggressiveTransforms(root);
         rewriteBlockSwitches(root);
+    }
+
+    private void doTransform(Op04StructuredStatement root) {
+        root.transform(this, new StructuredScope());
     }
 
     private static class LValueSingleUsageCheckingRewriter extends AbstractExpressionRewriter {
@@ -86,17 +99,44 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         }
     }
 
+    private static class BlockSwitchDiscoverer implements StructuredStatementTransformer {
+        Map<StructuredStatement, List<Op04StructuredStatement>> blockSwitches = MapFactory.newOrderedMap();
+
+        @Override
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+
+            if (in instanceof StructuredAssignment && ((StructuredAssignment) in).getRvalue() instanceof SwitchExpression) {
+                Op04StructuredStatement switchStatementContainer = in.getContainer();
+                StructuredStatement parent = scope.get(0);
+                if (parent != null) {
+                    List<Op04StructuredStatement> targetPairs = blockSwitches.get(parent);
+                    if (targetPairs == null) {
+                        targetPairs = ListFactory.newList();
+                        blockSwitches.put(parent, targetPairs);
+                    }
+                    targetPairs.add(switchStatementContainer);
+                }
+            }
+
+            in.transformStructuredChildren(this, scope);
+            return in;
+        }
+    }
+
     private void rewriteBlockSwitches(Op04StructuredStatement root) {
-        if (blockSwitches.isEmpty()) return;
+        BlockSwitchDiscoverer bsd = new BlockSwitchDiscoverer();
+        root.transform(bsd, new StructuredScope());
+
+        if (bsd.blockSwitches.isEmpty()) return;
 
         Set<StatementContainer> creators = SetFactory.newSet();
-        for (List<Op04StructuredStatement> list : blockSwitches.values()) {
+        for (List<Op04StructuredStatement> list : bsd.blockSwitches.values()) {
             creators.addAll(list);
         }
         LValueSingleUsageCheckingRewriter scr = new LValueSingleUsageCheckingRewriter(creators);
         root.transform(new ExpressionRewriterTransformer(scr), new StructuredScope());
 
-        for (Map.Entry<StructuredStatement, List<Op04StructuredStatement>> entry : blockSwitches.entrySet()) {
+        for (Map.Entry<StructuredStatement, List<Op04StructuredStatement>> entry : bsd.blockSwitches.entrySet()) {
             List<Op04StructuredStatement> switches = entry.getValue();
             StructuredStatement stm = entry.getKey();
             if (!(stm instanceof Block)) continue;
@@ -189,7 +229,7 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
             return false;
         }
         for (int itm = 0; itm < size; ++itm) {
-            Pair<StructuredCase, Expression> e = extractSwitchEntryPair(target, content.get(itm), replacements,itm == size -1);
+            Pair<StructuredCase, Expression> e = extractSwitchEntryPair(target, swatch.getBlockIdentifier(), content.get(itm), replacements,itm == size -1);
             if (e == null) {
                 return false;
             }
@@ -242,50 +282,50 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         swat.getContainer().replaceStatement(switchStatement);
         Op04StructuredStatement switchStatementContainer = switchStatement.getContainer();
         switchStatement.markCreator(target, switchStatementContainer);
-        StructuredStatement parent = scope.get(1);
-        if (parent != null) {
-            List<Op04StructuredStatement> targetPairs = blockSwitches.get(parent);
-            if (targetPairs == null) {
-                targetPairs = ListFactory.newList();
-                blockSwitches.put(parent, targetPairs);
-            }
-            targetPairs.add(switchStatementContainer);
-        }
         return true;
     }
 
-    private LValue extractSwitchLValue(Op04StructuredStatement item, boolean last) {
-        StructuredStatement stm = item.getStatement();
-        if (!(stm instanceof StructuredCase)) {
-            return null;
+    private static class SwitchExpressionSearcher implements StructuredStatementTransformer {
+        StructuredStatement last = null;
+        LValue found = null;
+
+        @Override
+        public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
+            if (found != null) {
+                return in;
+            }
+
+            if (in instanceof Block) {
+                in.transformStructuredChildren(this, scope);
+                return in;
+            }
+            if (in instanceof StructuredBreak) {
+                // TODO:  And the break is for this switch!!
+                checkLast();
+                return in;
+            }
+            if (!in.isEffectivelyNOP()) {
+                last = in;
+            }
+            in.transformStructuredChildren(this, scope);
+            return in;
         }
-        StructuredCase sc = (StructuredCase)stm;
-        Op04StructuredStatement body = sc.getBody();
-        StructuredStatement bodyStm = body.getStatement();
-        List<Op04StructuredStatement> content;
-        if (bodyStm instanceof Block) {
-            content = Functional.filterOptimistic(((Block) bodyStm).getBlockStatements(), notEmpty);
-        } else {
-            content = Collections.singletonList(body);
-        }
-        if (content.size() > 2) {
-            content = content.subList(content.size()-2,content.size());
-        }
-        if (content.isEmpty()) return null;
-        if (content.size() == 2) {
-            // last should be a break.
-            if (content.get(1).getStatement() instanceof StructuredBreak) {
-                // and the assignment?
-                StructuredStatement isAssign = content.get(0).getStatement();
-                if (!(isAssign instanceof StructuredAssignment)) return null;
-                return ((StructuredAssignment) isAssign).getLvalue();
+
+        private void checkLast() {
+            if (last instanceof StructuredAssignment) {
+                found = ((StructuredAssignment) last).getLvalue();
             }
         }
-        if (!last) return null;
-        // and the assignment?
-        StructuredStatement isAssign = content.get(content.size()-1).getStatement();
-        if (!(isAssign instanceof StructuredAssignment)) return null;
-        return ((StructuredAssignment) isAssign).getLvalue();
+    }
+
+    private LValue extractSwitchLValue(Op04StructuredStatement item, boolean last) {
+        SwitchExpressionSearcher ses = new SwitchExpressionSearcher();
+        item.transform(ses, new StructuredScope());
+        if (ses.found != null) {
+            return ses.found;
+        }
+        if (last) ses.checkLast();
+        return ses.found;
     }
 
     private final static Predicate<Op04StructuredStatement> notEmpty = new Predicate<Op04StructuredStatement>() {
@@ -295,13 +335,13 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         }
     };
 
-    private Pair<StructuredCase, Expression> extractSwitchEntryPair(LValue target, Op04StructuredStatement item, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements, boolean last) {
+    private Pair<StructuredCase, Expression> extractSwitchEntryPair(LValue target, BlockIdentifier blockIdentifier, Op04StructuredStatement item, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements, boolean last) {
         StructuredStatement stm = item.getStatement();
         if (!(stm instanceof StructuredCase)) {
             return null;
         }
         StructuredCase sc = (StructuredCase)stm;
-        Expression res = extractSwitchEntry(target, sc.getBody(), replacements, last);
+        Expression res = extractSwitchEntry(target, blockIdentifier, sc.getBody(), replacements, last);
         if (res == null) {
             return null;
         }
@@ -319,19 +359,17 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
      *
      * No assignment to the target can happen other than just prior to an exit point.
      */
-    private Expression extractSwitchEntry(LValue target, Op04StructuredStatement body, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements, boolean last) {
-        if (body.getStatement() instanceof Block) {
-            Block block = (Block) body.getStatement();
-            List<Op04StructuredStatement> blockStm = block.getBlockStatements();
-            blockStm = Functional.filterOptimistic(blockStm, notEmpty);
-            if (blockStm.size() == 2) {
-                return extractOneSwitchAssignment(target, blockStm);
-            } if (blockStm.size() == 1) {
-                return extractOneSwitchEntry(target, blockStm.get(0), last);
-            }
-            return extractSwitchStructure(target, body, replacements, last);
+    private Expression extractSwitchEntry(LValue target, BlockIdentifier blockIdentifier, Op04StructuredStatement body, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements, boolean last) {
+        SwitchExpressionTransformer transformer = new SwitchExpressionTransformer(target, blockIdentifier, replacements, last);
+        body.transform(transformer, new StructuredScope());
+        if (transformer.failed) return null;
+        if (!transformer.lastMarked) return null;
+        if (transformer.lastAssign && !last) return null;
+        if (transformer.totalStatements == 1 && transformer.singleValue != null) {
+            return transformer.singleValue;
         }
-        return extractOneSwitchEntry(target, body, last);
+
+        return new StructuredStatementExpression(target.getInferredJavaType(), body.getStatement());
     }
 
     /*
@@ -354,65 +392,98 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         }
     }
 
-    enum LastOk {
-        Ok,
-        OkIfLast,
-        NotOk
-    }
-
     static class SwitchExpressionTransformer implements StructuredStatementTransformer {
-        private BadSwitchExpressionTransformer badTransfomer = new BadSwitchExpressionTransformer();
         private UsageCheck rewriter;
+        private BlockIdentifier blockIdentifier;
         private List<Pair<Op04StructuredStatement, StructuredStatement>> replacements;
+        private boolean last;
         private final LValue target;
-        private LastOk lastOk = LastOk.NotOk;
         private boolean failed;
-        private Expression pendingAssignment;
+        private boolean lastAssign = true;
+        private boolean lastMarked = false;
+        private Expression singleValue = null;
+        private int totalStatements;
 
-        private SwitchExpressionTransformer(LValue target, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements) {
+        private SwitchExpressionTransformer(LValue target, BlockIdentifier blockIdentifier, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements, boolean last) {
             this.target = target;
             this.rewriter = new UsageCheck(target);
+            this.blockIdentifier = blockIdentifier;
             this.replacements = replacements;
+            this.last = last;
         }
 
         @Override
         public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
             if (failed) return in;
-            lastOk = LastOk.NotOk;
-            if (pendingAssignment != null) {
-                // Expecting a break.
-                if (in instanceof StructuredBreak) {
-                    if (((StructuredBreak) in).isLocalBreak()) {
-                        replacements.add(Pair.make(in.getContainer(), (StructuredStatement)new StructuredExpressionYield(pendingAssignment)));
-                        pendingAssignment = null;
-                        lastOk = LastOk.Ok;
-                        return in;
-                    }
-                }
-                failed = true;
-                return in;
+            lastMarked = false;
+            lastAssign = true;
+
+            if (in.isEffectivelyNOP()) return in;
+
+            if (!(in instanceof Block)) {
+                totalStatements++;
             }
-            if (in.supportsBreak()) {
-                return badTransfomer.transform(in, scope);
-            }
+
             if (in instanceof StructuredBreak) {
-                failed = true;
-                return in;
+                BreakClassification bk = classifyBreak((StructuredBreak)in, scope);
+                switch (bk) {
+                    case CORRECT:
+                        lastMarked = true;
+                        lastAssign = false;
+                        totalStatements--;
+                        replacements.add(Pair.make(in.getContainer(),(StructuredStatement)StructuredComment.EMPTY_COMMENT));
+                        return in;
+                    case INNER:
+                        break;
+                    case TOO_FAR:
+                        failed = true;
+                        return in;
+                }
             }
+
             if (in instanceof StructuredReturn) {
                 failed = true;
                 return in;
             }
-            if (in instanceof StructuredAssignment && ((StructuredAssignment) in).getLvalue().equals(target)) {
-                if (pendingAssignment != null) {
-                    failed = true;
+
+            if (in instanceof StructuredAssignment) {
+                if (((StructuredAssignment) in).getLvalue().equals(target)) {
+                    Set<Op04StructuredStatement> nextFallThrough = scope.getNextFallThrough(in);
+                    lastMarked = true;
+                    replacements.add(Pair.make(in.getContainer(), (StructuredStatement)new StructuredExpressionYield(((StructuredAssignment) in).getRvalue())));
+                    singleValue = ((StructuredAssignment) in).getRvalue();
+                    boolean foundBreak = false;
+                    for (Op04StructuredStatement fall : nextFallThrough) {
+                        StructuredStatement fallStatement = fall.getStatement();
+                        if (fallStatement.isEffectivelyNOP()) continue;
+                        if (fallStatement instanceof StructuredBreak) {
+                            BreakClassification bk = classifyBreak((StructuredBreak)fallStatement, scope);
+                            if (bk != BreakClassification.CORRECT) {
+                                failed = true;
+                                return in;
+                            } else {
+                                foundBreak = true;
+                            }
+                        } else {
+                            failed = true;
+                            return in;
+                        }
+                    }
+                    if (!last && !foundBreak) {
+                        failed = true;
+                        return in;
+                    }
                     return in;
                 }
-                pendingAssignment = ((StructuredAssignment) in).getRvalue();
-                replacements.add(Pair.make(in.getContainer(), (StructuredStatement)StructuredComment.EMPTY_COMMENT));
-                lastOk = LastOk.OkIfLast;
-                return in;
             }
+
+            if (in instanceof StructuredThrow) {
+                replacements.add(Pair.make(in.getContainer(), in));
+                singleValue = new StructuredStatementExpression(target.getInferredJavaType(), in);
+                lastAssign = false;
+                lastMarked = true;
+            }
+
             in.rewriteExpressions(rewriter);
             if (rewriter.failed) {
                 failed = true;
@@ -422,78 +493,453 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
             return in;
         }
 
-        // Inside here, we can't assign, we can't even break too far.
-        class BadSwitchExpressionTransformer implements StructuredStatementTransformer {
-            @Override
-            public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
-                if (failed) return in;
-                lastOk = LastOk.NotOk;
-                in.rewriteExpressions(rewriter);
-                if (rewriter.failed) {
-                    failed = true;
-                    return in;
+        BreakClassification classifyBreak(StructuredBreak in, StructuredScope scope) {
+            BlockIdentifier breakBlock = in.getBreakBlock();
+            if (breakBlock == blockIdentifier) return BreakClassification.CORRECT;
+            for (StructuredStatement stm : scope.getAll()) {
+                BlockIdentifier block = stm.getBreakableBlockOrNull();
+                if (block == breakBlock) return BreakClassification.INNER;
+            }
+            return BreakClassification.TOO_FAR;
+        }
+
+        enum BreakClassification {
+            CORRECT,
+            TOO_FAR,
+            INNER
+        }
+    }
+
+
+    /*
+     * There are times when we want to eliminate intermediate steps - i.e. when constructing an anonymous
+     * array, or when passing arguments to a chained constructor.
+     *
+     * We can (if we have to!) perform the following somewhat crazy code 'reductions'
+     * (currently only considered before constructor chains).
+     *
+     * 1) //////////////
+     * switch (A) {
+     *    default:
+     * }
+     * X : NON SWITCH EXPRESSION
+     *
+     * -->
+     *
+     * switch (A) {
+     *    default:
+     *      Y
+     *      X
+     * }
+     *
+     * This can be rolled uptil the first initialisation, at which point it becomes a case of 2.
+     *
+     * 2) ///////////////
+     *
+     * switch (A) {
+     *    default:
+     * }
+     * r = switch (B) {
+     * }
+     *
+     * --->
+     *
+     * r = switch (A) {
+     *   default -> switch (B) {
+     *   }
+     * }
+     *
+     * 3) //////////////// (by far the ugliest).  Unless
+     *
+     * r = switch (A) {
+     *    XXXXXX
+     * }
+     * switch (B) {
+     *    default:
+     * }
+     *
+     * -->
+     *
+     * r = switch (0) {
+     *    default -> {
+     *       var tmp = switch (A) {
+     *          xxx
+     *       };
+     *       var ignore0 = B;
+     *       yield tmp;
+     *    }
+     * }
+     */
+    private RollState getRollState(Op04StructuredStatement body) {
+        StructuredStatement s = body.getStatement();
+        if (!(s instanceof Block)) return new RollState();
+        Block b = (Block)s;
+
+        LinkedList<ClassifiedStm> tt = ListFactory.newLinkedList();
+        List<Op04StructuredStatement> others = ListFactory.newList();
+        Iterator<Op04StructuredStatement> it = b.getBlockStatements().iterator();
+        boolean found = false;
+        while (it.hasNext()) {
+            Op04StructuredStatement item = it.next();
+            if (item.getStatement().isEffectivelyNOP()) continue;
+            ClassifiedStm type = classify(item);
+            if (type.type == ClassifyType.CHAINED_CONSTRUCTOR) {
+                others.add(item);
+                while (it.hasNext()) {
+                    others.add(it.next());
                 }
-                if (in instanceof StructuredBreak) {
-                    // this *COULD* be ok, but come on.....
-                    if (!((StructuredBreak) in).isLocalBreak()) {
-                        failed = true;
-                    }
-                    return in;
-                }
-                if (in instanceof StructuredReturn) {
-                    failed = true;
-                    return in;
-                }
-                in.transformStructuredChildren(this, scope);
-                return in;
+                found = true;
+            } else {
+                tt.add(type);
             }
         }
+        if (!found) return new RollState();
+        return new RollState(tt, others, b);
     }
 
-    private Expression extractSwitchStructure(LValue target, Op04StructuredStatement body, List<Pair<Op04StructuredStatement, StructuredStatement>> replacements, boolean last) {
-        SwitchExpressionTransformer transformer = new SwitchExpressionTransformer(target, replacements);
-        body.transform(transformer, new StructuredScope());
-        if (transformer.failed) return null;
-        if (transformer.lastOk == LastOk.NotOk) return null;
-        if (transformer.lastOk == LastOk.OkIfLast) {
-            if (!last) return null;
-            int lastReplacement = replacements.size() - 1;
-            Op04StructuredStatement stm = replacements.get(lastReplacement).getFirst();
-            replacements.set(lastReplacement, Pair.make(stm, (StructuredStatement)new StructuredExpressionYield(transformer.pendingAssignment)));
+    class RollState {
+        boolean valid;
+        LinkedList<ClassifiedStm> prequel;
+        List<Op04StructuredStatement> remainder;
+        Block block;
+
+        RollState() {
+            this.valid = false;
         }
-        return new StructuredStatementExpression(target.getInferredJavaType(), body.getStatement());
+
+        RollState(LinkedList<ClassifiedStm> prequel, List<Op04StructuredStatement> remainder, Block block) {
+            this.valid = true;
+            this.prequel = prequel;
+            this.remainder = remainder;
+            this.block = block;
+        }
     }
 
-    private Expression extractOneSwitchAssignment(LValue target, List<Op04StructuredStatement> blockStm) {
-        if (blockStm.size() != 2) {
-            return null;
+    private boolean rollOne(Op04StructuredStatement root, UnaryFunction<RollState, Boolean> apply) {
+        RollState rollState = getRollState(root);
+        if (!rollState.valid) return false;
+        if (apply.invoke(rollState)) {
+            List<Op04StructuredStatement> mutableBlockStatements = rollState.block.getBlockStatements();
+            mutableBlockStatements.clear();
+            for (ClassifiedStm t : rollState.prequel) {
+                mutableBlockStatements.add(t.stm);
+            }
+            mutableBlockStatements.addAll(rollState.remainder);
+            doTransform(root);
         }
-        if (!(blockStm.get(1).getStatement() instanceof StructuredBreak)) {
-            return null;
-        }
-        return extractJustSwitchAssignment(target, blockStm.get(0));
+        return true;
     }
 
-    private Expression extractOneSwitchEntry(LValue target, Op04StructuredStatement body, boolean last) {
-        StructuredStatement content = body.getStatement();
-        if (content instanceof StructuredThrow) {
-            return new StructuredStatementExpression(new InferredJavaType(TypeConstants.THROWABLE, InferredJavaType.Source.TEST), content);
-        }
-        if (!last) {
-            return null;
-        }
-        return extractJustSwitchAssignment(target, body);
+    private void doAggressiveTransforms(Op04StructuredStatement root) {
+        if (!method.isConstructor()) return;
+
+        if (!rollOne(root, new UnaryFunction<RollState, Boolean>() {
+            @Override
+            public Boolean invoke(RollState arg) {
+                return rollUpEmptySwitches(arg);
+            }
+        })) return;
+        rollOne(root, new UnaryFunction<RollState, Boolean>() {
+            @Override
+            public Boolean invoke(RollState arg) {
+                return rollUpEmptySwitchCreation(arg);
+            }
+        });
+        rollOne(root, new UnaryFunction<RollState, Boolean>() {
+            @Override
+            public Boolean invoke(RollState arg) {
+                return rollUpEmptySwitchAggregation(arg);
+            }
+        });
+        // As a final pass - if there's a single 'default switch' remaining (SwitchConstructorTest1,6)
+        // capture the first argument to the chain.
+        rollOne(root, new UnaryFunction<RollState, Boolean>() {
+            @Override
+            public Boolean invoke(RollState arg) {
+                return rollSingleDefault(arg);
+            }
+        });
+
     }
 
-    private Expression extractJustSwitchAssignment(LValue target, Op04StructuredStatement body) {
-        StructuredStatement assign = body.getStatement();
-        if (!(assign instanceof StructuredAssignment)) {
-            return null;
+    /*
+        switch (b) {
+            default: {
+                System.out.println("Hello world");
+                if (b < 3) {
+                    System.out.println("one");
+                } else {
+                    System.out.println("two");
+                }
+            }
         }
-        StructuredAssignment assignStm = (StructuredAssignment)assign;
-        if (!assignStm.getLvalue().equals(target)) {
-            return null;
+        this(2);
+
+        ->>
+
+       int footmp;
+       switch (b) {
+            default: {
+                System.out.println("Hello world");
+                if (b < 3) {
+                    System.out.println("one");
+                } else {
+                    System.out.println("two");
+                }
+            }
+            footmp = 2;
         }
-        return assignStm.getRvalue();
+        this(footmp);
+
+     */
+    private boolean rollSingleDefault(RollState rollState) {
+        if (rollState.prequel.size() != 1) return false;
+        ClassifiedStm t = rollState.prequel.get(0);
+        if (t.type != ClassifyType.EMPTY_SWITCH) return false;
+
+        // Try to extract the first expression from the call.
+        if (rollState.remainder.isEmpty()) return false;
+        Op04StructuredStatement call = rollState.remainder.get(0);
+        StructuredStatement s = call.getStatement();
+        if (!(s instanceof StructuredExpressionStatement)) return false;
+        Expression e = ((StructuredExpressionStatement) s).getExpression();
+        List<Expression> args = null;
+        if (e instanceof MemberFunctionInvokation && ((MemberFunctionInvokation) e).isInitMethod()) {
+            args = ((MemberFunctionInvokation) e).getArgs();
+        } else if (e instanceof SuperFunctionInvokation) {
+            args = ((SuperFunctionInvokation) e).getArgs();
+        }
+        if (args == null) return false;
+        Expression tmpValue = args.get(0);
+        LValue tmp = new LocalVariable("cfr_switch_hack2", tmpValue.getInferredJavaType());
+        rollState.prequel.add(0, new ClassifiedStm(ClassifyType.DEFINITION, new Op04StructuredStatement(new StructuredDefinition(tmp))));
+        addToSwitch(t.stm, new Op04StructuredStatement(new StructuredAssignment(tmp, tmpValue)));
+        args.set(0, new LValueExpression(tmp));
+        return true;
+    }
+
+    private boolean rollUpEmptySwitchAggregation(RollState rollState) {
+        LinkedList<ClassifiedStm> tt = rollState.prequel;
+        Iterator<ClassifiedStm> di = tt.descendingIterator();
+        ClassifiedStm last = null;
+        boolean doneWork = false;
+        while (di.hasNext()) {
+            ClassifiedStm curr = di.next();
+            if (last != null) {
+                if (curr.type == ClassifyType.SWITCH_EXPRESSION) {
+                    if (last.type == ClassifyType.EMPTY_SWITCH) { // this could work for 'other' too....
+                        combineSwitchExpressionWithOther(curr, last);
+                        di.remove();
+                        doneWork = true;
+                        continue;
+                    }
+                }
+            }
+            last = curr;
+        }
+        return doneWork;
+    }
+
+    /*  This is by far the ugliest - we introduce a switch statement :(
+
+        byte by = switch (0) {
+            default -> b;
+            1 -> 12;
+        };
+        switch (0) {
+            default: {
+                System.out.println("HERE");
+            }
+        }
+
+        -->
+
+        byte by = switch (0) {
+            default -> {
+                byte tmp = switch (0) {
+                    default -> b;
+                    1 -> 12;
+                };
+                switch (0) {
+                    default: {
+                        System.out.println("HERE");
+                    }
+                }
+                yield tmp;
+            }
+        };
+
+     */
+    private void combineSwitchExpressionWithOther(ClassifiedStm switchExpression, ClassifiedStm other) {
+        StructuredAssignment assignment = (StructuredAssignment)switchExpression.stm.getStatement();
+        LValue lv = assignment.getLvalue();
+        Expression se = assignment.getRvalue();
+        LinkedList<Op04StructuredStatement> newBlockContent = ListFactory.newLinkedList();
+        LValue tmp = new LocalVariable("cfr_switch_hack", lv.getInferredJavaType());
+        newBlockContent.add(new Op04StructuredStatement(new StructuredAssignment(tmp, se, true)));
+        newBlockContent.add(other.stm);
+        newBlockContent.add(new Op04StructuredStatement(new StructuredExpressionYield(new LValueExpression(tmp))));
+        Block newBlock = new Block(newBlockContent, true);
+        SwitchExpression nse = new SwitchExpression(lv.getInferredJavaType(), Literal.INT_ZERO, Collections.singletonList(new SwitchExpression.Branch(Collections.<Expression>emptyList(), new StructuredStatementExpression(lv.getInferredJavaType(), newBlock))));
+        StructuredAssignment nsa = new StructuredAssignment(lv, nse, true);
+        other.type = ClassifyType.SWITCH_EXPRESSION;
+        other.stm = new Op04StructuredStatement(nsa);
+    }
+
+    private boolean rollUpEmptySwitchCreation(RollState rollState) {
+        LinkedList<ClassifiedStm> tt = rollState.prequel;
+        Iterator<ClassifiedStm> di = tt.descendingIterator();
+        ClassifiedStm last = null;
+        boolean doneWork = false;
+        while (di.hasNext()) {
+            ClassifiedStm curr = di.next();
+            if (curr.type == ClassifyType.EMPTY_SWITCH) {
+                if (last != null) {
+                    if (last.type == ClassifyType.OTHER_CREATION || last.type == ClassifyType.SWITCH_EXPRESSION) {
+                        combineEmptySwitchWithCreation(curr, last);
+                        doneWork = true;
+                        continue;
+
+                    }
+                }
+            }
+            last = curr;
+        }
+        return doneWork;
+    }
+
+    /*
+        switch (0) {
+            default:
+        }
+        byte by = b;
+
+        ->
+
+        byte by
+        switch(0) {
+           default:
+              by = b;
+        }
+     */
+    private void combineEmptySwitchWithCreation(ClassifiedStm switchStm, ClassifiedStm assignStm) {
+        StructuredAssignment stm = (StructuredAssignment)assignStm.stm.getStatement();
+        Expression rhs = stm.getRvalue();
+        LValue lhs = stm.getLvalue();
+        addToSwitch(switchStm.stm, new Op04StructuredStatement(new StructuredAssignment(lhs, rhs)));
+        StructuredStatement swtch = switchStm.stm.getStatement();
+        assignStm.stm.replaceStatement(swtch);
+        assignStm.type = ClassifyType.EMPTY_SWITCH;
+        switchStm.stm.replaceStatement(new StructuredDefinition(lhs));
+        switchStm.type = ClassifyType.DEFINITION;
+    }
+
+    private boolean rollUpEmptySwitches(RollState rollState) {
+        LinkedList<ClassifiedStm> tt = rollState.prequel;
+        List<ClassifiedStm> lt = ListFactory.newList(tt);
+
+        boolean doneWork = false;
+        for (int x=lt.size()-2;x>=0;--x) {
+
+            ClassifiedStm curr = lt.get(x);
+            ClassifiedStm last = x+1 < lt.size() ? lt.get(x+1) : null;
+            if (curr.type == ClassifyType.EMPTY_SWITCH) {
+                if (last != null) {
+                    if (last.type == ClassifyType.OTHER || last.type == ClassifyType.EMPTY_SWITCH) {
+                        addToSwitch(curr.stm, last.stm);
+                        last.stm = curr.stm;
+                        last.type = ClassifyType.EMPTY_SWITCH;
+                        lt.remove(x);
+                        ++x;
+                        doneWork = true;
+                    }
+                }
+            }
+        }
+        if (doneWork) {
+            rollState.prequel.clear();
+            rollState.prequel.addAll(lt);
+        }
+        return doneWork;
+    }
+
+    private void addToSwitch(Op04StructuredStatement swtch, Op04StructuredStatement add) {
+        StructuredSwitch ss = (StructuredSwitch)swtch.getStatement();
+        Block block = (Block)ss.getBody().getStatement();
+        StructuredCase caseStm = (StructuredCase)(block.getOneStatementIfPresent().getSecond().getStatement());
+        Block block1 = (Block) caseStm.getBody().getStatement();
+        block1.setIndenting(true);
+        block1.addStatement(add);
+    }
+
+    private class ClassifiedStm {
+        ClassifyType type;
+        Op04StructuredStatement stm;
+
+        ClassifiedStm(ClassifyType type, Op04StructuredStatement stm) {
+            this.type = type;
+            this.stm = stm;
+        }
+
+        @Override
+        public String toString() {
+            return "{" +
+                    "" + type +
+                    ", " + stm +
+                    '}';
+        }
+    }
+
+    private ClassifiedStm classify(Op04StructuredStatement item) {
+        StructuredStatement stm = item.getStatement();
+        if (stm instanceof StructuredDefinition) {
+            return new ClassifiedStm(ClassifyType.DEFINITION, item);
+        }
+        if (stm instanceof StructuredAssignment) {
+            StructuredAssignment as = (StructuredAssignment)stm;
+            LValue lv = as.getLvalue();
+            if (!as.isCreator(lv)) {
+                return new ClassifiedStm(ClassifyType.OTHER, item);
+            }
+            Expression rv = as.getRvalue();
+            if (rv instanceof SwitchExpression) {
+                return new ClassifiedStm(ClassifyType.SWITCH_EXPRESSION, item);
+            } else {
+                return new ClassifiedStm(ClassifyType.OTHER_CREATION, item);
+            }
+        }
+        if (stm instanceof StructuredSwitch) {
+            StructuredSwitch ss = (StructuredSwitch)stm;
+            if (ss.isOnlyEmptyDefault() || classifiedEmpty.contains(ss)) {
+                classifiedEmpty.add(ss);
+                return new ClassifiedStm(ClassifyType.EMPTY_SWITCH, item);
+            } else {
+                return new ClassifiedStm(ClassifyType.OTHER, item);
+            }
+        }
+        if (isConstructorChain(item)) {
+            return new ClassifiedStm(ClassifyType.CHAINED_CONSTRUCTOR, item);
+        }
+        return new ClassifiedStm(ClassifyType.OTHER, item);
+    }
+
+    private enum ClassifyType {
+        NONE,
+        EMPTY_SWITCH,
+        SWITCH_EXPRESSION,
+        OTHER_CREATION,
+        CHAINED_CONSTRUCTOR,
+        DEFINITION,
+        OTHER
+    }
+
+    // TODO : Or super!!!
+    private boolean isConstructorChain(Op04StructuredStatement item) {
+        StructuredStatement s = item.getStatement();
+        if (!(s instanceof StructuredExpressionStatement)) return false;
+        Expression e = ((StructuredExpressionStatement) s).getExpression();
+        if (e instanceof SuperFunctionInvokation) return true;
+        if (!(e instanceof MemberFunctionInvokation)) return false;
+        return ((MemberFunctionInvokation) e).isInitMethod();
     }
 }

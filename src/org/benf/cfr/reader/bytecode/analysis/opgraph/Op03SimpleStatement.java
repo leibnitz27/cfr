@@ -297,6 +297,28 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         }
     }
 
+    public void splice(Op03SimpleStatement newSource) {
+        if (newSource.targets.size() != 1) {
+            throw new ConfusedCFRException("Can't splice (bad targets)");
+        }
+        if (sources.size() != 1) {
+            throw new ConfusedCFRException("Can't splice (bad sources)");
+        }
+        if (targets.size() != 1) {
+            throw new ConfusedCFRException("Can't splice (bad new target)");
+        }
+        Op03SimpleStatement oldSource = sources.get(0);
+        Op03SimpleStatement oldTarget = targets.get(0);
+        Op03SimpleStatement newTarget = newSource.targets.get(0);
+        oldSource.replaceTarget(this, oldTarget);
+        oldTarget.replaceSource(this, oldSource);
+        newSource.replaceTarget(newTarget, this);
+        newTarget.replaceSource(newSource, this);
+        sources.set(0, newSource);
+        targets.set(0, newTarget);
+        setIndex(newSource.getIndex().justAfter());
+    }
+
     public void replaceTarget(Op03SimpleStatement oldTarget, Op03SimpleStatement newTarget) {
         int index = targets.indexOf(oldTarget);
         if (index == -1) {
