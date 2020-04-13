@@ -223,7 +223,7 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         List<Pair<Op04StructuredStatement, StructuredStatement>> replacements = ListFactory.newList();
         LValue target = null;
         for (int itm = 0; itm < size && target == null; ++itm) {
-            target = extractSwitchLValue(content.get(itm), itm == size - 1);
+            target = extractSwitchLValue(swatch.getBlockIdentifier(), content.get(itm), itm == size - 1);
         }
         if (target == null) {
             return false;
@@ -288,6 +288,11 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
     private static class SwitchExpressionSearcher implements StructuredStatementTransformer {
         StructuredStatement last = null;
         LValue found = null;
+        private BlockIdentifier blockIdentifier;
+
+        SwitchExpressionSearcher(BlockIdentifier blockIdentifier) {
+            this.blockIdentifier = blockIdentifier;
+        }
 
         @Override
         public StructuredStatement transform(StructuredStatement in, StructuredScope scope) {
@@ -300,9 +305,10 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
                 return in;
             }
             if (in instanceof StructuredBreak) {
-                // TODO:  And the break is for this switch!!
-                checkLast();
-                return in;
+                if (blockIdentifier.equals(((StructuredBreak) in).getBreakBlock())) {
+                    checkLast();
+                    return in;
+                }
             }
             if (!in.isEffectivelyNOP()) {
                 last = in;
@@ -318,8 +324,8 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
         }
     }
 
-    private LValue extractSwitchLValue(Op04StructuredStatement item, boolean last) {
-        SwitchExpressionSearcher ses = new SwitchExpressionSearcher();
+    private LValue extractSwitchLValue(BlockIdentifier blockIdentifier, Op04StructuredStatement item, boolean last) {
+        SwitchExpressionSearcher ses = new SwitchExpressionSearcher(blockIdentifier);
         item.transform(ses, new StructuredScope());
         if (ses.found != null) {
             return ses.found;
