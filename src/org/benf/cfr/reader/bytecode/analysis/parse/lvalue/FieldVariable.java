@@ -80,7 +80,7 @@ public class FieldVariable extends AbstractFieldVariable {
         return false;
     }
 
-    private boolean objectIsThis() {
+    public boolean objectIsThis() {
         if (object instanceof LValueExpression) {
             LValue lValue = ((LValueExpression) object).getLValue();
             if (lValue instanceof LocalVariable) {
