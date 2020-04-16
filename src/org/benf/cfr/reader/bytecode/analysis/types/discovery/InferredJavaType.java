@@ -351,7 +351,7 @@ public class InferredJavaType {
         @Override
         public boolean usesFinalId(int id) {
             if (this.id == id) return true;
-            if (resolved) return false;
+            if (resolved) return clashes.get(0).usesFinalId(id);
             for (IJTInternal internal : clashes) {
                 if (internal.usesFinalId(id)) return true;
             }
