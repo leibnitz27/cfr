@@ -134,11 +134,11 @@ public class KotlinSwitchHandler {
         );
         IfStatement testIf = new IfStatement(new ComparisonOperation(eqFn, Literal.FALSE, CompOp.EQ));
         IfStatement testNotIf = new IfStatement(new ComparisonOperation(eqFn, Literal.FALSE, CompOp.NE));
-        final Map<Op03SimpleStatement, Op03SimpleStatement> reTargetSet = MapFactory.newIdentityMap();
+        final Set<Op03SimpleStatement> reTargetSet = SetFactory.newIdentitySet();
         final Map<Op03SimpleStatement, DistinctSwitchTarget> reTargets = MapFactory.newIdentityLazyMap(new UnaryFunction<Op03SimpleStatement, DistinctSwitchTarget>() {
             @Override
             public DistinctSwitchTarget invoke(Op03SimpleStatement arg) {
-                reTargetSet.put(arg, arg);
+                reTargetSet.add(arg);
                 return new DistinctSwitchTarget(reTargetSet.size());
             }
         });
@@ -240,6 +240,30 @@ public class KotlinSwitchHandler {
                 currentCaseLoc = nextCaseLoc;
             } while (true);
             matchesFound.add(found);
+        }
+
+        /*
+         * Check we haven't actually encountered a java switch that's been explicitly stated.
+         * (in a way we'd successfully recover it later).
+         */
+        LValue foundValue = null;
+        for (Op03SimpleStatement retarget : reTargetSet) {
+            // Find one of these that is an assign, and ca
+            Statement reStatement = retarget.getStatement();
+            if (reStatement instanceof AssignmentSimple) {
+                foundValue = reStatement.getCreatedLValue();
+                break;
+            }
+        }
+        if (foundValue != null) {
+            Op03SimpleStatement defaultTran = Misc.followNopGotoChain(defaultTarget, true, false);
+            Statement defaultStm = defaultTran.getStatement();
+            if (defaultStm instanceof RawSwitchStatement) {
+                Expression switchOn2 = ((RawSwitchStatement) defaultStm).getSwitchOn();
+                if (switchOn2 != null && switchOn2.equals(new LValueExpression(foundValue))) {
+                    return false;
+                }
+            }
         }
 
         /*
