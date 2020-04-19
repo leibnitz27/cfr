@@ -27,6 +27,7 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredBreak;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredCase;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredExpressionStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredSwitch;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
@@ -34,12 +35,14 @@ import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.En
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 import org.benf.cfr.reader.util.getopt.Options;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -58,12 +61,76 @@ public class SwitchStringRewriter implements Op04Rewriter {
     @Override
     public void rewrite(Op04StructuredStatement root) {
         if (!(options.getOption(OptionsImpl.STRING_SWITCH, classFileVersion)
-              || bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.STRING_SWITCHES))
-           ) return;
+                || bytecodeMeta.has(BytecodeMeta.CodeInfoFlag.STRING_SWITCHES))
+        ) return;
 
         List<StructuredStatement> structuredStatements = MiscStatementTools.linearise(root);
         if (structuredStatements == null) return;
 
+        rewriteComplex(structuredStatements);
+        rewriteEmpty(structuredStatements);
+    }
+
+    /*
+     * also handle the (bizarre) situation where
+     *
+     * switch (foo) {
+     *    default:
+     *    --->
+     * }
+     *
+     * gives us
+     *
+     * foo.hashcode()
+     * switch(-1) {
+     *    default:
+     * }
+     *
+     * Note that this doesn't pull anything into the switch (so switch expressions will need further work).
+     */
+    private void rewriteEmpty(List<StructuredStatement> structuredStatements) {
+        MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
+
+        WildcardMatch wcm = new WildcardMatch();
+
+        Matcher<StructuredStatement> m = new ResetAfterTest(wcm, "r1", new MatchSequence(
+                new CollectMatch("ass1", new StructuredAssignment(wcm.getLValueWildCard("stringobject"), wcm.getExpressionWildCard("originalstring"))),
+                new CollectMatch("ass2", new StructuredAssignment(wcm.getLValueWildCard("intermed"), Literal.MINUS_ONE)),
+                new CollectMatch("hash", new StructuredExpressionStatement(
+                        wcm.getMemberFunction("hash", MiscConstants.HASHCODE, new LValueExpression(wcm.getLValueWildCard("stringobject"))), false
+                )),
+                new CollectMatch("switch1",
+                        new StructuredSwitch(new LValueExpression(wcm.getLValueWildCard("intermed")),
+                                null,
+                                wcm.getBlockIdentifier("switchblock"))),
+                new BeginBlock(null),
+                new StructuredCase(Collections.<Expression>emptyList(), null, null, wcm.getBlockIdentifier("case")),
+                new BeginBlock(null),
+                new EndBlock(null),
+                new EndBlock(null)
+        ));
+
+        EmptySwitchStringMatchResultCollector matchResultCollector = new EmptySwitchStringMatchResultCollector(wcm);
+        while (mi.hasNext()) {
+            mi.advance();
+            matchResultCollector.clear();
+            if (m.match(mi, matchResultCollector)) {
+                StructuredSwitch swtch = (StructuredSwitch) matchResultCollector.getStatementByName("switch1");
+                if (!swtch.isSafeExpression()) continue;
+
+                matchResultCollector.getStatementByName("ass1").getContainer().nopOut();
+                matchResultCollector.getStatementByName("ass2").getContainer().nopOut();
+                matchResultCollector.getStatementByName("hash").getContainer().nopOut();
+
+                Op04StructuredStatement body = swtch.getBody();
+                swtch.getContainer().replaceStatement(new StructuredSwitch(matchResultCollector.string, body, swtch.getBlockIdentifier()));
+                mi.rewind1();
+            }
+        }
+
+    }
+
+    private void rewriteComplex(List<StructuredStatement> structuredStatements) {
         // Rather than have a non-greedy kleene star at the start, we cheat and scan for valid start points.
         // switch OB (case OB (if-testalternativevalid OB assign break CB)* if-notvalid break assign break CB)+ CB
         MatchIterator<StructuredStatement> mi = new MatchIterator<StructuredStatement>(structuredStatements);
@@ -197,6 +264,38 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 blockIdentifier, false);
     }
 
+
+    private static class EmptySwitchStringMatchResultCollector extends AbstractMatchResultIterator {
+        private final WildcardMatch wcm;
+        private Expression string;
+        private final Map<String, StructuredStatement> collectedStatements = MapFactory.newMap();
+
+        EmptySwitchStringMatchResultCollector(WildcardMatch wcm) {
+            this.wcm = wcm;
+        }
+
+        @Override
+        public void clear() {
+            collectedStatements.clear();
+            string = null;
+        }
+
+        @Override
+        public void collectStatement(String name, StructuredStatement statement) {
+            collectedStatements.put(name, statement);
+        }
+
+        @Override
+        public void collectMatches(String name, WildcardMatch wcm) {
+            string = wcm.getExpressionWildCard("originalstring").getMatch();
+        }
+
+        StructuredStatement getStatementByName(String name) {
+            StructuredStatement structuredStatement = collectedStatements.get(name);
+            if (structuredStatement == null) throw new IllegalArgumentException("No collected statement " + name);
+            return structuredStatement;
+        }
+    }
 
     private static class SwitchStringMatchResultCollector extends AbstractMatchResultIterator {
 
