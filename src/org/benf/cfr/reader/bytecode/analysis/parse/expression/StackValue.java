@@ -76,7 +76,7 @@ public class StackValue extends AbstractExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        lValueUsageCollector.collect(stackValue);
+        lValueUsageCollector.collect(stackValue, ReadWrite.READ);
     }
 
     @Override

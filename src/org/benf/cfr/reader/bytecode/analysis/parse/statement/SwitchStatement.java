@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -8,9 +10,13 @@ import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredSwitch;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class SwitchStatement extends AbstractStatement {
     private Expression switchOn;
     private final BlockIdentifier switchBlock;
+    private boolean safeExpression = false;
 
     public SwitchStatement(Expression switchOn, BlockIdentifier switchBlock) {
         this.switchOn = switchOn;
@@ -39,7 +45,7 @@ public class SwitchStatement extends AbstractStatement {
 
     @Override
     public StructuredStatement getStructuredStatement() {
-        return new UnstructuredSwitch(switchOn, switchBlock);
+        return new UnstructuredSwitch(switchOn, switchBlock, safeExpression);
     }
 
     public BlockIdentifier getSwitchBlock() {
@@ -59,5 +65,18 @@ public class SwitchStatement extends AbstractStatement {
     @Override
     public boolean fallsToNext() {
         return false;
+    }
+
+    @Override
+    public Set<LValue> wantsLifetimeHint() {
+        if (switchOn instanceof LValueExpression) {
+            return Collections.singleton(((LValueExpression) switchOn).getLValue());
+        }
+        return null;
+    }
+
+    @Override
+    public void setLifetimeHint(LValue lv, boolean usedInChildren) {
+        if (!usedInChildren) safeExpression = true;
     }
 }

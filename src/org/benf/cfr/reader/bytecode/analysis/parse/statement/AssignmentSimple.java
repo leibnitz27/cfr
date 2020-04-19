@@ -18,6 +18,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollect
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollectorSimple;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifierFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -53,7 +54,7 @@ public class AssignmentSimple extends AbstractAssignment {
 
     @Override
     public void collectLValueUsage(LValueUsageCollector lValueUsageCollector) {
-        lvalue.collectLValueUsage(lValueUsageCollector);
+        lValueUsageCollector.collect(lvalue, ReadWrite.WRITE);
         rvalue.collectUsedLValues(lValueUsageCollector);
     }
 

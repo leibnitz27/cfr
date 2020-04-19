@@ -22,11 +22,18 @@ import java.util.List;
 public class StructuredSwitch extends AbstractStructuredBlockStatement implements BoxingProcessor {
     private Expression switchOn;
     private final BlockIdentifier blockIdentifier;
+    // Not checked by match.
+    private final boolean safeExpression;
 
-    public StructuredSwitch(Expression switchOn, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
+    public StructuredSwitch(Expression switchOn, Op04StructuredStatement body, BlockIdentifier blockIdentifier, boolean safeExpression) {
         super(body);
         this.switchOn = switchOn;
         this.blockIdentifier = blockIdentifier;
+        this.safeExpression = safeExpression;
+    }
+
+    public StructuredSwitch(Expression switchOn, Op04StructuredStatement body, BlockIdentifier blockIdentifier) {
+        this(switchOn, body, blockIdentifier, false);
     }
 
     public Expression getSwitchOn() {
@@ -126,5 +133,9 @@ public class StructuredSwitch extends AbstractStructuredBlockStatement implement
         StructuredStatement caseBody = cs.getBody().getStatement();
         if (!(caseBody instanceof Block)) return false;
         return caseBody.isEffectivelyNOP();
+    }
+
+    public boolean isSafeExpression() {
+        return safeExpression;
     }
 }

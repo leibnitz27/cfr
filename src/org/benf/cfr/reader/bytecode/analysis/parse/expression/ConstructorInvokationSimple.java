@@ -105,9 +105,8 @@ public class ConstructorInvokationSimple extends AbstractConstructorInvokation i
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
         JavaTypeInstance lValueType = constructorInvokation.getClassTypeInstance();
         if (isAnonymousMethodType(lValueType)) {
-            lValueUsageCollector.collect(new SentinelLocalClassLValue(lValueType));
+            lValueUsageCollector.collect(new SentinelLocalClassLValue(lValueType), ReadWrite.READ /* not strictly.. */);
         }
-
         super.collectUsedLValues(lValueUsageCollector);
     }
 

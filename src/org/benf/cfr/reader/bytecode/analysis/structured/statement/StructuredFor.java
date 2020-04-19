@@ -14,6 +14,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.LValueScopeDiscoverer;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.scope.ScopeDiscoverInfoCache;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -112,7 +113,7 @@ public class StructuredFor extends AbstractStructuredBlockStatement {
             Expression rhs = expression;
             LValue lv2 = lValue;
             do {
-                scopeDiscoverer.collect(lv2);
+                scopeDiscoverer.collect(lv2, ReadWrite.READ);
                 if (rhs instanceof AssignmentExpression) {
                     AssignmentExpression assignmentExpression = (AssignmentExpression) rhs;
                     lv2 = assignmentExpression.getlValue();

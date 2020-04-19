@@ -11,6 +11,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 import org.benf.cfr.reader.util.output.ToStringDumper;
 
 import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractStatement implements Statement {
     private StatementContainer<Statement> container;
@@ -86,5 +87,14 @@ public abstract class AbstractStatement implements Statement {
     @Override
     public boolean canThrow(ExceptionCheck caught) {
         return true;
+    }
+
+    @Override
+    public Set<LValue> wantsLifetimeHint() {
+        return null;
+    }
+
+    @Override
+    public void setLifetimeHint(LValue lv, boolean usedInChildren) {
     }
 }

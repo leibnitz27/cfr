@@ -63,7 +63,7 @@ public class LValuePropSimple {
         Map<StackSSALabel, Boolean> singleUsages = MapFactory.newMap();
 
         @Override
-        public void collect(LValue lValue) {
+        public void collect(LValue lValue, ReadWrite rw) {
             if (!(lValue instanceof StackSSALabel)) return;
             StackSSALabel stackSSALabel = (StackSSALabel)lValue;
             if (singleUsages.containsKey(stackSSALabel)) {

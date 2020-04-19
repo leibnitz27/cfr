@@ -1754,19 +1754,13 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         /*
          * If there's an identifier which /hasn't/ been used, remove the back propagation.
          */
-        Set<Op02WithProcessedDataAndRefs> seenOnce = SetFactory.newSet();
-        Set<Op02WithProcessedDataAndRefs> toProcessContent = SetFactory.newSet();
-        LinkedList<Op02WithProcessedDataAndRefs> toProcess = ListFactory.newLinkedList();
-
-        toProcess.addAll(endPoints);
-        toProcessContent.addAll(endPoints);
+        UniqueSeenQueue<Op02WithProcessedDataAndRefs> toProcess = new UniqueSeenQueue<Op02WithProcessedDataAndRefs>(endPoints);
 
         SSAIdentifiers<Slot> initial = new SSAIdentifiers<Slot>(op2list.get(0).ssaIdentifiers);
 
         List<Op02WithProcessedDataAndRefs> storeWithoutRead = ListFactory.newList();
         while (!toProcess.isEmpty()) {
             Op02WithProcessedDataAndRefs node = toProcess.removeFirst();
-            toProcessContent.remove(node);
 
             Pair<JavaTypeInstance, Integer> retrieved = node.getRetrieveType();
             Pair<JavaTypeInstance, Integer> stored = node.getStorageType();
@@ -1820,11 +1814,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
                 if (!used) {
                     for (Op02WithProcessedDataAndRefs source : node.sources) {
-                        if (!toProcessContent.contains(source)) {
-                            toProcessContent.add(source);
-                            toProcess.add(source);
-                            seenOnce.add(source);
-                        }
+                        toProcess.add(source);
                     }
                     if (stored != null && stored.getSecond() == slot.getIdx()) {
                         storeWithoutRead.add(node);
@@ -1836,13 +1826,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                      * we only need to process sources if they've never been seen, OR if we changed something.
                      */
                     for (Op02WithProcessedDataAndRefs source : node.sources) {
-                        if (!seenOnce.contains(source)) {
-                            if (!toProcessContent.contains(source)) {
-                                toProcessContent.add(source);
-                                toProcess.add(source);
-                                seenOnce.add(source);
-                            }
-                        }
+                        toProcess.addIfUnseen(source);
                     }
                 }
             }

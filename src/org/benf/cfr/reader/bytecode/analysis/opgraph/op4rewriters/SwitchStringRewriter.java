@@ -2,16 +2,33 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters;
 
 import org.benf.cfr.reader.bytecode.BytecodeMeta;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.*;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.AbstractMatchResultIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.CollectMatch;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.KleenePlus;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.KleeneStar;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchOneOf;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchSequence;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matcher;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.ResetAfterTest;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
-import org.benf.cfr.reader.bytecode.analysis.parse.expression.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.NotOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
-import org.benf.cfr.reader.bytecode.analysis.structured.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.Block;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredAssignment;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredBreak;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredCase;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredIf;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredSwitch;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.BeginBlock;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.placeholder.EndBlock;
 import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
@@ -55,7 +72,6 @@ public class SwitchStringRewriter implements Op04Rewriter {
         WildcardMatch wcm2 = new WildcardMatch();
         WildcardMatch wcm3 = new WildcardMatch();
 
-        //noinspection unchecked
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1, "r1", new MatchSequence(
                 new CollectMatch("ass1", new StructuredAssignment(wcm1.getLValueWildCard("stringobject"), wcm1.getExpressionWildCard("originalstring"))),
                 new CollectMatch("ass2", new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm1.getExpressionWildCard("defaultintermed"))),
@@ -114,6 +130,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
             if (m.match(mi, matchResultCollector)) {
                 StructuredSwitch firstSwitch = (StructuredSwitch) matchResultCollector.getStatementByName("switch1");
                 StructuredSwitch secondSwitch = (StructuredSwitch) matchResultCollector.getStatementByName("switch2");
+                if (!secondSwitch.isSafeExpression()) continue;
 
                 StructuredSwitch replacement = rewriteSwitch(secondSwitch, matchResultCollector);
                 secondSwitch.getContainer().replaceStatement(replacement);
@@ -177,7 +194,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
         return new StructuredSwitch(
                 switchOn,
                 new Op04StructuredStatement(newBlock),
-                blockIdentifier);
+                blockIdentifier, false);
     }
 
 
@@ -222,8 +239,6 @@ public class SwitchStringRewriter implements Op04Rewriter {
             if (wcm == wholeBlock) {
                 stringExpression = wcm.getExpressionWildCard("originalstring").getMatch();
             } else if (wcm == caseStatement) {
-                //noinspection unchecked
-                List<Expression> hashvals = wcm.getList("hashvals").getMatch();
                 Expression case2id = wcm.getExpressionWildCard("case2id").getMatch();
                 Expression stringValue = wcm.getExpressionWildCard("stringvalue").getMatch();
                 pendingHashCode.add(Pair.make(getString(stringValue), getInt(case2id)));

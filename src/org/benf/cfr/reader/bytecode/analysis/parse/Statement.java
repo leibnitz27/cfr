@@ -7,6 +7,7 @@ import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.output.Dumpable;
 
 import java.util.List;
+import java.util.Set;
 
 /*
  * statement =
@@ -53,4 +54,8 @@ public interface Statement extends Dumpable, ComparableUnderEC {
     boolean fallsToNext();
 
     boolean canThrow(ExceptionCheck caught);
+
+    Set<LValue> wantsLifetimeHint();
+
+    void setLifetimeHint(LValue lv, boolean usedInChildren);
 }

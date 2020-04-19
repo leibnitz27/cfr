@@ -102,7 +102,7 @@ public class Literal extends AbstractExpression {
                 InnerClassInfo innerClassInfo = lValueType.getInnerClassHereInfo();
 
                 if (innerClassInfo.isMethodScopedClass() && !innerClassInfo.isAnonymousClass()) {
-                    lValueUsageCollector.collect(new SentinelLocalClassLValue(lValueType));
+                    lValueUsageCollector.collect(new SentinelLocalClassLValue(lValueType), ReadWrite.READ);
                 }
             }
         }

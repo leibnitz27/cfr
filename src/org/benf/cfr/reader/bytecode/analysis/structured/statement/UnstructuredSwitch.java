@@ -14,10 +14,12 @@ import java.util.Vector;
 public class UnstructuredSwitch extends AbstractUnStructuredStatement {
     private Expression switchOn;
     private final BlockIdentifier blockIdentifier;
+    private boolean safeExpression;
 
-    public UnstructuredSwitch(Expression switchOn, BlockIdentifier blockIdentifier) {
+    public UnstructuredSwitch(Expression switchOn, BlockIdentifier blockIdentifier, boolean safeExpression) {
         this.switchOn = switchOn;
         this.blockIdentifier = blockIdentifier;
+        this.safeExpression = safeExpression;
     }
 
     @Override
@@ -48,6 +50,6 @@ public class UnstructuredSwitch extends AbstractUnStructuredStatement {
                 last.replaceStatement(caseStatement.getEmptyStructuredCase());
             }
         }
-        return new StructuredSwitch(switchOn, innerBlock, blockIdentifier);
+        return new StructuredSwitch(switchOn, innerBlock, blockIdentifier, safeExpression);
     }
 }

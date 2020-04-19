@@ -776,6 +776,8 @@ public class CodeAnalyser {
         Op03Rewriters.rewriteWith(op03SimpleParseNodes, new BadNarrowingArgRewriter());
         Cleaner.reindexInPlace(op03SimpleParseNodes);
 
+        Op03SimpleStatement.noteInterestingLifetimes(op03SimpleParseNodes);
+
         Op04StructuredStatement block = Op03SimpleStatement.createInitialStructuredBlock(op03SimpleParseNodes);
 
         Op04StructuredStatement.tidyEmptyCatch(block);

@@ -101,7 +101,7 @@ public class AssignmentExpression extends AbstractAssignmentExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        lValueUsageCollector.collect(lValue);
+        lValueUsageCollector.collect(lValue, ReadWrite.WRITE);
         rValue.collectUsedLValues(lValueUsageCollector);
     }
 

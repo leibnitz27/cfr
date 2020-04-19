@@ -8,6 +8,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueAssignmentCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 
 public interface LValueScopeDiscoverer extends LValueUsageCollector, LValueAssignmentCollector<StructuredStatement> {
@@ -27,7 +28,7 @@ public interface LValueScopeDiscoverer extends LValueUsageCollector, LValueAssig
 
     void collectLocalVariableAssignment(LocalVariable localVariable, StatementContainer<StructuredStatement> statementContainer, Expression value);
 
-    void collect(LValue lValue);
+    void collect(LValue lValue, ReadWrite rw);
 
     boolean ifCanDefine();
 

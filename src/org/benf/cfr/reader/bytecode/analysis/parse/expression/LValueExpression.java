@@ -15,6 +15,8 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.Map;
 
+import static org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite.READ;
+
 /*
  * Wraps a local, a static or an instance field.
  */
@@ -92,7 +94,7 @@ public class LValueExpression extends AbstractExpression {
 
     @Override
     public void collectUsedLValues(LValueUsageCollector lValueUsageCollector) {
-        lValueUsageCollector.collect(lValue);
+        lValueUsageCollector.collect(lValue, READ);
     }
 
     @Override
