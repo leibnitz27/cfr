@@ -306,8 +306,31 @@ public class SwitchReplacer {
          */
         for (Op03SimpleStatement switchStatement : switchStatements) {
             SwitchStatement switchStatementInr = (SwitchStatement) switchStatement.getStatement();
+            BlockIdentifier switchBlock = switchStatementInr.getSwitchBlock();
+
+            // un-classify any breaks that we've previously found, otherwise they
+            // might not qualify for conversion to labelled jumps.
+            // We know that the switch is linear at this point.
+            int idx = statements.indexOf(switchStatement.getTargets().get(0));
+            for (int len=statements.size();idx<len;++idx) {
+                Op03SimpleStatement statement = statements.get(idx);
+                if (!statement.getBlockIdentifiers().contains(switchBlock)) {
+                    for (Op03SimpleStatement src : statement.getSources()) {
+                        if (src.getBlockIdentifiers().contains(switchBlock)) {
+                            Statement srcStatement = src.getStatement();
+                            if (srcStatement instanceof GotoStatement) {
+                                if (((GotoStatement) srcStatement).getJumpType() == JumpType.BREAK) {
+                                    ((GotoStatement) srcStatement).setJumpType(JumpType.GOTO);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+
             Set<BlockIdentifier> allBlocks = SetFactory.newSet();
-            allBlocks.add(switchStatementInr.getSwitchBlock());
+            allBlocks.add(switchBlock);
             for (Op03SimpleStatement target : switchStatement.getTargets()) {
                 Statement stmTgt = target.getStatement();
                 if (stmTgt instanceof CaseStatement) {
