@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.StackVarToLocalRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.IfStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifierFactory;
+import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ClassFileVersion;
@@ -188,5 +189,9 @@ public class Op03Rewriters {
 
     public static void nopIsolatedStackValues(List<Op03SimpleStatement> op03SimpleParseNodes) {
         IsolatedStackValue.nopIsolatedStackValues(op03SimpleParseNodes);
+    }
+
+    public static void rewriteBadCompares(VariableFactory vf, List<Op03SimpleStatement> op03SimpleParseNodes) {
+        new BadCompareRewriter(vf).rewrite(op03SimpleParseNodes);
     }
 }

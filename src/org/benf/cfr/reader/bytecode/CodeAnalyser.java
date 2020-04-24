@@ -623,6 +623,8 @@ public class CodeAnalyser {
         op03SimpleParseNodes = Cleaner.removeUnreachableCode(op03SimpleParseNodes, true);
         LoopIdentifier.identifyLoops1(method, op03SimpleParseNodes, blockIdentifierFactory);
 
+        Op03Rewriters.rewriteBadCompares(variableFactory, op03SimpleParseNodes);
+
         // After we've identified loops, try to push any instructions through a goto
         op03SimpleParseNodes = Op03Rewriters.pushThroughGoto(op03SimpleParseNodes);
 
