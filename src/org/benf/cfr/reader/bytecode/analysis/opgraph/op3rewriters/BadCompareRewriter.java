@@ -82,6 +82,7 @@ public class BadCompareRewriter extends AbstractExpressionRewriter {
     private boolean isSideEffectFree(Expression lhs) {
         if (!(lhs instanceof LValueExpression)) return false;
         LValue lv =((LValueExpression) lhs).getLValue();
-        return (lv instanceof FieldVariable || lv instanceof LocalVariable);
+        // don't even trust field variables, in case we've snuck a side effect into the object.
+        return (lv instanceof LocalVariable);
     }
 }
