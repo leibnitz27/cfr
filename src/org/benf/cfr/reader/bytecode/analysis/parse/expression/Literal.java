@@ -10,7 +10,11 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionVisitor;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.ReadWrite;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
 import org.benf.cfr.reader.bytecode.analysis.types.InnerClassInfo;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
@@ -46,6 +50,29 @@ public class Literal extends AbstractExpression {
     public Literal(TypedLiteral value) {
         super(value.getInferredJavaType());
         this.value = value;
+    }
+
+    public static Expression getLiteralOrNull(RawJavaType rawCastType, InferredJavaType inferredCastType, int intValue) {
+        switch (rawCastType) {
+            case BOOLEAN:
+                if (intValue == 0) return FALSE;
+                if (intValue == 1) return TRUE;
+                return null;
+            case BYTE:
+            case CHAR:
+            case SHORT:
+                return new CastExpression(inferredCastType, new Literal(TypedLiteral.getInt(intValue)));
+            case INT:
+                return new Literal(TypedLiteral.getInt(intValue));
+            case LONG:
+                return new Literal(TypedLiteral.getLong(intValue));
+            case FLOAT:
+                return new Literal(TypedLiteral.getFloat(intValue));
+            case DOUBLE:
+                return new Literal(TypedLiteral.getDouble(intValue));
+            default:
+                return null;
+        }
     }
 
     @Override
