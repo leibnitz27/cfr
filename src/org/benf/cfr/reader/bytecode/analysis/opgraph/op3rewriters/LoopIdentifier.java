@@ -680,28 +680,48 @@ public class LoopIdentifier {
                        type == BlockType.SWITCH;
             }
         }));
+        Set<BlockIdentifier> originalCatches = SetFactory.newSet(catches);
         int newlast = last;
-        while (!catches.isEmpty()) {
-            /*
-             * Need to find the rest of these catch blocks, and add them to the range.
-             */
-            Op03SimpleStatement stm = statements.get(newlast);
-            catches.retainAll(stm.getBlockIdentifiers());
-            if (catches.isEmpty()) {
-                break;
+        do {
+            while (!catches.isEmpty()) {
+                /*
+                 * Need to find the rest of these catch blocks, and add them to the range.
+                 */
+                Op03SimpleStatement stm = statements.get(newlast);
+                catches.retainAll(stm.getBlockIdentifiers());
+                if (catches.isEmpty()) {
+                    break;
+                }
+                last = newlast;
+                if (newlast < statements.size() - 1) {
+                    newlast++;
+                } else {
+                    break;
+                }
             }
-            last = newlast;
-            if (newlast < statements.size() - 1) {
-                newlast++;
-            } else {
-                break;
+            for (int x = idxTestStart; x <= last; ++x) {
+                statements.get(x).markBlock(blockIdentifier);
             }
-        }
+
+            // If newlast (relying here on contiguity, which could be defeated, but should be recovered with a basic block sort )
+            // is the start of a new catch block, which is a peer of one of originalcatches, then we should add to catches
+            // and continue.
+            Op03SimpleStatement newlastStm = statements.get(newlast);
+            if (newlastStm.getStatement() instanceof CatchStatement) {
+                BlockIdentifier catchBlockIdent = ((CatchStatement) newlastStm.getStatement()).getCatchBlockIdent();
+                if (!originalCatches.contains(catchBlockIdent)) {
+                    for (Op03SimpleStatement source : newlastStm.getSources()) {
+                        if (!source.getBlockIdentifiers().contains(blockIdentifier)) return last;
+                    }
+                    originalCatches.add(catchBlockIdent);
+                    catches.add(catchBlockIdent);
+                    idxTestStart = last;
+                    newlast++;
+                }
+            }
+        } while (!catches.isEmpty() && newlast < statements.size() - 1);
 
 
-        for (int x = idxTestStart; x <= last; ++x) {
-            statements.get(x).markBlock(blockIdentifier);
-        }
         return last;
     }
 
