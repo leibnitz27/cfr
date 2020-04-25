@@ -155,6 +155,35 @@ public class OptionsImpl implements Options {
 
     };
 
+    private static final OptionDecoder<ClassFileVersion> defaultNullClassFileVersionDecoder = new OptionDecoder<ClassFileVersion>() {
+        @Override
+        public ClassFileVersion invoke(String arg, Void ignore, Options ignore2) {
+            if (arg == null) return null;
+            ClassFileVersion res = ClassFileVersion.parse(arg);
+            if (res.before(ClassFileVersion.JAVA_1_0)) {
+                throw new IllegalArgumentException("Class file version too early.");
+            }
+            return res;
+        }
+
+        @Override
+        public String getRangeDescription() {
+            StringBuilder res = new StringBuilder();
+            res.append("string, specifying either java version as 'j6', 'j1.0', or classfile as '56', '56.65535'\n\nList of known versions:");
+            res.append("\n\n");
+            for (Map.Entry<String, ClassFileVersion> ver : ClassFileVersion.getByName().entrySet()) {
+                res.append(ver.getKey()).append("\t: ").append(ver.getValue()).append("\n");
+            }
+            return res.toString();
+        }
+
+        @Override
+        public String getDefaultValue() {
+            return null;
+        }
+
+    };
+
     private static class VersionSpecificDefaulter implements OptionDecoderParam<Boolean, ClassFileVersion> {
 
         ClassFileVersion versionGreaterThanOrEqual;
@@ -341,6 +370,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> FORCE_TOPSORT = new PermittedOptionProvider.Argument<Troolean>(
             "forcetopsort", defaultNeitherTrooleanDecoder,
             "Force basic block sorting.  Usually not necessary for code emitted directly from javac, but required in the case of obfuscation (or dex2jar!).  Will be enabled in recovery.");
+    public static final PermittedOptionProvider.Argument<ClassFileVersion> FORCE_CLASSFILEVER = new PermittedOptionProvider.Argument<ClassFileVersion>(
+            "forceclassfilever", defaultNullClassFileVersionDecoder,
+            "Force the version of the classfile (and hence java) that classfiles are decompiled as.  Normally detected from class files.  --help forceclassfilever for details.");
     public static final PermittedOptionProvider.Argument<Troolean> FOR_LOOP_CAPTURE = new PermittedOptionProvider.Argument<Troolean>(
             "forloopaggcapture", defaultNeitherTrooleanDecoder,
             "Allow for loops to aggressively roll mutations into update section, even if they don't appear to be involved with the predicate");
@@ -517,7 +549,7 @@ public class OptionsImpl implements Options {
                     REMOVE_INNER_CLASS_SYNTHETICS, REWRITE_LAMBDAS, HIDE_BRIDGE_METHODS, LIFT_CONSTRUCTOR_INIT,
                     REMOVE_DEAD_METHODS, REMOVE_BAD_GENERICS, SUGAR_ASSERTS, SUGAR_BOXING, SHOW_CFR_VERSION,
                     DECODE_FINALLY, TIDY_MONITORS, LENIENT, DUMP_CLASS_PATH,
-                    DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
+                    DECOMPILER_COMMENTS, FORCE_TOPSORT, FORCE_TOPSORT_EXTRA, FORCE_CLASSFILEVER, FORCE_PRUNE_EXCEPTIONS, OUTPUT_DIR,
                     OUTPUT_PATH, CLOBBER_FILES, JAR_FILTER, IMPORT_FILTER,
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SUGAR_STRINGCONCATFACTORY, SILENT, RECOVER, ECLIPSE, OVERRIDES, SHOW_INFERRABLE,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,

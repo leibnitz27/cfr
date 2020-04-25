@@ -144,7 +144,8 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         // Members
         int minorVer = data.getU2At(OFFSET_OF_MINOR);
         int majorVer = data.getU2At(OFFSET_OF_MAJOR);
-        ClassFileVersion classFileVersion = new ClassFileVersion(majorVer, minorVer);
+        ClassFileVersion forced = options.getOption(OptionsImpl.FORCE_CLASSFILEVER);
+        ClassFileVersion classFileVersion = forced != null ? forced : new ClassFileVersion(majorVer, minorVer);
         this.classFileVersion = classFileVersion;
         final ClassFileVersion cfv = classFileVersion;
         int constantPoolCount = data.getU2At(OFFSET_OF_CONSTANT_POOL_COUNT);
