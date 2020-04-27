@@ -390,7 +390,7 @@ public class CodeAnalyser {
         // consumed / produced.
         // This is the point at which we combine temporaries from merging
         // stacks.
-        Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
+        DecompilerComment o2stackComment = Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
 
         /* Extra fun.  A ret can have a jump back to the instruction immediately following the JSR that called it.
          * So we have to search for RET instructions, then for each of them find any JSRs which could call it, and add
@@ -402,7 +402,10 @@ public class CodeAnalyser {
          */
         if (Op02WithProcessedDataAndRefs.processJSR(op2list)) {
             // Repopulate stack info, as it will have changed, as we might have cloned instructions.
-            Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
+            o2stackComment = Op02WithProcessedDataAndRefs.populateStackInfo(op2list, method);
+        }
+        if (o2stackComment != null) {
+            comments.addComment(o2stackComment);
         }
 
 

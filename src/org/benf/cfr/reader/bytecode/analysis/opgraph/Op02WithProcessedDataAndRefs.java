@@ -191,7 +191,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         return cpEntries;
     }
 
-    private void populateStackInfo(StackSim stackSim, Method method, LinkedList<Pair<StackSim, Op02WithProcessedDataAndRefs>> next) {
+    private void populateStackInfo(StackSim stackSim, Method method, Set<DecompilerComment> comments, LinkedList<Pair<StackSim, Op02WithProcessedDataAndRefs>> next) {
         StackDelta stackDelta = instr.getStackDelta(rawData, cpEntries, stackSim, method);
         if (stackDepthBeforeExecution != -1) {
             /* Catch instructions are funny, as we know we'll get here with 1 thing on the stack. */
@@ -203,7 +203,6 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 throw new ConfusedCFRException("Invalid stack depths @ " + this + " : trying to set " + stackSim.getDepth() + " previously set to " + stackDepthBeforeExecution);
             }
 
-
             List<StackEntryHolder> alsoConsumed = ListFactory.newList();
             List<StackEntryHolder> alsoProduced = ListFactory.newList();
             StackSim newStackSim = stackSim.getChange(stackDelta, alsoConsumed, alsoProduced, this);
@@ -211,7 +210,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 throw new ConfusedCFRException("Unexpected stack sizes on merge");
             }
             for (int i = 0; i < stackConsumed.size(); ++i) {
-                stackConsumed.get(i).mergeWith(alsoConsumed.get(i));
+                stackConsumed.get(i).mergeWith(alsoConsumed.get(i), comments);
             }
             /*
              * If unconsumed joined stack is set, see below, we must be merging something this instruction doesn't
@@ -223,7 +222,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 List<StackEntryHolder> unconsumedEntriesOld = unconsumedJoinedStack.getHolders(alsoProduced.size(), depth);
                 List<StackEntryHolder> unconsumedEntriesNew = newStackSim.getHolders(alsoProduced.size(), depth);
                 for (int i = 0; i < unconsumedEntriesOld.size(); ++i) {
-                    unconsumedEntriesOld.get(i).mergeWith(unconsumedEntriesNew.get(i));
+                    unconsumedEntriesOld.get(i).mergeWith(unconsumedEntriesNew.get(i), comments);
                 }
             }
 
@@ -1525,7 +1524,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
 
-    public static void populateStackInfo(List<Op02WithProcessedDataAndRefs> op2list, Method method) {
+    public static DecompilerComment populateStackInfo(List<Op02WithProcessedDataAndRefs> op2list, Method method) {
+        Set<DecompilerComment> comments = SetFactory.newSet();
         // We might have two passes if there are JSRS.  Reset.
         for (Op02WithProcessedDataAndRefs op : op2list) {
             op.resetStackInfo();
@@ -1539,7 +1539,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
                 Pair<StackSim, Op02WithProcessedDataAndRefs> next = toProcess.removeFirst();
                 Op02WithProcessedDataAndRefs o2 = next.getSecond();
                 StackSim stackSim = next.getFirst();
-                o2.populateStackInfo(stackSim, method, toProcess);
+                o2.populateStackInfo(stackSim, method, comments, toProcess);
             }
         } catch (ConfusedCFRException e) {
             Dumper dmp = new ToStringDumper();
@@ -1550,7 +1550,8 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             System.err.print(dmp.toString());
             throw e;
         }
-
+        if (comments.isEmpty()) return null;
+        return SetUtil.getSingle(comments);
     }
 
     public static void unlinkUnreachable(List<Op02WithProcessedDataAndRefs> op2list) {

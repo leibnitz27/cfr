@@ -4,6 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.util.ConfusedCFRException;
+import org.benf.cfr.reader.util.DecompilerComment;
+import org.benf.cfr.reader.util.DecompilerCommentSource;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 
@@ -41,14 +43,12 @@ public class StackEntry {
         usageCount = newCount;
     }
 
-    boolean mergeWith(StackEntry other) {
+    void mergeWith(StackEntry other, Set<DecompilerComment> comments) {
         if (other.stackType != this.stackType) {
-            return false;
-//            throw new ConfusedCFRException("Trying to merge different stackTypes " + stackType + " vs " + other.stackType + " [" + id0 + "/" + other.id0 + "]");
+            comments.add(DecompilerComment.UNVERIFIABLE_BYTECODE_BAD_MERGE);
         }
         ids.addAll(other.ids);
         usageCount += other.usageCount;
-        return true;
     }
 
     public long getUsageCount() {
