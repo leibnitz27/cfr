@@ -15,8 +15,8 @@ public class OperationFactorySwap extends OperationFactoryDefault {
     @Override
     public StackDelta getStackDelta(JVMInstr instr, byte[] data, ConstantPoolEntry[] cpEntries,
                                     StackSim stackSim, Method method) {
-        StackTypes popped = getStackTypes(stackSim, 1, 0);
-        StackTypes pushed = getStackTypes(stackSim, 0, 1);
+        StackTypes popped = getStackTypes(stackSim, 0, 1);
+        StackTypes pushed = getStackTypes(stackSim, 1, 0);
         return new StackDeltaImpl(popped, pushed);
     }
 
