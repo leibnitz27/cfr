@@ -147,6 +147,7 @@ public class ObjectTypeUsageRewriter extends AbstractExpressionRewriter implemen
 
         Expression lhsObject = funcInv.getObject();
         JavaTypeInstance owningClassType = funcInv.getMethodPrototype().getClassType();
+        if (owningClassType == null) return funcInv;
         if (!needsReWrite(lhsObject, owningClassType, new MemberCheck())) return funcInv;
         return funcInv.withReplacedObject(new CastExpression(new InferredJavaType(owningClassType, InferredJavaType.Source.FORCE_TARGET_TYPE), lhsObject));
     }

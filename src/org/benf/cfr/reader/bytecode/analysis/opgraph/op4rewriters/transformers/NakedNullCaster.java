@@ -40,10 +40,13 @@ public class NakedNullCaster implements StructuredStatementTransformer, Expressi
             if (Literal.NULL.equals(object)) {
                 // Needs a cast.
                 JavaTypeInstance callType = invokation.getMethodPrototype().getClassType();
-                Map<Expression, Expression> replace = MapFactory.newMap();
-                replace.put(object, new CastExpression(new InferredJavaType(callType, InferredJavaType.Source.LITERAL), object));
-                CloneHelper cloneHelper = new CloneHelper(replace);
-                expression = expression.deepClone(cloneHelper);
+                // if calltype is null, there's not a lot we can do here.
+                if (callType != null) {
+                    Map<Expression, Expression> replace = MapFactory.newMap();
+                    replace.put(object, new CastExpression(new InferredJavaType(callType, InferredJavaType.Source.LITERAL), object));
+                    CloneHelper cloneHelper = new CloneHelper(replace);
+                    expression = expression.deepClone(cloneHelper);
+                }
             }
         }
         return expression.applyExpressionRewriter(this, ssaIdentifiers, statementContainer, flags);
