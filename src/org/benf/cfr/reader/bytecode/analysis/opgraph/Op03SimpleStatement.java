@@ -449,7 +449,8 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
     }
 
     public void markFirstStatementInBlock(BlockIdentifier blockIdentifier) {
-        if (this.firstStatementInThisBlock != null && this.firstStatementInThisBlock != blockIdentifier) {
+        if (this.firstStatementInThisBlock != null && this.firstStatementInThisBlock != blockIdentifier
+                && blockIdentifier != null) {
             throw new ConfusedCFRException("Statement already marked as first in another block");
         }
         this.firstStatementInThisBlock = blockIdentifier;

@@ -117,7 +117,17 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.AGGRESSIVE_EXCEPTION_AGG)
     );
 
-    private static final RecoveryOptions recover1 = new RecoveryOptions(recoverPre1,
+    private static final RecoveryOptions recoverPre1b = new RecoveryOptions(recover0,
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
+            new RecoveryOption.TrooleanRO(OptionsImpl.AGGRESSIVE_DO_EXTENSION, Troolean.FALSE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FOR_LOOP_CAPTURE, Troolean.FALSE),
+            new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.AGGRESSIVE_EXCEPTION_AGG)
+    );
+
+    private static final RecoveryOptions recover1 = new RecoveryOptions(recoverPre1b,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_NOPULL, Troolean.TRUE)
             );
 
@@ -135,7 +145,7 @@ public class CodeAnalyser {
             new RecoveryOption.BooleanRO(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS, true, BytecodeMeta.checkParam(OptionsImpl.IGNORE_EXCEPTIONS), DecompilerComment.DROP_EXCEPTIONS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverPre1, recover1, recover2, recoverExAgg, recover3, recoverLast};
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverPre1, recoverPre1b, recover1, recover2, recoverExAgg, recover3, recoverLast};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
@@ -666,6 +676,15 @@ public class CodeAnalyser {
         // Identify simple (nested) conditionals - note that this also generates ternary expressions,
         // if the conditional is simple enough.
         ConditionalRewriter.identifyNonjumpingConditionals(op03SimpleParseNodes, blockIdentifierFactory);
+
+        // If we have a conditional JUST before a do statement which jumps in, then see if we can
+        // safely move it inside, and have another go.
+        // After we've done this we need another go at identifyingNonJumpingConditionals, however that happens below.
+        // It's possible that this could make spaghetti code *worse*, so if thing get really hairy, recovery turns it off.
+        if (options.getOption(OptionsImpl.AGGRESSIVE_DO_EXTENSION) != Troolean.FALSE) {
+            Op03Rewriters.moveJumpsIntoDo(variableFactory, op03SimpleParseNodes, comments);
+        }
+
         // Condense again, now we've simplified conditionals, ternaries, etc.
         LValueProp.condenseLValues(op03SimpleParseNodes);
         if (options.getOption(OptionsImpl.FORCE_COND_PROPAGATE) == Troolean.TRUE) {

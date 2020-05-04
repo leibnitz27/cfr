@@ -54,7 +54,8 @@ public class InferredJavaType {
         IMPROVED_ITERATION,
         TERNARY,
         RESOLVE_CLASH,
-        FORCE_TARGET_TYPE
+        FORCE_TARGET_TYPE,
+        TRANSFORM
     }
 
 

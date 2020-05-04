@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.variables.VariableFactory;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.util.ClassFileVersion;
+import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.getopt.Options;
 
@@ -193,5 +194,9 @@ public class Op03Rewriters {
 
     public static void rewriteBadCompares(VariableFactory vf, List<Op03SimpleStatement> op03SimpleParseNodes) {
         new BadCompareRewriter(vf).rewrite(op03SimpleParseNodes);
+    }
+
+    public static void moveJumpsIntoDo(VariableFactory vf, List<Op03SimpleStatement> op03SimpleParseNodes, DecompilerComments comments) {
+        new JumpsIntoDoRewriter(vf).rewrite(op03SimpleParseNodes, comments);
     }
 }
