@@ -42,7 +42,10 @@ public class IllegalIdentifierReplacement implements IllegalIdentifierDump {
             return true;
         }
         for (int x=1;x<chars.length;++x) {
-            if (!Character.isJavaIdentifierPart(chars[x])) return true;
+            char c = chars[x];
+            // If identifier contains ignorable char, it cannot be represented in source
+            // because e.g. `a\u0008` is effectively `a` when re-compiled
+            if (!Character.isJavaIdentifierPart(c) || Character.isIdentifierIgnorable(c)) return true;
         }
         return false;
     }
