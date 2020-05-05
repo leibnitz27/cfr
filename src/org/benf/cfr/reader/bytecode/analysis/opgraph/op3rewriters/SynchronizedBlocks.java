@@ -3,10 +3,12 @@ package org.benf.cfr.reader.bytecode.analysis.opgraph.op3rewriters;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
+import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
 import org.benf.cfr.reader.util.collections.SetUtil;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -15,6 +17,7 @@ import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class SynchronizedBlocks {
@@ -41,16 +44,17 @@ public class SynchronizedBlocks {
         // (Every exit from a synchronised block has to exit, so if there's any possibiliy of an exception... )
 
         for (Op03SimpleStatement enter : enters) {
-            MonitorEnterStatement monitorExitStatement = (MonitorEnterStatement) enter.getStatement();
+            MonitorEnterStatement monitorEnterStatement = (MonitorEnterStatement) enter.getStatement();
 
-            findSynchronizedRange(enter, monitorExitStatement.getMonitor());
+            findSynchronizedRange(enter, monitorEnterStatement.getMonitor());
         }
     }
 
-    private static void findSynchronizedRange(final Op03SimpleStatement start, final Expression monitor) {
+    private static void findSynchronizedRange(final Op03SimpleStatement start, final Expression monitorEnterExpression) {
+        final Expression monitor = removeCasts(monitorEnterExpression);
         final Set<Op03SimpleStatement> addToBlock = SetFactory.newSet();
 
-        final Set<Op03SimpleStatement> foundExits = SetFactory.newSet();
+        final Map<Op03SimpleStatement, MonitorExitStatement> foundExits = MapFactory.newOrderedMap();
         final Set<Op03SimpleStatement> extraNodes = SetFactory.newSet();
         /* Process all the parents until we find the monitorExit.
          * Note that this does NOT find statements which are 'orphaned', i.e.
@@ -73,14 +77,14 @@ public class SynchronizedBlocks {
                 new BinaryProcedure<Op03SimpleStatement, GraphVisitor<Op03SimpleStatement>>() {
                     @Override
                     public void call(Op03SimpleStatement arg1, GraphVisitor<Op03SimpleStatement> arg2) {
-                        //
-                        //
-
                         Statement statement = arg1.getStatement();
 
                         if (statement instanceof TryStatement) {
                             TryStatement tryStatement = (TryStatement) statement;
                             Set<Expression> tryMonitors = tryStatement.getMonitors();
+                            // TODO
+                            // It's possible that this is a function of monitor, as per https://github.com/leibnitz27/cfr/issues/154
+                            // However, if that's the case, we'll need to potentially leave a different mutex at different exit points
                             if (tryMonitors.contains(monitor)) {
                                 leaveExitsMutex.add(tryStatement.getBlockIdentifier());
                                 List<Op03SimpleStatement> tgts = arg1.getTargets();
@@ -96,8 +100,10 @@ public class SynchronizedBlocks {
                         }
 
                         if (statement instanceof MonitorExitStatement) {
-                            if (monitor.equals(((MonitorExitStatement) statement).getMonitor())) {
-                                foundExits.add(arg1);
+                            MonitorExitStatement monitorExitStatement = (MonitorExitStatement) statement;
+                            Expression exitMonitor = monitorExitStatement.getMonitor();
+                            if (monitor.equals(removeCasts(exitMonitor))) {
+                                foundExits.put(arg1, monitorExitStatement);
                                 addToBlock.add(arg1);
                                 /*
                                  * If there's a return / throw / goto immediately after this, then we know that the brace
@@ -155,7 +161,7 @@ public class SynchronizedBlocks {
          * find entries with same-block targets which are NOT in addToBlock, add them.
          */
         Set<Op03SimpleStatement> requiredComments = SetFactory.newSet();
-        Iterator<Op03SimpleStatement> foundExitIter = foundExits.iterator();
+        Iterator<Op03SimpleStatement> foundExitIter = foundExits.keySet().iterator();
         while (foundExitIter.hasNext()) {
             final Op03SimpleStatement foundExit = foundExitIter.next();
             final Set<BlockIdentifier> exitBlocks = SetFactory.newSet(foundExit.getBlockIdentifiers());
@@ -189,8 +195,16 @@ public class SynchronizedBlocks {
             contained.getBlockIdentifiers().add(blockIdentifier);
         }
 
-        for (Op03SimpleStatement exit : foundExits) {
-            exit.nopOut();
+        for (Map.Entry<Op03SimpleStatement, MonitorExitStatement> exitEntry : foundExits.entrySet()) {
+            Expression exit = exitEntry.getValue().getMonitor();
+            Op03SimpleStatement exitStm = exitEntry.getKey();
+            if (monitor.equals(exit)) {
+                exitStm.nopOut();
+            } else {
+                // A hidden side effect in the exit!
+                // we need to retain this.
+                exitStm.replaceStatement(new ExpressionStatement(exit));
+            }
         }
 
         for (Op03SimpleStatement exit : requiredComments) {
@@ -212,11 +226,14 @@ public class SynchronizedBlocks {
                 extra.getBlockIdentifiers().add(blockIdentifier);
             }
         }
-
-
     }
 
-
+    private static Expression removeCasts(Expression e) {
+        while (e instanceof CastExpression) {
+            e = ((CastExpression) e).getChild();
+        }
+        return e;
+    }
 
     /*
      * Strictly speaking, this isn't true.....  We should verify elsewhere first that we don't push
