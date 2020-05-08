@@ -65,10 +65,6 @@ public class IfExitingStatement extends AbstractStatement {
         return new StructuredIf(condition, new Op04StructuredStatement(Block.getBlockFor(false, statement.getStructuredStatement())));
     }
 
-    public void optimiseForTypes() {
-        condition = condition.optimiseForType();
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

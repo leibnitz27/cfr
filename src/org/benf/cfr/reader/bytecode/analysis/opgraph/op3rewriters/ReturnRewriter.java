@@ -4,6 +4,8 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.statement.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.functors.BinaryProcedure;
@@ -11,8 +13,9 @@ import org.benf.cfr.reader.util.graph.GraphVisitor;
 import org.benf.cfr.reader.util.graph.GraphVisitorDFS;
 
 import java.util.List;
+import java.util.Set;
 
-public class ReturnRewriter {
+class ReturnRewriter {
     private static void replaceReturningIf(Op03SimpleStatement ifStatement, boolean aggressive) {
         if (!(ifStatement.getStatement().getClass() == IfStatement.class)) return;
         IfStatement innerIf = (IfStatement) ifStatement.getStatement();
@@ -27,6 +30,13 @@ public class ReturnRewriter {
         Statement tgtStatement = tgt.getStatement();
         if (tgtStatement instanceof ReturnStatement) {
             ifStatement.replaceStatement(new IfExitingStatement(innerIf.getCondition(), tgtStatement));
+            Op03SimpleStatement origfall = ifStatement.getTargets().get(0);
+            origfall.setFirstStatementInThisBlock(null);
+            BlockIdentifier ifBlock = innerIf.getKnownIfBlock();
+            Pair<Set<Op03SimpleStatement>, Set<Op03SimpleStatement>> blockReachableAndExits = Misc.GraphVisitorBlockReachable.getBlockReachableAndExits(origfall, ifBlock);
+            for (Op03SimpleStatement stm : blockReachableAndExits.getFirst()) {
+                stm.getBlockIdentifiers().remove(ifBlock);
+            }
         } else {
             return;
         }
@@ -34,14 +44,14 @@ public class ReturnRewriter {
         ifStatement.removeTarget(origtgt);
     }
 
-    public static void replaceReturningIfs(List<Op03SimpleStatement> statements, boolean aggressive) {
+    static void replaceReturningIfs(List<Op03SimpleStatement> statements, boolean aggressive) {
         List<Op03SimpleStatement> ifStatements = Functional.filter(statements, new TypeFilter<IfStatement>(IfStatement.class));
         for (Op03SimpleStatement ifStatement : ifStatements) {
             replaceReturningIf(ifStatement, aggressive);
         }
     }
 
-    public static void propagateToReturn2(List<Op03SimpleStatement> statements) {
+    static void propagateToReturn2(List<Op03SimpleStatement> statements) {
         boolean success = false;
         for (Op03SimpleStatement stm : statements) {
             Statement inner = stm.getStatement();
