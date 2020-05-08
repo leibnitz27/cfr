@@ -109,6 +109,11 @@ public abstract class AbstractPlaceholder implements StructuredStatement {
     }
 
     @Override
+    public boolean canFall() {
+        return true;
+    }
+
+    @Override
     public List<LValue> findCreatedHere() {
         return null;
     }

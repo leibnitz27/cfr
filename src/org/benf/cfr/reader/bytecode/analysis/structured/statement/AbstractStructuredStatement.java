@@ -132,6 +132,11 @@ public abstract class AbstractStructuredStatement implements StructuredStatement
     }
 
     @Override
+    public boolean canFall() {
+        return true;
+    }
+
+    @Override
     public boolean fallsNopToNext() {
         return false;
     }

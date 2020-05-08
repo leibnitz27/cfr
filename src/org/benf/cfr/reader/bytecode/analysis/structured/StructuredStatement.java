@@ -71,6 +71,8 @@ public interface StructuredStatement extends Dumpable, TypeUsageCollectable, Mat
 
     boolean fallsNopToNext();
 
+    boolean canFall();
+
     List<LValue> findCreatedHere();
 
     String suggestName(LocalVariable createdHere, Predicate<String> testNameUsedFn);

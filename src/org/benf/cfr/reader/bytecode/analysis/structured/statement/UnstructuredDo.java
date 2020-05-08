@@ -10,6 +10,7 @@ import org.benf.cfr.reader.util.Optional;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
 public class UnstructuredDo extends AbstractUnStructuredStatement {
@@ -76,15 +77,19 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
             } else if (stm instanceof StructuredContinue) {
                 StructuredContinue cnt = (StructuredContinue) stm;
                 if (cnt.getContinueTgt().equals(blockIdentifier)) canRemove = false;
-            } else {
+            } else if (stm.canFall()) {
                 canRemove = false;
             }
             if (canRemove) {
                 return stm;
             }
         }
-        block.getBlockStatements().add(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
-//        }
+        Op04StructuredStatement last = block.getLast();
+        if (last != null) {
+            if (last.getStatement().canFall()) {
+                block.getBlockStatements().add(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
+            }
+        }
         return new StructuredDo(null, innerBlock, blockIdentifier);
     }
 
