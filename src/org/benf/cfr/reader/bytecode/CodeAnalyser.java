@@ -117,17 +117,7 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.AGGRESSIVE_EXCEPTION_AGG)
     );
 
-    private static final RecoveryOptions recoverPre1b = new RecoveryOptions(recover0,
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT, Troolean.TRUE, DecompilerComment.AGGRESSIVE_TOPOLOGICAL_SORT),
-            new RecoveryOption.TrooleanRO(OptionsImpl.AGGRESSIVE_DO_EXTENSION, Troolean.FALSE),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FOR_LOOP_CAPTURE, Troolean.FALSE),
-            new RecoveryOption.BooleanRO(OptionsImpl.LENIENT, Boolean.TRUE),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_COND_PROPAGATE, Troolean.TRUE),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_PRUNE_EXCEPTIONS, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.PRUNE_EXCEPTIONS),
-            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS), DecompilerComment.AGGRESSIVE_EXCEPTION_AGG)
-    );
-
-    private static final RecoveryOptions recover1 = new RecoveryOptions(recoverPre1b,
+    private static final RecoveryOptions recover1 = new RecoveryOptions(recoverPre1,
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_NOPULL, Troolean.TRUE)
             );
 
@@ -136,16 +126,23 @@ public class CodeAnalyser {
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG2, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
     );
 
+
     private static final RecoveryOptions recover3 = new RecoveryOptions(recover1,
             new RecoveryOption.BooleanRO(OptionsImpl.COMMENT_MONITORS, Boolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_MONITORS), DecompilerComment.COMMENT_MONITORS),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_RETURNING_IFS, Troolean.TRUE, DecompilerComment.RETURNING_IFS)
+    );
+
+    private static final RecoveryOptions recover3a = new RecoveryOptions(recover1,
+            new RecoveryOption.TrooleanRO(OptionsImpl.AGGRESSIVE_DO_EXTENSION, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_EXTRA, Troolean.TRUE),
+            new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG2, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
     );
 
     private static final RecoveryOptions recoverLast = new RecoveryOptions(recover3,
             new RecoveryOption.BooleanRO(OptionsImpl.IGNORE_EXCEPTIONS_ALWAYS, true, BytecodeMeta.checkParam(OptionsImpl.IGNORE_EXCEPTIONS), DecompilerComment.DROP_EXCEPTIONS)
     );
 
-    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverPre1, recoverPre1b, recover1, recover2, recoverExAgg, recover3, recoverLast};
+    private static final RecoveryOptions[] recoveryOptionsArr = new RecoveryOptions[]{recover0, recover0a, recoverPre1, recover1, recover2, recoverExAgg, recover3, recover3a, recoverLast};
 
     /*
      * This method should not throw.  If it does, something serious has gone wrong.
@@ -680,8 +677,7 @@ public class CodeAnalyser {
         // If we have a conditional JUST before a do statement which jumps in, then see if we can
         // safely move it inside, and have another go.
         // After we've done this we need another go at identifyingNonJumpingConditionals, however that happens below.
-        // It's possible that this could make spaghetti code *worse*, so if thing get really hairy, recovery turns it off.
-        if (options.getOption(OptionsImpl.AGGRESSIVE_DO_EXTENSION) != Troolean.FALSE) {
+        if (options.getOption(OptionsImpl.AGGRESSIVE_DO_EXTENSION) == Troolean.TRUE) {
             Op03Rewriters.moveJumpsIntoDo(variableFactory, op03SimpleParseNodes, comments);
         }
 
@@ -703,7 +699,6 @@ public class CodeAnalyser {
         // which jumps to immediately after the catch block.
         //
         // While it seems perverse to have another pass at this here, it seems to yield the best results.
-        //
         Op03Rewriters.classifyGotos(op03SimpleParseNodes);
         if (options.getOption(OptionsImpl.LABELLED_BLOCKS)) {
             Op03Rewriters.classifyAnonymousBlockGotos(op03SimpleParseNodes, false);
