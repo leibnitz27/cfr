@@ -1520,7 +1520,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
 
     @Override
     public String toString() {
-        return "" + index + " : " + instr;
+        return "" + index + " : " + instr + " - " + ssaIdentifiers;
     }
 
 
@@ -1697,10 +1697,10 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
         };
 
-        LinkedList<Op02WithProcessedDataAndRefs> toProcess = ListFactory.newLinkedList();
-        toProcess.addAll(statements);
+        UniqueSeenQueue<Op02WithProcessedDataAndRefs> toProcess =new UniqueSeenQueue<Op02WithProcessedDataAndRefs>(statements);
+//        LinkedList<Op02WithProcessedDataAndRefs> toProcess = new LinkedList<Op02WithProcessedDataAndRefs>(statements);
         while (!toProcess.isEmpty()) {
-            Op02WithProcessedDataAndRefs statement = toProcess.remove();
+            Op02WithProcessedDataAndRefs statement = toProcess.removeFirst();
             SSAIdentifiers<Slot> ssaIdentifiers = statement.ssaIdentifiers;
             boolean changed = false;
             // If this is a catch, we know for CERTAIN that we can't be sharing a lifetime with a previous incarnation

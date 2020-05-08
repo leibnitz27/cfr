@@ -695,10 +695,9 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
 
         Op03SimpleStatement entry = statements.get(0);
 
-        LinkedList<Op03SimpleStatement> toProcess = ListFactory.newLinkedList();
-        toProcess.addAll(statements);
+        UniqueSeenQueue<Op03SimpleStatement> toProcess = new UniqueSeenQueue<Op03SimpleStatement>(statements);
         while (!toProcess.isEmpty()) {
-            Op03SimpleStatement statement = toProcess.remove();
+            Op03SimpleStatement statement = toProcess.removeFirst();
             SSAIdentifiers<LValue> ssaIdentifiers = statement.ssaIdentifiers;
             boolean changed = false;
             if (statement == entry) {

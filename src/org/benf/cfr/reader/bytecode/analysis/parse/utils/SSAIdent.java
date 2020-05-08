@@ -60,6 +60,7 @@ public class SSAIdent {
 
     @Override
     public String toString() {
+        if (this == poison) return "POISON";
         return val.toString();
     }
 

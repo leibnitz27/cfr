@@ -102,7 +102,7 @@ public class SSAIdentifiers<KEYTYPE> {
             boolean c1 = registerChange(knownIdentifiersOnEntry, lValue, otherIdent);
             boolean skip = false;
             if (fixedHere.containsKey(lValue)) {
-                if (pred == null || !pred.test(lValue, fixedHere.get(lValue))) {
+                if (pred == null || !pred.test(lValue, fixedHere.get(lValue)) || otherIdent == SSAIdent.poison) {
                     skip = true;
                 }
             }

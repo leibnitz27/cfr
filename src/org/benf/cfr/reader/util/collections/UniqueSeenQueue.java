@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.collections;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -51,5 +52,11 @@ public class UniqueSeenQueue<T> {
     public boolean add(T c, boolean ifUnseen) {
         if (ifUnseen) return addIfUnseen(c);
         return add(c);
+    }
+
+    public void addAll(Collection<? extends T> ts) {
+        for (T t : ts) {
+            add(t);
+        }
     }
 }
