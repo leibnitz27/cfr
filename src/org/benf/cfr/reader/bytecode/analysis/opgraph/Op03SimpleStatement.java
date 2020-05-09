@@ -98,7 +98,6 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
         statement.setContainer(this);
     }
 
-
     @Override
     public List<Op03SimpleStatement> getSources() {
         return sources;

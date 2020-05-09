@@ -11,7 +11,9 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
@@ -325,6 +327,26 @@ public class ComparisonOperation extends AbstractExpression implements Condition
             case NE:
                 return l.equals(r) ? Literal.FALSE : Literal.TRUE;
             default:
+                JavaTypeInstance type = l.getInferredJavaType().getJavaTypeInstance();
+                if (!type.equals(r.getInferredJavaType().getJavaTypeInstance())) {
+                    return null;
+                }
+                // TODO : If we need to explicitly perform this sort of thing much,
+                // should split it out.
+                if (type.getStackType() == StackType.INT) {
+                    int lv = l.getIntValue();
+                    int rv = r.getIntValue();
+                    switch (op) {
+                        case LT:
+                            return lv < rv ? Literal.TRUE : Literal.FALSE;
+                        case LTE:
+                            return lv <= rv ? Literal.TRUE : Literal.FALSE;
+                        case GT:
+                            return lv > rv ? Literal.TRUE : Literal.FALSE;
+                        case GTE:
+                            return lv >= rv ? Literal.TRUE : Literal.FALSE;
+                    }
+                }
                 // Can't handle yet.
                 return null;
         }

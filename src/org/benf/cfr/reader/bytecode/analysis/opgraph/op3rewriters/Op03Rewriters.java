@@ -199,4 +199,8 @@ public class Op03Rewriters {
     public static void moveJumpsIntoDo(VariableFactory vf, List<Op03SimpleStatement> op03SimpleParseNodes, DecompilerComments comments) {
         new JumpsIntoDoRewriter(vf).rewrite(op03SimpleParseNodes, comments);
     }
+
+    public static List<Op03SimpleStatement>  removeDeadConditionals(List<Op03SimpleStatement> op03SimpleParseNodes) {
+        return DeadConditionalRemover.INSTANCE.rewrite(op03SimpleParseNodes);
+    }
 }

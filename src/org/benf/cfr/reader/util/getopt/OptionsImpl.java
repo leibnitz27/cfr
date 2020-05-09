@@ -472,6 +472,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> RENAME_ENUM_MEMBERS = new PermittedOptionProvider.Argument<Boolean>(
             "renameenumidents", new DefaultChainBooleanDecoder(RENAME_MEMBERS),
             "Rename ENUM identifiers which do not match their 'expected' string names.  Note - this WILL break reflection based access, so is not automatically enabled.");
+    public static final PermittedOptionProvider.Argument<Troolean> REMOVE_DEAD_CONDITIONALS = new PermittedOptionProvider.Argument<Troolean>(
+            "removedeadconditionals", defaultNeitherTrooleanDecoder,
+            "Remove code that can't be executed.");
     public static final PermittedOptionProvider.Argument<Troolean> AGGRESSIVE_DO_EXTENSION = new PermittedOptionProvider.Argument<Troolean>(
             "aggressivedoextension", defaultNeitherTrooleanDecoder,
             "Fold impossible jumps into do loops with 'first' test");
@@ -557,6 +560,7 @@ public class OptionsImpl implements Options {
                     SUGAR_STRINGBUFFER, SUGAR_STRINGBUILDER, SUGAR_STRINGCONCATFACTORY, SILENT, RECOVER, ECLIPSE, OVERRIDES, SHOW_INFERRABLE,
                     FORCE_AGGRESSIVE_EXCEPTION_AGG, FORCE_COND_PROPAGATE, HIDE_UTF8, HIDE_LONGSTRINGS, COMMENT_MONITORS,
                     AGGRESSIVE_DO_EXTENSION,
+                    REMOVE_DEAD_CONDITIONALS,
                     ALLOW_CORRECTING, LABELLED_BLOCKS, JAVA_4_CLASS_OBJECTS, HIDE_LANG_IMPORTS, FORCE_PASS,
                     RECOVER_TYPECLASHES, USE_RECOVERED_ITERATOR_TYPE_HINTS,
                     FORCE_RETURNING_IFS, ANALYSE_AS, FOR_LOOP_CAPTURE, RENAME_DUP_MEMBERS, RENAME_ENUM_MEMBERS,
