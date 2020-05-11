@@ -13,6 +13,7 @@ import org.benf.cfr.reader.state.DCCommonState;
 import org.benf.cfr.reader.state.DetectedStaticImport;
 import org.benf.cfr.reader.state.TypeUsageInformation;
 import org.benf.cfr.reader.util.CannotLoadClassException;
+import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.collections.Functional;
@@ -51,8 +52,12 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
     void dumpTopHeader(ClassFile classFile, Dumper d, boolean showPackage) {
         if (dcCommonState == null) return;
         Options options = dcCommonState.getOptions();
-        String header = MiscConstants.CFR_HEADER_BRA +
-                (options.getOption(OptionsImpl.SHOW_CFR_VERSION) ? (" " + MiscConstants.CFR_VERSION) : "") + ".";
+        String header = MiscConstants.CFR_HEADER_BRA;
+        if (options.getOption(OptionsImpl.SHOW_CFR_VERSION)) {
+            header += " " + CfrVersionInfo.VERSION_INFO;
+        }
+        header += '.';
+
         d.beginBlockComment(false);
         d.print(header).newln();
         if (options.getOption(OptionsImpl.DECOMPILER_COMMENTS)) {
