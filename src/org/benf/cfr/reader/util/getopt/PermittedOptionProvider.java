@@ -13,16 +13,15 @@ public interface PermittedOptionProvider {
         private final String help;
         private final boolean hidden;
 
-        ArgumentParam(List<ArgumentParam<?,?>> all, String name, OptionDecoderParam<X, InputType> fn, String help) {
-            this(all, name, fn, help, false);
+        ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help) {
+            this(name, fn, help, false);
         }
 
-        ArgumentParam(List<ArgumentParam<?,?>> all, String name, OptionDecoderParam<X, InputType> fn, String help, boolean hidden) {
+        ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help, boolean hidden) {
             this.name = name;
             this.fn = fn;
             this.help = help;
             this.hidden = hidden;
-            all.add(this);
         }
 
         public String getName() {
@@ -63,12 +62,12 @@ public interface PermittedOptionProvider {
     }
 
     class Argument<X> extends ArgumentParam<X, Void> {
-        Argument(List<ArgumentParam<?,?>> all, String name, OptionDecoderParam<X, Void> fn, String help, boolean hidden) {
-            super(all, name, fn, help, hidden);
+        Argument(String name, OptionDecoderParam<X, Void> fn, String help, boolean hidden) {
+            super(name, fn, help, hidden);
         }
 
-        Argument(List<ArgumentParam<?,?>> all, String name, OptionDecoderParam<X, Void> fn, String help) {
-            super(all, name, fn, help, false);
+        Argument(String name, OptionDecoderParam<X, Void> fn, String help) {
+            super(name, fn, help, false);
         }
     }
 }
