@@ -5,13 +5,8 @@ import org.benf.cfr.reader.util.AnalysisType;
 import org.benf.cfr.reader.util.ClassFileVersion;
 import org.benf.cfr.reader.util.StringUtils;
 import org.benf.cfr.reader.util.Troolean;
-import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
-import org.benf.cfr.reader.util.functors.Predicate;
-import org.benf.cfr.reader.util.functors.UnaryFunction;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
