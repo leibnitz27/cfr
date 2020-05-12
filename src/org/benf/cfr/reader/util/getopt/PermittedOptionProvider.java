@@ -13,15 +13,16 @@ public interface PermittedOptionProvider {
         private final String help;
         private final boolean hidden;
 
-        ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help) {
-            this(name, fn, help, false);
+        ArgumentParam(List<ArgumentParam<?,?>> all, String name, OptionDecoderParam<X, InputType> fn, String help) {
+            this(all, name, fn, help, false);
         }
 
-        ArgumentParam(String name, OptionDecoderParam<X, InputType> fn, String help, boolean hidden) {
+        ArgumentParam(List<ArgumentParam<?,?>> all, String name, OptionDecoderParam<X, InputType> fn, String help, boolean hidden) {
             this.name = name;
             this.fn = fn;
             this.help = help;
             this.hidden = hidden;
+            all.add(this);
         }
 
         public String getName() {
@@ -52,6 +53,8 @@ public interface PermittedOptionProvider {
             StringBuilder sb = new StringBuilder();
             String defaultVal = fn.getDefaultValue();
             String range = fn.getRangeDescription();
+            // but only the first line of range.
+            if (range != null) range = range.split("\n")[0];
             if (range != null && !(range.isEmpty())) sb.append(" (").append(range).append(") ");
             if (defaultVal != null && !(defaultVal.isEmpty()))
                 sb.append(" default: ").append(defaultVal);
@@ -60,12 +63,12 @@ public interface PermittedOptionProvider {
     }
 
     class Argument<X> extends ArgumentParam<X, Void> {
-        Argument(String name, OptionDecoderParam<X, Void> fn, String help, boolean hidden) {
-            super(name, fn, help, hidden);
+        Argument(List<ArgumentParam<?,?>> all, String name, OptionDecoderParam<X, Void> fn, String help, boolean hidden) {
+            super(all, name, fn, help, hidden);
         }
 
-        Argument(String name, OptionDecoderParam<X, Void> fn, String help) {
-            super(name, fn, help, false);
+        Argument(List<ArgumentParam<?,?>> all, String name, OptionDecoderParam<X, Void> fn, String help) {
+            super(all, name, fn, help, false);
         }
     }
 }
