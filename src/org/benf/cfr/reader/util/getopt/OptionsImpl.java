@@ -266,7 +266,7 @@ public class OptionsImpl implements Options {
     // Look, I don't like reflection.  ;)
     private static List<PermittedOptionProvider.ArgumentParam<?,?>> all = ListFactory.newList();
     
-    private static <A, B, C extends PermittedOptionProvider.ArgumentParam<A, B>> C register(C in) {
+    private static <T extends PermittedOptionProvider.ArgumentParam<?, ?>> T register(T in) {
         all.add(in);
         return in;
     }
@@ -318,6 +318,12 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> DECOMPILE_INNER_CLASSES = register(new PermittedOptionProvider.Argument<Boolean>(
             "innerclasses", defaultTrueBooleanDecoder,
             "Decompile inner classes"));
+    public static final PermittedOptionProvider.Argument<Boolean> FORBID_METHOD_SCOPED_CLASSES = register(new PermittedOptionProvider.Argument<Boolean>(
+            "forbidmethodscopedclasses", defaultFalseBooleanDecoder,
+            "Don't allow method scoped classes.   Note - this will NOT be used as a fallback, it must be specified.\nIt will produce odd code."));
+    public static final PermittedOptionProvider.Argument<Boolean> FORBID_ANONYMOUS_CLASSES = register(new PermittedOptionProvider.Argument<Boolean>(
+            "forbidanonymousclasses", defaultFalseBooleanDecoder,
+            "Don't allow anonymous classes.   Note - this will NOT be used as a fallback, it must be specified.\nIt will produce odd code."));
     public static final PermittedOptionProvider.Argument<Boolean> SKIP_BATCH_INNER_CLASSES = register(new PermittedOptionProvider.Argument<Boolean>(
             "skipbatchinnerclasses", defaultTrueBooleanDecoder,
             "When processing many files, skip inner classes, as they will be processed as part of outer classes anyway.  If false, you will see inner classes as separate entities also."));

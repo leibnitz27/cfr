@@ -8,6 +8,7 @@ import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
 import org.benf.cfr.reader.entities.innerclass.InnerClassAttributeInfo;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.bytestream.ByteData;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -50,6 +51,8 @@ public class AttributeInnerClasses extends Attribute {
     }
 
     public AttributeInnerClasses(ByteData raw, ConstantPool cp) {
+        Boolean forbidMethodScopedClasses = cp.getDCCommonState().getOptions().getOption(OptionsImpl.FORBID_METHOD_SCOPED_CLASSES);
+        Boolean forbidAnonymousClasses = cp.getDCCommonState().getOptions().getOption(OptionsImpl.FORBID_ANONYMOUS_CLASSES);
         this.length = raw.getS4At(OFFSET_OF_ATTRIBUTE_LENGTH);
         int numberInnerClasses = raw.getU2At(OFFSET_OF_NUMBER_OF_CLASSES);
         long offset = OFFSET_OF_CLASS_ARRAY;
@@ -68,10 +71,15 @@ public class AttributeInnerClasses extends Attribute {
             // MarkAnonymous feels like a bit of a hack, but otherwise we need to propagate this information
             // the whole way down the type creation path, and this is the only place we care about it.
             // May add that in later.
-            // if (outerClassType == null) {
             if (outerClassType == null) {
-                boolean methodScoped = innerNameIdx == 0;
-                innerClassType.getInnerClassHereInfo().markMethodScoped(methodScoped);
+                // This option has to be set manually, because it affects state generated
+                // which is shared between fallback passes.
+                if (forbidMethodScopedClasses) {
+                    outerClassType = innerClassType.getInnerClassHereInfo().getOuterClass();
+                } else {
+                    boolean isAnonymous = !forbidAnonymousClasses && innerNameIdx == 0;
+                    innerClassType.getInnerClassHereInfo().markMethodScoped(isAnonymous);
+                }
             }
             innerClassAttributeInfoList.add(new InnerClassAttributeInfo(
                     innerClassType,
