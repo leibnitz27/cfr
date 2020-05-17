@@ -142,16 +142,13 @@ public class InferredJavaType {
                         matches.clear();
                         return matches;
                     }
+                    if (clashType instanceof JavaArrayTypeInstance) {
+                        matches.keySet().retainAll(ListFactory.newList(clashType, TypeConstants.OBJECT));
+                    }
                     continue;
                 }
                 Map<? extends JavaTypeInstance, JavaGenericRefTypeInstance> boundSupers = otherSupers.getBoundSuperClasses();
-                Iterator<Map.Entry<JavaTypeInstance, JavaGenericRefTypeInstance>> iterator = matches.entrySet().iterator();
-                while (iterator.hasNext()) {
-                    Map.Entry<JavaTypeInstance, JavaGenericRefTypeInstance> entry = iterator.next();
-                    if (!boundSupers.containsKey(entry.getKey())) {
-                        iterator.remove();
-                    }
-                }
+                matches.keySet().retainAll(boundSupers.keySet());
             }
             return matches;
         }
@@ -1140,6 +1137,12 @@ public class InferredJavaType {
         }
     }
 
+    private static boolean isPrimitiveArray(IJTInternal i) {
+        if (!(i.getJavaTypeInstance() instanceof JavaArrayTypeInstance)) return false;
+        RawJavaType rawTypeOfSimpleType = i.getJavaTypeInstance().getArrayStrippedType().getRawTypeOfSimpleType();
+        return !(rawTypeOfSimpleType.isObject());
+    }
+
     /* We've got some type info about this type already, but we're assigning from other.
      * so, if we can, let's narrow this type, or chain it from
      */
@@ -1159,12 +1162,21 @@ public class InferredJavaType {
         }
 
         if (thisRaw.getStackType() != otherRaw.getStackType()) {
-            // throw new ConfusedCFRException("Can't tighten from " + thisRaw + " to " + otherRaw);
             if (MiscUtils.xor(thisRaw.getStackType(), otherRaw.getStackType(), StackType.REF)) {
                 this.value = IJTInternal_Clash.mkClash(this.value, other.value);
             }
             return CastAction.InsertExplicit;
         }
+        // we can't alias a primitive array to a reference either.
+        if (thisRaw.getStackType() == StackType.REF &&
+                (otherRaw != RawJavaType.NULL && thisRaw != RawJavaType.NULL) &&
+                (isPrimitiveArray(value) || isPrimitiveArray(other.value))) {
+            if (!other.value.getJavaTypeInstance().equals(this.value.getJavaTypeInstance())) {
+                this.value = IJTInternal_Clash.mkClash(this.value, other.value);
+                return CastAction.InsertExplicit;
+            }
+        }
+
         if (thisRaw == otherRaw && thisRaw.getStackType() != StackType.INT) {
             return chainFrom(other);
         }
