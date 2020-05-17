@@ -37,7 +37,7 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
         UnstructuredWhile lastEndWhile = innerBlock.removeLastEndWhile();
         if (lastEndWhile != null) {
             ConditionalExpression condition = lastEndWhile.getCondition();
-            return new StructuredDo(condition, innerBlock, blockIdentifier);
+            return StructuredDo.create(condition, innerBlock, blockIdentifier);
         }
 
         /*
@@ -90,8 +90,6 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
                 block.getBlockStatements().add(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
             }
         }
-        return new StructuredDo(null, innerBlock, blockIdentifier);
+        return StructuredDo.create(null, innerBlock, blockIdentifier);
     }
-
-
 }

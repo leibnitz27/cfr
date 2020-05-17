@@ -13,69 +13,23 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-public class StructuredWhile extends AbstractStructuredBlockStatement {
-    private ConditionalExpression condition;
-    private final BlockIdentifier block;
-
+public class StructuredWhile extends AbstractStructuredConditionalLoopStatement {
     public StructuredWhile(ConditionalExpression condition, Op04StructuredStatement body, BlockIdentifier block) {
-        super(body);
-        this.condition = condition;
-        this.block = block;
-    }
-
-    @Override
-    public void collectTypeUsages(TypeUsageCollector collector) {
-        collector.collectFrom(condition);
-        super.collectTypeUsages(collector);
+        super(condition, block, body);
     }
 
     @Override
     public Dumper dump(Dumper dumper) {
-        if (block.hasForeignReferences()) dumper.print(block.getName() + " : ");
-        dumper.print("while (").dump(condition).print(") ");
+        if (block.hasForeignReferences()) dumper.label(block.getName(), true);
+        dumper.print("while (");
+        if (condition == null) {
+            dumper.print("true");
+        } else {
+            dumper.dump(condition);
+        }
+        dumper.print(") ");
         getBody().dump(dumper);
         return dumper;
-    }
-
-    public BlockIdentifier getBlock() {
-        return block;
-    }
-
-    @Override
-    public boolean isScopeBlock() {
-        return true;
-    }
-
-    @Override
-    public boolean supportsContinueBreak() {
-        return true;
-    }
-
-    @Override
-    public BlockIdentifier getBreakableBlockOrNull() {
-        return block;
-    }
-
-    @Override
-    public boolean supportsBreak() {
-        return true;
-    }
-
-    @Override
-    public void linearizeInto(List<StructuredStatement> out) {
-        out.add(this);
-        getBody().linearizeStatementsInto(out);
-    }
-
-    @Override
-    public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
-        condition.collectUsedLValues(scopeDiscoverer);
-        scopeDiscoverer.processOp04Statement(getBody());
-    }
-
-    @Override
-    public void rewriteExpressions(ExpressionRewriter expressionRewriter) {
-        condition = expressionRewriter.rewriteExpression(condition, null, this.getContainer(), null);
     }
 
     @Override
@@ -92,9 +46,5 @@ public class StructuredWhile extends AbstractStructuredBlockStatement {
         // Don't check locality.
         matchIterator.advance();
         return true;
-    }
-
-    public ConditionalExpression getCondition() {
-        return condition;
     }
 }
