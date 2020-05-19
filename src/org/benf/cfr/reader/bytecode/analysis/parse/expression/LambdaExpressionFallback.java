@@ -79,6 +79,11 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
     }
 
     @Override
+    public boolean childCastForced() {
+        return false;
+    }
+
+    @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         collector.collect(targetFnArgTypes);
         collector.collectFrom(curriedArgs);

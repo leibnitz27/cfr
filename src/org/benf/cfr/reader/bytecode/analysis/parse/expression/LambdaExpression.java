@@ -80,6 +80,11 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
     }
 
     @Override
+    public boolean childCastForced() {
+        return getInferredJavaType().getJavaTypeInstance() instanceof JavaIntersectionTypeInstance;
+    }
+
+    @Override
     public Precedence getPrecedence() {
         return Precedence.PAREN_SUB_MEMBER;
     }
@@ -89,7 +94,7 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
         boolean multi = args.size() != 1;
         boolean first = true;
         // If we need to CAST the lambda to something, we have to do this.
-        if (getInferredJavaType().getJavaTypeInstance() instanceof JavaIntersectionTypeInstance) {
+        if (childCastForced()) {
             d.separator("(").dump(getInferredJavaType().getJavaTypeInstance()).separator(")");
         }
         if (explicitArgTypes != null && explicitArgTypes.size() == args.size()) {
