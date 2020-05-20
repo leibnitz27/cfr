@@ -11,6 +11,9 @@ public class CfrVersionInfo {
 
     /** CFR version */
     public static final String VERSION = "${project.version}";
+
+    /** Are we a snapshot? */
+    public static final boolean SNAPSHOT = CfrVersionInfo.VERSION.contains("SNAPSHOT");
     /**
      * Abbreviated Git commit hash of the commit representing this state
      * of the project.
@@ -26,5 +29,9 @@ public class CfrVersionInfo {
     public static final boolean GIT_IS_DIRTY = "${git.dirty}".equals("true");
 
     /** String consisting of CFR version and Git commit hash */
-    public static final String VERSION_INFO = VERSION + " (" + GIT_COMMIT_ABBREVIATED + (GIT_IS_DIRTY ? "-dirty" : "") + ")";
+    public static final String VERSION_INFO =
+            VERSION +
+                    (SNAPSHOT ?
+                            " (" + GIT_COMMIT_ABBREVIATED + (GIT_IS_DIRTY ? "-dirty" : "") + ")" :
+                            "");
 }
