@@ -178,6 +178,8 @@ public class JumpsIntoDoRewriter {
                         continue outer;
                     }
                     Op03SimpleStatement newDo = new Op03SimpleStatement(first.getBlockIdentifiers(), new DoStatement(doBlock), first.getSSAIdentifiers(), first.getIndex().justBefore());
+                    Op03SimpleStatement afterDo = stm.getTargets().get(0);
+
                     stm.replaceStatement(new Nop());
                     for (Op03SimpleStatement candidate : candidates) {
                         candidate.getBlockIdentifiers().add(doBlock);
@@ -206,14 +208,16 @@ public class JumpsIntoDoRewriter {
 
                     newIfStm.addSource(newDo);
                     newDo.addTarget(newIfStm);
+                    newIfStm.markFirstStatementInBlock(doBlock);
                     first.addSource(newIfStm);
                     newIfStm.addTarget(first);
                     newIfStm.addTarget(stm);
                     stm.addSource(newIfStm);
-                    effect = true;
                     op03SimpleParseNodes.add(preDo);
                     op03SimpleParseNodes.add(newDo);
                     op03SimpleParseNodes.add(newIfStm);
+                    afterDo.markFirstStatementInBlock(null);
+                    effect = true;
                 }
             }
         }
