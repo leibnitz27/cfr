@@ -18,7 +18,7 @@ import java.util.List;
  * Note - we CANNOT blindly trust stackmaps - and DEFINITELY not in <= 50. (which is quite possibly
  * why you still see a lot of 50 classes in the wild! :) )
  *
- * http://www.oracle.com/technetwork/java/javase/compatibility-417013.html
+ * https://www.oracle.com/java/technologies/compatibility.html
  *
  * Area: JSR 202
  * Synopsis: Verification of Version 51.0 Class Files
