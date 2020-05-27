@@ -5,7 +5,7 @@ import org.benf.cfr.reader.util.collections.SetFactory;
 import java.util.Set;
 
 public class Keywords {
-    // from http://docs.oracle.com/javase/tutorial/java/nutsandbolts/_keywords.html
+    // from https://docs.oracle.com/javase/tutorial/java/nutsandbolts/_keywords.html
     private static final Set<String> keywords = SetFactory.newSet(
             "abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized",

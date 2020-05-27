@@ -1216,7 +1216,7 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
             }
             case INVOKEDYNAMIC: {
                 // Java uses invokedynamic for lambda expressions.
-                // see http://download.java.net/jdk8/docs/api/java/lang/invoke/LambdaMetafactory.html
+                // see https://docs.oracle.com/javase/8/docs/api/java/lang/invoke/LambdaMetafactory.html
                 return buildInvokeDynamic(method, dcCommonState);
             }
             case INVOKESPECIAL:

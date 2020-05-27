@@ -295,7 +295,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         /*
          * Work around bug in inner class signatures.
          *
-         * http://stackoverflow.com/questions/15131040/java-inner-class-inconsistency-between-descriptor-and-signature-attribute-clas
+         * https://stackoverflow.com/questions/15131040/java-inner-class-inconsistency-between-descriptor-and-signature-attribute-clas
          */
         if (classFile.isInnerClass() && sigproto != null) {
             if (desproto.getArgs().size() != sigproto.getArgs().size()) {
