@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -28,6 +30,15 @@ public class TryStatement extends AbstractStatement {
 
     public Set<Expression> getMonitors() {
         return monitors;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        TryStatement res = new TryStatement(exceptionGroup);
+        for (Expression monitor : monitors) {
+            res.monitors.add(cloneHelper.replaceOrClone(monitor));
+        }
+        return res;
     }
 
     @Override

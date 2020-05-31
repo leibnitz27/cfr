@@ -1,8 +1,10 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -20,6 +22,11 @@ public class WhileStatement extends AbstractStatement {
     public WhileStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier) {
         this.condition = conditionalExpression;
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new WhileStatement((ConditionalExpression)cloneHelper.replaceOrClone(condition), blockIdentifier);
     }
 
     private int getBackJumpIndex() {

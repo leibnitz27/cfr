@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -38,6 +40,12 @@ public class RawSwitchStatement extends AbstractStatement {
         dumper.print(" default: goto " + getTargetStatement(0).getContainer().getLabel() + ";").newln();
         dumper.print("}").newln();
         return dumper;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        // we should really never get here!
+        return new RawSwitchStatement(cloneHelper.replaceOrClone(switchOn), switchData);
     }
 
     @Override

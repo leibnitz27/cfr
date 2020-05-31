@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -15,6 +17,11 @@ public class MonitorEnterStatement extends MonitorStatement {
     public MonitorEnterStatement(Expression monitor, BlockIdentifier blockIdentifier) {
         this.monitor = monitor;
         this.blockIdentifier = blockIdentifier;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new MonitorEnterStatement(cloneHelper.replaceOrClone(monitor), blockIdentifier);
     }
 
     @Override

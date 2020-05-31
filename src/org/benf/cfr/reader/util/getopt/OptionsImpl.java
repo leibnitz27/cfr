@@ -492,6 +492,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Troolean> AGGRESSIVE_DO_EXTENSION = register(new PermittedOptionProvider.Argument<Troolean>(
             "aggressivedoextension", defaultNeitherTrooleanDecoder,
             "Fold impossible jumps into do loops with 'first' test"));
+    public static final PermittedOptionProvider.Argument<Integer> AGGRESSIVE_DO_COPY = register(new PermittedOptionProvider.Argument<Integer>(
+            "aggressivedocopy", new DefaultingIntDecoder(0),
+            "Clone code from impossible jumps into loops with 'first' test"));
     public static final PermittedOptionProvider.Argument<Integer> AGGRESSIVE_SIZE_REDUCTION_THRESHOLD = register(new PermittedOptionProvider.Argument<Integer>(
             "aggressivesizethreshold", new DefaultingIntDecoder(15000),
             "Opcode count at which to trigger aggressive reductions"));

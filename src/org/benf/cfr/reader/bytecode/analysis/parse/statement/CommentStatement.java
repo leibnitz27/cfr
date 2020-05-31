@@ -27,12 +27,17 @@ public class CommentStatement extends AbstractStatement {
         this.text = new Literal(TypedLiteral.getString(text));
     }
 
-    public CommentStatement(Expression expression) {
+    private CommentStatement(Expression expression) {
         this.text = expression;
     }
 
     public CommentStatement(Statement statement) {
         this.text = new StatementExpression(statement);
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new CommentStatement(cloneHelper.replaceOrClone(text));
     }
 
     @Override

@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -17,6 +19,11 @@ public class FinallyStatement extends AbstractStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.keyword("finally ").separator("{").newln();
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new FinallyStatement(finallyBlockIdent);
     }
 
     @Override

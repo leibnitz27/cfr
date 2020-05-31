@@ -37,7 +37,8 @@ public class DecompilerComment implements Dumpable {
     public static final DecompilerComment UNVERIFIABLE_BYTECODE_BAD_JUMP = new DecompilerComment("Handled unverifiable bytecode (illegal jump).", false);
     public static final DecompilerComment UNVERIFIABLE_BYTECODE_BAD_MERGE = new DecompilerComment("Handled unverifiable bytecode (illegal stack merge).", false);
     public static final DecompilerComment BAD_SIGNATURE = new DecompilerComment("Ignored method signature, as it can't be verified against descriptor", false);
-    public static final DecompilerComment IMPOSSIBLE_DO_WITH_FIRST = new DecompilerComment("Handled impossible loop by adding 'first' condition", false);
+    public static final DecompilerComment IMPOSSIBLE_LOOP_WITH_FIRST = new DecompilerComment("Handled impossible loop by adding 'first' condition", false);
+    public static final DecompilerComment IMPOSSIBLE_LOOP_WITH_COPY = new DecompilerComment("Handled impossible loop by duplicating code", false);
 
     private final String comment;
     private final String summaryMessage;

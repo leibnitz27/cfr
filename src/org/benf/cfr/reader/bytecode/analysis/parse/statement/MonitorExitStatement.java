@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
@@ -21,6 +23,11 @@ public class MonitorExitStatement extends MonitorStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print("MONITOREXIT : ").dump(monitor);
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new MonitorExitStatement(cloneHelper.replaceOrClone(monitor));
     }
 
     @Override

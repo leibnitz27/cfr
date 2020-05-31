@@ -10,6 +10,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.AssignmentExpressi
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.CreationCollector;
@@ -40,6 +41,11 @@ public class AssignmentSimple extends AbstractAssignment {
     @Override
     public Dumper dump(Dumper d) {
         return d.dump(lvalue).operator(" = ").dump(rvalue).endCodeln();
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new AssignmentSimple(cloneHelper.replaceOrClone(lvalue), cloneHelper.replaceOrClone(rvalue));
     }
 
     @Override

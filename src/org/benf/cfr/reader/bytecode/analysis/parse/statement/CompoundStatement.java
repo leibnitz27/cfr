@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -10,6 +11,7 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
+import javax.swing.plaf.nimbus.State;
 import java.util.List;
 
 /**
@@ -36,6 +38,15 @@ public class CompoundStatement extends AbstractStatement {
     @Override
     public void collectLValueAssignments(LValueAssignmentCollector<Statement> lValueAssigmentCollector) {
         throw new ConfusedCFRException("Should not be using compound statements here");
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        List<Statement> res = ListFactory.newList();
+        for (Statement stm : statements) {
+            res.add(stm.deepClone(cloneHelper));
+        }
+        return new CompoundStatement(res.toArray(new Statement[0]));
     }
 
     @Override

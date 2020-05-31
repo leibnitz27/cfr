@@ -1,13 +1,16 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.structured.statement.UnstructuredFor;
 import org.benf.cfr.reader.util.StringUtils;
+import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
@@ -18,11 +21,20 @@ public class ForStatement extends AbstractStatement {
     private AssignmentSimple initial;
     private List<AbstractAssignmentExpression> assignments;
 
-    public ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, AssignmentSimple initial, List<AbstractAssignmentExpression> assignments) {
+    ForStatement(ConditionalExpression conditionalExpression, BlockIdentifier blockIdentifier, AssignmentSimple initial, List<AbstractAssignmentExpression> assignments) {
         this.condition = conditionalExpression;
         this.blockIdentifier = blockIdentifier;
         this.initial = initial;
         this.assignments = assignments;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        List<AbstractAssignmentExpression> assigns = ListFactory.newList();
+        for (AbstractAssignmentExpression ae : assignments) {
+            assigns.add((AbstractAssignmentExpression)cloneHelper.replaceOrClone(ae));
+        }
+        return new ForStatement((ConditionalExpression)cloneHelper.replaceOrClone(condition), blockIdentifier, (AssignmentSimple)initial.deepClone(cloneHelper), assigns);
     }
 
     @Override

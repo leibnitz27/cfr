@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -26,6 +28,11 @@ public class ConstructorStatement extends AbstractStatement {
     @Override
     public Dumper dump(Dumper dumper) {
         return dumper.print(MiscConstants.INIT_METHOD).dump(invokation).endCodeln();
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new ConstructorStatement((MemberFunctionInvokation)cloneHelper.replaceOrClone(invokation));
     }
 
     @Override

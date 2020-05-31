@@ -196,7 +196,14 @@ public class Op03Rewriters {
         new BadCompareRewriter(vf).rewrite(op03SimpleParseNodes);
     }
 
-    public static void moveJumpsIntoDo(VariableFactory vf, List<Op03SimpleStatement> op03SimpleParseNodes, DecompilerComments comments) {
+    /*
+     * Neither of these (cloneCodeFromLoop/moveJumpsIntoDo) are 'nice' transforms - they mess with the original code.
+     */
+    public static void cloneCodeFromLoop(List<Op03SimpleStatement> op03SimpleParseNodes, Options options, DecompilerComments comments) {
+        new JumpsIntoLoopCloneRewriter(options).rewrite(op03SimpleParseNodes, comments);
+    }
+
+    public static void moveJumpsIntoDo(VariableFactory vf, List<Op03SimpleStatement> op03SimpleParseNodes, Options options, DecompilerComments comments) {
         new JumpsIntoDoRewriter(vf).rewrite(op03SimpleParseNodes, comments);
     }
 

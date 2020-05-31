@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.AbstractMutatingAssignmentExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ArithOp;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -45,6 +46,16 @@ public class AssignmentPreMutation extends AbstractAssignment {
         this.lvalue = lvalue;
         this.rvalue = rvalue;
         lvalue.getInferredJavaType().chain(rvalue.getInferredJavaType());
+    }
+
+    private AssignmentPreMutation(LValue lvalue, AbstractAssignmentExpression rvalue) {
+        this.lvalue = lvalue;
+        this.rvalue = rvalue;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new AssignmentPreMutation(cloneHelper.replaceOrClone(lvalue), (AbstractAssignmentExpression)cloneHelper.replaceOrClone(rvalue));
     }
 
     @Override

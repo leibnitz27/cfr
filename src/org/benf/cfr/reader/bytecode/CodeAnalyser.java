@@ -133,6 +133,7 @@ public class CodeAnalyser {
     );
 
     private static final RecoveryOptions recover3a = new RecoveryOptions(recover1,
+            new RecoveryOption.IntRO(OptionsImpl.AGGRESSIVE_DO_COPY, 4),
             new RecoveryOption.TrooleanRO(OptionsImpl.AGGRESSIVE_DO_EXTENSION, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_TOPSORT_EXTRA, Troolean.TRUE),
             new RecoveryOption.TrooleanRO(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG2, Troolean.TRUE, BytecodeMeta.hasAnyFlag(BytecodeMeta.CodeInfoFlag.USES_EXCEPTIONS))
@@ -683,8 +684,11 @@ public class CodeAnalyser {
         // If we have a conditional JUST before a do statement which jumps in, then see if we can
         // safely move it inside, and have another go.
         // After we've done this we need another go at identifyingNonJumpingConditionals, however that happens below.
+        if (options.optionIsSet(OptionsImpl.AGGRESSIVE_DO_COPY)) {
+            Op03Rewriters.cloneCodeFromLoop(op03SimpleParseNodes, options, comments);
+        }
         if (options.getOption(OptionsImpl.AGGRESSIVE_DO_EXTENSION) == Troolean.TRUE) {
-            Op03Rewriters.moveJumpsIntoDo(variableFactory, op03SimpleParseNodes, comments);
+            Op03Rewriters.moveJumpsIntoDo(variableFactory, op03SimpleParseNodes, options, comments);
         }
 
         // Condense again, now we've simplified conditionals, ternaries, etc.

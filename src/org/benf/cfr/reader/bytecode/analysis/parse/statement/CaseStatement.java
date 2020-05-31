@@ -1,6 +1,8 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -35,6 +37,12 @@ public class CaseStatement extends AbstractStatement {
             }
         }
         return dumper;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        // TODO : When cloning, there's no reason to keep blocks.
+        return new CaseStatement(cloneHelper.replaceOrClone(values), caseType, switchBlock, caseBlock);
     }
 
     @Override

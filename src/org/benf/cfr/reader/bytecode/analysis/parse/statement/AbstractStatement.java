@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.StatementContainer;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -20,6 +21,11 @@ public abstract class AbstractStatement implements Statement {
     public void setContainer(StatementContainer<Statement> container) {
         if (container == null) throw new ConfusedCFRException("Trying to setContainer null!");
         this.container = container;
+    }
+
+    @Override
+    public Statement outerDeepClone(CloneHelper cloneHelper) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

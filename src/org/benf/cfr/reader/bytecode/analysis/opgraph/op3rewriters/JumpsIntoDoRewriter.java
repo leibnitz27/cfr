@@ -113,7 +113,6 @@ public class JumpsIntoDoRewriter {
                 SSAIdentifiers doId = doS.getSSAIdentifiers();
                 LValue loopControl = vf.tempVariable(new InferredJavaType(RawJavaType.BOOLEAN, InferredJavaType.Source.TRANSFORM, true));
                 prev.replaceStatement(new AssignmentSimple(loopControl, Literal.TRUE));
-
                 // No, it's not pretty.  But it structures!
                 IfStatement newIf = new IfStatement(new BooleanOperation(
                     new BooleanOperation(new ComparisonOperation(new LValueExpression(loopControl), Literal.TRUE, CompOp.EQ), new NotOperation(new BooleanExpression(new AssignmentExpression(loopControl, Literal.FALSE))), BoolOp.AND),
@@ -154,7 +153,9 @@ public class JumpsIntoDoRewriter {
                     for (Op03SimpleStatement source : s2.getSources()) {
                         if (!source.getBlockIdentifiers().contains(doBlock) && source != stm) {
                             // We have to be pretty paranoid - this can only be in the same blocks as the do Statement.
-                            if (!source.getBlockIdentifiers().equals(originalDoIdentifiers)) continue outer;
+                            if (!source.getBlockIdentifiers().equals(originalDoIdentifiers)) {
+                                continue outer;
+                            }
                             externals.add(source);
                         }
                     }
@@ -224,7 +225,7 @@ public class JumpsIntoDoRewriter {
         if (effect) {
             // This is going to generate pretty grotty code, (see LoopFakery tests), so we want to
             // apologise....
-            comments.addComment(DecompilerComment.IMPOSSIBLE_DO_WITH_FIRST);
+            comments.addComment(DecompilerComment.IMPOSSIBLE_LOOP_WITH_FIRST);
             Cleaner.sortAndRenumberInPlace(op03SimpleParseNodes);
         }
     }

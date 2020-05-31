@@ -2,6 +2,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.rewriters;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 
@@ -12,10 +13,10 @@ public class CloneHelper {
     private final Map<Expression, Expression> expressionMap;
     private final Map<LValue, LValue> lValueMap;
 
-
     public CloneHelper() {
         expressionMap = MapFactory.newMap();
         lValueMap = MapFactory.newMap();
+
     }
 
     public CloneHelper(Map<Expression, Expression> expressionMap, Map<LValue, LValue> lValueMap) {

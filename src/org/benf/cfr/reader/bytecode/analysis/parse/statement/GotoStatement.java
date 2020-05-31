@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.structured.StructuredStatement;
@@ -24,6 +25,13 @@ public class GotoStatement extends JumpingStatement {
         } catch (Exception e) {
             return dumper.print("!!! " + jumpType + " bad target");
         }
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        GotoStatement res = new GotoStatement();
+        res.jumpType = jumpType;
+        return res;
     }
 
     @Override

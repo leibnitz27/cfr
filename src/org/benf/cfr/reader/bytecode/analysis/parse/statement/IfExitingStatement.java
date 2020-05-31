@@ -4,6 +4,7 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.Op04StructuredStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -29,6 +30,11 @@ public class IfExitingStatement extends AbstractStatement {
         dumper.keyword("if ").separator("(").dump(condition).separator(") ");
         statement.dump(dumper);
         return dumper;
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        return new IfExitingStatement((ConditionalExpression)cloneHelper.replaceOrClone(condition), statement.deepClone(cloneHelper));
     }
 
     @Override

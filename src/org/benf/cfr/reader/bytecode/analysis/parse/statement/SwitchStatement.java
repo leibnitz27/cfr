@@ -2,7 +2,9 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
@@ -18,9 +20,17 @@ public class SwitchStatement extends AbstractStatement {
     private final BlockIdentifier switchBlock;
     private boolean safeExpression = false;
 
-    public SwitchStatement(Expression switchOn, BlockIdentifier switchBlock) {
+    SwitchStatement(Expression switchOn, BlockIdentifier switchBlock) {
         this.switchOn = switchOn;
         this.switchBlock = switchBlock;
+    }
+
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        SwitchStatement res = new SwitchStatement(cloneHelper.replaceOrClone(switchOn), switchBlock);
+        res.safeExpression = safeExpression;
+        return res;
     }
 
     @Override

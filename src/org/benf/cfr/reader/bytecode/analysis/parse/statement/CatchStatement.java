@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.parse.statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.*;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -42,6 +43,14 @@ public class CatchStatement extends AbstractStatement {
             ijt.collapseTypeClash();
         }
         return ijt.getJavaTypeInstance();
+    }
+
+    @Override
+    public Statement deepClone(CloneHelper cloneHelper) {
+        // TODO: blockidents when cloning.
+        CatchStatement res = new CatchStatement(exceptions, cloneHelper.replaceOrClone(catching));
+        res.setCatchBlockIdent(catchBlockIdent);
+        return res;
     }
 
     public void removeCatchBlockFor(final BlockIdentifier tryBlockIdent) {
