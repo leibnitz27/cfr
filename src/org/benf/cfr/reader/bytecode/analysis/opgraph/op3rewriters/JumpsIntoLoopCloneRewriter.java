@@ -227,6 +227,7 @@ public class JumpsIntoLoopCloneRewriter {
         Set<Op03SimpleStatement> visited = SetFactory.newSet(gv.getVisitedNodes());
         for (Map.Entry<Op03SimpleStatement, Op03SimpleStatement> candidate : candidates.entrySet()) {
             Op03SimpleStatement caller = candidate.getKey();
+            if (caller == stm) continue;
             Op03SimpleStatement target = candidate.getValue();
             /*
              * If this is a while loop  , fine, we can finish with a jump to the while.  If it's a do
