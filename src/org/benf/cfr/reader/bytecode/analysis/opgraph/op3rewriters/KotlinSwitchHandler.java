@@ -127,6 +127,7 @@ public class KotlinSwitchHandler {
         }
         if (defaultBranchIdx == -1) return false;
         Op03SimpleStatement defaultTarget = targets.get(defaultBranchIdx);
+        Op03SimpleStatement afterDefault = Misc.followNopGotoChain(defaultTarget, false, true);
 
         WildcardMatch.MemberFunctionInvokationWildcard eqFn = wcm.getMemberFunction("equals", "equals", matchObj,
                 new CastExpression(new InferredJavaType(TypeConstants.OBJECT, InferredJavaType.Source.UNKNOWN),
@@ -219,7 +220,7 @@ public class KotlinSwitchHandler {
                                 } else if (nextTest.getStatement().getClass() == GotoStatement.class) {
                                     Op03SimpleStatement nextTarget = Misc.followNopGotoChainUntil(nextTest, defaultTarget, true, false);
                                     // It's only valid to follow a chain if it ends up in the default.
-                                    if (nextTarget == defaultTarget) {
+                                    if (nextTarget == defaultTarget || nextTarget == afterDefault) {
                                         transitiveDefaultSources.add(Pair.make(nextTest, nextTest.getTargets().get(0)));
                                         nextCaseLoc = nextTarget;
                                     } else {
@@ -231,7 +232,7 @@ public class KotlinSwitchHandler {
                     }
                 }
 
-                if (nextCaseLoc == defaultTarget) {
+                if (nextCaseLoc == defaultTarget || nextCaseLoc == afterDefault) {
                     break;
                 }
                 if (nextCaseLoc == null) {
