@@ -766,6 +766,14 @@ public class Op03SimpleStatement implements MutableGraph<Op03SimpleStatement>, D
                             tgt.nopOut();
                             return;
                         }
+                        if (afterTgt.getStatement() instanceof Nop) {
+                            Op03SimpleStatement aat = afterTgt.targets.get(0);
+                            if (!aat.containedInBlocks.contains(switchBlock)) {
+                                tgt.nopOut();
+                                afterTgt.getBlockIdentifiers().retainAll(tgt.getBlockIdentifiers());
+                                return;
+                            }
+                        }
                         // If the default contains a single statement which is a
                         // break to the succeeding one, we can also remove it.
                         if (afterTgt.getStatement().getClass() != GotoStatement.class

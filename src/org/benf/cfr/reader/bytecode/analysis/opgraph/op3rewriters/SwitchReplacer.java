@@ -696,8 +696,52 @@ public class SwitchReplacer {
 
         // Check that lastTgt has multiple FORWARD JUMPING sources.
         List<Op03SimpleStatement> forwardJumpSources = Functional.filter(lastTgt.getSources(), new Misc.IsForwardJumpTo(lastTgt.getIndex()));
-        if (forwardJumpSources.size() <= 1) return;
+        if (forwardJumpSources.size() > 1) {
+            moveInternalJumpsToTerminal(switchStatement, statements, lastTgt, following, forwardJumpSources);
+        }
 
+        // And, if 'following' has a nop goto chain, and any sources of that are actually inside the switch, move them
+        // BACK to following.
+        Op03SimpleStatement followingTrans = Misc.followNopGotoChain(following, false, true);
+        if (followingTrans != following) {
+            tightenJumpsToTerminal(statements, switchBlock, following, followingTrans);
+        }
+    }
+
+    private static void tightenJumpsToTerminal(List<Op03SimpleStatement> statements, BlockIdentifier switchBlock, Op03SimpleStatement following, Op03SimpleStatement followingTrans) {
+        List<Op03SimpleStatement> tsource = ListFactory.newList(followingTrans.getSources());
+        boolean acted = false;
+        for (Op03SimpleStatement source : tsource) {
+            if (source.getBlockIdentifiers().contains(switchBlock)) {
+                followingTrans.removeSource(source);
+                source.replaceTarget(followingTrans, following);
+                following.addSource(source);
+                acted = true;
+            }
+        }
+        // We don't want this to be undone immediately, so break nop goto chains.
+        if (acted) {
+            Statement followingStatement = following.getStatement();
+            if (followingStatement instanceof Nop) {
+                following.replaceStatement(new CommentStatement(""));
+            } else if (followingStatement.getClass() == GotoStatement.class) {
+                following.replaceStatement(new CommentStatement(""));
+                Op03SimpleStatement force = new Op03SimpleStatement(
+                        following.getBlockIdentifiers(),
+                        new GotoStatement(),
+                        following.getSSAIdentifiers(),
+                        following.getIndex().justAfter());
+                Op03SimpleStatement followingTgt = following.getTargets().get(0);
+                followingTgt.replaceSource(following, force);
+                following.replaceTarget(followingTgt, force);
+                force.addSource(following);
+                force.addTarget(followingTgt);
+                statements.add(force);
+            }
+        }
+    }
+
+    private static void moveInternalJumpsToTerminal(Op03SimpleStatement switchStatement, List<Op03SimpleStatement> statements, Op03SimpleStatement lastTgt, Op03SimpleStatement following, List<Op03SimpleStatement> forwardJumpSources) {
         int idx = statements.indexOf(lastTgt);
         if (idx == 0) return;
         if (idx >= statements.size() - 1) return;
