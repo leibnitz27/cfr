@@ -13,12 +13,14 @@ import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.Matc
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.ResetAfterTest;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.util.MiscStatementTools;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.BooleanExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.Literal;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NotOperation;
 import org.benf.cfr.reader.bytecode.analysis.parse.literal.TypedLiteral;
+import org.benf.cfr.reader.bytecode.analysis.parse.statement.AssignmentSimple;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.bytecode.analysis.parse.wildcard.WildcardMatch;
@@ -97,7 +99,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 new CollectMatch("ass1", new StructuredAssignment(wcm.getLValueWildCard("stringobject"), wcm.getExpressionWildCard("originalstring"))),
                 new CollectMatch("ass2", new StructuredAssignment(wcm.getLValueWildCard("intermed"), Literal.MINUS_ONE)),
                 new CollectMatch("hash", new StructuredExpressionStatement(
-                        wcm.getMemberFunction("hash", MiscConstants.HASHCODE, new LValueExpression(wcm.getLValueWildCard("stringobject"))), false
+                        wcm.getMemberFunction("hash", MiscConstants.HASHCODE, wcm.getExpressionWildCard("stringobjornull")), false
                 )),
                 new CollectMatch("switch1",
                         new StructuredSwitch(new LValueExpression(wcm.getLValueWildCard("intermed")),
@@ -115,6 +117,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
             mi.advance();
             matchResultCollector.clear();
             if (m.match(mi, matchResultCollector)) {
+                if (!isLVOk(matchResultCollector.verify, matchResultCollector.lvalue, matchResultCollector.getStatementByName("ass1"))) continue;
                 StructuredSwitch swtch = (StructuredSwitch) matchResultCollector.getStatementByName("switch1");
                 if (!swtch.isSafeExpression()) continue;
 
@@ -143,7 +146,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 new CollectMatch("ass1", new StructuredAssignment(wcm1.getLValueWildCard("stringobject"), wcm1.getExpressionWildCard("originalstring"))),
                 new CollectMatch("ass2", new StructuredAssignment(wcm1.getLValueWildCard("intermed"), wcm1.getExpressionWildCard("defaultintermed"))),
                 new CollectMatch("switch1",
-                        new StructuredSwitch(wcm1.getMemberFunction("switch", "hashCode", new LValueExpression(wcm1.getLValueWildCard("stringobject"))),
+                        new StructuredSwitch(wcm1.getMemberFunction("switch", "hashCode", wcm1.getExpressionWildCard("stringobjornull")),
                                 null,
                                 wcm1.getBlockIdentifier("switchblock"))),
                 new BeginBlock(null),
@@ -195,6 +198,7 @@ public class SwitchStringRewriter implements Op04Rewriter {
             mi.advance();
             matchResultCollector.clear();
             if (m.match(mi, matchResultCollector)) {
+                if (!isLVOk(matchResultCollector.verify, matchResultCollector.lvalue, matchResultCollector.getStatementByName("ass1"))) continue;
                 StructuredSwitch firstSwitch = (StructuredSwitch) matchResultCollector.getStatementByName("switch1");
                 StructuredSwitch secondSwitch = (StructuredSwitch) matchResultCollector.getStatementByName("switch2");
                 if (!secondSwitch.isSafeExpression()) continue;
@@ -264,11 +268,20 @@ public class SwitchStringRewriter implements Op04Rewriter {
                 blockIdentifier, false);
     }
 
+    private static boolean isLVOk(Expression lve, LValue lv, StructuredStatement assign) {
+        if (lve instanceof LValueExpression && ((LValueExpression) lve).getLValue().equals(lv)) return true;
+        if (!lve.equals(Literal.NULL)) return false;
+        if (!(assign instanceof StructuredAssignment)) return false;
+        Expression rv = ((StructuredAssignment) assign).getRvalue();
+        return rv.equals(Literal.NULL);
+    }
 
     private static class EmptySwitchStringMatchResultCollector extends AbstractMatchResultIterator {
         private final WildcardMatch wcm;
         private Expression string;
         private final Map<String, StructuredStatement> collectedStatements = MapFactory.newMap();
+        private Expression verify;
+        private LValue lvalue;
 
         EmptySwitchStringMatchResultCollector(WildcardMatch wcm) {
             this.wcm = wcm;
@@ -278,6 +291,8 @@ public class SwitchStringRewriter implements Op04Rewriter {
         public void clear() {
             collectedStatements.clear();
             string = null;
+            verify = null;
+            lvalue = null;
         }
 
         @Override
@@ -288,6 +303,8 @@ public class SwitchStringRewriter implements Op04Rewriter {
         @Override
         public void collectMatches(String name, WildcardMatch wcm) {
             string = wcm.getExpressionWildCard("originalstring").getMatch();
+            verify = wcm.getExpressionWildCard("stringobjornull").getMatch();
+            lvalue = wcm.getLValueWildCard("stringobject").getMatch();
         }
 
         StructuredStatement getStatementByName(String name) {
@@ -312,6 +329,8 @@ public class SwitchStringRewriter implements Op04Rewriter {
             }
         });
         private final Map<String, StructuredStatement> collectedStatements = MapFactory.newMap();
+        private Expression verify;
+        private LValue lvalue;
 
 
         private SwitchStringMatchResultCollector(WildcardMatch wholeBlock, WildcardMatch caseStatement, WildcardMatch hashCollision) {
@@ -326,6 +345,8 @@ public class SwitchStringRewriter implements Op04Rewriter {
             pendingHashCode.clear();
             validatedHashes.clear();
             collectedStatements.clear();
+            verify = null;
+            lvalue = null;
         }
 
         @Override
@@ -337,6 +358,8 @@ public class SwitchStringRewriter implements Op04Rewriter {
         public void collectMatches(String name, WildcardMatch wcm) {
             if (wcm == wholeBlock) {
                 stringExpression = wcm.getExpressionWildCard("originalstring").getMatch();
+                verify = wcm.getExpressionWildCard("stringobjornull").getMatch();
+                lvalue = wcm.getLValueWildCard("stringobject").getMatch();
             } else if (wcm == caseStatement) {
                 Expression case2id = wcm.getExpressionWildCard("case2id").getMatch();
                 Expression stringValue = wcm.getExpressionWildCard("stringvalue").getMatch();
