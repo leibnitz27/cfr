@@ -798,7 +798,7 @@ public class WildcardMatch {
             if (returnType != null) {
                 if (!returnType.equals(other.getInferredJavaType().getJavaTypeInstance())) return false;
             }
-            if (!clazz.equals(other.getClazz())) return false;
+            if (clazz != null && !clazz.equals(other.getClazz())) return false;
             List<Expression> otherArgs = other.getArgs();
             if (args != null) {
                 if (args.size() != otherArgs.size()) return false;

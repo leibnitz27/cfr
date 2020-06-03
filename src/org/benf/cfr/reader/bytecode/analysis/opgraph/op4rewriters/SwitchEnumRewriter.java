@@ -154,6 +154,8 @@ public class SwitchEnumRewriter implements Op04Rewriter {
 
     private void tryRewriteEclipse(SwitchEnumMatchResultCollector mrc, StaticFunctionInvokation lookupFn, boolean expression) {
         Expression enumObject = mrc.getEnumObject();
+        Literal lv = enumObject.getComputedLiteral(MapFactory.<LValue, Literal>newMap());
+        boolean isNull = Literal.NULL.equals(lv);
 
         if (lookupFn.getClazz() != this.classFile.getClassType()) {
             return;
@@ -188,6 +190,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         if (structuredStatements == null) return;
 
         WildcardMatch wcm1 = new WildcardMatch();
+        JavaTypeInstance enumType = isNull ? null : enumObject.getInferredJavaType().getJavaTypeInstance();
         Matcher<StructuredStatement> test =
                 new ResetAfterTest(wcm1,
                         new MatchSequence(
@@ -207,7 +210,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
                                 )
                             ),
                             new StructuredAssignment(wcm1.getLValueWildCard("lookup"), new NewPrimitiveArray(
-                            new ArrayLength(wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), null, "values")),
+                            new ArrayLength(wcm1.getStaticFunction("func", enumType, null, "values")),
                             RawJavaType.INT)))
                 );
 
@@ -236,13 +239,18 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             !field.testAccessFlag(AccessFlag.ACC_STATIC)) {
             return;
         }
+        // If we didn't have the enum type, get it here.
+        if (enumType == null) {
+            enumType = assignment.arrayLen.getClazz();
+            enumObject = new CastExpression(new InferredJavaType(enumType, InferredJavaType.Source.TRANSFORM), enumObject);
+        }
 
         WildcardMatch wcm2 = new WildcardMatch();
         // Now we've figured out what the parts of the enum are, we can do the real match...
         Matcher<StructuredStatement> m = new ResetAfterTest(wcm1,
                 new MatchSequence(
                         new StructuredAssignment(assignment.lookup, new NewPrimitiveArray(
-                                new ArrayLength(wcm1.getStaticFunction("func", enumObject.getInferredJavaType().getJavaTypeInstance(), null, "values")),
+                                new ArrayLength(wcm1.getStaticFunction("func", enumType, null, "values")),
                                 RawJavaType.INT)),
                         getEnumSugarKleeneStar(assignment.lookup, enumObject, wcm2)
                 )
@@ -275,10 +283,10 @@ public class SwitchEnumRewriter implements Op04Rewriter {
     private static class EclipseVarResultCollector implements MatchResultCollector {
         LValue lookup;
         LValue field;
+        StaticFunctionInvokation arrayLen;
 
         @Override
         public void clear() {
-
         }
 
         @Override
@@ -290,6 +298,7 @@ public class SwitchEnumRewriter implements Op04Rewriter {
         public void collectMatches(String name, WildcardMatch wcm) {
             lookup = wcm.getLValueWildCard("lookup").getMatch();
             field = wcm.getLValueWildCard("static").getMatch();
+            arrayLen = wcm.getStaticFunction("func").getMatch();
         }
     }
 
@@ -395,9 +404,9 @@ public class SwitchEnumRewriter implements Op04Rewriter {
             Block block = (Block) switchBlockStatement;
             List<Op04StructuredStatement> caseStatements = block.getBlockStatements();
 
-        /*
-         * If we can match every one of the ordinals, we replace the statement.
-         */
+            /*
+             * If we can match every one of the ordinals, we replace the statement.
+             */
             LinkedList<Op04StructuredStatement> newBlockContent = ListFactory.newLinkedList();
             InferredJavaType inferredJavaType = enumObject.getInferredJavaType();
             for (Op04StructuredStatement caseOuter : caseStatements) {
