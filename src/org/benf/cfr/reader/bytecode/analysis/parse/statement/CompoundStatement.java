@@ -11,7 +11,6 @@ import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.output.Dumper;
 
-import javax.swing.plaf.nimbus.State;
 import java.util.List;
 
 /**
