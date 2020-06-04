@@ -138,7 +138,16 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
     private static String boolName(Object o) {
         if (!(o instanceof Integer)) throw new ConfusedCFRException("Expecting boolean-as-int");
         int i = (Integer) o;
-        return i == 0 ? "false" : "true"; // values that are not 0 or 1 are interpreted as "true" by the JVM and do not throw a verify error
+        switch (i) {
+            case 0:
+                return "false";
+            case 1:
+                return "true";
+            default:
+                // values that are not 0 or 1 are interpreted as "true" by the JVM and do not throw a verify error
+                // return X != 0 to retain information about the abnormal number in the output
+                return i + " != 0";
+        }
     }
 
     private static boolean hexTest(String hex) {
