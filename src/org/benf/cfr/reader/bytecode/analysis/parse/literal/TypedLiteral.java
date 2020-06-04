@@ -144,8 +144,9 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
             case 1:
                 return "true";
             default:
-                return "BADBOOL " + i;
-//                throw new ConfusedCFRException("Expecting a boolean, got " + i);
+                // values that are not 0 or 1 are interpreted as "true" by the JVM and do not throw a verify error
+                // return X != 0 to retain information about the abnormal number in the output
+                return i + " != 0";
         }
     }
 
