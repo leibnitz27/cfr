@@ -1479,7 +1479,16 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
         if (cpe instanceof ConstantPoolEntryDynamicInfo) {
             return getDynamicLiteral(m, (ConstantPoolEntryDynamicInfo)cpe);
         }
+        if(cpe instanceof ConstantPoolEntryMethodHandle) {
+          return constructMethodHandleExpression((ConstantPoolEntryMethodHandle)cpe);
+        }
         throw new ConfusedCFRException("Constant pool entry is neither literal or dynamic literal.");
+    }
+    
+    private Expression constructMethodHandleExpression(ConstantPoolEntryMethodHandle cpe) {
+      // StaticFunctionInvokationExplicit lookup = new StaticFunctionInvokationExplicit(new InferredJavaType(RawJavaType.NULL, InferredJavaType.Source.EXPRESSION), TypeConstants.METHOD_HANDLES, "lookup", Collections.emptyList());
+      // TODO: change to this form: "MethodHandles.lookup().findStatic(refc, name, type);"
+      return new HandleExpression(cpe);
     }
 
     private Expression getDynamicLiteral(Method method, ConstantPoolEntryDynamicInfo cpe) {
