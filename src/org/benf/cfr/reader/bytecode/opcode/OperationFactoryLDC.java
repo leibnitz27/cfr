@@ -38,6 +38,10 @@ public class OperationFactoryLDC extends OperationFactoryCPEntry {
           ConstantPoolEntryMethodHandle mh = (ConstantPoolEntryMethodHandle) cpe;
           return mh.getDefaultType().getStackType();
         }
+        if(cpe instanceof ConstantPoolEntryMethodType) {
+          ConstantPoolEntryMethodType mh = (ConstantPoolEntryMethodType) cpe;
+          return mh.getDefaultType().getStackType();
+        }
         throw new ConfusedCFRException("Expecting a ConstantPoolEntryLiteral or ConstantPoolEntryDynamicInfo");
     }
 }

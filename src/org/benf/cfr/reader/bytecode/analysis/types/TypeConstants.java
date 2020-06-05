@@ -12,6 +12,7 @@ public interface TypeConstants {
     
     String methodHandlesName = "java.lang.invoke.MethodHandles";
     String methodHandlesLookupName = "java.lang.invoke.MethodHandles$Lookup";
+    String methodTypeName = "java.lang.invoke.MethodType";
     String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
     String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
     
@@ -35,6 +36,7 @@ public interface TypeConstants {
     JavaRefTypeInstance RECORD = JavaRefTypeInstance.createTypeConstant("java.lang.Record");
     JavaRefTypeInstance OBJECTMETHODS = JavaRefTypeInstance.createTypeConstant("java.lang.runtime.ObjectMethods");
     JavaRefTypeInstance METHOD_HANDLES = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandlesName);
+    JavaRefTypeInstance METHOD_TYPE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodTypeName);
     
     String boxingNameBoolean = "java.lang.Boolean";
     String boxingNameByte = "java.lang.Byte";
