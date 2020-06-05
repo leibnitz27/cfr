@@ -270,10 +270,10 @@ public class SwitchStringRewriter implements Op04Rewriter {
 
     private static boolean isLVOk(Expression lve, LValue lv, StructuredStatement assign) {
         if (lve instanceof LValueExpression && ((LValueExpression) lve).getLValue().equals(lv)) return true;
-        if (!lve.equals(Literal.NULL)) return false;
+        if (!(lve instanceof Literal)) return false;
         if (!(assign instanceof StructuredAssignment)) return false;
         Expression rv = ((StructuredAssignment) assign).getRvalue();
-        return rv.equals(Literal.NULL);
+        return rv.equals(lve);
     }
 
     private static class EmptySwitchStringMatchResultCollector extends AbstractMatchResultIterator {

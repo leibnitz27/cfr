@@ -20,6 +20,7 @@ import org.benf.cfr.reader.util.collections.Functional;
 import org.benf.cfr.reader.util.collections.ListFactory;
 import org.benf.cfr.reader.util.collections.MapFactory;
 import org.benf.cfr.reader.util.collections.SetFactory;
+import org.benf.cfr.reader.util.functors.Predicate;
 import org.benf.cfr.reader.util.functors.UnaryFunction;
 
 import java.util.Collections;
@@ -71,7 +72,7 @@ public class KotlinSwitchHandler {
     // Everything except the default action should have a set of
     //   if (str.equals("aa")) goto IMPL1;
     // Note that we are dealing with RAW switches here, so have to decode default information manually.
-    private static boolean extractStringSwitch(Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
+    private static boolean extractStringSwitch(final Op03SimpleStatement swatch, List<Op03SimpleStatement> in, BytecodeMeta bytecodeMeta) {
         RawSwitchStatement rawSwitchStatement = (RawSwitchStatement)swatch.getStatement();
         Expression switchOn = rawSwitchStatement.getSwitchOn();
 
@@ -267,6 +268,20 @@ public class KotlinSwitchHandler {
             }
         }
 
+        List<Op03SimpleStatement> secondSwitchTargets = ListFactory.newList(reTargets.keySet());
+        Collections.sort(secondSwitchTargets, new CompareByIndex());
+        List<Op03SimpleStatement> fwds = Functional.filter(secondSwitchTargets, new Predicate<Op03SimpleStatement>() {
+            @Override
+            public boolean test(Op03SimpleStatement in) {
+                return in.getIndex().isBackJumpTo(swatch);
+            }
+        });
+        if (fwds.isEmpty()) {
+            // No forward targets?  Have to introduce a synthetic one?!
+            return false;
+        }
+        Op03SimpleStatement firstCase2 = fwds.get(0);
+
         /*
          * FORM2
          * We know by this point we're ok to rebuild.  But if we encountered the second type of switch,
@@ -380,10 +395,6 @@ public class KotlinSwitchHandler {
          */
         LValue lValue = new LocalVariable("tmp", new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.UNKNOWN));
         Expression lValueExpr = new LValueExpression(lValue);
-
-        List<Op03SimpleStatement> secondSwitchTargets = ListFactory.newList(reTargets.keySet());
-        Collections.sort(secondSwitchTargets, new CompareByIndex());
-        Op03SimpleStatement firstCase2 = secondSwitchTargets.get(0);
 
         /*
          * Build a new switch entry for each of the remapped one.
