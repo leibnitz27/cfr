@@ -51,11 +51,17 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
     private static final InferredJavaType INFERRED_INT = new InferredJavaType(RawJavaType.INT, InferredJavaType.Source.LITERAL);
     private static final StaticVariable I_MAX_VALUE = new StaticVariable(INFERRED_INT, TypeConstants.INTEGER, "MAX_VALUE");
     private static final StaticVariable I_MIN_VALUE = new StaticVariable(INFERRED_INT, TypeConstants.INTEGER, "MIN_VALUE");
+    
+    private static final InferredJavaType INFERRED_SHORT = new InferredJavaType(RawJavaType.SHORT, InferredJavaType.Source.LITERAL);
+    private static final StaticVariable S_MAX_VALUE = new StaticVariable(INFERRED_SHORT, TypeConstants.SHORT, "MAX_VALUE");
+    private static final StaticVariable S_MIN_VALUE = new StaticVariable(INFERRED_SHORT, TypeConstants.SHORT, "MIN_VALUE");
 
     private Expression rewriteInteger(Literal literal, int value) {
         if (!testType.equals(TypeConstants.INTEGER)) {
             if (value == Integer.MAX_VALUE) return new LValueExpression(I_MAX_VALUE);
             if (value == Integer.MIN_VALUE) return new LValueExpression(I_MIN_VALUE);
+            if (value == Short.MAX_VALUE) return new LValueExpression(S_MAX_VALUE);
+            if (value == Short.MIN_VALUE) return new LValueExpression(S_MIN_VALUE);
         }
         return literal;
     }
@@ -233,6 +239,18 @@ public strictfp class LiteralRewriter extends AbstractExpressionRewriter {
             };
             PI_FLOATS.put((float)(Math.PI) / (90 * i), pifn);
         }
+        PI_DOUBLES.put(Math.PI * Math.PI, new NonaryFunction<Expression>() {
+          @Override
+          public Expression invoke() {
+              return new ArithmeticOperation(pi, pi, ArithOp.MULTIPLY);
+          }
+        });
+        PI_FLOATS.put((float)(Math.PI * Math.PI), new NonaryFunction<Expression>() {
+          @Override
+          public Expression invoke() {
+              return new CastExpression(INFERRED_FLOAT,new ArithmeticOperation(pi, pi, ArithOp.MULTIPLY));
+          }
+        });
     }
 
     private static Expression maybeGetPiExpression(float value) {
