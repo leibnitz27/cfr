@@ -1488,11 +1488,11 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
       throw new ConfusedCFRException("Constant pool entry is neither literal, dynamic literal, method handle or method type.");
     }
 
-    private static final InferredJavaType OBJECT_TYPE = new InferredJavaType(RawJavaType.NULL, InferredJavaType.Source.EXPRESSION);
-
     private Expression constructMethodTypeExpression(ConstantPoolEntryMethodType cpe) {
-      return new StaticFunctionInvokationExplicit(OBJECT_TYPE, TypeConstants.METHOD_TYPE, "fromMethodDescriptorString",
-          Arrays.asList((Expression) new Literal(TypedLiteral.getConstantPoolEntryUTF8(cpe.getDescriptor())), (Expression) new Literal(TypedLiteral.getNull())));
+      return new StaticFunctionInvokationExplicit(
+              new InferredJavaType(TypeConstants.METHOD_TYPE, InferredJavaType.Source.EXPRESSION), TypeConstants.METHOD_TYPE, "fromMethodDescriptorString",
+                Arrays.asList((Expression) new Literal(TypedLiteral.getConstantPoolEntryUTF8(cpe.getDescriptor())), new Literal(TypedLiteral.getNull()))
+      );
     }
 
     private Expression constructMethodHandleExpression(ConstantPoolEntryMethodHandle cpe) {
