@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.entities.constantpool;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
+import org.benf.cfr.reader.bytecode.analysis.types.*;
 import org.benf.cfr.reader.entities.AbstractConstantPoolEntry;
 import org.benf.cfr.reader.entities.bootstrap.MethodHandleBehaviour;
 import org.benf.cfr.reader.util.bytestream.ByteData;
@@ -64,5 +65,9 @@ public class ConstantPoolEntryMethodHandle extends AbstractConstantPoolEntry {
     @Override
     public String toString() {
         return "MethodHandle value=" + referenceKind + "," + referenceIndex;
+    }
+
+    public JavaTypeInstance getDefaultType() {
+      return ConstantPoolUtils.decodeTypeTok("Ljava/lang/invoke/MethodHandle;", getCp());
     }
 }

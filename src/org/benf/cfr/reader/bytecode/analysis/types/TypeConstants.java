@@ -10,6 +10,12 @@ public interface TypeConstants {
     String className = "java.lang.Class";
     String objectName = "java.lang.Object";
     
+    String methodHandlesName = "java.lang.invoke.MethodHandles";
+    String methodHandlesLookupName = "java.lang.invoke.MethodHandles$Lookup";
+    String methodTypeName = "java.lang.invoke.MethodType";
+    String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
+    String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
+    
     JavaRefTypeInstance OBJECT = JavaRefTypeInstance.createTypeConstant(objectName);
     JavaRefTypeInstance ENUM = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Enum");
     JavaRefTypeInstance ASSERTION_ERROR = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.AssertionError");
@@ -29,7 +35,9 @@ public interface TypeConstants {
     JavaRefTypeInstance OVERRIDE = JavaRefTypeInstance.createTypeConstantWithObjectSuper("java.lang.Override");
     JavaRefTypeInstance RECORD = JavaRefTypeInstance.createTypeConstant("java.lang.Record");
     JavaRefTypeInstance OBJECTMETHODS = JavaRefTypeInstance.createTypeConstant("java.lang.runtime.ObjectMethods");
-
+    JavaRefTypeInstance METHOD_HANDLES = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodHandlesName);
+    JavaRefTypeInstance METHOD_TYPE = JavaRefTypeInstance.createTypeConstantWithObjectSuper(methodTypeName);
+    
     String boxingNameBoolean = "java.lang.Boolean";
     String boxingNameByte = "java.lang.Byte";
     String boxingNameShort = "java.lang.Short";
@@ -42,14 +50,10 @@ public interface TypeConstants {
 
     JavaRefTypeInstance NUMBER = JavaRefTypeInstance.createTypeConstant(boxingNameNumber, OBJECT, SERIALIZABLE);
     JavaRefTypeInstance INTEGER = JavaRefTypeInstance.createTypeConstant(boxingNameInt, NUMBER, COMPARABLE);
+    JavaRefTypeInstance SHORT = JavaRefTypeInstance.createTypeConstant(boxingNameShort, NUMBER, COMPARABLE);
     JavaRefTypeInstance LONG = JavaRefTypeInstance.createTypeConstant(boxingNameLong, NUMBER, COMPARABLE);
     JavaRefTypeInstance DOUBLE = JavaRefTypeInstance.createTypeConstant(boxingNameDouble, NUMBER, COMPARABLE);
     JavaRefTypeInstance FLOAT = JavaRefTypeInstance.createTypeConstant(boxingNameFloat, NUMBER, COMPARABLE);
-
-    String methodHandlesName = "java.lang.invoke.MethodHandles";
-    String methodHandlesLookupName = "java.lang.invoke.MethodHandles$Lookup";
-    String lambdaMetaFactoryName = "java.lang.invoke.LambdaMetafactory";
-    String stringConcatFactoryName = "java.lang.invoke.StringConcatFactory";
 
     // Path, because we actually want to load the class - could we get away with a hardcoded ref type as above?
     String runtimeExceptionPath = "java/lang/RuntimeException.class";

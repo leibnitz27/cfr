@@ -1473,13 +1473,36 @@ public class Op02WithProcessedDataAndRefs implements Dumpable, Graph<Op02WithPro
     }
 
     private Expression getLiteralConstantPoolEntry(Method m, ConstantPoolEntry cpe) {
-        if (cpe instanceof ConstantPoolEntryLiteral) {
-            return new Literal(TypedLiteral.getConstantPoolEntry(cp, cpe));
-        }
-        if (cpe instanceof ConstantPoolEntryDynamicInfo) {
-            return getDynamicLiteral(m, (ConstantPoolEntryDynamicInfo)cpe);
-        }
-        throw new ConfusedCFRException("Constant pool entry is neither literal or dynamic literal.");
+      if (cpe instanceof ConstantPoolEntryLiteral) {
+        return new Literal(TypedLiteral.getConstantPoolEntry(cp, cpe));
+      }
+      if (cpe instanceof ConstantPoolEntryDynamicInfo) {
+        return getDynamicLiteral(m, (ConstantPoolEntryDynamicInfo) cpe);
+      }
+      if (cpe instanceof ConstantPoolEntryMethodHandle) {
+        return constructMethodHandleExpression((ConstantPoolEntryMethodHandle) cpe);
+      }
+      if (cpe instanceof ConstantPoolEntryMethodType) {
+        return constructMethodTypeExpression((ConstantPoolEntryMethodType) cpe);
+      }
+      throw new ConfusedCFRException("Constant pool entry is neither literal, dynamic literal, method handle or method type.");
+    }
+
+    private static final InferredJavaType OBJECT_TYPE = new InferredJavaType(RawJavaType.NULL, InferredJavaType.Source.EXPRESSION);
+
+    private Expression constructMethodTypeExpression(ConstantPoolEntryMethodType cpe) {
+      return new StaticFunctionInvokationExplicit(OBJECT_TYPE, TypeConstants.METHOD_TYPE, "fromMethodDescriptorString",
+          Arrays.asList((Expression) new Literal(TypedLiteral.getConstantPoolEntryUTF8(cpe.getDescriptor())), (Expression) new Literal(TypedLiteral.getNull())));
+    }
+
+    private Expression constructMethodHandleExpression(ConstantPoolEntryMethodHandle cpe) {
+      // StaticFunctionInvokationExplicit lookup = new StaticFunctionInvokationExplicit(OBJECT_TYPE,
+      // TypeConstants.METHOD_HANDLES, "lookup", Collections.emptyList());
+      //       
+      // TODO: change to this form: "MethodHandles.lookup().findStatic(refc, name, type);"
+      // for virtual findVirtual, etc...
+      // we can use constructMethodTypeExpression here too
+      return new HandleExpression(cpe);
     }
 
     private Expression getDynamicLiteral(Method method, ConstantPoolEntryDynamicInfo cpe) {
