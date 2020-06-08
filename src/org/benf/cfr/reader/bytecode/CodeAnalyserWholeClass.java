@@ -539,6 +539,12 @@ public class CodeAnalyserWholeClass {
         }
 
         rewriteUnreachableStatics(classFile, typeUsage);
+
+        detectFakeMethods(classFile, typeUsage);
+    }
+
+    private static void detectFakeMethods(ClassFile classFile, TypeUsageCollectingDumper typeUsage) {
+        FakeMethodRewriter.rewrite(classFile, typeUsage);
     }
 
     private static void rewriteUnreachableStatics(ClassFile classFile, TypeUsageCollectingDumper typeUsage) {

@@ -32,7 +32,7 @@ public class UnreachableStaticRewriter {
         final JavaRefTypeInstance localInner;
         final JavaRefTypeInstance fakeFqnInner;
 
-        public Inaccessible(JavaRefTypeInstance external, JavaRefTypeInstance localInner, JavaRefTypeInstance fakeFqnInner) {
+        Inaccessible(JavaRefTypeInstance external, JavaRefTypeInstance localInner, JavaRefTypeInstance fakeFqnInner) {
             this.external = external;
             this.localInner = localInner;
             this.fakeFqnInner = fakeFqnInner;
@@ -46,8 +46,6 @@ public class UnreachableStaticRewriter {
         TypeUsageInformation info = typeUsage.getRealTypeUsageInformation();
         final JavaRefTypeInstance thisType = classFile.getRefClassType();
         if (thisType == null) return;
-
-        Set<JavaRefTypeInstance> tmp = SetFactory.newSet();
 
         Pair<List<JavaRefTypeInstance>, List<JavaRefTypeInstance>> split = Functional.partition(info.getUsedClassTypes(), new Predicate<JavaRefTypeInstance>() {
             @Override

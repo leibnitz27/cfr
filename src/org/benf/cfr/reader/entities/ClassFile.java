@@ -101,6 +101,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
     private Map<String, Map<JavaTypeInstance, ClassFileField>> fieldsByName; // Lazily populated if interrogated.
 
     private final List<Method> methods;
+    private FakeMethods fakeMethods;
     private Map<String, List<Method>> methodsByName; // Lazily populated if interrogated.
     private final boolean isInnerClass;
     private final Map<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassesByTypeInfo; // populated if analysed.
@@ -431,6 +432,11 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
         return decompilerComments;
     }
 
+    public FakeMethod addFakeMethod(Object key, String nameHint, UnaryFunction<String, FakeMethod> methodFactory) {
+        if (fakeMethods == null) fakeMethods = new FakeMethods();
+        return fakeMethods.add(key, nameHint, methodFactory);
+    }
+
     public List<JavaTypeInstance> getAllClassTypes() {
         List<JavaTypeInstance> res = ListFactory.newList();
         getAllClassTypes(res);
@@ -449,6 +455,7 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
             collector.collectFrom(field.getInitialValue());
         }
         collector.collectFrom(methods);
+        if (fakeMethods != null) collector.collectFrom(fakeMethods);;
         // Collect the types of all inner classes, then process recursively.
         for (Map.Entry<JavaTypeInstance, Pair<InnerClassAttributeInfo, ClassFile>> innerClassByTypeInfo : innerClassesByTypeInfo.entrySet()) {
             collector.collect(innerClassByTypeInfo.getKey());
@@ -1390,5 +1397,9 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
 
     public AttributeMap getAttributes() {
         return attributes;
+    }
+
+    public List<FakeMethod> getMethodFakes() {
+        return (fakeMethods == null) ? null : fakeMethods.getMethods();
     }
 }

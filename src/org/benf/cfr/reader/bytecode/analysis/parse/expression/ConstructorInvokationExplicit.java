@@ -6,7 +6,6 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.misc.Precedence;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.CloneHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterFlags;
-import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterHelper;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.EquivalenceConstraint;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
@@ -21,18 +20,19 @@ import java.util.List;
 /*
  * A static call that doesn't necessarily exist, for a type we don't necessarily have.
  */
-public class StaticFunctionInvokationExplicit extends AbstractFunctionInvokationExplicit {
-    public StaticFunctionInvokationExplicit(InferredJavaType res, JavaTypeInstance clazz, String method, List<Expression> args) {
-        super(res, clazz, method, args);
+public class ConstructorInvokationExplicit extends AbstractFunctionInvokationExplicit {
+
+    ConstructorInvokationExplicit(InferredJavaType res, JavaTypeInstance clazz, List<Expression> args) {
+        super(res, clazz, null, args);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null) return false;
-        if (!(o instanceof StaticFunctionInvokationExplicit)) return false;
-        StaticFunctionInvokationExplicit other = (StaticFunctionInvokationExplicit)o;
-        return getClazz().equals(other.getClazz()) && getMethod().equals(other.getMethod()) && getArgs().equals(other.getArgs());
+        if (!(o instanceof ConstructorInvokationExplicit)) return false;
+        ConstructorInvokationExplicit other = (ConstructorInvokationExplicit)o;
+        return getClazz().equals(other.getClazz()) && getArgs().equals(other.getArgs());
     }
 
     @Override
@@ -42,7 +42,7 @@ public class StaticFunctionInvokationExplicit extends AbstractFunctionInvokation
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        d.dump(getClazz()).separator(".").print(getMethod()).separator("(");
+        d.keyword("new ").dump(getClazz()).separator("(");
         boolean first = true;
         for (Expression arg : getArgs()) {
             first = StringUtils.comma(first, d);
@@ -56,9 +56,8 @@ public class StaticFunctionInvokationExplicit extends AbstractFunctionInvokation
     public boolean equivalentUnder(Object o, EquivalenceConstraint constraint) {
         if (o == this) return true;
         if (o == null) return false;
-        if (!(o instanceof StaticFunctionInvokationExplicit)) return false;
-        StaticFunctionInvokationExplicit other = (StaticFunctionInvokationExplicit)o;
-        if (!constraint.equivalent(getMethod(), other.getMethod())) return false;
+        if (!(o instanceof ConstructorInvokationExplicit)) return false;
+        ConstructorInvokationExplicit other = (ConstructorInvokationExplicit)o;
         if (!constraint.equivalent(getClazz(), other.getClazz())) return false;
         if (!constraint.equivalent(getArgs(), other.getArgs())) return false;
         return true;
@@ -66,6 +65,6 @@ public class StaticFunctionInvokationExplicit extends AbstractFunctionInvokation
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new StaticFunctionInvokationExplicit(getInferredJavaType(), getClazz(), getMethod(), cloneHelper.replaceOrClone(getArgs()));
+        return new ConstructorInvokationExplicit(getInferredJavaType(), getClazz(), cloneHelper.replaceOrClone(getArgs()));
     }
 }

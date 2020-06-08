@@ -37,8 +37,4 @@ public class ConstantPoolEntryMethodType extends AbstractConstantPoolEntry {
     public String toString() {
         return "MethodType value=" + descriptorIndex;
     }
-
-    public JavaTypeInstance getDefaultType() {
-      return ConstantPoolUtils.decodeTypeTok("Ljava/lang/invoke/MethodType;", getCp());
-    }
 }

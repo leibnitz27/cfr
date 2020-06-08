@@ -66,8 +66,4 @@ public class ConstantPoolEntryMethodHandle extends AbstractConstantPoolEntry {
     public String toString() {
         return "MethodHandle value=" + referenceKind + "," + referenceIndex;
     }
-
-    public JavaTypeInstance getDefaultType() {
-      return ConstantPoolUtils.decodeTypeTok("Ljava/lang/invoke/MethodHandle;", getCp());
-    }
 }

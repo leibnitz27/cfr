@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.stack.StackSim;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.StackType;
 import org.benf.cfr.reader.bytecode.analysis.types.StackTypes;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.entities.constantpool.*;
 import org.benf.cfr.reader.entities.Method;
 import org.benf.cfr.reader.util.ConfusedCFRException;
@@ -25,22 +26,20 @@ public class OperationFactoryLDC extends OperationFactoryCPEntry {
 
     static StackType getStackType(ConstantPoolEntry cpe) {
         if (cpe instanceof ConstantPoolEntryLiteral) {
-            ConstantPoolEntryLiteral constantPoolEntryLiteral = (ConstantPoolEntryLiteral)cpe;
+            ConstantPoolEntryLiteral constantPoolEntryLiteral = (ConstantPoolEntryLiteral) cpe;
             return constantPoolEntryLiteral.getStackType();
         }
         if (cpe instanceof ConstantPoolEntryDynamicInfo) {
-            ConstantPoolEntryDynamicInfo di = (ConstantPoolEntryDynamicInfo)cpe;
+            ConstantPoolEntryDynamicInfo di = (ConstantPoolEntryDynamicInfo) cpe;
             ConstantPoolEntryNameAndType nt = di.getNameAndTypeEntry();
             JavaTypeInstance type = nt.decodeTypeTok();
             return type.getStackType();
         }
-        if(cpe instanceof ConstantPoolEntryMethodHandle) {
-          ConstantPoolEntryMethodHandle mh = (ConstantPoolEntryMethodHandle) cpe;
-          return mh.getDefaultType().getStackType();
+        if (cpe instanceof ConstantPoolEntryMethodHandle) {
+            return TypeConstants.METHOD_HANDLE.getStackType();
         }
-        if(cpe instanceof ConstantPoolEntryMethodType) {
-          ConstantPoolEntryMethodType mh = (ConstantPoolEntryMethodType) cpe;
-          return mh.getDefaultType().getStackType();
+        if (cpe instanceof ConstantPoolEntryMethodType) {
+            return TypeConstants.METHOD_TYPE.getStackType();
         }
         throw new ConfusedCFRException("Expecting a ConstantPoolEntryLiteral or ConstantPoolEntryDynamicInfo");
     }

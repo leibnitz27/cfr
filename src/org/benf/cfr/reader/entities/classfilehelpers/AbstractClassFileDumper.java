@@ -6,6 +6,7 @@ import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.AccessFlag;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
+import org.benf.cfr.reader.entities.FakeMethod;
 import org.benf.cfr.reader.entities.attributes.AttributeMap;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeInvisibleAnnotations;
 import org.benf.cfr.reader.entities.attributes.AttributeRuntimeVisibleAnnotations;
@@ -191,6 +192,19 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
                 }
                 first = false;
                 method.dump(d, asClass);
+            }
+        }
+        /*
+         * Any 'additional' methods we've had to create to work around unsynthesisable code.
+         */
+        List<FakeMethod> fakes = classFile.getMethodFakes();
+        if (fakes != null && !fakes.isEmpty()) {
+            for (FakeMethod method : fakes) {
+                if (!first) {
+                    d.newln();
+                }
+                first = false;
+                method.dump(d);
             }
         }
     }

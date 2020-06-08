@@ -1,9 +1,23 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.literal;
 
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.QuotingUtils;
-import org.benf.cfr.reader.bytecode.analysis.types.*;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaGenericRefTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
+import org.benf.cfr.reader.bytecode.analysis.types.RawJavaType;
+import org.benf.cfr.reader.bytecode.analysis.types.StackType;
+import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 import org.benf.cfr.reader.bytecode.analysis.types.discovery.InferredJavaType;
-import org.benf.cfr.reader.entities.constantpool.*;
+import org.benf.cfr.reader.entities.constantpool.ConstantPool;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryClass;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryDouble;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryFloat;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryInteger;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryLong;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodHandle;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryMethodType;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryString;
+import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntryUTF8;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.ConfusedCFRException;
 import org.benf.cfr.reader.util.TypeUsageCollectable;
@@ -278,12 +292,12 @@ public class TypedLiteral implements TypeUsageCollectable, Dumpable {
     }
 
     private static TypedLiteral getMethodHandle(ConstantPoolEntryMethodHandle methodHandle, ConstantPool cp) {
-        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodHandle");
+        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor(TypeConstants.methodHandleName);
         return new TypedLiteral(LiteralType.MethodHandle, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodHandle);
     }
 
     private static TypedLiteral getMethodType(ConstantPoolEntryMethodType methodType, ConstantPool cp) {
-        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor("java.lang.invoke.MethodType");
+        JavaTypeInstance typeInstance = cp.getClassCache().getRefClassFor(TypeConstants.methodTypeName);
         return new TypedLiteral(LiteralType.MethodType, new InferredJavaType(typeInstance, InferredJavaType.Source.LITERAL), methodType);
     }
 
