@@ -17,8 +17,8 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/*
- * A static call that doesn't necessarily exist, for a type we don't necessarily have.
+/**
+ * A member function call that doesn't necessarily exist, for a type we don't necessarily have.
  */
 public class MemberFunctionInvokationExplicit extends AbstractFunctionInvokationExplicit {
     private Expression object;

@@ -18,7 +18,7 @@ import org.benf.cfr.reader.util.output.Dumper;
 
 import java.util.List;
 
-/*
+/**
  * A static call that doesn't necessarily exist, for a type we don't necessarily have.
  */
 public class StaticFunctionInvokationExplicit extends AbstractFunctionInvokationExplicit {
