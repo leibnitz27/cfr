@@ -95,6 +95,7 @@ public class SwitchExpressionRewriter extends AbstractExpressionRewriter impleme
                 usageSites.put(lValue, (Op04StructuredStatement)statementContainer);
             } else {
                 usages.put(lValue, Boolean.FALSE);
+                usageSites.remove(lValue);
             }
             return lValue;
         }
