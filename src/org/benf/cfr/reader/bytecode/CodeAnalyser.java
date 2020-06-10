@@ -223,7 +223,7 @@ public class CodeAnalyser {
      * Expensive mechanism for getting a single bytecode instruction.  We should only use this when recovering
      * from illegal instructions.
      */
-    Op01WithProcessedDataAndByteJumps getSingleInstr(ByteData rawCode, int offset) {
+    private Op01WithProcessedDataAndByteJumps getSingleInstr(ByteData rawCode, int offset) {
         OffsettingByteData bdCode = rawCode.getOffsettingOffsetData(offset);
         JVMInstr instr = JVMInstr.find(bdCode.getS1At(0));
         return instr.createOperation(bdCode, cp, offset);
@@ -492,18 +492,11 @@ public class CodeAnalyser {
 
         //      Op03SimpleStatement.removePointlessExpressionStatements(op03SimpleParseNodes);
 
-        // Rewrite new / constructor pairs.
         AnonymousClassUsage anonymousClassUsage = new AnonymousClassUsage();
-        /*
-         * Check for usage of stackValues which don't have SSA data - this means they're used
-         * in an uninitialised context. (see proof_wrong_path).
-         *
-         * If that's the case, they must have been used after new, but before init (which is naughty).
-         *
-         */
 
-
+        // Rewrite new / constructor pairs.
         Op03Rewriters.condenseConstruction(dcCommonState, method, op03SimpleParseNodes, anonymousClassUsage);
+        op03SimpleParseNodes = Cleaner.sortAndRenumber(op03SimpleParseNodes);
         LValueProp.condenseLValues(op03SimpleParseNodes);
         Op03Rewriters.condenseLValueChain1(op03SimpleParseNodes);
 

@@ -467,7 +467,6 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                 if (verifyStatement.getStatement().doesBlackListLValueReplacement(stackSSALabel, target.expression)) return null;
                 for (LValue checkThis : checkThese) {
                     if (guessStatement == verifyStatement) continue;
-                    //noinspection unchecked
                     if (!verifyStatement.getSSAIdentifiers().isValidReplacement(checkThis, guessStatement.getSSAIdentifiers())) {
                         return null;
                     }
@@ -645,7 +644,6 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     StatementContainer<Statement> replacement = replaceWith.statementContainer;
                     if (replacement == statementContainer) return null;
 
-                    //noinspection unchecked
                     SSAIdentifiers<LValue> previousIdents = replacement.getSSAIdentifiers();
                     Set fixedPrevious = previousIdents.getFixedHere();
                     if (SetUtil.hasIntersection(this.fixed, fixedPrevious)) {
@@ -662,7 +660,6 @@ public class LValueAssignmentAndAliasCondenser implements LValueRewriter<Stateme
                     // Only the first time.
                     mutableReplacable.remove(versionedLValue);
                     replacement.nopOut();
-                    //noinspection unchecked
                     currentIdents.setKnownIdentifierOnEntry(lValue, previousIdents.getSSAIdentOnEntry(lValue));
                     currentIdents.fixHere(previousIdents.getFixedHere());
                     return replaceWith.expression;
