@@ -90,7 +90,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     private final AttributeMap attributes;
     private MethodConstructor isConstructor;
     private final int descriptorIndex;
-    private final AttributeCode codeAttribute;
+    public final AttributeCode codeAttribute;
     private final ConstantPool cp;
     private final VariableNamer variableNamer;
     private final MethodPrototype methodPrototype;
