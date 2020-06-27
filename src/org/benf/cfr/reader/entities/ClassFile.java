@@ -1095,9 +1095,18 @@ public class ClassFile implements Dumpable, TypeUsageCollectable {
                                         List<ConstantPoolEntryClass> rawInterfaces) {
         AttributeSignature signatureAttribute = attributes.getByName(AttributeSignature.ATTRIBUTE_NAME);
 
-        if (signatureAttribute != null) {
+        sigAgree : if (signatureAttribute != null) {
             try {
-                return ConstantPoolUtils.parseClassSignature(signatureAttribute.getSignature(), cp);
+                ClassSignature fromAttr = ConstantPoolUtils.parseClassSignature(signatureAttribute.getSignature(), cp);
+                if (rawSuperClass != null) {
+                    JavaTypeInstance rawSuperType = rawSuperClass.getTypeInstance();
+                    JavaTypeInstance fromAttrType = fromAttr.getSuperClass().getDeGenerifiedType();
+                    if (!fromAttrType.equals(rawSuperType)) {
+                        addComment("Signature claims super is " + fromAttr.getSuperClass().getRawName() + ", not " + rawSuperType.getRawName() + " - discarding signature.");
+                        break sigAgree;
+                    }
+                }
+                return fromAttr;
             } catch (Exception ignore) {
                 // Corrupt?
             }
