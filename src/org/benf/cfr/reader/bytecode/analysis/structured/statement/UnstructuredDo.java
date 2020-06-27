@@ -87,7 +87,7 @@ public class UnstructuredDo extends AbstractUnStructuredStatement {
         Op04StructuredStatement last = block.getLast();
         if (last != null) {
             if (last.getStatement().canFall()) {
-                block.getBlockStatements().add(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
+                block.addStatement(new Op04StructuredStatement(new StructuredBreak(blockIdentifier, true)));
             }
         }
         return StructuredDo.create(null, innerBlock, blockIdentifier);

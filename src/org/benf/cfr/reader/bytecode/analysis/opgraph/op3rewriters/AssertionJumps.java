@@ -11,8 +11,8 @@ import org.benf.cfr.reader.bytecode.analysis.types.TypeConstants;
 
 import java.util.List;
 
-public class AssertionJumps {
-    public static void extractAssertionJumps(List<Op03SimpleStatement> in) {
+class AssertionJumps {
+    static void extractAssertionJumps(List<Op03SimpleStatement> in) {
         /*
          * If we have
          *

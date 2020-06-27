@@ -34,8 +34,6 @@ public class Block extends AbstractStructuredStatement {
     private boolean indenting;
     private BlockIdentifier blockIdentifier;
 
-    private final static LinkedList<Op04StructuredStatement> emptyBlockStatements = ListFactory.newLinkedList();
-
     public Block(Op04StructuredStatement statement) {
         LinkedList<Op04StructuredStatement> stm = new LinkedList<Op04StructuredStatement>();
         stm.add(statement);
@@ -74,14 +72,11 @@ public class Block extends AbstractStructuredStatement {
     }
 
     public void addStatement(Op04StructuredStatement stm) {
-        if (containedStatements == emptyBlockStatements) {
-            containedStatements = new LinkedList<Op04StructuredStatement>();
-        }
         containedStatements.add(stm);
     }
 
     static Block getEmptyBlock(boolean indenting) {
-        return new Block(emptyBlockStatements, indenting);
+        return new Block(new LinkedList<Op04StructuredStatement>(), indenting);
     }
 
     public static Block getBlockFor(boolean indenting, StructuredStatement... statements) {
@@ -145,16 +140,6 @@ public class Block extends AbstractStructuredStatement {
         return null;
     }
 
-    public void removeLastGoto(Op04StructuredStatement toHere) {
-        StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
-        if (structuredStatement instanceof UnstructuredGoto) {
-            Op04StructuredStatement oldGoto = containedStatements.getLast();
-            if (oldGoto.getTargets().get(0) == toHere) {
-                oldGoto.replaceStatementWithNOP("");
-            }
-        }
-    }
-
     public UnstructuredWhile removeLastEndWhile() {
         StructuredStatement structuredStatement = containedStatements.getLast().getStatement();
         if (structuredStatement instanceof UnstructuredWhile) {
@@ -180,6 +165,16 @@ public class Block extends AbstractStructuredStatement {
             }
         }
         return Pair.make(res==null, res);
+    }
+
+    public List<Op04StructuredStatement> getFilteredBlockStatements() {
+        List<Op04StructuredStatement> res = ListFactory.newList();
+        for (Op04StructuredStatement statement : containedStatements) {
+            if (!(statement.getStatement() instanceof StructuredComment)) {
+                res.add(statement);
+            }
+        }
+        return res;
     }
 
     public Optional<Op04StructuredStatement> getMaybeJustOneStatement() {
@@ -477,6 +472,11 @@ public class Block extends AbstractStructuredStatement {
 
     public List<Op04StructuredStatement> getBlockStatements() {
         return containedStatements;
+    }
+
+    public void replaceBlockStatements(Collection<Op04StructuredStatement> statements) {
+        containedStatements.clear();
+        containedStatements.addAll(statements);
     }
 
     @Override

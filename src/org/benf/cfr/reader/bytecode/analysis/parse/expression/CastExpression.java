@@ -219,4 +219,13 @@ public class CastExpression extends AbstractExpression implements BoxingProcesso
         return e;
     }
 
+    public static Expression tryRemoveCast(Expression e) {
+        if (e instanceof CastExpression) {
+            Expression ce = ((CastExpression) e).getChild();
+            if (ce.getInferredJavaType().getJavaTypeInstance().implicitlyCastsTo(e.getInferredJavaType().getJavaTypeInstance(), null)) {
+                e = ce;
+            }
+        }
+        return e;
+    }
 }

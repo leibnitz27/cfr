@@ -20,6 +20,10 @@ public class StructuredThrow extends AbstractStructuredStatement {
         this.value = value;
     }
 
+    public Expression getValue() {
+        return value;
+    }
+
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         value.collectTypeUsages(collector);

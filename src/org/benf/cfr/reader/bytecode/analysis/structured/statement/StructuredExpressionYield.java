@@ -51,6 +51,10 @@ public class StructuredExpressionYield extends AbstractStructuredStatement {
         return true;
     }
 
+    public Expression getValue() {
+        return value;
+    }
+
     @Override
     public void traceLocalVariableScope(LValueScopeDiscoverer scopeDiscoverer) {
         value.collectUsedLValues(scopeDiscoverer);

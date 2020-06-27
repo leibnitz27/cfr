@@ -3,6 +3,7 @@ package org.benf.cfr.reader.bytecode.analysis.structured.statement;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchIterator;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.op4rewriters.matchutil.MatchResultCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.CastExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.ConditionalExpression;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.BlockIdentifier;
@@ -21,9 +22,13 @@ public class StructuredAssert extends AbstractStructuredStatement {
     private ConditionalExpression conditionalExpression;
     private Expression arg;
 
-    public StructuredAssert(ConditionalExpression conditionalExpression, Expression arg) {
+    private StructuredAssert(ConditionalExpression conditionalExpression, Expression arg) {
         this.conditionalExpression = conditionalExpression;
         this.arg = arg;
+    }
+
+    public static StructuredAssert mkStructuredAssert(ConditionalExpression conditionalExpression, Expression arg) {
+        return new StructuredAssert(conditionalExpression, CastExpression.tryRemoveCast(arg));
     }
 
     @Override
