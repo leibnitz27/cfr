@@ -451,6 +451,14 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         boolean usesAdmissibleType = !annotationsInfo.requiresNonAdmissibleType();
         dumpMethodAnnotations(d, annotationsInfo.getDeclarationAnnotations(usesAdmissibleType));
 
+        if (isConstructor == MethodConstructor.STATIC_CONSTRUCTOR) {
+            // JVM Spec 2nd ed., chapter 4.6: All access flags except static for class initializers are ignored
+            // Pre java 7 class files even allow static initializers to be non-static
+            // See classFileParser.cpp#parse_method
+            d.keyword(AccessFlagMethod.ACC_STATIC.toString());
+            return;
+        }
+        
         EnumSet<AccessFlagMethod> localAccessFlags = SetFactory.newSet(accessFlags);
         if (!asClass) {
             if (codeAttribute != null && !accessFlags.contains(AccessFlagMethod.ACC_STATIC)
@@ -463,13 +471,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         localAccessFlags.remove(AccessFlagMethod.ACC_VARARGS);
         String prefix = CollectionUtils.join(localAccessFlags, " ");
 
-        if (!prefix.isEmpty()) d.keyword(prefix);
-
-        if (isConstructor == MethodConstructor.STATIC_CONSTRUCTOR) {
-            return;
+        if (!prefix.isEmpty()) {
+            d.keyword(prefix);
+            d.print(' ');
         }
-
-        if (!prefix.isEmpty()) d.print(' ');
 
         String displayName = isConstructor.isConstructor() ?
                 d.getTypeUsageInformation().getName(classFile.getClassType(), TypeContext.None) :
