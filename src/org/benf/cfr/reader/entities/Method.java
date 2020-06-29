@@ -132,12 +132,8 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             // JVM Spec 2nd ed., chapter 4.6: All access flags except static for class initializers are ignored
             // Pre java 7 class files even allow static initializers to be non-static
             // See classFileParser.cpp#parse_method
-            if (classFileVersion.before(ClassFileVersion.JAVA_7)) {
-                accessFlags.clear();
-                accessFlags.add(AccessFlagMethod.ACC_STATIC);
-            } else {
-                accessFlags.retainAll(SetFactory.newSet(AccessFlagMethod.ACC_STATIC, AccessFlagMethod.ACC_STRICT));
-            }
+            accessFlags.clear();
+            accessFlags.add(AccessFlagMethod.ACC_STATIC);
         }
         this.isConstructor = methodConstructor;
         if (methodConstructor.isConstructor() && accessFlags.contains(AccessFlagMethod.ACC_STRICT)) {
