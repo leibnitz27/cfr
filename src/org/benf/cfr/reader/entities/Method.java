@@ -128,6 +128,12 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             methodConstructor = isEnum ? MethodConstructor.ENUM_CONSTRUCTOR : MethodConstructor.CONSTRUCTOR;
         } else if (initialName.equals(MiscConstants.STATIC_INIT_METHOD)) {
             methodConstructor = MethodConstructor.STATIC_CONSTRUCTOR;
+            // JVM Spec 2nd ed., chapter 4.6: All access flags except static for class initializers are ignored
+            // Pre java 7 class files even allow static initializers to be non-static, but the JVM interprets them as if they were static
+            // See classFileParser.cpp#parse_method
+            // To make sure the static initializer can't be hidden by being synthetic, just keep the static flag.
+            accessFlags.clear();
+            accessFlags.add(AccessFlagMethod.ACC_STATIC);
         }
         this.isConstructor = methodConstructor;
         if (methodConstructor.isConstructor() && accessFlags.contains(AccessFlagMethod.ACC_STRICT)) {
@@ -452,9 +458,6 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
         dumpMethodAnnotations(d, annotationsInfo.getDeclarationAnnotations(usesAdmissibleType));
 
         if (isConstructor == MethodConstructor.STATIC_CONSTRUCTOR) {
-            // JVM Spec 2nd ed., chapter 4.6: All access flags except static for class initializers are ignored
-            // Pre java 7 class files even allow static initializers to be non-static
-            // See classFileParser.cpp#parse_method
             d.keyword(AccessFlagMethod.ACC_STATIC.toString());
             return;
         }
