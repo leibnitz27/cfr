@@ -459,6 +459,9 @@ public class CodeAnalyser {
 
         Op03SimpleStatement.assignSSAIdentifiers(method, op03SimpleParseNodes);
 
+        // Fix static instance usage.
+        Op03Rewriters.condenseStaticInstances(op03SimpleParseNodes);
+
         // Condense pointless assignments
         LValueProp.condenseLValues(op03SimpleParseNodes);
 

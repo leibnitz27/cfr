@@ -207,7 +207,11 @@ public class Op03Rewriters {
         new JumpsIntoDoRewriter(vf).rewrite(op03SimpleParseNodes, comments);
     }
 
-    public static List<Op03SimpleStatement>  removeDeadConditionals(List<Op03SimpleStatement> op03SimpleParseNodes) {
+    public static List<Op03SimpleStatement> removeDeadConditionals(List<Op03SimpleStatement> op03SimpleParseNodes) {
         return DeadConditionalRemover.INSTANCE.rewrite(op03SimpleParseNodes);
+    }
+
+    public static void condenseStaticInstances(List<Op03SimpleStatement> op03SimpleParseNodes) {
+        StaticInstanceCondenser.INSTANCE.rewrite(op03SimpleParseNodes);
     }
 }

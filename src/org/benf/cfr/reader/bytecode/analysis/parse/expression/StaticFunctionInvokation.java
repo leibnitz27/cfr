@@ -29,6 +29,9 @@ import java.util.List;
 public class StaticFunctionInvokation extends AbstractFunctionInvokation implements FunctionProcessor, BoxingProcessor {
     protected final List<Expression> args;
     private final JavaTypeInstance clazz;
+    // No - a static method doesn't require an object.
+    // BUT - we could be an explicit static. :(
+    private Expression object;
     private @Nullable
     List<JavaTypeInstance> explicitGenerics;
 
@@ -40,17 +43,29 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
     @Override
     public Expression deepClone(CloneHelper cloneHelper) {
-        return new StaticFunctionInvokation(getFunction(), cloneHelper.replaceOrClone(args));
+        return new StaticFunctionInvokation(getFunction(), cloneHelper.replaceOrClone(args), cloneHelper.replaceOrClone(object));
     }
 
-    public StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args) {
+    private StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args, Expression object) {
         super(function, getTypeForFunction(function, args));
         this.args = args;
         this.clazz = function.getClassEntry().getTypeInstance();
+        this.object = object;
+    }
+
+    public StaticFunctionInvokation(ConstantPoolEntryMethodRef function, List<Expression> args) {
+        this(function, args, null);
+    }
+
+    public void forceObject(Expression object) {
+        this.object = object;
     }
 
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
+        if (object != null) {
+            object.collectTypeUsages(collector);
+        }
         collector.collect(clazz);
         for (Expression arg : args) {
             arg.collectTypeUsages(collector);
@@ -65,6 +80,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
     @Override
     public Expression applyExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        applyNonArgExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
         applyExpressionRewriterToArgs(expressionRewriter, ssaIdentifiers, statementContainer, flags);
         return this;
     }
@@ -72,6 +88,7 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
     @Override
     public Expression applyReverseExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
         ExpressionRewriterHelper.applyBackwards(args, expressionRewriter, ssaIdentifiers, statementContainer, flags);
+        applyNonArgExpressionRewriter(expressionRewriter, ssaIdentifiers, statementContainer, flags);
         return this;
     }
 
@@ -97,17 +114,21 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
     @Override
     public Dumper dumpInner(Dumper d) {
-        if (!d.getTypeUsageInformation().isStaticImport(clazz.getDeGenerifiedType(), getFixedName())) {
-            d.dump(clazz, TypeContext.Static).separator(".");
-        }
-        if (explicitGenerics != null && !explicitGenerics.isEmpty()) {
-            d.operator("<");
-            boolean first = true;
-            for (JavaTypeInstance typeInstance : explicitGenerics) {
-                first = StringUtils.comma(first, d);
-                d.dump(typeInstance);
+        if (object != null) {
+            d.dump(object).separator(".");
+        } else {
+            if (!d.getTypeUsageInformation().isStaticImport(clazz.getDeGenerifiedType(), getFixedName())) {
+                d.dump(clazz, TypeContext.Static).separator(".");
             }
-            d.operator(">");
+            if (explicitGenerics != null && !explicitGenerics.isEmpty()) {
+                d.operator("<");
+                boolean first = true;
+                for (JavaTypeInstance typeInstance : explicitGenerics) {
+                    first = StringUtils.comma(first, d);
+                    d.dump(typeInstance);
+                }
+                d.operator(">");
+            }
         }
         d.methodName(getFixedName(), getMethodPrototype(), false, false).separator("(");
         boolean first = true;
@@ -167,6 +188,9 @@ public class StaticFunctionInvokation extends AbstractFunctionInvokation impleme
 
     @Override
     public void applyNonArgExpressionRewriter(ExpressionRewriter expressionRewriter, SSAIdentifiers ssaIdentifiers, StatementContainer statementContainer, ExpressionRewriterFlags flags) {
+        if (object != null) {
+            object = expressionRewriter.rewriteExpression(object, ssaIdentifiers, statementContainer, flags);
+        }
     }
 
     @Override
